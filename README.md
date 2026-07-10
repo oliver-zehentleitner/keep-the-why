@@ -42,7 +42,7 @@ A project's documentation is one coherent group of files, not a single practice:
 | **Keep the Why** (`context/`) | "Why is it built this way?" | `context/` |
 | `AGENTS.local.md` | "What's specific to me, not relevant to anyone else?" | `AGENTS.local.md` (not committed) |
 
-Michael Feathers' classic definition — legacy code is code without tests — covers only the Tests row. Each of the others answers a different question, and none substitutes for another: contribution process belongs in `CONTRIBUTING.md`, not `context/`; rationale belongs in `context/`, not scattered into a README that's supposed to stay a quick pitch. That doesn't mean every project needs all eight files fully built out from day one — use the ones justified by the project's size, lifetime, and number of maintainers, the same way a one-file script doesn't need six `docs/` pages (see `references/repository-structure.md`). What it does mean: once you know which question you're answering, you know exactly which file it goes in — see [`references/repository-structure.md`](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/references/repository-structure.md) for the same routing table with more detail. Full methodology behind the `docs/`/`context/` split specifically: [`references/methodology.md`](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/references/methodology.md).
+Michael Feathers' classic definition — legacy code is code without tests — covers only the Tests row. Each of the others answers a different question, and none substitutes for another: contribution process belongs in `CONTRIBUTING.md`, not `context/`; rationale belongs in `context/`, not scattered into a README that's supposed to stay a quick pitch. That doesn't mean every project needs all eight files fully built out from day one — use the ones justified by the project's size, lifetime, and number of maintainers, the same way a one-file script doesn't need six `docs/` pages (see `references/repository-structure.md`). What it does mean: once you know which question you're answering, you know exactly which file it goes in — see [`references/repository-structure.md`](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/skills/keep-the-why/references/repository-structure.md) for the same routing table with more detail. Full methodology behind the `docs/`/`context/` split specifically: [`references/methodology.md`](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/skills/keep-the-why/references/methodology.md).
 
 **What none of them does by itself: stay honest over time.** Tests get skipped under deadline pressure, docs rot, changelogs get forgotten mid-release, and rationale decays — one 2026 study found 23% of AI-generated decisions had stale supporting evidence within two months. Keep the Why doesn't solve that alone; it just gives "why" a place to live so it *can* be kept current, the same way a test suite only helps if it actually runs in CI. Keeping all of them honest over time (via CI checks, review habits, whatever fits the project) is a separate, necessary piece this project doesn't ship an opinion on yet.
 
@@ -50,7 +50,23 @@ This isn't a new pattern, either. Docs and changelogs are already commonly kept 
 
 ## Install
 
-Clone into your agent's skills directory — the folder name must stay `keep-the-why`:
+**Recommended — [GitHub CLI](https://cli.github.com/) (`gh` v2.90.0+):**
+
+```bash
+gh skill install oliver-zehentleitner/keep-the-why
+```
+
+Prompts for which agent and scope (project or personal) to install for. This installs just the skill package (`skills/keep-the-why/`), not the whole repo — no docs/, mkdocs config, or CI files end up in your project.
+
+**Fallback — manual clone**, if `gh skill install` isn't available. The skill lives under `skills/keep-the-why/` in this repo, not at the root, so clone to a scratch location and copy just that folder rather than cloning straight into your agent's skills directory (cloning the whole repo there would nest an embedded git repository inside yours, and pull in unrelated project files):
+
+```bash
+git clone https://github.com/oliver-zehentleitner/keep-the-why.git /tmp/keep-the-why
+cp -r /tmp/keep-the-why/skills/keep-the-why <target-directory>/keep-the-why
+rm -rf /tmp/keep-the-why
+```
+
+Where `<target-directory>` is your agent's skills directory — the folder name must stay `keep-the-why`:
 
 | Agent | Project-scoped | Personal |
 |---|---|---|
@@ -62,10 +78,6 @@ Clone into your agent's skills directory — the folder name must stay `keep-the
 
 Several other tools (Antigravity, Amp, OpenCode, Warp, and more) read a shared `.agents/skills/keep-the-why` path at project scope instead of a vendor-specific one — check whether yours does before falling back to a vendor path. Cline uses its own `.cline/skills/keep-the-why` (project) / `~/.cline/skills/keep-the-why` (personal) instead.
 
-```bash
-git clone https://github.com/oliver-zehentleitner/keep-the-why.git <target-directory>/keep-the-why
-```
-
 Start a new session afterward so the skill is picked up. Also compatible with Windsurf, Goose, Roo Code, Trae, Factory, JetBrains Junie, and other tools supporting the open Agent Skills format — the directory convention varies, check your tool's own docs. Full details, including tools without a skill runtime at all: [`docs/installation.md`](docs/installation.md) or [https://keepthewhy.com/installation/](https://keepthewhy.com/installation/).
 
 ## Example
@@ -76,7 +88,7 @@ You: We're changing the retry mechanism because the previous
      maintainers understand this.
 ```
 
-Keep the Why updates the relevant topic file in `context/` (or creates one if none exists), records the reason, and marks the old approach as superseded — without you having to ask for documentation separately. See [`examples/`](https://github.com/oliver-zehentleitner/keep-the-why/tree/main/examples) for continuous, retrospective, and interview-mode walkthroughs.
+Keep the Why updates the relevant topic file in `context/` (or creates one if none exists), records the reason, and marks the old approach as superseded — without you having to ask for documentation separately. See [`examples/`](https://github.com/oliver-zehentleitner/keep-the-why/tree/main/skills/keep-the-why/examples) for continuous, retrospective, and interview-mode walkthroughs.
 
 ## Not a green field
 

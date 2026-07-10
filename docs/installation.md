@@ -2,9 +2,27 @@
 
 Keep the Why is a `SKILL.md` file, following the open, cross-agent skill format — not tied to one vendor. No build step, no external service, no database, no MCP server.
 
-## Where to put it
+## Recommended: GitHub CLI
 
-The folder name must stay `keep-the-why` (has to match `name` in the frontmatter). Clone it into whichever agent's skills directory applies:
+With [`gh`](https://cli.github.com/) v2.90.0 or later:
+
+```bash
+gh skill install oliver-zehentleitner/keep-the-why
+```
+
+This prompts for which agent and scope (project or personal) to install for, and installs only the skill package (`skills/keep-the-why/` in this repo) — not the whole repository. Run `gh skill install --help` for non-interactive flags.
+
+## Fallback: manual clone
+
+If `gh skill install` isn't available. The skill lives under `skills/keep-the-why/`, not at the repo root — clone to a scratch location and copy just that folder, rather than cloning the whole repo straight into your agent's skills directory (which would nest an embedded git repository inside yours and pull in docs/, mkdocs config, and CI files you don't need):
+
+```bash
+git clone https://github.com/oliver-zehentleitner/keep-the-why.git /tmp/keep-the-why
+cp -r /tmp/keep-the-why/skills/keep-the-why <target-directory>/keep-the-why
+rm -rf /tmp/keep-the-why
+```
+
+The folder name must stay `keep-the-why` (has to match `name` in the frontmatter). `<target-directory>` is whichever agent's skills directory applies:
 
 | Agent | Project-scoped | Personal | Last verified |
 |---|---|---|---|
@@ -17,10 +35,6 @@ The folder name must stay `keep-the-why` (has to match `name` in the frontmatter
 
 These paths change as agent tooling evolves — if one doesn't work, check the agent's current docs rather than assuming this table is still accurate. Several other tools (Antigravity, Amp, OpenCode, Warp, and more) read a shared `.agents/skills/keep-the-why` path at project scope instead of a vendor-specific one — check whether yours does before falling back to a vendor path. Also compatible with Windsurf, Goose, Roo Code, Trae, Factory, JetBrains Junie, and other tools supporting the open Agent Skills format — the directory convention varies, check your tool's own docs.
 
-```bash
-git clone https://github.com/oliver-zehentleitner/keep-the-why.git <target-directory>/keep-the-why
-```
-
 Start a new session afterward so the skill is picked up.
 
 ## Without a skill-compatible agent
@@ -29,10 +43,7 @@ Start a new session afterward so the skill is picked up.
 
 ## Updating
 
-```bash
-cd <target-directory>/keep-the-why
-git pull
-```
+Re-run `gh skill install oliver-zehentleitner/keep-the-why`, or repeat the manual clone-and-copy steps above — a plain `git pull` doesn't work if you copied the folder out of a scratch clone rather than cloning directly into place.
 
 ## Verifying it loaded
 

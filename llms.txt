@@ -17,10 +17,20 @@ License: MIT — free for commercial and private use. No paid license, no subscr
 
 ## Quick Start
 
-Install as an agent skill — the folder name must stay `keep-the-why`:
+Recommended, with GitHub CLI v2.90.0+:
 
 ```bash
-git clone https://github.com/oliver-zehentleitner/keep-the-why.git .claude/skills/keep-the-why
+gh skill install oliver-zehentleitner/keep-the-why
+```
+
+Fallback (manual clone) — the skill lives under `skills/keep-the-why/` in this repo, not at the
+root, so clone to a scratch location and copy just that folder rather than cloning the whole repo
+into your agent's skills directory:
+
+```bash
+git clone https://github.com/oliver-zehentleitner/keep-the-why.git /tmp/keep-the-why
+cp -r /tmp/keep-the-why/skills/keep-the-why .claude/skills/keep-the-why
+rm -rf /tmp/keep-the-why
 ```
 
 Compatible with Claude Code, Codex CLI, Gemini CLI, GitHub Copilot, Cursor, Windsurf,
@@ -71,6 +81,6 @@ no required external service (no database, no MCP server).
 
 - Repo: https://github.com/oliver-zehentleitner/keep-the-why
 - AGENTS.md (for AI agents working on this repo): https://github.com/oliver-zehentleitner/keep-the-why/blob/main/AGENTS.md
-- SKILL.md: https://github.com/oliver-zehentleitner/keep-the-why/blob/main/SKILL.md
+- SKILL.md: https://github.com/oliver-zehentleitner/keep-the-why/blob/main/skills/keep-the-why/SKILL.md
 - Docs: https://keepthewhy.com
 - Why this project is built this way: https://keepthewhy.com/context/repo-conventions/
