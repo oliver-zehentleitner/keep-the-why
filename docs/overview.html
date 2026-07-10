@@ -264,7 +264,7 @@
 </section>
 <section id="how-it-works">
 <h2>How it works<a class="headerlink" href="#how-it-works" title="Link to this heading">¶</a></h2>
-<p>Keep the Why is a <a class="reference external" href="https://code.claude.com/docs/en/skills">Claude Code Skill</a> (SKILL.md-based, works with any agent that supports the format). It operates in four modes:</p>
+<p>Keep the Why is a <code class="docutils literal notranslate"><span class="pre">SKILL.md</span></code>-based agent skill — an open, cross-agent format (Claude Code, Codex CLI, Gemini CLI, Cursor, and others). It operates in four modes:</p>
 <ol class="arabic simple">
 <li><p><strong>Continuous capture</strong> — during normal development, the agent notices rationale worth keeping and records it alongside the code as it happens.</p></li>
 <li><p><strong>Retrospective recovery</strong> — pointed at an existing or legacy repository, the agent reconstructs what it can from git history, issues, and code, and is explicit about what it couldn’t.</p></li>
@@ -314,16 +314,39 @@
 </section>
 <section id="install">
 <h2>Install<a class="headerlink" href="#install" title="Link to this heading">¶</a></h2>
-<p><strong>Project-scoped</strong> (recommended — ships with the repo, available to anyone working on it):</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span>-p<span class="w"> </span>.claude/skills
-git<span class="w"> </span>clone<span class="w"> </span>https://github.com/oliver-zehentleitner/keep-the-why.git<span class="w"> </span>.claude/skills/keep-the-why
+<p>Clone into your agent’s skills directory — the folder name must stay <code class="docutils literal notranslate"><span class="pre">keep-the-why</span></code>:</p>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Agent</p></th>
+<th class="head"><p>Project-scoped</p></th>
+<th class="head"><p>Personal</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Claude Code</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">.claude/skills/keep-the-why</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">~/.claude/skills/keep-the-why</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Codex CLI</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">.codex/skills/keep-the-why</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">~/.codex/skills/keep-the-why</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Gemini CLI</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">.gemini/skills/keep-the-why</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">~/.gemini/skills/keep-the-why</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Cursor</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">.cursor/skills/keep-the-why</span></code></p></td>
+<td><p>— (no personal directory)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/oliver-zehentleitner/keep-the-why.git<span class="w"> </span>&lt;target-directory&gt;/keep-the-why
 </pre></div>
 </div>
-<p><strong>Personal</strong> (available across all your projects):</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/oliver-zehentleitner/keep-the-why.git<span class="w"> </span>~/.claude/skills/keep-the-why
-</pre></div>
-</div>
-<p>Start a new Claude Code session afterward so the skill is picked up.</p>
+<p>Start a new session afterward so the skill is picked up. Full details, including agents without a skill runtime: <a class="reference internal" href="#dev/sphinx/config/installation.md"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">dev/sphinx/config/installation.md</span></code></span></a> (or the built docs site once published).</p>
 </section>
 <section id="example">
 <h2>Example<a class="headerlink" href="#example" title="Link to this heading">¶</a></h2>

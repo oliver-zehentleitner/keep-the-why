@@ -18,7 +18,7 @@ Important project knowledge gets created in conversation — with a teammate, or
 
 ## How it works
 
-Keep the Why is a [Claude Code Skill](https://code.claude.com/docs/en/skills) (SKILL.md-based, works with any agent that supports the format). It operates in four modes:
+Keep the Why is a `SKILL.md`-based agent skill — an open, cross-agent format (Claude Code, Codex CLI, Gemini CLI, Cursor, and others). It operates in four modes:
 
 1. **Continuous capture** — during normal development, the agent notices rationale worth keeping and records it alongside the code as it happens.
 2. **Retrospective recovery** — pointed at an existing or legacy repository, the agent reconstructs what it can from git history, issues, and code, and is explicit about what it couldn't.
@@ -49,20 +49,20 @@ Michael Feathers' classic definition — legacy code is code without tests — c
 
 ## Install
 
-**Project-scoped** (recommended — ships with the repo, available to anyone working on it):
+Clone into your agent's skills directory — the folder name must stay `keep-the-why`:
+
+| Agent | Project-scoped | Personal |
+|---|---|---|
+| Claude Code | `.claude/skills/keep-the-why` | `~/.claude/skills/keep-the-why` |
+| Codex CLI | `.codex/skills/keep-the-why` | `~/.codex/skills/keep-the-why` |
+| Gemini CLI | `.gemini/skills/keep-the-why` | `~/.gemini/skills/keep-the-why` |
+| Cursor | `.cursor/skills/keep-the-why` | — (no personal directory) |
 
 ```bash
-mkdir -p .claude/skills
-git clone https://github.com/oliver-zehentleitner/keep-the-why.git .claude/skills/keep-the-why
+git clone https://github.com/oliver-zehentleitner/keep-the-why.git <target-directory>/keep-the-why
 ```
 
-**Personal** (available across all your projects):
-
-```bash
-git clone https://github.com/oliver-zehentleitner/keep-the-why.git ~/.claude/skills/keep-the-why
-```
-
-Start a new Claude Code session afterward so the skill is picked up.
+Start a new session afterward so the skill is picked up. Full details, including agents without a skill runtime: [`dev/sphinx/config/installation.md`](dev/sphinx/config/installation.md) (or the built docs site once published).
 
 ## Example
 

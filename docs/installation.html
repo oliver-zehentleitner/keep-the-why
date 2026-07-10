@@ -249,26 +249,51 @@
         <article role="main" id="furo-main-content">
           <section id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h1>
-<p>Keep the Why is a <a class="reference external" href="https://code.claude.com/docs/en/skills">SKILL.md</a>-based agent skill. No build step, no external service, no database, no MCP server.</p>
-<section id="project-scoped">
-<h2>Project-scoped<a class="headerlink" href="#project-scoped" title="Link to this heading">¶</a></h2>
-<p>Available to anyone working on a specific repository, checked in alongside the code:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span>-p<span class="w"> </span>.claude/skills
-git<span class="w"> </span>clone<span class="w"> </span>https://github.com/oliver-zehentleitner/keep-the-why.git<span class="w"> </span>.claude/skills/keep-the-why
+<p>Keep the Why is a <code class="docutils literal notranslate"><span class="pre">SKILL.md</span></code> file, following the open, cross-agent skill format — not tied to one vendor. No build step, no external service, no database, no MCP server.</p>
+<section id="where-to-put-it">
+<h2>Where to put it<a class="headerlink" href="#where-to-put-it" title="Link to this heading">¶</a></h2>
+<p>The folder name must stay <code class="docutils literal notranslate"><span class="pre">keep-the-why</span></code> (has to match <code class="docutils literal notranslate"><span class="pre">name</span></code> in the frontmatter). Clone it into whichever agent’s skills directory applies:</p>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Agent</p></th>
+<th class="head"><p>Project-scoped</p></th>
+<th class="head"><p>Personal</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Claude Code</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">.claude/skills/keep-the-why</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">~/.claude/skills/keep-the-why</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Codex CLI</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">.codex/skills/keep-the-why</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">~/.codex/skills/keep-the-why</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Gemini CLI</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">.gemini/skills/keep-the-why</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">~/.gemini/skills/keep-the-why</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Cursor</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">.cursor/skills/keep-the-why</span></code></p></td>
+<td><p>— (no personal directory)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Some agents also honor a shared <code class="docutils literal notranslate"><span class="pre">.agents/skills/keep-the-why</span></code> path instead of a vendor-specific one — check your agent’s own docs for whether it’s supported; where it is, one copy covers every tool that reads it.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/oliver-zehentleitner/keep-the-why.git<span class="w"> </span>&lt;target-directory&gt;/keep-the-why
 </pre></div>
 </div>
+<p>Start a new session afterward so the skill is picked up.</p>
 </section>
-<section id="personal">
-<h2>Personal<a class="headerlink" href="#personal" title="Link to this heading">¶</a></h2>
-<p>Available across all your projects:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/oliver-zehentleitner/keep-the-why.git<span class="w"> </span>~/.claude/skills/keep-the-why
-</pre></div>
-</div>
-<p>Start a new Claude Code session afterward so the skill is picked up.</p>
+<section id="without-a-skill-compatible-agent">
+<h2>Without a skill-compatible agent<a class="headerlink" href="#without-a-skill-compatible-agent" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">docs/</span></code> and <code class="docutils literal notranslate"><span class="pre">context/</span></code> are plain Markdown — no skill runtime is required to read them. Anything that browses or indexes a repository (a wiki generator, a documentation site builder, or just a person reading the files on GitHub) works with the output directly. The skill automates keeping this current; the result is still useful on its own even where the skill itself isn’t installed.</p>
 </section>
 <section id="updating">
 <h2>Updating<a class="headerlink" href="#updating" title="Link to this heading">¶</a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>.claude/skills/keep-the-why<span class="w">   </span><span class="c1"># or ~/.claude/skills/keep-the-why</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>&lt;target-directory&gt;/keep-the-why
 git<span class="w"> </span>pull
 </pre></div>
 </div>
@@ -335,8 +360,8 @@ git<span class="w"> </span>pull
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Installation</a><ul>
-<li><a class="reference internal" href="#project-scoped">Project-scoped</a></li>
-<li><a class="reference internal" href="#personal">Personal</a></li>
+<li><a class="reference internal" href="#where-to-put-it">Where to put it</a></li>
+<li><a class="reference internal" href="#without-a-skill-compatible-agent">Without a skill-compatible agent</a></li>
 <li><a class="reference internal" href="#updating">Updating</a></li>
 <li><a class="reference internal" href="#verifying-it-loaded">Verifying it loaded</a></li>
 </ul>

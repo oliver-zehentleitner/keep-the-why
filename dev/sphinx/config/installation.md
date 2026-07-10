@@ -1,30 +1,34 @@
 # Installation
 
-Keep the Why is a [SKILL.md](https://code.claude.com/docs/en/skills)-based agent skill. No build step, no external service, no database, no MCP server.
+Keep the Why is a `SKILL.md` file, following the open, cross-agent skill format — not tied to one vendor. No build step, no external service, no database, no MCP server.
 
-## Project-scoped
+## Where to put it
 
-Available to anyone working on a specific repository, checked in alongside the code:
+The folder name must stay `keep-the-why` (has to match `name` in the frontmatter). Clone it into whichever agent's skills directory applies:
+
+| Agent | Project-scoped | Personal |
+|---|---|---|
+| Claude Code | `.claude/skills/keep-the-why` | `~/.claude/skills/keep-the-why` |
+| Codex CLI | `.codex/skills/keep-the-why` | `~/.codex/skills/keep-the-why` |
+| Gemini CLI | `.gemini/skills/keep-the-why` | `~/.gemini/skills/keep-the-why` |
+| Cursor | `.cursor/skills/keep-the-why` | — (no personal directory) |
+
+Some agents also honor a shared `.agents/skills/keep-the-why` path instead of a vendor-specific one — check your agent's own docs for whether it's supported; where it is, one copy covers every tool that reads it.
 
 ```bash
-mkdir -p .claude/skills
-git clone https://github.com/oliver-zehentleitner/keep-the-why.git .claude/skills/keep-the-why
+git clone https://github.com/oliver-zehentleitner/keep-the-why.git <target-directory>/keep-the-why
 ```
 
-## Personal
+Start a new session afterward so the skill is picked up.
 
-Available across all your projects:
+## Without a skill-compatible agent
 
-```bash
-git clone https://github.com/oliver-zehentleitner/keep-the-why.git ~/.claude/skills/keep-the-why
-```
-
-Start a new Claude Code session afterward so the skill is picked up.
+`docs/` and `context/` are plain Markdown — no skill runtime is required to read them. Anything that browses or indexes a repository (a wiki generator, a documentation site builder, or just a person reading the files on GitHub) works with the output directly. The skill automates keeping this current; the result is still useful on its own even where the skill itself isn't installed.
 
 ## Updating
 
 ```bash
-cd .claude/skills/keep-the-why   # or ~/.claude/skills/keep-the-why
+cd <target-directory>/keep-the-why
 git pull
 ```
 
