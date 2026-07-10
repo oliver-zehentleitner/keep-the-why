@@ -71,12 +71,11 @@ Where `<target-directory>` is your agent's skills directory — the folder name 
 | Agent | Project-scoped | Personal |
 |---|---|---|
 | Claude Code | `.claude/skills/keep-the-why` | `~/.claude/skills/keep-the-why` |
-| Codex CLI | `.codex/skills/keep-the-why` | `~/.codex/skills/keep-the-why` |
 | Gemini CLI | `.gemini/skills/keep-the-why` | `~/.gemini/skills/keep-the-why` |
 | GitHub Copilot | `.github/skills/keep-the-why` | `~/.copilot/skills/keep-the-why` |
 | Cursor | `.cursor/skills/keep-the-why` | — (no personal directory) |
 
-Several other tools (Antigravity, Amp, OpenCode, Warp, and more) read a shared `.agents/skills/keep-the-why` path at project scope instead of a vendor-specific one — check whether yours does before falling back to a vendor path. Cline uses its own `.cline/skills/keep-the-why` (project) / `~/.cline/skills/keep-the-why` (personal) instead.
+Codex CLI, Antigravity, Amp, OpenCode, Warp, and more read the shared `.agents/skills/keep-the-why` path at project scope (Codex scans it from your current directory up to the repository root) and `~/.agents/skills/keep-the-why` personally — check whether yours does before falling back to a vendor path. Cline uses its own `.cline/skills/keep-the-why` (project) / `~/.cline/skills/keep-the-why` (personal) instead.
 
 Start a new session afterward so the skill is picked up. Also compatible with Windsurf, Goose, Roo Code, Trae, Factory, JetBrains Junie, and other tools supporting the open Agent Skills format — the directory convention varies, check your tool's own docs. Full details, including tools without a skill runtime at all: [`docs/installation.md`](docs/installation.md) or [https://keepthewhy.com/installation/](https://keepthewhy.com/installation/).
 
