@@ -50,4 +50,3 @@ nav:
       - Developer handover: examples/developer-handover.md
   - "Why this project is built this way":
       - Repo conventions: context/repo-conventions.md
-      - Scope: context/scope.md
