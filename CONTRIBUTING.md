@@ -9,6 +9,7 @@ The installable skill package lives under `skills/keep-the-why/` (SKILL.md, refe
 - Real examples from applying the skill to an actual repository (continuous, retrospective, or interview mode) — even a rough write-up in `skills/keep-the-why/examples/` is valuable.
 - Sharper wording in `skills/keep-the-why/SKILL.md` itself, especially anything that makes the "confirmed / inferred / unknown" distinction more reliable in practice.
 - Additional eval cases in `skills/keep-the-why/evals/evals.json` — particularly failure modes you've hit (hallucinated rationale, generic interview questions, index bloat) that aren't covered yet.
+- **Cross-agent test results.** The evals exist, but nobody's run the full set against Claude Code, Codex CLI, and Gemini CLI yet and published the results — that's a real gap, not something this project claims to have done. If you run the evals against an agent, open an issue or PR with what you found (pass/fail per case, agent, and version) — that's exactly the kind of verified claim worth adding to the README once there's actual data behind it.
 - Corrections to the prior-art comparison in the README — if something is inaccurate or missing, say so.
 
 ## What to avoid

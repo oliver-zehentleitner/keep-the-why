@@ -30,7 +30,7 @@ Keep the Why organizes `context/` by **topic** instead: `auth.md`, `sync.md`, `c
 
 A project with years of accumulated rationale can easily produce more `context/` content than fits comfortably in an agent's context window. Most documentation-structure advice treats this as a human-navigation problem (a table of contents, a search bar). It's equally a **retrieval problem for the agent itself**: loading everything, every time, wastes context budget on material that's irrelevant to the task at hand.
 
-`context/index.md` is therefore not just a directory listing — it's the file that lets an agent (or a human) figure out *which* topic file is relevant before loading it, and skip the rest. Keeping this index lean and accurate is part of the skill's ongoing maintenance job (see Core rule 9), not a one-time setup step.
+`context/index.md` is therefore not just a directory listing — it's the file that lets an agent (or a human) figure out *which* topic file is relevant before loading it, and skip the rest. Keeping this index lean and accurate is part of the skill's ongoing maintenance job (see Core rule 8), not a one-time setup step.
 
 ## Self-monitoring: react to bloat, don't just accumulate
 

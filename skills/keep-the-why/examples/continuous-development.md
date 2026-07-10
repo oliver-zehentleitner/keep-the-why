@@ -35,4 +35,4 @@ Mid-session, working on a Python service. The retry logic for an external API ca
 
 - Doesn't write a comprehensive explanation of the entire order flow — only the part relevant to this change.
 - Doesn't ask the user unnecessary clarifying questions when the rationale was already stated directly in the conversation.
-- Doesn't commit the change to git automatically (per core rule 12) — it's staged as a working-tree edit unless the user says to commit.
+- Doesn't commit the change to git automatically (per core rule 10) — it's staged as a working-tree edit unless the user says to commit.

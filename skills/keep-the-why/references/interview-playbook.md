@@ -42,7 +42,7 @@ Low-risk, easily-reconstructible, low-weight gaps can wait or be skipped if time
 
 ## Consent, recall, and evidence
 
-- Don't commit raw transcripts or recordings — extract the rationale into the normal topic-file structure (see Core rule 11: session narrative doesn't belong in `context/`, only the objective reasoning does).
+- Don't commit raw transcripts or recordings — extract the rationale into the normal topic-file structure (see Core rule 9: session narrative doesn't belong in `context/`, only the objective reasoning does).
 - Get explicit agreement before recording or transcribing a conversation, if that's how the session is being captured.
 - A person's recollection is confirmed *that they said it*, not automatically confirmed as objective fact — memory is fallible, especially years after the fact. Note it as their stated account; cross-check against repository evidence where practical.
 - When memory and repository evidence disagree (they remember it one way, the git history or code shows another), don't quietly pick one — record both and flag the conflict openly, same as any other source disagreement (`retrospective-analysis.md`).

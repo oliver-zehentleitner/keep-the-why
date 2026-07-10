@@ -22,3 +22,14 @@ It also fixes a second, independent problem: cloning this whole repository into 
 
 **Rejected alternative:** keep `SKILL.md` at the root and only document the limitation (`gh skill install` won't discover it, use manual clone instead). Rejected because the manual-clone fallback has its own real problem (the embedded-repo issue above) — accepting both limitations to avoid one file move wasn't a good trade.
 
+## Launch-readiness pass: SKILL.md trimmed, negative evals added, README reordered
+
+**Status:** active
+**Confirmed**
+
+Four changes made together ahead of publishing to skill marketplaces: `SKILL.md` cut from ~2100 to ~1580 words (merged redundant rules, tightened the Record workflow step instead of restating rules 9/13 in full); six negative-case evals added (routine changes that shouldn't trigger the skill, an already-good doc structure that shouldn't be rebuilt, conflicting sources, a secret in an interview answer, a stale confirmed decision past its revisit trigger); README reordered so Install and a concrete Example come right after the pitch, with the longer "Problem" and "Where this fits" sections moved below instead of gating the actionable content; and social preview meta tags (Open Graph/Twitter card, pointing at the existing logo) added via a small `overrides/main.html` template.
+
+**Reason:** all four came out of an external review before the intended launch — the SKILL.md length and README ordering were both flagged as things a technically experienced reader would stumble on even though the underlying idea was sound, and the missing negative evals were a real gap (every existing eval tested "the skill should do X," none tested "the skill should stay quiet" or "the skill should flag a conflict instead of guessing").
+
+**Rejected/deferred:** a cross-agent test matrix (Claude Code, Codex CLI, Gemini CLI) was suggested alongside the evals. Not done here — this environment only has access to Claude Code, and claiming test results without having actually run them would violate rule 1 (never invent) applied to the project's own claims about itself. `CONTRIBUTING.md` asks for real cross-agent results as a contribution instead of asserting them prematurely.
+
