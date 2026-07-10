@@ -7,6 +7,12 @@
 
 /* Same heading repeated at the top of the expanded section panel. */
 .md-nav--secondary .md-nav__title,
-.md-nav:not(.md-nav--primary) > .md-nav__title:not([for="__drawer"]) {
+.md-nav:not(.md-nav--primary) > .md-nav__title {
+  color: #845bed;
+}
+
+/* The very first nav heading: the site title ("Keep the Why") above the
+   drawer's nav tree, next to the wordmark logo. */
+.md-nav__title[for="__drawer"] {
   color: #845bed;
 }
