@@ -8,6 +8,10 @@ venv/
 # Docs build output (built by .github/workflows/docs.yml, not committed)
 site/
 
+# Copied from the root llms.txt by the docs workflow before build, not a
+# second source of truth - see llms.txt at the repo root.
+docs/llms.txt
+
 # OS
 .DS_Store
 Thumbs.db
