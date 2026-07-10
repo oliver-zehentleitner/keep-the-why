@@ -73,6 +73,8 @@ A generic questionnaire produces generic, low-value answers. A targeted question
 
 ### 5. Record
 
+Before writing anything, resolve *which file* it actually belongs in — `context/` is not the only place project knowledge lives, and duplicating something already covered by the README, `docs/`, or `CONTRIBUTING.md` creates the same staleness risk this skill exists to avoid. See "Which file does this belong in?" in `references/repository-structure.md` when it's not obvious. Most of what this skill records belongs in `context/`, but not all of it does.
+
 Write or update concise, topic-oriented documentation. Every entry should answer the fork, not just state the outcome — see Core rule 7. Three fields are core, not optional extras:
 
 - **decision or behavior** — what was actually done
@@ -110,6 +112,7 @@ project/
 - `AGENTS.md` stays short and generic, compatible with the wider AGENTS.md ecosystem — it should not become the whole system.
 - `docs/` and `context/` are read directly by humans and agents alike — no separate AI-only copy.
 - `AGENTS.local.md` is the default location for anything personal or local; a tool-specific file (`CLAUDE.md`, `CODEX.md`, ...) should only exist for content genuinely exclusive to one tool, which in practice is rare.
+- This diagram isn't the whole picture — a project also has (or should have) a `README.md`, usually a `CONTRIBUTING.md`, and often a separate `CHANGELOG.md`. This skill doesn't generate those, but recording something in `context/` that actually belongs in one of them is a routing mistake, not a stylistic choice. See `references/repository-structure.md`.
 
 Full rationale for this shape: `references/methodology.md`. Concrete file layout guidance: `references/repository-structure.md`.
 

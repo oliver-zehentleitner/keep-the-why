@@ -23,6 +23,26 @@ project/
 
 Adjust freely. A one-file script doesn't need six `docs/` files; a large suite might need `context/` split by subsystem with its own sub-index. The shape should track the project's actual complexity, not a template.
 
+## Which file does this belong in?
+
+A project accumulates several files that all explain *something*: README, `docs/`, `CONTRIBUTING.md`, `context/`, `AGENTS.md`, `AGENTS.local.md`, and often a separate `CHANGELOG.md` (Keep the Why doesn't generate this one, but routing decisions still need to account for it). Content ending up in the wrong one — or copied into more than one — is exactly the kind of redundancy this skill should prevent, not add to.
+
+The routing question is always **who is reading this, and what do they need to do next**:
+
+| File | Reader | Question it answers |
+|---|---|---|
+| `README.md` | Someone evaluating whether to use this at all | What is this, should I care, how do I get started |
+| `docs/` | Someone actively using it | How do I configure, operate, or troubleshoot this |
+| `CONTRIBUTING.md` | Someone about to change the code | How do I set up a dev environment, what are the conventions, how does a PR get reviewed |
+| `context/` | Anyone (human or agent) about to change something and needing to know why first | Why is this built the way it is, what was tried and rejected |
+| `CHANGELOG.md` | Someone tracking what changed between versions | What changed, in which release |
+| `AGENTS.md` | Any agent working in the repo | Where to look — a pointer, not the content itself |
+| `AGENTS.local.md` | This one specific developer | Personal, local, not relevant to anyone else |
+
+When recording something, resolve it to exactly one of these — then have every other file that would naturally mention it *point* to that one, not restate it. A README's contributing section should be a one-line link to `CONTRIBUTING.md`, not a partial copy of its dev-setup steps; `docs/installation.md` (for end users installing a release) and `CONTRIBUTING.md`'s dev-setup section (for contributors setting up from source) can overlap in steps without one having to explain the other's context — link between them if the overlap is substantial enough that keeping both in sync matters.
+
+When something genuinely doesn't fit the table above (e.g. security disclosure process, a code of conduct), that's a signal it's a different kind of artifact — governance or legal, not comprehension — and outside what this skill routes for. Don't force it into `context/` just because there's nowhere else obvious to put it.
+
 ## `AGENTS.md` — minimal example
 
 ```markdown
