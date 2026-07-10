@@ -77,7 +77,7 @@ right and the incident showed it wasn't actually needed if ordering
 was enforced instead.
 ```
 
-Not every entry needs every field — use what's relevant. The status/confirmed-or-inferred markers and the rejected-alternative are the two things worth keeping even in a minimal entry, since they're what prevents the next person (or agent) from re-deriving or re-breaking the same thing.
+Not every entry needs every field, but treat the decision as a fork, not a single point: what was chosen, and what specifically was rejected and why. The status/confirmed-or-inferred markers and the rejected-alternative are the two things worth keeping even in a minimal entry — the rejected alternative especially, since "we chose X" without "we didn't choose Y, because Z" is usually the less useful half of the story. It's what prevents the next person (or agent) from re-deriving or re-breaking the same thing (see Core rule 7 in `SKILL.md`).
 
 ## Retrofitting an existing project
 

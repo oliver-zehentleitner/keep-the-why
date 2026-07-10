@@ -29,7 +29,7 @@ Four modes, all part of the same job:
 4. Preserve the project's existing terminology and documentation conventions; don't impose a foreign vocabulary.
 5. Update existing topic files instead of creating duplicate or near-duplicate documents.
 6. Organize knowledge by *topic* (e.g. `auth.md`, `sync.md`), not mechanically by source file or by commit.
-7. Record rejected alternatives whenever they explain why the current approach was chosen.
+7. **Treat a decision as having two halves: what was chosen, and what wasn't.** A "why" that only explains the chosen path is usually half the story. When recording a decision, actively look for the rejected alternative(s) and why they lost — don't just wait for one to surface on its own. If genuinely nothing else was considered, say that explicitly rather than silently omitting the question.
 8. Mark superseded knowledge explicitly (e.g. a `> Superseded 2026-03: see below` note) instead of silently deleting project history.
 9. Keep the index lean. Detailed reasoning lives in topic files that get loaded only when relevant — the index itself should stay small enough to not bloat every agent session's context window.
 10. When a topic file grows large enough to be unwieldy, say so and propose a split — don't let it grow indefinitely.
@@ -73,12 +73,15 @@ A generic questionnaire produces generic, low-value answers. A targeted question
 
 ### 5. Record
 
-Write or update concise, topic-oriented documentation. Include what's relevant, not a fixed template applied everywhere:
+Write or update concise, topic-oriented documentation. Every entry should answer the fork, not just state the outcome — see Core rule 7. Three fields are core, not optional extras:
+
+- **decision or behavior** — what was actually done
+- **alternative(s) considered, and why each was rejected** — even a one-line "X was considered but dropped because Y" is worth more than silence
+- **reason the chosen path won**
+
+Include the rest when relevant, not as a fixed template applied everywhere:
 
 - context / the problem being solved
-- decision or behavior
-- reason
-- rejected alternatives (and why they were rejected)
 - constraints
 - consequences and failure modes
 - current status (active / superseded)

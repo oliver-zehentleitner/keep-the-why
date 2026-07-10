@@ -3,8 +3,8 @@
 **Is this affiliated with Keep a Changelog?**
 No. The name is a deliberate homage to [keepachangelog.com](https://keepachangelog.com/) — same naming pattern, same spirit of "a lightweight open convention, not a platform" — but there's no official relationship and no shared code or governance.
 
-**Does this replace tests, docs, or a changelog?**
-No — see the README's "Where this fits" table (on the [Overview](index.md) page). Keep the Why only covers the "why" layer. Tests, usage docs, and Keep a Changelog each answer a different question and none of the four is optional just because you have the others.
+**Does this replace the README, tests, docs, or a changelog?**
+No — see the README's "Where this fits" table (on the [Overview](index.md) page). Keep the Why only covers the "why" layer. The README, usage docs, tests, and Keep a Changelog each answer a different question and none of them is optional just because you have the others.
 
 **How is this different from an ADR (Architecture Decision Record)?**
 ADRs are typically human-authored, written at a discrete decision point, one file per decision, and treated as frozen once accepted. Keep the Why is continuous and agent-authored from the conversation itself, organized by topic rather than by decision, and entries are living — updated and marked superseded rather than replaced by a new file. See [Methodology](methodology.md) for the full reasoning.

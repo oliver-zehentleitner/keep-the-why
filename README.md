@@ -34,18 +34,19 @@ Full methodology: [`references/methodology.md`](https://github.com/oliver-zehent
 
 ## Where this fits
 
-Anti-legacy isn't one practice, it's four — complementary, not competing. A project missing any one of them still has a real gap:
+Anti-legacy isn't one practice, it's several — complementary, not competing. A project missing any one of them still has a real gap:
 
 | Practice | Answers | Artifact |
 |---|---|---|
-| Tests | "Did I just break something?" | test suite |
+| README | "What is this, and should I care?" | `README.md` |
 | `docs/` | "How do I use or operate this?" | usage docs |
+| Tests | "Did I just break something?" | test suite |
 | [Keep a Changelog](https://keepachangelog.com/) | "What changed, release by release?" | `CHANGELOG.md` |
 | **Keep the Why** (`context/`) | "Why is it built this way?" | `context/` |
 
-Michael Feathers' classic definition — legacy code is code without tests — covers only the first row. A project can have full test coverage and still be legacy in every practical sense if nobody can explain why any of it works the way it does. None of the four substitutes for another.
+Michael Feathers' classic definition — legacy code is code without tests — covers only the Tests row. A project can have full test coverage and still be legacy in every practical sense if nobody can explain why any of it works the way it does. None of these substitutes for another, and this list isn't necessarily closed — treat it as the practices that combat a codebase becoming inaccessible over time, not a general OSS-hygiene checklist (things like a license or a contribution guide matter too, just for different reasons — legal clarity and process, not comprehension).
 
-**What none of the four does by itself: stay honest over time.** Tests get skipped under deadline pressure, docs rot, changelogs get forgotten mid-release, and rationale decays — one 2026 study found 23% of AI-generated decisions had stale supporting evidence within two months. Keep the Why doesn't solve that alone; it just gives "why" a place to live so it *can* be kept current, the same way a test suite only helps if it actually runs in CI. Keeping all four honest over time (via CI checks, review habits, whatever fits the project) is a separate, necessary piece this project doesn't ship an opinion on yet.
+**What none of them does by itself: stay honest over time.** Tests get skipped under deadline pressure, docs rot, changelogs get forgotten mid-release, and rationale decays — one 2026 study found 23% of AI-generated decisions had stale supporting evidence within two months. Keep the Why doesn't solve that alone; it just gives "why" a place to live so it *can* be kept current, the same way a test suite only helps if it actually runs in CI. Keeping all of them honest over time (via CI checks, review habits, whatever fits the project) is a separate, necessary piece this project doesn't ship an opinion on yet.
 
 ## Install
 
