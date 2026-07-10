@@ -35,7 +35,7 @@ Four modes, all part of the same job:
 10. When a topic file grows large enough to be unwieldy, say so and propose a split — don't let it grow indefinitely.
 11. **Don't store secrets, credentials, personal information, or private local details in anything meant to be committed — and this extends to session narrative, not just obvious secrets.** Record the objective technical reasoning behind a decision, not a transcript of who said what or how the conversation went. Never cite a person's other, unrelated projects, employer, or private matters as the source of a decision, even if that is literally how it happened — restate the reasoning on its own terms instead. If a decision only seems to make sense with that private context attached, that's a signal the entry itself needs to be made more self-contained, not that the private context should be included anyway.
 12. Don't commit or publish documentation changes unless the user explicitly asks for it.
-13. Prefer a small, useful update over a speculative or exhaustive rewrite.
+13. **Prefer a small, useful update over a speculative or exhaustive rewrite — and match documentation depth to how non-obvious a decision actually is.** A self-evident choice ("uses X, the standard convention for Y") is a sentence, not a structured entry with a manufactured rejected-alternatives section. The full decision/alternative/reason structure (rule 7) is for decisions a reader would genuinely ask "why" about — applying it uniformly to everything, including the obvious, is the same context bloat rule 9 warns against, just produced one over-long entry at a time instead of one bloated index.
 
 Rules 1–3 matter most. A skill that hallucinates a confident-sounding project history is worse than no documentation at all — it actively misleads the next reader (human or agent).
 
@@ -75,11 +75,13 @@ Exception: when the knowledge holder's understanding is broad and tacit rather t
 
 ### 5. Record
 
-Before writing anything, resolve *which file* it actually belongs in — `context/` is not the only place project knowledge lives, and duplicating something already covered by the README, `docs/`, or `CONTRIBUTING.md` creates the same staleness risk this skill exists to avoid. See "Which file does this belong in?" in `references/repository-structure.md` when it's not obvious. Most of what this skill records belongs in `context/`, but not all of it does.
+Before writing anything, three gates, in order:
 
-Also apply Core rule 11's filter here: is this objectively relevant to understanding the project, or is it session/process narrative that happens to explain how the decision came about? Write the former; leave the latter out even if it's the more complete story of how the conversation actually went.
+1. **Is this worth documenting at all, and how much?** Match the depth of the entry to how non-obvious the decision actually is. If the reason is self-evident once the relevant fact is stated ("uses X because it's the standard convention for Y"), that fact *is* the entry — one sentence, not a structured multi-part write-up. Reserve the full decision/alternative/reason structure below for choices a reader would genuinely ask "why" about. Applying the same heavy template to every decision regardless of how obvious it is produces exactly the kind of bloat rule 9 exists to prevent — verbosity is not the same as diligence, and an over-documented obvious choice is worse than a one-liner, not more thorough.
+2. **Which file does this actually belong in?** `context/` is not the only place project knowledge lives, and duplicating something already covered by the README, `docs/`, or `CONTRIBUTING.md` creates the same staleness risk this skill exists to avoid. See "Which file does this belong in?" in `references/repository-structure.md` when it's not obvious.
+3. **Apply Core rule 11's filter:** is this objectively relevant to understanding the project, or is it session/process narrative that happens to explain how the decision came about? Write the former; leave the latter out even if it's the more complete story of how the conversation actually went.
 
-Write or update concise, topic-oriented documentation. Every entry should answer the fork, not just state the outcome — see Core rule 7. Three fields are core, not optional extras:
+For decisions that pass gate 1 as genuinely non-obvious: write concise, topic-oriented documentation that answers the fork, not just the outcome — see Core rule 7. Three fields carry the weight when the full structure is warranted:
 
 - **decision or behavior** — what was actually done
 - **alternative(s) considered, and why each was rejected** — even a one-line "X was considered but dropped because Y" is worth more than silence
