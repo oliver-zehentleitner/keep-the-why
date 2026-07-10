@@ -34,13 +34,15 @@ Anti-legacy is one coherent group of files, not a single practice: each answers 
 | File | Answers | Artifact |
 |---|---|---|
 | README | "What is this, and should I care?" | `README.md` |
+| `AGENTS.md` | "Where do I look, if I'm an agent working in this repo?" | `AGENTS.md` |
 | `docs/` | "How do I use or operate this?" | usage docs |
 | `CONTRIBUTING.md` | "How do I contribute to this?" | contribution guide |
 | Tests | "Did I just break something?" | test suite |
 | [Keep a Changelog](https://keepachangelog.com/) | "What changed, release by release?" | `CHANGELOG.md` |
 | **Keep the Why** (`context/`) | "Why is it built this way?" | `context/` |
+| `AGENTS.local.md` | "What's specific to me, not relevant to anyone else?" | `AGENTS.local.md` (not committed) |
 
-Michael Feathers' classic definition — legacy code is code without tests — covers only the Tests row. A project can have full test coverage and still be legacy in every practical sense if nobody can explain why any of it works the way it does. None of these substitutes for another: contribution process belongs in `CONTRIBUTING.md`, not `context/`; rationale belongs in `context/`, not scattered into a README that's supposed to stay a quick pitch. Once you know which question you're answering, you know exactly which file it goes in — see [`references/repository-structure.md`](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/references/repository-structure.md) for the fuller routing table (also covering `AGENTS.md` and `AGENTS.local.md`, which are entry points rather than knowledge topics in this same sense). Full methodology behind the `docs/`/`context/` split specifically: [`references/methodology.md`](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/references/methodology.md).
+Michael Feathers' classic definition — legacy code is code without tests — covers only the Tests row. A project can have full test coverage and still be legacy in every practical sense if nobody can explain why any of it works the way it does. None of these substitutes for another: contribution process belongs in `CONTRIBUTING.md`, not `context/`; rationale belongs in `context/`, not scattered into a README that's supposed to stay a quick pitch. Once you know which question you're answering, you know exactly which file it goes in — see [`references/repository-structure.md`](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/references/repository-structure.md) for the same routing table with more detail. Full methodology behind the `docs/`/`context/` split specifically: [`references/methodology.md`](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/references/methodology.md).
 
 **What none of them does by itself: stay honest over time.** Tests get skipped under deadline pressure, docs rot, changelogs get forgotten mid-release, and rationale decays — one 2026 study found 23% of AI-generated decisions had stale supporting evidence within two months. Keep the Why doesn't solve that alone; it just gives "why" a place to live so it *can* be kept current, the same way a test suite only helps if it actually runs in CI. Keeping all of them honest over time (via CI checks, review habits, whatever fits the project) is a separate, necessary piece this project doesn't ship an opinion on yet.
 
