@@ -1,0 +1,12 @@
+/* Color the top-level nav section headings (e.g. "Reference", "Examples") —
+   not individual page links, just the non-clickable group labels. */
+.md-nav__item--section > .md-nav__link,
+.md-nav__item--section > .md-nav__link .md-ellipsis {
+  color: #845bed;
+}
+
+/* Same heading repeated at the top of the expanded section panel. */
+.md-nav--secondary .md-nav__title,
+.md-nav:not(.md-nav--primary) > .md-nav__title:not([for="__drawer"]) {
+  color: #845bed;
+}
