@@ -58,3 +58,14 @@ The README positions Keep the Why as one of several practices (README, `docs/`, 
 **Reason:** an earlier pass of `context/docs-engine.md` and `context/repo-conventions.md` named a specific unrelated private project as the source of the original (later replaced) documentation tooling choice, and several entries quoted conversational messages verbatim. Both leaked information that has nothing to do with this project and wasn't objectively relevant to a future reader trying to understand *this* codebase — it was development-session narrative, not project rationale. Rewritten to state the technical reasoning on its own terms.
 
 **Rejected alternative:** keep the fuller narrative for transparency/authenticity, since it's an accurate record of how the decision actually happened. Rejected because accuracy about the session isn't the same as relevance to the project — Core rule 11 now states this distinction explicitly so it isn't re-learned the same way again.
+
+## `context/naming.md` exists but is excluded from the public site's navigation and build
+
+**Status:** active
+**Confirmed**
+
+`context/naming.md` (the naming history: Backstory and Anti-Legacy considered and rejected before Keep the Why) stays in the repository — it's genuine project history and the file-level content is unchanged — but it's excluded from the built site (`mkdocs.yml`'s `exclude_docs`) and removed from the "Why this project is built this way" navigation, rather than published alongside the other context pages.
+
+**Reason:** naming/branding rationale is a different category from the technical "why is the code built this way" content the rest of `context/` covers, and doesn't need to be surfaced in the polished public site the same way. It's still reachable by anyone browsing the repository directly on GitHub — this isn't a deletion, just a decision about what the published site foregrounds.
+
+**Rejected alternative:** delete `context/naming.md` outright, or leave it in the nav unchanged. Neither fit: deleting it would contradict this project's own principle of marking history rather than erasing it (Core rule 8); leaving it in the public nav is what got reconsidered in the first place.

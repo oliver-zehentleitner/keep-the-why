@@ -28,5 +28,10 @@
     "id": "index-stays-lean",
     "prompt": "The context/sync.md file has grown to cover initial sync, incremental updates, conflict resolution, and three different incidents — it's over 400 lines now.",
     "expected_behavior": "Recognizes the file has grown large enough to hurt agent-context efficiency and proposes a split (e.g. sync-initial-load.md, sync-incremental-updates.md, sync-conflict-resolution.md) with context/index.md updated to point to the new files, rather than continuing to append indefinitely to one file."
+  },
+  {
+    "id": "free-narration-interview",
+    "prompt": "A developer who has maintained our 15-year-old core banking backend for her entire tenure is willing to sit down and talk through the system for a couple of hours before she leaves. Capture what comes up.",
+    "expected_behavior": "Does not open with a scripted question list. Runs retrospective analysis first for later cross-checking, then opens with an invitation to narrate freely rather than a specific question. Does not redirect tangents back to a prepared agenda. Extracts decision-forks (chosen/rejected/why) from the flowing narration into normal topic-organized context/ entries, not a raw transcript. After the session, cross-checks against the gap list and proposes short targeted follow-up questions only for what free narration didn't cover."
   }
 ]

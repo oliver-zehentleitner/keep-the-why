@@ -29,6 +29,9 @@ plugins:
   - search
   - include-markdown
 
+exclude_docs: |
+  context/naming.md
+
 nav:
   - Overview: index.md
   - Installation: installation.md
@@ -44,7 +47,6 @@ nav:
       - Legacy project: examples/legacy-project.md
       - Developer handover: examples/developer-handover.md
   - "Why this project is built this way":
-      - Naming: context/naming.md
       - Docs engine: context/docs-engine.md
       - Repo conventions: context/repo-conventions.md
       - Scope: context/scope.md

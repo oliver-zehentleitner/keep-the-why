@@ -22,7 +22,7 @@ Keep the Why is a `SKILL.md`-based agent skill — an open, cross-agent format (
 
 1. **Continuous capture** — during normal development, the agent notices rationale worth keeping and records it alongside the code as it happens.
 2. **Retrospective recovery** — pointed at an existing or legacy repository, the agent reconstructs what it can from git history, issues, and code, and is explicit about what it couldn't.
-3. **Knowledge-transfer interview** — before a maintainer's knowledge becomes unavailable (leaving, retiring, changing teams), the agent analyzes the codebase first and then asks targeted questions about exactly what the code couldn't explain.
+3. **Knowledge-transfer interview** — before a maintainer's knowledge becomes unavailable (leaving, retiring, changing teams), the agent analyzes the codebase first, then either asks targeted questions about exactly what the code couldn't explain, or — for someone whose knowledge is broad and tacit after many years on one system — just listens while they narrate freely and extracts the rationale from that instead.
 4. **Maintenance** — existing rationale docs get kept current: contradictions resolved, superseded entries marked, oversized files split.
 
 Captured knowledge lives in the repository itself, in two layers:
