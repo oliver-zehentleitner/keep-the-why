@@ -5,8 +5,9 @@
 > incident learnings, and operational constraints that the code alone can't explain.
 
 Because "ask Bob" is not documentation. Keep a Changelog records what changed; Keep the Why
-preserves why it changed. Complements README, docs, CONTRIBUTING.md, tests, and Keep a Changelog
-rather than replacing any of them — see "Where this fits" in the README.
+preserves why it changed. Complements README, AGENTS.md, docs, CONTRIBUTING.md, tests, Keep a
+Changelog, and AGENTS.local.md rather than replacing any of them — see "Where this fits" in
+the README.
 
 Version: 0.1.0.
 
