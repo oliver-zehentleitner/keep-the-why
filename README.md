@@ -21,7 +21,15 @@ Where the captured knowledge actually lives, and how it relates to everything el
 
 ## Install
 
-**Recommended — [GitHub CLI](https://cli.github.com/) (`gh` v2.90.0+):**
+**Recommended — [skills CLI](https://skills.sh/) (via `npx`, needs Node.js):**
+
+```bash
+npx skills add oliver-zehentleitner/keep-the-why
+```
+
+Prompts for which of its 70+ supported agents (Claude Code, Codex, OpenCode, and more) and scope to install for, then symlinks or copies the skill package in. Also listed on [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why).
+
+**Also recommended — [GitHub CLI](https://cli.github.com/) (`gh` v2.90.0+):**
 
 ```bash
 gh skill install oliver-zehentleitner/keep-the-why
@@ -29,7 +37,7 @@ gh skill install oliver-zehentleitner/keep-the-why
 
 Prompts for which agent and scope (project or personal) to install for. This installs just the skill package (`skills/keep-the-why/`), not the whole repo — no docs/, mkdocs config, or CI files end up in your project.
 
-**Fallback — manual clone**, if `gh skill install` isn't available. The skill lives under `skills/keep-the-why/` in this repo, not at the root, so clone to a scratch location and copy just that folder rather than cloning straight into your agent's skills directory (cloning the whole repo there would nest an embedded git repository inside yours, and pull in unrelated project files):
+**Fallback — manual clone**, if neither of the above is available. The skill lives under `skills/keep-the-why/` in this repo, not at the root, so clone to a scratch location and copy just that folder rather than cloning straight into your agent's skills directory (cloning the whole repo there would nest an embedded git repository inside yours, and pull in unrelated project files):
 
 ```bash
 git clone https://github.com/oliver-zehentleitner/keep-the-why.git /tmp/keep-the-why

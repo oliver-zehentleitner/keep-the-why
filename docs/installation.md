@@ -2,7 +2,17 @@
 
 Keep the Why is a `SKILL.md` file, following the open, cross-agent skill format — not tied to one vendor. No build step, no external service, no database, no MCP server.
 
-## Recommended: GitHub CLI
+## Recommended: skills CLI
+
+With [`skills`](https://skills.sh/) (runs via `npx`, requires Node.js, no separate install step):
+
+```bash
+npx skills add oliver-zehentleitner/keep-the-why
+```
+
+Prompts for which of its 70+ supported agents (Claude Code, Codex, OpenCode, and more) and scope (project or personal) to install for, then installs via symlink or copy, your choice. Also listed on [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why).
+
+## Also recommended: GitHub CLI
 
 With [`gh`](https://cli.github.com/) v2.90.0 or later:
 
@@ -42,7 +52,7 @@ Start a new session afterward so the skill is picked up.
 
 ## Updating
 
-Re-run `gh skill install oliver-zehentleitner/keep-the-why`, or repeat the manual clone-and-copy steps above — a plain `git pull` doesn't work if you copied the folder out of a scratch clone rather than cloning directly into place.
+Re-run `npx skills add oliver-zehentleitner/keep-the-why` or `gh skill install oliver-zehentleitner/keep-the-why`, or repeat the manual clone-and-copy steps above — a plain `git pull` doesn't work if you copied the folder out of a scratch clone rather than cloning directly into place.
 
 ## Verifying it loaded
 
