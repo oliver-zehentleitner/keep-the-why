@@ -18,7 +18,7 @@ Four modes, all part of the same job:
 
 1. **Continuous capture** — during normal development, notice when the current conversation contains rationale worth keeping (a decision, a rejected alternative, a workaround, an incident, a constraint) and record it alongside the code.
 2. **Retrospective recovery** — given an existing or legacy repository, find the decisions the code cannot explain by itself, and reconstruct as much as possible from code, git history, issues, and existing docs.
-3. **Knowledge-transfer interview** — when a maintainer's knowledge is about to become unavailable (leaving, retiring, changing teams), analyze the repository first, then ask that person specifically about the gaps analysis couldn't fill.
+3. **Knowledge-transfer interview** — when a maintainer's knowledge is about to become unavailable (leaving, retiring, changing teams), analyze the repository first, then either ask that person specifically about the gaps analysis couldn't fill, or — when their knowledge is broad and tacit rather than narrowly scoped, e.g. someone who has maintained one system for many years — just listen while they narrate freely and extract rationale from that instead. See `references/interview-playbook.md` for both techniques.
 4. **Maintenance** — keep existing rationale documentation current: resolve contradictions, mark superseded entries, merge duplicates, split files that have grown too large for efficient agent context loading.
 
 ## Core rules
@@ -62,14 +62,16 @@ Look for signs that rationale is missing:
 
 For every candidate piece of knowledge: is it confirmed, inferred, unknown, or superseded? See rule 2. This classification is not optional — it's what keeps the output trustworthy.
 
-### 4. Ask (when in interview or retrospective mode)
+### 4. Ask, or listen (when in interview or retrospective mode)
 
-Only ask what the evidence genuinely can't answer. Ask specifically, not generically.
+Default: only ask what the evidence genuinely can't answer, and ask specifically, not generically.
 
 - Weak: "Please explain the synchronization component."
 - Better: "Why does the sync step wait for the snapshot before applying buffered events?"
 
-A generic questionnaire produces generic, low-value answers. A targeted question — grounded in something specific the agent already found and couldn't explain — gets the actual reasoning. See `references/interview-playbook.md`.
+A generic questionnaire usually produces generic, low-value answers. A targeted question — grounded in something specific the agent already found and couldn't explain — gets the actual reasoning.
+
+Exception: when the knowledge holder's understanding is broad and tacit rather than narrowly scoped — most often someone who has maintained one system for many years — a scripted question list can suppress recall instead of helping it. There, open with an invitation to narrate freely instead of a specific question, listen without redirecting the story, and extract decision-forks from what comes up organically. Cross-check against the gap list afterward and close what's still missing with targeted questions. See `references/interview-playbook.md` for both techniques.
 
 ### 5. Record
 
