@@ -2,7 +2,7 @@
 
 ## Scope: one of several practices, not a replacement for the others
 
-Keep the Why only covers the "why" layer. It deliberately doesn't try to replace a README (what is this, should I care?), tests (did this change break something?), usage docs (how do I run/operate this?), or [Keep a Changelog](https://keepachangelog.com/) (what changed, release by release?) — see the README's "Where this fits" table. A project that adopts Keep the Why but drops its test suite hasn't gotten less legacy, just legacy in a different dimension. Keep the reasoning below scoped accordingly: it's about the `docs`/`context` split specifically, not documentation strategy in general.
+Keep the Why only covers the "why" layer. It deliberately doesn't try to replace a README (what is this, should I care?), usage docs (how do I run/operate this?), `CONTRIBUTING.md` (how do I contribute?), tests (did this change break something?), or [Keep a Changelog](https://keepachangelog.com/) (what changed, release by release?) — see the README's "Where this fits" table. A project that adopts Keep the Why but drops its test suite hasn't gotten less legacy, just legacy in a different dimension. Keep the reasoning below scoped accordingly: it's about the `docs`/`context` split specifically, not documentation strategy in general.
 
 ## Two layers: docs vs. context
 
