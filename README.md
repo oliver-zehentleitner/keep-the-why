@@ -1,6 +1,6 @@
-# Keep the Why
+<img src="docs/assets/logo.png" alt="Keep the Why — because &quot;ask Bob&quot; is not documentation." width="600">
 
-Because "ask Bob" is not documentation.
+# Keep the Why
 
 Keep a Changelog records what changed. Keep the Why preserves why it changed.
 
