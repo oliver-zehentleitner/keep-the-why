@@ -43,3 +43,8 @@ nav:
       - Continuous development: examples/continuous-development.md
       - Legacy project: examples/legacy-project.md
       - Developer handover: examples/developer-handover.md
+  - "Why this project is built this way":
+      - Naming: context/naming.md
+      - Docs engine: context/docs-engine.md
+      - Repo conventions: context/repo-conventions.md
+      - Scope: context/scope.md
