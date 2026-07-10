@@ -48,3 +48,4 @@ nav:
       - Docs engine: context/docs-engine.md
       - Repo conventions: context/repo-conventions.md
       - Scope: context/scope.md
+      - Compatibility: context/compatibility.md
