@@ -2,6 +2,18 @@
 
 Keep the Why is a `SKILL.md` file, following the open, cross-agent skill format — not tied to one vendor. No build step, no external service, no database, no MCP server.
 
+## Trust and scope
+
+Before installing anything that runs inside an agent, know what you're actually getting:
+
+- **No executable code.** The skill package (`skills/keep-the-why/`) is instructions only — `SKILL.md`, `references/*.md`, `examples/*.md`, `evals/evals.json`. No scripts, no binaries.
+- **No network access of its own.** There's nothing to run, so there's nothing that calls out anywhere. Whatever network access exists is your agent's own, not something this skill adds.
+- **No external services.** No database, no MCP server, no account, no API key.
+- **Pin instead of tracking `main`** once you want reproducibility: `gh skill install ... --pin v0.1.0`, or clone a specific [tagged release](https://github.com/oliver-zehentleitner/keep-the-why/releases) instead of `main` in the manual-clone steps below.
+- **Updating is explicit**, never automatic — see "Updating" below.
+
+None of that substitutes for actually reading `SKILL.md` yourself before installing — see "Recommended: GitHub CLI" below for `gh skill preview`, which lets you do exactly that.
+
 ## Recommended: skills CLI
 
 With [`skills`](https://skills.sh/) (runs via `npx`, requires Node.js, no separate install step):
@@ -26,11 +38,11 @@ GitHub's own guidance: skills aren't verified by GitHub and may contain prompt i
 gh skill install oliver-zehentleitner/keep-the-why keep-the-why
 ```
 
-This prompts for which agent and scope (project or personal) to install for, and installs only the skill package (`skills/keep-the-why/` in this repo) — not the whole repository. Once a tagged release exists, add `--pin <tag>` to pin instead of tracking `main`. Run `gh skill install --help` for non-interactive flags.
+This prompts for which agent and scope (project or personal) to install for, and installs only the skill package (`skills/keep-the-why/` in this repo) — not the whole repository. Add `--pin v0.1.0` (or a later [tagged release](https://github.com/oliver-zehentleitner/keep-the-why/releases)) to pin instead of tracking `main`. Run `gh skill install --help` for non-interactive flags.
 
 ## Fallback: manual clone
 
-If `gh skill install` isn't available. The skill lives under `skills/keep-the-why/`, not at the repo root — clone to a scratch location and copy just that folder, rather than cloning the whole repo straight into your agent's skills directory (which would nest an embedded git repository inside yours and pull in docs/, mkdocs config, and CI files you don't need):
+If `gh skill install` isn't available. The skill lives under `skills/keep-the-why/`, not at the repo root — clone to a scratch location and copy just that folder, rather than cloning the whole repo straight into your agent's skills directory (which would nest an embedded git repository inside yours and pull in docs/, mkdocs config, and CI files you don't need). Add `--branch v0.1.0` (or a later tag) to the clone command below to pin instead of tracking `main`:
 
 ```bash
 git clone https://github.com/oliver-zehentleitner/keep-the-why.git /tmp/keep-the-why
