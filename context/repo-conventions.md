@@ -3,38 +3,38 @@
 ## No `pyproject.toml`
 
 **Status:** active
-**Confirmed** (direct decision by the maintainer, 2026-07-10)
+**Confirmed**
 
 There is no `pyproject.toml` in this repo.
 
-**Reason:** an earlier version had one, copied from the `a1-ai-expert-case-study` template, purely to make `pip install -e .[docs]` work as a way to install Sphinx doc dependencies. It declared an empty package (`[tool.setuptools] packages = []`) whose only purpose was enabling that pip idiom. This repo isn't a Python package — nothing here is ever `pip install`-ed by an end user — so the fake-package indirection was unnecessary. The maintainer asked directly why it was needed ("Warum brauchen wir eine pyproject.toml?"), and the honest answer was: it wasn't. Replaced with a plain `requirements-docs.txt` that both local development and CI install via `pip install -r requirements-docs.txt`.
+**Reason:** this repo isn't a Python package — nothing here is ever `pip install`-ed by an end user, so there's no package to declare. Docs dependencies (mkdocs and its plugins) are installed via a plain `requirements-docs.txt`, used identically by local development and CI (`pip install -r requirements-docs.txt`). A `pyproject.toml` declaring an empty package purely to enable a `pip install -e .[docs]` idiom was considered and rejected — it would add a file whose only purpose is making a pip convention work for a package that doesn't exist.
 
 ## `.gitignore` is short
 
 **Status:** active
 **Confirmed**
 
-`.gitignore` covers only: Python bytecode/venv artifacts, the `site/` docs build output, OS and editor noise, and `AGENTS.local.md`. `.idea/` is explicitly *not* ignored from being listed — it's kept active (uncommented) because the maintainer uses PyCharm/IntelliJ.
+`.gitignore` covers only: Python bytecode/venv artifacts, the `site/` docs build output, OS and editor noise, and `AGENTS.local.md`. `.idea/` is explicitly kept active (not ignored from being listed) for PyCharm/IntelliJ users.
 
-**Reason:** the file originally came from GitHub's auto-generated Python `.gitignore` template (226 lines), and only had entries added on top of it, never removed. It included ignores for Django, Flask, Scrapy, Celery, RabbitMQ, ActiveMQ, PyInstaller, Cython, Marimo, Streamlit, PyBuilder, Abstra, and more — none relevant to this repo. Trimmed to ~25 lines reflecting what the repo actually contains, as part of the same "no structural baggage" review that also changed the docs engine (see `docs-engine.md`).
+**Reason:** kept to what this repo actually contains, rather than starting from a generic language template and only ever adding to it. A generic Python `.gitignore` template carries entries for frameworks and tools (web frameworks, task queues, notebook tooling, and more) that have nothing to do with a Markdown-based skill repo — irrelevant entries accumulate silently if nobody ever reviews whether they still apply.
 
-## `docs/` is not committed
+## `docs/` is not committed as built output
 
 **Status:** active
 **Confirmed**
 
-`docs/` (the mkdocs source, formerly the Sphinx build output) is tracked in git as source content is expected to be — but the *built* site (`site/`) never is. The live site is built and deployed by `.github/workflows/docs.yml` on every push to `main`.
+`docs/` (the mkdocs *source*) is tracked in git, as source content should be — but the *built* site (`site/`) never is. The live site is built and deployed by `.github/workflows/docs.yml` on every push to `main`, via GitHub Pages' Actions-artifact deployment mechanism.
 
-**Reason:** the first version of this pipeline (Sphinx) committed the built HTML output directly to `docs/` on `main`, following the `a1-ai-expert-case-study` pattern. Every documentation content change then produced a git diff dominated by generated HTML/CSS/JS with no reviewable signal, and publishing an update required a manual local build + commit. Moving the build into CI and deploying via GitHub Pages' Actions-artifact mechanism removes both problems — nothing generated ever enters git history.
+**Reason:** committing built HTML output directly to a branch means every documentation content change produces a git diff dominated by generated HTML/CSS/JS with no reviewable signal, and publishing an update requires a manual local build-and-commit step every time. Building in CI and deploying straight to Pages removes both problems — nothing generated ever enters git history, and a push to `main` is the only step needed to publish.
 
 ## No `dev/` directory
 
 **Status:** active
 **Confirmed**
 
-Related to `docs-engine.md`: docs tooling lives directly at the repo root (`mkdocs.yml`, `docs/`, `requirements-docs.txt`), not nested under a `dev/` folder.
+Docs tooling lives directly at the repo root (`mkdocs.yml`, `docs/`, `requirements-docs.txt`), not nested under a `dev/` folder.
 
-**Reason:** `dev/sphinx/` existed in the first iteration only because it mirrored `a1-ai-expert-case-study`, a repo that has other dev-only tooling justifying that grouping. This repo doesn't — there was nothing else under `dev/` to group. Kept flat once that became clear.
+**Reason:** a `dev/`-style grouping only earns its place when there's more than one thing under it needing separation from the rest of the repo. This repo doesn't have that — docs tooling is the only "build-time" concern it has, so it stays flat at the root rather than adding a directory layer that groups nothing.
 
 ## AIgent GitHub token cannot push workflow files
 

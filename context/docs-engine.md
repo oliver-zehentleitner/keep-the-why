@@ -3,7 +3,7 @@
 ## Current: mkdocs-material
 
 **Status:** active
-**Confirmed** (direct decision by the maintainer, 2026-07-10)
+**Confirmed**
 
 Docs are built with mkdocs + the `mkdocs-material` theme + the `mkdocs-include-markdown-plugin`. Source lives in `docs/*.md`. Most pages are thin include-directive wrappers (the plugin's own syntax, not spelled out literally here — writing it out breaks this file's own build, see the note at the bottom) pointing at the actual source of truth (`README.md`, `references/*.md`, `examples/*.md`) — one copy of each piece of content, not a duplicate maintained separately for the site. Build output goes to `site/`, which is git-ignored; the live site is built and deployed by `.github/workflows/docs.yml` via GitHub Pages' "deploy via Actions" mechanism, not committed to any branch.
 
@@ -11,18 +11,18 @@ Docs are built with mkdocs + the `mkdocs-material` theme + the `mkdocs-include-m
 
 ## Rejected: Sphinx + furo + myst-parser
 
-**Status:** superseded (2026-07-10, same day it was built)
+**Status:** superseded
 **Confirmed**
 
-First implementation. Copied directly from the `a1-ai-expert-case-study` project's docs pipeline at the maintainer's explicit request ("mit dem Theme wie aus dem A1 case study Projekt"): Sphinx source in `dev/sphinx/config/`, built HTML committed to `docs/` and served via GitHub Pages "deploy from branch."
+Sphinx (with the `furo` theme and `myst-parser` for Markdown support) was considered and briefly implemented before being replaced.
 
-**Rejected because:** Sphinx's core feature set (`autodoc`, `napoleon`, RST-first tooling) exists to document a Python package's API. This repo has no Python package and nothing to autodoc — it's markdown content only. That mismatch surfaced as unnecessary complexity: `build_docs.sh` had to *stage* copies of `README.md`, `references/`, and `examples/` into the Sphinx source directory before every build and delete them afterward, purely to satisfy Sphinx's assumption that all source content lives in one directory it controls.
+**Rejected because:** Sphinx's core feature set (`autodoc`, `napoleon`, RST-first tooling) exists to document a Python package's API. This repo has no Python package and nothing to autodoc — it's Markdown content only. That mismatch showed up as unnecessary complexity: keeping all documentation source inside one Sphinx-controlled directory required staging copies of `README.md`, `references/`, and `examples/` into that directory before every build and deleting them afterward, purely to satisfy an assumption Sphinx makes that doesn't apply to a pure-Markdown project.
 
-**What triggered the change:** the maintainer asked directly, after the initial Sphinx setup was already built and working, "ich möchte keine strukturellen Altlasten aus UBS übernehmen" (I don't want to inherit structural baggage from UBS) — followed by a direct question about whether `dev/` was still justified. That prompted a critical review of the whole pipeline rather than treating "it already works" as sufficient justification to keep it.
+**Chosen instead:** mkdocs-material, because it's built for exactly this case — Markdown-only content, no API to autodoc — and its include-directive plugin lets pages reference the real source files directly without a staging/cleanup step.
 
-**Also changed in the same pass, for the same reason:**
-- Committing built `docs/` HTML to `main` was replaced with a CI-built, artifact-deployed Pages site (see `repo-conventions.md`) — the original A1-style pattern of "build locally, commit the output" was itself the thing being avoided, not something to merely automate.
-- `dev/sphinx/` was flattened to `sphinx/` (later removed entirely with the Sphinx→mkdocs switch) — there was nothing else under `dev/` to justify the extra nesting; it existed only because A1 had other dev-only tooling that this repo doesn't.
+**Also decided at the same time, for the same underlying reason (no structural complexity without a concrete need for it):**
+- Built HTML is never committed to `main` — see `repo-conventions.md`. The build runs in CI and deploys straight to GitHub Pages via the Actions-artifact mechanism.
+- Docs tooling lives directly at the repo root (`mkdocs.yml`, `docs/`, `requirements-docs.txt`) rather than nested under a `dev/` directory — there's nothing else under `dev/` that would justify the extra nesting.
 
 ## Why this file avoids spelling out the include-directive syntax literally
 
@@ -30,4 +30,3 @@ First implementation. Copied directly from the `a1-ai-expert-case-study` project
 **Confirmed**
 
 The paragraph above deliberately doesn't write out the plugin's own directive syntax character-for-character. It caused a real build failure: this file gets pulled into the docs site via that same directive (`docs/context/docs-engine.md` includes this file), and the plugin's parser tried to execute the literal syntax found in this file's own prose as a second, nested directive with no path argument, and the build broke. This note exists so nobody "fixes" the paraphrase back to the literal syntax without knowing why it was avoided.
-

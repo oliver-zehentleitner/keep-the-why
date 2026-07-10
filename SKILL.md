@@ -33,7 +33,7 @@ Four modes, all part of the same job:
 8. Mark superseded knowledge explicitly (e.g. a `> Superseded 2026-03: see below` note) instead of silently deleting project history.
 9. Keep the index lean. Detailed reasoning lives in topic files that get loaded only when relevant — the index itself should stay small enough to not bloat every agent session's context window.
 10. When a topic file grows large enough to be unwieldy, say so and propose a split — don't let it grow indefinitely.
-11. Don't store secrets, credentials, personal information, or private local details in anything meant to be committed.
+11. **Don't store secrets, credentials, personal information, or private local details in anything meant to be committed — and this extends to session narrative, not just obvious secrets.** Record the objective technical reasoning behind a decision, not a transcript of who said what or how the conversation went. Never cite a person's other, unrelated projects, employer, or private matters as the source of a decision, even if that is literally how it happened — restate the reasoning on its own terms instead. If a decision only seems to make sense with that private context attached, that's a signal the entry itself needs to be made more self-contained, not that the private context should be included anyway.
 12. Don't commit or publish documentation changes unless the user explicitly asks for it.
 13. Prefer a small, useful update over a speculative or exhaustive rewrite.
 
@@ -74,6 +74,8 @@ A generic questionnaire produces generic, low-value answers. A targeted question
 ### 5. Record
 
 Before writing anything, resolve *which file* it actually belongs in — `context/` is not the only place project knowledge lives, and duplicating something already covered by the README, `docs/`, or `CONTRIBUTING.md` creates the same staleness risk this skill exists to avoid. See "Which file does this belong in?" in `references/repository-structure.md` when it's not obvious. Most of what this skill records belongs in `context/`, but not all of it does.
+
+Also apply Core rule 11's filter here: is this objectively relevant to understanding the project, or is it session/process narrative that happens to explain how the decision came about? Write the former; leave the latter out even if it's the more complete story of how the conversation actually went.
 
 Write or update concise, topic-oriented documentation. Every entry should answer the fork, not just state the outcome — see Core rule 7. Three fields are core, not optional extras:
 

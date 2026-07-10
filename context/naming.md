@@ -18,7 +18,7 @@ Repo/skill name: `keep-the-why`. Tagline: "Because 'ask Bob' is not documentatio
 
 First choice. Worked as a name for the *methodology* (not tied to one tool, analogous to how "Scrum" names a method independent of any implementing tool). Checked for collisions in the GitHub/agent-skill niche — clean.
 
-**Rejected because:** a broader check (prompted directly by the maintainer asking "hast du das hier gesehen? https://www.backstory.ai/") found that `backstory.ai` is the rebranded **People.ai** — a YC-backed company, $100M+ raised, an AI revenue/sales-intelligence platform, freshly renamed to "Backstory" at the time of this check. Same name, same broad "AI product" category, well-funded, actively marketed. High collision and brand-confusion risk if this project ever gained visibility.
+**Rejected because:** a broader collision check found that `backstory.ai` is the rebranded **People.ai** — a YC-backed company, $100M+ raised, an AI revenue/sales-intelligence platform, freshly renamed to "Backstory" at the time of this check. Same name, same broad "AI product" category, well-funded, actively marketed. High collision and brand-confusion risk if this project ever gained visibility.
 
 **What this taught the process:** the original collision check was scoped too narrowly (GitHub/dev-tool niche only). It missed a collision in the *general AI-product-branding* space entirely. Every subsequent naming round explicitly added a `<name>.ai` + general-web-search check as a required step — see `naming.md`'s "Keep the Why" section above, which was checked this way before being accepted.
 
