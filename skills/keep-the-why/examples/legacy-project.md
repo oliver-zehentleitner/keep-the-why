@@ -14,21 +14,21 @@ Does not immediately produce a confident-sounding architecture overview covering
 2. Works through `retrospective-analysis.md`'s evidence order — git history first, then any old docs, then the code itself — building a gap list.
 3. Produces an initial `context/` structure with what it found, explicitly marked:
 
-```markdown
-## Session handling
+    ```markdown
+    ## Session handling
 
-**Status:** active
-**Inferred** (from code structure and a 2019 commit message referencing
-"the mobile client issue" — original ticket not accessible)
+    **Status:** active
+    **Inferred** (from code structure and a 2019 commit message referencing
+    "the mobile client issue" — original ticket not accessible)
 
-Sessions appear to be validated twice: once at the gateway, once in
-the service itself. This looks redundant.
+    Sessions appear to be validated twice: once at the gateway, once in
+    the service itself. This looks redundant.
 
-**Unknown:** whether the double validation is still necessary or is a
-leftover from a since-resolved mobile client bug. A 2019 commit message
-mentions "the mobile client issue" without detail. Needs confirmation
-from someone who worked on this before it can be simplified safely.
-```
+    **Unknown:** whether the double validation is still necessary or is a
+    leftover from a since-resolved mobile client bug. A 2019 commit message
+    mentions "the mobile client issue" without detail. Needs confirmation
+    from someone who worked on this before it can be simplified safely.
+    ```
 
 4. Ends the pass with a visible list of open/unknown items, not a false sense of completeness — and flags that some of these are strong candidates for a knowledge-transfer interview if anyone who worked on the original system is still reachable.
 

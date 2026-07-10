@@ -1,1 +1,1 @@
-{% include-markdown "../references/repository-structure.md" %}
+{% include-markdown "../skills/keep-the-why/references/repository-structure.md" %}

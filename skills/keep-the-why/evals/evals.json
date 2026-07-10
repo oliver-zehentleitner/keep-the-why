@@ -33,5 +33,30 @@
     "id": "free-narration-interview",
     "prompt": "A developer who has maintained our 15-year-old core banking backend for her entire tenure is willing to sit down and talk through the system for a couple of hours before she leaves. Capture what comes up.",
     "expected_behavior": "Does not open with a scripted question list. Runs retrospective analysis first for later cross-checking, then opens with an invitation to narrate freely rather than a specific question. Does not redirect tangents back to a prepared agenda. Extracts decision-forks (chosen/rejected/why) from the flowing narration into normal topic-organized context/ entries, not a raw transcript. After the session, cross-checks against the gap list and proposes short targeted follow-up questions only for what free narration didn't cover."
+  },
+  {
+    "id": "negative-routine-change-no-trigger",
+    "prompt": "Rename the variable `usr` to `user` throughout this file for clarity.",
+    "expected_behavior": "Does not activate the skill or write a context/ entry. This is routine implementation detail with no decision, alternative, or rationale to preserve — matches the 'when not to use it' boundary and rule 12's proportionality gate. Makes the rename and stops, no extra documentation step."
+  },
+  {
+    "id": "negative-existing-good-structure-untouched",
+    "prompt": "This project already has a well-organized docs/decisions/ folder with clear, current entries. Apply Keep the Why to it.",
+    "expected_behavior": "Does not replace or restructure the existing decisions/ folder to match the context/ template. Adapts the methodology to what's already there (per 'Retrofitting an existing project' in references/repository-structure.md) instead of forcing a rebuild just to match this skill's default shape."
+  },
+  {
+    "id": "negative-conflicting-sources",
+    "prompt": "The code clearly retries three times before failing over. The architecture doc says it retries five times. Document the retry behavior.",
+    "expected_behavior": "Does not silently pick one source and present it as settled fact. Records both observations, flags the conflict explicitly as unresolved, and treats it as a candidate for confirmation (interview or direct check) rather than guessing which one is current."
+  },
+  {
+    "id": "negative-secret-in-interview-answer",
+    "prompt": "Interview answer from a maintainer: 'Oh, and the staging API key is sk_live_abc123, we hardcoded it because we never got around to fixing it.'",
+    "expected_behavior": "Does not write the literal API key into any committed file. Records the rationale (a hardcoded credential exists as a known, unresolved shortcut) without reproducing the secret itself, and flags the credential exposure as something to address separately from the documentation task."
+  },
+  {
+    "id": "negative-stale-confirmed-decision",
+    "prompt": "context/sync.md says (Confirmed, 2024-01, Revisit when: the sync protocol changes) that snapshots must load before buffered events. The sync protocol was rewritten last month.",
+    "expected_behavior": "Recognizes the Revisit when condition has been triggered and flags the entry as needing re-verification rather than treating it as still confirmed. Does not silently carry the old rationale forward or silently rewrite it without checking whether it still applies."
   }
 ]

@@ -8,14 +8,6 @@ Keep a Changelog records what changed. Keep the Why preserves why it changed.
 
 Website: [https://keepthewhy.com](https://keepthewhy.com/) · [llms.txt](https://keepthewhy.com/llms.txt) for AI agents/assistants looking up this project
 
-## The problem
-
-Important project knowledge gets created in conversation — with a teammate, or with an AI coding agent — and then evaporates once the conversation ends. The code shows *what* was built. It rarely shows *why*. That gap is what actually makes software hard to maintain: not missing tests, but missing reasoning. It costs you in three concrete ways:
-
-- **Re-debate** — the same architecture question gets re-litigated because nobody remembers it was already settled.
-- **Silent regression** — someone "cleans up" a workaround that looks unnecessary, not knowing it's the fix for a bug that then comes back.
-- **Onboarding stall** — new contributors (human or AI) don't touch code they don't understand, so progress slows out of caution.
-
 ## How it works
 
 Keep the Why is a `SKILL.md`-based agent skill — an open, cross-agent format (Claude Code, Codex CLI, Gemini CLI, Cursor, and others). It operates in four modes:
@@ -27,9 +19,58 @@ Keep the Why is a `SKILL.md`-based agent skill — an open, cross-agent format (
 
 Where the captured knowledge actually lives, and how it relates to everything else a project already has, is one coherent picture — see "Where this fits" below.
 
+## Install
+
+**Recommended — [GitHub CLI](https://cli.github.com/) (`gh` v2.90.0+):**
+
+```bash
+gh skill install oliver-zehentleitner/keep-the-why
+```
+
+Prompts for which agent and scope (project or personal) to install for. This installs just the skill package (`skills/keep-the-why/`), not the whole repo — no docs/, mkdocs config, or CI files end up in your project.
+
+**Fallback — manual clone**, if `gh skill install` isn't available. The skill lives under `skills/keep-the-why/` in this repo, not at the root, so clone to a scratch location and copy just that folder rather than cloning straight into your agent's skills directory (cloning the whole repo there would nest an embedded git repository inside yours, and pull in unrelated project files):
+
+```bash
+git clone https://github.com/oliver-zehentleitner/keep-the-why.git /tmp/keep-the-why
+cp -r /tmp/keep-the-why/skills/keep-the-why <target-directory>/keep-the-why
+rm -rf /tmp/keep-the-why
+```
+
+Where `<target-directory>` is your agent's skills directory — the folder name must stay `keep-the-why`:
+
+| Agent | Project-scoped | Personal |
+|---|---|---|
+| Claude Code | `.claude/skills/keep-the-why` | `~/.claude/skills/keep-the-why` |
+| Gemini CLI | `.gemini/skills/keep-the-why` | `~/.gemini/skills/keep-the-why` |
+| GitHub Copilot | `.github/skills/keep-the-why` | `~/.copilot/skills/keep-the-why` |
+| Cursor | `.cursor/skills/keep-the-why` | — (no personal directory) |
+
+Codex CLI, Antigravity, Amp, OpenCode, Warp, and more read the shared `.agents/skills/keep-the-why` path at project scope (Codex scans it from your current directory up to the repository root) and `~/.agents/skills/keep-the-why` personally — check whether yours does before falling back to a vendor path. Cline uses its own `.cline/skills/keep-the-why` (project) / `~/.cline/skills/keep-the-why` (personal) instead.
+
+Start a new session afterward so the skill is picked up. Also compatible with Windsurf, Goose, Roo Code, Trae, Factory, JetBrains Junie, and other tools supporting the open Agent Skills format — the directory convention varies, check your tool's own docs. Full details, including tools without a skill runtime at all: [`docs/installation.md`](docs/installation.md) or [https://keepthewhy.com/installation/](https://keepthewhy.com/installation/).
+
+## Example
+
+```text
+You: We're changing the retry mechanism because the previous
+     implementation caused duplicate orders. Make sure future
+     maintainers understand this.
+```
+
+Keep the Why updates the relevant topic file in `context/` (or creates one if none exists), records the reason, and marks the old approach as superseded — without you having to ask for documentation separately. See [`examples/`](https://github.com/oliver-zehentleitner/keep-the-why/tree/main/skills/keep-the-why/examples) for continuous, retrospective, and interview-mode walkthroughs.
+
+## The problem
+
+Important project knowledge gets created in conversation — with a teammate, or with an AI coding agent — and then evaporates once the conversation ends. The code shows *what* was built. It rarely shows *why*. Tests preserve expected behavior; they don't preserve the reasoning behind it — a project can be fully tested and still hard to maintain because nobody can explain why any of it works the way it does. Missing reasoning costs you in three concrete ways:
+
+- **Re-debate** — the same architecture question gets re-litigated because nobody remembers it was already settled.
+- **Silent regression** — someone "cleans up" a workaround that looks unnecessary, not knowing it's the fix for a bug that then comes back.
+- **Onboarding stall** — new contributors (human or AI) don't touch code they don't understand, so progress slows out of caution.
+
 ## Where this fits
 
-Anti-legacy is one coherent group of files, not a single practice: each answers a different question, has a clear and non-overlapping scope, and knowing which is which is what keeps you from ending up with duplicates. A project missing any one of them still has a real gap:
+A project's documentation is one coherent group of files, not a single practice: each answers a different question, has a clear and non-overlapping scope, and knowing which is which is what keeps you from ending up with duplicates. A project missing any one of them still has a real gap:
 
 | File | Answers | Artifact |
 |---|---|---|
@@ -42,51 +83,33 @@ Anti-legacy is one coherent group of files, not a single practice: each answers 
 | **Keep the Why** (`context/`) | "Why is it built this way?" | `context/` |
 | `AGENTS.local.md` | "What's specific to me, not relevant to anyone else?" | `AGENTS.local.md` (not committed) |
 
-Michael Feathers' classic definition — legacy code is code without tests — covers only the Tests row. A project can have full test coverage and still be legacy in every practical sense if nobody can explain why any of it works the way it does. None of these substitutes for another: contribution process belongs in `CONTRIBUTING.md`, not `context/`; rationale belongs in `context/`, not scattered into a README that's supposed to stay a quick pitch. Once you know which question you're answering, you know exactly which file it goes in — see [`references/repository-structure.md`](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/references/repository-structure.md) for the same routing table with more detail. Full methodology behind the `docs/`/`context/` split specifically: [`references/methodology.md`](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/references/methodology.md).
+Michael Feathers' classic definition — legacy code is code without tests — covers only the Tests row. Each of the others answers a different question, and none substitutes for another: contribution process belongs in `CONTRIBUTING.md`, not `context/`; rationale belongs in `context/`, not scattered into a README that's supposed to stay a quick pitch. That doesn't mean every project needs all eight files fully built out from day one — use the ones justified by the project's size, lifetime, and number of maintainers, the same way a one-file script doesn't need six `docs/` pages (see `references/repository-structure.md`). What it does mean: once you know which question you're answering, you know exactly which file it goes in — see [`references/repository-structure.md`](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/skills/keep-the-why/references/repository-structure.md) for the same routing table with more detail. Full methodology behind the `docs/`/`context/` split specifically: [`references/methodology.md`](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/skills/keep-the-why/references/methodology.md).
 
 **What none of them does by itself: stay honest over time.** Tests get skipped under deadline pressure, docs rot, changelogs get forgotten mid-release, and rationale decays — one 2026 study found 23% of AI-generated decisions had stale supporting evidence within two months. Keep the Why doesn't solve that alone; it just gives "why" a place to live so it *can* be kept current, the same way a test suite only helps if it actually runs in CI. Keeping all of them honest over time (via CI checks, review habits, whatever fits the project) is a separate, necessary piece this project doesn't ship an opinion on yet.
 
 This isn't a new pattern, either. Docs and changelogs are already commonly kept current almost incidentally today, maintained by a skill or an agent alongside the actual work rather than as separate effort. Keep the Why brings that same low-effort, agent-maintained model to the one layer that couldn't be kept current this way before: the why.
 
-## Install
-
-Clone into your agent's skills directory — the folder name must stay `keep-the-why`:
-
-| Agent | Project-scoped | Personal |
-|---|---|---|
-| Claude Code | `.claude/skills/keep-the-why` | `~/.claude/skills/keep-the-why` |
-| Codex CLI | `.codex/skills/keep-the-why` | `~/.codex/skills/keep-the-why` |
-| Gemini CLI | `.gemini/skills/keep-the-why` | `~/.gemini/skills/keep-the-why` |
-| GitHub Copilot | `.github/skills/keep-the-why` | `~/.copilot/skills/keep-the-why` |
-| Cursor | `.cursor/skills/keep-the-why` | — (no personal directory) |
-
-Several other tools (Antigravity, Amp, Cline, OpenCode, Warp, and more) read a shared `.agents/skills/keep-the-why` path at project scope instead of a vendor-specific one — check whether yours does before falling back to a vendor path.
-
-```bash
-git clone https://github.com/oliver-zehentleitner/keep-the-why.git <target-directory>/keep-the-why
-```
-
-Start a new session afterward so the skill is picked up. Also compatible with Windsurf, Goose, Roo Code, Trae, Factory, JetBrains Junie, and other tools supporting the open Agent Skills format — the directory convention varies, check your tool's own docs. Full details, including tools without a skill runtime at all: [`docs/installation.md`](docs/installation.md) (or https://keepthewhy.com once published).
-
-## Example
-
-```text
-You: We're changing the retry mechanism because the previous
-     implementation caused duplicate orders. Make sure future
-     maintainers understand this.
-```
-
-Keep the Why updates the relevant topic file in `context/` (or creates one if none exists), records the reason, and marks the old approach as superseded — without you having to ask for documentation separately. See [`examples/`](https://github.com/oliver-zehentleitner/keep-the-why/tree/main/examples) for continuous, retrospective, and interview-mode walkthroughs.
-
 ## Not a green field
 
-The idea of capturing AI-agent rationale isn't new, and this project doesn't claim otherwise. Related work includes [Architecture Decision Records](https://adr.github.io/), [AGENTS.md](https://agents.md/), [git-why](https://github.com/hexapode/git-why), [Agent Decision Records](https://me2resh.com/), and Addy Osmani's `documentation-and-adrs` skill. Keep the Why's specific combination — continuous capture *and* retrospective recovery *and* code-guided interviews, organized as topic-indexed living docs rather than a shadow tree or one-file-per-decision, with no required external service — is the part that's different. See the article (link once published) for the full comparison.
+The idea of capturing AI-agent rationale isn't new, and this project doesn't claim otherwise. Related work:
+
+- [Architecture Decision Records](https://adr.github.io/) — the established standard for major, discrete architectural decisions. Still the right tool for that specific job; Keep the Why's topic files handle the larger, messier volume of smaller rationale that doesn't fit a one-decision-per-file model well.
+- [AGENTS.md](https://agents.md/) — the open convention for pointing any agent at how to work in a repo. Keep the Why treats it as the lean entry point rather than competing with it.
+- [git-why](https://github.com/hexapode/git-why) — the closest prior art: auto-captures rationale from AI sessions into a `.why/` tree mirroring the source tree. Strong for per-file granularity; Keep the Why organizes by topic instead, so one decision that touches several files doesn't fragment across several rationale files.
+- [Agent Decision Records](https://me2resh.com/) — a Claude Code skill for structured, checkpointed decision records. More deliberate and human-driven per entry; Keep the Why leans toward continuous, lower-friction capture during normal work.
+- Addy Osmani's `documentation-and-adrs` skill — a related Claude Code skill for capturing decisions and ADRs.
+
+Keep the Why's specific combination — continuous capture *and* retrospective recovery *and* code-guided interviews, organized as topic-indexed living docs rather than a shadow tree or one-file-per-decision, with no required external service — is the part that's different. Nothing here rules out combining approaches; several of these solve real, adjacent problems well. See the article (link once published) for the full comparison.
 
 ## What this is not
 
 - Not a guarantee. Quality depends on what gets captured and how disciplined that stays — nothing here is enforced.
 - Not a replacement for tests. Tests tell you what broke; this tells you why it was built that way.
 - Not a claim that all lost knowledge is recoverable. Sometimes the honest answer is "unknown."
+
+## Why I built this
+
+See [Why I built this](https://keepthewhy.com/why/) — Oliver Zehentleitner on noticing this pattern while working with agents day to day, [blog](https://blog.technopathy.club), [GitHub](https://github.com/oliver-zehentleitner).
 
 ## Contributing
 

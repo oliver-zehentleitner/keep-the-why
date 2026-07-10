@@ -16,6 +16,14 @@ The actual goal of this mode: **find what the code cannot explain, and be honest
 4. **The code itself** — comments, naming, structure. Weakest source for *why* (it mostly tells you *what*), but useful for identifying candidates: unusual branches, defensive checks that look unnecessary, magic numbers, seemingly redundant abstractions.
 5. **People** — see `interview-playbook.md`. Used when the above doesn't resolve something, not as the first resort.
 
+## Search order isn't trust order
+
+The list above is where to *look* first, not which source to *trust* most when two disagree. A commit message can be wrong or stale; a maintained architecture doc or a maintainer confirming something directly can outweigh a five-year-old commit that no longer reflects reality. Roughly:
+
+- **Discovery** — code, git blame/history, issues: cheap to search, good for finding candidates, weakest as authority.
+- **Confirmation** — maintained docs, an accepted decision record, a maintainer stating something directly: what actually settles a "confirmed" label.
+- **Conflict handling** — when discovery and confirmation disagree (the code does X, a doc or a person says Y), don't silently pick one. Record both, mark the conflict explicitly, and treat it as an open question rather than resolving it by assumption.
+
 ## Building the gap list
 
 Work through the codebase (or the relevant subsystem, if scoping to one) and build a list of candidates: things that look surprising, defensive, redundant, or otherwise unexplained. For each, try to resolve it from evidence sources 1–4 before deciding it needs a question for a human.

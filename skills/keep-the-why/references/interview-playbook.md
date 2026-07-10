@@ -40,6 +40,13 @@ Low-risk, easily-reconstructible, low-weight gaps can wait or be skipped if time
 - Write up answers into the relevant topic files immediately, while detail is fresh, same as continuous capture.
 - If some prepared questions didn't get answered (time ran out, the person didn't know either), leave them visibly as open/unknown in the relevant topic file rather than dropping them silently — a documented open question is still more useful than one that quietly disappears.
 
+## Consent, recall, and evidence
+
+- Don't commit raw transcripts or recordings — extract the rationale into the normal topic-file structure (see Core rule 9: session narrative doesn't belong in `context/`, only the objective reasoning does).
+- Get explicit agreement before recording or transcribing a conversation, if that's how the session is being captured.
+- A person's recollection is confirmed *that they said it*, not automatically confirmed as objective fact — memory is fallible, especially years after the fact. Note it as their stated account; cross-check against repository evidence where practical.
+- When memory and repository evidence disagree (they remember it one way, the git history or code shows another), don't quietly pick one — record both and flag the conflict openly, same as any other source disagreement (`retrospective-analysis.md`).
+
 ## A note on tone
 
 This is often a conversation with someone leaving a project they've spent years on. Treat it as capturing their knowledge for the project's benefit, not as an audit or an extraction exercise. The framing "help the next person avoid re-learning this the hard way" tends to land better than "we need to get this out of your head before you go."

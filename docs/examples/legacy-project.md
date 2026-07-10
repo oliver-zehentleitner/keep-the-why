@@ -1,1 +1,1 @@
-{% include-markdown "../../examples/legacy-project.md" %}
+{% include-markdown "../../skills/keep-the-why/examples/legacy-project.md" %}

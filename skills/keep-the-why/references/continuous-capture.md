@@ -22,6 +22,8 @@ Don't capture:
 
 Write the update at the point the rationale becomes clear — usually right after a decision is made or a workaround is explained, not batched up at the end of a long session where detail gets lost. If a topic file for the relevant subject already exists, update it in place rather than waiting to create a new one.
 
+This means a natural checkpoint — a decision has actually landed — not every intermediate step on the way there. Collect what's worth capturing as the work happens, but write it up at the point the reasoning is settled; don't interrupt an in-progress implementation to document a choice that might still change.
+
 ## Updating vs. creating
 
 Before creating a new topic file, check whether the subject already has one. A new decision about sync behavior belongs in the existing `sync.md`, appended or amended, not in a new `sync-2.md` or `new-sync-decision.md`. Fragmentation defeats the purpose — the whole point is that the next reader finds everything about a topic in one place.

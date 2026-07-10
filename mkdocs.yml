@@ -6,6 +6,7 @@ repo_name: oliver-zehentleitner/keep-the-why
 
 theme:
   name: material
+  custom_dir: overrides
   logo: assets/wordmark-transparent.png
   favicon: assets/icon-transparent.png
   palette:
@@ -41,6 +42,7 @@ nav:
   - Overview: index.md
   - Installation: installation.md
   - FAQ: faq.md
+  - Why I built this: why.md
   - Reference:
       - Methodology: methodology.md
       - Repository structure: repository-structure.md
