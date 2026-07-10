@@ -6,7 +6,7 @@ repo_name: oliver-zehentleitner/keep-the-why
 
 theme:
   name: material
-  logo: assets/logo-transparent.png
+  logo: assets/wordmark-transparent.png
   favicon: assets/icon-transparent.png
   palette:
     - media: "(prefers-color-scheme: light)"
