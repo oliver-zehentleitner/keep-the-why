@@ -6,7 +6,7 @@ repo_name: oliver-zehentleitner/keep-the-why
 
 theme:
   name: material
-  logo: assets/logo.png
+  logo: assets/logo-transparent.png
   favicon: assets/icon-transparent.png
   palette:
     - media: "(prefers-color-scheme: light)"
@@ -49,7 +49,5 @@ nav:
       - Legacy project: examples/legacy-project.md
       - Developer handover: examples/developer-handover.md
   - "Why this project is built this way":
-      - Docs engine: context/docs-engine.md
       - Repo conventions: context/repo-conventions.md
       - Scope: context/scope.md
-      - Compatibility: context/compatibility.md
