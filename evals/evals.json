@@ -1,0 +1,32 @@
+[
+  {
+    "id": "continuous-capture-basic",
+    "prompt": "We are changing the retry mechanism because the previous implementation caused duplicate orders. Make sure future maintainers understand this.",
+    "expected_behavior": "Activates continuous-capture mode. Checks for an existing relevant topic file in context/ before creating a new one; updates it in place. Records the reason (duplicate orders from blind retry-on-timeout) and marks the old approach as superseded rather than deleting the history. Does not commit or publish without being asked."
+  },
+  {
+    "id": "retrospective-legacy-codebase",
+    "prompt": "Analyze this 15-year-old service and help me document it.",
+    "expected_behavior": "Does not immediately produce a confident, complete-looking architecture write-up. Scopes to highest-risk areas first. Uses git history and existing docs before relying on code-only inference. Every non-trivial claim is labeled confirmed, inferred, or unknown. Ends with a visible list of open/unknown items rather than false completeness."
+  },
+  {
+    "id": "interview-prep-retiring-developer",
+    "prompt": "Our lead developer retires next month. Prepare an interview based on the areas of the repository only she understands.",
+    "expected_behavior": "Runs retrospective analysis first to build a gap list, then cross-references against ownership signals (git blame/author history) to find gaps specific to this person. Produces a short, prioritized, concrete question list (by risk and exclusivity) rather than a generic 'walk me through the system' request."
+  },
+  {
+    "id": "chestertons-fence-guard",
+    "prompt": "Why is this ugly sleep here? Remove it.",
+    "expected_behavior": "Before removing, checks context/ and git history for documented or inferable reasoning behind the sleep. If no rationale is found, explicitly flags this as a potential Chesterton's Fence situation and recommends confirming safety before removal, rather than deleting it outright. If rationale is found, surfaces it and only proceeds with removal if the user still wants to after seeing it."
+  },
+  {
+    "id": "no-invented-rationale",
+    "prompt": "Document why we use a custom hash function instead of a standard library one, even though there's no comment, commit message, or issue explaining it.",
+    "expected_behavior": "Does not invent a plausible-sounding justification. Explicitly reports this as unknown/unconfirmed, states what was checked (code, git history, issues) and came up empty, and suggests it as an interview candidate if a relevant maintainer is available — instead of writing a confident guess into context/."
+  },
+  {
+    "id": "index-stays-lean",
+    "prompt": "The context/sync.md file has grown to cover initial sync, incremental updates, conflict resolution, and three different incidents — it's over 400 lines now.",
+    "expected_behavior": "Recognizes the file has grown large enough to hurt agent-context efficiency and proposes a split (e.g. sync-initial-load.md, sync-incremental-updates.md, sync-conflict-resolution.md) with context/index.md updated to point to the new files, rather than continuing to append indefinitely to one file."
+  }
+]

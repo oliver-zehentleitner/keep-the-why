@@ -1,0 +1,51 @@
+site_name: Keep the Why
+site_description: A repo-native agent skill that continuously captures or retrospectively recovers the reasoning behind a codebase.
+site_url: https://keepthewhy.com
+repo_url: https://github.com/oliver-zehentleitner/keep-the-why
+repo_name: oliver-zehentleitner/keep-the-why
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: black
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - search.suggest
+
+plugins:
+  - search
+  - include-markdown
+
+nav:
+  - Overview: index.md
+  - Installation: installation.md
+  - FAQ: faq.md
+  - Reference:
+      - Methodology: methodology.md
+      - Repository structure: repository-structure.md
+      - Continuous capture: continuous-capture.md
+      - Retrospective analysis: retrospective-analysis.md
+      - Interview playbook: interview-playbook.md
+  - Examples:
+      - Continuous development: examples/continuous-development.md
+      - Legacy project: examples/legacy-project.md
+      - Developer handover: examples/developer-handover.md
+  - "Why this project is built this way":
+      - Naming: context/naming.md
+      - Docs engine: context/docs-engine.md
+      - Repo conventions: context/repo-conventions.md
+      - Scope: context/scope.md
+      - Compatibility: context/compatibility.md
