@@ -14,13 +14,19 @@ Prompts for which of its 70+ supported agents (Claude Code, Codex, OpenCode, and
 
 ## Also recommended: GitHub CLI
 
-With [`gh`](https://cli.github.com/) v2.90.0 or later:
+With [`gh`](https://cli.github.com/) v2.90.0 or later — `gh skill` is [in public preview](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/customize-cloud-agent/add-skills) and subject to change:
 
 ```bash
-gh skill install oliver-zehentleitner/keep-the-why
+gh skill preview oliver-zehentleitner/keep-the-why keep-the-why
 ```
 
-This prompts for which agent and scope (project or personal) to install for, and installs only the skill package (`skills/keep-the-why/` in this repo) — not the whole repository. Run `gh skill install --help` for non-interactive flags.
+GitHub's own guidance: skills aren't verified by GitHub and may contain prompt injections, hidden instructions, or malicious scripts — inspect before installing. Keep the Why ships instructions only, no executable scripts. Then:
+
+```bash
+gh skill install oliver-zehentleitner/keep-the-why keep-the-why
+```
+
+This prompts for which agent and scope (project or personal) to install for, and installs only the skill package (`skills/keep-the-why/` in this repo) — not the whole repository. Once a tagged release exists, add `--pin <tag>` to pin instead of tracking `main`. Run `gh skill install --help` for non-interactive flags.
 
 ## Fallback: manual clone
 
