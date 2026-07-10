@@ -10,4 +10,4 @@ And the "why" itself is basically exhaust from that process, not separate work. 
 
 Keep the Why is that idea, built out. Nothing more complicated than: this seemed worth doing, so I did it.
 
-More on how I work with AI agents day to day: [blog.technopathy.club](https://blog.technopathy.club) · [GitHub](https://github.com/oliver-zehentleitner)
+More on how I work with AI agents day to day: [blog.technopathy.club](https://blog.technopathy.club/series/ai-assisted-development) · [GitHub](https://github.com/oliver-zehentleitner)
