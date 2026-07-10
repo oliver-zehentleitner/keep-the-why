@@ -1,3 +1,9 @@
+[![GitHub Release](https://img.shields.io/github/release/oliver-zehentleitner/keep-the-why.svg?label=github)](https://github.com/oliver-zehentleitner/keep-the-why/releases)
+[![GitHub Downloads](https://img.shields.io/github/downloads/oliver-zehentleitner/keep-the-why/total?color=blue)](https://github.com/oliver-zehentleitner/keep-the-why/releases)
+[![License](https://img.shields.io/github/license/oliver-zehentleitner/keep-the-why.svg?color=blue)](https://oliver-zehentleitner.github.io/keep-the-why/license.html)
+[![Read the Docs](https://img.shields.io/badge/read-%20docs-yellow)](https://keepthewhy.com/)
+[![Telegram](https://img.shields.io/badge/community-telegram-41ab8c)](https://t.me/unicorndevs)
+
 <img src="docs/assets/logo.png" alt="Keep the Why — because &quot;ask Bob&quot; is not documentation." width="600">
 
 # Keep the Why
