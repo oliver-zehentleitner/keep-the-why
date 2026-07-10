@@ -5,8 +5,8 @@
 > incident learnings, and operational constraints that the code alone can't explain.
 
 Because "ask Bob" is not documentation. Keep a Changelog records what changed; Keep the Why
-preserves why it changed. Complements tests, docs, README, and Keep a Changelog rather than
-replacing any of them — see "Where this fits" in the README.
+preserves why it changed. Complements README, docs, CONTRIBUTING.md, tests, and Keep a Changelog
+rather than replacing any of them — see "Where this fits" in the README.
 
 Version: 0.1.0.
 
@@ -34,7 +34,9 @@ only what evidence can't resolve):
 
 - Continuous capture — record rationale as it comes up during normal development
 - Retrospective recovery — reconstruct rationale from an existing or legacy repository
-- Knowledge-transfer interview — recover a departing developer's knowledge before it's lost
+- Knowledge-transfer interview — recover a departing developer's knowledge before it's lost,
+  either via targeted questions (narrow, specific gaps) or free narration (broad, tacit
+  knowledge — let them talk, extract decision-forks from what comes up)
 - Maintenance — keep existing rationale current, mark superseded entries, split oversized files
 
 Produces, inside the project using the skill:
@@ -53,14 +55,17 @@ no required external service (no database, no MCP server).
 
 ## Common Mistakes
 
-- Don't treat this as a replacement for tests, docs, README, or a changelog — it covers only the
-  "why" layer; see "Where this fits" in the README.
+- Don't treat this as a replacement for README, docs, CONTRIBUTING.md, tests, or a changelog —
+  it covers only the "why" layer; see "Where this fits" in the README.
 - Don't invent rationale when evidence doesn't support an answer — mark it "unknown" instead of
   guessing.
 - Don't create a new topic file in `context/` when an existing one on the same subject should be
   updated instead.
-- Don't ask generic interview questions — analyze the repository first, then ask about
-  specifically what the code couldn't explain.
+- Don't default to a scripted interview question list for someone with broad, tacit knowledge
+  (e.g. a long-tenured maintainer) — free narration usually surfaces more; close remaining gaps
+  with targeted questions afterward.
+- Don't apply the full decision/alternative/reason write-up to obvious, self-evident choices —
+  match documentation depth to how non-obvious the decision actually is.
 
 ## Docs
 
@@ -68,4 +73,4 @@ no required external service (no database, no MCP server).
 - AGENTS.md (for AI agents working on this repo): https://github.com/oliver-zehentleitner/keep-the-why/blob/main/AGENTS.md
 - SKILL.md: https://github.com/oliver-zehentleitner/keep-the-why/blob/main/SKILL.md
 - Docs: https://keepthewhy.com
-- Why this project is built this way: https://keepthewhy.com/context/naming/ (and the other pages under "Why this project is built this way")
+- Why this project is built this way: https://keepthewhy.com/context/repo-conventions/
