@@ -68,10 +68,9 @@ instance/
 # Scrapy stuff:
 .scrapy
 
-# Sphinx documentation
-docs/_build/
-docs/.doctrees/
-docs/.buildinfo
+# Sphinx documentation — built and deployed by .github/workflows/docs.yml,
+# not committed. docs/ here is local-preview output only (build_docs.sh).
+docs/
 
 # PyBuilder
 .pybuilder/

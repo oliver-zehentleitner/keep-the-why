@@ -62,7 +62,7 @@ Clone into your agent's skills directory — the folder name must stay `keep-the
 git clone https://github.com/oliver-zehentleitner/keep-the-why.git <target-directory>/keep-the-why
 ```
 
-Start a new session afterward so the skill is picked up. Full details, including agents without a skill runtime: [`dev/sphinx/config/installation.md`](dev/sphinx/config/installation.md) (or the built docs site once published).
+Start a new session afterward so the skill is picked up. Full details, including agents without a skill runtime: [`sphinx/config/installation.md`](sphinx/config/installation.md) (or the built docs site once published).
 
 ## Example
 
