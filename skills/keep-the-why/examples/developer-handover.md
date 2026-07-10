@@ -13,7 +13,7 @@ Two variants of the same mode, depending on the knowledge holder and how they co
 3. Prioritizes that intersection by risk and decision weight (see `references/interview-playbook.md`), producing a short, concrete question list instead of a generic "walk me through the system" request. Example output:
 
     ```markdown
-    ## Interview prep: <name>, retiring 2026-08
+    ## Interview prep: Priya, retiring 2026-08
 
     Priority 1 (high risk, exclusive knowledge):
     - Why does the billing reconciliation job run before the nightly
