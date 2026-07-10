@@ -6,6 +6,8 @@ That paid off in a way I didn't fully expect. I can hand the agent a piece of co
 
 That's what led to the actual insight: if context can make an AI proficient in a codebase whose history it never lived through, the same context makes a *human* developer portable between codebases too. The knowledge stops being trapped in one person's head — it travels with the project instead.
 
+And the "why" itself is basically exhaust from that process, not separate work. You define the conventions once, and after that it just keeps accumulating out of the conversations you're already having — the longer you work on a project this way, the more it's built up on its own.
+
 Keep the Why is that idea, built out. Nothing more complicated than: this seemed worth doing, so I did it.
 
 More on how I work with AI agents day to day: [blog.technopathy.club](https://blog.technopathy.club) · [GitHub](https://github.com/oliver-zehentleitner)
