@@ -5,8 +5,8 @@ on:
     branches: [main]
     paths:
       - "README.md"
-      - "references/**"
-      - "examples/**"
+      - "skills/keep-the-why/**"
+      - "context/**"
       - "docs/**"
       - "llms.txt"
       - "mkdocs.yml"
