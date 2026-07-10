@@ -30,7 +30,7 @@ Captured knowledge lives in the repository itself, in two layers:
 - `docs/` — how to use, operate, and test the project (human-facing, agent-readable too).
 - `context/` — why the project is the way it is, organized by topic and indexed to stay efficient to load into an agent's context window.
 
-Full methodology: [`references/methodology.md`](references/methodology.md). Concrete layout: [`references/repository-structure.md`](references/repository-structure.md).
+Full methodology: [`references/methodology.md`](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/references/methodology.md). Concrete layout: [`references/repository-structure.md`](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/references/repository-structure.md).
 
 ## Where this fits
 
@@ -62,7 +62,7 @@ Clone into your agent's skills directory — the folder name must stay `keep-the
 git clone https://github.com/oliver-zehentleitner/keep-the-why.git <target-directory>/keep-the-why
 ```
 
-Start a new session afterward so the skill is picked up. Full details, including agents without a skill runtime: [`sphinx/config/installation.md`](sphinx/config/installation.md) (or the built docs site once published).
+Start a new session afterward so the skill is picked up. Full details, including agents without a skill runtime: [`docs/installation.md`](docs/installation.md) (or https://keepthewhy.com once published).
 
 ## Example
 
@@ -72,7 +72,7 @@ You: We're changing the retry mechanism because the previous
      maintainers understand this.
 ```
 
-Keep the Why updates the relevant topic file in `context/` (or creates one if none exists), records the reason, and marks the old approach as superseded — without you having to ask for documentation separately. See [`examples/`](examples/) for continuous, retrospective, and interview-mode walkthroughs.
+Keep the Why updates the relevant topic file in `context/` (or creates one if none exists), records the reason, and marks the old approach as superseded — without you having to ask for documentation separately. See [`examples/`](https://github.com/oliver-zehentleitner/keep-the-why/tree/main/examples) for continuous, retrospective, and interview-mode walkthroughs.
 
 ## Not a green field
 
@@ -86,8 +86,8 @@ The idea of capturing AI-agent rationale isn't new, and this project doesn't cla
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+See [CONTRIBUTING.md](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/CONTRIBUTING.md).
 
 ## License
 
-[MIT](LICENSE)
+[MIT](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/LICENSE)

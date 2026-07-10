@@ -23,7 +23,7 @@ Start a new session afterward so the skill is picked up.
 
 ## Without a skill-compatible agent
 
-`docs/` and `context/` are plain Markdown — no skill runtime is required to read them. Anything that browses or indexes a repository (a wiki generator, a documentation site builder, or just a person reading the files on GitHub) works with the output directly. The skill automates keeping this current; the result is still useful on its own even where the skill itself isn't installed.
+`docs/` and `context/` (the structure the skill produces in *your* project — see [repository structure](repository-structure.md)) are plain Markdown — no skill runtime is required to read them. Anything that browses or indexes a repository (a wiki generator, a documentation site builder, or just a person reading the files on GitHub) works with the output directly. The skill automates keeping this current; the result is still useful on its own even where the skill itself isn't installed.
 
 ## Updating
 
