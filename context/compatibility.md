@@ -25,3 +25,14 @@ README, `docs/installation.md`, and `docs/faq.md` list specific agent names — 
 **Rejected alternative:** leave DeepWiki as an implied example under the generic "wiki generator" category without naming it, on the theory that the general claim already covers it. Rejected for the same reason the broader agent list was expanded: a named example a reader recognizes ("oh, DeepWiki, I've used that") is more convincing and more useful than an abstract category they have to map onto tools themselves.
 
 **Kept honest:** the FAQ entry also states the one real limitation found during the earlier verification — DeepWiki re-synthesizes content into its own wiki in its own voice, so it may not preserve the confirmed/inferred/superseded distinctions this project relies on. Not overclaiming compatibility here follows the same discipline as Core rule 1.
+
+## `llms.txt` at both the repo root and the site root
+
+**Status:** active
+**Confirmed**
+
+An `llms.txt` file exists at the repo root (for tools browsing the repo directly) and is duplicated into `docs/llms.txt` so the built site serves it at `https://keepthewhy.com/llms.txt` (mkdocs copies non-Markdown files in `docs/` straight through to the built site). README links to it.
+
+**Reason:** `llms.txt` is a proposed convention (llmstxt.org) for giving AI agents/assistants a concise, structured summary of a project without needing to crawl and parse full HTML or an entire repo — a short, purpose-built file for LLM consumption specifically. It's a separate, established open standard from the Agent Skills/SKILL.md format this project's install table already covers; this file exists for tools that just want a quick summary, not to install or run anything.
+
+**Rejected alternative:** keep the content in only one location and symlink or reference it from the other. Rejected because the two consumption paths have fixed, non-negotiable path expectations (GitHub always resolves repo-root files; the llms.txt convention specifically expects the file at a site's root) that a symlink can't satisfy for both a git checkout and a deployed static site simultaneously — this is a case where duplication is the direct consequence of two independent path conventions, not a routing mistake (contrast with the file-routing guidance in `scope.md`, which is about content that has one true home and shouldn't be copied elsewhere).

@@ -6,7 +6,7 @@ Keep a Changelog records what changed. Keep the Why preserves why it changed.
 
 **Keep the Why** is a repo-native agent skill that continuously captures — or retrospectively recovers — the reasoning behind a codebase: architecture decisions, rejected alternatives, workarounds, incident learnings, and operational constraints that the code alone can't explain.
 
-Website: [https://keepthewhy.com](https://keepthewhy.com/)
+Website: [https://keepthewhy.com](https://keepthewhy.com/) · [llms.txt](https://keepthewhy.com/llms.txt) for AI agents/assistants looking up this project
 
 ## The problem
 
