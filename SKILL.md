@@ -21,10 +21,12 @@ Four modes, all part of the same job:
 3. **Knowledge-transfer interview** — when a maintainer's knowledge is about to become unavailable (leaving, retiring, changing teams), analyze the repository first, then either ask that person specifically about the gaps analysis couldn't fill, or — when their knowledge is broad and tacit rather than narrowly scoped, e.g. someone who has maintained one system for many years — just listen while they narrate freely and extract rationale from that instead. See `references/interview-playbook.md` for both techniques.
 4. **Maintenance** — keep existing rationale documentation current: resolve contradictions, mark superseded entries, merge duplicates, split files that have grown too large for efficient agent context loading.
 
+**When not to use it:** routine implementation detail, generic formatting or style changes, or anything already fully and obviously explained by the code itself. Not every change is a decision worth a `context/` entry — see Core rule 13's proportionality gate.
+
 ## Core rules
 
 1. **Never invent rationale.** If it can't be confirmed or reasonably inferred, say so — don't fill the gap with something plausible-sounding.
-2. Always distinguish **confirmed** (stated by a maintainer or backed by authoritative evidence) from **inferred** (reasonably derived, not confirmed) from **unknown** (evidence doesn't support an answer). Label every non-trivial claim.
+2. Always distinguish **confirmed** (stated by a maintainer or backed by authoritative evidence) from **inferred** (reasonably derived, not confirmed) from **unknown** (evidence doesn't support an answer). Classify at the level of the entry, not every individual sentence — only split out a separate label when part of an entry genuinely has different evidence than the rest. Labeling every clause is bureaucratic, not more trustworthy.
 3. Ask focused questions when evidence can't explain *why* — never pad the gap with invented plausible-sounding reasoning.
 4. Preserve the project's existing terminology and documentation conventions; don't impose a foreign vocabulary.
 5. Update existing topic files instead of creating duplicate or near-duplicate documents.

@@ -22,7 +22,7 @@ Both layers are written in plain Markdown, readable by humans and agents alike. 
 Two structures are common in prior art for rationale capture, and both have a real weakness:
 
 - **Shadow tree** (one rationale file mirroring each source file, e.g. `.why/src/auth.py.md`): ties documentation structure to file structure, which changes for reasons that have nothing to do with rationale (refactors, renames, file splits). It also fragments a single decision across many files if that decision touched multiple source files.
-- **One file per decision** (classic ADR style, `0001-use-postgres.md`, `0002-...`): works well for a handful of major, discrete, one-time architecture decisions. It works poorly for the much larger volume of smaller "why is this weird-looking thing here" knowledge that accumulates over a project's life, and it encourages treating each entry as frozen once written, which is wrong — reasoning can be revisited, appended to, and superseded.
+- **One file per decision** (classic ADR style, `0001-use-postgres.md`, `0002-...`): works well for a handful of major, discrete, one-time architecture decisions. It works poorly for the much larger volume of smaller "why is this weird-looking thing here" knowledge that accumulates over a project's life, and commonly encourages treating each entry as frozen once written — in practice, reasoning gets revisited, appended to, and superseded more often than a one-and-done record accounts for.
 
 Keep the Why organizes `context/` by **topic** instead: `auth.md`, `sync.md`, `compatibility.md`, `incidents.md` — whatever topics the project actually has. A topic file accumulates related rationale over the project's life and gets updated, not re-created, as understanding deepens or circumstances change. Superseded entries are marked, not deleted — the history of "we used to think X, then Y happened, now we do Z" is itself valuable and often exactly what a new maintainer needs.
 
@@ -41,6 +41,8 @@ A topic file that keeps growing eventually stops being useful — both for a hum
 `AGENTS.md` is a cross-tool, cross-vendor open convention (agents.md), read by many different coding agents. Keep the Why treats it as a **lean entry point only** — a short pointer into `docs/` and `context/`, not the system itself. Stuffing the whole methodology into `AGENTS.md` would make it incompatible with everything else that expects `AGENTS.md` to stay short and generic.
 
 `AGENTS.local.md` is the counterpart for anything personal, local, or not meant to be shared: individual environment quirks, private paths, personal workflow preferences. It is not committed. A tool-specific file (`CLAUDE.md`, `CODEX.md`, etc.) should be the exception, reserved only for content genuinely exclusive to one specific tool — in practice this is rare, and `AGENTS.local.md` should be the default.
+
+Note: `AGENTS.local.md` is a Keep the Why convention, not an established cross-agent standard that every tool auto-loads on its own. It works the same way any other file you reference does — point to it from the committed `AGENTS.md` ("also read `AGENTS.local.md` if it exists") and any agent that reads `AGENTS.md` will pick it up from there.
 
 ## What this deliberately does not prescribe
 

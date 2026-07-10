@@ -6,15 +6,16 @@ Keep the Why is a `SKILL.md` file, following the open, cross-agent skill format 
 
 The folder name must stay `keep-the-why` (has to match `name` in the frontmatter). Clone it into whichever agent's skills directory applies:
 
-| Agent | Project-scoped | Personal |
-|---|---|---|
-| Claude Code | `.claude/skills/keep-the-why` | `~/.claude/skills/keep-the-why` |
-| Codex CLI | `.codex/skills/keep-the-why` | `~/.codex/skills/keep-the-why` |
-| Gemini CLI | `.gemini/skills/keep-the-why` | `~/.gemini/skills/keep-the-why` |
-| GitHub Copilot | `.github/skills/keep-the-why` | `~/.copilot/skills/keep-the-why` |
-| Cursor | `.cursor/skills/keep-the-why` | — (no personal directory) |
+| Agent | Project-scoped | Personal | Last verified |
+|---|---|---|---|
+| Claude Code | `.claude/skills/keep-the-why` | `~/.claude/skills/keep-the-why` | 2026-07-10 |
+| Codex CLI | `.codex/skills/keep-the-why` | `~/.codex/skills/keep-the-why` | 2026-07-10 |
+| Gemini CLI | `.gemini/skills/keep-the-why` | `~/.gemini/skills/keep-the-why` | 2026-07-10 |
+| GitHub Copilot | `.github/skills/keep-the-why` | `~/.copilot/skills/keep-the-why` | 2026-07-10 |
+| Cursor | `.cursor/skills/keep-the-why` | — (no personal directory) | 2026-07-10 |
+| Cline | `.cline/skills/keep-the-why` | `~/.cline/skills/keep-the-why` | 2026-07-10 |
 
-Several other tools (Antigravity, Amp, Cline, OpenCode, Warp, and more) read a shared `.agents/skills/keep-the-why` path at project scope instead of a vendor-specific one — check whether yours does before falling back to a vendor path. Also compatible with Windsurf, Goose, Roo Code, Trae, Factory, JetBrains Junie, and other tools supporting the open Agent Skills format — the directory convention varies, check your tool's own docs.
+These paths change as agent tooling evolves — if one doesn't work, check the agent's current docs rather than assuming this table is still accurate. Several other tools (Antigravity, Amp, OpenCode, Warp, and more) read a shared `.agents/skills/keep-the-why` path at project scope instead of a vendor-specific one — check whether yours does before falling back to a vendor path. Also compatible with Windsurf, Goose, Roo Code, Trae, Factory, JetBrains Junie, and other tools supporting the open Agent Skills format — the directory convention varies, check your tool's own docs.
 
 ```bash
 git clone https://github.com/oliver-zehentleitner/keep-the-why.git <target-directory>/keep-the-why
