@@ -1,10 +1,10 @@
 # Repository conventions
 
-## AIgent GitHub token cannot push workflow files
+## Automation tokens need the `workflow` OAuth scope to push workflow files
 
 **Status:** active, operational constraint (not a design choice)
 **Confirmed**
 
-Pushes to this repo from the `oliver-zehentleitner-aigent` account fail if the commit touches `.github/workflows/*.yml` — GitHub rejects this unless the token has the `workflow` OAuth scope, which this token doesn't have (independent of the `repo` scope it does have). This is a GitHub platform restriction, not specific to this repo.
+Any push that touches `.github/workflows/*.yml` is rejected by GitHub unless the pushing credential has the `workflow` OAuth scope — this is independent of the `repo` scope and applies to any token or bot/automation account that lacks it, not specific to this repo.
 
-**Workaround used:** the workflow file's content is prepared and shared with the maintainer directly (or left as an untracked local file); the maintainer adds it manually via the GitHub UI or their own credentials. All other changes in the same commit are pushed normally by dropping just the workflow file from the commit (`git rm --cached` + `commit --amend` before pushing).
+**Workaround:** if the pushing credential lacks the `workflow` scope, prepare the workflow file's content separately and have someone with appropriate access add it manually (via the GitHub UI or their own credentials), while pushing everything else in the same change normally by excluding just the workflow file from that commit.
