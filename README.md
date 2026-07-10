@@ -1,2 +1,93 @@
-# keep-the-why
-A repo-native agent skill that continuously captures or retrospectively recovers the reasoning behind a codebase.
+# Keep the Why
+
+Because "ask Bob" is not documentation.
+
+Keep a Changelog records what changed. Keep the Why preserves why it changed.
+
+**Keep the Why** is a repo-native agent skill that continuously captures — or retrospectively recovers — the reasoning behind a codebase: architecture decisions, rejected alternatives, workarounds, incident learnings, and operational constraints that the code alone can't explain.
+
+Website: https://keepthewhy.com
+
+## The problem
+
+Important project knowledge gets created in conversation — with a teammate, or with an AI coding agent — and then evaporates once the conversation ends. The code shows *what* was built. It rarely shows *why*. That gap is what actually makes software hard to maintain: not missing tests, but missing reasoning. It costs you in three concrete ways:
+
+- **Re-debate** — the same architecture question gets re-litigated because nobody remembers it was already settled.
+- **Silent regression** — someone "cleans up" a workaround that looks unnecessary, not knowing it's the fix for a bug that then comes back.
+- **Onboarding stall** — new contributors (human or AI) don't touch code they don't understand, so progress slows out of caution.
+
+## How it works
+
+Keep the Why is a [Claude Code Skill](https://code.claude.com/docs/en/skills) (SKILL.md-based, works with any agent that supports the format). It operates in four modes:
+
+1. **Continuous capture** — during normal development, the agent notices rationale worth keeping and records it alongside the code as it happens.
+2. **Retrospective recovery** — pointed at an existing or legacy repository, the agent reconstructs what it can from git history, issues, and code, and is explicit about what it couldn't.
+3. **Knowledge-transfer interview** — before a maintainer's knowledge becomes unavailable (leaving, retiring, changing teams), the agent analyzes the codebase first and then asks targeted questions about exactly what the code couldn't explain.
+4. **Maintenance** — existing rationale docs get kept current: contradictions resolved, superseded entries marked, oversized files split.
+
+Captured knowledge lives in the repository itself, in two layers:
+
+- `docs/` — how to use, operate, and test the project (human-facing, agent-readable too).
+- `context/` — why the project is the way it is, organized by topic and indexed to stay efficient to load into an agent's context window.
+
+Full methodology: [`references/methodology.md`](references/methodology.md). Concrete layout: [`references/repository-structure.md`](references/repository-structure.md).
+
+## Where this fits
+
+Anti-legacy isn't one practice, it's four — complementary, not competing. A project missing any one of them still has a real gap:
+
+| Practice | Answers | Artifact |
+|---|---|---|
+| Tests | "Did I just break something?" | test suite |
+| `docs/` | "How do I use or operate this?" | usage docs |
+| [Keep a Changelog](https://keepachangelog.com/) | "What changed, release by release?" | `CHANGELOG.md` |
+| **Keep the Why** (`context/`) | "Why is it built this way?" | `context/` |
+
+Michael Feathers' classic definition — legacy code is code without tests — covers only the first row. A project can have full test coverage and still be legacy in every practical sense if nobody can explain why any of it works the way it does. None of the four substitutes for another.
+
+**What none of the four does by itself: stay honest over time.** Tests get skipped under deadline pressure, docs rot, changelogs get forgotten mid-release, and rationale decays — one 2026 study found 23% of AI-generated decisions had stale supporting evidence within two months. Keep the Why doesn't solve that alone; it just gives "why" a place to live so it *can* be kept current, the same way a test suite only helps if it actually runs in CI. Keeping all four honest over time (via CI checks, review habits, whatever fits the project) is a separate, necessary piece this project doesn't ship an opinion on yet.
+
+## Install
+
+**Project-scoped** (recommended — ships with the repo, available to anyone working on it):
+
+```bash
+mkdir -p .claude/skills
+git clone https://github.com/oliver-zehentleitner/keep-the-why.git .claude/skills/keep-the-why
+```
+
+**Personal** (available across all your projects):
+
+```bash
+git clone https://github.com/oliver-zehentleitner/keep-the-why.git ~/.claude/skills/keep-the-why
+```
+
+Start a new Claude Code session afterward so the skill is picked up.
+
+## Example
+
+```text
+You: We're changing the retry mechanism because the previous
+     implementation caused duplicate orders. Make sure future
+     maintainers understand this.
+```
+
+Keep the Why updates the relevant topic file in `context/` (or creates one if none exists), records the reason, and marks the old approach as superseded — without you having to ask for documentation separately. See [`examples/`](examples/) for continuous, retrospective, and interview-mode walkthroughs.
+
+## Not a green field
+
+The idea of capturing AI-agent rationale isn't new, and this project doesn't claim otherwise. Related work includes [Architecture Decision Records](https://adr.github.io/), [AGENTS.md](https://agents.md/), [git-why](https://github.com/hexapode/git-why), [Agent Decision Records](https://me2resh.com/), and Addy Osmani's `documentation-and-adrs` skill. Keep the Why's specific combination — continuous capture *and* retrospective recovery *and* code-guided interviews, organized as topic-indexed living docs rather than a shadow tree or one-file-per-decision, with no required external service — is the part that's different. See the article (link once published) for the full comparison.
+
+## What this is not
+
+- Not a guarantee. Quality depends on what gets captured and how disciplined that stays — nothing here is enforced.
+- Not a replacement for tests. Tests tell you what broke; this tells you why it was built that way.
+- Not a claim that all lost knowledge is recoverable. Sometimes the honest answer is "unknown."
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+[MIT](LICENSE)

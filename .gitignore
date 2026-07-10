@@ -70,6 +70,8 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+docs/.doctrees/
+docs/.buildinfo
 
 # PyBuilder
 .pybuilder/
@@ -216,3 +218,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local/personal, not shared (per this project's own AGENTS.local.md convention)
+AGENTS.local.md
