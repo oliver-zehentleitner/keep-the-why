@@ -18,7 +18,13 @@ License: MIT — free for commercial and private use. No paid license, no subscr
 
 ## Quick Start
 
-Recommended, with GitHub CLI v2.90.0+:
+Recommended, with the skills CLI (via `npx`, needs Node.js):
+
+```bash
+npx skills add oliver-zehentleitner/keep-the-why
+```
+
+Also recommended, with GitHub CLI v2.90.0+:
 
 ```bash
 gh skill install oliver-zehentleitner/keep-the-why
@@ -30,7 +36,7 @@ into your agent's skills directory:
 
 ```bash
 git clone https://github.com/oliver-zehentleitner/keep-the-why.git /tmp/keep-the-why
-cp -r /tmp/keep-the-why/skills/keep-the-why .claude/skills/keep-the-why
+cp -r /tmp/keep-the-why/skills/keep-the-why <target-directory>/keep-the-why
 rm -rf /tmp/keep-the-why
 ```
 
