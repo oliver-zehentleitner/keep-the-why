@@ -114,7 +114,7 @@ The idea of capturing AI-agent rationale isn't new, and this project doesn't cla
 - [Agent Decision Records](https://me2resh.com/) — a Claude Code skill for structured, checkpointed decision records. More deliberate and human-driven per entry; Keep the Why leans toward continuous, lower-friction capture during normal work.
 - Addy Osmani's `documentation-and-adrs` skill — a related Claude Code skill for capturing decisions and ADRs.
 
-Keep the Why's specific combination — continuous capture *and* retrospective recovery *and* code-guided interviews, organized as topic-indexed living docs rather than a shadow tree or one-file-per-decision, with no required external service — is the part that's different. Nothing here rules out combining approaches; several of these solve real, adjacent problems well. See the article (link once published) for the full comparison.
+Keep the Why's specific combination — continuous capture *and* retrospective recovery *and* code-guided interviews, organized as topic-indexed living docs rather than a shadow tree or one-file-per-decision, with no required external service — is the part that's different. Nothing here rules out combining approaches; several of these solve real, adjacent problems well. See [the article](https://blog.technopathy.club/keep-the-why-code-becomes-legacy-when-nobody-remembers-why) for the full comparison and the story behind why this exists.
 
 ## What this is not
 
