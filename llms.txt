@@ -91,3 +91,4 @@ no required external service (no database, no MCP server).
 - SKILL.md: https://github.com/oliver-zehentleitner/keep-the-why/blob/main/skills/keep-the-why/SKILL.md
 - Docs: https://keepthewhy.com
 - Why this project is built this way: https://keepthewhy.com/context/repo-conventions/
+- Article — origin story and full comparison to prior art: https://blog.technopathy.club/keep-the-why-code-becomes-legacy-when-nobody-remembers-why
