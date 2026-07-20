@@ -4,7 +4,9 @@ Show that a project uses Keep the Why with a badge in its README:
 
 [![Keep the Why](https://keepthewhy.com/assets/badge.svg)](https://keepthewhy.com)
 
-The markdown is the same for every project — copy it as-is:
+The snippet is the same for every project — copy it as-is.
+
+## Markdown
 
 ```markdown
 [![Keep the Why](https://keepthewhy.com/assets/badge.svg)](https://keepthewhy.com)
