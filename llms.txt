@@ -23,16 +23,21 @@ License: MIT — free for commercial and private use. No paid license, no subscr
 
 ## Quick Start
 
+`main` is active development, not guaranteed release-ready — pin to `latest` instead of tracking
+it directly. A `latest` tag always points to the newest release, moved automatically by CI. Use
+an exact tag (e.g. `v0.1.0`) instead for full reproducibility; see the releases page:
+https://github.com/oliver-zehentleitner/keep-the-why/releases
+
 Recommended, with the skills CLI (via `npx`, needs Node.js):
 
 ```bash
-npx skills add oliver-zehentleitner/keep-the-why
+npx skills add https://github.com/oliver-zehentleitner/keep-the-why/tree/latest/skills/keep-the-why
 ```
 
 Also recommended, with GitHub CLI v2.90.0+:
 
 ```bash
-gh skill install oliver-zehentleitner/keep-the-why
+gh skill install oliver-zehentleitner/keep-the-why keep-the-why@latest
 ```
 
 Fallback (manual clone) — the skill lives under `skills/keep-the-why/` in this repo, not at the
@@ -40,7 +45,7 @@ root, so clone to a scratch location and copy just that folder rather than cloni
 into your agent's skills directory:
 
 ```bash
-git clone https://github.com/oliver-zehentleitner/keep-the-why.git /tmp/keep-the-why
+git clone --branch latest https://github.com/oliver-zehentleitner/keep-the-why.git /tmp/keep-the-why
 cp -r /tmp/keep-the-why/skills/keep-the-why <target-directory>/keep-the-why
 rm -rf /tmp/keep-the-why
 ```
