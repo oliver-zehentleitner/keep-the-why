@@ -1,5 +1,5 @@
 site_name: Keep the Why
-site_description: A repo-native agent skill that continuously captures or retrospectively recovers the reasoning behind a codebase.
+site_description: A repo-native agent skill that captures the reasoning behind a codebase — so your agent gives better answers, onboarding is faster, and legacy projects become tractable again.
 site_url: https://keepthewhy.com
 repo_url: https://github.com/oliver-zehentleitner/keep-the-why
 repo_name: oliver-zehentleitner/keep-the-why

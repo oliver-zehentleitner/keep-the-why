@@ -4,6 +4,11 @@
 > reasoning behind a codebase: architecture decisions, rejected alternatives, workarounds,
 > incident learnings, and operational constraints that the code alone can't explain.
 
+The payoff: this makes a project genuinely portable between developers and cuts onboarding
+time. It's not limited to "why" questions either — with that context loaded, an agent gives
+better answers and makes safer changes across the board, which is what actually makes a
+legacy project tractable again instead of a black box only one person ever understood.
+
 Because "ask Bob" is not documentation. Keep a Changelog records what changed; Keep the Why
 preserves why it changed. Complements README, AGENTS.md, docs, CONTRIBUTING.md, tests, Keep a
 Changelog, and AGENTS.local.md rather than replacing any of them — see "Where this fits" in
@@ -84,11 +89,22 @@ no required external service (no database, no MCP server).
 - Don't apply the full decision/alternative/reason write-up to obvious, self-evident choices —
   match documentation depth to how non-obvious the decision actually is.
 
+## Badge
+
+Show that a project uses Keep the Why:
+
+```markdown
+[![Keep the Why](https://keepthewhy.com/assets/badge.svg)](https://keepthewhy.com)
+```
+
+HTML equivalent and details: https://keepthewhy.com/badge/
+
 ## Docs
 
 - Repo: https://github.com/oliver-zehentleitner/keep-the-why
 - AGENTS.md (for AI agents working on this repo): https://github.com/oliver-zehentleitner/keep-the-why/blob/main/AGENTS.md
 - SKILL.md: https://github.com/oliver-zehentleitner/keep-the-why/blob/main/skills/keep-the-why/SKILL.md
 - Docs: https://keepthewhy.com
+- Badge: https://keepthewhy.com/badge/
 - Why this project is built this way: https://keepthewhy.com/context/repo-conventions/
 - Article — origin story and full comparison to prior art: https://blog.technopathy.club/keep-the-why-code-becomes-legacy-when-nobody-remembers-why
