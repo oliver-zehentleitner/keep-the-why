@@ -30,12 +30,12 @@ Where the captured knowledge actually lives, and how it relates to everything el
 
 ## Install
 
-`main` is active development, not guaranteed release-ready — pin to the [latest tag](https://github.com/oliver-zehentleitner/keep-the-why/releases/latest) instead of tracking it directly. Shown below pinned to `v0.1.0`; see [`docs/installation.md`](docs/installation.md) for the unpinned form and full detail.
+`main` is active development, not guaranteed release-ready — pin to `latest` instead of tracking it directly (moved automatically by CI to the newest release; use an exact [tag](https://github.com/oliver-zehentleitner/keep-the-why/releases) instead for full reproducibility). See [`docs/installation.md`](docs/installation.md) for the unpinned form and full detail.
 
 **Recommended — [skills CLI](https://skills.sh/) (via `npx`, needs Node.js):**
 
 ```bash
-npx skills add https://github.com/oliver-zehentleitner/keep-the-why/tree/v0.1.0/skills/keep-the-why
+npx skills add https://github.com/oliver-zehentleitner/keep-the-why/tree/latest/skills/keep-the-why
 ```
 
 Prompts for which of its 70+ supported agents (Claude Code, Codex, OpenCode, and more) and scope to install for, then symlinks or copies the skill package in. Also listed on [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why).
@@ -43,7 +43,7 @@ Prompts for which of its 70+ supported agents (Claude Code, Codex, OpenCode, and
 **Also recommended — [GitHub CLI](https://cli.github.com/) (`gh` v2.90.0+):**
 
 ```bash
-gh skill install oliver-zehentleitner/keep-the-why keep-the-why@v0.1.0
+gh skill install oliver-zehentleitner/keep-the-why keep-the-why@latest
 ```
 
 Prompts for which agent and scope (project or personal) to install for. This installs just the skill package (`skills/keep-the-why/`), not the whole repo — no docs/, mkdocs config, or CI files end up in your project.
@@ -51,7 +51,7 @@ Prompts for which agent and scope (project or personal) to install for. This ins
 **Fallback — manual clone**, if neither of the above is available. The skill lives under `skills/keep-the-why/` in this repo, not at the root, so clone to a scratch location and copy just that folder rather than cloning straight into your agent's skills directory (cloning the whole repo there would nest an embedded git repository inside yours, and pull in unrelated project files):
 
 ```bash
-git clone --branch v0.1.0 https://github.com/oliver-zehentleitner/keep-the-why.git /tmp/keep-the-why
+git clone --branch latest https://github.com/oliver-zehentleitner/keep-the-why.git /tmp/keep-the-why
 cp -r /tmp/keep-the-why/skills/keep-the-why <target-directory>/keep-the-why
 rm -rf /tmp/keep-the-why
 ```
