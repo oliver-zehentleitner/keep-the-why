@@ -14,6 +14,8 @@ Keep a Changelog records what changed. Keep the Why preserves why it changed.
 
 Website: [https://keepthewhy.com](https://keepthewhy.com/) · [llms.txt](https://keepthewhy.com/llms.txt) for AI agents/assistants looking up this project
 
+***Featured by the [Architecture Decision Record](https://github.com/architecture-decision-record/architecture-decision-record) project.***
+
 ## How it works
 
 Keep the Why is a `SKILL.md`-based agent skill — an open, cross-agent format (Claude Code, Codex CLI, Gemini CLI, Cursor, and others). It operates in four modes:
