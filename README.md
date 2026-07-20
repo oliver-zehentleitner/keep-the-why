@@ -13,6 +13,8 @@ Keep a Changelog records what changed. Keep the Why preserves why it changed.
 
 **Keep the Why** is a repo-native agent skill that continuously captures — or retrospectively recovers — the reasoning behind a codebase: architecture decisions, rejected alternatives, workarounds, incident learnings, and operational constraints that the code alone can't explain.
 
+**The payoff:** this makes a project genuinely portable between developers and cuts onboarding time — a new hire, or an AI agent that's never touched the codebase before, doesn't have to track down whoever wrote the original code. And it's not limited to "why" questions: with that context loaded, your agent gives better answers and makes safer changes across the board — which is what actually makes a legacy project tractable again, instead of a black box only one person ever understood. "Ask Bob" stops being the fallback.
+
 Website: [https://keepthewhy.com](https://keepthewhy.com/) · [llms.txt](https://keepthewhy.com/llms.txt) for AI agents/assistants looking up this project
 
 ## How it works
@@ -73,7 +75,15 @@ You: We're changing the retry mechanism because the previous
      maintainers understand this.
 ```
 
-Keep the Why updates the relevant topic file in `context/` (or creates one if none exists), records the reason, and marks the old approach as superseded — without you having to ask for documentation separately. See [`examples/`](https://github.com/oliver-zehentleitner/keep-the-why/tree/main/skills/keep-the-why/examples) for continuous, retrospective, and interview-mode walkthroughs.
+Keep the Why updates the relevant topic file in `context/` (or creates one if none exists), records the reason, and marks the old approach as superseded — without you having to ask for documentation separately.
+
+Weeks later, a new maintainer — human or agent — can just ask:
+
+```text
+You: Why does the retry mechanism track state instead of just retrying?
+```
+
+and get the real answer instead of reverse-engineering it from the diff. See [`examples/`](https://github.com/oliver-zehentleitner/keep-the-why/tree/main/skills/keep-the-why/examples) for continuous, retrospective, and interview-mode walkthroughs.
 
 ## The problem
 
