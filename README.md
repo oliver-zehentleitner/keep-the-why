@@ -15,8 +15,6 @@ Keep a Changelog records what changed. Keep the Why preserves why it changed.
 
 Website: [https://keepthewhy.com](https://keepthewhy.com/) · [llms.txt](https://keepthewhy.com/llms.txt) for AI agents/assistants looking up this project
 
-***Featured by the [Architecture Decision Record](https://github.com/architecture-decision-record/architecture-decision-record) project.***
-
 ## How it works
 
 Keep the Why is a `SKILL.md`-based agent skill — an open, cross-agent format (Claude Code, Codex CLI, Gemini CLI, Cursor, and others). It operates in four modes:
@@ -117,6 +115,8 @@ The idea of capturing AI-agent rationale isn't new, and this project doesn't cla
 - Addy Osmani's `documentation-and-adrs` skill — a related Claude Code skill for capturing decisions and ADRs.
 
 Keep the Why's specific combination — continuous capture *and* retrospective recovery *and* code-guided interviews, organized as topic-indexed living docs rather than a shadow tree or one-file-per-decision, with no required external service — is the part that's different. Nothing here rules out combining approaches; several of these solve real, adjacent problems well. See [the article](https://blog.technopathy.club/keep-the-why-code-becomes-legacy-when-nobody-remembers-why) for the full comparison and the story behind why this exists.
+
+Also listed among the tools and further reading in the [Architecture Decision Record](https://github.com/architecture-decision-record/architecture-decision-record) community project's resources (not to be confused with the ADR standard linked above).
 
 ## What this is not
 
