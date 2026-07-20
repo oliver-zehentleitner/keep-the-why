@@ -3,6 +3,7 @@
 [![Link Check](https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/link-check.yml/badge.svg)](https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/link-check.yml)
 [![Read the Docs](https://img.shields.io/badge/read-%20docs-yellow)](https://keepthewhy.com/)
 [![Telegram](https://img.shields.io/badge/community-telegram-41ab8c)](https://t.me/unicorndevs)
+[![Keep the Why](https://keepthewhy.com/assets/badge.png)](https://keepthewhy.com)
 
 <img src="docs/assets/logo.png" alt="Keep the Why — because &quot;ask Bob&quot; is not documentation." width="600">
 
