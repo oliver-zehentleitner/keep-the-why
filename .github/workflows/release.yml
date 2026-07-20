@@ -32,3 +32,8 @@ jobs:
           gh release create "$TAG" keep-the-why-skill.zip \
             --title "$TAG" \
             --generate-notes
+
+      - name: Move latest tag
+        run: |
+          git tag -f latest
+          git push origin latest --force
