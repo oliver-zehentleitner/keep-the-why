@@ -41,6 +41,7 @@ exclude_docs: |
 nav:
   - Overview: index.md
   - Installation: installation.md
+  - Badge: badge.md
   - FAQ: faq.md
   - Why I built this: why.md
   - Reference:
