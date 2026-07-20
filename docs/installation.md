@@ -9,20 +9,26 @@ Before installing anything that runs inside an agent, know what you're actually 
 - **No executable code.** The skill package (`skills/keep-the-why/`) is instructions only — `SKILL.md`, `references/*.md`, `examples/*.md`, `evals/evals.json`. No scripts, no binaries.
 - **No network access of its own.** There's nothing to run, so there's nothing that calls out anywhere. Whatever network access exists is your agent's own, not something this skill adds.
 - **No external services.** No database, no MCP server, no account, no API key.
-- **Pin instead of tracking `main`** once you want reproducibility: `gh skill install ... --pin v0.1.0`, or clone a specific [tagged release](https://github.com/oliver-zehentleitner/keep-the-why/releases) instead of `main` in the manual-clone steps below.
+- **Install a tagged release, not `main`.** `main` is where active development happens and isn't guaranteed release-ready at any given moment — installing without pinning tracks it directly. The current release: [latest tag](https://github.com/oliver-zehentleitner/keep-the-why/releases/latest). Every install method below shows how to pin to it.
 - **Updating is explicit**, never automatic — see "Updating" below.
 
 None of that substitutes for actually reading `SKILL.md` yourself before installing — see "Recommended: GitHub CLI" below for `gh skill preview`, which lets you do exactly that.
 
 ## Recommended: skills CLI
 
-With [`skills`](https://skills.sh/) (runs via `npx`, requires Node.js, no separate install step):
+With [`skills`](https://skills.sh/) (runs via `npx`, requires Node.js, no separate install step), pinned to a release via a GitHub tree URL:
+
+```bash
+npx skills add https://github.com/oliver-zehentleitner/keep-the-why/tree/v0.1.0/skills/keep-the-why
+```
+
+Replace `v0.1.0` with whatever the [latest tag](https://github.com/oliver-zehentleitner/keep-the-why/releases/latest) is. The plain shorthand form tracks `main` directly instead:
 
 ```bash
 npx skills add oliver-zehentleitner/keep-the-why
 ```
 
-Prompts for which of its 70+ supported agents (Claude Code, Codex, OpenCode, and more) and scope (project or personal) to install for, then installs via symlink or copy, your choice. Also listed on [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why).
+Either form prompts for which of its 70+ supported agents (Claude Code, Codex, OpenCode, and more) and scope (project or personal) to install for, then installs via symlink or copy, your choice. Also listed on [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why).
 
 ## Also recommended: GitHub CLI
 
@@ -32,23 +38,31 @@ With [`gh`](https://cli.github.com/) v2.90.0 or later — `gh skill` is [in publ
 gh skill preview oliver-zehentleitner/keep-the-why keep-the-why
 ```
 
-GitHub's own guidance: skills aren't verified by GitHub and may contain prompt injections, hidden instructions, or malicious scripts — inspect before installing. Keep the Why ships instructions only, no executable scripts. Then:
+GitHub's own guidance: skills aren't verified by GitHub and may contain prompt injections, hidden instructions, or malicious scripts — inspect before installing. Keep the Why ships instructions only, no executable scripts. Then, pinned to a release:
+
+```bash
+gh skill install oliver-zehentleitner/keep-the-why keep-the-why@v0.1.0
+```
+
+Replace `v0.1.0` with whatever the [latest tag](https://github.com/oliver-zehentleitner/keep-the-why/releases/latest) is (`--pin v0.1.0` works the same way, as a flag instead of a suffix). Dropping the version tracks `main` directly:
 
 ```bash
 gh skill install oliver-zehentleitner/keep-the-why keep-the-why
 ```
 
-This prompts for which agent and scope (project or personal) to install for, and installs only the skill package (`skills/keep-the-why/` in this repo) — not the whole repository. Add `--pin v0.1.0` (or a later [tagged release](https://github.com/oliver-zehentleitner/keep-the-why/releases)) to pin instead of tracking `main`. Run `gh skill install --help` for non-interactive flags.
+Either form prompts for which agent and scope (project or personal) to install for, and installs only the skill package (`skills/keep-the-why/` in this repo) — not the whole repository. Run `gh skill install --help` for non-interactive flags.
 
 ## Fallback: manual clone
 
-If `gh skill install` isn't available. The skill lives under `skills/keep-the-why/`, not at the repo root — clone to a scratch location and copy just that folder, rather than cloning the whole repo straight into your agent's skills directory (which would nest an embedded git repository inside yours and pull in docs/, mkdocs config, and CI files you don't need). Add `--branch v0.1.0` (or a later tag) to the clone command below to pin instead of tracking `main`:
+If neither CLI is available. The skill lives under `skills/keep-the-why/`, not at the repo root — clone to a scratch location and copy just that folder, rather than cloning the whole repo straight into your agent's skills directory (which would nest an embedded git repository inside yours and pull in docs/, mkdocs config, and CI files you don't need). Pinned to a release:
 
 ```bash
-git clone https://github.com/oliver-zehentleitner/keep-the-why.git /tmp/keep-the-why
+git clone --branch v0.1.0 https://github.com/oliver-zehentleitner/keep-the-why.git /tmp/keep-the-why
 cp -r /tmp/keep-the-why/skills/keep-the-why <target-directory>/keep-the-why
 rm -rf /tmp/keep-the-why
 ```
+
+Replace `v0.1.0` with whatever the [latest tag](https://github.com/oliver-zehentleitner/keep-the-why/releases/latest) is. Dropping `--branch v0.1.0` clones `main` directly instead.
 
 The folder name must stay `keep-the-why` (has to match `name` in the frontmatter). `<target-directory>` is whichever agent's skills directory applies:
 
@@ -70,7 +84,7 @@ Start a new session afterward so the skill is picked up.
 
 ## Updating
 
-Re-run `npx skills add oliver-zehentleitner/keep-the-why` or `gh skill install oliver-zehentleitner/keep-the-why`, or repeat the manual clone-and-copy steps above — a plain `git pull` doesn't work if you copied the folder out of a scratch clone rather than cloning directly into place.
+Re-run whichever install command you used the first time, with the new version if you're pinning — check the [latest tag](https://github.com/oliver-zehentleitner/keep-the-why/releases/latest) first. A plain `git pull` doesn't work if you copied the folder out of a scratch clone rather than cloning directly into place.
 
 ## Verifying it loaded
 
