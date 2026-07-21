@@ -41,7 +41,7 @@ Where the why-knowledge lives and whether the project has been set up at all are
 2. Ask, in one pass:
    - Where should the why-knowledge live? Default `context/`; anything else is fine.
    - How do you want to start: capture from now on only, work through existing history now (retrospective recovery), sit down for an interview now, or some combination?
-   - Add the Keep the Why badge to this project's `README.md`? If yes, insert `[![Keep the Why](https://keepthewhy.com/assets/badge.svg)](https://keepthewhy.com)` near the top, alongside any other badges — same snippet for every project, see `keepthewhy.com/badge/`.
+   - Add the Keep the Why badge to this project's `README.md`? If yes, insert `[![Keep the Why](https://keepthewhy.com/assets/badge.svg)](https://keepthewhy.com)` as the *last* badge in the existing badge row — same snippet for every project, see `keepthewhy.com/badge/`. If there's no existing badge row yet, it's the only one, at the top.
 3. Run whichever starting mode was chosen.
 4. If declined entirely, write `init: declined` and stop — no further project-level questions, ever, unless asked again. (The personal wizard below is independent and can still run.)
 

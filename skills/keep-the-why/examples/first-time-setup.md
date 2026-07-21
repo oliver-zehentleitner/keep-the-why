@@ -17,7 +17,7 @@ The skill has just been installed in a project. There's no `AGENTS.md`, no `cont
     > - Add the Keep the Why badge to README.md? [yes]
 
 3. User replies: "defaults."
-4. Adds the badge to `README.md`, near the existing badges:
+4. Adds the badge to `README.md`, as the last badge after the existing ones:
 
     ```markdown
     [![Keep the Why](https://keepthewhy.com/assets/badge.svg)](https://keepthewhy.com)
