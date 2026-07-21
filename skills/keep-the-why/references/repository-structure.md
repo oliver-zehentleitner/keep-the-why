@@ -15,6 +15,7 @@ project/
 │   ├── testing.md
 │   └── troubleshooting.md
 └── context/
+    ├── README.md              # short, GitHub renders it when someone browses the folder cold
     ├── index.md
     ├── architecture.md
     ├── <topic>.md            # one per recurring theme, named for the theme, not the file it touches

@@ -94,6 +94,7 @@ project/
 ├── docs/                # HOW to use, operate, test, deploy — human-facing, agent-readable too
 │   └── index.md
 └── context/             # WHY the project is the way it is
+    ├── README.md        # short, for anyone landing here cold (GitHub renders it automatically)
     ├── index.md         # lean index — the load-bearing file for keeping agent context efficient
     ├── architecture.md
     └── ...               # one file per topic, not per source file, not per decision

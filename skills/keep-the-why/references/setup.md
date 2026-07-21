@@ -42,8 +42,24 @@ Where the why-knowledge lives and whether the project has been set up at all are
    - Where should the why-knowledge live? Default `context/`; anything else is fine.
    - How do you want to start: capture from now on only, work through existing history now (retrospective recovery), sit down for an interview now, or some combination?
    - Add the Keep the Why badge to this project's `README.md`? If yes, insert `[![Keep the Why](https://keepthewhy.com/assets/badge.svg)](https://keepthewhy.com)` as the *last* badge in the existing badge row — same snippet for every project, see `keepthewhy.com/badge/`. If there's no existing badge row yet, it's the only one, at the top.
-3. Run whichever starting mode was chosen.
-4. If declined entirely, write `init: declined` and stop — no further project-level questions, ever, unless asked again. (The personal wizard below is independent and can still run.)
+3. If the why-knowledge folder is being created fresh (not an existing folder being adopted), add a short `README.md` inside it:
+
+    ```markdown
+    <img src="https://keepthewhy.com/assets/logo.png" alt="Keep the Why" width="200">
+
+    # Context
+
+    Why this project is built the way it is — architecture decisions,
+    rejected alternatives, workarounds, and reasoning the code alone
+    can't show. Captured and kept current by the [Keep the
+    Why](https://keepthewhy.com) agent skill.
+
+    Not usage docs — see `docs/` for that. Start with `index.md`.
+    ```
+
+    GitHub (and most code hosts) render a folder's `README.md` automatically when browsing it, so this is what someone sees first landing in the folder cold, without needing to already know what Keep the Why is. Skip this step if adopting an existing folder that already has its own README or equivalent — don't overwrite it.
+4. Run whichever starting mode was chosen.
+5. If declined entirely, write `init: declined` and stop — no further project-level questions, ever, unless asked again. (The personal wizard below is independent and can still run.)
 
 ## Personal preferences wizard (once per developer)
 
