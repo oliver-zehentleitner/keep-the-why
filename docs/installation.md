@@ -16,7 +16,7 @@ None of that substitutes for actually reading `SKILL.md` yourself before install
 
 ## Recommended: skills CLI
 
-With [`skills`](https://skills.sh/) (runs via `npx`, requires Node.js, no separate install step), pinned to a release via a GitHub tree URL:
+With [`skills`](https://skills.sh/) (runs via `npx`, requires [Node.js](https://nodejs.org/en/download) — `npx` ships with it, no separate install step), pinned to a release via a GitHub tree URL:
 
 ```bash
 npx skills add https://github.com/oliver-zehentleitner/keep-the-why/tree/latest/skills/keep-the-why

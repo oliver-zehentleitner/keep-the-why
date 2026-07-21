@@ -28,7 +28,8 @@ it directly. A `latest` tag always points to the newest release, moved automatic
 an exact tag (e.g. `v0.1.0`) instead for full reproducibility; see the releases page:
 https://github.com/oliver-zehentleitner/keep-the-why/releases
 
-Recommended, with the skills CLI (via `npx`, needs Node.js):
+Recommended, with the skills CLI (via `npx`, needs Node.js: https://nodejs.org/en/download —
+`npx` ships with it, nothing extra to install):
 
 ```bash
 npx skills add https://github.com/oliver-zehentleitner/keep-the-why/tree/latest/skills/keep-the-why
