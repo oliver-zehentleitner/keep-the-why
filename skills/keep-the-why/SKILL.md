@@ -3,6 +3,7 @@ name: keep-the-why
 description: Preserves or recovers the reasoning behind a codebase - architectural decisions, rejected alternatives, workarounds, incident learnings, operational constraints, and historical context the code itself cannot explain. Use when implementing or reviewing a non-trivial change involving a design decision, workaround, incident fix, operational constraint, rejected alternative, or changed assumption; when documenting an existing or legacy codebase; during onboarding or a maintainer handover; or when interviewing a developer before their knowledge is lost (e.g. before they leave or retire). Identifies what the code cannot explain, asks focused questions instead of generic ones, and maintains concise, topic-based, version-controlled documentation readable by both humans and AI agents.
 license: MIT
 version: 0.1.0
+repository: https://github.com/oliver-zehentleitner/keep-the-why
 ---
 
 # Keep the Why
@@ -42,6 +43,8 @@ Rules 1–2 matter most. A skill that hallucinates a confident-sounding project 
 ### 0. Setup check
 
 Before anything else, check whether this project already has a Keep the Why config block (in `AGENTS.md` or whatever entry-point file it already uses). If not, run the one-time init wizard instead of jumping straight to inspection — see `references/setup.md` for the exact detection marker, the wizard questions, and the per-session timer checks (skill updates, `context/` staleness) that run afterward. Init is project-wide, not per-developer: once set up, every session inherits it silently.
+
+If the timer check finds the update-check interval elapsed: compare the installed `version` (frontmatter above) against the latest release at `repository` (frontmatter above) — don't rely on `references/setup.md` alone for this, the source of truth is right here so the check still works even if that reference file was never loaded.
 
 ### 1. Inspect
 
