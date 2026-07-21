@@ -17,9 +17,16 @@ The skill has just been installed in a project. There's no `AGENTS.md`, no `cont
     > - Load automatically every session, or only when asked? [automatically]
     > - Check for skill updates? [yes, every 14 days]
     > - Check `context/` for staleness? [yes, every 30 days]
+    > - Add the Keep the Why badge to README.md? [yes]
 
 3. User replies: "defaults, but don't autostart — I'll ask for it."
-4. Creates `AGENTS.md` with a short pointer section and the config block:
+4. Adds the badge to `README.md`, near the existing badges:
+
+    ```markdown
+    [![Keep the Why](https://keepthewhy.com/assets/badge.svg)](https://keepthewhy.com)
+    ```
+
+5. Creates `AGENTS.md` with a short pointer section and the config block:
 
     ```markdown
     <!-- keep-the-why:config -->
@@ -31,11 +38,12 @@ The skill has just been installed in a project. There's no `AGENTS.md`, no `cont
     <!-- /keep-the-why:config -->
     ```
 
-5. Only then answers the original question about the retry logic — using retrospective recovery on just that piece of code, since "fresh start" was chosen, not a full-history pass.
+6. Only then answers the original question about the retry logic — using retrospective recovery on just that piece of code, since "fresh start" was chosen, not a full-history pass.
 
 ## What it doesn't do
 
 - Doesn't silently create `context/` and start capturing without asking first.
 - Doesn't turn the setup into a long interrogation — one message, sensible defaults, "defaults" as a valid one-word answer.
+- Doesn't add the badge (or anything else) if the user says no to that specific question - each wizard answer is independent, not all-or-nothing.
 - Doesn't re-run this wizard the next time anyone opens the project — `init: complete` in the committed config block is a project-wide fact, not a per-developer one.
 - Doesn't answer the original question before setup is resolved, but also doesn't let setup become a multi-turn detour from what the user actually asked.

@@ -31,6 +31,7 @@ Init is a **project property, not a per-developer one**: once the config block i
    - Autostart every session, or load manually when asked?
    - Check for skill updates automatically? If yes, what interval (default: 14 days).
    - Check `context/` for staleness automatically? If yes, what interval (default: 30 days).
+   - Add the Keep the Why badge to this project's `README.md`? If yes, insert `[![Keep the Why](https://keepthewhy.com/assets/badge.svg)](https://keepthewhy.com)` near the top, alongside any other badges — same snippet for every project, see `keepthewhy.com/badge/`.
 3. Always offer the defaults above as the fast path ("just use the defaults" should be a one-word answer), but leave room for different choices, and record any deviation from default in the config block so it's visible later, not just implied.
 4. Anything genuinely personal (not shared team preference) belongs in `AGENTS.local.md`, referenced from the committed entry-point file — not in the config block itself.
 5. Run whichever starting mode was chosen.
