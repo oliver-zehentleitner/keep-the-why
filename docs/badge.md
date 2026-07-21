@@ -12,7 +12,7 @@ The snippet is the same for every project — copy it as-is.
 [![Keep the Why](https://keepthewhy.com/assets/badge.svg)](https://keepthewhy.com)
 ```
 
-Paste it wherever the other badges live, usually near the top of `README.md`.
+Paste it near the top of `README.md`, as the *last* badge if there are others already — keeps it out of the way of badges that carry more load-bearing information (build status, license, version).
 
 ## HTML
 
