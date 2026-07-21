@@ -2,6 +2,7 @@
 name: keep-the-why
 description: Preserves or recovers the reasoning behind a codebase - architectural decisions, rejected alternatives, workarounds, incident learnings, operational constraints, and historical context the code itself cannot explain. Use when implementing or reviewing a non-trivial change involving a design decision, workaround, incident fix, operational constraint, rejected alternative, or changed assumption; when documenting an existing or legacy codebase; during onboarding or a maintainer handover; or when interviewing a developer before their knowledge is lost (e.g. before they leave or retire). Identifies what the code cannot explain, asks focused questions instead of generic ones, and maintains concise, topic-based, version-controlled documentation readable by both humans and AI agents.
 license: MIT
+version: 0.1.0
 ---
 
 # Keep the Why
@@ -37,6 +38,10 @@ Four modes, all part of the same job:
 Rules 1–2 matter most. A skill that hallucinates a confident-sounding project history is worse than no documentation — it actively misleads the next reader.
 
 ## Workflow
+
+### 0. Setup check
+
+Before anything else, check whether this project already has a Keep the Why config block (in `AGENTS.md` or whatever entry-point file it already uses). If not, run the one-time init wizard instead of jumping straight to inspection — see `references/setup.md` for the exact detection marker, the wizard questions, and the per-session timer checks (skill updates, `context/` staleness) that run afterward. Init is project-wide, not per-developer: once set up, every session inherits it silently.
 
 ### 1. Inspect
 
@@ -102,6 +107,7 @@ Full rationale: `references/methodology.md`. Concrete layout: `references/reposi
 
 Load these only when the situation calls for them — keep this file lean:
 
+- `references/setup.md` — first activation in a project: detecting whether it's already set up, running the init wizard, and the per-session timer checks afterward.
 - `references/methodology.md` — reasoning behind the docs/context split and the index+topic-files structure.
 - `references/repository-structure.md` — before introducing or restructuring a documentation layout.
 - `references/continuous-capture.md` — deciding what's worth capturing during normal development.

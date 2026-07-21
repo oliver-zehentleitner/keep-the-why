@@ -56,9 +56,17 @@ This project uses Keep the Why to preserve the reasoning behind its code.
 
 Read `context/index.md` before making non-trivial changes to understand
 prior decisions and avoid re-litigating or accidentally reverting them.
+
+<!-- keep-the-why:config -->
+- context: `context/`
+- init: complete
+- autostart: yes
+- update-check: every 14 days — last: 2026-07-21
+- consistency-check: every 30 days — last: 2026-07-21
+<!-- /keep-the-why:config -->
 ```
 
-Keep it short. Anything longer belongs in `docs/` or `context/`, not here — `AGENTS.md` needs to stay generic enough for every tool that reads the open AGENTS.md convention, not just this skill.
+Keep it short. Anything longer belongs in `docs/` or `context/`, not here — `AGENTS.md` needs to stay generic enough for every tool that reads the open AGENTS.md convention, not just this skill. The config block is the exception: it's the skill's own machine-readable state, kept small and clearly delimited on purpose so it doesn't creep into being a second undocumented system living inside a file meant to stay generic — see `setup.md` for what writes and reads it.
 
 ## `context/index.md` — example
 

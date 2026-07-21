@@ -45,12 +45,14 @@ nav:
   - FAQ: faq.md
   - Why I built this: why.md
   - Reference:
+      - Setup: setup.md
       - Methodology: methodology.md
       - Repository structure: repository-structure.md
       - Continuous capture: continuous-capture.md
       - Retrospective analysis: retrospective-analysis.md
       - Interview playbook: interview-playbook.md
   - Examples:
+      - First-time setup: examples/first-time-setup.md
       - Continuous development: examples/continuous-development.md
       - Legacy project: examples/legacy-project.md
       - Developer handover: examples/developer-handover.md

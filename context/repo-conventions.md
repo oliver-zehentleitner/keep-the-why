@@ -33,3 +33,25 @@ Four changes made together ahead of publishing to skill marketplaces: `SKILL.md`
 
 **Rejected/deferred:** a cross-agent test matrix (Claude Code, Codex CLI, Gemini CLI) was suggested alongside the evals. Not done here — this environment only has access to Claude Code, and claiming test results without having actually run them would violate rule 1 (never invent) applied to the project's own claims about itself. `CONTRIBUTING.md` asks for real cross-agent results as a contribution instead of asserting them prematurely.
 
+## Setup/init state is tracked opportunistically, not via a real background schedule
+
+**Status:** active
+**Confirmed**
+
+The skill's periodic checks (update availability, `context/` staleness) run as an "elapsed time since last check" comparison evaluated whenever the skill is already active in a session — not a true OS-level scheduled job (`cron`, Task Scheduler) that wakes something up on its own.
+
+**Reason:** a Skill has no background execution — it only runs inside an active agent session. A real OS cron entry would need to shell out to a specific agent's non-interactive invocation (e.g. `claude -p "..."`), which only works for agents that expose one and ties the mechanism to a single vendor, contradicting the project's cross-agent goal. Comparing elapsed time on every session start works identically regardless of which agent is running the skill.
+
+**Rejected alternative:** a real OS-level scheduled job that invokes an agent CLI directly. Rejected for the cross-agent portability reason above, not for being harder to build — it's better *if* you only ever use one specific agent, but that's not a constraint this project wants to impose.
+
+## Config state lives in a delimited block inside the entry-point file, not a separate file
+
+**Status:** active
+**Confirmed**
+
+Setup state (where `context/` lives, autostart preference, check intervals and last-run timestamps) is written into a `<!-- keep-the-why:config -->` ... `<!-- /keep-the-why:config -->` block inside whichever entry-point file the project already uses (`AGENTS.md` by default), not a dedicated state file.
+
+**Reason:** keeps the state next to the one file every agent working in the repo is already expected to read, instead of adding a new file nobody has a reason to look at otherwise. The HTML-comment delimiters keep it easy to locate and parse without needing to interpret the rest of the file, and keep it visually out of the way of the human-readable pointer content `AGENTS.md` is otherwise supposed to stay limited to.
+
+**Rejected alternative:** a separate state file (e.g. `.keep-the-why.json`). Rejected because it adds a file whose only reader is this skill, splits state away from the file that already serves as the project's agent entry point, and a dedicated dotfile invites exactly the kind of "second undocumented system" the config-block approach was chosen to avoid.
+

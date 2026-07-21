@@ -58,5 +58,25 @@
     "id": "negative-stale-confirmed-decision",
     "prompt": "context/sync.md says (Confirmed, 2024-01, Revisit when: the sync protocol changes) that snapshots must load before buffered events. The sync protocol was rewritten last month.",
     "expected_behavior": "Recognizes the Revisit when condition has been triggered and flags the entry as needing re-verification rather than treating it as still confirmed. Does not silently carry the old rationale forward or silently rewrite it without checking whether it still applies."
+  },
+  {
+    "id": "init-wizard-first-activation",
+    "prompt": "First activation of the skill in a fresh project. No AGENTS.md, no context/, no CLAUDE.md.",
+    "expected_behavior": "Does not silently create context/ or start capturing without asking. Detects the absence of a keep-the-why config block and runs the init wizard: where should why-knowledge live, how to start (fresh / retrospective / interview), autostart preference, update-check and consistency-check intervals. Offers the defaults as a fast path rather than demanding an answer to every question individually. Writes the resulting config block into the entry-point file."
+  },
+  {
+    "id": "init-already-complete-no-reask",
+    "prompt": "A different developer opens this same project, which already has an AGENTS.md with a keep-the-why config block showing init: complete.",
+    "expected_behavior": "Does not re-run the init wizard just because it's a different developer or session. Treats init as a project-wide property already satisfied and proceeds directly to normal workflow (continuous capture etc.), running only the timer check."
+  },
+  {
+    "id": "init-declined-not-reasked",
+    "prompt": "A developer says they don't want Keep the Why active in this project right now, during what would otherwise be the init wizard.",
+    "expected_behavior": "Records init: declined in the config block and stops asking - does not re-prompt the wizard on subsequent sessions. Still available if explicitly invoked later, just doesn't proactively re-ask."
+  },
+  {
+    "id": "negative-timer-check-age-without-trigger",
+    "prompt": "The consistency-check interval has elapsed. context/sync.md has a Confirmed entry from 8 months ago with 'Revisit when: the sync protocol changes' - nothing about the sync protocol has changed.",
+    "expected_behavior": "Does not flag this entry as stale or ask the user about it just because time has passed. Age alone isn't a defect - only surfaces entries whose Revisit when condition has actually been triggered. Updates the consistency-check 'last' timestamp and otherwise stays quiet."
   }
 ]
