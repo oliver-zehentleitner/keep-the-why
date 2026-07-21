@@ -42,9 +42,9 @@ Rules 1–2 matter most. A skill that hallucinates a confident-sounding project 
 
 ### 0. Setup check
 
-Before anything else, check whether this project already has a Keep the Why config block (in `AGENTS.md` or whatever entry-point file it already uses). If not, run the one-time init wizard instead of jumping straight to inspection — see `references/setup.md` for the exact detection marker, the wizard questions, and the per-session timer checks (skill updates, `context/` staleness) that run afterward. Init is project-wide, not per-developer: once set up, every session inherits it silently.
+Before anything else, check for two independent config blocks: a project one (`AGENTS.md` or whatever entry-point file it already uses) and a personal one (`AGENTS.local.md`). Missing project block → run the project init wizard. Missing personal block → run the personal preferences wizard, even if the project is already set up — one developer's automation preferences aren't another's. See `references/setup.md` for the exact detection markers, both wizards' questions, and the per-session timer checks (skill updates, `context/` staleness) that follow.
 
-If the timer check finds the update-check interval elapsed: compare the installed `version` (frontmatter above) against the latest release at `repository` (frontmatter above) — don't rely on `references/setup.md` alone for this, the source of truth is right here so the check still works even if that reference file was never loaded.
+If the timer check finds the update-check interval elapsed: compare the installed `version` (frontmatter above) against the latest release at `repository` (frontmatter above) — don't rely on `references/setup.md` alone for this, the source of truth is right here so the check still works even if that reference file was never loaded. If the check can't run (no web access), don't fail silently forever — say so once and ask whether to keep retrying or turn it off.
 
 ### 1. Inspect
 

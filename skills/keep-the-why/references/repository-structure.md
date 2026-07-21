@@ -60,13 +60,22 @@ prior decisions and avoid re-litigating or accidentally reverting them.
 <!-- keep-the-why:config -->
 - context: `context/`
 - init: complete
-- autostart: yes
-- update-check: every 14 days — last: 2026-07-21
-- consistency-check: every 30 days — last: 2026-07-21
 <!-- /keep-the-why:config -->
 ```
 
-Keep it short. Anything longer belongs in `docs/` or `context/`, not here — `AGENTS.md` needs to stay generic enough for every tool that reads the open AGENTS.md convention, not just this skill. The config block is the exception: it's the skill's own machine-readable state, kept small and clearly delimited on purpose so it doesn't creep into being a second undocumented system living inside a file meant to stay generic — see `setup.md` for what writes and reads it.
+Keep it short. Anything longer belongs in `docs/` or `context/`, not here — `AGENTS.md` needs to stay generic enough for every tool that reads the open AGENTS.md convention, not just this skill. The config block is the exception: it's the skill's own machine-readable state, kept small and clearly delimited on purpose so it doesn't creep into being a second undocumented system living inside a file meant to stay generic. Only project-wide facts live here — personal automation preferences go in `AGENTS.local.md` instead, see below and `setup.md`.
+
+## `AGENTS.local.md` — personal config example
+
+```markdown
+<!-- keep-the-why:local -->
+- autostart: yes
+- update-check: every 14 days — last: 2026-07-21
+- consistency-check: every 30 days — last: 2026-07-21
+<!-- /keep-the-why:local -->
+```
+
+Not committed. One developer's automation preferences aren't another's — see `setup.md` for why this is split from the project config block instead of living in `AGENTS.md` alongside it.
 
 ## `context/index.md` — example
 

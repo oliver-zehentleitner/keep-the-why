@@ -44,14 +44,36 @@ The skill's periodic checks (update availability, `context/` staleness) run as a
 
 **Rejected alternative:** a real OS-level scheduled job that invokes an agent CLI directly. Rejected for the cross-agent portability reason above, not for being harder to build — it's better *if* you only ever use one specific agent, but that's not a constraint this project wants to impose.
 
-## Config state lives in a delimited block inside the entry-point file, not a separate file
+## Config state lives in delimited blocks inside existing entry-point files, not a separate file
 
 **Status:** active
 **Confirmed**
 
-Setup state (where `context/` lives, autostart preference, check intervals and last-run timestamps) is written into a `<!-- keep-the-why:config -->` ... `<!-- /keep-the-why:config -->` block inside whichever entry-point file the project already uses (`AGENTS.md` by default), not a dedicated state file.
+Setup state is written into `<!-- keep-the-why:config -->` / `<!-- keep-the-why:local -->` blocks inside files the project already has a reason to read (`AGENTS.md` and `AGENTS.local.md`), not a dedicated state file.
 
-**Reason:** keeps the state next to the one file every agent working in the repo is already expected to read, instead of adding a new file nobody has a reason to look at otherwise. The HTML-comment delimiters keep it easy to locate and parse without needing to interpret the rest of the file, and keep it visually out of the way of the human-readable pointer content `AGENTS.md` is otherwise supposed to stay limited to.
+**Reason:** keeps the state next to files every agent working in the repo is already expected to read, instead of adding a new file nobody has a reason to look at otherwise. The HTML-comment delimiters keep it easy to locate and parse without needing to interpret the rest of the file, and keep it visually out of the way of the human-readable pointer content those files are otherwise supposed to stay limited to.
 
-**Rejected alternative:** a separate state file (e.g. `.keep-the-why.json`). Rejected because it adds a file whose only reader is this skill, splits state away from the file that already serves as the project's agent entry point, and a dedicated dotfile invites exactly the kind of "second undocumented system" the config-block approach was chosen to avoid.
+**Rejected alternative:** a separate state file (e.g. `.keep-the-why.json`). Rejected because it adds a file whose only reader is this skill, splits state away from the files that already serve as the project's agent entry points, and a dedicated dotfile invites exactly the kind of "second undocumented system" the config-block approach was chosen to avoid.
+
+## Setup state splits across a project block and a personal block
+
+**Status:** active
+**Confirmed**
+
+Where `context/` lives and whether the project has been initialized are in the committed `AGENTS.md` config block. Autostart preference, and the update-check/consistency-check intervals and their last-run timestamps, are in the personal, uncommitted `AGENTS.local.md` block instead. A project can be `init: complete` while a specific developer still gets asked their own preferences, if they don't have an `AGENTS.local.md` yet.
+
+**Reason:** the first version bundled everything into one committed block. Oliver pointed out that autostart and check-interval preferences are individual workflow choices, not project facts — one developer wanting weekly update checks and another wanting none are both fine, and forcing one answer onto everyone (or making it a merge-conflict-prone shared timestamp several sessions race to update) doesn't fit the existing `AGENTS.md`/`AGENTS.local.md` boundary this project already draws for exactly this kind of distinction.
+
+**Rejected alternative:** one combined block covering both project and personal state, as originally shipped. Rejected once the personal/project distinction became clear — see above.
+
+## Update-check failures get surfaced once, not swallowed indefinitely
+
+**Status:** active
+**Confirmed**
+
+If the update check can't run (no web access this session), the first failure is reported and the user is asked whether to keep retrying each session or turn the check off. Subsequent identical failures don't re-ask.
+
+**Reason:** the first version skipped silently on failure, on the reasoning that a check that can't run shouldn't nag about it. Oliver pointed out the actual risk: for a user whose agent never has web access, that check would be permanently and invisibly broken — silence reads as "nothing to report," not "this has never once worked." A single surfaced notice, with the option to just turn it off, avoids both the nagging and the false sense that the check is doing anything.
+
+**Rejected alternative:** always skip silently on failure (the first version). Rejected because it can't be distinguished from "checked, nothing new" — the two states look identical to the user, and one of them is worth knowing about.
 
