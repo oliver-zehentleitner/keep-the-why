@@ -34,7 +34,7 @@ Where the captured knowledge actually lives, and how it relates to everything el
 
 `main` is active development, not guaranteed release-ready — pin to `latest` instead of tracking it directly (moved automatically by CI to the newest release; use an exact [tag](https://github.com/oliver-zehentleitner/keep-the-why/releases) instead for full reproducibility). See [`docs/installation.md`](docs/installation.md) for the unpinned form and full detail.
 
-**Recommended — [skills CLI](https://skills.sh/) (via `npx`, needs Node.js):**
+**Recommended — [skills CLI](https://skills.sh/) (via `npx`, needs [Node.js](https://nodejs.org/en/download) — `npx` ships with it, nothing extra to install):**
 
 ```bash
 npx skills add https://github.com/oliver-zehentleitner/keep-the-why/tree/latest/skills/keep-the-why
