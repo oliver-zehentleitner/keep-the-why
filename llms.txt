@@ -14,7 +14,7 @@ preserves why it changed. Complements README, AGENTS.md, docs, CONTRIBUTING.md, 
 Changelog, and AGENTS.local.md rather than replacing any of them — see "Where this fits" in
 the README.
 
-Version: 0.1.0.
+Version: 0.2.0.
 
 ## Authorship & License
 
