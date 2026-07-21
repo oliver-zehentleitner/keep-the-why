@@ -108,7 +108,7 @@ A project's documentation is one coherent group of files, not a single practice:
 | `docs/` | "How do I use or operate this?" | usage docs |
 | `CONTRIBUTING.md` | "How do I contribute to this?" | contribution guide |
 | Tests | "Did I just break something?" | test suite |
-| [Keep a Changelog](https://keepachangelog.com/) | "What changed, release by release?" | `CHANGELOG.md` |
+| [Keep a Changelog](https://keepachangelog.com/) | "What changed, release by release?" | [`CHANGELOG.md`](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/CHANGELOG.md) |
 | **Keep the Why** (`context/`) | "Why is it built this way?" | `context/` |
 | `AGENTS.local.md` | "What's specific to me, not relevant to anyone else?" | `AGENTS.local.md` (not committed) |
 

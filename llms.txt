@@ -110,6 +110,7 @@ HTML equivalent and details: https://keepthewhy.com/badge/
 - Repo: https://github.com/oliver-zehentleitner/keep-the-why
 - AGENTS.md (for AI agents working on this repo): https://github.com/oliver-zehentleitner/keep-the-why/blob/main/AGENTS.md
 - SKILL.md: https://github.com/oliver-zehentleitner/keep-the-why/blob/main/skills/keep-the-why/SKILL.md
+- CHANGELOG: https://github.com/oliver-zehentleitner/keep-the-why/blob/main/CHANGELOG.md
 - Docs: https://keepthewhy.com
 - Badge: https://keepthewhy.com/badge/
 - Why this project is built this way: https://keepthewhy.com/context/repo-conventions/
