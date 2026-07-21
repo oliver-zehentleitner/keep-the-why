@@ -2,6 +2,8 @@
 name: keep-the-why
 description: Preserves or recovers the reasoning behind a codebase - architectural decisions, rejected alternatives, workarounds, incident learnings, operational constraints, and historical context the code itself cannot explain. Use when implementing or reviewing a non-trivial change involving a design decision, workaround, incident fix, operational constraint, rejected alternative, or changed assumption; when documenting an existing or legacy codebase; during onboarding or a maintainer handover; or when interviewing a developer before their knowledge is lost (e.g. before they leave or retire). Identifies what the code cannot explain, asks focused questions instead of generic ones, and maintains concise, topic-based, version-controlled documentation readable by both humans and AI agents.
 license: MIT
+version: 0.1.0
+repository: https://github.com/oliver-zehentleitner/keep-the-why
 ---
 
 # Keep the Why
@@ -37,6 +39,12 @@ Four modes, all part of the same job:
 Rules 1–2 matter most. A skill that hallucinates a confident-sounding project history is worse than no documentation — it actively misleads the next reader.
 
 ## Workflow
+
+### 0. Setup check
+
+Before anything else, check for two independent config blocks: a project one (`AGENTS.md` or whatever entry-point file it already uses) and a personal one (`AGENTS.local.md`). Missing project block → run the project init wizard. Missing personal block → run the personal preferences wizard, even if the project is already set up — one developer's automation preferences aren't another's. See `references/setup.md` for the exact detection markers, both wizards' questions, and the per-session timer checks (skill updates, `context/` staleness) that follow.
+
+If the timer check finds the update-check interval elapsed: compare the installed `version` (frontmatter above) against the latest release at `repository` (frontmatter above) — don't rely on `references/setup.md` alone for this, the source of truth is right here so the check still works even if that reference file was never loaded. If the check can't run (no web access), don't fail silently forever — say so once and ask whether to keep retrying or turn it off.
 
 ### 1. Inspect
 
@@ -102,6 +110,7 @@ Full rationale: `references/methodology.md`. Concrete layout: `references/reposi
 
 Load these only when the situation calls for them — keep this file lean:
 
+- `references/setup.md` — first activation in a project: detecting whether it's already set up, running the init wizard, and the per-session timer checks afterward.
 - `references/methodology.md` — reasoning behind the docs/context split and the index+topic-files structure.
 - `references/repository-structure.md` — before introducing or restructuring a documentation layout.
 - `references/continuous-capture.md` — deciding what's worth capturing during normal development.

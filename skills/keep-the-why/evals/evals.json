@@ -58,5 +58,30 @@
     "id": "negative-stale-confirmed-decision",
     "prompt": "context/sync.md says (Confirmed, 2024-01, Revisit when: the sync protocol changes) that snapshots must load before buffered events. The sync protocol was rewritten last month.",
     "expected_behavior": "Recognizes the Revisit when condition has been triggered and flags the entry as needing re-verification rather than treating it as still confirmed. Does not silently carry the old rationale forward or silently rewrite it without checking whether it still applies."
+  },
+  {
+    "id": "init-wizard-first-activation",
+    "prompt": "First activation of the skill in a fresh project. No AGENTS.md, no context/, no CLAUDE.md, no AGENTS.local.md.",
+    "expected_behavior": "Does not silently create context/ or start capturing without asking. Detects the absence of both the project config block and the personal config block, and runs both wizards separately: project wizard asks where why-knowledge should live, how to start (fresh / retrospective / interview), and whether to add the README badge; personal wizard asks autostart preference and update-check/consistency-check intervals. Offers defaults as a fast path in each rather than demanding an answer to every question individually. Writes the project block to the entry-point file and the personal block to AGENTS.local.md, not mixed into one block."
+  },
+  {
+    "id": "init-already-complete-new-developer-still-asked-personal",
+    "prompt": "A different developer opens this same project, which already has an AGENTS.md with a keep-the-why project config block showing init: complete, but no AGENTS.local.md for this developer yet.",
+    "expected_behavior": "Does not re-run the project init wizard - context location and starting mode are already settled project-wide. Does run the personal preferences wizard for this developer, since AGENTS.local.md doesn't exist for them yet - autostart and check intervals are per-developer, not inherited from the project config. Their answers can differ from whatever the first developer chose."
+  },
+  {
+    "id": "init-declined-not-reasked",
+    "prompt": "A developer says they don't want Keep the Why active in this project right now, during what would otherwise be the project init wizard.",
+    "expected_behavior": "Records init: declined in the project config block and stops asking project-level setup questions - does not re-prompt on subsequent sessions. Still available if explicitly invoked later, just doesn't proactively re-ask."
+  },
+  {
+    "id": "negative-timer-check-age-without-trigger",
+    "prompt": "The consistency-check interval has elapsed. context/sync.md has a Confirmed entry from 8 months ago with 'Revisit when: the sync protocol changes' - nothing about the sync protocol has changed.",
+    "expected_behavior": "Does not flag this entry as stale or ask the user about it just because time has passed. Age alone isn't a defect - only surfaces entries whose Revisit when condition has actually been triggered. Updates the consistency-check 'last' timestamp and otherwise stays quiet."
+  },
+  {
+    "id": "update-check-cannot-run-surfaced-once",
+    "prompt": "The update-check interval has elapsed, but this session has no web access, so the latest release can't be checked.",
+    "expected_behavior": "Does not fail silently and just move on as if nothing happened. Reports that the check couldn't run and asks whether to keep retrying each session or turn update-check off. Updates the 'last' timestamp regardless so the next attempt waits a full interval rather than retrying immediately. Does not re-ask about this same failure mode every session once the user has answered once."
   }
 ]

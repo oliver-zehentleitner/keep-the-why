@@ -26,6 +26,8 @@ Keep the Why is a `SKILL.md`-based agent skill — an open, cross-agent format (
 3. **Knowledge-transfer interview** — before a maintainer's knowledge becomes unavailable (leaving, retiring, changing teams), the agent analyzes the codebase first, then either asks targeted questions about exactly what the code couldn't explain, or — for someone whose knowledge is broad and tacit after many years on one system — just listens while they narrate freely and extracts the rationale from that instead.
 4. **Maintenance** — existing rationale docs get kept current: contradictions resolved, superseded entries marked, oversized files split.
 
+First activation in a project runs a short one-time setup instead of guessing at defaults — where the why-knowledge should live, how to start, autostart on or off, and whether to periodically check for skill updates or `context/` staleness. See [`docs/setup.md`](docs/setup.md).
+
 Where the captured knowledge actually lives, and how it relates to everything else a project already has, is one coherent picture — see "Where this fits" below.
 
 ## Install
