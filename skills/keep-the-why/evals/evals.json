@@ -62,12 +62,12 @@
   {
     "id": "init-wizard-first-activation",
     "prompt": "First activation of the skill in a fresh project. No AGENTS.md, no context/, no CLAUDE.md, no AGENTS.local.md.",
-    "expected_behavior": "Does not silently create context/ or start capturing without asking. Detects the absence of both the project config block and the personal config block, and runs both wizards separately: project wizard asks where why-knowledge should live, how to start (fresh / retrospective / interview), and whether to add the README badge; personal wizard asks autostart preference and update-check/consistency-check intervals. Offers defaults as a fast path in each rather than demanding an answer to every question individually. Writes the project block to the entry-point file and the personal block to AGENTS.local.md, not mixed into one block. Since context/ is being created fresh (not adopted), also adds a short README.md inside it explaining what the folder is."
+    "expected_behavior": "Does not silently create context/ or start capturing without asking. Detects the absence of both the project config block and the personal config block, and runs both wizards separately: project wizard asks where why-knowledge should live, how to start (fresh / retrospective / interview), and whether to add the README badge; personal wizard asks capture-mode preference and update-check/consistency-check intervals. Offers defaults as a fast path in each rather than demanding an answer to every question individually. Writes the project block to the entry-point file and the personal block to AGENTS.local.md, not mixed into one block. Since context/ is being created fresh (not adopted), also adds a short README.md inside it explaining what the folder is."
   },
   {
     "id": "init-already-complete-new-developer-still-asked-personal",
     "prompt": "A different developer opens this same project, which already has an AGENTS.md with a keep-the-why project config block showing init: complete, but no AGENTS.local.md for this developer yet.",
-    "expected_behavior": "Does not re-run the project init wizard - context location and starting mode are already settled project-wide. Does run the personal preferences wizard for this developer, since AGENTS.local.md doesn't exist for them yet - autostart and check intervals are per-developer, not inherited from the project config. Their answers can differ from whatever the first developer chose."
+    "expected_behavior": "Does not re-run the project init wizard - context location and starting mode are already settled project-wide. Does run the personal preferences wizard for this developer, since AGENTS.local.md doesn't exist for them yet - capture mode and check intervals are per-developer, not inherited from the project config. Their answers can differ from whatever the first developer chose."
   },
   {
     "id": "init-declined-not-reasked",
@@ -81,7 +81,17 @@
   },
   {
     "id": "update-check-cannot-run-surfaced-once",
-    "prompt": "The update-check interval has elapsed, but this session has no web access, so the latest release can't be checked.",
-    "expected_behavior": "Does not fail silently and just move on as if nothing happened. Reports that the check couldn't run and asks whether to keep retrying each session or turn update-check off. Updates the 'last' timestamp regardless so the next attempt waits a full interval rather than retrying immediately. Does not re-ask about this same failure mode every session once the user has answered once."
+    "prompt": "The update-check interval has elapsed, but this session has no web access, so the latest release can't be checked. This is the first time the check has ever failed.",
+    "expected_behavior": "Does not fail silently and just move on as if nothing happened. Reports that the check couldn't run and asks whether to keep retrying next session or turn update-check off. Does NOT advance the 'last' timestamp on this failed attempt - leaving it unchanged is what makes the next session retry automatically instead of waiting out the full interval. Records the user's answer as an 'on-failure' field (retry-quietly or disabled) so the same question isn't asked again on subsequent failures."
+  },
+  {
+    "id": "update-check-repeat-failure-no-reask",
+    "prompt": "The personal config already has 'update-check: every 14 days — last: 2026-07-08 — on-failure: retry-quietly' from a previous failed attempt. This session also has no web access.",
+    "expected_behavior": "Retries the check silently without asking the user how to handle it again - on-failure is already set to retry-quietly from the earlier answer. Does not advance 'last'. If a later session succeeds, 'last' advances to that session's date and on-failure's job is done for this cycle."
+  },
+  {
+    "id": "agents-local-gitignore-not-covered",
+    "prompt": "Running the personal preferences wizard for the first time in a project. AGENTS.local.md doesn't exist yet, and .gitignore has no entry for it.",
+    "expected_behavior": "Before creating AGENTS.local.md, checks whether .gitignore excludes it. Since it doesn't, adds an AGENTS.local.md entry to .gitignore (creating .gitignore if it doesn't exist) before creating the file - not after, and not skipped. Personal preferences described as 'not committed' should actually be prevented from being committed, not just documented as such."
   }
 ]

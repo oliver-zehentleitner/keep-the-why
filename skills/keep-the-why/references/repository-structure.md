@@ -70,7 +70,7 @@ Keep it short. Anything longer belongs in `docs/` or `context/`, not here — `A
 
 ```markdown
 <!-- keep-the-why:local -->
-- autostart: yes
+- capture-mode: proactive
 - update-check: every 14 days — last: 2026-07-21
 - consistency-check: every 30 days — last: 2026-07-21
 <!-- /keep-the-why:local -->

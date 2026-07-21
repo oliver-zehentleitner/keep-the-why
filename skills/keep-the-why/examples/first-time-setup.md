@@ -50,16 +50,16 @@ The skill has just been installed in a project. There's no `AGENTS.md`, no `cont
 7. Runs the personal preferences wizard, separately:
 
     > And a couple of preferences just for you (not committed):
-    > - Load automatically every session, or only when asked? [automatically]
+    > - Capture proactively during conversation, or only when asked? [proactive]
     > - Check for skill updates? [yes, every 14 days]
     > - Check `context/` for staleness? [yes, every 30 days]
 
-8. User replies: "don't autostart, defaults on the rest."
-9. Creates `AGENTS.local.md`, referenced from `AGENTS.md`, with the personal config block:
+8. User replies: "explicit-only, defaults on the rest."
+9. `AGENTS.local.md` doesn't exist yet. Checks `.gitignore` first — it already has an `AGENTS.local.md` entry (from an earlier project convention), so nothing to add there. Creates `AGENTS.local.md`, referenced from `AGENTS.md`, with the personal config block:
 
     ```markdown
     <!-- keep-the-why:local -->
-    - autostart: no
+    - capture-mode: explicit-only
     - update-check: every 14 days — last: 2026-07-21
     - consistency-check: every 30 days — last: 2026-07-21
     <!-- /keep-the-why:local -->
@@ -69,7 +69,11 @@ The skill has just been installed in a project. There's no `AGENTS.md`, no `cont
 
 ## A second developer opens the same project later
 
-The project config block already says `init: complete` — that part isn't re-asked, it's a project fact, not a per-developer one. But this developer has no `AGENTS.local.md` yet, so the personal preferences wizard (step 7 above) runs for them individually. Their answers might differ from the first developer's, and that's fine — autostart and check intervals are exactly the kind of thing that should vary per person.
+The project config block already says `init: complete` — that part isn't re-asked, it's a project fact, not a per-developer one. But this developer has no `AGENTS.local.md` yet, so the personal preferences wizard (step 7 above) runs for them individually. Their answers might differ from the first developer's, and that's fine — capture mode and check intervals are exactly the kind of thing that should vary per person.
+
+## A later session, after a few weeks of no web access
+
+The update-check interval elapses, but this environment has no web access. The skill reports it can't check, asks whether to keep retrying next session or turn the check off, and the developer says "keep trying." The personal config block gets a third field: `- update-check: every 14 days — last: 2026-07-08 — on-failure: retry-quietly`. Because `last` didn't advance on the failed attempt, the very next session tries again automatically — and because `on-failure` is now `retry-quietly`, it does so without asking the same question again. Once a check actually succeeds, `last` advances and the normal interval takes back over.
 
 ## What it doesn't do
 
@@ -78,4 +82,6 @@ The project config block already says `init: complete` — that part isn't re-as
 - Doesn't add the badge (or anything else) if the user says no to that specific question — each wizard answer is independent, not all-or-nothing.
 - Doesn't bundle personal preferences into the committed project config, and doesn't skip the personal wizard just because the project is already initialized.
 - Doesn't overwrite an existing `context/README.md` (or equivalent) if the folder is being adopted rather than created fresh.
+- Doesn't create `AGENTS.local.md` without first making sure `.gitignore` actually excludes it — "not committed" is enforced, not just documented.
+- Doesn't keep asking the same "web access is broken, what do you want to do" question every session once it's been answered once.
 - Doesn't answer the original question before setup is resolved, but also doesn't let setup become a multi-turn detour from what the user actually asked.
