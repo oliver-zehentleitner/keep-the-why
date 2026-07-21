@@ -5,7 +5,7 @@
 [![Telegram](https://img.shields.io/badge/community-telegram-41ab8c)](https://t.me/unicorndevs)
 [![Keep the Why](https://keepthewhy.com/assets/badge.svg)](https://keepthewhy.com)
 
-<img src="docs/assets/logo.png" alt="Keep the Why — because &quot;ask Bob&quot; is not documentation." width="600">
+<img src="docs/assets/logo.png" alt="Keep the Why — because &quot;ask Bob&quot; is not documentation.">
 
 # Keep the Why
 
