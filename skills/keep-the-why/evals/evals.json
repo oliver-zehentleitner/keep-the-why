@@ -62,7 +62,7 @@
   {
     "id": "init-wizard-first-activation",
     "prompt": "First activation of the skill in a fresh project. No AGENTS.md, no context/, no CLAUDE.md, no AGENTS.local.md.",
-    "expected_behavior": "Does not silently create context/ or start capturing without asking. Detects the absence of both the project config block and the personal config block, and runs both wizards separately: project wizard asks where why-knowledge should live, how to start (fresh / retrospective / interview), and whether to add the README badge; personal wizard asks autostart preference and update-check/consistency-check intervals. Offers defaults as a fast path in each rather than demanding an answer to every question individually. Writes the project block to the entry-point file and the personal block to AGENTS.local.md, not mixed into one block."
+    "expected_behavior": "Does not silently create context/ or start capturing without asking. Detects the absence of both the project config block and the personal config block, and runs both wizards separately: project wizard asks where why-knowledge should live, how to start (fresh / retrospective / interview), and whether to add the README badge; personal wizard asks autostart preference and update-check/consistency-check intervals. Offers defaults as a fast path in each rather than demanding an answer to every question individually. Writes the project block to the entry-point file and the personal block to AGENTS.local.md, not mixed into one block. Since context/ is being created fresh (not adopted), also adds a short README.md inside it explaining what the folder is."
   },
   {
     "id": "init-already-complete-new-developer-still-asked-personal",
