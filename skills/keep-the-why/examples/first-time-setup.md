@@ -26,7 +26,7 @@ The skill has just been installed in a project. There's no `AGENTS.md`, no `cont
 5. `context/` doesn't exist yet, so creates it with a short `README.md` inside (GitHub renders this automatically when someone browses the folder):
 
     ```markdown
-    <img src="https://keepthewhy.com/assets/logo.png" alt="Keep the Why" width="200">
+    <img src="https://keepthewhy.com/assets/logo.png" alt="Keep the Why">
 
     # Context
 
