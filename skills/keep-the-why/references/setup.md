@@ -56,7 +56,9 @@ Where the why-knowledge lives and whether the project has been set up at all are
     can't show. Captured and kept current by the [Keep the
     Why](https://keepthewhy.com) agent skill.
 
-    Not usage docs — see `docs/` for that. Start with `index.md`.
+    Start with `index.md`.
+
+    Not usage docs — see `docs/` for that. 
     ```
 
     GitHub (and most code hosts) render a folder's `README.md` automatically when browsing it, so this is what someone sees first landing in the folder cold, without needing to already know what Keep the Why is. Skip this step if adopting an existing folder that already has its own README or equivalent — don't overwrite it.
