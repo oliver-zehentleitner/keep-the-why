@@ -29,9 +29,8 @@ primary handler. This person will coordinate the fix and release process,
 involving the following steps:
 
   * Confirm the problem and determine the affected versions.
-  * Audit code to find any potential similar problems.
-  * Prepare fixes for all releases still under maintenance. These fixes will be
-    released as fast as possible to pip.
+  * Audit the skill's instructions and reference files for any similar issues.
+  * Prepare a fix and publish it as a new GitHub release as fast as possible.
 
 ## Comments on this Policy
 If you have suggestions on how this process could be improved please submit a

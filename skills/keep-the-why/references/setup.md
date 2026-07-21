@@ -19,13 +19,15 @@ Setup state splits across two files, matching the existing `AGENTS.md`/`AGENTS.l
 
 ```markdown
 <!-- keep-the-why:local -->
-- autostart: yes
+- capture-mode: proactive
 - update-check: every 14 days — last: 2026-07-21
 - consistency-check: every 30 days — last: 2026-07-21
 <!-- /keep-the-why:local -->
 ```
 
-Where the why-knowledge lives and whether the project has been set up at all are facts about the project — everyone should see the same answer, so they're committed. Autostart and how often to run the timer checks are about how *this one developer* wants to work day to day — one person might want autostart and weekly checks, another might not want either, and neither is more correct. Splitting them also means the update-check/consistency-check timestamps don't turn into a shared field that every developer's session is racing to update.
+Where the why-knowledge lives and whether the project has been set up at all are facts about the project — everyone should see the same answer, so they're committed. Capture mode and how often to run the timer checks are about how *this one developer* wants to work day to day — one person might want proactive capture and weekly checks, another might not want either, and neither is more correct. Splitting them also means the update-check/consistency-check timestamps don't turn into a shared field that every developer's session is racing to update.
+
+`capture-mode` says `proactive` rather than `autostart` deliberately — a Skill has no session-level autostart hook to promise (see "What this skill is not" in `SKILL.md`); what's actually configurable is whether the skill, once active in a conversation, looks for capture opportunities on its own or waits to be asked. `proactive` describes that behavior honestly; `explicit-only` is the alternative.
 
 ## Detection and the two independent wizards
 
@@ -64,10 +66,11 @@ Where the why-knowledge lives and whether the project has been set up at all are
 ## Personal preferences wizard (once per developer)
 
 1. Ask, in one pass:
-   - Autostart every session, or load manually when asked? Default: automatically.
+   - Capture proactively during normal conversation, or only when explicitly asked? Default: proactive.
    - Check for skill updates automatically? If yes, what interval (default: 14 days).
    - Check `context/` for staleness automatically? If yes, what interval (default: 30 days).
-2. Write the answers to the `AGENTS.local.md` personal block. If `AGENTS.local.md` doesn't exist yet, create it and make sure the entry-point file points to it (see `methodology.md`).
+2. If `AGENTS.local.md` doesn't exist yet: before creating it, check whether the project's `.gitignore` already excludes it. If not, add an `AGENTS.local.md` entry to `.gitignore` (creating the file if it doesn't exist) — this file is meant to hold personal, sometimes sensitive preferences, and "not committed" only means something if it's actually enforced, not just stated in prose. Then create `AGENTS.local.md` and make sure the entry-point file points to it (see `methodology.md`).
+3. Write the answers to the `AGENTS.local.md` personal block.
 
 Both wizards: offer the defaults as a fast path ("just use the defaults" should be a one-word answer), but leave room for different choices, and record any deviation explicitly rather than leaving it implied.
 
@@ -77,7 +80,9 @@ Two independent timers, both opportunistic — checked when the skill is already
 
 **Update check.** If `update-check` is enabled and the interval has elapsed since `last`: compare the installed `version` (`SKILL.md` frontmatter) against the latest release's `tag_name`. Query the GitHub API, not the HTML releases page — turn `repository` (also frontmatter) into an API URL by replacing `github.com/` with `api.github.com/repos/` and appending `/releases/latest`, e.g. `https://api.github.com/repos/oliver-zehentleitner/keep-the-why/releases/latest`. Returns clean JSON (`tag_name`, `published_at`, ...) instead of requiring the agent to parse an HTML redirect. This needs the agent's own web access — the skill itself has none (see "What this skill is not").
 
-If checking isn't possible (no web access this session): don't fail silently forever. The first time this happens, say so and ask how to handle it — keep retrying each session, or turn `update-check` off. Respect the answer and don't re-ask every session after that; a check that's been silently broken since the day it was set up isn't a check, it's a false sense of one. Update `last` regardless of outcome, so the interval logic doesn't retry on every single message.
+`last` only advances on a check that actually completed (found "up to date" or found a newer version) — not on an attempt that couldn't run at all. That's what makes "keep retrying" and "the interval controls how often this runs" both true at once: a successful check waits out the full interval before trying again; a failed attempt leaves `last` untouched, so the *next* session tries again regardless of how much of the interval has passed.
+
+If checking isn't possible (no web access this session): don't fail silently forever, and don't re-ask about the same ongoing failure every single session either. The first time an attempt fails, say so and ask how to handle it — keep retrying next session, or turn `update-check` off. Record the answer as a third field, e.g. `- update-check: every 14 days — last: 2026-07-08 — on-failure: retry-quietly`. `on-failure` starts unset (meaning: ask, the first time it's needed); once set to `retry-quietly`, keep attempting silently on future failures without asking again; if set to `disabled`, stop checking and drop `update-check` to `no`.
 
 **Consistency check.** If `consistency-check` is enabled and the interval has elapsed: look for entries whose `Revisit when` condition (see `repository-structure.md`) has actually been triggered — not just entries that are merely old. Age alone isn't a defect; an untriggered old entry is still accurate. Scope the check to what `context/index.md` already summarizes rather than opening every topic file — the index exists precisely so this kind of check stays cheap. If something's genuinely triggered, surface it and ask whether to address it now. Update `last` regardless of outcome.
 
