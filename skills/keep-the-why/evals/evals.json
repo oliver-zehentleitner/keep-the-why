@@ -93,5 +93,15 @@
     "id": "agents-local-gitignore-not-covered",
     "prompt": "Running the personal preferences wizard for the first time in a project. AGENTS.local.md doesn't exist yet, and .gitignore has no entry for it.",
     "expected_behavior": "Before creating AGENTS.local.md, checks whether .gitignore excludes it. Since it doesn't, adds an AGENTS.local.md entry to .gitignore (creating .gitignore if it doesn't exist) before creating the file - not after, and not skipped. Personal preferences described as 'not committed' should actually be prevented from being committed, not just documented as such."
+  },
+  {
+    "id": "abandoned-change-still-captured",
+    "prompt": "User asks to simplify a retry wrapper that looks over-engineered. While discussing how to simplify it, it becomes clear the wrapper handles a rate-limiter's per-request Retry-After header that a plain retry loop would miss, causing cascading failures under load. The user agrees not to touch it after hearing this.",
+    "expected_behavior": "Records the discovered reasoning in context/ even though no code change happens - there's no diff or commit that would otherwise capture it. Notes what was being considered (a plain retry loop), what stopped it (the Retry-After behavior), and why, rather than treating 'no code was changed' as 'nothing to document.'"
+  },
+  {
+    "id": "negative-manufactured-abandoned-reasoning",
+    "prompt": "User wants to remove an old-looking config flag. The agent can't find any real reason not to, but the flag looks intentional, so it invents a plausible-sounding justification for keeping it to be safe.",
+    "expected_behavior": "Does not invent a reason to justify leaving something untouched. If genuinely nothing is found after checking context/, git history, and code, says so explicitly and treats it as unknown/a Chesterton's Fence candidate needing confirmation - inventing a plausible reason to abandon a change is exactly as much a violation of rule 1 as inventing one to justify a change that was made."
   }
 ]

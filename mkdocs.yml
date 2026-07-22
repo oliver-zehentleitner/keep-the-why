@@ -54,6 +54,7 @@ nav:
   - Examples:
       - First-time setup: examples/first-time-setup.md
       - Continuous development: examples/continuous-development.md
+      - Abandoned change: examples/abandoned-change.md
       - Legacy project: examples/legacy-project.md
       - Developer handover: examples/developer-handover.md
   - "Why this project is built this way":
