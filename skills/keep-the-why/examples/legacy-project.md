@@ -18,8 +18,9 @@ Does not immediately produce a confident-sounding architecture overview covering
     ## Session handling
 
     **Status:** active
-    **Inferred** (from code structure and a 2019 commit message referencing
-    "the mobile client issue" — original ticket not accessible)
+    **Evidence:** inferred
+    **Source:** code structure and a 2019 commit message referencing
+    "the mobile client issue" — original ticket not accessible
 
     Sessions appear to be validated twice: once at the gateway, once in
     the service itself. This looks redundant.

@@ -4,6 +4,14 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- `context/` entries now track **Status** (active, superseded, open, needs-review) separately from **Evidence** (confirmed, inferred, unknown) — previously "superseded" was mixed into the evidence classification as if it were a fourth confidence level, when it's really a different question (is this still current, vs. how well is it backed).
+- Optional **Source** and **Verification** fields for confirmed entries whose claim is worth tracing or could be checked against other evidence. A `contradicted` verification must explain what contradicts it, not just carry the label.
+- `context-schema` field in the project config block, tracking which version's `context/` entry format is in use — separate from the installed skill version, since not every release changes the format.
+- `references/migrations.md`: what changed and how to update existing `context/` entries, checked automatically when `context-schema` falls behind the installed version.
+- This `CHANGELOG.md` — the README already promised one in its "Where this fits" table; it just didn't exist.
+
 ## [0.2.0] - 2026-07-21
 
 ### Added
