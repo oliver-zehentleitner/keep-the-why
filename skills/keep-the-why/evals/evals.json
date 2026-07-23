@@ -123,5 +123,10 @@
     "id": "verification-contradicted-needs-explanation",
     "prompt": "Recording a Verification: contradicted for a context/ entry.",
     "expected_behavior": "Never records 'Verification: contradicted' as a bare label. Always includes what specifically contradicts the claim and why (e.g. a conflicting source, a code inspection result) in the same entry - the label alone doesn't explain anything and isn't useful to the next reader."
+  },
+  {
+    "id": "ambiguous-worth-capturing-asks-instead-of-guessing",
+    "prompt": "A change is made for a reason that's somewhat self-explanatory from the code, but also has a slightly non-obvious edge case behind it - not clearly worth a context/ entry, not clearly routine either.",
+    "expected_behavior": "Does not silently decide either way (skipping it entirely, or writing a full entry nobody asked for). Asks a short, specific yes/no question about whether it's worth a note - e.g. 'worth a quick context/ entry for the edge case, or obvious enough to skip?' - rather than guessing. A brief confirmation question is treated as compatible with staying low-effort, not a violation of it."
   }
 ]
