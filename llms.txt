@@ -14,6 +14,10 @@ preserves why it changed. Complements README, AGENTS.md, docs, CONTRIBUTING.md, 
 Changelog, and AGENTS.local.md rather than replacing any of them — see "Where this fits" in
 the README.
 
+Because it's just Markdown in the repo, a `context/` update ships in the same commit or PR as
+the code change it explains — reviewed the same way, versioned the same way, no separate
+system to trust or keep in sync.
+
 Version: 0.2.0.
 
 ## Authorship & License
@@ -57,21 +61,35 @@ other tools supporting the open Agent Skills format. Full paths per agent: see I
 
 ## Core Concept
 
-Four modes, one underlying mechanism (classify evidence as confirmed / inferred / unknown; ask
-only what evidence can't resolve):
+Four modes. Every entry is classified on two separate axes: **Evidence** (confirmed / inferred /
+unknown — is this well-supported?) and **Status** (active / superseded / open / needs-review —
+is this still current?) — a superseded decision can still have been confirmed when it was
+current, so the two don't collapse into one. A confirmed entry worth tracing can also carry
+**Source** (who or what it came from) and **Verification** (corroborated / uncorroborated /
+contradicted).
 
-- Continuous capture — record rationale as it comes up during normal development
+- Continuous capture — record rationale as it comes up during normal development, including a
+  change that didn't happen: started, then stopped after discovering a reason not to — nothing
+  else would ever capture that reasoning, since no diff or commit results from it
 - Retrospective recovery — reconstruct rationale from an existing or legacy repository
 - Knowledge-transfer interview — recover a departing developer's knowledge before it's lost,
   either via targeted questions (narrow, specific gaps) or free narration (broad, tacit
   knowledge — let them talk, extract decision-forks from what comes up)
-- Maintenance — keep existing rationale current, mark superseded entries, split oversized files
+- Maintenance — keep existing rationale current, resolve contradictions, split oversized files
+
+First activation in a project runs a one-time setup: a project wizard (where `context/` lives,
+starting mode, README badge) and a separate personal wizard (proactive vs. explicit-only
+capture, update-check/consistency-check intervals) — see https://keepthewhy.com/setup/. When a
+later skill update changes the `context/` entry format, a `context-schema` version tracked in
+the project's config is compared against the installed skill version and, if behind, offers a
+migration — see https://keepthewhy.com/migrations/. A developer can personally decline being
+asked about one specific migration without affecting the project or anyone else on it.
 
 Produces, inside the project using the skill:
-- `AGENTS.md` — lean entry point, pointers only
+- `AGENTS.md` — lean entry point, pointers only, plus a small machine-readable config block
 - `docs/` — how to use, operate, test, deploy
-- `context/` — why the project is the way it is, organized by topic
-- `AGENTS.local.md` — personal/local notes, not committed
+- `context/` — why the project is the way it is, organized by topic, with its own `README.md`
+- `AGENTS.local.md` — personal preferences and notes, not committed
 
 ## Not a Green Field
 
@@ -94,6 +112,10 @@ no required external service (no database, no MCP server).
   with targeted questions afterward.
 - Don't apply the full decision/alternative/reason write-up to obvious, self-evident choices —
   match documentation depth to how non-obvious the decision actually is.
+- Don't skip recording a change that was considered and then abandoned — that reasoning has no
+  other trace, since nothing gets committed.
+- Don't guess when migrating an old entry to a new `context/` schema and information is missing
+  (e.g. no separate Evidence value recorded) — mark the new field "unknown" and flag for review.
 
 ## Badge
 
@@ -112,6 +134,8 @@ HTML equivalent and details: https://keepthewhy.com/badge/
 - SKILL.md: https://github.com/oliver-zehentleitner/keep-the-why/blob/main/skills/keep-the-why/SKILL.md
 - CHANGELOG: https://github.com/oliver-zehentleitner/keep-the-why/blob/main/CHANGELOG.md
 - Docs: https://keepthewhy.com
+- Setup (project + personal wizards, timer checks): https://keepthewhy.com/setup/
+- Migrations (context-schema version changes): https://keepthewhy.com/migrations/
 - Badge: https://keepthewhy.com/badge/
 - Why this project is built this way: https://keepthewhy.com/context/repo-conventions/
 - Article — origin story and full comparison to prior art: https://blog.technopathy.club/keep-the-why-code-becomes-legacy-when-nobody-remembers-why

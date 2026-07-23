@@ -28,6 +28,8 @@ Keep the Why is a `SKILL.md`-based agent skill — an open, cross-agent format (
 
 First activation in a project runs a short one-time setup instead of guessing at defaults — where the why-knowledge should live, how to start, proactive or explicit-only capture, and whether to periodically check for skill updates or `context/` staleness. See [`docs/setup.md`](docs/setup.md).
 
+Because it's just Markdown in the repo, a `context/` update ships in the same commit or PR as the code change it explains — reviewed the same way, versioned the same way, no separate system to trust or keep in sync.
+
 Where the captured knowledge actually lives, and how it relates to everything else a project already has, is one coherent picture — see "Where this fits" below.
 
 ## Install
