@@ -46,7 +46,7 @@ Before anything else, check for two independent config blocks: a project one (`A
 
 If the timer check finds the update-check interval elapsed: compare the installed `version` (frontmatter above) against the latest release at `repository` (frontmatter above) — don't rely on `references/setup.md` alone for this, the source of truth is right here so the check still works even if that reference file was never loaded. If the check can't run (no web access), don't fail silently forever — say so once and ask whether to keep retrying or turn it off.
 
-Also compare the project config's `context-schema` against the installed `version`. If `context-schema` is behind, check `references/migrations.md` for what changed in between and, if anything applies to existing `context/` entries, discuss with the user whether to migrate now or next session — don't migrate silently, and don't forget to ask again later if deferred. Once caught up (or confirmed nothing applied), advance `context-schema` to match.
+Also compare the project config's `context-schema` against the installed `version`. If `context-schema` is behind, check `references/migrations.md` for what changed in between and, if anything applies to existing `context/` entries, discuss with the user whether to migrate now, defer to next session, or stop asking this particular developer about this specific version (recorded personally, in `AGENTS.local.md` — the project's `context-schema` itself doesn't change until someone actually migrates). Don't migrate silently. Once caught up (or confirmed nothing applied), advance `context-schema` to match.
 
 ### 1. Inspect
 
