@@ -4,6 +4,20 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-07-23
+
+### Fixed
+
+- `version` and `repository` moved from top-level frontmatter fields into `metadata:` (`metadata.version`, `metadata.repository`) in `SKILL.md` — the Agent Skills spec documents `metadata` as the place for custom properties; top-level custom fields aren't part of the spec.
+- The consistency check couldn't actually find triggered `Revisit when` conditions — it was scoped to `context/index.md`, which by design only holds one-line summaries, not the conditions themselves. Now greps `context/*.md` directly for `**Revisit when:**` lines and only opens files that match.
+- A project whose `context-schema` is *ahead* of the installed skill's version was treated the same as "up to date." Now surfaced explicitly (older skill on a newer project) with a recommendation to update, instead of silently proceeding as if there were nothing to check.
+- `repository-structure.md` said "Evidence and Revisit when are not mandatory fields" — contradicted Core rule 2 (Evidence is mandatory for every entry) and the file's own earlier statement. Should have said Verification, not Evidence; fixed, and Core rule 7 now states explicitly that a triggered Revisit when sets Status to needs-review without resetting Evidence.
+- **Source** was described as tied to confirmed claims only (Core rule 2), but the legacy-project example used it with `Evidence: inferred`. Source is now documented as useful at any Evidence level; Verification remains the field for checking a claim against other evidence.
+- The project init wizard's normative steps had the entry-point config block written before the setup questions were asked — reversed from the worked example, which asks first. Reordered to match.
+- Update-check version comparison now explicitly calls for stripping a leading `v` and comparing semantically (`0.9.0` < `0.10.0`), not as strings.
+- `on-failure: retry-quietly` is cleared after a successful update check instead of persisting indefinitely, so a later unrelated failure asks again rather than staying silently suppressed.
+- Dogfooding fixes in this repo's own `context/`: `repo-conventions.md` had a Status value outside the defined enum, and referenced the pre-rename "Autostart preference" instead of `capture-mode`; `context/index.md` undersold `repo-conventions.md` as "operational notes" when it documents process and tooling decisions.
+
 ## [0.3.0] - 2026-07-23
 
 ### Added
@@ -64,7 +78,8 @@ Initial release.
 - Logo, wordmark, and favicon.
 - `context/repo-conventions.md`, dogfooding the skill on its own repository from day one.
 
-[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/oliver-zehentleitner/keep-the-why/releases/tag/v0.1.0

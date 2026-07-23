@@ -38,7 +38,7 @@ For any change to the skill's rules, workflow, or reference docs, check whether 
 
 ## Release checklist (maintainer)
 
-1. Bump `version` in `skills/keep-the-why/SKILL.md` frontmatter
+1. Bump `metadata.version` in `skills/keep-the-why/SKILL.md` frontmatter
 2. Update the `Version:` line in `llms.txt` to match
 3. In `CHANGELOG.md`, rename `[Unreleased]` to `[x.y.z] - YYYY-MM-DD` and add a fresh empty `[Unreleased]` above it
 4. **Verify `skills/keep-the-why/references/migrations.md` already covers every `context/` format change since the last release** — this should already be true if step 3 of the pre-PR checklist was followed each time, but check before tagging, not after. This is the one that must never be found out of sync retroactively.
