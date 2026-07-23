@@ -88,6 +88,8 @@ Re-run whichever install command you used the first time. If you pinned to `late
 
 Start a new session afterward, same as a fresh install — a session already in progress keeps whatever `SKILL.md` it already loaded and won't pick up the update mid-conversation. To confirm the update actually took, check the `metadata.version` field in your installed `skills/keep-the-why/SKILL.md`, or ask your agent to report it.
 
+This is separate from whether your project's own `context/` needs anything done to it. Updating the skill replaces its own files wholesale — nothing to do on your side just because a release changed how `SKILL.md` describes itself internally. A release only asks something of your project when it changes the *format* of `context/` entries, tracked via `context-schema` in your `AGENTS.md` — see `setup.md` and `migrations.md`. The two are independent: a release can update the skill's own frontmatter shape (as `0.3.1` did) without touching `context-schema` at all.
+
 ## Verifying it loaded
 
 Start a session in a project where the skill is installed and ask something that should trigger it, e.g. "why does this workaround exist, and can you document it?" If it doesn't seem to activate, double-check that `SKILL.md` sits directly inside the skill folder (not nested deeper) and that the folder name matches `name: keep-the-why` in the frontmatter exactly.

@@ -148,5 +148,10 @@
     "id": "update-check-version-comparison-is-semantic",
     "prompt": "The installed skill's metadata.version is '0.9.0'. The update check's API response has tag_name 'v0.10.0'.",
     "expected_behavior": "Strips the leading 'v' from the tag and compares the versions semantically, recognizing 0.10.0 is newer than 0.9.0 - not a naive string or floating-point comparison that would wrongly treat 0.9.0 as larger than 0.10.0, and not treating 'v0.10.0' != '0.9.0' as a meaningless mismatch."
+  },
+  {
+    "id": "consistency-check-respects-configured-context-path",
+    "prompt": "The project config block has 'context: `docs/why/`' (not the default `context/`). The consistency-check interval has elapsed.",
+    "expected_behavior": "Scopes the Revisit when search to docs/why/ (the configured location), not a hardcoded context/ directory that doesn't exist in this project. Searches recursively in case the project has split it into subsystem subdirectories."
   }
 ]
