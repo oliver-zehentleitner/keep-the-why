@@ -3,7 +3,7 @@
 ## Automation tokens need the `workflow` OAuth scope to push workflow files
 
 **Status:** active, operational constraint (not a design choice)
-**Confirmed**
+**Evidence:** confirmed
 
 Any push that touches `.github/workflows/*.yml` is rejected by GitHub unless the pushing credential has the `workflow` OAuth scope — this is independent of the `repo` scope and applies to any token or bot/automation account that lacks it, not specific to this repo.
 
@@ -12,7 +12,7 @@ Any push that touches `.github/workflows/*.yml` is rejected by GitHub unless the
 ## The installable skill lives under `skills/keep-the-why/`, not at the repo root
 
 **Status:** active
-**Confirmed**
+**Evidence:** confirmed
 
 `SKILL.md`, `references/`, `examples/`, and `evals/` moved from the repo root into `skills/keep-the-why/`. Everything else (`docs/`, `mkdocs.yml`, `context/`, CI config) stays at the root — it's this project's own site and self-documentation, not part of what gets installed into someone else's project.
 
@@ -25,7 +25,7 @@ It also fixes a second, independent problem: cloning this whole repository into 
 ## Launch-readiness pass: SKILL.md trimmed, negative evals added, README reordered
 
 **Status:** active
-**Confirmed**
+**Evidence:** confirmed
 
 Four changes made together ahead of publishing to skill marketplaces: `SKILL.md` cut from ~2100 to ~1580 words (merged redundant rules, tightened the Record workflow step instead of restating rules 9/13 in full); six negative-case evals added (routine changes that shouldn't trigger the skill, an already-good doc structure that shouldn't be rebuilt, conflicting sources, a secret in an interview answer, a stale confirmed decision past its revisit trigger); README reordered so Install and a concrete Example come right after the pitch, with the longer "Problem" and "Where this fits" sections moved below instead of gating the actionable content; and social preview meta tags (Open Graph/Twitter card, pointing at the existing logo) added via a small `overrides/main.html` template.
 
@@ -36,7 +36,7 @@ Four changes made together ahead of publishing to skill marketplaces: `SKILL.md`
 ## Setup/init state is tracked opportunistically, not via a real background schedule
 
 **Status:** active
-**Confirmed**
+**Evidence:** confirmed
 
 The skill's periodic checks (update availability, `context/` staleness) run as an "elapsed time since last check" comparison evaluated whenever the skill is already active in a session — not a true OS-level scheduled job (`cron`, Task Scheduler) that wakes something up on its own.
 
@@ -47,7 +47,7 @@ The skill's periodic checks (update availability, `context/` staleness) run as a
 ## Config state lives in delimited blocks inside existing entry-point files, not a separate file
 
 **Status:** active
-**Confirmed**
+**Evidence:** confirmed
 
 Setup state is written into `<!-- keep-the-why:config -->` / `<!-- keep-the-why:local -->` blocks inside files the project already has a reason to read (`AGENTS.md` and `AGENTS.local.md`), not a dedicated state file.
 
@@ -58,7 +58,7 @@ Setup state is written into `<!-- keep-the-why:config -->` / `<!-- keep-the-why:
 ## Setup state splits across a project block and a personal block
 
 **Status:** active
-**Confirmed**
+**Evidence:** confirmed
 
 Where `context/` lives and whether the project has been initialized are in the committed `AGENTS.md` config block. Autostart preference, and the update-check/consistency-check intervals and their last-run timestamps, are in the personal, uncommitted `AGENTS.local.md` block instead. A project can be `init: complete` while a specific developer still gets asked their own preferences, if they don't have an `AGENTS.local.md` yet.
 
@@ -69,7 +69,7 @@ Where `context/` lives and whether the project has been initialized are in the c
 ## Update-check failures get surfaced once, not swallowed indefinitely
 
 **Status:** active
-**Confirmed**
+**Evidence:** confirmed
 
 If the update check can't run (no web access this session), the first failure is reported and the user is asked whether to keep retrying each session or turn the check off. Subsequent identical failures don't re-ask.
 
