@@ -4,13 +4,23 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-07-23
+
 ### Added
 
 - `context/` entries now track **Status** (active, superseded, open, needs-review) separately from **Evidence** (confirmed, inferred, unknown) — previously "superseded" was mixed into the evidence classification as if it were a fourth confidence level, when it's really a different question (is this still current, vs. how well is it backed).
 - Optional **Source** and **Verification** fields for confirmed entries whose claim is worth tracing or could be checked against other evidence. A `contradicted` verification must explain what contradicts it, not just carry the label.
 - `context-schema` field in the project config block, tracking which version's `context/` entry format is in use — separate from the installed skill version, since not every release changes the format.
 - `references/migrations.md`: what changed and how to update existing `context/` entries, checked automatically when `context-schema` falls behind the installed version.
+- A developer can personally decline being asked about one specific `context-schema` migration (`migration-prompt: <version> declined` in `AGENTS.local.md`) without affecting the project or any other developer.
+- Continuous capture now includes the abandoned change as its own signal: starting to modify or remove something, then stopping after discovering why it shouldn't be touched — reasoning that would otherwise leave no trace, since nothing gets committed.
 - This `CHANGELOG.md` — the README already promised one in its "Where this fits" table; it just didn't exist.
+- `CONTRIBUTING.md` gained a pre-PR checklist (which files to check for staleness on a change) and a release checklist.
+
+### Changed
+
+- The proportionality gate (rule 12) sharpened with a concrete example pair ("prevents a breaking API change" earns an entry, "formats the code more nicely" doesn't) and now explicitly allows a quick yes/no question when it's genuinely unclear whether something is worth documenting — asking isn't a violation of staying low-effort.
+- README and `llms.txt` now state directly that a `context/` update ships in the same commit or PR as the code it explains — reviewed and versioned the same way, no separate system to trust or keep in sync.
 
 ## [0.2.0] - 2026-07-21
 
@@ -54,6 +64,7 @@ Initial release.
 - Logo, wordmark, and favicon.
 - `context/repo-conventions.md`, dogfooding the skill on its own repository from day one.
 
-[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/oliver-zehentleitner/keep-the-why/releases/tag/v0.1.0
