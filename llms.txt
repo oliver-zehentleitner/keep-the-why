@@ -18,7 +18,7 @@ Because it's just Markdown in the repo, a `context/` update ships in the same co
 the code change it explains — reviewed the same way, versioned the same way, no separate
 system to trust or keep in sync.
 
-Version: 0.2.0.
+Version: 0.3.0.
 
 ## Authorship & License
 
