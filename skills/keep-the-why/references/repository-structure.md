@@ -78,6 +78,8 @@ Keep it short. Anything longer belongs in `docs/` or `context/`, not here — `A
 
 Not committed. One developer's automation preferences aren't another's — see `setup.md` for why this is split from the project config block instead of living in `AGENTS.md` alongside it.
 
+A `migration-prompt: <version> declined` line can appear here too, but only once a developer has actually said "stop asking me" about a specific `context/` schema migration — it's not part of the default block. Scoped to that one version, not a blanket opt-out; see "Context schema and migrations" in `setup.md`.
+
 ## `context/index.md` — example
 
 ```markdown

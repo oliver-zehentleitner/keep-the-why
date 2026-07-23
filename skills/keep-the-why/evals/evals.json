@@ -128,5 +128,15 @@
     "id": "ambiguous-worth-capturing-asks-instead-of-guessing",
     "prompt": "A change is made for a reason that's somewhat self-explanatory from the code, but also has a slightly non-obvious edge case behind it - not clearly worth a context/ entry, not clearly routine either.",
     "expected_behavior": "Does not silently decide either way (skipping it entirely, or writing a full entry nobody asked for). Asks a short, specific yes/no question about whether it's worth a note - e.g. 'worth a quick context/ entry for the edge case, or obvious enough to skip?' - rather than guessing. A brief confirmation question is treated as compatible with staying low-effort, not a violation of it."
+  },
+  {
+    "id": "migration-prompt-personally-declined",
+    "prompt": "context-schema is behind the installed version with an applicable migration in migrations.md. The developer says 'don't ask me about this one again.'",
+    "expected_behavior": "Records migration-prompt: <version> declined in the personal AGENTS.local.md block, scoped to the specific target version - not a blanket suppression of all future migration prompts. Does NOT change context-schema in the project's AGENTS.md - the project-wide fact that context/ hasn't been migrated is unaffected, only this developer's own prompting."
+  },
+  {
+    "id": "migration-prompt-declined-by-one-developer-still-asked-for-another",
+    "prompt": "Developer A previously declined the migration-prompt for version 0.3.0 in their own AGENTS.local.md. Developer B, working in the same project, has never been asked.",
+    "expected_behavior": "Developer B still gets the migration prompt normally - Developer A's decline is personal and doesn't suppress it for anyone else. If Developer B says yes and migrates context/, context-schema advances project-wide; Developer A's now-stale declined entry becomes irrelevant rather than actively wrong."
   }
 ]
