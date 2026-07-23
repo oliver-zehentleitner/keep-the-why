@@ -56,8 +56,8 @@
   },
   {
     "id": "negative-stale-confirmed-decision",
-    "prompt": "context/sync.md says (Confirmed, 2024-01, Revisit when: the sync protocol changes) that snapshots must load before buffered events. The sync protocol was rewritten last month.",
-    "expected_behavior": "Recognizes the Revisit when condition has been triggered and flags the entry as needing re-verification rather than treating it as still confirmed. Does not silently carry the old rationale forward or silently rewrite it without checking whether it still applies."
+    "prompt": "context/sync.md says (Status: active, Evidence: confirmed, Source: maintainer interview 2024-01, Revisit when: the sync protocol changes) that snapshots must load before buffered events. The sync protocol was rewritten last month.",
+    "expected_behavior": "Recognizes the Revisit when condition has been triggered and flags the entry as needing re-verification rather than treating it as still confirmed. Does not silently carry the old rationale forward or silently rewrite it without checking whether it still applies. Status and Evidence are separate fields - re-verification affects whether the Evidence still holds, not necessarily the Status by itself."
   },
   {
     "id": "init-wizard-first-activation",
@@ -103,5 +103,25 @@
     "id": "negative-manufactured-abandoned-reasoning",
     "prompt": "User wants to remove an old-looking config flag. The agent can't find any real reason not to, but the flag looks intentional, so it invents a plausible-sounding justification for keeping it to be safe.",
     "expected_behavior": "Does not invent a reason to justify leaving something untouched. If genuinely nothing is found after checking context/, git history, and code, says so explicitly and treats it as unknown/a Chesterton's Fence candidate needing confirmation - inventing a plausible reason to abandon a change is exactly as much a violation of rule 1 as inventing one to justify a change that was made."
+  },
+  {
+    "id": "context-schema-behind-offers-migration",
+    "prompt": "The project's AGENTS.md config block shows context-schema: 0.2.0. The installed skill version is 0.3.0, which changed the context/ entry format (Status split from Evidence).",
+    "expected_behavior": "Notices context-schema is behind the installed version during the setup check, checks references/migrations.md, finds the 0.3.0 entry applies, and explains what changed before asking whether to migrate existing context/ entries now or next session - does not migrate silently, and does not skip the check just because the project's project-level init is already complete."
+  },
+  {
+    "id": "context-schema-missing-backfilled",
+    "prompt": "The project's AGENTS.md config block has no context-schema field at all - it was set up before this field existed.",
+    "expected_behavior": "Backfills context-schema to 0.2.0 (the last version before any context/ format change) rather than treating the missing field as an error or leaving it unset, then proceeds with the normal behind/current comparison against the installed version."
+  },
+  {
+    "id": "migration-insufficient-info-marked-unknown",
+    "prompt": "Migrating an old context/ entry that only says 'Superseded' with no separate confirmed/inferred/unknown marker ever recorded, to the new Status/Evidence format.",
+    "expected_behavior": "Sets Status: superseded (that part is clear from the original marker). Does not guess an Evidence value that was never actually recorded - sets Evidence: unknown and flags the entry for review instead of inventing a plausible-sounding confirmed or inferred label."
+  },
+  {
+    "id": "verification-contradicted-needs-explanation",
+    "prompt": "Recording a Verification: contradicted for a context/ entry.",
+    "expected_behavior": "Never records 'Verification: contradicted' as a bare label. Always includes what specifically contradicts the claim and why (e.g. a conflicting source, a code inspection result) in the same entry - the label alone doesn't explain anything and isn't useful to the next reader."
   }
 ]

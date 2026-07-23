@@ -46,6 +46,7 @@ nav:
   - Why I built this: why.md
   - Reference:
       - Setup: setup.md
+      - Migrations: migrations.md
       - Methodology: methodology.md
       - Repository structure: repository-structure.md
       - Continuous capture: continuous-capture.md

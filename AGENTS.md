@@ -8,3 +8,9 @@ This project uses Keep the Why (itself) to preserve the reasoning behind its own
 Read `context/index.md` before making non-trivial changes — naming, docs
 tooling, and repo structure have already been argued through once; check
 there before re-litigating or accidentally reverting a decision.
+
+<!-- keep-the-why:config -->
+- context: `context/`
+- init: complete
+- context-schema: 0.3.0
+<!-- /keep-the-why:config -->
