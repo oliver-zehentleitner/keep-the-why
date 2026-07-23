@@ -86,7 +86,7 @@ Start a new session afterward so the skill is picked up.
 
 Re-run whichever install command you used the first time. If you pinned to `latest`, that's enough — it always resolves to the newest release. If you pinned to an exact version, swap in the new tag. A plain `git pull` doesn't work if you copied the folder out of a scratch clone rather than cloning directly into place.
 
-Start a new session afterward, same as a fresh install — a session already in progress keeps whatever `SKILL.md` it already loaded and won't pick up the update mid-conversation. To confirm the update actually took, check the `version:` field in your installed `skills/keep-the-why/SKILL.md`, or ask your agent to report it.
+Start a new session afterward, same as a fresh install — a session already in progress keeps whatever `SKILL.md` it already loaded and won't pick up the update mid-conversation. To confirm the update actually took, check the `metadata.version` field in your installed `skills/keep-the-why/SKILL.md`, or ask your agent to report it.
 
 ## Verifying it loaded
 

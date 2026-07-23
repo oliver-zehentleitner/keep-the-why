@@ -77,3 +77,14 @@ If the update check can't run (no web access this session), the first failure is
 
 **Rejected alternative:** always skip silently on failure (the first version). Rejected because it can't be distinguished from "checked, nothing new" — the two states look identical to the user, and one of them is worth knowing about.
 
+
+## `context-schema` always tracks the released version, even when nothing migrated
+
+**Status:** active
+**Evidence:** confirmed
+
+Every release advances this repo's own `context-schema` (in this file's config block) to match the just-released `metadata.version`, even when that release introduced no `context/` entry format change — not just when `migrations.md` had something to apply.
+
+**Reason:** during the 0.3.1 release, `context-schema` was left at `0.3.0` because nothing in `migrations.md` applied to the 0.3.0→0.3.1 gap — but "nothing to migrate" and "don't advance the number" are different things. Leaving it behind made a later external review flag it as if the skill's own schema-comparison logic were broken, when the actual bug was simpler: the release process itself skipped the catch-up step that `setup.md`'s existing behind-case logic already calls for.
+
+**Rejected alternative:** a separate `metadata.context-schema` field in `SKILL.md`, decoupled from `metadata.version`, so schema and release versioning could drift independently. Rejected — the existing single-version-axis model (check for applicable migrations, advance the number whether or not anything applied) already does everything a second version field would, without a second number to keep in sync.

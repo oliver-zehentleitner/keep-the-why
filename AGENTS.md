@@ -12,5 +12,5 @@ there before re-litigating or accidentally reverting a decision.
 <!-- keep-the-why:config -->
 - context: `context/`
 - init: complete
-- context-schema: 0.3.0
+- context-schema: 0.3.1
 <!-- /keep-the-why:config -->
