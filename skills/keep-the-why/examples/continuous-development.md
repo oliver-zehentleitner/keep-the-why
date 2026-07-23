@@ -15,7 +15,8 @@ Mid-session, working on a Python service. The retry logic for an external API ca
     ## Retry mechanism (updated 2026-07-10)
 
     **Status:** active
-    **Confirmed** (stated directly by the user during the change)
+    **Evidence:** confirmed
+    **Source:** stated directly by the user during the change
 
     Order submission retries now use idempotency keys instead of blind
     retry-on-timeout.

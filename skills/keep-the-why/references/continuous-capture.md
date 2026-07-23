@@ -18,6 +18,12 @@ Don't capture:
 - decisions that are genuinely still open/undecided — note them as unknown or open instead of writing them up as settled
 - anything speculative ("we might want to X later") unless it's actively shaping a decision made now
 
+## The abandoned change is its own signal
+
+Not every capture-worthy moment ends with a code change. Starting to modify or remove something, then stopping once a subtle reason not to becomes clear — a hidden dependency, a workaround that looked unnecessary but wasn't — is often exactly the moment worth recording, precisely because nothing else will: no diff, no commit, no PR ever points back to reasoning that stopped a change before it happened. Without capturing it here, that insight has to be painfully rediscovered next time, which is the whole Chesterton's Fence problem repeating itself.
+
+Capture it the same way as a completed decision: what was about to change, what stopped it, and why — even though the code itself ends up looking untouched.
+
 ## When to write, during a session
 
 Write the update at the point the rationale becomes clear — usually right after a decision is made or a workaround is explained, not batched up at the end of a long session where detail gets lost. If a topic file for the relevant subject already exists, update it in place rather than waiting to create a new one.

@@ -99,8 +99,8 @@ Keep entries to one line each. This file exists so an agent can decide what to l
 ## Snapshot-before-buffer ordering
 
 **Status:** active
-**Confirmed** (2026-03-14, via maintainer interview)
-**Evidence:** incident postmortem 2025-11, `incidents.md`
+**Evidence:** confirmed
+**Source:** maintainer interview, 2026-03-14; incident postmortem 2025-11, `incidents.md`
 **Revisit when:** the sync protocol or snapshot mechanism changes
 
 The sync step always waits for a full snapshot before applying any
@@ -118,7 +118,17 @@ right and the incident showed it wasn't actually needed if ordering
 was enforced instead.
 ```
 
-Not every entry needs every field, but treat the decision as a fork, not a single point: what was chosen, and what specifically was rejected and why. The status/confirmed-or-inferred markers and the rejected-alternative are the two things worth keeping even in a minimal entry — the rejected alternative especially, since "we chose X" without "we didn't choose Y, because Z" is usually the less useful half of the story. It's what prevents the next person (or agent) from re-deriving or re-breaking the same thing (see Core rule 6 in `SKILL.md`).
+Not every entry needs every field, but treat the decision as a fork, not a single point: what was chosen, and what specifically was rejected and why. Status, Evidence, and the rejected-alternative are the things worth keeping even in a minimal entry — the rejected alternative especially, since "we chose X" without "we didn't choose Y, because Z" is usually the less useful half of the story. It's what prevents the next person (or agent) from re-deriving or re-breaking the same thing (see Core rule 6 in `SKILL.md`). Status and Evidence are independent (Core rules 2 and 7) — a `superseded` entry can still show `confirmed` for what was true while it was active.
+
+**Verification**, when there's something concrete to check a confirmed claim against, goes the same place Source does:
+
+```markdown
+**Evidence:** confirmed
+**Source:** maintainer interview, 2026-03-14
+**Verification:** contradicted — the interview said retries max out at 3;
+the actual retry loop in `client.py` caps at 5. Flagged for re-confirmation,
+not silently corrected either way.
+```
 
 **Evidence** and **Revisit when** are worth adding once a decision has a concrete trigger for going stale (a dependency, a protocol version, an external constraint that could change). They're not mandatory fields for everything — per the proportionality gate in `SKILL.md`, add them when there's a real answer, not as filler. This is also the mechanism for the "rationale decays" risk named in the README: a **Revisit when** condition gives a future reader (or agent) something concrete to check, rather than just hoping someone remembers to re-verify.
 

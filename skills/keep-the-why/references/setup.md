@@ -12,8 +12,11 @@ Setup state splits across two files, matching the existing `AGENTS.md`/`AGENTS.l
 <!-- keep-the-why:config -->
 - context: `context/`
 - init: complete
+- context-schema: 0.2.0
 <!-- /keep-the-why:config -->
 ```
+
+`context-schema` tracks which version's `context/` entry format is in use — separate from the installed skill `version`, because not every skill release changes the format (see "Context schema and migrations" below).
 
 **Personal config**, in `AGENTS.local.md`, not committed, one per developer:
 
@@ -39,7 +42,7 @@ Where the why-knowledge lives and whether the project has been set up at all are
 
 ## Project init wizard (once per project)
 
-1. Create or update the entry-point file with the project config block.
+1. Create or update the entry-point file with the project config block, including `context-schema` set to the currently installed skill `version` (frontmatter in `SKILL.md`) — a freshly created or newly adopted `context/` is up to date with the current format by definition, nothing to migrate.
 2. Ask, in one pass:
    - Where should the why-knowledge live? Default `context/`; anything else is fine.
    - How do you want to start: capture from now on only, work through existing history now (retrospective recovery), sit down for an interview now, or some combination?
@@ -89,3 +92,16 @@ If checking isn't possible (no web access this session): don't fail silently for
 **Consistency check.** If `consistency-check` is enabled and the interval has elapsed: look for entries whose `Revisit when` condition (see `repository-structure.md`) has actually been triggered — not just entries that are merely old. Age alone isn't a defect; an untriggered old entry is still accurate. Scope the check to what `context/index.md` already summarizes rather than opening every topic file — the index exists precisely so this kind of check stays cheap. If something's genuinely triggered, surface it and ask whether to address it now. Update `last` regardless of outcome.
 
 Keep both checks quiet when there's nothing to report. The point is catching real drift, not adding a second source of noise on top of the problem this skill exists to solve.
+
+## Context schema and migrations (every session, not interval-gated)
+
+Unlike the two timers above, this isn't opportunistic on an elapsed interval — it's a plain version comparison, checked every session:
+
+1. Compare the project config's `context-schema` against the installed skill `version`.
+2. **Missing entirely** (a project set up before this field existed): backfill it to `0.2.0` — the last version before any `context/` entry format changed — then continue to step 3 as normal.
+3. **`context-schema` equal to or ahead of `version`** → nothing to do.
+4. **`context-schema` behind `version`** → check `references/migrations.md` for entries between the two. If none apply to existing `context/` content, just advance `context-schema` to match `version`. If some do apply: explain what changed and what migrating would involve, then ask whether to do it now or next session.
+   - **Now** → apply the migration steps from `migrations.md` to the affected `context/` entries, then advance `context-schema` to `version`.
+   - **Later** → leave `context-schema` as is and ask again next session; don't silently drop the question, and don't nag about it more than once per session either.
+
+When a migration touches an existing entry that doesn't have enough information to fill in a new field confidently (e.g. an old entry marked only "Superseded" with no separate Evidence value recorded) — don't guess. Set the new field to `unknown` and flag the entry for review, consistent with rule 1.

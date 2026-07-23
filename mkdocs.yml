@@ -46,6 +46,7 @@ nav:
   - Why I built this: why.md
   - Reference:
       - Setup: setup.md
+      - Migrations: migrations.md
       - Methodology: methodology.md
       - Repository structure: repository-structure.md
       - Continuous capture: continuous-capture.md
@@ -54,6 +55,7 @@ nav:
   - Examples:
       - First-time setup: examples/first-time-setup.md
       - Continuous development: examples/continuous-development.md
+      - Abandoned change: examples/abandoned-change.md
       - Legacy project: examples/legacy-project.md
       - Developer handover: examples/developer-handover.md
   - "Why this project is built this way":
