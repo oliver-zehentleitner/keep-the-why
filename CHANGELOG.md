@@ -10,6 +10,11 @@ All notable changes to this project are documented here. Format follows [Keep a 
 - This repo's own `context-schema` was left at `0.3.0` after the `0.3.1` release, even though nothing in `migrations.md` applied to that gap — the release checklist only mentioned advancing `context-schema` when a migration was needed, not also when nothing was. Fixed the checklist wording and caught this repo's own `context-schema` up to `0.3.1` (see `context/repo-conventions.md`).
 - `docs/installation.md` still referenced the pre-0.3.1 top-level `version:` frontmatter field instead of `metadata.version`.
 
+### Added
+
+- `docs/installation.md` and `llms.txt` now state explicitly that updating the skill itself (new `metadata.version`, frontmatter shape changes) is independent of `context-schema`/migrations — a release only asks something of a project when the `context/` entry format actually changes.
+- New eval case covering the fixed consistency-check path bug: a project with `context:` pointing somewhere other than the default `context/`.
+
 ## [0.3.1] - 2026-07-23
 
 ### Fixed

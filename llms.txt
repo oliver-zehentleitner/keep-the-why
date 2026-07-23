@@ -81,9 +81,12 @@ First activation in a project runs a one-time setup: a project wizard (where `co
 starting mode, README badge) and a separate personal wizard (proactive vs. explicit-only
 capture, update-check/consistency-check intervals) — see https://keepthewhy.com/setup/. When a
 later skill update changes the `context/` entry format, a `context-schema` version tracked in
-the project's config is compared against the installed skill version and, if behind, offers a
-migration — see https://keepthewhy.com/migrations/. A developer can personally decline being
-asked about one specific migration without affecting the project or anyone else on it.
+the project's config is compared against the installed skill's `metadata.version` and, if
+behind, offers a migration — see https://keepthewhy.com/migrations/. A developer can personally
+decline being asked about one specific migration without affecting the project or anyone else
+on it. Updating the skill itself (new `metadata.version`, new frontmatter shape, etc.) is
+independent of this — it only asks something of a project when the `context/` entry format
+actually changes.
 
 Produces, inside the project using the skill:
 - `AGENTS.md` — lean entry point, pointers only, plus a small machine-readable config block
