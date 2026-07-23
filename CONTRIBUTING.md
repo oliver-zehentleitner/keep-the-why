@@ -42,7 +42,7 @@ For any change to the skill's rules, workflow, or reference docs, check whether 
 2. Update the `Version:` line in `llms.txt` to match
 3. In `CHANGELOG.md`, rename `[Unreleased]` to `[x.y.z] - YYYY-MM-DD` and add a fresh empty `[Unreleased]` above it
 4. **Verify `skills/keep-the-why/references/migrations.md` already covers every `context/` format change since the last release** — this should already be true if step 3 of the pre-PR checklist was followed each time, but check before tagging, not after. This is the one that must never be found out of sync retroactively.
-5. If this repo's own `context-schema` (in `AGENTS.md`) is behind the version just released and something in `migrations.md` applies to `context/repo-conventions.md`: migrate it now, dogfooding the same process a user would go through
+5. This repo's own `context-schema` (in `AGENTS.md`) must never trail the version just released, same as `setup.md`'s "context-schema behind metadata.version" logic requires of any project: if something in `migrations.md` applies to `context/repo-conventions.md`, migrate it now (dogfooding the same process a user would go through), then advance `context-schema` to match. If nothing applies, still advance `context-schema` to match — don't leave it pointing at an older version just because there was nothing to migrate.
 6. Tag `vX.Y.Z` and push the tag — the `GH Release` workflow creates the release and moves the `latest` tag automatically
 
 Oliver runs this personally, or asks the assisting agent to run it on his explicit request for a specific version — never triggered on its own initiative just because a PR merged.

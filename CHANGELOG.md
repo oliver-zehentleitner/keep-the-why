@@ -4,6 +4,12 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Fixed
+
+- The consistency check's `Revisit when` search was hardcoded to `context/*.md` — a leftover from the previous fix that didn't account for a project choosing a different why-knowledge location or splitting it into subsystem subdirectories. Now greps recursively under whatever the project config's `context:` value actually is.
+- This repo's own `context-schema` was left at `0.3.0` after the `0.3.1` release, even though nothing in `migrations.md` applied to that gap — the release checklist only mentioned advancing `context-schema` when a migration was needed, not also when nothing was. Fixed the checklist wording and caught this repo's own `context-schema` up to `0.3.1` (see `context/repo-conventions.md`).
+- `docs/installation.md` still referenced the pre-0.3.1 top-level `version:` frontmatter field instead of `metadata.version`.
+
 ## [0.3.1] - 2026-07-23
 
 ### Fixed
