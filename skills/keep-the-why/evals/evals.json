@@ -57,7 +57,7 @@
   {
     "id": "negative-stale-confirmed-decision",
     "prompt": "context/sync.md says (Status: active, Evidence: confirmed, Source: maintainer interview 2024-01, Revisit when: the sync protocol changes) that snapshots must load before buffered events. The sync protocol was rewritten last month.",
-    "expected_behavior": "Recognizes the Revisit when condition has been triggered and flags the entry as needing re-verification rather than treating it as still confirmed. Does not silently carry the old rationale forward or silently rewrite it without checking whether it still applies. Status and Evidence are separate fields - re-verification affects whether the Evidence still holds, not necessarily the Status by itself."
+    "expected_behavior": "Recognizes the Revisit when condition has been triggered and sets Status to needs-review rather than leaving it active or treating it as still fully trustworthy. Evidence stays confirmed until the entry is actually re-checked — the trigger alone doesn't reset Evidence, it flags the entry for review. Does not silently carry the old rationale forward or silently rewrite it without checking whether it still applies."
   },
   {
     "id": "init-wizard-first-activation",
@@ -138,5 +138,15 @@
     "id": "migration-prompt-declined-by-one-developer-still-asked-for-another",
     "prompt": "Developer A previously declined the migration-prompt for version 0.3.0 in their own AGENTS.local.md. Developer B, working in the same project, has never been asked.",
     "expected_behavior": "Developer B still gets the migration prompt normally - Developer A's decline is personal and doesn't suppress it for anyone else. If Developer B says yes and migrates context/, context-schema advances project-wide; Developer A's now-stale declined entry becomes irrelevant rather than actively wrong."
+  },
+  {
+    "id": "context-schema-ahead-of-installed-skill",
+    "prompt": "AGENTS.md's config block has 'context-schema: 0.4.0'. The installed skill's SKILL.md frontmatter says metadata.version: 0.3.0.",
+    "expected_behavior": "Does not treat this the same as context-schema being equal to or behind the installed version. Recognizes the installed skill is older than what the project's context/ was set up or migrated with, says so once, and recommends updating the skill rather than silently proceeding. Avoids writing to existing context/ entries until this is resolved, since an older skill may misinterpret a newer entry format. Does not attempt to 'migrate' anything - there's nothing to migrate, the skill itself needs to catch up."
+  },
+  {
+    "id": "update-check-version-comparison-is-semantic",
+    "prompt": "The installed skill's metadata.version is '0.9.0'. The update check's API response has tag_name 'v0.10.0'.",
+    "expected_behavior": "Strips the leading 'v' from the tag and compares the versions semantically, recognizing 0.10.0 is newer than 0.9.0 - not a naive string or floating-point comparison that would wrongly treat 0.9.0 as larger than 0.10.0, and not treating 'v0.10.0' != '0.9.0' as a meaningless mismatch."
   }
 ]

@@ -2,10 +2,10 @@
 
 ## Automation tokens need the `workflow` OAuth scope to push workflow files
 
-**Status:** active, operational constraint (not a design choice)
+**Status:** active
 **Evidence:** confirmed
 
-Any push that touches `.github/workflows/*.yml` is rejected by GitHub unless the pushing credential has the `workflow` OAuth scope — this is independent of the `repo` scope and applies to any token or bot/automation account that lacks it, not specific to this repo.
+An operational constraint, not a design choice: any push that touches `.github/workflows/*.yml` is rejected by GitHub unless the pushing credential has the `workflow` OAuth scope — this is independent of the `repo` scope and applies to any token or bot/automation account that lacks it, not specific to this repo.
 
 **Workaround:** if the pushing credential lacks the `workflow` scope, prepare the workflow file's content separately and have someone with appropriate access add it manually (via the GitHub UI or their own credentials), while pushing everything else in the same change normally by excluding just the workflow file from that commit.
 
@@ -60,7 +60,7 @@ Setup state is written into `<!-- keep-the-why:config -->` / `<!-- keep-the-why:
 **Status:** active
 **Evidence:** confirmed
 
-Where `context/` lives and whether the project has been initialized are in the committed `AGENTS.md` config block. Autostart preference, and the update-check/consistency-check intervals and their last-run timestamps, are in the personal, uncommitted `AGENTS.local.md` block instead. A project can be `init: complete` while a specific developer still gets asked their own preferences, if they don't have an `AGENTS.local.md` yet.
+Where `context/` lives and whether the project has been initialized are in the committed `AGENTS.md` config block. Capture-mode preference, and the update-check/consistency-check intervals and their last-run timestamps, are in the personal, uncommitted `AGENTS.local.md` block instead. A project can be `init: complete` while a specific developer still gets asked their own preferences, if they don't have an `AGENTS.local.md` yet.
 
 **Reason:** the first version bundled everything into one committed block. Oliver pointed out that capture-mode and check-interval preferences are individual workflow choices, not project facts — one developer wanting weekly update checks and another wanting none are both fine, and forcing one answer onto everyone (or making it a merge-conflict-prone shared timestamp several sessions race to update) doesn't fit the existing `AGENTS.md`/`AGENTS.local.md` boundary this project already draws for exactly this kind of distinction.
 

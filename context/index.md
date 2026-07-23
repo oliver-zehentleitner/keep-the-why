@@ -2,4 +2,4 @@
 
 Why this project is built the way it is.
 
-- [repo-conventions.md](repo-conventions.md) — operational notes on working with this repo
+- [repo-conventions.md](repo-conventions.md) — process and tooling decisions behind how this repo is built and released
