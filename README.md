@@ -44,7 +44,7 @@ Where the captured knowledge actually lives, and how it relates to everything el
 npx skills add https://github.com/oliver-zehentleitner/keep-the-why/tree/latest/skills/keep-the-why
 ```
 
-Prompts for which of its 70+ supported agents (Claude Code, Codex, OpenCode, and more) and scope to install for, then symlinks or copies the skill package in. Also listed on [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why). Start a new session afterward so the skill is picked up.
+Prompts you to select one of 70+ supported agents (Claude Code, Codex, OpenCode, and more) and choose whether to install the skill at project or personal scope, then symlinks or copies the skill package in. Also listed on [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why). Start a new session afterward so the skill is picked up.
 
 <details markdown="1">
 <summary>Other install methods — GitHub CLI, manual clone, agent-specific paths</summary>
