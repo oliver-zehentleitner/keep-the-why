@@ -1,0 +1,25 @@
+name: Validate Skill
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install skills-ref
+        run: pip install skills-ref
+
+      - name: Validate SKILL.md against the Agent Skills spec
+        run: skills-ref validate skills/keep-the-why
+
+      - name: Validate evals.json is well-formed
+        run: python -m json.tool skills/keep-the-why/evals/evals.json >/dev/null

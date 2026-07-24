@@ -18,6 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
 
       - name: Package skill
         run: |
@@ -35,5 +37,6 @@ jobs:
 
       - name: Move latest tag
         run: |
-          git tag -f latest
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          git tag -f latest "$TAG"
           git push origin latest --force
