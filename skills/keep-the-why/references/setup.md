@@ -155,13 +155,29 @@ Only confirmed items get written either way. `confirmation-flow` changes nothing
 `capture-confirmation` and `confirmation-flow` apply everywhere the skill is about to write to `context/`, not just continuous capture:
 
 - **Continuous capture** — the usual case: a decision lands mid-conversation, the settings decide the confirmation step before it's written.
-- **Retrospective recovery** — once the agent reconstructs a candidate rationale from git history or issues, the same settings apply before it's written — and reconstructing several candidates from one pass is exactly the case `confirmation-flow: batch` is for.
-- **Knowledge-transfer interview** — free narration doesn't get written down unfiltered. The agent still extracts decision-forks, classifies Evidence and checks proportionality for each one, and *then* the same confirmation settings apply per candidate before anything lands in `context/`. `confirm-always` is often the natural fit here, since a live dialogue is already happening — but `automatic` is still valid if the person being interviewed says so explicitly.
+- **Retrospective recovery** — once the agent reconstructs a candidate rationale from git history or issues, the same settings apply before it's written. This mode routinely surfaces several candidates from one pass, which is exactly what `confirmation-flow` decides how to present — `sequential` walks through them one at a time, `batch` presents them together; both are equally valid, whichever the developer set.
+- **Knowledge-transfer interview** — free narration doesn't get written down unfiltered. The agent still extracts decision-forks, classifies Evidence and checks proportionality for each one, and *then* the same confirmation settings apply per candidate before anything lands in `context/`, exactly as configured — a live dialogue doesn't change which `capture-confirmation` value applies.
 - **Maintenance** — resolving contradictions, marking something superseded, splitting a file: the same settings apply before the change is written. `automatic` here never means silently deleting, reinterpreting, or replacing already-confirmed historical information with weaker evidence (rule 11) — maintenance touches existing, previously-confirmed entries, which deserves at least the same scrutiny a new entry gets.
 
-### Missing fields
+### Missing fields vs. invalid fields — not the same case (rule 14)
 
-If `capture-confirmation` is missing from an existing project's config block, backfill it to `confirm-when-unsure` the next time the setup check runs — that's already the project's actual behavior today, so nothing changes and no question is needed. Same for `confirmation-flow` missing from a personal block: backfill to `sequential` silently. Neither of these is a `context-schema` migration — this setting doesn't touch the `context/` entry *format*, only how writing to it is confirmed, so it doesn't go through `migrations.md`.
+**Missing entirely:**
+
+- `capture-confirmation` absent from an existing project's config block → backfill to `confirm-when-unsure` the next time the setup check runs, silently. This is legitimate precisely because it's a documented default for a field that doesn't exist yet, and it's already the project's actual behavior today — nothing changes, so there's nothing to ask about.
+- `confirmation-flow` absent from an existing personal block → this is *not* the same situation, even though it looks similar. There's no prior behavior to preserve, since this axis didn't exist before the setting did. Ask the same one-line question the personal wizard already asks ("one at a time, or as a list?"), once, and record the answer — don't default it silently just because it's convenient to treat it like `capture-confirmation`'s case.
+
+Neither is a `context-schema` migration — this doesn't touch the `context/` entry *format*, only how writing to it is confirmed, so it doesn't go through `migrations.md`.
+
+**Present but invalid, or contradictory:** a field that exists with a value outside the documented set (`confirmation-flow: grouped`), or one recorded more than once with different values, is never treated as if it were missing. Don't guess which value was intended, don't silently apply the documented default, and don't pick one of the conflicting values on your own — even if one looks more "obviously right." Instead:
+
+1. Say plainly that the stored value isn't recognized (or that the values conflict).
+2. Name the actual valid options.
+3. Ask which one is meant.
+4. Don't take any action whose behavior depends on that setting until it's answered — including writing to `context/` if `capture-confirmation` is the field in question.
+
+A likely typo (`confirmation-flow: sequental`) can be named as a probable guess — "did you mean `sequential`?" — but still needs the user's actual confirmation before the config is corrected or anything proceeds on that assumption. Guessing correctly by luck isn't the same as asking, and doesn't get to skip the question rule 14 requires.
+
+This same principle covers ambiguous session instructions, not just config fields: "don't keep asking me, but don't decide anything on your own either" doesn't resolve to any single `capture-confirmation` value — it's internally in tension, not a request for `confirm-when-unsure` or any other specific mode. Point out the tension and ask what's actually wanted, rather than picking the reading that seems closest.
 
 ## Timer check (every session, for whoever has a personal config)
 

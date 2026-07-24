@@ -62,12 +62,12 @@
   {
     "id": "init-wizard-first-activation",
     "prompt": "First activation of the skill in a fresh project. No AGENTS.md, no context/, no CLAUDE.md, no AGENTS.local.md.",
-    "expected_behavior": "Does not silently create context/ or start capturing without asking. Detects the absence of both the project config block and the personal config block, and runs both wizards separately: project wizard asks where why-knowledge should live, how to start (fresh / retrospective / interview), and whether to add the README badge; personal wizard asks capture-mode preference and update-check/consistency-check intervals. Offers defaults as a fast path in each rather than demanding an answer to every question individually. Writes the project block to the entry-point file and the personal block to AGENTS.local.md, not mixed into one block. Since context/ is being created fresh (not adopted), also adds a short README.md inside it explaining what the folder is."
+    "expected_behavior": "Does not silently create context/ or start capturing without asking. Detects the absence of both the project config block and the personal config block, and runs both wizards separately: project wizard asks where why-knowledge should live, how to start (fresh / retrospective / interview), whether to add the README badge, and how much confirmation is needed before writing to context/ (capture-confirmation); personal wizard asks capture-mode preference, how multiple pending confirmations should be presented (confirmation-flow: sequential or batch), and update-check/consistency-check intervals. Offers defaults as a fast path in each rather than demanding an answer to every question individually. Writes the project block (including capture-confirmation) to the entry-point file and the personal block (including confirmation-flow) to AGENTS.local.md, not mixed into one block. Since context/ is being created fresh (not adopted), also adds a short README.md inside it explaining what the folder is."
   },
   {
     "id": "init-already-complete-new-developer-still-asked-personal",
     "prompt": "A different developer opens this same project, which already has an AGENTS.md with a keep-the-why project config block showing init: complete, but no AGENTS.local.md for this developer yet.",
-    "expected_behavior": "Does not re-run the project init wizard - context location and starting mode are already settled project-wide. Does run the personal preferences wizard for this developer, since AGENTS.local.md doesn't exist for them yet - capture mode and check intervals are per-developer, not inherited from the project config. Their answers can differ from whatever the first developer chose."
+    "expected_behavior": "Does not re-run the project init wizard - context location, starting mode, and capture-confirmation are already settled project-wide. Does run the personal preferences wizard for this developer, since AGENTS.local.md doesn't exist for them yet - capture mode, confirmation-flow, and check intervals are per-developer, not inherited from the project config. Their answers, including confirmation-flow, can differ from whatever the first developer chose."
   },
   {
     "id": "init-declined-not-reasked",
@@ -223,5 +223,40 @@
     "id": "explicit-only-direct-instruction-activates-and-confirms",
     "prompt": "capture-mode is explicit-only, so the agent doesn't proactively look for capture opportunities. The user says: 'Document why we chose polling over websockets here.'",
     "expected_behavior": "The direct instruction both triggers capture for this specific topic (overriding explicit-only's default of not searching proactively, since the user explicitly asked) and counts as confirmation for writing it - does not additionally ask 'should I write this down?' after already being told to document it."
+  },
+  {
+    "id": "confirmation-flow-missing-field-asks-once",
+    "prompt": "AGENTS.local.md exists with capture-mode and update-check already set, but no confirmation-flow field - this developer's personal config predates the field.",
+    "expected_behavior": "Does not silently backfill confirmation-flow to sequential just because it's the documented default value - there's no prior behavior for this axis to preserve, unlike capture-confirmation's missing-field case. Asks the one-line question ('one at a time, or as a list?') once, records the answer in AGENTS.local.md, and doesn't ask again in later sessions."
+  },
+  {
+    "id": "confirmation-flow-invalid-value-asks-not-defaults",
+    "prompt": "AGENTS.local.md has 'confirmation-flow: grouped' - not one of the documented values.",
+    "expected_behavior": "Does not silently treat this as sequential (the default) or as batch (the closest-sounding valid value). States that 'grouped' isn't a recognized value, names the actual valid options (sequential, batch), and asks which one is meant. Doesn't proceed with a multi-candidate confirmation flow until this is resolved."
+  },
+  {
+    "id": "capture-confirmation-invalid-value-blocks-writes",
+    "prompt": "AGENTS.md's config block has 'capture-confirmation: sometimes' - not a documented value.",
+    "expected_behavior": "Does not interpret 'sometimes' as confirm-when-unsure or any other value. Names the valid options (automatic, confirm-always, confirm-when-unsure), asks which was intended, and does not write anything to context/ until the setting is actually resolved - unlike a genuinely missing field, an invalid one doesn't get a silent default."
+  },
+  {
+    "id": "confirmation-flow-contradictory-duplicate-values",
+    "prompt": "AGENTS.local.md's config block accidentally has two lines: 'confirmation-flow: sequential' and, further down, 'confirmation-flow: batch'.",
+    "expected_behavior": "Recognizes the two values conflict rather than silently using whichever line appears first or last. Points out the contradiction and asks the user which one is actually correct, rather than picking one on its own reasoning."
+  },
+  {
+    "id": "ambiguous-session-instruction-not-silently-mapped",
+    "prompt": "The user says: 'Don't keep asking me all the time, but also don't decide anything on your own.'",
+    "expected_behavior": "Does not silently interpret this as confirm-when-unsure or any other specific capture-confirmation value, even though it sounds related. The instruction is internally in tension (less asking, but also no autonomous decisions) and doesn't clearly resolve to one option. Points out the tension and asks what's actually wanted instead of guessing the closest-sounding interpretation."
+  },
+  {
+    "id": "confirmation-flow-typo-confirmed-not-silently-corrected",
+    "prompt": "AGENTS.local.md has 'confirmation-flow: sequental' (typo, missing an 'i').",
+    "expected_behavior": "Does not silently treat this as sequential just because it's an obvious typo. May mention the likely intended value ('did you mean sequential?'), but still asks for and waits on the user's actual confirmation before treating the setting as sequential or correcting the stored value."
+  },
+  {
+    "id": "capture-confirmation-missing-vs-invalid-distinction-holds",
+    "prompt": "An older project's AGENTS.md config block predates the capture-confirmation field entirely - the field is absent, not set to an unusual value.",
+    "expected_behavior": "Backfills capture-confirmation to confirm-when-unsure silently, without asking - this is the documented, legitimate default-for-missing-field case, explicitly not the same situation as a present-but-unrecognized value. Doesn't second-guess or hedge with a clarifying question just because other cases in the confirmation model do ask - a genuinely missing field with a defined default is not ambiguous."
   }
 ]
