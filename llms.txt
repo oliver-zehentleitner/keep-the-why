@@ -6,8 +6,9 @@
 
 The payoff: this makes a project genuinely portable between developers and cuts onboarding
 time. It's not limited to "why" questions either — with that context loaded, an agent gives
-better answers and makes safer changes across the board, which is what actually makes a
-legacy project tractable again instead of a black box only one person ever understood.
+better answers, stops re-suggesting approaches that were already tried and rejected, and
+makes safer changes across the board, which is what actually makes a legacy project tractable
+again instead of a black box only one person ever understood.
 
 Because "ask Bob" is not documentation. Keep a Changelog records what changed; Keep the Why
 preserves why it changed. Complements README, AGENTS.md, docs, CONTRIBUTING.md, tests, Keep a
