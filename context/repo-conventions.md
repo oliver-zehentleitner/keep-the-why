@@ -88,3 +88,14 @@ Every release advances this repo's own `context-schema` (in this file's config b
 **Reason:** during the 0.3.1 release, `context-schema` was left at `0.3.0` because nothing in `migrations.md` applied to the 0.3.0→0.3.1 gap — but "nothing to migrate" and "don't advance the number" are different things. Leaving it behind made a later external review flag it as if the skill's own schema-comparison logic were broken, when the actual bug was simpler: the release process itself skipped the catch-up step that `setup.md`'s existing behind-case logic already calls for.
 
 **Rejected alternative:** a separate `metadata.context-schema` field in `SKILL.md`, decoupled from `metadata.version`, so schema and release versioning could drift independently. Rejected — the existing single-version-axis model (check for applicable migrations, advance the number whether or not anything applied) already does everything a second version field would, without a second number to keep in sync.
+
+## `release.yml`'s checkout pins the actual release tag, not the workflow's trigger ref
+
+**Status:** active
+**Evidence:** confirmed
+
+The `GH Release` workflow's `checkout` step explicitly sets `ref: ${{ github.event.inputs.tag || github.ref }}`, and "Move latest tag" moves `latest` to that same resolved tag rather than an implicit `HEAD`.
+
+**Reason:** `actions/checkout@v4` without an explicit `ref` checks out whatever triggered the workflow. For the normal tag-push trigger that's already correct (the trigger ref *is* the tag). For a manual `workflow_dispatch` run with a typed-in tag input, though, the trigger ref is whatever branch the dispatch was run from — not necessarily the tag someone typed into the input box. Without pinning `ref` explicitly, a manual dispatch could package and release the wrong commit under the requested tag's name. Caught by external review; we'd only ever used the tag-push path in practice, so it hadn't surfaced.
+
+**Rejected alternative:** leave it as-is, reasoning that we never actually use manual dispatch. Rejected — the input field existing at all implies it's meant to work correctly, and a latent bug that only bites on a rarely-used path is still worth fixing once known.
