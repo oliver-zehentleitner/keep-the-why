@@ -1,8 +1,8 @@
 # Keep the Why
 
-> A repo-native agent skill that continuously captures — or retrospectively recovers — the
-> reasoning behind a codebase: architecture decisions, rejected alternatives, workarounds,
-> incident learnings, and operational constraints that the code alone can't explain.
+> A repo-native agent skill that captures the reasoning behind a codebase as a byproduct of
+> working with your agent — so it stops re-suggesting rejected approaches, gives better
+> answers, speeds up onboarding, and makes legacy projects tractable again.
 
 The payoff: this makes a project genuinely portable between developers and cuts onboarding
 time. It's not limited to "why" questions either — with that context loaded, an agent gives
