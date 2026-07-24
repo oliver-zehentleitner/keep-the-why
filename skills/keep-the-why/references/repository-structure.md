@@ -71,12 +71,13 @@ Keep it short. Anything longer belongs in `docs/` or `context/`, not here — `A
 ```markdown
 <!-- keep-the-why:local -->
 - capture-mode: proactive
+- confirmation-flow: sequential
 - update-check: every 14 days — last: 2026-07-21
 - consistency-check: every 30 days — last: 2026-07-21
 <!-- /keep-the-why:local -->
 ```
 
-Not committed. One developer's automation preferences aren't another's — see `setup.md` for why this is split from the project config block instead of living in `AGENTS.md` alongside it.
+Not committed. One developer's automation preferences aren't another's — see `setup.md` for why this is split from the project config block instead of living in `AGENTS.md` alongside it. `capture-confirmation` (whether writing needs permission first) is the one setting in this area that's project-wide instead — it lives in `AGENTS.md`'s config block, not here; see "The confirmation model" in `setup.md`.
 
 A `migration-prompt: <version> declined` line can appear here too, but only once a developer has actually said "stop asking me" about a specific `context/` schema migration — it's not part of the default block. Scoped to that one version, not a blanket opt-out; see "Context schema and migrations" in `setup.md`.
 

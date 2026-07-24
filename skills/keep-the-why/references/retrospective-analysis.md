@@ -41,3 +41,7 @@ For a codebase too large to analyze end-to-end in one pass:
 ## Output
 
 Same as continuous mode: topic-organized entries in `context/`, each classified, each linked to its evidence where practical (a commit hash, an issue link, a file reference) so a future reader can verify rather than just trust.
+
+## Confirming before writing
+
+This mode routinely produces several candidate entries from a single pass rather than one at a time. Before writing any of them, the project's `capture-confirmation` setting still applies (automatic, always ask, or only when unclear — see "The confirmation model" in `setup.md`), same as continuous capture. This is exactly the situation `confirmation-flow: batch` is for — presenting the whole gap list as a short numbered review instead of confirming candidates one by one.
