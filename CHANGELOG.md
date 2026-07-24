@@ -4,6 +4,15 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Fixed
+
+- `release.yml`'s `checkout` didn't pin to the `workflow_dispatch` tag input, so a manual dispatch could package whatever commit the workflow happened to run from instead of the requested tag. Now pins `ref:` explicitly, and "Move latest tag" moves it to that same tag rather than an implicit `HEAD`.
+- `context-schema`'s definition in `setup.md` read like an independent format-version number, which is how an external review initially (mis)understood it. Reworded: it's the latest skill version this project's `context/` has been checked and migrated against, not a second versioning axis.
+
+### Added
+
+- `.github/workflows/validate-skill.yml`: validates `SKILL.md` against the Agent Skills spec (`skills-ref validate`) and that `evals.json` is well-formed JSON, on every push to `main` and every PR.
+
 ## [0.3.1] - 2026-07-23
 
 ### Fixed

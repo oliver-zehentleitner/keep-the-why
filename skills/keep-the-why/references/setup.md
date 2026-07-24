@@ -16,7 +16,7 @@ Setup state splits across two files, matching the existing `AGENTS.md`/`AGENTS.l
 <!-- /keep-the-why:config -->
 ```
 
-`context-schema` tracks which version's `context/` entry format is in use — separate from the installed skill's `metadata.version` (SKILL.md frontmatter), because not every skill release changes the format (see "Context schema and migrations" below).
+`context-schema` records the latest skill version this project's `context/` has been checked and migrated against — not an independent format-version number of its own. It's still tracked separately from the installed skill's `metadata.version` (SKILL.md frontmatter) because a release can bump `metadata.version` without changing the `context/` entry format at all — in that case `context-schema` simply advances to match, with nothing to migrate (see "Context schema and migrations" below).
 
 **Personal config**, in `AGENTS.local.md`, not committed, one per developer:
 
