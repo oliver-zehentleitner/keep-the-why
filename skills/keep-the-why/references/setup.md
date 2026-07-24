@@ -44,7 +44,7 @@ Where the why-knowledge lives, whether the project has been set up at all, and h
 - **Project block present, `init: complete`** → project is set up. Don't re-run this part regardless of who's asking — it's a project property, not a per-developer one. Once committed, every other developer or session inherits it silently.
 - **Project block present, `init: declined`** → set up was explicitly declined for this project. Don't re-ask.
 - **Personal block missing** (independent of the project block's state) → run the personal preferences wizard (below). This is why a project already marked `init: complete` can still prompt a *new* developer once — the project is set up, but this particular person hasn't stated their own preferences yet.
-- **Personal block present** → use it, no re-asking.
+- **Personal block present** → use all valid stored values as-is, no re-asking for them. This isn't unconditional, though: ask once for any required field that's still missing (e.g. `confirmation-flow` added to the skill after this block was created — see "Missing fields vs. invalid fields" below), and clarify any invalid, contradictory, or ambiguous value per rule 14 rather than silently using it. "No re-asking" applies to settings that are actually present and valid, not to the whole block regardless of its contents.
 
 ## Project init wizard (once per project)
 
