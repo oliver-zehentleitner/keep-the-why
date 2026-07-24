@@ -11,7 +11,7 @@
 
 Keep a Changelog records what changed. Keep the Why preserves why it changed.
 
-**Keep the Why** is a repo-native agent skill that captures the reasoning behind a codebase as a byproduct of working with your agent — so it stops re-suggesting rejected approaches, gives better answers, speeds up onboarding, and makes legacy projects tractable again.
+**Keep the Why** is a repo-native agent skill that captures the reasoning behind a codebase as a byproduct of working with your agent — so it stops re-suggesting rejected approaches, gives better answers, speeds up onboarding, and makes legacy projects tractable again. It works continuously as you develop, or retrospectively on an existing repo, capturing architecture decisions, rejected alternatives, workarounds, incident learnings, and operational constraints that the code alone can't explain.
 
 **The payoff:** this makes a project genuinely portable between developers and cuts onboarding time — a new hire, or an AI agent that's never touched the codebase before, doesn't have to track down whoever wrote the original code. And it's not limited to "why" questions: with that context loaded, your agent gives better answers and makes safer changes across the board — which is what actually makes a legacy project tractable again, instead of a black box only one person ever understood. "Ask Bob" stops being the fallback.
 

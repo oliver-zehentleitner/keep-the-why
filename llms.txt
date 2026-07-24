@@ -2,7 +2,10 @@
 
 > A repo-native agent skill that captures the reasoning behind a codebase as a byproduct of
 > working with your agent — so it stops re-suggesting rejected approaches, gives better
-> answers, speeds up onboarding, and makes legacy projects tractable again.
+> answers, speeds up onboarding, and makes legacy projects tractable again. It works
+> continuously as you develop, or retrospectively on an existing repo, capturing architecture
+> decisions, rejected alternatives, workarounds, incident learnings, and operational
+> constraints that the code alone can't explain.
 
 The payoff: this makes a project genuinely portable between developers and cuts onboarding
 time. It's not limited to "why" questions either — with that context loaded, an agent gives
