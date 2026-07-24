@@ -32,6 +32,9 @@ plugins:
   - search
   - include-markdown
 
+markdown_extensions:
+  - md_in_html
+
 extra_css:
   - assets/extra.css
 
