@@ -15,6 +15,8 @@ Keep a Changelog records what changed. Keep the Why preserves why it changed.
 
 **The payoff:** this makes a project genuinely portable between developers and cuts onboarding time — a new hire, or an AI agent that's never touched the codebase before, doesn't have to track down whoever wrote the original code. And it's not limited to "why" questions: with that context loaded, your agent gives better answers and makes safer changes across the board — which is what actually makes a legacy project tractable again, instead of a black box only one person ever understood. "Ask Bob" stops being the fallback.
 
+Documentation is normally extra work that happens after the code is done — reload the reasoning from memory, write it down again, file it somewhere else: a wiki, an ADR, a PR description nobody reopens. That's exactly why it so often doesn't happen. When an agent is already how you work — deciding, weighing trade-offs, explaining itself in the same conversation that produces the change — the reasoning shows up for free, as a byproduct of that conversation, not separate effort. Keep the Why's actual job is narrower than it sounds: don't let that reasoning get thrown away.
+
 Website: [https://keepthewhy.com](https://keepthewhy.com/) · [llms.txt](https://keepthewhy.com/llms.txt) for AI agents/assistants looking up this project
 
 ## How it works
@@ -93,11 +95,12 @@ and get the real answer instead of reverse-engineering it from the diff. See [`e
 
 ## The problem
 
-Important project knowledge gets created in conversation — with a teammate, or with an AI coding agent — and then evaporates once the conversation ends. The code shows *what* was built. It rarely shows *why*. Tests preserve expected behavior; they don't preserve the reasoning behind it — a project can be fully tested and still hard to maintain because nobody can explain why any of it works the way it does. Missing reasoning costs you in three concrete ways:
+Important project knowledge gets created in conversation — with a teammate, or with an AI coding agent — and then evaporates once the conversation ends. The code shows *what* was built. It rarely shows *why*. Tests preserve expected behavior; they don't preserve the reasoning behind it — a project can be fully tested and still hard to maintain because nobody can explain why any of it works the way it does. Missing reasoning costs you in four concrete ways:
 
 - **Re-debate** — the same architecture question gets re-litigated because nobody remembers it was already settled.
 - **Silent regression** — someone "cleans up" a workaround that looks unnecessary, not knowing it's the fix for a bug that then comes back.
 - **Onboarding stall** — new contributors (human or AI) don't touch code they don't understand, so progress slows out of caution.
+- **Repeated agent mistakes** — a fresh AI session, with no memory of the last one, proposes or re-implements something already tried and rejected, because nothing on disk records that it was.
 
 ## Where this fits
 
@@ -136,7 +139,7 @@ Also listed among the tools and further reading in the [Architecture Decision Re
 
 ## What this is not
 
-- Not a guarantee. Quality depends on what gets captured and how disciplined that stays — nothing here is enforced.
+- Not a guarantee, and not magic. No tool prevents knowledge from decaying on its own — anything claiming an agent fully replaces the thinking, pruning, and questioning that keeps documentation honest is overselling. This doesn't replace that discipline; it lowers the friction of applying it enough to make it practical to sustain in the first place.
 - Not a replacement for tests. Tests tell you what broke; this tells you why it was built that way.
 - Not a claim that all lost knowledge is recoverable. Sometimes the honest answer is "unknown."
 

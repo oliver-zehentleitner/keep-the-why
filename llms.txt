@@ -18,6 +18,14 @@ Because it's just Markdown in the repo, a `context/` update ships in the same co
 the code change it explains — reviewed the same way, versioned the same way, no separate
 system to trust or keep in sync.
 
+Documentation is normally extra work that happens after the code is done — reload the
+reasoning from memory, write it down again, file it somewhere else. That's why it so often
+doesn't happen. When an agent is already how you work, the reasoning shows up for free, as a
+byproduct of the conversation that produces the change — Keep the Why's job is not letting it
+get thrown away, not creating separate documentation effort. It isn't magic, though: no tool
+prevents knowledge from decaying on its own. This lowers the friction of the discipline that
+keeps documentation honest; it doesn't replace it.
+
 Version: 0.3.1.
 
 ## Authorship & License
