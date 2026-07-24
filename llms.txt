@@ -7,10 +7,11 @@
 > decisions, rejected alternatives, workarounds, incident learnings, and operational
 > constraints that the code alone can't explain.
 
-The payoff: this makes a project genuinely portable between developers and cuts onboarding
-time. It's not limited to "why" questions either — with that context loaded, an agent gives
-better answers and makes safer changes across the board, which is what actually makes a
-legacy project tractable again instead of a black box only one person ever understood.
+The payoff, made concrete: a new hire, or an agent that's never touched the codebase before,
+doesn't have to track down whoever wrote the original code — and doesn't just repeat what was
+already tried and rejected. The same context makes changes safer across the board, turning a
+legacy project back into something tractable instead of a black box only one person ever
+understood.
 
 Because "ask Bob" is not documentation. Keep a Changelog records what changed; Keep the Why
 preserves why it changed. Complements README, AGENTS.md, docs, CONTRIBUTING.md, tests, Keep a
@@ -105,7 +106,7 @@ Produces, inside the project using the skill:
 - `context/` — why the project is the way it is, organized by topic, with its own `README.md`
 - `AGENTS.local.md` — personal preferences and notes, not committed
 
-## Not a Green Field
+## Related Work
 
 Related prior art: Architecture Decision Records, the AGENTS.md standard, git-why, Agent
 Decision Records, Addy Osmani's `documentation-and-adrs` skill. Keep the Why's distinguishing

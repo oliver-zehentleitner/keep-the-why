@@ -13,7 +13,7 @@ Keep a Changelog records what changed. Keep the Why preserves why it changed.
 
 **Keep the Why** is a repo-native agent skill that captures the reasoning behind a codebase as a byproduct of working with your agent — so it stops re-suggesting rejected approaches, gives better answers, speeds up onboarding, and makes legacy projects tractable again. It works continuously as you develop, or retrospectively on an existing repo, capturing architecture decisions, rejected alternatives, workarounds, incident learnings, and operational constraints that the code alone can't explain.
 
-**The payoff:** this makes a project genuinely portable between developers and cuts onboarding time — a new hire, or an AI agent that's never touched the codebase before, doesn't have to track down whoever wrote the original code. And it's not limited to "why" questions: with that context loaded, your agent gives better answers and makes safer changes across the board — which is what actually makes a legacy project tractable again, instead of a black box only one person ever understood. "Ask Bob" stops being the fallback.
+**The payoff, made concrete:** a new hire, or an AI agent that's never touched the codebase before, doesn't have to track down whoever wrote the original code — and doesn't just repeat what was already tried and rejected. The same context makes changes safer across the board, turning a legacy project back into something tractable instead of a black box only one person ever understood. "Ask Bob" stops being the fallback.
 
 Documentation is normally extra work that happens after the code is done — reload the reasoning from memory, write it down again, file it somewhere else: a wiki, an ADR, a PR description nobody reopens. That's exactly why it so often doesn't happen. When an agent is already how you work — deciding, weighing trade-offs, explaining itself in the same conversation that produces the change — the reasoning shows up for free, as a byproduct of that conversation, not separate effort. Keep the Why's actual job is narrower than it sounds: don't let that reasoning get thrown away.
 
@@ -36,15 +36,18 @@ Where the captured knowledge actually lives, and how it relates to everything el
 
 ## Install
 
-`main` is active development, not guaranteed release-ready — pin to `latest` instead of tracking it directly (moved automatically by CI to the newest release; use an exact [tag](https://github.com/oliver-zehentleitner/keep-the-why/releases) instead for full reproducibility). See [`docs/installation.md`](docs/installation.md) for the unpinned form and full detail.
+`main` is active development, not guaranteed release-ready — pin to `latest` instead of tracking it directly (moved automatically by CI to the newest release; use an exact [tag](https://github.com/oliver-zehentleitner/keep-the-why/releases) instead for full reproducibility).
 
-**Recommended — [skills CLI](https://skills.sh/) (via `npx`, needs [Node.js](https://nodejs.org/en/download) — `npx` ships with it, nothing extra to install):**
+**Recommended — [skills CLI](https://skills.sh/)** (via `npx`, needs [Node.js](https://nodejs.org/en/download) — `npx` ships with it, nothing extra to install):
 
 ```bash
 npx skills add https://github.com/oliver-zehentleitner/keep-the-why/tree/latest/skills/keep-the-why
 ```
 
-Prompts for which of its 70+ supported agents (Claude Code, Codex, OpenCode, and more) and scope to install for, then symlinks or copies the skill package in. Also listed on [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why).
+Prompts for which of its 70+ supported agents (Claude Code, Codex, OpenCode, and more) and scope to install for, then symlinks or copies the skill package in. Also listed on [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why). Start a new session afterward so the skill is picked up.
+
+<details markdown="1">
+<summary>Other install methods — GitHub CLI, manual clone, agent-specific paths</summary>
 
 **Also recommended — [GitHub CLI](https://cli.github.com/) (`gh` v2.90.0+):**
 
@@ -73,7 +76,11 @@ Where `<target-directory>` is your agent's skills directory — the folder name 
 
 Codex CLI, Antigravity, Amp, OpenCode, Warp, and more read the shared `.agents/skills/keep-the-why` path at project scope (Codex scans it from your current directory up to the repository root) and `~/.agents/skills/keep-the-why` personally — check whether yours does before falling back to a vendor path. Cline uses its own `.cline/skills/keep-the-why` (project) / `~/.cline/skills/keep-the-why` (personal) instead.
 
-Start a new session afterward so the skill is picked up. Also compatible with Windsurf, Goose, Roo Code, Trae, Factory, JetBrains Junie, and other tools supporting the open Agent Skills format — the directory convention varies, check your tool's own docs. Full details, including tools without a skill runtime at all: [`docs/installation.md`](docs/installation.md) or [https://keepthewhy.com/installation/](https://keepthewhy.com/installation/).
+Also compatible with Windsurf, Goose, Roo Code, Trae, Factory, JetBrains Junie, and other tools supporting the open Agent Skills format — the directory convention varies, check your tool's own docs.
+
+</details>
+
+Full install detail for every method, including tools without a skill runtime at all: [`docs/installation.md`](docs/installation.md) or [https://keepthewhy.com/installation/](https://keepthewhy.com/installation/).
 
 ## Example
 
@@ -123,7 +130,7 @@ Michael Feathers' classic definition — legacy code is code without tests — c
 
 This isn't a new pattern, either. Docs and changelogs are already commonly kept current almost incidentally today, maintained by a skill or an agent alongside the actual work rather than as separate effort. Keep the Why brings that same low-effort, agent-maintained model to the one layer that couldn't be kept current this way before: the why.
 
-## Not a green field
+## Related work
 
 The idea of capturing AI-agent rationale isn't new, and this project doesn't claim otherwise. Related work:
 
