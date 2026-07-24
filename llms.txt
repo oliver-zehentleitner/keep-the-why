@@ -110,6 +110,12 @@ settings; a substantive clarifying question about the facts themselves is not, a
 independent even in `automatic` mode. Applies across all four modes, including maintenance,
 where `automatic` never permits silently overwriting already-confirmed historical information.
 
+A genuinely missing field can fall back to a documented default (e.g. `capture-confirmation`
+absent means `confirm-when-unsure`, since that's already the project's real behavior) — but a
+field set to something outside the documented values, recorded twice with conflicting values,
+or a session instruction that doesn't clearly resolve to one option, is never treated the same
+as missing. Name the valid options and ask; don't silently coerce, normalize, or guess.
+
 Produces, inside the project using the skill:
 - `AGENTS.md` — lean entry point, pointers only, plus a small machine-readable config block
 - `docs/` — how to use, operate, test, deploy
@@ -145,6 +151,9 @@ no required external service (no database, no MCP server).
   about the facts — it only removes the permission question, not a genuine clarifying one.
 - Don't let `automatic` mode silently overwrite or reinterpret an already-confirmed historical
   entry during maintenance — that gets the same scrutiny a new entry would.
+- Don't treat an invalid, conflicting, or ambiguous setting the same as a missing one — only a
+  genuinely missing field gets a silent documented default; an invalid or contradictory value
+  always gets a clarifying question instead.
 
 ## Badge
 

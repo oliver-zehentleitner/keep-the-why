@@ -44,7 +44,7 @@ When recording something, resolve it to exactly one of these — then have every
 
 When something genuinely doesn't fit the table above (e.g. security disclosure process, a code of conduct), that's a signal it's a different kind of artifact — governance or legal, not comprehension — and outside what this skill routes for. Don't force it into `context/` just because there's nowhere else obvious to put it.
 
-## `AGENTS.md` — minimal example
+## `AGENTS.md` — example
 
 ```markdown
 # AGENTS.md
@@ -61,10 +61,12 @@ prior decisions and avoid re-litigating or accidentally reverting them.
 <!-- keep-the-why:config -->
 - context: `context/`
 - init: complete
+- context-schema: 0.3.1
+- capture-confirmation: confirm-when-unsure
 <!-- /keep-the-why:config -->
 ```
 
-Keep it short. Anything longer belongs in `docs/` or `context/`, not here — `AGENTS.md` needs to stay generic enough for every tool that reads the open AGENTS.md convention, not just this skill. The config block is the exception: it's the skill's own machine-readable state, kept small and clearly delimited on purpose so it doesn't creep into being a second undocumented system living inside a file meant to stay generic. Only project-wide facts live here — personal automation preferences go in `AGENTS.local.md` instead, see below and `setup.md`.
+Keep the prose above the config block short. Anything longer belongs in `docs/` or `context/`, not here — `AGENTS.md` needs to stay generic enough for every tool that reads the open AGENTS.md convention, not just this skill. The config block is the exception: it's the skill's own machine-readable state, kept small and clearly delimited on purpose so it doesn't creep into being a second undocumented system living inside a file meant to stay generic. Only project-wide facts live here — personal automation preferences go in `AGENTS.local.md` instead, see below and `setup.md`. `context-schema` and `capture-confirmation` are shown here at real, current values rather than omitted — a project's actual config block always has both, so an example without them would be misleading, not just terse.
 
 ## `AGENTS.local.md` — personal config example
 

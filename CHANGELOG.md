@@ -10,17 +10,18 @@ All notable changes to this project are documented here. Format follows [Keep a 
 - **`confirmation-flow`** (personal, `AGENTS.local.md`): `sequential` or `batch` — how multiple pending confirmations get presented when more than one accumulates at once (typical in retrospective recovery or after an interview).
 - New Core Rule 11 covering both settings: session instructions override stored preferences, which override the project setting, which override the documented default; a direct instruction to capture something specific counts as confirmation for that one change; and confirmation never overrides Evidence quality, the proportionality gate, a substantive clarifying question, or the existing requirement to never commit/publish without being asked.
 - Applies across all four modes, not just continuous capture — including a specific safeguard for maintenance: `automatic` never permits silently deleting, reinterpreting, or replacing already-confirmed historical information with weaker evidence.
-- Project init wizard and personal preferences wizard both updated with a question for the new settings; existing projects/personal configs missing the fields backfill silently to the defaults, since the defaults match current behavior.
-- 14 new eval cases covering the confirmation model, including cross-axis interactions (e.g. proactive search with confirm-always writing) and the permission-vs-clarifying-question distinction.
+- Project init wizard and personal preferences wizard both updated with a question for the new settings.
+- New **Core Rule 14**: clarify ambiguity instead of guessing, applied generally — not just to entry content. A stored setting that's genuinely missing may fall back to a documented default (e.g. `capture-confirmation` absent → `confirm-when-unsure`, since that's already the project's real behavior). A setting that's *present but invalid*, recorded with *conflicting duplicate values*, or a *session instruction that doesn't clearly resolve* to one option is never treated the same as missing — name the valid options and ask, don't silently coerce, normalize, or pick one.
+- 21 new eval cases covering the confirmation model: cross-axis interactions, the permission-vs-clarifying-question distinction, and the missing-vs-invalid-vs-contradictory distinction (invalid values, duplicate conflicting values, ambiguous session instructions, and a likely typo that still needs confirmation before being treated as corrected).
+- `.github/workflows/validate-skill.yml`: validates `SKILL.md` against the Agent Skills spec (`skills-ref validate`) and that `evals.json` is well-formed JSON, on every push to `main` and every PR.
 
 ### Fixed
 
 - `release.yml`'s `checkout` didn't pin to the `workflow_dispatch` tag input, so a manual dispatch could package whatever commit the workflow happened to run from instead of the requested tag. Now pins `ref:` explicitly, and "Move latest tag" moves it to that same tag rather than an implicit `HEAD`.
 - `context-schema`'s definition in `setup.md` read like an independent format-version number, which is how an external review initially (mis)understood it. Reworded: it's the latest skill version this project's `context/` has been checked and migrated against, not a second versioning axis.
-
-### Added
-
-- `.github/workflows/validate-skill.yml`: validates `SKILL.md` against the Agent Skills spec (`skills-ref validate`) and that `evals.json` is well-formed JSON, on every push to `main` and every PR.
+- `confirmation-flow` missing from a personal config was documented as a silent backfill to `sequential`, same treatment as `capture-confirmation`'s missing-field case. Caught by review: there's no prior behavior for `confirmation-flow` to preserve, since the axis didn't exist before — it needed to ask once, not default silently. Fixed, and Core Rule 14 now makes the missing-vs-invalid distinction explicit project-wide.
+- Reference docs described `confirmation-flow: batch` and `capture-confirmation: confirm-always` as the "natural fit" for retrospective recovery and interviews respectively. Neutralized — a deliberately chosen personal preference gets respected regardless of which mode it's used in, not nudged toward whichever option sounds more fitting.
+- The `AGENTS.md` example in `repository-structure.md` omitted `context-schema` and `capture-confirmation`, both of which a real project's config block always has — an example without them was misleading, not just terse. Now shown at realistic current values.
 
 ## [0.3.1] - 2026-07-23
 
