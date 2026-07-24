@@ -1,3 +1,7 @@
+<!-- GitHub repo "About" description (Settings > About > Description) - not rendered, just parked here for easy copy-paste:
+A repo-native agent skill that captures the reasoning behind a codebase as a byproduct of working with your agent — so it stops re-suggesting rejected approaches, gives better answers, speeds up onboarding, and makes legacy projects tractable again.
+-->
+
 [![GitHub Release](https://img.shields.io/github/release/oliver-zehentleitner/keep-the-why.svg?label=github)](https://github.com/oliver-zehentleitner/keep-the-why/releases)
 [![License](https://img.shields.io/github/license/oliver-zehentleitner/keep-the-why.svg?color=blue)](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/LICENSE)
 [![Link Check](https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/link-check.yml/badge.svg)](https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/link-check.yml)
