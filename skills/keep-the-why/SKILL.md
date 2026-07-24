@@ -20,7 +20,7 @@ Four modes, all part of the same job:
 3. **Knowledge-transfer interview** — when a maintainer's knowledge is about to become unavailable, analyze the repository first, then either ask targeted questions about exactly what the code couldn't explain, or — for someone whose knowledge is broad and tacit, e.g. a long-tenured maintainer — let them narrate freely and extract rationale from that instead. See `references/interview-playbook.md` for both techniques.
 4. **Maintenance** — keep existing rationale current: resolve contradictions, mark superseded entries, merge duplicates, split files that have grown too large.
 
-**When not to use it:** routine implementation detail, generic formatting or style changes, or anything already fully and obviously explained by the code. Not every change is a decision worth a `context/` entry — see rule 12's proportionality gate.
+**When not to use it:** routine implementation detail, generic formatting or style changes, or anything already fully and obviously explained by the code. Not every change is a decision worth a `context/` entry — see rule 13's proportionality gate.
 
 ## Core rules
 
@@ -34,8 +34,9 @@ Four modes, all part of the same job:
 8. Keep `context/index.md` lean — detailed reasoning lives in topic files, loaded only when relevant. When a topic file grows large enough to be unwieldy, propose a split rather than letting it grow indefinitely.
 9. **Privacy and relevance extend beyond obvious secrets.** Don't store credentials, personal information, or private local details in anything meant to be committed — and don't record session narrative (who said what, how a conversation went) either. Never cite a person's other, unrelated projects or private matters as the source of a decision, even if that's literally how it happened — restate the reasoning on its own terms. If an entry only makes sense with that private context attached, make the entry itself more self-contained.
 10. Don't commit or publish documentation changes unless the user explicitly asks for it.
-11. **Prefer free narration over a scripted question list for broad, tacit knowledge.** Most often a long-tenured maintainer. A question list forces them to guess what's being asked; let them talk first, don't redirect the story, extract decision-forks from what comes up, then close remaining gaps with targeted questions — narration and targeted questions are sequential steps, not a choice between them.
-12. **Match documentation depth to how non-obvious a decision actually is.** A self-evident choice ("uses X, the standard convention for Y") is a sentence, not a structured entry with a manufactured rejected-alternatives section. The full decision/alternative/reason structure (rule 6) is for decisions a reader would genuinely ask "why" about — applying it to everything, including the obvious, is the same context bloat rule 8 warns against, just produced one over-long entry at a time. A rough test: "prevents a breaking API change" earns an entry; "formats the code more nicely" doesn't. When it's genuinely unclear which side of that line something falls on, a quick yes/no question is cheap — ask rather than silently guessing either way.
+11. **Respect the effective confirmation settings before writing to `context/` or modifying an existing entry — a separate question from whether an entry is warranted at all.** `capture-confirmation` (project-wide, `AGENTS.md`) governs whether writing needs permission first: `automatic`, `confirm-always`, or `confirm-when-unsure` (default). `confirmation-flow` (personal, `AGENTS.local.md`) governs how multiple pending confirmations get presented: `sequential` or `batch`. Distinct from `capture-mode` (also personal), which only governs when the skill proactively looks for capture-worthy moments — these settings apply once something's already been found. Resolve session instructions first, then personal preference, then the project setting, then the documented default; a direct instruction to capture something specific counts as confirmation for that one change, don't ask again for it. None of this changes Evidence quality (rule 2), the proportionality gate (rule 13), a substantive clarifying question that would sharpen the evidence, or rule 10's requirement to never commit or publish without being asked. `automatic` never means guessing — unresolved evidence still becomes inferred or unknown, and a factual question worth asking stays worth asking regardless of whether permission to write is needed. See `references/setup.md` for field placement and the setup wizard questions.
+12. **Prefer free narration over a scripted question list for broad, tacit knowledge.** Most often a long-tenured maintainer. A question list forces them to guess what's being asked; let them talk first, don't redirect the story, extract decision-forks from what comes up, then close remaining gaps with targeted questions — narration and targeted questions are sequential steps, not a choice between them.
+13. **Match documentation depth to how non-obvious a decision actually is.** A self-evident choice ("uses X, the standard convention for Y") is a sentence, not a structured entry with a manufactured rejected-alternatives section. The full decision/alternative/reason structure (rule 6) is for decisions a reader would genuinely ask "why" about — applying it to everything, including the obvious, is the same context bloat rule 8 warns against, just produced one over-long entry at a time. A rough test: "prevents a breaking API change" earns an entry; "formats the code more nicely" doesn't. When it's genuinely unclear which side of that line something falls on, a quick yes/no question is cheap — ask rather than silently guessing either way.
 
 Rules 1–2 matter most. A skill that hallucinates a confident-sounding project history is worse than no documentation — it actively misleads the next reader.
 
@@ -44,6 +45,8 @@ Rules 1–2 matter most. A skill that hallucinates a confident-sounding project 
 ### 0. Setup check
 
 Before anything else, check for two independent config blocks: a project one (`AGENTS.md` or whatever entry-point file it already uses) and a personal one (`AGENTS.local.md`). Missing project block → run the project init wizard. Missing personal block → run the personal preferences wizard, even if the project is already set up — one developer's automation preferences aren't another's. See `references/setup.md` for the exact detection markers, both wizards' questions, and the per-session timer checks (skill updates, `context/` staleness) that follow.
+
+If a project block exists but is missing `capture-confirmation` (a project set up before this field existed), backfill it to `confirm-when-unsure` silently — that's already the behavior described in rules 1 and 13, so nothing actually changes for that project. Same for a personal block missing `confirmation-flow`: backfill to `sequential` silently. Neither backfill needs a question, since neither changes existing behavior.
 
 If the timer check finds the update-check interval elapsed: compare the installed `metadata.version` (frontmatter above) against the latest release at `metadata.repository` (frontmatter above) — don't rely on `references/setup.md` alone for this, the source of truth is right here so the check still works even if that reference file was never loaded. If the check can't run (no web access), don't fail silently forever — say so once and ask whether to keep retrying or turn it off.
 
@@ -68,11 +71,11 @@ Default: ask only what the evidence genuinely can't answer, and ask specifically
 - Weak: "Please explain the synchronization component."
 - Better: "Why does the sync step wait for the snapshot before applying buffered events?"
 
-Exception: rule 11 — free narration for broad, tacit knowledge. See `references/interview-playbook.md` for both techniques.
+Exception: rule 12 — free narration for broad, tacit knowledge. See `references/interview-playbook.md` for both techniques.
 
 ### 5. Record
 
-Three checks before writing: is this even worth documenting at this depth (rule 12)? Which file does it actually belong in — `context/` isn't the only place project knowledge lives, see "Which file does this belong in?" in `references/repository-structure.md`? Does it pass the privacy/relevance filter (rule 9)?
+Three checks before writing: is this even worth documenting at this depth (rule 13)? Which file does it actually belong in — `context/` isn't the only place project knowledge lives, see "Which file does this belong in?" in `references/repository-structure.md`? Does it pass the privacy/relevance filter (rule 9)?
 
 For decisions that clear those checks, write concise, topic-oriented documentation answering the fork (rule 6), not just the outcome. Three fields carry the weight:
 
@@ -82,9 +85,11 @@ For decisions that clear those checks, write concise, topic-oriented documentati
 
 Include when relevant, not as a fixed template: context, constraints, consequences and failure modes, current status, evidence or related files for traceability.
 
+Before the actual write, resolve the effective `capture-confirmation` setting (rule 11) — this is what decides whether that write needs a quick yes/no first, not whether it's warranted (already settled above).
+
 ### 6. Maintain
 
-Update existing topics rather than accumulating new ones, resolve contradictions when found, mark superseded information instead of deleting it, split files once they get large. This is what keeps the system *living* instead of another pile of stale docs no one trusts.
+Update existing topics rather than accumulating new ones, resolve contradictions when found, mark superseded information instead of deleting it, split files once they get large. This is what keeps the system *living* instead of another pile of stale docs no one trusts. The same confirmation settings (rule 11) apply here too — and regardless of setting, `automatic` never permits silently deleting, reinterpreting, or replacing already-confirmed historical information with weaker evidence; maintenance changes to existing entries still get the same scrutiny superseding or contradicting something deserves.
 
 ## Target repository structure
 

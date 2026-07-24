@@ -37,7 +37,7 @@
   {
     "id": "negative-routine-change-no-trigger",
     "prompt": "Rename the variable `usr` to `user` throughout this file for clarity.",
-    "expected_behavior": "Does not activate the skill or write a context/ entry. This is routine implementation detail with no decision, alternative, or rationale to preserve — matches the 'when not to use it' boundary and rule 12's proportionality gate. Makes the rename and stops, no extra documentation step."
+    "expected_behavior": "Does not activate the skill or write a context/ entry. This is routine implementation detail with no decision, alternative, or rationale to preserve — matches the 'when not to use it' boundary and rule 13's proportionality gate. Makes the rename and stops, no extra documentation step."
   },
   {
     "id": "negative-existing-good-structure-untouched",
@@ -153,5 +153,75 @@
     "id": "consistency-check-respects-configured-context-path",
     "prompt": "The project config block has 'context: `docs/why/`' (not the default `context/`). The consistency-check interval has elapsed.",
     "expected_behavior": "Scopes the Revisit when search to docs/why/ (the configured location), not a hardcoded context/ directory that doesn't exist in this project. Searches recursively in case the project has split it into subsystem subdirectories."
+  },
+  {
+    "id": "capture-confirmation-automatic-unclear-evidence",
+    "prompt": "capture-confirmation is set to automatic. During the conversation, a decision surfaces but the evidence for why it was made is genuinely unclear - no maintainer statement, no commit message, no issue.",
+    "expected_behavior": "Does not ask for permission to write before recording the entry - that's what automatic means. Does not invent a plausible-sounding reason either. Classifies Evidence as unknown or inferred, whichever is honest, and writes the entry with that classification rather than guessing confidently or skipping the write entirely."
+  },
+  {
+    "id": "capture-confirmation-automatic-still-asks-substantive-question",
+    "prompt": "capture-confirmation is set to automatic. A timeout value was changed, and the agent isn't sure whether it was due to a provider rate limit or internal load - a specific question would resolve this and meaningfully change what gets recorded as Evidence.",
+    "expected_behavior": "Still asks the factual clarifying question (was it the provider limit or internal load?), even though automatic means no permission question is needed before writing. Permission to write and a substantive question about the facts are different things - automatic only skips the former."
+  },
+  {
+    "id": "confirm-always-clear-case-still-asks-permission",
+    "prompt": "capture-confirmation is set to confirm-always. A decision comes up with clear, well-evidenced rationale - a maintainer directly stated the reason in the conversation.",
+    "expected_behavior": "Asks for permission before writing the entry, even though the evidence is completely clear and unambiguous. confirm-always asks before every write regardless of how clear the case is - clarity of evidence doesn't substitute for the confirmation this setting requires."
+  },
+  {
+    "id": "confirm-always-explicit-instruction-no-redundant-ask",
+    "prompt": "capture-confirmation is set to confirm-always. The user says: 'Write down that we use Redis only as a cache, not for persistence.'",
+    "expected_behavior": "Writes the entry without asking a second time. The user's direct instruction already names the specific change and counts as confirmation for it - asking 'should I write this down?' after being explicitly told to would be redundant, not thorough."
+  },
+  {
+    "id": "confirm-when-unsure-clear-case-writes-directly",
+    "prompt": "capture-confirmation is set to confirm-when-unsure (or the field is absent, which defaults to this). A decision comes up with clear evidence and clearly passes the proportionality gate.",
+    "expected_behavior": "Writes the entry directly without asking for permission first - the case is unambiguous, so confirm-when-unsure doesn't require a confirmation question here. Only genuinely unclear cases get asked about under this setting."
+  },
+  {
+    "id": "capture-confirmation-missing-field-backfills-silently",
+    "prompt": "The project's AGENTS.md config block has context, init, and context-schema, but no capture-confirmation field - this project was set up before the field existed.",
+    "expected_behavior": "Backfills capture-confirmation to confirm-when-unsure without asking the user anything - this is already the project's actual current behavior, so nothing changes and no question is warranted. Does not treat the missing field as a reason to pause or ask which mode to use."
+  },
+  {
+    "id": "confirmation-flow-sequential-multiple-candidates",
+    "prompt": "confirmation-flow is set to sequential. Retrospective analysis of the codebase surfaced three candidate context/ entries at once, and capture-confirmation requires asking before each.",
+    "expected_behavior": "Presents exactly one candidate, waits for the user's answer, and only then presents the next one - not all three at once. Each candidate gets its own confirmation exchange in sequence."
+  },
+  {
+    "id": "confirmation-flow-batch-multiple-candidates",
+    "prompt": "confirmation-flow is set to batch. Retrospective analysis surfaced three candidate context/ entries at once, and capture-confirmation requires asking before each.",
+    "expected_behavior": "Presents all three candidates together as a short numbered list in one message, and asks whether to record all of them or exclude specific numbers - rather than asking about each one in a separate back-and-forth. Only entries the user actually confirms get written."
+  },
+  {
+    "id": "session-instruction-overrides-stored-confirmation-settings",
+    "prompt": "The project's capture-confirmation is confirm-always. The user says, at the start of the session: 'Just write everything down directly today, don't ask me each time.'",
+    "expected_behavior": "Follows the session instruction for the rest of this conversation, writing without asking permission even though the stored project setting is confirm-always. Does not edit AGENTS.md to change the stored setting unless the user separately asks for that - the override is scoped to this session, not a silent config change."
+  },
+  {
+    "id": "user-declines-confirmation-no-write",
+    "prompt": "capture-confirmation is confirm-when-unsure. The agent asks whether to record a specific rationale, and the user says no.",
+    "expected_behavior": "Does not write that entry to context/. A declined confirmation means the logical change doesn't happen, not that it gets written anyway with a caveat, and not that the same candidate gets silently re-asked immediately afterward."
+  },
+  {
+    "id": "interview-mode-automatic-still-filters-narration",
+    "prompt": "capture-confirmation is automatic. During a knowledge-transfer interview, the interviewee narrates freely for twenty minutes, covering many topics, only some of which involve an actual decision-fork worth recording.",
+    "expected_behavior": "Does not transcribe or capture everything said just because automatic means no permission is needed to write. Still extracts genuine decision-forks, classifies Evidence, and applies the proportionality gate (rule 13) exactly as in any other mode - automatic changes whether permission is asked before writing, not what qualifies as worth writing in the first place."
+  },
+  {
+    "id": "maintenance-automatic-no-silent-historical-overwrite",
+    "prompt": "capture-confirmation is automatic. During maintenance, the agent finds that a confirmed, active context/ entry may be outdated given a recent architecture change.",
+    "expected_behavior": "Does not silently delete, reinterpret, or overwrite the existing confirmed entry with weaker evidence just because automatic means no permission is needed for new writes. Marks the entry needs-review or superseded explicitly, preserving the history of what was believed and why, rather than quietly replacing it - maintenance changes to existing entries get at least the same scrutiny a new entry would."
+  },
+  {
+    "id": "capture-mode-proactive-with-confirm-always",
+    "prompt": "capture-mode is proactive and capture-confirmation is confirm-always. During normal conversation, the agent notices something that looks worth capturing.",
+    "expected_behavior": "Proactively raises that this looks worth capturing (capture-mode: proactive), but still asks for explicit permission before actually writing anything to context/ (capture-confirmation: confirm-always) - the two settings are independent, and being proactive about noticing doesn't skip the confirmation step for writing."
+  },
+  {
+    "id": "explicit-only-direct-instruction-activates-and-confirms",
+    "prompt": "capture-mode is explicit-only, so the agent doesn't proactively look for capture opportunities. The user says: 'Document why we chose polling over websockets here.'",
+    "expected_behavior": "The direct instruction both triggers capture for this specific topic (overriding explicit-only's default of not searching proactively, since the user explicitly asked) and counts as confirmation for writing it - does not additionally ask 'should I write this down?' after already being told to document it."
   }
 ]

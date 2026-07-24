@@ -4,6 +4,15 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- **`capture-confirmation`** (project-wide, `AGENTS.md`): `automatic`, `confirm-always`, or `confirm-when-unsure` (default) — how much permission is needed before writing to `context/`, independent of whether an entry is warranted at all. `confirm-when-unsure` is exactly today's existing behavior, now named and configurable.
+- **`confirmation-flow`** (personal, `AGENTS.local.md`): `sequential` or `batch` — how multiple pending confirmations get presented when more than one accumulates at once (typical in retrospective recovery or after an interview).
+- New Core Rule 11 covering both settings: session instructions override stored preferences, which override the project setting, which override the documented default; a direct instruction to capture something specific counts as confirmation for that one change; and confirmation never overrides Evidence quality, the proportionality gate, a substantive clarifying question, or the existing requirement to never commit/publish without being asked.
+- Applies across all four modes, not just continuous capture — including a specific safeguard for maintenance: `automatic` never permits silently deleting, reinterpreting, or replacing already-confirmed historical information with weaker evidence.
+- Project init wizard and personal preferences wizard both updated with a question for the new settings; existing projects/personal configs missing the fields backfill silently to the defaults, since the defaults match current behavior.
+- 14 new eval cases covering the confirmation model, including cross-axis interactions (e.g. proactive search with confirm-always writing) and the permission-vs-clarifying-question distinction.
+
 ### Fixed
 
 - `release.yml`'s `checkout` didn't pin to the `workflow_dispatch` tag input, so a manual dispatch could package whatever commit the workflow happened to run from instead of the requested tag. Now pins `ref:` explicitly, and "Move latest tag" moves it to that same tag rather than an implicit `HEAD`.

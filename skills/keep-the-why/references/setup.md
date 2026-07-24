@@ -13,24 +13,30 @@ Setup state splits across two files, matching the existing `AGENTS.md`/`AGENTS.l
 - context: `context/`
 - init: complete
 - context-schema: 0.2.0
+- capture-confirmation: confirm-when-unsure
 <!-- /keep-the-why:config -->
 ```
 
 `context-schema` records the latest skill version this project's `context/` has been checked and migrated against — not an independent format-version number of its own. It's still tracked separately from the installed skill's `metadata.version` (SKILL.md frontmatter) because a release can bump `metadata.version` without changing the `context/` entry format at all — in that case `context-schema` simply advances to match, with nothing to migrate (see "Context schema and migrations" below).
+
+`capture-confirmation` governs whether writing to `context/` needs permission first, independently of whether an entry is warranted at all (that's rules 1, 9, and 13, unaffected by this setting). It's project-wide, not personal — unlike *when* the skill looks for capture opportunities (see `capture-mode` below), *how much gets written without asking* affects what everyone else sees committed to a shared folder, so it's a project decision. See "The confirmation model" below for the three values and how they interact with the other two settings.
 
 **Personal config**, in `AGENTS.local.md`, not committed, one per developer:
 
 ```markdown
 <!-- keep-the-why:local -->
 - capture-mode: proactive
+- confirmation-flow: sequential
 - update-check: every 14 days — last: 2026-07-21
 - consistency-check: every 30 days — last: 2026-07-21
 <!-- /keep-the-why:local -->
 ```
 
-Where the why-knowledge lives and whether the project has been set up at all are facts about the project — everyone should see the same answer, so they're committed. Capture mode and how often to run the timer checks are about how *this one developer* wants to work day to day — one person might want proactive capture and weekly checks, another might not want either, and neither is more correct. Splitting them also means the update-check/consistency-check timestamps don't turn into a shared field that every developer's session is racing to update.
+Where the why-knowledge lives, whether the project has been set up at all, and how much confirmation writing needs are facts about the project or its quality bar — everyone should see the same answer, so they're committed. Capture mode, how multiple confirmations get presented, and how often to run the timer checks are about how *this one developer* wants to work day to day — one person might want proactive capture and weekly checks, another might not want either, and neither is more correct. Splitting them also means the update-check/consistency-check timestamps don't turn into a shared field that every developer's session is racing to update.
 
-`capture-mode` says `proactive` rather than `autostart` deliberately — a Skill has no session-level autostart hook to promise (see "What this skill is not" in `SKILL.md`); what's actually configurable is whether the skill, once active in a conversation, looks for capture opportunities on its own or waits to be asked. `proactive` describes that behavior honestly; `explicit-only` is the alternative.
+`capture-mode` says `proactive` rather than `autostart` deliberately — a Skill has no session-level autostart hook to promise (see "What this skill is not" in `SKILL.md`); what's actually configurable is whether the skill, once active in a conversation, looks for capture opportunities on its own or waits to be asked. `proactive` describes that behavior honestly; `explicit-only` is the alternative. This is a different question from `capture-confirmation` — `capture-mode` decides whether the skill goes looking in the first place, `capture-confirmation` decides what happens once it's found something.
+
+`confirmation-flow` governs how *multiple* pending confirmations get presented when more than one accumulates at once (typical in retrospective recovery or after an interview session) — `sequential` (one at a time, wait for an answer before the next) or `batch` (a numbered list, confirm or reject individually or all at once). It doesn't change *whether* confirmation is needed — that's still `capture-confirmation` — only how it's presented when there's more than one.
 
 ## Detection and the two independent wizards
 
@@ -46,6 +52,7 @@ Where the why-knowledge lives and whether the project has been set up at all are
    - Where should the why-knowledge live? Default `context/`; anything else is fine.
    - How do you want to start: capture from now on only, work through existing history now (retrospective recovery), sit down for an interview now, or some combination?
    - Add the Keep the Why badge to this project's `README.md`? If yes, insert `[![Keep the Why](https://keepthewhy.com/assets/badge.svg)](https://keepthewhy.com)` as the *last* badge in the existing badge row — same snippet for every project, see `keepthewhy.com/badge/`. If there's no existing badge row yet, it's the only one, at the top.
+   - How much confirmation before something gets written to `context/`: automatic (no interruption), always ask, or only ask when it's genuinely unclear? Default: only ask when unclear.
 2. Create or update the entry-point file with the project config block, including `context-schema` set to the currently installed skill's `metadata.version` (frontmatter in `SKILL.md`) — a freshly created or newly adopted `context/` is up to date with the current format by definition, nothing to migrate.
 3. If the why-knowledge folder is being created fresh (not an existing folder being adopted), add a short `README.md` inside it:
 
@@ -72,12 +79,89 @@ Where the why-knowledge lives and whether the project has been set up at all are
 
 1. Ask, in one pass:
    - Capture proactively during normal conversation, or only when explicitly asked? Default: proactive.
+   - When there's more than one thing to confirm at once, do you want them one at a time or as a list you can review together? Default: one at a time.
    - Check for skill updates automatically? If yes, what interval (default: 14 days).
    - Check `context/` for staleness automatically? If yes, what interval (default: 30 days).
 2. If `AGENTS.local.md` doesn't exist yet: before creating it, check whether the project's `.gitignore` already excludes it. If not, add an `AGENTS.local.md` entry to `.gitignore` (creating the file if it doesn't exist) — this file is meant to hold personal, sometimes sensitive preferences, and "not committed" only means something if it's actually enforced, not just stated in prose. Then create `AGENTS.local.md` and make sure the entry-point file points to it (see `methodology.md`).
 3. Write the answers to the `AGENTS.local.md` personal block.
 
 Both wizards: offer the defaults as a fast path ("just use the defaults" should be a one-word answer), but leave room for different choices, and record any deviation explicitly rather than leaving it implied.
+
+## The confirmation model
+
+Three independent settings, two different files (see rule 11 in `SKILL.md` for the rule itself; this section is the detail):
+
+| Setting | Question it answers | Values | Where |
+|---|---|---|---|
+| `capture-mode` | When does the skill look for capture opportunities? | `proactive` \| `explicit-only` | `AGENTS.local.md` (personal) |
+| `capture-confirmation` | Once something's found, does writing it need permission first? | `automatic` \| `confirm-always` \| `confirm-when-unsure` | `AGENTS.md` (project) |
+| `confirmation-flow` | When more than one thing needs confirming at once, how is that presented? | `sequential` \| `batch` | `AGENTS.local.md` (personal) |
+
+They're orthogonal. Proactive search plus always-ask is a valid, if chattier, combination; explicit-only plus automatic writing is equally valid — searching only on request, then not interrupting once asked.
+
+### `capture-confirmation` values
+
+- **`automatic`** — writes without asking permission, once Evidence (rule 2) and the proportionality gate (rule 13) already say an entry is warranted. This means *don't interrupt to ask permission*, not *don't ask at all* — see "Permission vs. clarification" below — and it never means guessing: evidence that's still genuinely unclear becomes `inferred` or `unknown`, exactly as rule 1 already requires, regardless of this setting.
+- **`confirm-always`** — asks before every write, even an unambiguous one. Useful early on, or for a team that wants to review every `context/` change before it lands. A direct instruction that already names the specific change (e.g. "write that down in `sync.md`") counts as confirmation for that one change — don't ask again for something the user just explicitly asked for.
+- **`confirm-when-unsure`** (default) — writes directly when Evidence and proportionality are clear; asks only when genuinely unclear whether or how something should be captured. This is the behavior the skill already had before this setting existed (see `continuous-capture.md`'s "'Low-effort' doesn't mean 'never ask'"), now named and configurable instead of only implicit.
+
+### Permission vs. clarification
+
+Two different kinds of question, and `capture-confirmation` only governs one of them:
+
+- **Permission question** — "Should I write this down?" Governed entirely by `capture-confirmation`.
+- **Clarifying question** — "Was the timeout from a provider limit or internal load?" A question about the *facts*, asked because a specific answer would meaningfully sharpen the Evidence. Always allowed, always independent of `capture-confirmation` — even in `automatic` mode. `automatic` means the skill doesn't ask for permission once it already has enough to write something honest; it never means the skill stops asking substantive questions that would improve what gets written.
+
+### Resolution order
+
+An explicit instruction in the current session always wins. After that:
+
+```text
+session instruction → personal setting (AGENTS.local.md) → project setting (AGENTS.md) → documented default
+```
+
+Examples of session overrides: "just write everything down directly this session," "ask me before every entry today," "show me everything you found as one list," "only make suggestions, don't touch any files yet." A session override doesn't change the stored config unless the user explicitly says to update it — it's scoped to that conversation, not a silent edit to `AGENTS.md` or `AGENTS.local.md`.
+
+A personal override for `capture-confirmation` isn't part of this release — it's project-wide only for now, deliberately, to see how it behaves in practice first (see `context/repo-conventions.md` for why). The resolution order above already leaves room for one later: a personal `capture-confirmation` field in `AGENTS.local.md` would simply slot in between session instruction and the project setting, same pattern as `migration-prompt: <version> declined`.
+
+### `confirmation-flow` values
+
+- **`sequential`** — present one candidate, wait for the answer, then present the next:
+
+    ```text
+    Agent: I'd record that Redis is deliberately used as a cache only. OK?
+    User: Yes.
+
+    Agent: The decision against Redis persistence I'd document separately. OK?
+    User: No.
+    ```
+
+- **`batch`** — present several candidates as a short numbered list, then let the user confirm all, reject all, or pick individual numbers:
+
+    ```text
+    Agent: I found three things worth recording:
+
+    1. Redis is deliberately used as a cache only.
+    2. Persistence was rejected because of recovery complexity.
+    3. The TTL value comes from a previous provider limit.
+
+    Should I record all of these, or do you want to exclude any numbers?
+    ```
+
+Only confirmed items get written either way. `confirmation-flow` changes nothing about *whether* confirmation is needed — that's `capture-confirmation` — only how it looks once more than one confirmation is pending at the same time.
+
+### Scope: all four modes
+
+`capture-confirmation` and `confirmation-flow` apply everywhere the skill is about to write to `context/`, not just continuous capture:
+
+- **Continuous capture** — the usual case: a decision lands mid-conversation, the settings decide the confirmation step before it's written.
+- **Retrospective recovery** — once the agent reconstructs a candidate rationale from git history or issues, the same settings apply before it's written — and reconstructing several candidates from one pass is exactly the case `confirmation-flow: batch` is for.
+- **Knowledge-transfer interview** — free narration doesn't get written down unfiltered. The agent still extracts decision-forks, classifies Evidence and checks proportionality for each one, and *then* the same confirmation settings apply per candidate before anything lands in `context/`. `confirm-always` is often the natural fit here, since a live dialogue is already happening — but `automatic` is still valid if the person being interviewed says so explicitly.
+- **Maintenance** — resolving contradictions, marking something superseded, splitting a file: the same settings apply before the change is written. `automatic` here never means silently deleting, reinterpreting, or replacing already-confirmed historical information with weaker evidence (rule 11) — maintenance touches existing, previously-confirmed entries, which deserves at least the same scrutiny a new entry gets.
+
+### Missing fields
+
+If `capture-confirmation` is missing from an existing project's config block, backfill it to `confirm-when-unsure` the next time the setup check runs — that's already the project's actual behavior today, so nothing changes and no question is needed. Same for `confirmation-flow` missing from a personal block: backfill to `sequential` silently. Neither of these is a `context-schema` migration — this setting doesn't touch the `context/` entry *format*, only how writing to it is confirmed, so it doesn't go through `migrations.md`.
 
 ## Timer check (every session, for whoever has a personal config)
 

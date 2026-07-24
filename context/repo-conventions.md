@@ -99,3 +99,14 @@ The `GH Release` workflow's `checkout` step explicitly sets `ref: ${{ github.eve
 **Reason:** `actions/checkout@v4` without an explicit `ref` checks out whatever triggered the workflow. For the normal tag-push trigger that's already correct (the trigger ref *is* the tag). For a manual `workflow_dispatch` run with a typed-in tag input, though, the trigger ref is whatever branch the dispatch was run from — not necessarily the tag someone typed into the input box. Without pinning `ref` explicitly, a manual dispatch could package and release the wrong commit under the requested tag's name. Caught by external review; we'd only ever used the tag-push path in practice, so it hadn't surfaced.
 
 **Rejected alternative:** leave it as-is, reasoning that we never actually use manual dispatch. Rejected — the input field existing at all implies it's meant to work correctly, and a latent bug that only bites on a rarely-used path is still worth fixing once known.
+
+## `capture-confirmation` is project-wide only, for now — deliberately, to test first
+
+**Status:** active
+**Evidence:** confirmed
+
+`capture-confirmation` (automatic / confirm-always / confirm-when-unsure — how much permission is needed before writing to `context/`) lives only in the project config block (`AGENTS.md`), with no personal override in this release, even though `capture-mode` and `confirmation-flow` are both personal.
+
+**Reason:** Oliver's call: test the setting project-wide first and see how it behaves in practice before deciding whether individual developers should be able to override it. The resolution order (session instruction → personal setting → project setting → default) is deliberately structured so a personal override slots in later without restructuring anything — same pattern as `migration-prompt: <version> declined` — but adding it now, before there's any real usage to learn from, would be guessing at a need rather than confirming one.
+
+**Rejected alternative:** ship a personal override immediately, symmetric with `capture-mode` and `confirmation-flow`. Rejected for now — not because it's wrong in principle, but because whether developers actually want to diverge from the project's confirmation bar is an open question this release is meant to help answer, not one to presume the answer to upfront.
