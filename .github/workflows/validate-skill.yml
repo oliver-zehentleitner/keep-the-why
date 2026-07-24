@@ -19,7 +19,7 @@ jobs:
         run: pip install skills-ref
 
       - name: Validate SKILL.md against the Agent Skills spec
-        run: skills-ref validate skills/keep-the-why
+        run: python -m skills_ref.cli validate skills/keep-the-why
 
       - name: Validate evals.json is well-formed
         run: python -m json.tool skills/keep-the-why/evals/evals.json >/dev/null
