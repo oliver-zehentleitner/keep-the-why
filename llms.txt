@@ -30,7 +30,7 @@ get thrown away, not creating separate documentation effort. It isn't magic, tho
 prevents knowledge from decaying on its own. This lowers the friction of the discipline that
 keeps documentation honest; it doesn't replace it.
 
-Version: 0.3.1.
+Version: 0.4.0.
 
 ## Authorship & License
 

@@ -4,6 +4,8 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-07-24
+
 ### Added
 
 - **`capture-confirmation`** (project-wide, `AGENTS.md`): `automatic`, `confirm-always`, or `confirm-when-unsure` (default) — how much permission is needed before writing to `context/`, independent of whether an entry is warranted at all. `confirm-when-unsure` is exactly today's existing behavior, now named and configurable.
@@ -22,6 +24,8 @@ All notable changes to this project are documented here. Format follows [Keep a 
 - `confirmation-flow` missing from a personal config was documented as a silent backfill to `sequential`, same treatment as `capture-confirmation`'s missing-field case. Caught by review: there's no prior behavior for `confirmation-flow` to preserve, since the axis didn't exist before — it needed to ask once, not default silently. Fixed, and Core Rule 14 now makes the missing-vs-invalid distinction explicit project-wide.
 - Reference docs described `confirmation-flow: batch` and `capture-confirmation: confirm-always` as the "natural fit" for retrospective recovery and interviews respectively. Neutralized — a deliberately chosen personal preference gets respected regardless of which mode it's used in, not nudged toward whichever option sounds more fitting.
 - The `AGENTS.md` example in `repository-structure.md` omitted `context-schema` and `capture-confirmation`, both of which a real project's config block always has — an example without them was misleading, not just terse. Now shown at realistic current values.
+- `setup.md`'s "personal block present → use it, no re-asking" read as a blanket statement, in tension with the missing-field and invalid-value handling documented right below it. Precised: applies to settings that are present and valid, not the whole block regardless of contents.
+- This repo's own `AGENTS.md` and `context/repo-conventions.md` were missing `capture-confirmation`/`confirmation-flow` — dogfooded.
 
 ## [0.3.1] - 2026-07-23
 
@@ -104,7 +108,8 @@ Initial release.
 - Logo, wordmark, and favicon.
 - `context/repo-conventions.md`, dogfooding the skill on its own repository from day one.
 
-[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.1.0...v0.2.0
