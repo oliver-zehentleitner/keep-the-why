@@ -30,6 +30,15 @@ npx skills add oliver-zehentleitner/keep-the-why
 
 Either form prompts for which of its 70+ supported agents (Claude Code, Codex, OpenCode, and more) and scope (project or personal) to install for, then installs via symlink or copy, your choice. Also listed on [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why).
 
+## Also listed on
+
+| Name | Status | Info |
+|---|---|---|
+| [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why) | Live | Backs the `npx skills add` install method above |
+| [GitHub Copilot plugin marketplace](https://github.com/github/awesome-copilot) | Ready for review — [Issue #2470](https://github.com/github/awesome-copilot/issues/2470) | External plugin submission, pinned to `v0.5.2` |
+| [awesome-agent-skills](https://github.com/VoltAgent/awesome-agent-skills) | Pending — [PR #850](https://github.com/VoltAgent/awesome-agent-skills/pull/850) | Requires "real community usage"; may be declined |
+| [SkillsLLM](https://skillsllm.com/) | Not eligible yet | Requires 100+ GitHub stars to submit |
+
 ## Also recommended: GitHub CLI
 
 With [`gh`](https://cli.github.com/) v2.90.0 or later — `gh skill` is [in public preview](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/customize-cloud-agent/add-skills) and subject to change:

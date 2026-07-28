@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- "Also listed on" table in `README.md` and `docs/installation.md`, plus an equivalent "Also Listed On" section in `llms.txt`, tracking marketplace listing status (skills.sh, GitHub Copilot plugin marketplace, awesome-agent-skills, SkillsLLM) — only lists what's actually confirmed live or has an open, trackable submission, not aspirational entries.
+
 ### Fixed
 
 - `docs/faq.md`'s "How is this different from git-why, AgDR, or similar projects?" entry named specific competing tools and pointed at a README section ("Not a green field") that no longer exists under that name — missed when README/`llms.txt` dropped name-by-name comparisons earlier. Reworded to match, and the dead section reference fixed to "Related work". Also brought the "distinguishing combination" wording in README, `llms.txt`, and the FAQ back in sync with the four modes `SKILL.md` actually describes (was missing "maintenance", and used the stale "code-guided interviews" name instead of "knowledge-transfer interviews").
