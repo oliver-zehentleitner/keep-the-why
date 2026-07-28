@@ -9,8 +9,8 @@ No — see the README's "Where this fits" table (on the [Overview](index.md) pag
 **How is this different from an ADR (Architecture Decision Record)?**
 ADRs are typically human-authored, written at a discrete decision point, one file per decision, and treated as frozen once accepted. Keep the Why is continuous and agent-authored from the conversation itself, organized by topic rather than by decision, and entries are living — updated and marked superseded rather than replaced by a new file. See [Methodology](methodology.md) for the full reasoning.
 
-**How is this different from git-why, AgDR, or similar projects?**
-They're real prior art and worth using too — see the README's "Not a green field" section for specifics. Keep the Why's distinguishing combination is continuous capture *and* retrospective recovery *and* code-guided interviews, organized as topic-indexed living docs, with no required external service.
+**How is this different from other tools or skills that capture agent rationale?**
+Several solve adjacent parts of this problem well. Rather than a name-by-name comparison that's incomplete the moment it's written and stale soon after, see the README's "Related work" section and [Philosophy](https://keepthewhy.com/philosophy/) for how Keep the Why draws its own boundaries: continuous capture, retrospective recovery, and knowledge-transfer interviews, plus ongoing maintenance of what's already there — organized as topic-indexed living docs rather than a shadow tree or one-file-per-decision, with no required external service.
 
 **Does this require a database, MCP server, or network access?**
 No. Everything is plain Markdown files committed to the repository.
