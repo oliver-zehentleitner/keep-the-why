@@ -109,15 +109,16 @@ contradicted).
 - Maintenance — keep existing rationale current, resolve contradictions, split oversized files
 
 First activation in a project runs a one-time setup: a project wizard (where `context/` lives,
-starting mode, README badge, and `capture-confirmation`) and a separate personal wizard
-(proactive vs. explicit-only capture, `confirmation-flow`, update-check/consistency-check
-intervals) — see https://keepthewhy.com/setup/. When a later skill update changes the
-`context/` entry format, a `context-schema` version tracked in the project's config is
-compared against the installed skill's `metadata.version` and, if behind, offers a migration —
-see https://keepthewhy.com/migrations/. A developer can personally decline being asked about
-one specific migration without affecting the project or anyone else on it. Updating the skill
-itself (new `metadata.version`, new frontmatter shape, etc.) is independent of this — it only
-asks something of a project when the `context/` entry format actually changes.
+starting mode, README badge, `capture-confirmation`, and `source-reference`) and a separate
+personal wizard (proactive vs. explicit-only capture, `confirmation-flow`,
+update-check/consistency-check intervals) — see https://keepthewhy.com/setup/. When a later
+skill update changes the `context/` entry format, a `context-schema` version tracked in the
+project's config is compared against the installed skill's `metadata.version` and, if behind,
+offers a migration — see https://keepthewhy.com/migrations/. A developer can personally
+decline being asked about one specific migration without affecting the project or anyone else
+on it. Updating the skill itself (new `metadata.version`, new frontmatter shape, etc.) is
+independent of this — it only asks something of a project when the `context/` entry format
+actually changes.
 
 Two more settings decide how writing itself gets confirmed, independent of when the skill
 looks for something worth capturing (`capture-mode`) or whether an entry is warranted at all
@@ -130,6 +131,12 @@ permission question ("should I write this?") is governed by these settings; a su
 clarifying question about the facts themselves is not, and stays independent even in
 `automatic` mode. Applies across all four modes, including maintenance, where `automatic`
 never permits silently overwriting already-confirmed historical information.
+
+A fourth, independent setting, `source-reference` (project-wide) — `always`, `never` (default),
+or `filtered: <criteria>` — decides whether the skill actively asks for a related issue,
+ticket, PR, or post-mortem when recording an entry, separate from Source above, which was
+already able to hold one but was never actively sought. Asking is never the same as requiring
+one to exist: "no reference" is a complete answer, never invented to fill the field.
 
 A genuinely missing field can fall back to a documented default (e.g. `capture-confirmation`
 absent means `confirm-when-unsure`, since that's already the project's real behavior) — but a
@@ -160,6 +167,8 @@ external service (no database, no MCP server).
   it covers only the "why" layer; see "Where this fits" in the README.
 - Don't invent rationale when evidence doesn't support an answer — mark it "unknown" instead of
   guessing.
+- Don't invent an issue, ticket, or post-mortem reference to satisfy `source-reference: always`
+  or a matching `filtered` criterion — "no reference exists" is a complete, valid answer.
 - Don't create a new topic file in `context/` when an existing one on the same subject should be
   updated instead.
 - Don't default to a scripted interview question list for someone with broad, tacit knowledge

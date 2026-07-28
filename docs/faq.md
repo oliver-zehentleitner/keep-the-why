@@ -21,6 +21,9 @@ No — see "What this is not" in the [Overview](index.md) and in `SKILL.md`. Qua
 **Does the skill always interrupt me to ask before writing anything?**
 Configurable, project-wide, via `capture-confirmation` in `AGENTS.md`: `automatic` (never asks permission, just writes once evidence and proportionality already support it), `confirm-always` (asks before every write), or `confirm-when-unsure` (the default, and what the skill already did before this setting existed — writes directly when things are clear, asks only when genuinely unclear). None of these change whether the skill asks a substantive question about the facts themselves, which stays independent of this setting even in `automatic` mode. See [Setup](setup.md), "The confirmation model."
 
+**Does it link entries to a Jira/GitHub issue or post-mortem?**
+It can, via `source-reference` in `AGENTS.md` (project-wide, default `never`): `always` asks whether a related issue, ticket, PR, or post-mortem exists for every new entry; `filtered: <criteria>` asks only when your own free-text criteria match (e.g. only for incident-related topic files). Either way, asking isn't the same as requiring one — "no reference exists" is a complete answer, never invented to fill the field. This is separate from rule 2's Source field itself, which could already hold a reference, just wasn't actively asked for before this setting existed. See [Setup](setup.md), "The confirmation model."
+
 **What if my project already has a documentation structure I like?**
 Keep the Why is meant to adapt to what exists, not replace a working structure with a fixed template. See [Repository structure](repository-structure.md), "Retrofitting an existing project."
 
