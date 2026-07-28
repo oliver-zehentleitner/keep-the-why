@@ -6,6 +6,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Added
 
+- New project setting `source-reference` (`always` / `never` / `filtered: <criteria>`, default `never`) governs whether the skill actively asks for a related issue, ticket, PR, or post-mortem when recording a `context/` entry — distinct from rule 2's existing (passive) Source field. `filtered` criteria are free text the project defines itself, not a fixed taxonomy. Asking is never the same as requiring one to exist — "no reference" is a complete answer, never invented to fill the field. Project-wide only for now, no personal override, same precedent as `capture-confirmation`. See `context/repo-conventions.md`.
+
+### Added
+
 - "Also listed on" table in `README.md` and `docs/installation.md`, plus an equivalent "Also Listed On" section in `llms.txt`, tracking marketplace listing status (skills.sh, GitHub Copilot plugin marketplace, awesome-agent-skills, SkillsLLM) — only lists what's actually confirmed live or has an open, trackable submission, not aspirational entries.
 
 ### Fixed

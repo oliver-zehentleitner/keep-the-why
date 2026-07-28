@@ -140,3 +140,18 @@ README's and `llms.txt`'s "Related work" don't compare Keep the Why against spec
 **Rejected alternative:** keep a maintained comparison table and just fix the broken link. Rejected — doesn't address why it went stale in the first place, and the same drift would recur.
 
 **Consequence, caught late:** `docs/faq.md`'s "How is this different from git-why, AgDR, or similar projects?" entry was missed when this changed elsewhere (README, `llms.txt`) — it named both tools and pointed at a README section ("Not a green field") that no longer exists under that name (now "Related work"). Fixed once noticed; recorded here so the next place this wording lives doesn't get missed the same way.
+
+## `source-reference` asks about ticket/issue links, doesn't require one to exist, and ships project-wide only
+
+**Status:** active
+**Evidence:** confirmed
+
+New project setting `source-reference` (`always` / `never` / `filtered: <criteria>`, default `never`) governs whether the skill actively asks for a related issue, ticket, PR, or post-mortem when recording a `context/` entry — distinct from rule 2's existing Source field, which was already able to hold this but was never actively sought.
+
+**Reason:** prompted by an external review of this project pointing out that a "why" is strongest when it's traceable to something concrete like a tracked incident or ticket. The underlying capability already existed (Source, rule 2) — what was missing was ever proactively asking for it. Making that its own setting, rather than folding it into `capture-confirmation`, keeps the two questions separate: whether writing needs permission (`capture-confirmation`) is orthogonal to whether the skill goes looking for a ticket reference (`source-reference`) — a project could want one without the other.
+
+**Rejected alternative:** a rigid per-entry YAML/frontmatter schema with a mandatory ticket-ID field (the shape the original suggestion came in, closer to ADR/AgDR-style structured records). Rejected — this project already differentiates itself from one-file-per-decision, rigid-schema tools (see "No name-by-name comparison" above); a mandatory structured field pushes toward exactly that model and would need its own `context-schema` migration. Recording Source in prose, same as today, keeps the format unchanged — only whether it gets actively asked for changes.
+
+**Rejected alternative (the `filtered` mechanism specifically):** a fixed taxonomy of filter categories (by topic file, by Status, by severity) defined by the skill. Rejected in favor of free text the project defines itself — a fixed taxonomy would be guessing at categories before there's real usage to learn from, the same reasoning already applied to keeping `capture-confirmation` project-wide-only for now (see above).
+
+**Consequence:** `always` (or a matching `filtered` criterion) means asking is mandatory, but a reference existing is not — "no, nothing tracks this" is a complete, valid answer. Inventing a plausible-sounding ticket reference to avoid an empty field would violate rule 1 exactly like inventing rationale would. No personal override in this release, same "test one setting before adding a second axis" precedent as `capture-confirmation`.

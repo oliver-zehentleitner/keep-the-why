@@ -14,12 +14,15 @@ Setup state splits across two files, matching the existing `AGENTS.md`/`AGENTS.l
 - init: complete
 - context-schema: 0.5.2
 - capture-confirmation: confirm-when-unsure
+- source-reference: never
 <!-- /keep-the-why:config -->
 ```
 
 `context-schema` records the latest skill version this project's `context/` has been checked and migrated against — not an independent format-version number of its own. It's still tracked separately from the installed skill's `metadata.version` (SKILL.md frontmatter) because a release can bump `metadata.version` without changing the `context/` entry format at all — in that case `context-schema` simply advances to match, with nothing to migrate (see "Context schema and migrations" below).
 
-`capture-confirmation` governs whether writing to `context/` needs permission first, independently of whether an entry is warranted at all (that's rules 1, 9, and 13, unaffected by this setting). It's project-wide, not personal — unlike *when* the skill looks for capture opportunities (see `capture-mode` below), *how much gets written without asking* affects what everyone else sees committed to a shared folder, so it's a project decision. See "The confirmation model" below for the three values and how they interact with the other two settings.
+`capture-confirmation` governs whether writing to `context/` needs permission first, independently of whether an entry is warranted at all (that's rules 1, 9, and 13, unaffected by this setting). It's project-wide, not personal — unlike *when* the skill looks for capture opportunities (see `capture-mode` below), *how much gets written without asking* affects what everyone else sees committed to a shared folder, so it's a project decision. See "The confirmation model" below for the values and how they interact with the other settings.
+
+`source-reference` governs whether the skill actively *asks* for a related issue, ticket, or post-mortem link when recording an entry, rather than only capturing a Source (rule 2 in `SKILL.md`) that surfaces naturally. Project-wide, same reasoning as `capture-confirmation` — it changes what gets asked during a shared workflow, not an individual's personal habits.
 
 **Personal config**, in `AGENTS.local.md`, not committed, one per developer:
 
@@ -53,6 +56,7 @@ Where the why-knowledge lives, whether the project has been set up at all, and h
    - How do you want to start: capture from now on only, work through existing history now (retrospective recovery), sit down for an interview now, or some combination?
    - Add the Keep the Why badge to this project's `README.md`? If yes, insert `[![Keep the Why](https://keepthewhy.com/assets/badge.svg)](https://keepthewhy.com)` as the *last* badge in the existing badge row — same snippet for every project, see `keepthewhy.com/badge/`. If there's no existing badge row yet, it's the only one, at the top.
    - How much confirmation before something gets written to `context/`: automatic (no interruption), always ask, or only ask when it's genuinely unclear? Default: only ask when unclear.
+   - Should the agent actively ask whether a related issue, ticket, or post-mortem exists when recording something: always, never, or only when a filter criterion you define matches? Default: never.
 2. Create or update the entry-point file with the project config block, including `context-schema` set to the currently installed skill's `metadata.version` (frontmatter in `SKILL.md`) — a freshly created or newly adopted `context/` is up to date with the current format by definition, nothing to migrate.
 3. If the why-knowledge folder is being created fresh (not an existing folder being adopted), add a short `README.md` inside it:
 
@@ -116,15 +120,16 @@ Both wizards: offer the defaults as a fast path ("just use the defaults" should 
 
 ## The confirmation model
 
-Three independent settings, two different files (see rule 11 in `SKILL.md` for the rule itself; this section is the detail):
+Four independent settings, two different files (see rule 11 in `SKILL.md` for the rule itself; this section is the detail):
 
 | Setting | Question it answers | Values | Where |
 |---|---|---|---|
 | `capture-mode` | When does the skill look for capture opportunities? | `proactive` \| `explicit-only` | `AGENTS.local.md` (personal) |
 | `capture-confirmation` | Once something's found, does writing it need permission first? | `automatic` \| `confirm-always` \| `confirm-when-unsure` | `AGENTS.md` (project) |
 | `confirmation-flow` | When more than one thing needs a response at once — pending entry confirmations, or a wizard's own questions — how is that presented? | `sequential` \| `batch` | `AGENTS.local.md` (personal) |
+| `source-reference` | Does the skill actively ask for a related issue, ticket, or post-mortem link when recording an entry? | `always` \| `never` \| `filtered: <criteria>` | `AGENTS.md` (project) |
 
-They're orthogonal. Proactive search plus always-ask is a valid, if chattier, combination; explicit-only plus automatic writing is equally valid — searching only on request, then not interrupting once asked.
+They're orthogonal. Proactive search plus always-ask is a valid, if chattier, combination; explicit-only plus automatic writing is equally valid — searching only on request, then not interrupting once asked. `source-reference` is independent of all three — it decides whether one extra question gets asked, not whether writing needs permission or how multiple pending items are presented.
 
 ### `capture-confirmation` values
 
@@ -138,6 +143,18 @@ Two different kinds of question, and `capture-confirmation` only governs one of 
 
 - **Permission question** — "Should I write this down?" Governed entirely by `capture-confirmation`.
 - **Clarifying question** — "Was the timeout from a provider limit or internal load?" A question about the *facts*, asked because a specific answer would meaningfully sharpen the Evidence. Always allowed, always independent of `capture-confirmation` — even in `automatic` mode. `automatic` means the skill doesn't ask for permission once it already has enough to write something honest; it never means the skill stops asking substantive questions that would improve what gets written.
+
+A third kind sits alongside these two: a **source-lookup question** — "Is there an issue, ticket, or post-mortem for this?" It isn't permission (it doesn't ask whether to write anything) and it isn't a clarifying question about the rationale itself (the entry can be written and be entirely correct without ever getting an answer). Whether it gets asked at all is exactly what `source-reference` governs.
+
+### `source-reference` values
+
+- **`always`** — ask whether a related issue, ticket, PR, or post-mortem exists for every new `context/` entry, before writing it.
+- **`never`** (default) — don't ask proactively. Source (rule 2) still gets recorded whenever it comes up on its own — this setting only controls whether the skill goes looking for one.
+- **`filtered: <criteria>`** — ask only when the developer-defined criteria match the entry in question. Criteria are free text, recorded alongside the setting (e.g. `source-reference: filtered — only for entries in context/incidents.md and context/security.md`, or `filtered — only when Evidence would otherwise be inferred`) — not a fixed taxonomy the skill imposes. Interpret the stated criteria against each candidate entry; if a specific case is genuinely unclear against what's written, that's rule 14 ambiguity — ask which way it falls, don't silently guess either direction.
+
+Whatever the setting, asking is never the same as requiring one to exist. "No, there's nothing tracking this" is a complete, valid answer — recording it as `**Source:** none — no tracked issue or ticket` (or simply omitting Source, since it was never mandatory per rule 2) is correct. Inventing a plausible-sounding ticket reference to satisfy `always` or a matched `filtered` criterion would violate rule 1 exactly the same way inventing rationale would.
+
+`source-reference` doesn't have a personal override in this release, same reasoning and same "test one setting before adding a second axis" precedent as `capture-confirmation` — see `context/repo-conventions.md`.
 
 ### Resolution order
 
@@ -188,14 +205,17 @@ The same two shapes apply to a wizard's own questions, not just candidate `conte
 - **Knowledge-transfer interview** — free narration doesn't get written down unfiltered. The agent still extracts decision-forks, classifies Evidence and checks proportionality for each one, and *then* the same confirmation settings apply per candidate before anything lands in `context/`, exactly as configured — a live dialogue doesn't change which `capture-confirmation` value applies.
 - **Maintenance** — resolving contradictions, marking something superseded, splitting a file: the same settings apply before the change is written. `automatic` here never means silently deleting, reinterpreting, or replacing already-confirmed historical information with weaker evidence (rule 11) — maintenance touches existing, previously-confirmed entries, which deserves at least the same scrutiny a new entry gets.
 
+`source-reference` follows the same scope for the three modes that produce genuinely new entries (continuous capture, retrospective recovery, knowledge-transfer interview) — `always` or a matching `filtered` criterion means the source-lookup question is part of recording the candidate, regardless of which mode surfaced it. Maintenance usually doesn't trigger it, since it isn't originating new rationale to source — though adding a missing Source to an already-existing entry during maintenance is the same source-lookup question, on the same terms.
+
 ### Missing fields vs. invalid fields — not the same case (rule 14)
 
 **Missing entirely:**
 
 - `capture-confirmation` absent from an existing project's config block → backfill to `confirm-when-unsure` the next time the setup check runs, silently. This is legitimate precisely because it's a documented default for a field that doesn't exist yet, and it's already the project's actual behavior today — nothing changes, so there's nothing to ask about.
+- `source-reference` absent from an existing project's config block → same reasoning, backfill to `never` silently. It's a new question the skill didn't used to ask at all, so "never ask it" is the accurate description of prior behavior, not a guess.
 - `confirmation-flow` absent from an existing personal block → this is *not* the same situation, even though it looks similar. There's no prior behavior to preserve, since this axis didn't exist before the setting did. Ask the same one-line question the personal wizard already asks ("one at a time, or as a list?"), once, and record the answer — don't default it silently just because it's convenient to treat it like `capture-confirmation`'s case.
 
-Neither is a `context-schema` migration — this doesn't touch the `context/` entry *format*, only how writing to it is confirmed, so it doesn't go through `migrations.md`.
+None of these is a `context-schema` migration — none touch the `context/` entry *format*, only how writing to it is confirmed or what gets asked beforehand, so none go through `migrations.md`.
 
 **Present but invalid, or contradictory:** a field that exists with a value outside the documented set (`confirmation-flow: grouped`), or one recorded more than once with different values, is never treated as if it were missing. Don't guess which value was intended, don't silently apply the documented default, and don't pick one of the conflicting values on your own — even if one looks more "obviously right." Instead:
 

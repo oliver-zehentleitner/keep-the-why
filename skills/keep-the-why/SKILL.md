@@ -26,7 +26,7 @@ Four modes, all part of the same job:
 ## Core rules
 
 1. **Never invent rationale.** If it can't be confirmed or reasonably inferred, say so — ask a focused question or mark it unknown, don't fill the gap with something plausible-sounding.
-2. Classify every entry's **Evidence**: **confirmed** (stated by a maintainer or backed by authoritative evidence), **inferred** (reasonably derived, not confirmed), or **unknown** (evidence doesn't support an answer). This is a separate axis from Status (rule 7) — a superseded decision can still have been confirmed when it was current; being outdated and being well-evidenced are different questions. Classify at the level of the entry, not every sentence — split out a separate label only when part of an entry genuinely has different evidence than the rest. When an entry's origin is worth tracing, add **Source** (who or what it came from — a maintainer interview, a commit, an issue, or where you looked and found nothing, for an unknown) — useful at any Evidence level, not just confirmed. Add **Verification**: corroborated, uncorroborated, or contradicted when there's something concrete to check a confirmed or inferred claim against. A `contradicted` verification must say what contradicts it and why — the label alone isn't an explanation.
+2. Classify every entry's **Evidence**: **confirmed** (stated by a maintainer or backed by authoritative evidence), **inferred** (reasonably derived, not confirmed), or **unknown** (evidence doesn't support an answer). This is a separate axis from Status (rule 7) — a superseded decision can still have been confirmed when it was current; being outdated and being well-evidenced are different questions. Classify at the level of the entry, not every sentence — split out a separate label only when part of an entry genuinely has different evidence than the rest. When an entry's origin is worth tracing, add **Source** (who or what it came from — a maintainer interview, a commit, an issue, or where you looked and found nothing, for an unknown) — useful at any Evidence level, not just confirmed. Whether to actively *ask* for a Source (an issue, ticket, or post-mortem link) rather than only recording one that surfaces naturally is governed by the project's `source-reference` setting — see `references/setup.md`. Add **Verification**: corroborated, uncorroborated, or contradicted when there's something concrete to check a confirmed or inferred claim against. A `contradicted` verification must say what contradicts it and why — the label alone isn't an explanation.
 3. Preserve the project's existing terminology and documentation conventions; don't impose a foreign vocabulary.
 4. Update existing topic files instead of creating duplicate or near-duplicate documents.
 5. Organize knowledge by *topic* (`auth.md`, `sync.md`), not mechanically by source file or by commit.
@@ -77,6 +77,8 @@ Default: ask only what the evidence genuinely can't answer, and ask specifically
 - Better: "Why does the sync step wait for the snapshot before applying buffered events?"
 
 Exception: rule 12 — free narration for broad, tacit knowledge. See `references/interview-playbook.md` for both techniques.
+
+Also check the project's `source-reference` setting (`references/setup.md`): `always`, or a matching `filtered` criterion, means whether a related issue, ticket, PR, or post-mortem exists is part of what gets asked here, not just the rationale itself. "No, there isn't one" is a complete answer — this never means inventing a reference to fill the field (rule 1).
 
 ### 5. Record
 
