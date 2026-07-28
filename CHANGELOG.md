@@ -4,10 +4,16 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-07-28
+
 ### Added
 
 - `SKILL.md` frontmatter's `metadata` block now includes `author: "Oliver Zehentleitner"` — the Agent Skills spec's `metadata` field is an arbitrary key-value map (its own spec example shows `author` as a custom key), not a dedicated top-level field.
 - `plugin.json` at the repo root, declaring `skills/` as this repo's skill directory — groundwork for registering this repo as an external plugin in GitHub's Copilot plugin marketplace (`awesome-copilot`), submitted via their external-plugin Issue form with a pinned release tag (see `context/repo-conventions.md`).
+
+### Fixed
+
+- `SKILL.md`'s "Reference files" list now uses real Markdown links (`[references/setup.md](references/setup.md)`) instead of plain backtick-formatted paths — `awesome-copilot`'s `vally lint` orphan-files check couldn't otherwise tell those files were reachable from `SKILL.md`.
 
 ## [0.5.1] - 2026-07-27
 
