@@ -82,6 +82,15 @@ Also compatible with Windsurf, Goose, Roo Code, Trae, Factory, JetBrains Junie, 
 
 Full install detail for every method, including tools without a skill runtime at all: [`docs/installation.md`](docs/installation.md) or [https://keepthewhy.com/installation/](https://keepthewhy.com/installation/).
 
+### Also listed on
+
+| Name | Status | Info |
+|---|---|---|
+| [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why) | Live | Backs the `npx skills add` install method above |
+| [GitHub Copilot plugin marketplace](https://github.com/github/awesome-copilot) | Ready for review — [Issue #2470](https://github.com/github/awesome-copilot/issues/2470) | External plugin submission, pinned to `v0.5.2` |
+| [awesome-agent-skills](https://github.com/VoltAgent/awesome-agent-skills) | Pending — [PR #850](https://github.com/VoltAgent/awesome-agent-skills/pull/850) | Requires "real community usage"; may be declined |
+| [SkillsLLM](https://skillsllm.com/) | Not eligible yet | Requires 100+ GitHub stars to submit |
+
 ## Example
 
 ```text
