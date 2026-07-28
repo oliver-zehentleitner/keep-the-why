@@ -110,3 +110,18 @@ The `GH Release` workflow's `checkout` step explicitly sets `ref: ${{ github.eve
 **Reason:** Oliver's call: test the setting project-wide first and see how it behaves in practice before deciding whether individual developers should be able to override it. The resolution order (session instruction → personal setting → project setting → default) is deliberately structured so a personal override slots in later without restructuring anything — same pattern as `migration-prompt: <version> declined` — but adding it now, before there's any real usage to learn from, would be guessing at a need rather than confirming one.
 
 **Rejected alternative:** ship a personal override immediately, symmetric with `capture-mode` and `confirmation-flow`. Rejected for now — not because it's wrong in principle, but because whether developers actually want to diverge from the project's confirmation bar is an open question this release is meant to help answer, not one to presume the answer to upfront.
+
+## Third-party marketplaces (skills.sh, Copilot) build on the existing `latest` tag, not a pinned version
+
+**Status:** active
+**Evidence:** confirmed
+
+skills.sh already resolves this repo's skill via the moving `latest` tag `release.yml` force-updates on every release (see "`release.yml`'s checkout pins the actual release tag" above). Planned distribution via GitHub's Copilot plugin marketplace (`awesome-copilot`) follows the same pattern: this repo becomes a remote plugin source (a `plugin.json` here, plus one entry in their `marketplace.json` pointing at this repo) with `ref: latest`, instead of a fixed version tag.
+
+**Reason:** a marketplace plugin source's `ref` has no built-in "always newest" keyword in Copilot CLI's plugin spec — it resolves as a literal git ref. Pinning it to a specific tag (e.g. `v0.5.1`) would mean every future release also needs a follow-up PR against `awesome-copilot` just to bump that ref, on top of the one PR needed to register the plugin at all. `latest` already exists as this project's release-tooling convention and is already what skills.sh builds on — reusing it for Copilot means that PR only ever has to happen once, no second marketplace-specific mechanism to maintain.
+
+**Rejected alternative:** pin the marketplace entry's `ref` to a specific version tag and open a follow-up PR against `awesome-copilot` on every release to bump it. Rejected — redundant with the `latest` tag this project already maintains and that skills.sh already relies on. Trade-off accepted: marketplace installs can't pin to an older version, everyone always gets the current release — fine here since this is a documentation/knowledge skill, not a library with breaking-change risk.
+
+**Known consumers of the `latest` tag** (keep this list current — anything added here is a reason `release.yml`'s tag-move step can't be dropped or changed casually):
+- skills.sh
+- GitHub Copilot plugin marketplace (`awesome-copilot`), planned — pending `plugin.json` + the one-time marketplace-entry PR

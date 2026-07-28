@@ -1,0 +1,18 @@
+{
+  "name": "keep-the-why",
+  "description": "Preserves or recovers the reasoning behind a codebase - architectural decisions, rejected alternatives, workarounds, incident learnings, operational constraints, and historical context the code itself cannot explain.",
+  "version": "0.5.1",
+  "author": {
+    "name": "Oliver Zehentleitner"
+  },
+  "license": "MIT",
+  "keywords": [
+    "documentation",
+    "context",
+    "decision-log",
+    "knowledge-management",
+    "onboarding",
+    "agents"
+  ],
+  "skills": ["skills/"]
+}

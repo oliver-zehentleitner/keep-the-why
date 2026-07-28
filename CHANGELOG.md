@@ -7,6 +7,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 ### Added
 
 - `SKILL.md` frontmatter's `metadata` block now includes `author: "Oliver Zehentleitner"` — the Agent Skills spec's `metadata` field is an arbitrary key-value map (its own spec example shows `author` as a custom key), not a dedicated top-level field.
+- `plugin.json` at the repo root, declaring `skills/` as this repo's skill directory — groundwork for registering this repo as a remote plugin source in GitHub's Copilot plugin marketplace (`awesome-copilot`), resolved via the existing `latest` tag rather than a pinned version (see `context/repo-conventions.md`).
 
 ## [0.5.1] - 2026-07-27
 
