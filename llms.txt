@@ -80,6 +80,16 @@ and most AGENTS.md-aware tools already read that file at the start of every sess
 own, independent of this skill. Every later session picks the project back up without
 needing to be told again.
 
+## Also Listed On
+
+- skills.sh: https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why — live, backs
+  the `npx skills add` method above
+- GitHub Copilot plugin marketplace: ready for review, external plugin submission pinned to
+  v0.5.2 — https://github.com/github/awesome-copilot/issues/2470
+- awesome-agent-skills: pending review — requires "real community usage", may be declined —
+  https://github.com/VoltAgent/awesome-agent-skills/pull/850
+- SkillsLLM: not eligible yet, requires 100+ GitHub stars — https://skillsllm.com/
+
 ## Core Concept
 
 Four modes. Every entry is classified on two separate axes: **Evidence** (confirmed / inferred /
