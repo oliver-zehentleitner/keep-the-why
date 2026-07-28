@@ -122,7 +122,7 @@ skills.sh resolves this repo's skill via the moving `latest` tag `release.yml` f
 
 **Rejected alternative:** submit `ref: latest` anyway, since the validator doesn't reject the literal string. Rejected — passing an automated check by exploiting what it doesn't verify isn't the same as meeting the stated requirement, and this project doesn't want to misrepresent a submission's immutability to get a marketplace listing.
 
-**Consequence:** for `awesome-copilot` specifically, each meaningful release needs a fresh immutable ref (a version tag, e.g. `v0.5.1`) submitted via their Issue form — unlike skills.sh, this one doesn't ride `latest` for free. Whether that's a new issue per update or an update to the existing one is still to be confirmed against their process.
+**Consequence:** for `awesome-copilot` specifically, each meaningful release needs a fresh immutable ref (a version tag, e.g. `v0.5.1`) — unlike skills.sh, this one doesn't ride `latest` for free. Only the *first* submission goes through their Issue form and full maintainer review; per their `CONTRIBUTING.md` ("Updating listed external plugins via PR"), later version bumps for an already-approved listing go through a direct PR updating `plugins/external.json`, which only runs automated quality gates — lighter than the initial review, but still a PR we have to open per release. Their process also re-reviews approved listings every six months on the maintainer side (`re-review-due`); no action needed from us unless they flag `re-review-follow-up`.
 
 **Known consumers of this repo's tags** (keep current — a reason `release.yml`'s tag-move step, and future release tags generally, can't be dropped or changed casually):
 - skills.sh — via the moving `latest` tag
