@@ -6,7 +6,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Fixed
 
-- "Composition with other skills" was missing an explicit re-check instruction: checking whether Keep the Why applies isn't a one-time, start-of-turn decision — re-check at the natural end of another skill's workflow step (a design settled, a root cause confirmed, an alternative rejected), not just once before that step ran. Found via live testing against a real methodology-style skill framework: a genuine decision + rejected alternative played out entirely inside that framework's own brainstorming step, and Keep the Why did not activate afterward on its own. See `context/repo-conventions.md`. New eval case added.
+- "Composition with other skills" was missing an explicit re-check instruction: checking whether Keep the Why applies isn't a one-time, start-of-turn decision — re-check at the natural end of another skill's workflow step (a design settled, a root cause confirmed, an alternative rejected), not just once before that step ran. Found via live testing against a real methodology-style skill framework: a genuine decision + rejected alternative played out entirely inside that framework's own brainstorming step, and Keep the Why did not activate afterward on its own. Retested with the fix in place — it still didn't self-trigger (the added text lives in the skill body, which only loads once already triggered; the trigger check itself runs against `description`, untouched by this fix). Added an honest caveat instead of a stronger claim: whether the re-check happens on its own isn't guaranteed, and asking directly is a reasonable fallback. New eval case added. See `context/repo-conventions.md`.
 
 ### Added
 
