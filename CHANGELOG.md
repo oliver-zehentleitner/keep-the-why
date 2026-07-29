@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- Link to [obra/superpowers#2051](https://github.com/obra/superpowers/issues/2051) in `context/repo-conventions.md` — the compatibility gap found via live testing was reported upstream, framed as feedback on their own bootstrap's stated behavior, not a third-party integration request.
+
 ### Changed
 
 - "Also listed on" entries in `README.md`, `docs/installation.md`, and `llms.txt` reordered: Live entries first (A–Z), then Pending entries (A–Z), instead of insertion order.
