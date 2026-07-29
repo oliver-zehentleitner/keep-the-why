@@ -7,10 +7,7 @@
     "url": "https://github.com/oliver-zehentleitner"
   },
   "homepage": "https://keepthewhy.com",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/oliver-zehentleitner/keep-the-why.git"
-  },
+  "repository": "https://github.com/oliver-zehentleitner/keep-the-why.git",
   "license": "MIT",
   "keywords": [
     "documentation",
