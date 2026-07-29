@@ -70,6 +70,8 @@ rm -rf /tmp/keep-the-why
 Compatible with Claude Code, Codex CLI, Gemini CLI, GitHub Copilot, Cursor, Windsurf,
 Antigravity, Amp, Cline, Goose, Roo Code, OpenCode, Trae, Factory, JetBrains Junie, Warp, and
 other tools supporting the open Agent Skills format. Full paths per agent: see Installation below.
+Also installable as a Claude Code plugin (`.claude-plugin/plugin.json` at the repo root, separate
+from the root `plugin.json` used by GitHub's Copilot CLI plugin marketplace format).
 
 A Skill activates when something in the conversation matches its description, not
 automatically on session start. After installing, start a new session and tell the agent
@@ -109,6 +111,15 @@ contradicted).
   either via targeted questions (narrow, specific gaps) or free narration (broad, tacit
   knowledge — let them talk, extract decision-forks from what comes up)
 - Maintenance — keep existing rationale current, resolve contradictions, split oversized files
+
+Composition with other skills: Keep the Why is a cross-cutting persistence skill, not a
+development methodology or workflow orchestrator. When another skill or framework already
+governs how the work gets done (brainstorming, planning, systematic debugging, TDD, code
+review), that workflow runs first; Keep the Why doesn't compete for that role, and preserves
+only the rationale it produces. Live-tested against a real methodology-style framework: this
+worked correctly once explicitly invoked, but didn't reliably self-trigger the moment a design
+decision settled mid-conversation on its own. Asking directly afterward ("check whether
+keep-the-why applies here") is a reasonable fallback, not a workaround for something broken.
 
 First activation in a project runs a one-time setup: a project wizard (where `context/` lives,
 starting mode, README badge, `capture-confirmation`, and `source-reference`) and a separate

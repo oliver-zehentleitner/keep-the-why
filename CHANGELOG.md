@@ -6,6 +6,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Added
 
+- Documented the Claude Code plugin manifest (`.claude-plugin/plugin.json`) and the "Composition with other skills" positioning in `README.md`, `llms.txt`, and a new `docs/faq.md` entry ("Does this work alongside Superpowers or other methodology-style skills?") — both had landed in `SKILL.md` and `context/repo-conventions.md` only, missed in the user-facing docs.
+
+### Added
+
 - Link to [obra/superpowers#2051](https://github.com/obra/superpowers/issues/2051) in `context/repo-conventions.md` — the compatibility gap found via live testing was reported upstream, framed as feedback on their own bootstrap's stated behavior, not a third-party integration request.
 
 ### Changed
