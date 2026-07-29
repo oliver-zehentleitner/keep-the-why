@@ -84,13 +84,13 @@ needing to be told again.
 
 - skills.sh: https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why — live, backs
   the `npx skills add` method above
-- GitHub Copilot plugin marketplace: ready for review, external plugin submission pinned to
-  v0.5.2 — https://github.com/github/awesome-copilot/issues/2470
-- awesome-agent-skills: pending review — requires "real community usage", may be declined —
-  https://github.com/VoltAgent/awesome-agent-skills/pull/850
 - SkillsLLM: live, verified, passed security scan — https://skillsllm.com/skill/keep-the-why
 - ASM Registry: pending — manifest pinned to v0.5.2, installable via `asm install keep-the-why`
   once merged — https://github.com/luongnv89/asm-registry/pull/5
+- awesome-agent-skills: pending review — requires "real community usage", may be declined —
+  https://github.com/VoltAgent/awesome-agent-skills/pull/850
+- GitHub Copilot plugin marketplace: ready for review, external plugin submission pinned to
+  v0.5.2 — https://github.com/github/awesome-copilot/issues/2470
 
 ## Core Concept
 
