@@ -155,3 +155,16 @@ New project setting `source-reference` (`always` / `never` / `filtered: <criteri
 **Rejected alternative (the `filtered` mechanism specifically):** a fixed taxonomy of filter categories (by topic file, by Status, by severity) defined by the skill. Rejected in favor of free text the project defines itself — a fixed taxonomy would be guessing at categories before there's real usage to learn from, the same reasoning already applied to keeping `capture-confirmation` project-wide-only for now (see above).
 
 **Consequence:** `always` (or a matching `filtered` criterion) means asking is mandatory, but a reference existing is not — "no, nothing tracks this" is a complete, valid answer. Inventing a plausible-sounding ticket reference to avoid an empty field would violate rule 1 exactly like inventing rationale would. No personal override in this release, same "test one setting before adding a second axis" precedent as `capture-confirmation`.
+
+## `.claude-plugin/plugin.json` is a second, separate manifest — not a replacement for the root `plugin.json`
+
+**Status:** active
+**Evidence:** confirmed
+
+Added `.claude-plugin/plugin.json` (the official Claude Code plugin manifest, verified against Anthropic's own `plugin.json` schema reference) alongside the existing root `plugin.json` (built for GitHub's Copilot CLI plugin marketplace format, see the `awesome-copilot` entries above). Two files, two different consumers, both needed.
+
+**Reason:** Claude Code and GitHub Copilot CLI each define their own plugin manifest format and expected file location — `.claude-plugin/plugin.json` versus a root-level `plugin.json` — and neither reads the other's. Consolidating into one file wasn't an option once both ecosystems mattered to us; each needs its own, correctly located manifest. Claude Code's schema has no `skills` field at all — skills are auto-discovered from a `skills/` (or `commands/`) directory at the plugin root by convention — unlike the Copilot CLI schema, which requires listing `skills` explicitly. This is why `.claude-plugin/plugin.json` doesn't need a `skills` field even though the root one does.
+
+**Rejected alternative:** try to find or invent one manifest format both ecosystems would accept. Rejected — not viable; the two schemas are independently defined by different vendors with different required fields and file locations. Maintaining two small, correctly-targeted manifests is simpler than fighting that.
+
+**Related:** the new "Composition with other skills" section in `SKILL.md` was written generically (no specific framework named) rather than tailored to any one methodology-style skill framework we might integrate with — the positioning (cross-cutting persistence, not a workflow orchestrator) is true regardless of which specific framework it's composed alongside, and naming one by name in the skill's own evergreen content would date quickly and read as an unearned endorsement or dependency.

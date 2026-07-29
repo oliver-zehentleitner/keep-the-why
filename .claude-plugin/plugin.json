@@ -1,0 +1,23 @@
+{
+  "name": "keep-the-why",
+  "version": "0.5.2",
+  "description": "Preserves the reasoning behind a codebase - decisions, rejected alternatives, workarounds, and incident learnings the code alone can't explain.",
+  "author": {
+    "name": "Oliver Zehentleitner",
+    "url": "https://github.com/oliver-zehentleitner"
+  },
+  "homepage": "https://keepthewhy.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oliver-zehentleitner/keep-the-why.git"
+  },
+  "license": "MIT",
+  "keywords": [
+    "documentation",
+    "context",
+    "decision-log",
+    "knowledge-management",
+    "onboarding",
+    "agents"
+  ]
+}

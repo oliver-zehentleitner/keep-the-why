@@ -40,7 +40,7 @@ For any change to the skill's rules, workflow, or reference docs, check whether 
 
 1. Bump `metadata.version` in `skills/keep-the-why/SKILL.md` frontmatter
 2. Update the `Version:` line in `llms.txt` to match
-3. Update the `version` field in `plugin.json` to match
+3. Update the `version` field in `plugin.json` and `.claude-plugin/plugin.json` to match
 4. In `CHANGELOG.md`, rename `[Unreleased]` to `[x.y.z] - YYYY-MM-DD` and add a fresh empty `[Unreleased]` above it
 5. **Verify `skills/keep-the-why/references/migrations.md` already covers every `context/` format change since the last release** — this should already be true if step 3 of the pre-PR checklist was followed each time, but check before tagging, not after. This is the one that must never be found out of sync retroactively.
 6. This repo's own `context-schema` (in `AGENTS.md`) must never trail the version just released, same as `setup.md`'s "context-schema behind metadata.version" logic requires of any project: if something in `migrations.md` applies to `context/repo-conventions.md`, migrate it now (dogfooding the same process a user would go through), then advance `context-schema` to match. If nothing applies, still advance `context-schema` to match — don't leave it pointing at an older version just because there was nothing to migrate.

@@ -23,6 +23,10 @@ Four modes, all part of the same job:
 
 **When not to use it:** routine implementation detail, generic formatting or style changes, or anything already fully and obviously explained by the code. Not every change is a decision worth a `context/` entry — see rule 13's proportionality gate.
 
+## Composition with other skills
+
+Keep the Why is a cross-cutting persistence skill, not a development methodology or workflow orchestrator. When another skill or framework already governs *how* the work gets done — brainstorming, planning, systematic debugging, TDD, code review — follow that workflow first; this skill doesn't compete for that role. It observes the decisions, rejected alternatives, constraints, and discoveries produced along the way, and preserves only the rationale likely to matter beyond the current task. A design doc or implementation plan another skill produces is evidence to draw from, not something to duplicate — see rule 4 and "Which file does this belong in?" in `references/repository-structure.md`.
+
 ## Core rules
 
 1. **Never invent rationale.** If it can't be confirmed or reasonably inferred, say so — ask a focused question or mark it unknown, don't fill the gap with something plausible-sounding.
