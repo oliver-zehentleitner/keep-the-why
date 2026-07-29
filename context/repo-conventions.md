@@ -168,3 +168,16 @@ Added `.claude-plugin/plugin.json` (the official Claude Code plugin manifest, ve
 **Rejected alternative:** try to find or invent one manifest format both ecosystems would accept. Rejected — not viable; the two schemas are independently defined by different vendors with different required fields and file locations. Maintaining two small, correctly-targeted manifests is simpler than fighting that.
 
 **Related:** the new "Composition with other skills" section in `SKILL.md` was written generically (no specific framework named) rather than tailored to any one methodology-style skill framework we might integrate with — the positioning (cross-cutting persistence, not a workflow orchestrator) is true regardless of which specific framework it's composed alongside, and naming one by name in the skill's own evergreen content would date quickly and read as an unearned endorsement or dependency.
+
+## "Composition with other skills" needed an explicit re-check instruction, found via real testing
+
+**Status:** active
+**Evidence:** confirmed
+
+Added a second paragraph to "Composition with other skills": checking whether Keep the Why applies isn't a one-time, start-of-turn decision — re-check specifically at the natural end of another skill's workflow step (a design settled, a root cause confirmed, an alternative rejected), since that's exactly when capture-worthy content has just been produced.
+
+**Reason:** live-tested against a real methodology-style skill framework (installed via Claude Code's plugin system, `claude plugin install`) in a scratch project. A genuine design decision with a clearly rejected alternative (token bucket vs. a simple sleep-based throttle) played out entirely inside that framework's own brainstorming step. Keep the Why did not activate on its own afterward, despite the content matching its trigger description almost exactly. Asked directly why not, the agent's own explanation: it had checked "does a skill apply" once at the start of the turn (per the other framework's own bootstrap instruction to check before any action), then tracked that framework's workflow state through to completion without re-checking once new decision content had actually been produced mid-conversation. Once explicitly told to invoke Keep the Why afterward, it worked correctly — clean setup wizard, two well-formed entries with Decision/Alternative/Reason and Status/Evidence/Source, nothing committed unasked. The gap was specifically the *automatic* re-trigger, not the capture logic itself.
+
+**Rejected alternative:** leave "Composition with other skills" as originally written (observe what another skill's workflow produces, don't compete for that role) and treat this as something the user just has to remember to ask for. Rejected — the whole value of a skill that "activates when something in the conversation matches its description" (see "How it works" in `README.md`) depends on not needing that manual nudge; silently requiring one for exactly the composition scenario this section exists to describe would be a real, avoidable gap, not an acceptable limitation.
+
+**Verification:** uncorroborated as of this entry — the fix is written but not yet retested against the same scenario. Update this once retested.

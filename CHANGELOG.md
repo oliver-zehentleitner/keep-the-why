@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Fixed
+
+- "Composition with other skills" was missing an explicit re-check instruction: checking whether Keep the Why applies isn't a one-time, start-of-turn decision — re-check at the natural end of another skill's workflow step (a design settled, a root cause confirmed, an alternative rejected), not just once before that step ran. Found via live testing against a real methodology-style skill framework: a genuine decision + rejected alternative played out entirely inside that framework's own brainstorming step, and Keep the Why did not activate afterward on its own. See `context/repo-conventions.md`. New eval case added.
+
 ### Added
 
 - `.claude-plugin/plugin.json` — the official Claude Code plugin manifest (distinct from the root `plugin.json`, which serves GitHub's Copilot CLI plugin marketplace format). No `skills` field needed: Claude Code auto-discovers the existing `skills/` directory by convention. Groundwork for listing on `obra/superpowers-marketplace`.

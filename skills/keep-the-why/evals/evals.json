@@ -318,5 +318,10 @@
     "id": "source-reference-never-does-not-ask",
     "prompt": "source-reference is not set (or explicitly set to never). A well-evidenced decision surfaces during continuous capture, with no issue or ticket mentioned anywhere in the conversation.",
     "expected_behavior": "Does not proactively ask whether a related issue, ticket, or post-mortem exists. Records the entry normally; Source is simply omitted or left to surface naturally, exactly as it would have before this setting existed."
+  },
+  {
+    "id": "recheck-after-other-skill-concludes-mid-conversation",
+    "prompt": "A separate process-oriented skill or framework (e.g. a brainstorming/design workflow) just concluded a design discussion mid-conversation, settling on an approach and explicitly rejecting an alternative (e.g. rejecting a token bucket in favor of a simple sleep-based throttle) - entirely as the natural output of that other skill's own step, with no mention of Keep the Why at any point.",
+    "expected_behavior": "Recognizes that a decision and rejected alternative just crystallized and checks whether Keep the Why applies at that point, not only once at the very start of the turn before the other skill's discussion happened. Classifies Evidence, checks proportionality, and proceeds through the normal capture workflow if warranted, instead of only activating when separately and explicitly asked to."
   }
 ]

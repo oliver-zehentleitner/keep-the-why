@@ -27,6 +27,8 @@ Four modes, all part of the same job:
 
 Keep the Why is a cross-cutting persistence skill, not a development methodology or workflow orchestrator. When another skill or framework already governs *how* the work gets done — brainstorming, planning, systematic debugging, TDD, code review — follow that workflow first; this skill doesn't compete for that role. It observes the decisions, rejected alternatives, constraints, and discoveries produced along the way, and preserves only the rationale likely to matter beyond the current task. A design doc or implementation plan another skill produces is evidence to draw from, not something to duplicate — see rule 4 and "Which file does this belong in?" in `references/repository-structure.md`.
 
+**Checking whether this skill applies isn't a one-time, start-of-turn decision.** Re-check specifically at the natural end of another skill's workflow step — a design settled, a root cause confirmed, a plan approved, an alternative rejected — since that's exactly when capture-worthy content has just been produced. A check made before that step ran couldn't have seen content it hadn't generated yet; waiting to be separately asked afterward isn't good enough either.
+
 ## Core rules
 
 1. **Never invent rationale.** If it can't be confirmed or reasonably inferred, say so — ask a focused question or mark it unknown, don't fill the gap with something plausible-sounding.
