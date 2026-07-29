@@ -12,6 +12,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 - `.claude-plugin/plugin.json` — the official Claude Code plugin manifest (distinct from the root `plugin.json`, which serves GitHub's Copilot CLI plugin marketplace format). No `skills` field needed: Claude Code auto-discovers the existing `skills/` directory by convention. Groundwork for listing on `obra/superpowers-marketplace`.
 - New `SKILL.md` section "Composition with other skills": Keep the Why is a cross-cutting persistence skill, not a workflow orchestrator — when another skill already governs how work gets done, follow that workflow first and preserve only the rationale likely to matter afterward. Written generically, not tied to any one specific framework.
+- Submitted a manifest to the [ASM Registry](https://github.com/luongnv89/asm-registry) ([PR #5](https://github.com/luongnv89/asm-registry/pull/5)), pinned to `v0.5.2` — listed in the "Also listed on" tables in `README.md`, `docs/installation.md`, and `llms.txt`. Updating the pinned commit on future releases is now step 10 of the release checklist in `CONTRIBUTING.md`.
 
 ### Added
 

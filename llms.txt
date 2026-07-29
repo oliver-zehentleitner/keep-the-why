@@ -89,6 +89,8 @@ needing to be told again.
 - awesome-agent-skills: pending review — requires "real community usage", may be declined —
   https://github.com/VoltAgent/awesome-agent-skills/pull/850
 - SkillsLLM: not eligible yet, requires 100+ GitHub stars — https://skillsllm.com/
+- ASM Registry: pending — manifest pinned to v0.5.2, installable via `asm install keep-the-why`
+  once merged — https://github.com/luongnv89/asm-registry/pull/5
 
 ## Core Concept
 
