@@ -14,6 +14,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 - New `SKILL.md` section "Composition with other skills": Keep the Why is a cross-cutting persistence skill, not a workflow orchestrator — when another skill already governs how work gets done, follow that workflow first and preserve only the rationale likely to matter afterward. Written generically, not tied to any one specific framework.
 - Submitted a manifest to the [ASM Registry](https://github.com/luongnv89/asm-registry) ([PR #5](https://github.com/luongnv89/asm-registry/pull/5)), pinned to `v0.5.2` — listed in the "Also listed on" tables in `README.md`, `docs/installation.md`, and `llms.txt`. Updating the pinned commit on future releases is now step 10 of the release checklist in `CONTRIBUTING.md`.
 
+### Changed
+
+- [SkillsLLM](https://skillsllm.com/skill/keep-the-why) listing status corrected from "Not eligible yet" to "Live" in the "Also listed on" tables — the prior "requires 100+ GitHub stars" note was wrong; SkillsLLM listed the skill unprompted at 11 stars, verified with a clean security scan.
+
 ### Added
 
 - New project setting `source-reference` (`always` / `never` / `filtered: <criteria>`, default `never`) governs whether the skill actively asks for a related issue, ticket, PR, or post-mortem when recording a `context/` entry — distinct from rule 2's existing (passive) Source field. `filtered` criteria are free text the project defines itself, not a fixed taxonomy. Asking is never the same as requiring one to exist — "no reference" is a complete answer, never invented to fill the field. Project-wide only for now, no personal override, same precedent as `capture-confirmation`. See `context/repo-conventions.md`. Also documented in `README.md`, `llms.txt`, and `docs/faq.md`.

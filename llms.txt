@@ -88,7 +88,7 @@ needing to be told again.
   v0.5.2 — https://github.com/github/awesome-copilot/issues/2470
 - awesome-agent-skills: pending review — requires "real community usage", may be declined —
   https://github.com/VoltAgent/awesome-agent-skills/pull/850
-- SkillsLLM: not eligible yet, requires 100+ GitHub stars — https://skillsllm.com/
+- SkillsLLM: live, verified, passed security scan — https://skillsllm.com/skill/keep-the-why
 - ASM Registry: pending — manifest pinned to v0.5.2, installable via `asm install keep-the-why`
   once merged — https://github.com/luongnv89/asm-registry/pull/5
 

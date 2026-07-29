@@ -37,7 +37,7 @@ Either form prompts for which of its 70+ supported agents (Claude Code, Codex, O
 | [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why) | Live | Backs the `npx skills add` install method above |
 | [GitHub Copilot plugin marketplace](https://github.com/github/awesome-copilot) | Ready for review — [Issue #2470](https://github.com/github/awesome-copilot/issues/2470) | External plugin submission, pinned to `v0.5.2` |
 | [awesome-agent-skills](https://github.com/VoltAgent/awesome-agent-skills) | Pending — [PR #850](https://github.com/VoltAgent/awesome-agent-skills/pull/850) | Requires "real community usage"; may be declined |
-| [SkillsLLM](https://skillsllm.com/) | Not eligible yet | Requires 100+ GitHub stars to submit |
+| [SkillsLLM](https://skillsllm.com/skill/keep-the-why) | Live | Verified, passed SkillsLLM's security scan |
 | [ASM Registry](https://github.com/luongnv89/asm-registry) | Pending — [PR #5](https://github.com/luongnv89/asm-registry/pull/5) | Manifest pinned to `v0.5.2`; installable via `asm install keep-the-why` once merged |
 
 ## Also recommended: GitHub CLI
