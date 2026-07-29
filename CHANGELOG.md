@@ -4,42 +4,24 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
-### Added
-
-- Documented the Claude Code plugin manifest (`.claude-plugin/plugin.json`) and the "Composition with other skills" positioning in `README.md`, `llms.txt`, and a new `docs/faq.md` entry ("Does this work alongside Superpowers or other methodology-style skills?") — both had landed in `SKILL.md` and `context/repo-conventions.md` only, missed in the user-facing docs.
+## [0.6.0] - 2026-07-29
 
 ### Added
 
-- Link to [obra/superpowers#2051](https://github.com/obra/superpowers/issues/2051) in `context/repo-conventions.md` — the compatibility gap found via live testing was reported upstream, framed as feedback on their own bootstrap's stated behavior, not a third-party integration request.
-
-### Changed
-
-- "Also listed on" entries in `README.md`, `docs/installation.md`, and `llms.txt` reordered: Live entries first (A–Z), then Pending entries (A–Z), instead of insertion order.
-
-### Fixed
-
-- "Composition with other skills" was missing an explicit re-check instruction: checking whether Keep the Why applies isn't a one-time, start-of-turn decision — re-check at the natural end of another skill's workflow step (a design settled, a root cause confirmed, an alternative rejected), not just once before that step ran. Found via live testing against a real methodology-style skill framework: a genuine decision + rejected alternative played out entirely inside that framework's own brainstorming step, and Keep the Why did not activate afterward on its own. Retested with the fix in place — it still didn't self-trigger (the added text lives in the skill body, which only loads once already triggered; the trigger check itself runs against `description`, untouched by this fix). Added an honest caveat instead of a stronger claim: whether the re-check happens on its own isn't guaranteed, and asking directly is a reasonable fallback. New eval case added. See `context/repo-conventions.md`.
-
-### Added
-
+- New project setting `source-reference` (`always` / `never` / `filtered: <criteria>`, default `never`) governs whether the skill actively asks for a related issue, ticket, PR, or post-mortem when recording a `context/` entry — distinct from rule 2's existing (passive) Source field. `filtered` criteria are free text the project defines itself, not a fixed taxonomy. Asking is never the same as requiring one to exist — "no reference" is a complete answer, never invented to fill the field. Project-wide only for now, no personal override, same precedent as `capture-confirmation`. Documented in `SKILL.md`, `references/setup.md`, `README.md`, `llms.txt`, and `docs/faq.md`.
 - `.claude-plugin/plugin.json` — the official Claude Code plugin manifest (distinct from the root `plugin.json`, which serves GitHub's Copilot CLI plugin marketplace format). No `skills` field needed: Claude Code auto-discovers the existing `skills/` directory by convention. Groundwork for listing on `obra/superpowers-marketplace`.
-- New `SKILL.md` section "Composition with other skills": Keep the Why is a cross-cutting persistence skill, not a workflow orchestrator — when another skill already governs how work gets done, follow that workflow first and preserve only the rationale likely to matter afterward. Written generically, not tied to any one specific framework.
-- Submitted a manifest to the [ASM Registry](https://github.com/luongnv89/asm-registry) ([PR #5](https://github.com/luongnv89/asm-registry/pull/5)), pinned to `v0.5.2` — listed in the "Also listed on" tables in `README.md`, `docs/installation.md`, and `llms.txt`. Updating the pinned commit on future releases is now step 10 of the release checklist in `CONTRIBUTING.md`.
+- New `SKILL.md` section "Composition with other skills": Keep the Why is a cross-cutting persistence skill, not a workflow orchestrator — when another skill already governs how work gets done, follow that workflow first and preserve only the rationale likely to matter afterward. Written generically, not tied to any one specific framework. Documented in `README.md`, `llms.txt`, and a new `docs/faq.md` entry ("Does this work alongside Superpowers or other methodology-style skills?").
+- "Also listed on" table in `README.md` and `docs/installation.md`, plus an equivalent "Also Listed On" section in `llms.txt`, tracking marketplace listing status (skills.sh, SkillsLLM, ASM Registry, awesome-agent-skills, GitHub Copilot plugin marketplace) — only lists what's actually confirmed live or has an open, trackable submission, not aspirational entries. Entries sorted Live first (A–Z), then Pending (A–Z).
+- Submitted a manifest to the [ASM Registry](https://github.com/luongnv89/asm-registry) ([PR #5](https://github.com/luongnv89/asm-registry/pull/5)), pinned to `v0.5.2`. Updating the pinned commit on future releases is now step 10 of the release checklist in `CONTRIBUTING.md`.
+- Link to [obra/superpowers#2051](https://github.com/obra/superpowers/issues/2051) in `context/repo-conventions.md` — a compatibility gap found via live testing (Keep the Why didn't reliably self-trigger after a decision settled inside another skill's own workflow step) was reported upstream, framed as feedback on their own bootstrap's stated behavior, not a third-party integration request.
 
 ### Changed
 
 - [SkillsLLM](https://skillsllm.com/skill/keep-the-why) listing status corrected from "Not eligible yet" to "Live" in the "Also listed on" tables — the prior "requires 100+ GitHub stars" note was wrong; SkillsLLM listed the skill unprompted at 11 stars, verified with a clean security scan.
 
-### Added
-
-- New project setting `source-reference` (`always` / `never` / `filtered: <criteria>`, default `never`) governs whether the skill actively asks for a related issue, ticket, PR, or post-mortem when recording a `context/` entry — distinct from rule 2's existing (passive) Source field. `filtered` criteria are free text the project defines itself, not a fixed taxonomy. Asking is never the same as requiring one to exist — "no reference" is a complete answer, never invented to fill the field. Project-wide only for now, no personal override, same precedent as `capture-confirmation`. See `context/repo-conventions.md`. Also documented in `README.md`, `llms.txt`, and `docs/faq.md`.
-
-### Added
-
-- "Also listed on" table in `README.md` and `docs/installation.md`, plus an equivalent "Also Listed On" section in `llms.txt`, tracking marketplace listing status (skills.sh, GitHub Copilot plugin marketplace, awesome-agent-skills, SkillsLLM) — only lists what's actually confirmed live or has an open, trackable submission, not aspirational entries.
-
 ### Fixed
 
+- "Composition with other skills" was missing an explicit re-check instruction: checking whether Keep the Why applies isn't a one-time, start-of-turn decision — re-check at the natural end of another skill's workflow step (a design settled, a root cause confirmed, an alternative rejected), not just once before that step ran. Retested with the fix in place — it still didn't self-trigger (the added text lives in the skill body, which only loads once already triggered; the trigger check itself runs against `description`, untouched by this fix). Added an honest caveat instead of a stronger claim: whether the re-check happens on its own isn't guaranteed, and asking directly is a reasonable fallback. New eval case added.
 - `docs/faq.md`'s "How is this different from git-why, AgDR, or similar projects?" entry named specific competing tools and pointed at a README section ("Not a green field") that no longer exists under that name — missed when README/`llms.txt` dropped name-by-name comparisons earlier. Reworded to match, and the dead section reference fixed to "Related work". Also brought the "distinguishing combination" wording in README, `llms.txt`, and the FAQ back in sync with the four modes `SKILL.md` actually describes (was missing "maintenance", and used the stale "code-guided interviews" name instead of "knowledge-transfer interviews").
 
 ## [0.5.2] - 2026-07-28
