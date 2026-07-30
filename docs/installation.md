@@ -1,6 +1,6 @@
 # Installation
 
-This page installs Keep the Why's reference implementation: a `SKILL.md` file, following the open, cross-agent skill format — not tied to one vendor. No build step, no external service, no database, no MCP server.
+This page installs Keep the Why's agent skill: a `SKILL.md` file, following the open, cross-agent skill format — not tied to one vendor. No build step, no external service, no database, no MCP server.
 
 ## Trust and scope
 

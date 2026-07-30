@@ -6,7 +6,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Changed
 
-- Repositioned Keep the Why as a concept with a reference implementation, not just "an agent skill" — the previous framing (README hero, `llms.txt`'s blockquote, "How it works", `docs/philosophy.md`'s closing summary, `docs/installation.md`'s opener) defined it as the skill itself throughout, which undersold the point that the skill is one implementation of an open, repo-native convention. Reworded all five without changing the surrounding content otherwise.
+- Repositioned Keep the Why as "a repo-native convention and agent skill," not just "an agent skill" — the previous framing throughout (README hero, `llms.txt`'s blockquote, README's "How it works", `docs/philosophy.md`'s closing summary, `docs/installation.md`'s opener, and the generated `context/README.md` template embedded in `setup.md`, `examples/first-time-setup.md`, and this repo's own `context/README.md`) defined it as the skill itself, undermining the point that the skill is one half of an open convention, not the whole thing. Standardized on "repo-native" over "repository-native" (the existing majority spelling) while at it.
 - Sharpened the ADR FAQ entry (`docs/faq.md`): ADRs' real-world weakness was never the format, it's that writing one depends entirely on a human remembering to do it under exactly the deadline pressure that makes people skip it. Keep the Why's agent-authored capture removes that dependency — it's a byproduct of the conversation, not a separate disciplined act.
 
 ### Added

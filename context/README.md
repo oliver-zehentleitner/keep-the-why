@@ -4,7 +4,7 @@
 
 This directory preserves the reasoning behind this project: architectural decisions, constraints, rejected alternatives, incident learnings, deliberate workarounds, and other knowledge that the code alone cannot explain.
 
-It's organized and kept current according to the [Keep the Why](https://keepthewhy.com) schema — a repo-native agent skill, not specific to this project. Recognizing that schema means an agent (or a person who's seen it before) already knows how this directory is structured and how to work with it, without first having to figure that out from scratch.
+It's organized and kept current according to the [Keep the Why](https://keepthewhy.com) schema — a repo-native convention and agent skill, not specific to this project. Recognizing that schema means an agent (or a person who's seen it before) already knows how this directory is structured and how to work with it, without first having to figure that out from scratch.
 
 It answers:
 

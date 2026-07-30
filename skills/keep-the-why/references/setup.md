@@ -71,11 +71,11 @@ Where the why-knowledge lives, whether the project has been set up at all, and h
     explain.
 
     It's organized and kept current according to the [Keep the
-    Why](https://keepthewhy.com) schema — a repo-native agent skill, not
-    specific to this project. Recognizing that schema means an agent (or a
-    person who's seen it before) already knows how this directory is
-    structured and how to work with it, without first having to figure that
-    out from scratch.
+    Why](https://keepthewhy.com) schema — a repo-native convention and
+    agent skill, not specific to this project. Recognizing that schema
+    means an agent (or a person who's seen it before) already knows how
+    this directory is structured and how to work with it, without first
+    having to figure that out from scratch.
 
     It answers:
 

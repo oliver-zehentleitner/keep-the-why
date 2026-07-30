@@ -1,12 +1,11 @@
 # Keep the Why
 
-> An open, repo-native convention for preserving the reasoning behind a codebase —
+> A repo-native convention and agent skill for preserving the reasoning behind a codebase —
 > architecture decisions, rejected alternatives, workarounds, incident learnings, operational
-> constraints that the code alone can't explain. This repo is its reference implementation: an
-> agent skill that captures that reasoning as a byproduct of working with your agent — so it
-> stops re-suggesting rejected approaches, gives better answers, speeds up onboarding, and
-> makes legacy projects tractable again. It works continuously as you develop, or
-> retrospectively on an existing repo.
+> constraints that the code alone can't explain. It captures that reasoning as a byproduct of
+> working with your agent — so it stops re-suggesting rejected approaches, gives better
+> answers, speeds up onboarding, and makes legacy projects tractable again. It works
+> continuously as you develop, or retrospectively on an existing repo.
 
 The payoff, made concrete: a new hire, or an agent that's never touched the codebase before,
 doesn't have to track down whoever wrote the original code — and doesn't just repeat what was
