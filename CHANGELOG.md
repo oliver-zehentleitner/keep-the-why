@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- Explained why this can't run as a CI/CD check: by the time code is pushed, the reasoning that mattered has usually already happened and isn't recoverable from the diff — CI can verify a `context/` entry exists, not invent one. Extended "No daemon" in `docs/philosophy.md`, and added a new `docs/faq.md` entry, "Could this run as a CI/CD check instead of during development?"
+
 ### Changed
 
 - Moved README's Claude Code plugin manifest mention out of "How it works" and into "Install", next to the other install methods, where it actually belongs. Removed the "How it works" pointer at the FAQ's Superpowers-composition entry entirely — the FAQ already stands on its own without a teaser sentence duplicating it.

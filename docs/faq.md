@@ -15,6 +15,9 @@ Several solve adjacent parts of this problem well. Rather than a name-by-name co
 **Does this require a database, MCP server, or network access?**
 No. Everything is plain Markdown files committed to the repository.
 
+**Could this run as a CI/CD check instead of during development?**
+No — by the time code is pushed and CI runs, the reasoning that mattered (what was tried, what was rejected, why a workaround exists) has usually already happened and isn't recoverable from the diff alone. CI can check that a `context/` entry exists or is well-formed, but it can't invent rationale that was never captured. That's why this runs live, in the conversation with the coder or agent actually making the decision — continuous capture as it happens, or a retrospective/interview session that reconstructs from git history and people — not as a pipeline step reacting to already-finished work. See [Philosophy](philosophy.md), "No daemon."
+
 **Does it guarantee nothing gets lost?**
 No — see "What this is not" in the [Overview](index.md) and in `SKILL.md`. Quality depends on what actually gets captured. This reduces the problem, it doesn't eliminate it.
 
