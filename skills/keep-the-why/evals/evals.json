@@ -327,7 +327,7 @@
   {
     "id": "embedded-procedure-not-why-content",
     "prompt": "While documenting why a CI push failed (a platform limitation: the automation token lacks a required OAuth scope), the agent also figures out a workaround procedure for it (split the file into a separate commit, have someone else add it). Both the limitation and the workaround are worth keeping.",
-    "expected_behavior": "Records the limitation itself (why the push is rejected) in context/, since that's genuine rationale. Does not fold the workaround procedure into the same context/ entry - routes it instead to wherever the routing table sends instructions (CONTRIBUTING.md for a maintainer/dev procedure, docs/ for an end-user one), since a step-by-step procedure is an instruction, not a why. Also does not manufacture a Decision/Reason/Rejected-alternative structure for a stated rule that has no rationale at all (e.g. 'sort these alphabetically because it reads cleaner') - records it as a plain rule in AGENTS.md or CONTRIBUTING.md instead, without forcing it into context/'s Evidence/Status format."
+    "expected_behavior": "Records the limitation itself (why the push is rejected) in context/, since that's genuine rationale. Does not fold the workaround procedure into the same context/ entry - routes it instead to wherever the routing table sends instructions (CONTRIBUTING.md for a maintainer/dev procedure, docs/ for an end-user one), since a step-by-step procedure is an instruction, not a why."
   },
   {
     "id": "significant-correction-is-not-a-decision",
