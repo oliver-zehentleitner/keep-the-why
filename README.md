@@ -147,7 +147,7 @@ A project's documentation is one coherent group of files, not a single practice:
 | File | Answers | Artifact |
 |---|---|---|
 | README | "What is this, and should I care?" | `README.md` |
-| `AGENTS.md` | "Where do I look, if I'm an agent working in this repo?" | `AGENTS.md` |
+| `AGENTS.md` | "Where do I look, if I'm an agent working in this repo?" — plus any rule the agent should just follow, no rationale attached | `AGENTS.md` |
 | `docs/` | "How do I use or operate this?" | usage docs |
 | `CONTRIBUTING.md` | "How do I contribute to this?" | contribution guide |
 | Tests | "Did I just break something?" | test suite |

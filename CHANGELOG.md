@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Changed
+
+- README's "Where this fits" table: `AGENTS.md`'s row now also names plain rules the agent should just follow (no rationale attached), matching the "Working conventions" section added to this repo's own `AGENTS.md`.
+
 ### Added
 
 - Added a "Working conventions" section to `AGENTS.md`, separate from the keep-the-why config block, for plain rules that need no rationale (currently: CHANGELOG heading/ordering).
