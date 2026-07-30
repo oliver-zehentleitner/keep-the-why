@@ -7,7 +7,7 @@
 
 An operational constraint, not a design choice: any push that touches `.github/workflows/*.yml` is rejected by GitHub unless the pushing credential has the `workflow` OAuth scope — this is independent of the `repo` scope and applies to any token or bot/automation account that lacks it, not specific to this repo.
 
-**Workaround:** if the pushing credential lacks the `workflow` scope, prepare the workflow file's content separately and have someone with appropriate access add it manually (via the GitHub UI or their own credentials), while pushing everything else in the same change normally by excluding just the workflow file from that commit.
+The workaround (split the workflow file into its own commit, have someone with the right scope add it separately) is a procedure, not a reason — see `CONTRIBUTING.md`.
 
 ## The installable skill lives under `skills/keep-the-why/`, not at the repo root
 
@@ -186,20 +186,15 @@ Added a second paragraph to "Composition with other skills": checking whether Ke
 
 **Reported:** filed as [obra/superpowers#2051](https://github.com/obra/superpowers/issues/2051) — framed explicitly as an observation about their own bootstrap's stated behavior, not a request to change anything for a third-party skill (their `CLAUDE.md` is explicit that third-party-specific asks belong in a separate plugin, not core). Not a marketplace listing, so it doesn't belong in the "Also listed on" tables — a compatibility finding, tracked here instead.
 
-## An external review caught a regressed fix and three smaller drifts; added a CI check to catch the numeric ones going forward
+## CI now checks version consistency across the repo, after an external review caught a regressed fix and two smaller drifts by hand
 
 **Status:** active
 **Evidence:** confirmed
 
-An external AI review found four real issues, all verified against live file content before fixing:
+Added a "Check version consistency across the repo" step to `validate-skill.yml`, comparing `SKILL.md`'s `metadata.version` against `plugin.json`, `.claude-plugin/plugin.json`, `llms.txt`'s `Version:` line, `AGENTS.md`'s `context-schema`, and the three illustrative `context-schema` examples (`references/setup.md`, `references/repository-structure.md`, `examples/first-time-setup.md`) — fails the build if any differ.
 
-1. `llms.txt` restricted **Source** to confirmed entries only ("A confirmed entry worth tracing can also carry Source..."), contradicting `SKILL.md` rule 2 (Source is useful at any Evidence level) — and contradicting this project's own `CHANGELOG.md`, which documents this exact bug as fixed in `0.3.1`. The fix evidently never propagated to `llms.txt`, or regressed there independently at some later point; either way it sat live and uncaught. Fixed to match rule 2's actual wording.
-2. `docs/installation.md`'s opener said only "installs Keep the Why's agent skill," without ever using the "repo-native convention and agent skill" formula established elsewhere — technically not wrong, but the one page that skipped the formula entirely. Fixed to state it explicitly, then note the page installs the skill half specifically.
-3. `.claude-plugin/plugin.json`'s description said "Preserves the reasoning..." — missing "or recovers," unlike `SKILL.md` and the root `plugin.json`, both of which name retrospective recovery explicitly as one of the four modes. Fixed to match.
-4. Three separate `### Changed`/`### Added` headings had accumulated under `[Unreleased]` in `CHANGELOG.md` as separate PRs each added their own, instead of reusing an existing heading for the same category. Consolidated to one heading per category, entries now ordered alphabetically by first word within a category (not insertion order) — deterministic, and doesn't need someone to remember where in a growing list a new PR's line should go.
+**Reason:** an external review found this drift by hand (`llms.txt` had regressed a bug already documented as fixed in `0.3.1`; `.claude-plugin/plugin.json`'s description had fallen out of sync with `SKILL.md`'s — see `CHANGELOG.md` for what those actually were). The manual release checklist already asked for exactly this comparison (steps 1–3, 6–7), and the drift still happened anyway. A CI check that fails loudly doesn't depend on the checklist being followed carefully every single time.
 
-**Reason:** (1) and (3) are the same underlying failure mode — a fact stated correctly in one place (`SKILL.md`) that quietly drifted in a duplicate description elsewhere, uncaught because nothing compared them. (2) is a completeness gap in the positioning sweep, not a factual error. (4) is a formatting convention that had no enforcement, so three separate PRs each did the locally-reasonable thing (add a new heading) without anyone checking whether one already existed for `[Unreleased]`.
+**Consequence — what this can't catch:** only *numeric* drift. There's no cheap, reliable automated check for "does this sentence still say the same thing as that other sentence" — the semantic drift this same review also found needs a human or an external review to catch, same as this time.
 
-**Consequence — new CI check:** added a "Check version consistency across the repo" step to `validate-skill.yml`, comparing `SKILL.md`'s `metadata.version` against `plugin.json`, `.claude-plugin/plugin.json`, `llms.txt`'s `Version:` line, `AGENTS.md`'s `context-schema`, and the three illustrative `context-schema` examples (`references/setup.md`, `references/repository-structure.md`, `examples/first-time-setup.md`) — fails the build if any differ. This only catches *numeric* drift (exactly what finding 5 asked for), not semantic drift like findings 1–3 above — there's no cheap, reliable automated check for "does this sentence still say the same thing as that other sentence." Those still need a human or an external review to catch, same as this time.
-
-**Rejected alternative:** leave version consistency to the manual release checklist alone, since steps 1–3, 6–7 already describe it. Rejected — the checklist already existed and this specific drift (well, a semantic one, not numeric) still happened anyway; a CI check that fails loudly doesn't depend on the checklist being followed carefully every single time.
+**Rejected alternative:** leave version consistency to the manual release checklist alone. Rejected — see Reason above; it already existed and didn't prevent this.

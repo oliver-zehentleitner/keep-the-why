@@ -17,3 +17,7 @@ there before re-litigating or accidentally reverting a decision.
 - capture-confirmation: confirm-always
 - source-reference: never
 <!-- /keep-the-why:config -->
+
+## Working conventions (no why needed, just follow these)
+
+- `CHANGELOG.md`: one `### Added` / `### Changed` / `### Fixed` heading per category under `[Unreleased]` — reuse an existing one instead of opening a new one for the same category. Entries within a category, alphabetically ordered by first word, not insertion order.

@@ -6,6 +6,8 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Added
 
+- Added a "Working conventions" section to `AGENTS.md`, separate from the keep-the-why config block, for plain rules that need no rationale (currently: CHANGELOG heading/ordering).
+- Added routing guidance to `references/repository-structure.md`: an embedded procedure, or a rule with no rationale behind it, isn't why-content even when discovered alongside a real decision — route it separately instead of forcing a Decision/Reason/Rejected structure onto it. New eval case.
 - Explained why this can't run as a CI/CD check: by the time code is pushed, the reasoning that mattered has usually already happened and isn't recoverable from the diff — CI can verify a `context/` entry exists, not invent one. Extended "No daemon" in `docs/philosophy.md`, and added a new `docs/faq.md` entry, "Could this run as a CI/CD check instead of during development?"
 
 ### Changed
@@ -14,6 +16,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 - Repositioned Keep the Why as "a repo-native convention and agent skill," not just "an agent skill" — the previous framing throughout (README hero, `llms.txt`'s blockquote, README's "How it works", `docs/philosophy.md`'s closing summary, `docs/installation.md`'s opener, and the generated `context/README.md` template embedded in `setup.md`, `examples/first-time-setup.md`, and this repo's own `context/README.md`) defined it as the skill itself, undermining the point that the skill is one half of an open convention, not the whole thing. Standardized on "repo-native" over "repository-native" (the existing majority spelling) while at it.
 - Sharpened the ADR FAQ entry (`docs/faq.md`): ADRs' real-world weakness was never the format, it's that writing one depends entirely on a human remembering to do it under exactly the deadline pressure that makes people skip it. Keep the Why's agent-authored capture removes that dependency — it's a byproduct of the conversation, not a separate disciplined act.
 - Shortened README's "Composition with other skills" paragraph to a pointer at the FAQ entry, instead of restating the explanation inline.
+- Trimmed two `context/repo-conventions.md` entries that had drifted into instructions rather than rationale: moved the OAuth-scope workaround procedure to `CONTRIBUTING.md` (kept only the "why" in `context/`), and reduced the external-review entry to just the CI-check decision — the wording fixes it also described are already in this file and aren't decisions with alternatives.
 
 ### Fixed
 

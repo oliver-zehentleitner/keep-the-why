@@ -21,6 +21,8 @@ The installable skill package lives under `skills/keep-the-why/` (SKILL.md, refe
 
 Open an issue or a PR — for anything beyond a small fix, an issue first is appreciated so the direction can be discussed before the work is done.
 
+**Pushing a change that touches `.github/workflows/*.yml`?** GitHub rejects that push unless your credential has the `workflow` OAuth scope, independently of `repo` — this hits any token or bot/automation account missing it, not just this repo (see `context/repo-conventions.md` for why). If yours lacks it: commit the workflow file's content separately, push everything else normally, and have someone with the right scope add the workflow file itself (GitHub UI or their own credentials).
+
 ## Before opening a PR
 
 For any change to the skill's rules, workflow, or reference docs, check whether it also needs updating in:

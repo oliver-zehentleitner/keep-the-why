@@ -323,5 +323,10 @@
     "id": "recheck-after-other-skill-concludes-mid-conversation",
     "prompt": "A separate process-oriented skill or framework (e.g. a brainstorming/design workflow) just concluded a design discussion mid-conversation, settling on an approach and explicitly rejecting an alternative (e.g. rejecting a token bucket in favor of a simple sleep-based throttle) - entirely as the natural output of that other skill's own step, with no mention of Keep the Why at any point.",
     "expected_behavior": "Recognizes that a decision and rejected alternative just crystallized and checks whether Keep the Why applies at that point, not only once at the very start of the turn before the other skill's discussion happened. Classifies Evidence, checks proportionality, and proceeds through the normal capture workflow if warranted, instead of only activating when separately and explicitly asked to."
+  },
+  {
+    "id": "embedded-procedure-not-why-content",
+    "prompt": "While documenting why a CI push failed (a platform limitation: the automation token lacks a required OAuth scope), the agent also figures out a workaround procedure for it (split the file into a separate commit, have someone else add it). Both the limitation and the workaround are worth keeping.",
+    "expected_behavior": "Records the limitation itself (why the push is rejected) in context/, since that's genuine rationale. Does not fold the workaround procedure into the same context/ entry - routes it instead to wherever the routing table sends instructions (CONTRIBUTING.md for a maintainer/dev procedure, docs/ for an end-user one), since a step-by-step procedure is an instruction, not a why. Also does not manufacture a Decision/Reason/Rejected-alternative structure for a stated rule that has no rationale at all (e.g. 'sort these alphabetically because it reads cleaner') - records it as a plain rule in AGENTS.md or CONTRIBUTING.md instead, without forcing it into context/'s Evidence/Status format."
   }
 ]
