@@ -15,6 +15,14 @@ All notable changes to this project are documented here. Format follows [Keep a 
 - Sharpened the ADR FAQ entry (`docs/faq.md`): ADRs' real-world weakness was never the format, it's that writing one depends entirely on a human remembering to do it under exactly the deadline pressure that makes people skip it. Keep the Why's agent-authored capture removes that dependency — it's a byproduct of the conversation, not a separate disciplined act.
 - Shortened README's "Composition with other skills" paragraph to a pointer at the FAQ entry, instead of restating the explanation inline.
 
+### Fixed
+
+- `.claude-plugin/plugin.json`'s description was missing "or recovers" — retrospective recovery is one of the four modes, and both `SKILL.md` and the root `plugin.json` name it explicitly. Fixed to match.
+- `docs/installation.md`'s opener never used the "repo-native convention and agent skill" formula established elsewhere in the positioning sweep. Fixed to state it explicitly, then note the page installs the agent-skill half specifically.
+- Full project-wide consistency audit after the positioning sweep. Found and fixed two stragglers the sweep missed: `mkdocs.yml`'s `site_description` (feeds keepthewhy.com's meta description and social preview cards via `overrides/main.html`) still had the old "is a repo-native agent skill" wording; `CONTRIBUTING.md` still referred to a "prior-art comparison in the README" — stale since the README's "Related work" section deliberately dropped name-by-name comparisons. Everything else checked clean: version numbers (`SKILL.md`, `llms.txt`, both `plugin.json` files, `context-schema`) match at 0.6.0 everywhere; "Also listed on" tables are identical across `README.md`, `docs/installation.md`, and `llms.txt`, and all four tracked external submissions were re-verified live; `mkdocs build --strict`, Link Check, and Validate Skill all pass on `main`.
+- `llms.txt` wrongly restricted **Source** to confirmed entries only, contradicting `SKILL.md` rule 2 — and a regression of the exact bug this project's own `CHANGELOG` already documents as fixed in `0.3.1`. Fixed to match rule 2's actual scope (useful at any Evidence level).
+- Three separate `### Changed`/`### Added` headings had accumulated under `[Unreleased]`, added independently by separate PRs instead of reusing an existing heading for the same category. Consolidated to one heading per category, with entries ordered alphabetically by first word within a category — now a documented convention, see `CONTRIBUTING.md` checklist item 8.
+
 ## [0.6.0] - 2026-07-29
 
 ### Added
