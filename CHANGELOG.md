@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Fixed
+
+- Full project-wide consistency audit after the positioning sweep. Found and fixed two stragglers the sweep missed: `mkdocs.yml`'s `site_description` (feeds keepthewhy.com's meta description and social preview cards via `overrides/main.html`) still had the old "is a repo-native agent skill" wording; `CONTRIBUTING.md` still referred to a "prior-art comparison in the README" — stale since the README's "Related work" section deliberately dropped name-by-name comparisons. Everything else checked clean: version numbers (`SKILL.md`, `llms.txt`, both `plugin.json` files, `context-schema`) match at 0.6.0 everywhere; "Also listed on" tables are identical across `README.md`, `docs/installation.md`, and `llms.txt`, and all four tracked external submissions were re-verified live; `mkdocs build --strict`, Link Check, and Validate Skill all pass on `main`.
+
 ### Changed
 
 - Repositioned Keep the Why as "a repo-native convention and agent skill," not just "an agent skill" — the previous framing throughout (README hero, `llms.txt`'s blockquote, README's "How it works", `docs/philosophy.md`'s closing summary, `docs/installation.md`'s opener, and the generated `context/README.md` template embedded in `setup.md`, `examples/first-time-setup.md`, and this repo's own `context/README.md`) defined it as the skill itself, undermining the point that the skill is one half of an open convention, not the whole thing. Standardized on "repo-native" over "repository-native" (the existing majority spelling) while at it.

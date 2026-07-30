@@ -10,7 +10,7 @@ The installable skill package lives under `skills/keep-the-why/` (SKILL.md, refe
 - Sharper wording in `skills/keep-the-why/SKILL.md` itself, especially anything that makes the Evidence (confirmed / inferred / unknown) or Status (active / superseded / open / needs-review) classification more reliable in practice.
 - Additional eval cases in `skills/keep-the-why/evals/evals.json` — particularly failure modes you've hit (hallucinated rationale, generic interview questions, index bloat) that aren't covered yet.
 - **Cross-agent test results.** The evals exist, but nobody's run the full set against Claude Code, Codex CLI, and Gemini CLI yet and published the results — that's a real gap, not something this project claims to have done. If you run the evals against an agent, open an issue or PR with what you found (pass/fail per case, agent, and version) — that's exactly the kind of verified claim worth adding to the README once there's actual data behind it.
-- Corrections to the prior-art comparison in the README — if something is inaccurate or missing, say so.
+- Corrections to the README's "Related work" section — if something is inaccurate or missing, say so.
 
 ## What to avoid
 
