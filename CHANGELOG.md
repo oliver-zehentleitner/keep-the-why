@@ -9,6 +9,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 - Added a "Working conventions" section to `AGENTS.md`, separate from the keep-the-why config block, for plain rules that need no rationale (currently: CHANGELOG heading/ordering).
 - Added routing guidance to `references/repository-structure.md`: an embedded procedure, or a rule with no rationale behind it, isn't why-content even when discovered alongside a real decision — route it separately instead of forcing a Decision/Reason/Rejected structure onto it. New eval case.
 - Explained why this can't run as a CI/CD check: by the time code is pushed, the reasoning that mattered has usually already happened and isn't recoverable from the diff — CI can verify a `context/` entry exists, not invent one. Extended "No daemon" in `docs/philosophy.md`, and added a new `docs/faq.md` entry, "Could this run as a CI/CD check instead of during development?"
+- Sharpened Core Rule 6: a correction (a stale value, a regressed bug, wording fixed back in line with what's already established elsewhere) is not a decision, no matter how significant the fix or how it was surfaced — nothing was chosen between real alternatives. Significance and decision-worthiness are different questions; rule 13 tests the former, this rule the latter. New eval case.
 
 ### Changed
 
