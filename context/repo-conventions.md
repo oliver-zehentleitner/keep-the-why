@@ -185,16 +185,3 @@ Added a second paragraph to "Composition with other skills": checking whether Ke
 **Update after retest:** decided not to keep chasing this with further prompt-engineering inside our own `SKILL.md` (e.g. moving the cue into `description` itself) — Claude Code's skill activation is model-driven with no hard orchestration layer, so reliability here isn't fully in our control no matter how it's worded, and iterating on wording against a moving, unverifiable target isn't a good use of effort. Two things instead: (1) document the real limitation plainly rather than implying seamless automatic composition — recommend explicitly prompting for a check after a design/debugging session concludes, until proven otherwise; (2) report the finding upstream. The methodology-style framework's own bootstrap instruction already claims to re-check *any* skill's relevance before every action, "even 1% chance" — our test shows that claim doesn't hold once a workflow step is underway. That's a legitimate, evidence-based gap in a claim they already make about their own system, worth telling them directly, not something to quietly route around on our side.
 
 **Reported:** filed as [obra/superpowers#2051](https://github.com/obra/superpowers/issues/2051) — framed explicitly as an observation about their own bootstrap's stated behavior, not a request to change anything for a third-party skill (their `CLAUDE.md` is explicit that third-party-specific asks belong in a separate plugin, not core). Not a marketplace listing, so it doesn't belong in the "Also listed on" tables — a compatibility finding, tracked here instead.
-
-## CI now checks version consistency across the repo, after an external review caught a regressed fix and two smaller drifts by hand
-
-**Status:** active
-**Evidence:** confirmed
-
-Added a "Check version consistency across the repo" step to `validate-skill.yml`, comparing `SKILL.md`'s `metadata.version` against `plugin.json`, `.claude-plugin/plugin.json`, `llms.txt`'s `Version:` line, `AGENTS.md`'s `context-schema`, and the three illustrative `context-schema` examples (`references/setup.md`, `references/repository-structure.md`, `examples/first-time-setup.md`) — fails the build if any differ.
-
-**Reason:** an external review found this drift by hand (`llms.txt` had regressed a bug already documented as fixed in `0.3.1`; `.claude-plugin/plugin.json`'s description had fallen out of sync with `SKILL.md`'s — see `CHANGELOG.md` for what those actually were). The manual release checklist already asked for exactly this comparison (steps 1–3, 6–7), and the drift still happened anyway. A CI check that fails loudly doesn't depend on the checklist being followed carefully every single time.
-
-**Consequence — what this can't catch:** only *numeric* drift. There's no cheap, reliable automated check for "does this sentence still say the same thing as that other sentence" — the semantic drift this same review also found needs a human or an external review to catch, same as this time.
-
-**Rejected alternative:** leave version consistency to the manual release checklist alone. Rejected — see Reason above; it already existed and didn't prevent this.
