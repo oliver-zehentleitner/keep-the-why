@@ -13,7 +13,7 @@
 
 Keep a Changelog records what changed. Keep the Why preserves why it changed.
 
-**Keep the Why** is a repo-native agent skill that captures the reasoning behind a codebase as a byproduct of working with your agent — so it stops re-suggesting rejected approaches, gives better answers, speeds up onboarding, and makes legacy projects tractable again. It works continuously as you develop, or retrospectively on an existing repo, capturing architecture decisions, rejected alternatives, workarounds, incident learnings, and operational constraints that the code alone can't explain.
+**Keep the Why** is an open, repo-native convention for preserving the reasoning behind a codebase — architecture decisions, rejected alternatives, workarounds, incident learnings, operational constraints that the code alone can't explain. This repo is its reference implementation: an agent skill that captures that reasoning as a byproduct of working with your agent — so it stops re-suggesting rejected approaches, gives better answers, speeds up onboarding, and makes legacy projects tractable again. It works continuously as you develop, or retrospectively on an existing repo.
 
 **The payoff, made concrete:** a new hire, or an AI agent that's never touched the codebase before, doesn't have to track down whoever wrote the original code — and doesn't just repeat what was already tried and rejected. The same context makes changes safer across the board, turning a legacy project back into something tractable instead of a black box only one person ever understood. "Ask Bob" stops being the fallback.
 
@@ -29,7 +29,7 @@ Website: [https://keepthewhy.com](https://keepthewhy.com/) · [llms.txt](https:/
        width="900">
 </p>
 
-Keep the Why is a `SKILL.md`-based agent skill — an open, cross-agent format (Claude Code, Codex CLI, Gemini CLI, Cursor, and others). It operates in four modes:
+The reference implementation is a `SKILL.md`-based agent skill — an open, cross-agent format (Claude Code, Codex CLI, Gemini CLI, Cursor, and others), not tied to this repo. It operates in four modes:
 
 1. **Continuous capture** — during normal development, the agent notices rationale worth keeping and records it alongside the code as it happens.
 2. **Retrospective recovery** — pointed at an existing or legacy repository, the agent reconstructs what it can from git history, issues, and code, and is explicit about what it couldn't.

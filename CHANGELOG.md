@@ -4,6 +4,11 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Changed
+
+- Repositioned Keep the Why as a concept with a reference implementation, not just "an agent skill" — the previous framing (README hero, `llms.txt`'s blockquote, "How it works", `docs/philosophy.md`'s closing summary, `docs/installation.md`'s opener) defined it as the skill itself throughout, which undersold the point that the skill is one implementation of an open, repo-native convention. Reworded all five without changing the surrounding content otherwise.
+- Sharpened the ADR FAQ entry (`docs/faq.md`): ADRs' real-world weakness was never the format, it's that writing one depends entirely on a human remembering to do it under exactly the deadline pressure that makes people skip it. Keep the Why's agent-authored capture removes that dependency — it's a byproduct of the conversation, not a separate disciplined act.
+
 ### Added
 
 - Explained why this can't run as a CI/CD check: by the time code is pushed, the reasoning that mattered has usually already happened and isn't recoverable from the diff — CI can verify a `context/` entry exists, not invent one. Extended "No daemon" in `docs/philosophy.md`, and added a new `docs/faq.md` entry, "Could this run as a CI/CD check instead of during development?"
