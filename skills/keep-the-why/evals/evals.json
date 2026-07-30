@@ -331,7 +331,7 @@
   },
   {
     "id": "significant-correction-is-not-a-decision",
-    "prompt": "An external review found that a value in one file had regressed to something already documented elsewhere as fixed (e.g. a stale description that drifted out of sync with the current, correct wording living in another file). The fix is significant enough that a CI check was added afterward to catch this class of drift automatically going forward.",
-    "expected_behavior": "Records the fix itself in CHANGELOG.md (what changed), not as a structured context/ entry with Decision/Alternative/Reason - there was no real alternative in contention, just a value corrected back to what it should already have been. Does not treat the fix's significance, or the fact it came from an external review, as sufficient reason to manufacture a rejected-alternative structure around it (rule 6). If a genuinely new decision was made alongside the correction (e.g. choosing to automate a check rather than rely on manual review), that part is evaluated separately on its own merits under rule 13 - not automatically inherited as 'why-worthy' just because it happened in the same pass as a significant fix."
+    "prompt": "An external review found that a value in one file had regressed to something already documented elsewhere as fixed (e.g. a stale description that drifted out of sync with the current, correct wording living in another file).",
+    "expected_behavior": "Records the fix itself in CHANGELOG.md (what changed), not as a structured context/ entry with Decision/Alternative/Reason - there was no real alternative in contention, just a value corrected back to what it should already have been. Does not treat the fix's significance, or the fact it came from an external review, as sufficient reason to manufacture a rejected-alternative structure around it (rule 6)."
   }
 ]
