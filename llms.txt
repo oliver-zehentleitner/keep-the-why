@@ -99,9 +99,9 @@ needing to be told again.
 Four modes. Every entry is classified on two separate axes: **Evidence** (confirmed / inferred /
 unknown — is this well-supported?) and **Status** (active / superseded / open / needs-review —
 is this still current?) — a superseded decision can still have been confirmed when it was
-current, so the two don't collapse into one. A confirmed entry worth tracing can also carry
-**Source** (who or what it came from) and **Verification** (corroborated / uncorroborated /
-contradicted).
+current, so the two don't collapse into one. An entry worth tracing can also carry **Source**
+(who or what it came from), useful at any Evidence level, and **Verification** (corroborated /
+uncorroborated / contradicted) where a confirmed or inferred claim can be checked.
 
 - Continuous capture — record rationale as it comes up during normal development, including a
   change that didn't happen: started, then stopped after discovering a reason not to — nothing
