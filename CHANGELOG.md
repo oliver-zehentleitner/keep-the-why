@@ -6,6 +6,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Changed
 
+- Moved README's Claude Code plugin manifest mention out of "How it works" and into "Install", next to the other install methods, where it actually belongs. Removed the "How it works" pointer at the FAQ's Superpowers-composition entry entirely — the FAQ already stands on its own without a teaser sentence duplicating it.
+
+### Changed
+
 - Shortened README's "Composition with other skills" paragraph to a pointer at the FAQ entry, instead of restating the explanation inline.
 
 ## [0.6.0] - 2026-07-29

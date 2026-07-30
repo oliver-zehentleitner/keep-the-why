@@ -34,8 +34,6 @@ Keep the Why is a `SKILL.md`-based agent skill — an open, cross-agent format (
 3. **Knowledge-transfer interview** — before a maintainer's knowledge becomes unavailable (leaving, retiring, changing teams), the agent analyzes the codebase first, then either asks targeted questions about exactly what the code couldn't explain, or — for someone whose knowledge is broad and tacit after many years on one system — just listens while they narrate freely and extracts the rationale from that instead.
 4. **Maintenance** — existing rationale docs get kept current: contradictions resolved, superseded entries marked, oversized files split.
 
-Keep the Why is a cross-cutting persistence skill, not a workflow orchestrator — see [the FAQ](docs/faq.md) ("Does this work alongside Superpowers or other methodology-style skills?") for how it composes alongside other skills. Also installable as a Claude Code plugin (`.claude-plugin/plugin.json` at the repo root), alongside the plain-skill install methods below.
-
 First activation in a project runs a short one-time setup instead of guessing at defaults — where the why-knowledge should live, how to start, proactive or explicit-only capture, how much confirmation is needed before something gets written, whether to actively ask for a related issue or ticket, and whether to periodically check for skill updates or `context/` staleness. See [`docs/setup.md`](docs/setup.md).
 
 Because it's just Markdown in the repo, a `context/` update ships in the same commit or PR as the code change it explains — reviewed the same way, versioned the same way, no separate system to trust or keep in sync.
@@ -64,6 +62,8 @@ gh skill install oliver-zehentleitner/keep-the-why keep-the-why@latest
 ```
 
 Prompts for which agent and scope (project or personal) to install for. This installs just the skill package (`skills/keep-the-why/`), not the whole repo — no docs/, mkdocs config, or CI files end up in your project.
+
+**Also installable as a Claude Code plugin** — `.claude-plugin/plugin.json` at the repo root (separate from the root `plugin.json`, which serves GitHub's Copilot CLI plugin marketplace format).
 
 **Fallback — manual clone**, if neither of the above is available. The skill lives under `skills/keep-the-why/` in this repo, not at the root, so clone to a scratch location and copy just that folder rather than cloning straight into your agent's skills directory (cloning the whole repo there would nest an embedded git repository inside yours, and pull in unrelated project files):
 
