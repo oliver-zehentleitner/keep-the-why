@@ -4,9 +4,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
-### Changed
-
-- README's "Where this fits" table: `AGENTS.md`'s row now also names plain rules the agent should just follow (no rationale attached), matching the "Working conventions" section added to this repo's own `AGENTS.md`.
+## [0.6.1] - 2026-07-30
 
 ### Added
 
@@ -18,6 +16,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 ### Changed
 
 - Moved README's Claude Code plugin manifest mention out of "How it works" and into "Install", next to the other install methods, where it actually belongs. Removed the "How it works" pointer at the FAQ's Superpowers-composition entry entirely — the FAQ already stands on its own without a teaser sentence duplicating it.
+- README's "Where this fits" table: `AGENTS.md`'s row now also names plain rules the agent should just follow (no rationale attached), matching the "Working conventions" section added to this repo's own `AGENTS.md`.
 - Repositioned Keep the Why as "a repo-native convention and agent skill," not just "an agent skill" — the previous framing throughout (README hero, `llms.txt`'s blockquote, README's "How it works", `docs/philosophy.md`'s closing summary, `docs/installation.md`'s opener, and the generated `context/README.md` template embedded in `setup.md`, `examples/first-time-setup.md`, and this repo's own `context/README.md`) defined it as the skill itself, undermining the point that the skill is one half of an open convention, not the whole thing. Standardized on "repo-native" over "repository-native" (the existing majority spelling) while at it.
 - Sharpened the ADR FAQ entry (`docs/faq.md`): ADRs' real-world weakness was never the format, it's that writing one depends entirely on a human remembering to do it under exactly the deadline pressure that makes people skip it. Keep the Why's agent-authored capture removes that dependency — it's a byproduct of the conversation, not a separate disciplined act.
 - Shortened README's "Composition with other skills" paragraph to a pointer at the FAQ entry, instead of restating the explanation inline.
