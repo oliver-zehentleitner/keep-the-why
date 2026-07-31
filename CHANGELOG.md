@@ -14,6 +14,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 - `CONTRIBUTING.md`: the cross-agent bullet now points at the runner and names non-Claude agents as the remaining gap; pre-PR checklist item 4 asks for a matching fixture alongside a new or changed eval case.
 - `evals/README.md`: replaced the "no automated runner, no scoring" status with a pointer to `tools/evals/` (linked to `main` on purpose — the runner is development tooling, not part of any release artifact).
+- `README.md` and `llms.txt` now describe the eval suite generically and point at https://keepthewhy.com/evals/ for numbers — concrete run results live in exactly one place (`docs/evals.md`) instead of going stale in three.
 - Rewrote 36 eval prompts from third-person scenario narration ("A developer says they don't want…", "capture-confirmation is set to automatic. During the conversation…") into direct user requests and utterances. Against a real materialized project, the narrated form reliably made the agent answer "I don't see an actual task in your message" instead of exercising the behavior under test; expected behaviors are untouched. Three of these also stopped hardcoding an installed-skill version that contradicts the actually installed one, and two stopped referring to files ("this file") that no fresh session has open.
 
 ### Fixed

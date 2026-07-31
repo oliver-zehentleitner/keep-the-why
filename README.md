@@ -40,7 +40,7 @@ First activation in a project runs a short one-time setup instead of guessing at
 
 Because it's just Markdown in the repo, a `context/` update ships in the same commit or PR as the code change it explains — reviewed the same way, versioned the same way, no separate system to trust or keep in sync.
 
-The skill's behavior is exercised by 67 eval cases, executed for real (fixture project, fresh agent session, LLM-judged): **59/67 passed** with Claude Code and Claude Sonnet 5 as of skill 0.6.2 — including an honest analysis of the 8 failures, most of which quantify the documented skill-activation limitation rather than the capture logic itself. See [Evals](https://keepthewhy.com/evals/) for results, caveats, and how to reproduce or run it against other agents.
+The skill's behavior is exercised by 67 eval cases, executed for real — a fixture project per case, a fresh agent session, LLM-judged verdicts, tested with Claude Code. Current results including an honest failure analysis, the stated caveats, and how to reproduce or run the suite against other agents: [Evals](https://keepthewhy.com/evals/).
 
 Where the captured knowledge actually lives, and how it relates to everything else a project already has, is one coherent picture — see "Where this fits" below.
 

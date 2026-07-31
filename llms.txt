@@ -166,11 +166,10 @@ Produces, inside the project using the skill:
 ## Testing / Evals
 
 67 eval cases ship with the skill, executed for real by a local runner in the repo
-(fixture project per case, fresh non-interactive agent session, LLM-judged verdicts).
-Latest run: 59/67 passed (2026-07-31, skill 0.6.2, Claude Code with Claude Sonnet 5,
-agent and judge). Most failures quantify the documented skill-activation limitation
-(low-signal prompts don't load the skill) rather than the capture logic. Full results,
-caveats, and reproduction: https://keepthewhy.com/evals/
+(fixture project per case, fresh non-interactive agent session, LLM-judged verdicts),
+tested with Claude Code and Claude Sonnet. Current numbers live in one place only, so
+they can't drift: https://keepthewhy.com/evals/ — including the failure analysis,
+stated caveats, and reproduction instructions.
 
 ## Related Work
 
