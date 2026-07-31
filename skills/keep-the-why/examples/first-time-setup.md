@@ -85,7 +85,7 @@ This happens to be a question the skill's own description matches, which is what
     <!-- keep-the-why:config -->
     - context: `context/`
     - init: complete
-    - context-schema: 0.6.1
+    - context-schema: 0.6.2
     - capture-confirmation: confirm-when-unsure
     <!-- /keep-the-why:config -->
     ```

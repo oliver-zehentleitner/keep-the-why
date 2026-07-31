@@ -4,13 +4,27 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-07-31
+
+### Added
+
+- "Format" section in README documenting `context/` entry fields (Status, Evidence, Source, Revisit when, ...) directly — discoverable without installing the skill, matching the "repo-native convention, not just an agent skill" framing.
+- "Independent verification" section in `docs/security.md`, linking to the SkillsLLM security scan report.
+
 ### Changed
 
+- `docs/installation.md`'s GitHub-CLI warning about unverified skills now points to `docs/security.md`, which links onward to the SkillsLLM scan; both "Also listed on" tables link "security scan" directly to the scan report.
+- Promoted "Repository structure" from the nested Reference nav group to top-level in `mkdocs.yml`'s nav, since it documents the `context/` format, not skill-usage detail.
+- Replaced "trustworthy background" / "trust by default" wording in `docs/security.md` and `references/trust-model.md` with salience framing — the previous wording collided with the Source/evidence-level model (`confirmed`/`inferred`/`unknown`), implying `context/` is trusted by default when it explicitly isn't.
 - Split `context/repo-conventions.md` (187 lines, five unrelated topics in one file) into `context/release-and-distribution.md`, `context/config-format.md`, `context/positioning.md`, and `context/compatibility.md` — rule 5 (organize by topic) and rule 8 (split large files) applied to this repo's own `context/`, not just advice given to others. All cross-references (`CONTRIBUTING.md`, `references/setup.md`, `docs/faq.md`, `mkdocs.yml` nav, `docs/context/*.md`) updated to match.
 
 ### Removed
 
 - The "Launch-readiness pass" entry in `context/repo-conventions.md` (SKILL.md trimmed, negative evals added, README reordered ahead of the initial launch). On review, none of the four bundled changes had a real rejected alternative — all four were corrections made in response to external review feedback, which rule 6 already excludes from `context/` regardless of significance. The "what happened" is already covered by the `[0.1.0]` entry below.
+
+### Fixed
+
+- Internal links in `README.md` and `docs/security.md` hardcoded to `/blob/main/` (so a tagged checkout's README could show newer, unreleased `main` content instead of that tag's own) — changed to `/blob/latest/` (the project's own recommended pin) or, for pages also mirrored on the docs site (`repository-structure.md`, `methodology.md`), to their `keepthewhy.com` URL. An intermediate fix using bare relative paths broke the "Deploy docs" GitHub Action (`mkdocs build --strict` validates `.md` links against its own `docs_dir`, and these point outside it) — caught and corrected before release.
 
 ## [0.6.1] - 2026-07-30
 
@@ -227,7 +241,13 @@ Initial release.
 - Logo, wordmark, and favicon.
 - `context/repo-conventions.md`, dogfooding the skill on its own repository from day one.
 
-[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.4.2...HEAD
+[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.6.2...HEAD
+[0.6.2]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.6.1...v0.6.2
+[0.6.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.6.0...v0.6.1
+[0.6.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.5.2...v0.6.0
+[0.5.2]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.5.1...v0.5.2
+[0.5.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.5.0...v0.5.1
+[0.5.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.4.2...v0.5.0
 [0.4.2]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.3.1...v0.4.0

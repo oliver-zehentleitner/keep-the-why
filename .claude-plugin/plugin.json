@@ -1,6 +1,6 @@
 {
   "name": "keep-the-why",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Preserves or recovers the reasoning behind a codebase - decisions, rejected alternatives, workarounds, and incident learnings the code alone can't explain.",
   "author": {
     "name": "Oliver Zehentleitner",
