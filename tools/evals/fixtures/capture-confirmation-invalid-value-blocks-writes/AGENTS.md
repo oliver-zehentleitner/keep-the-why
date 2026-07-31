@@ -8,7 +8,7 @@ This project uses Keep the Why to preserve the reasoning behind its code.
 <!-- keep-the-why:config -->
 - context: `context/`
 - init: complete
-- context-schema: 0.6.2
+- context-schema: {{SKILL_VERSION}}
 - capture-confirmation: sometimes
 - source-reference: never
 <!-- /keep-the-why:config -->

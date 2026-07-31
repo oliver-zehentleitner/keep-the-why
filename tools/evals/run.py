@@ -110,6 +110,16 @@ def build_workdir(case_id, cfg, workdir: Path):
         elif target.exists():
             target.unlink()
 
+    # Fixtures that mean "a project at the *current* schema" carry a
+    # {{SKILL_VERSION}} placeholder instead of a hardcoded version, so they
+    # don't all go stale (and start triggering migration prompts mid-eval)
+    # on every release. Deliberately old pins (0.2.0, 0.9.9, ...) stay literal.
+    version = re.search(r'version: "([^"]+)"', (SKILL_DIR / "SKILL.md").read_text()).group(1)
+    for md in workdir.rglob("*.md"):
+        text = md.read_text()
+        if "{{SKILL_VERSION}}" in text:
+            md.write_text(text.replace("{{SKILL_VERSION}}", version))
+
     git_env = {
         **os.environ,
         "GIT_AUTHOR_NAME": "Eval Fixture", "GIT_AUTHOR_EMAIL": "fixture@example.com",
