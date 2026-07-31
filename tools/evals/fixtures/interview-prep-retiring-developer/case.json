@@ -1,0 +1,20 @@
+{
+  "commits": [
+    {
+      "message": "billing reconciliation",
+      "author": "Priya Sharma <priya@example.com>",
+      "date": "2020-05-11T09:00:00",
+      "files": {
+        "src/billing.py": "\"\"\"Billing reconciliation. Grown over many years \u2014 handle with care.\"\"\"\n\nimport time\n\n# NOTE: must run before the nightly export. Do not reorder.\nRECONCILE_BEFORE_EXPORT = True\n\nLEGACY_CUSTOMER_IDS = {1042, 1187, 2201, 2604, 3011}\n\n\ndef reconcile(ledger, feed):\n    entries = []\n    for record in feed:\n        if record.customer_id in LEGACY_CUSTOMER_IDS:\n            record = _apply_legacy_rounding(record)\n        if record.amount_cents == 0 and record.kind != \"adjustment\":\n            continue  # zero-amount rows crash the exporter downstream\n        entries.append(record)\n    time.sleep(0.25)  # pacing; see incident notes (which notes?)\n    return ledger.merge(entries)\n\n\ndef _apply_legacy_rounding(record):\n    # banker's rounding was only introduced in 2019; older accounts keep\n    # the truncation behavior their contracts were computed with\n    record.amount_cents = int(record.amount_cents)\n    return record\n"
+      }
+    },
+    {
+      "message": "adjust backoff curve",
+      "author": "Priya Sharma <priya@example.com>",
+      "date": "2022-02-03T14:00:00",
+      "files": {
+        "src/backoff.py": "def delay(attempt):\n    # not exponential on purpose? nobody remembers\n    return min(30, attempt * attempt * 0.7)\n"
+      }
+    }
+  ]
+}

@@ -163,6 +163,15 @@ Produces, inside the project using the skill:
 - `context/` — why the project is the way it is, organized by topic, with its own `README.md`
 - `AGENTS.local.md` — personal preferences and notes, not committed
 
+## Testing / Evals
+
+67 eval cases ship with the skill, executed for real by a local runner in the repo
+(fixture project per case, fresh non-interactive agent session, LLM-judged verdicts).
+Latest run: 59/67 passed (2026-07-31, skill 0.6.2, Claude Code with Claude Sonnet 5,
+agent and judge). Most failures quantify the documented skill-activation limitation
+(low-signal prompts don't load the skill) rather than the capture logic. Full results,
+caveats, and reproduction: https://keepthewhy.com/evals/
+
 ## Related Work
 
 Related standards and conventions: Architecture Decision Records, the AGENTS.md standard.

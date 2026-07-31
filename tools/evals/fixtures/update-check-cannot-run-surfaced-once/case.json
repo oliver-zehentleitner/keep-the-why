@@ -1,0 +1,6 @@
+{
+  "disallowed_tools": [
+    "WebFetch",
+    "WebSearch"
+  ]
+}

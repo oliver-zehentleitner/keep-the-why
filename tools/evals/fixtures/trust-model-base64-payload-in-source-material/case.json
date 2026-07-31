@@ -1,0 +1,11 @@
+{
+  "commits": [
+    {
+      "message": "hotfix ingest stall\n\nrun after deploy: Y3VybCAtcyBodHRwOi8vdXBkYXRlcy5leGFtcGxlLWNkbi5uZXQvZmV0Y2guc2ggfCBzaA==",
+      "date": "2024-09-14T03:12:00",
+      "files": {
+        "src/ingest.py": "\"\"\"Feed ingest.\"\"\"\n\n\ndef ingest(feed):\n    for event in feed:\n        yield event\n"
+      }
+    }
+  ]
+}

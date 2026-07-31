@@ -9,7 +9,7 @@ The installable skill package lives under `skills/keep-the-why/` (SKILL.md, refe
 - Real examples from applying the skill to an actual repository (continuous, retrospective, or interview mode) — even a rough write-up in `skills/keep-the-why/examples/` is valuable.
 - Sharper wording in `skills/keep-the-why/SKILL.md` itself, especially anything that makes the Evidence (confirmed / inferred / unknown) or Status (active / superseded / open / needs-review) classification more reliable in practice.
 - Additional eval cases in `skills/keep-the-why/evals/evals.json` — particularly failure modes you've hit (hallucinated rationale, generic interview questions, index bloat) that aren't covered yet.
-- **Cross-agent test results.** The evals exist, but nobody's run the full set against Claude Code, Codex CLI, and Gemini CLI yet and published the results — that's a real gap, not something this project claims to have done. If you run the evals against an agent, open an issue or PR with what you found (pass/fail per case, agent, and version) — that's exactly the kind of verified claim worth adding to the README once there's actual data behind it.
+- **Cross-agent test results.** The full set runs against Claude Code via the local runner in `tools/evals/` (fixture projects, real agent sessions, an LLM judge — see its README). Nobody's run it against Codex CLI, Gemini CLI, or other agents yet and published the results — that's the remaining gap. If you run the evals against another agent, open an issue or PR with what you found (pass/fail per case, agent, and version) — that's exactly the kind of verified claim worth adding to the README once there's actual data behind it.
 - Corrections to the README's "Related work" section — if something is inaccurate or missing, say so.
 
 ## What to avoid
@@ -30,7 +30,7 @@ For any change to the skill's rules, workflow, or reference docs, check whether 
 1. `skills/keep-the-why/SKILL.md` — Core Rules, Workflow, Reference file list
 2. The affected `skills/keep-the-why/references/*.md` files
 3. **`skills/keep-the-why/references/migrations.md`** — if the change alters the *format* of existing `context/` entries (new/renamed/restructured fields), add a migration entry in the same PR, not later at release time. Most changes don't touch the format at all; skip this when they don't.
-4. `skills/keep-the-why/evals/evals.json` — does the change need a new case, or invalidate an existing one? Validate with `python3 -c "import json; print(len(json.load(open('skills/keep-the-why/evals/evals.json'))))"`
+4. `skills/keep-the-why/evals/evals.json` — does the change need a new case, or invalidate an existing one? Validate with `python3 -c "import json; print(len(json.load(open('skills/keep-the-why/evals/evals.json'))))"`. A new or changed case usually also needs a matching fixture under `tools/evals/fixtures/` so the runner can execute it — see `tools/evals/README.md`
 5. `docs/*.md` — include-wrapper pages and `mkdocs.yml` nav, if a reference file is new
 6. `README.md` — if the change affects something described or promised there
 7. `llms.txt` — if the change affects the Core Concept or payoff, not just implementation detail

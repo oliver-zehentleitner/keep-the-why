@@ -4,6 +4,18 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- Local eval runner in `tools/evals/`: materializes a per-case fixture project (shared `_base` plus per-case overlays, optional extra git commits and tool restrictions via `case.json`), runs a real non-interactive Claude Code session against it with the skill installed, captures transcript plus working-tree changes, and grades both with an LLM judge into per-case JSON results and a summary. Deliberately outside `skills/keep-the-why/`, which stays instructions-only. Results directory is gitignored; findings get communicated in the docs instead.
+
+- `docs/evals.md` — new docs page publishing the first full eval run (59/67 with Claude Code + Claude Sonnet 5 on skill 0.6.2) with an analysis of the 8 failures (5 quantify the documented skill-activation limitation, 3 are judgment misses with the skill active), stated caveats (single run, same-vendor judge, one agent), and reproduction instructions. Linked from `README.md`, `llms.txt`, and the mkdocs nav.
+
+### Changed
+
+- `CONTRIBUTING.md`: the cross-agent bullet now points at the runner and names non-Claude agents as the remaining gap; pre-PR checklist item 4 asks for a matching fixture alongside a new or changed eval case.
+- `evals/README.md`: replaced the "no automated runner, no scoring" status with a pointer to `tools/evals/` (linked to `main` on purpose — the runner is development tooling, not part of any release artifact).
+- Rewrote 36 eval prompts from third-person scenario narration ("A developer says they don't want…", "capture-confirmation is set to automatic. During the conversation…") into direct user requests and utterances. Against a real materialized project, the narrated form reliably made the agent answer "I don't see an actual task in your message" instead of exercising the behavior under test; expected behaviors are untouched. Three of these also stopped hardcoding an installed-skill version that contradicts the actually installed one, and two stopped referring to files ("this file") that no fresh session has open.
+
 ### Fixed
 
 - `examples/first-time-setup.md` still showed the pre-0.6.0 project wizard: the `source-reference` question was missing from the dialogue and the field missing from the generated config block. Also corrected the "second developer" walkthrough (and the `wizard-respects-known-confirmation-flow-batch` eval case, which encoded the same error): `confirmation-flow` is stored per checkout in `AGENTS.local.md` and does not travel with the developer across projects — when it's not stored in the current checkout, the wizard asks and records it there. `references/setup.md` now states the per-checkout scope explicitly.

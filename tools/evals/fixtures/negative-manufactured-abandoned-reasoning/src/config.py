@@ -1,0 +1,6 @@
+"""Service configuration."""
+
+ENABLE_LEGACY_EXPORT_PATH = True
+
+GATEWAY_TIMEOUT_SECONDS = 30
+SYNC_BATCH_SIZE = 500

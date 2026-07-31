@@ -31,12 +31,12 @@
   },
   {
     "id": "free-narration-interview",
-    "prompt": "A developer who has maintained our 15-year-old core banking backend for her entire tenure is willing to sit down and talk through the system for a couple of hours before she leaves. Capture what comes up.",
+    "prompt": "A developer who has maintained this system for her entire tenure, since the very beginning, is willing to sit down and talk through it for a couple of hours before she leaves. Her knowledge is broad and tacit, not organized around specific questions. Capture what comes up.",
     "expected_behavior": "Does not open with a scripted question list. Runs retrospective analysis first for later cross-checking, then opens with an invitation to narrate freely rather than a specific question. Does not redirect tangents back to a prepared agenda. Extracts decision-forks (chosen/rejected/why) from the flowing narration into normal topic-organized context/ entries, not a raw transcript. After the session, cross-checks against the gap list and proposes short targeted follow-up questions only for what free narration didn't cover."
   },
   {
     "id": "negative-routine-change-no-trigger",
-    "prompt": "Rename the variable `usr` to `user` throughout this file for clarity.",
+    "prompt": "Rename the variable `usr` to `user` throughout src/report.py for clarity.",
     "expected_behavior": "Does not activate the skill or write a context/ entry. This is routine implementation detail with no decision, alternative, or rationale to preserve — matches the 'when not to use it' boundary and rule 13's proportionality gate. Makes the rename and stops, no extra documentation step."
   },
   {
@@ -61,7 +61,7 @@
   },
   {
     "id": "init-wizard-first-activation",
-    "prompt": "First activation of the skill in a fresh project. No AGENTS.md, no context/, no CLAUDE.md, no AGENTS.local.md.",
+    "prompt": "Set up Keep the Why in this project, please.",
     "expected_behavior": "Does not silently create context/ or start capturing without asking. Detects the absence of both the project config block and the personal config block, and runs both wizards separately: project wizard asks where why-knowledge should live, how to start (fresh / retrospective / interview), whether to add the README badge, and how much confirmation is needed before writing to context/ (capture-confirmation); personal wizard asks capture-mode preference, how multiple pending confirmations and wizard questions should be presented (confirmation-flow: sequential or batch), and update-check/consistency-check intervals. Since this developer has no stored confirmation-flow yet, both wizards present their own questions one at a time (sequential, confirmation-flow's own default) rather than bundling them into one message - it waits for an answer before asking the next question. Offers defaults as a fast path (a single word can cover one question or everything remaining) rather than demanding a fully custom answer to each. Writes the project block (including capture-confirmation) to the entry-point file and the personal block (including confirmation-flow) to AGENTS.local.md, not mixed into one block. Since context/ is being created fresh (not adopted), also adds a short README.md inside it explaining what the folder is."
   },
   {
@@ -71,22 +71,22 @@
   },
   {
     "id": "init-declined-not-reasked",
-    "prompt": "A developer says they don't want Keep the Why active in this project right now, during what would otherwise be the project init wizard.",
+    "prompt": "You suggested setting up Keep the Why here — no, I don't want it active in this project right now. Make sure I don't get asked about it again.",
     "expected_behavior": "Records init: declined in the project config block and stops asking project-level setup questions - does not re-prompt on subsequent sessions. Still available if explicitly invoked later, just doesn't proactively re-ask."
   },
   {
     "id": "negative-timer-check-age-without-trigger",
-    "prompt": "The consistency-check interval has elapsed. context/sync.md has a Confirmed entry from 8 months ago with 'Revisit when: the sync protocol changes' - nothing about the sync protocol has changed.",
+    "prompt": "Start of a new working session in this repo. Quick task: explain briefly why order submission uses an idempotency key.",
     "expected_behavior": "Does not flag this entry as stale or ask the user about it just because time has passed. Age alone isn't a defect - only surfaces entries whose Revisit when condition has actually been triggered. Updates the consistency-check 'last' timestamp and otherwise stays quiet."
   },
   {
     "id": "update-check-cannot-run-surfaced-once",
-    "prompt": "The update-check interval has elapsed, but this session has no web access, so the latest release can't be checked. This is the first time the check has ever failed.",
+    "prompt": "Start of a new working session in this repo. Quick task: explain briefly why order submission uses an idempotency key.",
     "expected_behavior": "Does not fail silently and just move on as if nothing happened. Reports that the check couldn't run and asks whether to keep retrying next session or turn update-check off. Does NOT advance the 'last' timestamp on this failed attempt - leaving it unchanged is what makes the next session retry automatically instead of waiting out the full interval. Records the user's answer as an 'on-failure' field (retry-quietly or disabled) so the same question isn't asked again on subsequent failures."
   },
   {
     "id": "update-check-repeat-failure-no-reask",
-    "prompt": "The personal config already has 'update-check: every 14 days — last: 2026-07-08 — on-failure: retry-quietly' from a previous failed attempt. This session also has no web access.",
+    "prompt": "Start of a new working session in this repo. Quick task: explain briefly why order submission uses an idempotency key.",
     "expected_behavior": "Retries the check silently without asking the user how to handle it again - on-failure is already set to retry-quietly from the earlier answer. Does not advance 'last'. If a later session succeeds, 'last' advances to that session's date and on-failure's job is done for this cycle."
   },
   {
@@ -101,12 +101,12 @@
   },
   {
     "id": "negative-manufactured-abandoned-reasoning",
-    "prompt": "User wants to remove an old-looking config flag. The agent can't find any real reason not to, but the flag looks intentional, so it invents a plausible-sounding justification for keeping it to be safe.",
+    "prompt": "Remove ENABLE_LEGACY_EXPORT_PATH from src/config.py — looks like an old leftover nobody uses.",
     "expected_behavior": "Does not invent a reason to justify leaving something untouched. If genuinely nothing is found after checking context/, git history, and code, says so explicitly and treats it as unknown/a Chesterton's Fence candidate needing confirmation - inventing a plausible reason to abandon a change is exactly as much a violation of rule 1 as inventing one to justify a change that was made."
   },
   {
     "id": "context-schema-behind-offers-migration",
-    "prompt": "The project's AGENTS.md config block shows context-schema: 0.2.0. The installed skill version is 0.3.0, which changed the context/ entry format (Status split from Evidence).",
+    "prompt": "The project's AGENTS.md config block shows context-schema: 0.2.0 — several versions behind the installed skill. One of the releases in between, 0.3.0, changed the context/ entry format (Status split from Evidence).",
     "expected_behavior": "Notices context-schema is behind the installed version during the setup check, checks references/migrations.md, finds the 0.3.0 entry applies, and explains what changed before asking whether to migrate existing context/ entries now or next session - does not migrate silently, and does not skip the check just because the project's project-level init is already complete."
   },
   {
@@ -121,12 +121,12 @@
   },
   {
     "id": "verification-contradicted-needs-explanation",
-    "prompt": "Recording a Verification: contradicted for a context/ entry.",
+    "prompt": "The reliability entry in context/ says upstream retries cap at three, but src/api_client.py caps at five. Record a Verification on that entry.",
     "expected_behavior": "Never records 'Verification: contradicted' as a bare label. Always includes what specifically contradicts the claim and why (e.g. a conflicting source, a code inspection result) in the same entry - the label alone doesn't explain anything and isn't useful to the next reader."
   },
   {
     "id": "ambiguous-worth-capturing-asks-instead-of-guessing",
-    "prompt": "A change is made for a reason that's somewhat self-explanatory from the code, but also has a slightly non-obvious edge case behind it - not clearly worth a context/ entry, not clearly routine either.",
+    "prompt": "I just added the BOM handling in src/parser.py — some partners' exports arrive with a UTF-8 BOM and json.loads chokes on the first key otherwise. Moving on to the next task now.",
     "expected_behavior": "Does not silently decide either way (skipping it entirely, or writing a full entry nobody asked for). Asks a short, specific yes/no question about whether it's worth a note - e.g. 'worth a quick context/ entry for the edge case, or obvious enough to skip?' - rather than guessing. A brief confirmation question is treated as compatible with staying low-effort, not a violation of it."
   },
   {
@@ -141,122 +141,122 @@
   },
   {
     "id": "context-schema-ahead-of-installed-skill",
-    "prompt": "AGENTS.md's config block has 'context-schema: 0.4.0'. The installed skill's SKILL.md frontmatter says metadata.version: 0.3.0.",
+    "prompt": "The project's AGENTS.md config block has a context-schema value newer than the installed skill's metadata.version — the project was set up or migrated by a newer skill release than the one running here.",
     "expected_behavior": "Does not treat this the same as context-schema being equal to or behind the installed version. Recognizes the installed skill is older than what the project's context/ was set up or migrated with, says so once, and recommends updating the skill rather than silently proceeding. Avoids writing to existing context/ entries until this is resolved, since an older skill may misinterpret a newer entry format. Does not attempt to 'migrate' anything - there's nothing to migrate, the skill itself needs to catch up."
   },
   {
     "id": "update-check-version-comparison-is-semantic",
-    "prompt": "The installed skill's metadata.version is '0.9.0'. The update check's API response has tag_name 'v0.10.0'.",
+    "prompt": "During an update check: if the installed skill's metadata.version were '0.9.0' and the release API's tag_name is 'v0.10.0', is a newer version available? Explain how the two get compared.",
     "expected_behavior": "Strips the leading 'v' from the tag and compares the versions semantically, recognizing 0.10.0 is newer than 0.9.0 - not a naive string or floating-point comparison that would wrongly treat 0.9.0 as larger than 0.10.0, and not treating 'v0.10.0' != '0.9.0' as a meaningless mismatch."
   },
   {
     "id": "consistency-check-respects-configured-context-path",
-    "prompt": "The project config block has 'context: `docs/why/`' (not the default `context/`). The consistency-check interval has elapsed.",
+    "prompt": "Start of a new working session in this repo. Quick task: explain briefly why order submission uses an idempotency key.",
     "expected_behavior": "Scopes the Revisit when search to docs/why/ (the configured location), not a hardcoded context/ directory that doesn't exist in this project. Searches recursively in case the project has split it into subsystem subdirectories."
   },
   {
     "id": "capture-confirmation-automatic-unclear-evidence",
-    "prompt": "capture-confirmation is set to automatic. During the conversation, a decision surfaces but the evidence for why it was made is genuinely unclear - no maintainer statement, no commit message, no issue.",
+    "prompt": "I'm bumping CACHE_TTL_SECONDS in src/cache.py from 47 to 120 — staging is fine with it. No idea why it was 47; whoever picked that is long gone. Keep the context docs current with this change.",
     "expected_behavior": "Does not ask for permission to write before recording the entry - that's what automatic means. Does not invent a plausible-sounding reason either. Classifies Evidence as unknown or inferred, whichever is honest, and writes the entry with that classification rather than guessing confidently or skipping the write entirely."
   },
   {
     "id": "capture-confirmation-automatic-still-asks-substantive-question",
-    "prompt": "capture-confirmation is set to automatic. A timeout value was changed, and the agent isn't sure whether it was due to a provider rate limit or internal load - a specific question would resolve this and meaningfully change what gets recorded as Evidence.",
+    "prompt": "Make sure the gateway timeout change (30s down to 8s, see the last commit) is captured — we did it after the timeout pile-ups two weeks ago.",
     "expected_behavior": "Still asks the factual clarifying question (was it the provider limit or internal load?), even though automatic means no permission question is needed before writing. Permission to write and a substantive question about the facts are different things - automatic only skips the former."
   },
   {
     "id": "confirm-always-clear-case-still-asks-permission",
-    "prompt": "capture-confirmation is set to confirm-always. A decision comes up with clear, well-evidenced rationale - a maintainer directly stated the reason in the conversation.",
+    "prompt": "Quick note from our team sync, then back to work: Redis stays cache-only; persistence was rejected because recovery complexity outweighed the benefit — that's settled and confirmed. Now, please bump CACHE_TTL_SECONDS in src/cache.py to 180.",
     "expected_behavior": "Asks for permission before writing the entry, even though the evidence is completely clear and unambiguous. confirm-always asks before every write regardless of how clear the case is - clarity of evidence doesn't substitute for the confirmation this setting requires."
   },
   {
     "id": "confirm-always-explicit-instruction-no-redundant-ask",
-    "prompt": "capture-confirmation is set to confirm-always. The user says: 'Write down that we use Redis only as a cache, not for persistence.'",
+    "prompt": "Write down in context/ that we use Redis only as a cache, not for persistence — persistence was rejected because of recovery complexity.",
     "expected_behavior": "Writes the entry without asking a second time. The user's direct instruction already names the specific change and counts as confirmation for it - asking 'should I write this down?' after being explicitly told to would be redundant, not thorough."
   },
   {
     "id": "confirm-when-unsure-clear-case-writes-directly",
-    "prompt": "capture-confirmation is set to confirm-when-unsure (or the field is absent, which defaults to this). A decision comes up with clear evidence and clearly passes the proportionality gate.",
+    "prompt": "For future maintainers: order submission switched to idempotency keys because blind retry-on-timeout caused duplicate orders. Capture that.",
     "expected_behavior": "Writes the entry directly without asking for permission first - the case is unambiguous, so confirm-when-unsure doesn't require a confirmation question here. Only genuinely unclear cases get asked about under this setting."
   },
   {
     "id": "capture-confirmation-missing-field-backfills-silently",
-    "prompt": "The project's AGENTS.md config block has context, init, and context-schema, but no capture-confirmation field - this project was set up before the field existed.",
+    "prompt": "Capture in context/ that Redis is used strictly as a cache — persistence was rejected for recovery complexity.",
     "expected_behavior": "Backfills capture-confirmation to confirm-when-unsure without asking the user anything - this is already the project's actual current behavior, so nothing changes and no question is warranted. Does not treat the missing field as a reason to pause or ask which mode to use."
   },
   {
     "id": "confirmation-flow-sequential-multiple-candidates",
-    "prompt": "confirmation-flow is set to sequential. Retrospective analysis of the codebase surfaced three candidate context/ entries at once, and capture-confirmation requires asking before each.",
+    "prompt": "Run a retrospective pass over src/ and record what's worth keeping in context/.",
     "expected_behavior": "Presents exactly one candidate, waits for the user's answer, and only then presents the next one - not all three at once. Each candidate gets its own confirmation exchange in sequence."
   },
   {
     "id": "confirmation-flow-batch-multiple-candidates",
-    "prompt": "confirmation-flow is set to batch. Retrospective analysis surfaced three candidate context/ entries at once, and capture-confirmation requires asking before each.",
+    "prompt": "Run a retrospective pass over src/ and record what's worth keeping in context/.",
     "expected_behavior": "Presents all three candidates together as a short numbered list in one message, and asks whether to record all of them or exclude specific numbers - rather than asking about each one in a separate back-and-forth. Only entries the user actually confirms get written."
   },
   {
     "id": "session-instruction-overrides-stored-confirmation-settings",
-    "prompt": "The project's capture-confirmation is confirm-always. The user says, at the start of the session: 'Just write everything down directly today, don't ask me each time.'",
+    "prompt": "Just write everything down directly today, don't ask me each time. To start: capture that we rejected websockets in favor of polling because the corporate proxy kills idle connections.",
     "expected_behavior": "Follows the session instruction for the rest of this conversation, writing without asking permission even though the stored project setting is confirm-always. Does not edit AGENTS.md to change the stored setting unless the user separately asks for that - the override is scoped to this session, not a silent config change."
   },
   {
     "id": "user-declines-confirmation-no-write",
-    "prompt": "capture-confirmation is confirm-when-unsure. The agent asks whether to record a specific rationale, and the user says no.",
+    "prompt": "You asked whether to record the Redis cache-only rationale in context/ — no, don't record that one. Now please bump CACHE_TTL_SECONDS in src/cache.py to 180.",
     "expected_behavior": "Does not write that entry to context/. A declined confirmation means the logical change doesn't happen, not that it gets written anyway with a caveat, and not that the same candidate gets silently re-asked immediately afterward."
   },
   {
     "id": "interview-mode-automatic-still-filters-narration",
-    "prompt": "capture-confirmation is automatic. During a knowledge-transfer interview, the interviewee narrates freely for twenty minutes, covering many topics, only some of which involve an actual decision-fork worth recording.",
+    "prompt": "notes/interview-2026-07.md has my raw notes from a 20-minute maintainer interview — process them into context/.",
     "expected_behavior": "Does not transcribe or capture everything said just because automatic means no permission is needed to write. Still extracts genuine decision-forks, classifies Evidence, and applies the proportionality gate (rule 13) exactly as in any other mode - automatic changes whether permission is asked before writing, not what qualifies as worth writing in the first place."
   },
   {
     "id": "maintenance-automatic-no-silent-historical-overwrite",
-    "prompt": "capture-confirmation is automatic. During maintenance, the agent finds that a confirmed, active context/ entry may be outdated given a recent architecture change.",
+    "prompt": "Do a maintenance pass over context/ — we changed the architecture recently, some entries may be stale.",
     "expected_behavior": "Does not silently delete, reinterpret, or overwrite the existing confirmed entry with weaker evidence just because automatic means no permission is needed for new writes. Marks the entry needs-review or superseded explicitly, preserving the history of what was believed and why, rather than quietly replacing it - maintenance changes to existing entries get at least the same scrutiny a new entry would."
   },
   {
     "id": "capture-mode-proactive-with-confirm-always",
-    "prompt": "capture-mode is proactive and capture-confirmation is confirm-always. During normal conversation, the agent notices something that looks worth capturing.",
+    "prompt": "FYI from standup: we're keeping the quadratic backoff in src/backoff.py — exponential backed off so hard the mirror lagged minutes behind; quadratic keeps it bounded and the provider is fine with it. Anyway: please add a short docstring to delay().",
     "expected_behavior": "Proactively raises that this looks worth capturing (capture-mode: proactive), but still asks for explicit permission before actually writing anything to context/ (capture-confirmation: confirm-always) - the two settings are independent, and being proactive about noticing doesn't skip the confirmation step for writing."
   },
   {
     "id": "explicit-only-direct-instruction-activates-and-confirms",
-    "prompt": "capture-mode is explicit-only, so the agent doesn't proactively look for capture opportunities. The user says: 'Document why we chose polling over websockets here.'",
+    "prompt": "Document why we chose polling over websockets here.",
     "expected_behavior": "The direct instruction both triggers capture for this specific topic (overriding explicit-only's default of not searching proactively, since the user explicitly asked) and counts as confirmation for writing it - does not additionally ask 'should I write this down?' after already being told to document it."
   },
   {
     "id": "confirmation-flow-missing-field-asks-once",
-    "prompt": "AGENTS.local.md exists with capture-mode and update-check already set, but no confirmation-flow field - this developer's personal config predates the field.",
+    "prompt": "Quick Keep the Why maintenance check on this repo, please.",
     "expected_behavior": "Does not silently backfill confirmation-flow to sequential just because it's the documented default value - there's no prior behavior for this axis to preserve, unlike capture-confirmation's missing-field case. Asks the one-line question ('one at a time, or as a list?') once, records the answer in AGENTS.local.md, and doesn't ask again in later sessions."
   },
   {
     "id": "confirmation-flow-invalid-value-asks-not-defaults",
-    "prompt": "AGENTS.local.md has 'confirmation-flow: grouped' - not one of the documented values.",
+    "prompt": "Run a retrospective pass over src/ and record what's worth keeping in context/.",
     "expected_behavior": "Does not silently treat this as sequential (the default) or as batch (the closest-sounding valid value). States that 'grouped' isn't a recognized value, names the actual valid options (sequential, batch), and asks which one is meant. Doesn't proceed with a multi-candidate confirmation flow until this is resolved."
   },
   {
     "id": "capture-confirmation-invalid-value-blocks-writes",
-    "prompt": "AGENTS.md's config block has 'capture-confirmation: sometimes' - not a documented value.",
+    "prompt": "Capture in context/ that Redis is used strictly as a cache — persistence was rejected for recovery complexity.",
     "expected_behavior": "Does not interpret 'sometimes' as confirm-when-unsure or any other value. Names the valid options (automatic, confirm-always, confirm-when-unsure), asks which was intended, and does not write anything to context/ until the setting is actually resolved - unlike a genuinely missing field, an invalid one doesn't get a silent default."
   },
   {
     "id": "confirmation-flow-contradictory-duplicate-values",
-    "prompt": "AGENTS.local.md's config block accidentally has two lines: 'confirmation-flow: sequential' and, further down, 'confirmation-flow: batch'.",
+    "prompt": "Run a retrospective pass over src/ and record what's worth keeping in context/.",
     "expected_behavior": "Recognizes the two values conflict rather than silently using whichever line appears first or last. Points out the contradiction and asks the user which one is actually correct, rather than picking one on its own reasoning."
   },
   {
     "id": "ambiguous-session-instruction-not-silently-mapped",
-    "prompt": "The user says: 'Don't keep asking me all the time, but also don't decide anything on your own.'",
+    "prompt": "Don't keep asking me all the time, but also don't decide anything on your own. Anyway — capture in context/ that Redis stays cache-only; persistence was rejected because of recovery complexity.",
     "expected_behavior": "Does not silently interpret this as confirm-when-unsure or any other specific capture-confirmation value, even though it sounds related. The instruction is internally in tension (less asking, but also no autonomous decisions) and doesn't clearly resolve to one option. Points out the tension and asks what's actually wanted instead of guessing the closest-sounding interpretation."
   },
   {
     "id": "confirmation-flow-typo-confirmed-not-silently-corrected",
-    "prompt": "AGENTS.local.md has 'confirmation-flow: sequental' (typo, missing an 'i').",
+    "prompt": "Run a retrospective pass over src/ and record what's worth keeping in context/.",
     "expected_behavior": "Does not silently treat this as sequential just because it's an obvious typo. May mention the likely intended value ('did you mean sequential?'), but still asks for and waits on the user's actual confirmation before treating the setting as sequential or correcting the stored value."
   },
   {
     "id": "capture-confirmation-missing-vs-invalid-distinction-holds",
-    "prompt": "An older project's AGENTS.md config block predates the capture-confirmation field entirely - the field is absent, not set to an unusual value.",
+    "prompt": "Capture in context/ that Redis is used strictly as a cache — persistence was rejected for recovery complexity.",
     "expected_behavior": "Backfills capture-confirmation to confirm-when-unsure silently, without asking - this is the documented, legitimate default-for-missing-field case, explicitly not the same situation as a present-but-unrecognized value. Doesn't second-guess or hedge with a clarifying question just because other cases in the confirmation model do ask - a genuinely missing field with a defined default is not ambiguous."
   },
   {
@@ -266,7 +266,7 @@
   },
   {
     "id": "wizard-bundling-is-not-the-silent-default",
-    "prompt": "A developer with no AGENTS.local.md anywhere yet (truly first-ever activation) triggers the project init wizard.",
+    "prompt": "Set up Keep the Why in this project, please.",
     "expected_behavior": "Presents the wizard's questions one at a time, waiting for an answer before the next, rather than bundling all of them into one message. Bundling (batch-style presentation) is only appropriate once a developer's confirmation-flow is actually known to prefer it - it is not the default behavior for someone with no stored preference, even though earlier versions of the skill always bundled wizard questions unconditionally."
   },
   {

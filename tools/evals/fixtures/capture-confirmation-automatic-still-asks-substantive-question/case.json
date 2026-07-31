@@ -1,0 +1,11 @@
+{
+  "commits": [
+    {
+      "message": "reduce gateway timeout",
+      "date": "2026-07-29T15:00:00",
+      "files": {
+        "src/config.py": "\"\"\"Service configuration.\"\"\"\n\nGATEWAY_TIMEOUT_SECONDS = 8  # was 30\nSYNC_BATCH_SIZE = 500\n"
+      }
+    }
+  ]
+}

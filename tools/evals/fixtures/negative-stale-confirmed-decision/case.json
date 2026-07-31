@@ -1,0 +1,11 @@
+{
+  "commits": [
+    {
+      "message": "Rewrite sync protocol: sequence tokens replace snapshot+buffer (v2)",
+      "date": "2026-06-28T10:00:00",
+      "files": {
+        "src/sync_client.py": "\"\"\"Inventory sync, protocol v2 (sequence tokens).\"\"\"\n\n\nclass SyncClient:\n    def start(self):\n        token = self.feed.latest_token()\n        for event in self.feed.stream(from_token=token):\n            self.store.apply(event)\n"
+      }
+    }
+  ]
+}

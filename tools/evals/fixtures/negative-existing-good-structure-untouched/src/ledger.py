@@ -1,0 +1,3 @@
+class Ledger:
+    def post(self, entry):
+        ...

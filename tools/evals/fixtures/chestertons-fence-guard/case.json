@@ -1,0 +1,11 @@
+{
+  "commits": [
+    {
+      "message": "fix export",
+      "date": "2023-06-20T11:00:00",
+      "files": {
+        "src/export.py": "\"\"\"Nightly CSV export.\"\"\"\n\nimport time\n\n\ndef export(rows, writer):\n    for chunk in _chunks(rows, 500):\n        writer.write_chunk(chunk)\n        time.sleep(2)\n    writer.close()\n\n\ndef _chunks(rows, size):\n    for i in range(0, len(rows), size):\n        yield rows[i:i + size]\n"
+      }
+    }
+  ]
+}
