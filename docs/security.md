@@ -17,6 +17,10 @@ See [Trust model](trust-model.md) for the full reasoning, the read/write rules, 
 - Actions with real side effects still go through whatever the agent running the skill already requires — permission prompts, sandboxing, trust verification. Keep the Why doesn't add a separate permission layer, and doesn't assume those mechanisms are bulletproof either.
 - `context/` is committed alongside the code, reviewed the same way — a change to it is as visible in a diff or a pull request as any other change.
 
+## Independent verification
+
+Beyond this document's own reasoning: [SkillsLLM](https://skillsllm.com/skill/keep-the-why) ran an automated security scan against the skill package and marked it **Verified** — see the [scan report](https://skillsllm.com/security-check/IPmNycVdbOyq) for what it checked. A second opinion, not a substitute for reading `SKILL.md` yourself.
+
 ## Reporting a vulnerability in Keep the Why itself
 
 That's a different question from the above — see [`SECURITY.md`](https://github.com/oliver-zehentleitner/keep-the-why/blob/latest/SECURITY.md) for the disclosure process, or report directly via [GitHub Security Advisories](https://github.com/oliver-zehentleitner/keep-the-why/security/advisories/new).

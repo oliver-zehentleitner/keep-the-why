@@ -35,7 +35,7 @@ Either form prompts for which of its 70+ supported agents (Claude Code, Codex, O
 | Name | Status | Info |
 |---|---|---|
 | [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why) | Live | Backs the `npx skills add` install method above |
-| [SkillsLLM](https://skillsllm.com/skill/keep-the-why) | Live | Verified, passed SkillsLLM's security scan |
+| [SkillsLLM](https://skillsllm.com/skill/keep-the-why) | Live | Verified, passed [SkillsLLM's security scan](https://skillsllm.com/security-check/IPmNycVdbOyq) |
 | [ASM Registry](https://github.com/luongnv89/asm-registry) | Pending — [PR #5](https://github.com/luongnv89/asm-registry/pull/5) | Manifest pinned to `v0.5.2`; installable via `asm install keep-the-why` once merged |
 | [awesome-agent-skills](https://github.com/VoltAgent/awesome-agent-skills) | Pending — [PR #850](https://github.com/VoltAgent/awesome-agent-skills/pull/850) | Requires "real community usage"; may be declined |
 | [GitHub Copilot plugin marketplace](https://github.com/github/awesome-copilot) | Ready for review — [Issue #2470](https://github.com/github/awesome-copilot/issues/2470) | External plugin submission, pinned to `v0.5.2` |
@@ -48,7 +48,7 @@ With [`gh`](https://cli.github.com/) v2.90.0 or later — `gh skill` is [in publ
 gh skill preview oliver-zehentleitner/keep-the-why keep-the-why
 ```
 
-GitHub's own guidance: skills aren't verified by GitHub and may contain prompt injections, hidden instructions, or malicious scripts — inspect before installing. Keep the Why ships instructions only, no executable scripts. Then, pinned to a release:
+GitHub's own guidance: skills aren't verified by GitHub and may contain prompt injections, hidden instructions, or malicious scripts — inspect before installing. Keep the Why ships instructions only, no executable scripts; see [Security](security.md) for what that means in practice, including an independent SkillsLLM scan. Then, pinned to a release:
 
 ```bash
 gh skill install oliver-zehentleitner/keep-the-why keep-the-why@latest
