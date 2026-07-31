@@ -22,7 +22,7 @@ Thumbs.db
 *.swp
 
 # Local/personal, not shared (per this project's own AGENTS.local.md convention)
-AGENTS.local.md
+/AGENTS.local.md
 
 # Eval runner output (local runs, not committed)
 tools/evals/results/
