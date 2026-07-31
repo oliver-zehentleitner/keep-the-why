@@ -11,6 +11,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 - `mkdocs.yml`'s `exclude_docs` still listed `context/naming.md`, a file that no longer exists — removed.
 - `README.md`'s "Related work" pointed at "What this is not" as being *above* when the section sits below it; and the setup pointer linked `docs/setup.md`, which on GitHub is a one-line include stub — now links the rendered https://keepthewhy.com/setup/ page instead, per the 0.6.2 link convention.
 - `references/repository-structure.md`'s example `AGENTS.md` config block was missing `source-reference`, and the prose beneath it still claimed a real config block "always has both" fields when 0.6.0 made it three.
+- `SKILL.md`'s setup check named the silent missing-field backfill only for `capture-confirmation` — it now names `source-reference` alongside it, so an agent that never loads `references/setup.md` handles both fields alike.
 
 ## [0.6.2] - 2026-07-31
 
