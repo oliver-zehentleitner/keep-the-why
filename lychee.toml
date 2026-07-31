@@ -1,0 +1,7 @@
+# Config for the Link Check workflow (lychee auto-loads ./lychee.toml).
+#
+# Eval fixtures are excluded: they are scenario *data* for tools/evals/run.py,
+# not documentation. Their internal links (e.g. context/index.md ->
+# architecture.md) resolve only after the runner overlays the shared _base
+# fixture at runtime, so checking them as repo files produces false positives.
+exclude_path = ["tools/evals/fixtures"]
