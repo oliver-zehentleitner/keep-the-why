@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Changed
+
+- Tightened Core Rules 2, 6, 7, 11, 13, 14, and 15 in `SKILL.md` toward stating each as a compact invariant rather than prose with nested caveats — mechanism-level detail already covered by `references/setup.md`, `references/repository-structure.md`, and `references/trust-model.md` was cut from the core rules rather than duplicated. Every eval-tested clause (Evidence/Status/Verification values, the two-sources-disagree handling, the needs-review "immediately, and nothing more" behavior, missing-vs-invalid-vs-contradictory config handling, the trust-model enumerable list) was checked against `skills/keep-the-why/evals/evals.json` and kept; only padding and restated cross-rule hedging was removed. Core Rules section: 1669 → 1327 words (-20.5%). `python -m skills_ref.cli validate` still passes; the eval suite itself gets re-run once this pass (and the settings review) is fully done, not per-commit.
+
 ### Added
 
 - Local eval runner in `tools/evals/`: materializes a per-case fixture project (shared `_base` plus per-case overlays, optional extra git commits and tool restrictions via `case.json`), runs a real non-interactive Claude Code session against it with the skill installed, captures transcript plus working-tree changes, and grades both with an LLM judge into per-case JSON results and a summary. Deliberately outside `skills/keep-the-why/`, which stays instructions-only. Results directory is gitignored; findings get communicated in the docs instead.
