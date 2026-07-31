@@ -4,6 +4,14 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Changed
+
+- Split `context/repo-conventions.md` (187 lines, five unrelated topics in one file) into `context/release-and-distribution.md`, `context/config-format.md`, `context/positioning.md`, and `context/compatibility.md` — rule 5 (organize by topic) and rule 8 (split large files) applied to this repo's own `context/`, not just advice given to others. All cross-references (`CONTRIBUTING.md`, `references/setup.md`, `docs/faq.md`, `mkdocs.yml` nav, `docs/context/*.md`) updated to match.
+
+### Removed
+
+- The "Launch-readiness pass" entry in `context/repo-conventions.md` (SKILL.md trimmed, negative evals added, README reordered ahead of the initial launch). On review, none of the four bundled changes had a real rejected alternative — all four were corrections made in response to external review feedback, which rule 6 already excludes from `context/` regardless of significance. The "what happened" is already covered by the `[0.1.0]` entry below.
+
 ## [0.6.1] - 2026-07-30
 
 ### Added

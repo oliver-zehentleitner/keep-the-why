@@ -154,7 +154,7 @@ A third kind sits alongside these two: a **source-lookup question** — "Is ther
 
 Whatever the setting, asking is never the same as requiring one to exist. "No, there's nothing tracking this" is a complete, valid answer — recording it as `**Source:** none — no tracked issue or ticket` (or simply omitting Source, since it was never mandatory per rule 2) is correct. Inventing a plausible-sounding ticket reference to satisfy `always` or a matched `filtered` criterion would violate rule 1 exactly the same way inventing rationale would.
 
-`source-reference` doesn't have a personal override in this release, same reasoning and same "test one setting before adding a second axis" precedent as `capture-confirmation` — see `context/repo-conventions.md`.
+`source-reference` doesn't have a personal override in this release, same reasoning and same "test one setting before adding a second axis" precedent as `capture-confirmation` — see `context/config-format.md`.
 
 ### Resolution order
 
@@ -166,7 +166,7 @@ session instruction → personal setting (AGENTS.local.md) → project setting (
 
 Examples of session overrides: "just write everything down directly this session," "ask me before every entry today," "show me everything you found as one list," "only make suggestions, don't touch any files yet." A session override doesn't change the stored config unless the user explicitly says to update it — it's scoped to that conversation, not a silent edit to `AGENTS.md` or `AGENTS.local.md`.
 
-A personal override for `capture-confirmation` isn't part of this release — it's project-wide only for now, deliberately, to see how it behaves in practice first (see `context/repo-conventions.md` for why). The resolution order above already leaves room for one later: a personal `capture-confirmation` field in `AGENTS.local.md` would simply slot in between session instruction and the project setting, same pattern as `migration-prompt: <version> declined`.
+A personal override for `capture-confirmation` isn't part of this release — it's project-wide only for now, deliberately, to see how it behaves in practice first (see `context/config-format.md` for why). The resolution order above already leaves room for one later: a personal `capture-confirmation` field in `AGENTS.local.md` would simply slot in between session instruction and the project setting, same pattern as `migration-prompt: <version> declined`.
 
 ### `confirmation-flow` values
 

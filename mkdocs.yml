@@ -66,4 +66,7 @@ nav:
       - Legacy project: examples/legacy-project.md
       - Developer handover: examples/developer-handover.md
   - "Why this project is built this way":
-      - Repo conventions: context/repo-conventions.md
+      - Release and distribution: context/release-and-distribution.md
+      - Skill configuration format: context/config-format.md
+      - Positioning: context/positioning.md
+      - Compatibility: context/compatibility.md
