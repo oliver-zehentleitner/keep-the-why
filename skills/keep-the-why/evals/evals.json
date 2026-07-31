@@ -76,7 +76,7 @@
   },
   {
     "id": "negative-timer-check-age-without-trigger",
-    "prompt": "Start of a new working session in this repo. Quick task: explain briefly why order submission uses an idempotency key.",
+    "prompt": "Quick Keep the Why maintenance check on this repo, please — anything that needs attention?",
     "expected_behavior": "Does not flag this entry as stale or ask the user about it just because time has passed. Age alone isn't a defect - only surfaces entries whose Revisit when condition has actually been triggered. Updates the consistency-check 'last' timestamp and otherwise stays quiet."
   },
   {
@@ -151,7 +151,7 @@
   },
   {
     "id": "consistency-check-respects-configured-context-path",
-    "prompt": "Start of a new working session in this repo. Quick task: explain briefly why order submission uses an idempotency key.",
+    "prompt": "Quick Keep the Why maintenance check on this repo, please — anything that needs attention?",
     "expected_behavior": "Scopes the Revisit when search to docs/why/ (the configured location), not a hardcoded context/ directory that doesn't exist in this project. Searches recursively in case the project has split it into subsystem subdirectories."
   },
   {
