@@ -46,6 +46,7 @@ nav:
   - Overview: index.md
   - Philosophy: philosophy.md
   - Installation: installation.md
+  - Repository structure: repository-structure.md
   - Security: security.md
   - Badge: badge.md
   - FAQ: faq.md
@@ -54,7 +55,6 @@ nav:
       - Setup: setup.md
       - Migrations: migrations.md
       - Methodology: methodology.md
-      - Repository structure: repository-structure.md
       - Continuous capture: continuous-capture.md
       - Retrospective analysis: retrospective-analysis.md
       - Interview playbook: interview-playbook.md

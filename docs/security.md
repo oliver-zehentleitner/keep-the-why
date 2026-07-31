@@ -19,4 +19,4 @@ See [Trust model](trust-model.md) for the full reasoning, the read/write rules, 
 
 ## Reporting a vulnerability in Keep the Why itself
 
-That's a different question from the above — see [`SECURITY.md`](../SECURITY.md) for the disclosure process, or report directly via [GitHub Security Advisories](https://github.com/oliver-zehentleitner/keep-the-why/security/advisories/new).
+That's a different question from the above — see [`SECURITY.md`](https://github.com/oliver-zehentleitner/keep-the-why/blob/latest/SECURITY.md) for the disclosure process, or report directly via [GitHub Security Advisories](https://github.com/oliver-zehentleitner/keep-the-why/security/advisories/new).
