@@ -9,6 +9,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 - Local eval runner in `tools/evals/`: materializes a per-case fixture project (shared `_base` plus per-case overlays, optional extra git commits and tool restrictions via `case.json`), runs a real non-interactive Claude Code session against it with the skill installed, captures transcript plus working-tree changes, and grades both with an LLM judge into per-case JSON results and a summary. Deliberately outside `skills/keep-the-why/`, which stays instructions-only. Results directory is gitignored; findings get communicated in the docs instead.
 
 - `docs/evals.md` — new docs page publishing the first full eval run (59/67 with Claude Code + Claude Sonnet 5 on skill 0.6.2) with an analysis of the 8 failures (5 quantify the documented skill-activation limitation, 3 are judgment misses with the skill active), stated caveats (single run, same-vendor judge, one agent), and reproduction instructions. Linked from `README.md`, `llms.txt`, and the mkdocs nav.
+- `overrides/README.md` — explains what the theme-override directory is for (mkdocs-material `custom_dir`, currently the Open Graph/Twitter-card meta tags in `main.html`) and why it sits at the repo root instead of inside `docs/`.
 
 ### Changed
 
