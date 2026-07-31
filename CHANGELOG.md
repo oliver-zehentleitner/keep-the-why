@@ -4,6 +4,14 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Fixed
+
+- `examples/first-time-setup.md` still showed the pre-0.6.0 project wizard: the `source-reference` question was missing from the dialogue and the field missing from the generated config block. Also corrected the "second developer" walkthrough (and the `wizard-respects-known-confirmation-flow-batch` eval case, which encoded the same error): `confirmation-flow` is stored per checkout in `AGENTS.local.md` and does not travel with the developer across projects — when it's not stored in the current checkout, the wizard asks and records it there. `references/setup.md` now states the per-checkout scope explicitly.
+- `llms.txt`'s repo links (`AGENTS.md`, `SKILL.md`, `CHANGELOG`) still pointed at `/blob/main/` — changed to `/blob/latest/`, the same convention the 0.6.2 README link fix established.
+- `mkdocs.yml`'s `exclude_docs` still listed `context/naming.md`, a file that no longer exists — removed.
+- `README.md`'s "Related work" pointed at "What this is not" as being *above* when the section sits below it; and the setup pointer linked `docs/setup.md`, which on GitHub is a one-line include stub — now links the rendered https://keepthewhy.com/setup/ page instead, per the 0.6.2 link convention.
+- `references/repository-structure.md`'s example `AGENTS.md` config block was missing `source-reference`, and the prose beneath it still claimed a real config block "always has both" fields when 0.6.0 made it three.
+
 ## [0.6.2] - 2026-07-31
 
 ### Added

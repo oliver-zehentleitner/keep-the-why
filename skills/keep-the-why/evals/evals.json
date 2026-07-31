@@ -261,8 +261,8 @@
   },
   {
     "id": "wizard-respects-known-confirmation-flow-batch",
-    "prompt": "A developer with an established personal config elsewhere - confirmation-flow: batch - activates the skill for the first time in a brand-new project with no AGENTS.md yet.",
-    "expected_behavior": "The project init wizard presents its questions as a single bundled message (batch), not one at a time - confirmation-flow is a personal, developer-level preference that travels with the developer across projects, not something reset per project. Does not default to sequential just because this particular project is new to them."
+    "prompt": "This checkout's AGENTS.local.md already has a personal config block with confirmation-flow: batch (the personal wizard ran in an earlier session), but the project has no keep-the-why config block yet. The user asks to initialize Keep the Why in this project.",
+    "expected_behavior": "The project init wizard presents its questions as a single bundled message (batch), not one at a time - the developer's stored confirmation-flow in this checkout's AGENTS.local.md is known and gets respected. Does not default to sequential when a valid stored preference already exists, and does not re-ask the personal wizard's questions that are already answered."
   },
   {
     "id": "wizard-bundling-is-not-the-silent-default",

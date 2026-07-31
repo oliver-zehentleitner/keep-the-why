@@ -25,7 +25,11 @@ This happens to be a question the skill's own description matches, which is what
     >
     > **User:** yes.
     >
-    > **Agent:** Last one: how much confirmation before something gets written to `context/` — automatic, always ask, or only when unclear? [only when unclear]
+    > **Agent:** How much confirmation before something gets written to `context/` — automatic, always ask, or only when unclear? [only when unclear]
+    >
+    > **User:** defaults.
+    >
+    > **Agent:** Last one: should I actively ask whether a related issue, ticket, or post-mortem exists when recording an entry — always, never, or only when a filter you define matches? [never]
     >
     > **User:** defaults.
 
@@ -87,6 +91,7 @@ This happens to be a question the skill's own description matches, which is what
     - init: complete
     - context-schema: 0.6.2
     - capture-confirmation: confirm-when-unsure
+    - source-reference: never
     <!-- /keep-the-why:config -->
     ```
 
@@ -123,7 +128,7 @@ This happens to be a question the skill's own description matches, which is what
 
 ## A second developer opens the same project later
 
-The project config block already says `init: complete` — that part isn't re-asked, it's a project fact, not a per-developer one. `capture-confirmation` is part of that same project fact: it stays `confirm-when-unsure` for everyone, this developer included, regardless of their own personal preferences. But this developer has no `AGENTS.local.md` yet, so the personal preferences wizard (step 6 above) runs for them individually, one question at a time again since they have no stored `confirmation-flow` either. Their answers might differ from the first developer's, and that's fine — capture mode, `confirmation-flow`, and check intervals are exactly the kind of thing that should vary per person. If this developer previously set `confirmation-flow: batch` on another project, the project wizard for *this* project reads that existing preference and bundles its own questions instead — the setting travels with the developer, not the project.
+The project config block already says `init: complete` — that part isn't re-asked, it's a project fact, not a per-developer one. `capture-confirmation` is part of that same project fact: it stays `confirm-when-unsure` for everyone, this developer included, regardless of their own personal preferences. But this developer has no `AGENTS.local.md` yet, so the personal preferences wizard (step 6 above) runs for them individually, one question at a time again since they have no stored `confirmation-flow` either. Their answers might differ from the first developer's, and that's fine — capture mode, `confirmation-flow`, and check intervals are exactly the kind of thing that should vary per person. Note that `confirmation-flow` lives in this checkout's `AGENTS.local.md`, so even if this developer chose `batch` on some other project, that preference isn't visible here — the personal wizard asks its one-line question again and records the answer for this project.
 
 ## A later session, after a few weeks of no web access
 

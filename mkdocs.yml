@@ -39,9 +39,6 @@ markdown_extensions:
 extra_css:
   - assets/extra.css
 
-exclude_docs: |
-  context/naming.md
-
 nav:
   - Overview: index.md
   - Philosophy: philosophy.md

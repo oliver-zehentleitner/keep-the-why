@@ -65,10 +65,11 @@ prior decisions and avoid re-litigating or accidentally reverting them.
 - init: complete
 - context-schema: 0.6.2
 - capture-confirmation: confirm-when-unsure
+- source-reference: never
 <!-- /keep-the-why:config -->
 ```
 
-Keep the prose above the config block short. Anything longer belongs in `docs/` or `context/`, not here — `AGENTS.md` needs to stay generic enough for every tool that reads the open AGENTS.md convention, not just this skill. The config block is the exception: it's the skill's own machine-readable state, kept small and clearly delimited on purpose so it doesn't creep into being a second undocumented system living inside a file meant to stay generic. Only project-wide facts live here — personal automation preferences go in `AGENTS.local.md` instead, see below and `setup.md`. `context-schema` and `capture-confirmation` are shown here at real, current values rather than omitted — a project's actual config block always has both, so an example without them would be misleading, not just terse.
+Keep the prose above the config block short. Anything longer belongs in `docs/` or `context/`, not here — `AGENTS.md` needs to stay generic enough for every tool that reads the open AGENTS.md convention, not just this skill. The config block is the exception: it's the skill's own machine-readable state, kept small and clearly delimited on purpose so it doesn't creep into being a second undocumented system living inside a file meant to stay generic. Only project-wide facts live here — personal automation preferences go in `AGENTS.local.md` instead, see below and `setup.md`. `context-schema`, `capture-confirmation`, and `source-reference` are shown here at real, current values rather than omitted — a project's actual config block always has all three, so an example without them would be misleading, not just terse.
 
 ## `AGENTS.local.md` — personal config example
 

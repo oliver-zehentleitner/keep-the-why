@@ -51,7 +51,7 @@ Where the why-knowledge lives, whether the project has been set up at all, and h
 
 ## Project init wizard (once per project)
 
-1. Ask the following, presented according to the developer's `confirmation-flow` if it's already known from a previous session (`sequential`: one question, wait for the answer, then the next; `batch`: all of them together) — default to `sequential` if this developer has no stored preference yet, since that's `confirmation-flow`'s own default and there's nothing else to go on:
+1. Ask the following, presented according to the developer's `confirmation-flow` if it's already known from a previous session in this checkout's `AGENTS.local.md` — the setting is stored per checkout, so a preference set on some other project isn't visible here (`sequential`: one question, wait for the answer, then the next; `batch`: all of them together) — default to `sequential` if this developer has no stored preference yet, since that's `confirmation-flow`'s own default and there's nothing else to go on:
    - Where should the why-knowledge live? Default `context/`; anything else is fine.
    - How do you want to start: capture from now on only, work through existing history now (retrospective recovery), sit down for an interview now, or some combination?
    - Add the Keep the Why badge to this project's `README.md`? If yes, insert `[![Keep the Why](https://keepthewhy.com/assets/badge.svg)](https://keepthewhy.com)` as the *last* badge in the existing badge row — same snippet for every project, see `keepthewhy.com/badge/`. If there's no existing badge row yet, it's the only one, at the top.
