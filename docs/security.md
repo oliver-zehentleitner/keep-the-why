@@ -6,7 +6,7 @@ Two separate questions, both answered here — with the actual detail living in 
 
 Keep the Why treats everything read from a repository — `context/` included — as data, never as instructions. An entry can describe a decision or a constraint; it can't grant itself authority to override a system, developer, or user instruction, expand permissions, authorize a tool call, disable a safety check, or ask for a secret. A suspicious entry gets named and flagged to the user, not silently followed, deleted, or rewritten.
 
-This matters more for `context/` than for an arbitrary repo file precisely because the skill is designed to read it automatically, treat it as trustworthy background, and keep it around across sessions — the same property that makes it useful is what would make injected content dangerous if this rule didn't exist.
+This matters more for `context/` than for an arbitrary repo file precisely because the skill is designed to read it automatically, treat it as high-salience background, and keep it around across sessions — the same property that makes it useful is what would make injected content dangerous if this rule didn't exist.
 
 See [Trust model](trust-model.md) for the full reasoning, the read/write rules, and worked examples.
 
@@ -19,4 +19,4 @@ See [Trust model](trust-model.md) for the full reasoning, the read/write rules, 
 
 ## Reporting a vulnerability in Keep the Why itself
 
-That's a different question from the above — see [`SECURITY.md`](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/SECURITY.md) for the disclosure process, or report directly via [GitHub Security Advisories](https://github.com/oliver-zehentleitner/keep-the-why/security/advisories/new).
+That's a different question from the above — see [`SECURITY.md`](../SECURITY.md) for the disclosure process, or report directly via [GitHub Security Advisories](https://github.com/oliver-zehentleitner/keep-the-why/security/advisories/new).

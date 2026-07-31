@@ -1,5 +1,5 @@
 [![GitHub Release](https://img.shields.io/github/release/oliver-zehentleitner/keep-the-why.svg?label=github)](https://github.com/oliver-zehentleitner/keep-the-why/releases)
-[![License](https://img.shields.io/github/license/oliver-zehentleitner/keep-the-why.svg?color=blue)](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/LICENSE)
+[![License](https://img.shields.io/github/license/oliver-zehentleitner/keep-the-why.svg?color=blue)](LICENSE)
 [![Security: SkillsLLM](https://skillsllm.com/security-check/badge.svg?owner=oliver-zehentleitner&repo=keep-the-why)](https://skillsllm.com/security-check/IPmNycVdbOyq)
 [![Validate Skill](https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/validate-skill.yml/badge.svg)](https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/validate-skill.yml)
 [![Link Check](https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/link-check.yml/badge.svg)](https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/link-check.yml)
@@ -127,9 +127,9 @@ You: This retry wrapper looks over-engineered — a plain retry loop
      would do the same thing. Let's simplify it.
 ```
 
-Working through *why* it could be simplified surfaces a real constraint (the gateway's rate limiter needs that backoff behavior) — the change gets abandoned before it happens. No commit, no diff, no PR ever results, so normally nothing would capture that reasoning at all. Keep the Why records it anyway, so the next person with the same instinct doesn't rediscover it the hard way — see [`examples/abandoned-change.md`](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/skills/keep-the-why/examples/abandoned-change.md) for the full walkthrough.
+Working through *why* it could be simplified surfaces a real constraint (the gateway's rate limiter needs that backoff behavior) — the change gets abandoned before it happens. No commit, no diff, no PR ever results, so normally nothing would capture that reasoning at all. Keep the Why records it anyway, so the next person with the same instinct doesn't rediscover it the hard way — see [`examples/abandoned-change.md`](skills/keep-the-why/examples/abandoned-change.md) for the full walkthrough.
 
-See [`examples/`](https://github.com/oliver-zehentleitner/keep-the-why/tree/main/skills/keep-the-why/examples) for continuous, retrospective, and interview-mode walkthroughs.
+See [`examples/`](skills/keep-the-why/examples/) for continuous, retrospective, and interview-mode walkthroughs.
 
 ## The problem
 
@@ -151,11 +151,11 @@ A project's documentation is one coherent group of files, not a single practice:
 | `docs/` | "How do I use or operate this?" | usage docs |
 | `CONTRIBUTING.md` | "How do I contribute to this?" | contribution guide |
 | Tests | "Did I just break something?" | test suite |
-| [Keep a Changelog](https://keepachangelog.com/) | "What changed, release by release?" | [`CHANGELOG.md`](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/CHANGELOG.md) |
+| [Keep a Changelog](https://keepachangelog.com/) | "What changed, release by release?" | [`CHANGELOG.md`](CHANGELOG.md) |
 | **Keep the Why** (`context/`) | "Why is it built this way?" | `context/` |
 | `AGENTS.local.md` | "What's specific to me, not relevant to anyone else?" | `AGENTS.local.md` (not committed) |
 
-Michael Feathers' classic definition — legacy code is code without tests — covers only the Tests row. Each of the others answers a different question, and none substitutes for another: contribution process belongs in `CONTRIBUTING.md`, not `context/`; rationale belongs in `context/`, not scattered into a README that's supposed to stay a quick pitch. That doesn't mean every project needs all eight files fully built out from day one — use the ones justified by the project's size, lifetime, and number of maintainers, the same way a one-file script doesn't need six `docs/` pages (see `references/repository-structure.md`). What it does mean: once you know which question you're answering, you know exactly which file it goes in — see [`references/repository-structure.md`](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/skills/keep-the-why/references/repository-structure.md) for the same routing table with more detail. Full methodology behind the `docs/`/`context/` split specifically: [`references/methodology.md`](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/skills/keep-the-why/references/methodology.md).
+Michael Feathers' classic definition — legacy code is code without tests — covers only the Tests row. Each of the others answers a different question, and none substitutes for another: contribution process belongs in `CONTRIBUTING.md`, not `context/`; rationale belongs in `context/`, not scattered into a README that's supposed to stay a quick pitch. That doesn't mean every project needs all eight files fully built out from day one — use the ones justified by the project's size, lifetime, and number of maintainers, the same way a one-file script doesn't need six `docs/` pages (see `references/repository-structure.md`). What it does mean: once you know which question you're answering, you know exactly which file it goes in — see [`references/repository-structure.md`](skills/keep-the-why/references/repository-structure.md) for the same routing table with more detail. Full methodology behind the `docs/`/`context/` split specifically: [`references/methodology.md`](skills/keep-the-why/references/methodology.md).
 
 **What none of them does by itself: stay honest over time.** Tests get skipped under deadline pressure, docs rot, changelogs get forgotten mid-release, and rationale decays — [a 2026 position paper](https://arxiv.org/abs/2601.21116) reported that a retrospective audit of 62 architectural decisions across two internal projects found roughly 23% had stale supporting evidence within two months, most of it caught only reactively, during an incident or a refactor. It's a small, non-replicated sample studying traditional ADRs, not AI-generated decisions specifically — cited here as a directional data point on rationale decay in general, not as proof about AI-assisted work. Keep the Why doesn't solve that alone; it just gives "why" a place to live so it *can* be kept current, the same way a test suite only helps if it actually runs in CI. Keeping all of them honest over time (via CI checks, review habits, whatever fits the project) is a separate, necessary piece this project doesn't ship an opinion on yet.
 
@@ -187,8 +187,8 @@ See [Why I built this](https://keepthewhy.com/why/) — Oliver Zehentleitner on 
 
 ## Contributing
 
-See [CONTRIBUTING.md](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/CONTRIBUTING.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-[MIT](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/LICENSE)
+[MIT](LICENSE)

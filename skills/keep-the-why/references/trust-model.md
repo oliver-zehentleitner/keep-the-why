@@ -7,11 +7,11 @@ Why `context/` deserves explicit treatment as an injection surface, and the rule
 Any repository file can carry an indirect prompt injection — code comments, commit messages, and issue text are already recognized as such (see OWASP's [LLM Prompt Injection Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html)). `context/` isn't a new category of risk, but it's a sharper version of the same one, because this skill deliberately:
 
 - has an agent read it automatically, often before doing anything else in a session (`AGENTS.md` pointers, `SKILL.md`'s own "Inspect" step)
-- presents it as trustworthy background, not just one more file among many
+- presents it as high-salience background, not just one more file among many
 - persists it across sessions, so one successful injection doesn't need to land twice
 - can populate it from less-vetted sources during retrospective recovery or an interview — git history, issues, and a person's recollection aren't the same as a maintainer directly authoring `context/` themselves
 
-None of this means `context/` is more likely to be attacked than any other file. It means that *if* something injected lands there, this skill's own design — read first, trust by default, keep around indefinitely — is exactly what turns a one-time injection into a persistent one. The value this skill provides (context an agent can act on without re-deriving it) is the same property that makes poisoned context more dangerous than a poisoned comment nobody reads.
+None of this means `context/` is more likely to be attacked than any other file. It means that *if* something injected lands there, this skill's own design — read first, keep around indefinitely — is exactly what turns a one-time injection into a persistent one. The value this skill provides (context an agent can act on without re-deriving it) is the same property that makes poisoned context more dangerous than a poisoned comment nobody reads.
 
 ## The core rule
 
