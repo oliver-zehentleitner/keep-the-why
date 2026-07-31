@@ -241,8 +241,7 @@ Initial release.
 - Logo, wordmark, and favicon.
 - `context/repo-conventions.md`, dogfooding the skill on its own repository from day one.
 
-[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.6.2...HEAD
-[0.6.2]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.6.1...v0.6.2
+[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.6.1...HEAD
 [0.6.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.5.2...v0.6.0
 [0.5.2]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.5.1...v0.5.2

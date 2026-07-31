@@ -227,5 +227,5 @@ HTML equivalent and details: https://keepthewhy.com/badge/
 - Trust model (context/ as data, not instructions): https://keepthewhy.com/trust-model/
 - Badge: https://keepthewhy.com/badge/
 - Philosophy (why no database/daemon/dashboard, deliberately): https://keepthewhy.com/philosophy/
-- Why this project is built this way: https://keepthewhy.com/context/repo-conventions/
+- Why this project is built this way (release/distribution, config format, positioning, compatibility): https://keepthewhy.com/context/release-and-distribution/, https://keepthewhy.com/context/config-format/, https://keepthewhy.com/context/positioning/, https://keepthewhy.com/context/compatibility/
 - Article — origin story and full comparison to prior art: https://blog.technopathy.club/keep-the-why-code-becomes-legacy-when-nobody-remembers-why
