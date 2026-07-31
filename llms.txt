@@ -165,11 +165,11 @@ Produces, inside the project using the skill:
 
 ## Testing / Evals
 
-67 eval cases ship with the skill, executed for real by a local runner in the repo
-(fixture project per case, fresh non-interactive agent session, LLM-judged verdicts),
-tested with Claude Code and Claude Sonnet. Current numbers live in one place only, so
-they can't drift: https://keepthewhy.com/evals/ — including the failure analysis,
-stated caveats, and reproduction instructions.
+A suite of eval cases ships with the skill, executed for real by a local runner in the
+repo (fixture project per case, fresh non-interactive agent session, LLM-judged
+verdicts), tested with Claude Code and Claude Sonnet. Current case count and numbers
+live in one place only, so they can't drift: https://keepthewhy.com/evals/ — including
+the failure analysis, stated caveats, and reproduction instructions.
 
 ## Related Work
 
