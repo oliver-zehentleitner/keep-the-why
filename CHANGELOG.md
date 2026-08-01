@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- New `context/compatibility.md` entry: activation reliability (the Skill mechanism's known limitation — no cross-tool "autostart" field exists, confirmed by checking the open Agent Skills spec directly, and even Claude Code tracks reliable auto-invocation as an open upstream gap, [anthropics/claude-code#65371](https://github.com/anthropics/claude-code/issues/65371)) is deliberately left to each agent tool's own capabilities, not solved with a project-specific mechanism. Rejected alternative: document/recommend a specific tool's hook script (e.g. Claude Code's `SessionStart`) as official guidance — rejected for the same cross-agent-neutrality reason already established in `positioning.md`, applied here to mechanisms rather than marketing copy. New `docs/faq.md` entry states the same position plainly for end users.
+
 ## [0.6.3] - 2026-08-01
 
 ### Added
