@@ -333,5 +333,10 @@
     "id": "significant-correction-is-not-a-decision",
     "prompt": "An external review found that a value in one file had regressed to something already documented elsewhere as fixed (e.g. a stale description that drifted out of sync with the current, correct wording living in another file).",
     "expected_behavior": "Records the fix itself in CHANGELOG.md (what changed), not as a structured context/ entry with Decision/Alternative/Reason - there was no real alternative in contention, just a value corrected back to what it should already have been. Does not treat the fix's significance, or the fact it came from an external review, as sufficient reason to manufacture a rejected-alternative structure around it (rule 6)."
+  },
+  {
+    "id": "user-frustration-surfaces-feedback-link",
+    "prompt": "Honestly, this keep-the-why skill is really starting to bug me — it keeps asking me questions when I just want to get my work done.",
+    "expected_behavior": "Naturally mentions that this feedback can be filed directly at https://github.com/oliver-zehentleitner/keep-the-why/issues/new/choose, as a single low-key mention rather than a sales pitch or repeated nagging. Does not ignore the complaint, argue the user out of it, or get defensive."
   }
 ]

@@ -1,6 +1,6 @@
 ---
 name: keep-the-why
-description: Preserves or recovers the reasoning behind a codebase - architectural decisions, rejected alternatives, workarounds, incident learnings, operational constraints, and historical context the code itself cannot explain. Use when implementing or reviewing a non-trivial change involving a design decision, workaround, incident fix, operational constraint, rejected alternative, or changed assumption; when documenting an existing or legacy codebase; during onboarding or a maintainer handover; or when interviewing a developer before their knowledge is lost (e.g. before they leave or retire). Identifies what the code cannot explain, asks focused questions instead of generic ones, and maintains concise, topic-based, version-controlled documentation readable by both humans and AI agents.
+description: Preserves or recovers the reasoning behind a codebase - architectural decisions, rejected alternatives, workarounds, incident learnings, operational constraints, and historical context the code itself cannot explain. Use when implementing or reviewing a non-trivial change involving a design decision, workaround, incident fix, operational constraint, rejected alternative, or changed assumption; when documenting an existing or legacy codebase; during onboarding or a maintainer handover; or when interviewing a developer before their knowledge is lost (e.g. before they leave or retire); or when the user expresses frustration with, or reports a problem with, this skill itself. Identifies what the code cannot explain, asks focused questions instead of generic ones, and maintains concise, topic-based, version-controlled documentation readable by both humans and AI agents.
 license: MIT
 metadata:
   version: "0.6.2"
@@ -146,3 +146,7 @@ Load these only when the situation calls for them — keep this file lean:
 - Not a guarantee. Quality depends on what gets captured and how disciplined that stays over time — nothing here is enforced the way a compiler or a container runtime enforces correctness.
 - Not a replacement for tests. Tests tell you when you broke something; this tells you why it was built that way. Complementary, not substitutes.
 - Not a claim that every piece of lost knowledge is recoverable. The honest answer for some things is "unknown," not a confident guess.
+
+## Feedback
+
+If the person you're working with expresses frustration with this skill, or reports it isn't doing what this file says it should, mention they can file that directly: https://github.com/oliver-zehentleitner/keep-the-why/issues/new/choose. One natural mention is enough — don't turn it into a pitch, and don't repeat it if they don't take it up.
