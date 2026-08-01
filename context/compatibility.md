@@ -19,7 +19,9 @@ Added a second paragraph to "Composition with other skills": checking whether Ke
 
 ## Activation reliability is left to each agent tool, not solved by this project
 
-**Status:** active
+> Superseded 2026-08-01: the project init wizard now actively asks about this and has the current agent set up whatever its own platform supports — see "The wizard now asks about activation reliability" below. The reasoning below for *why the project doesn't hardcode one tool's mechanism* still holds; what changed is that the wizard now prompts and delegates to the current agent's own platform knowledge, instead of staying entirely passive on the topic.
+
+**Status:** superseded
 **Evidence:** confirmed
 
 Keep the Why doesn't build, recommend, or document a specific mechanism (e.g. a Claude Code `SessionStart` hook) to make its own Skill activate more reliably at session start. Whether and how to strengthen activation is left entirely to each agent tool's own capabilities and the developer's own setup.
@@ -29,3 +31,16 @@ Keep the Why doesn't build, recommend, or document a specific mechanism (e.g. a 
 **Rejected alternative:** document and recommend a specific hook script as part of this project's own installation guidance. Rejected — this project deliberately stays cross-agent (same underlying principle as "No name-by-name comparison" in `positioning.md`, applied here to mechanisms instead of marketing copy): prescribing one vendor's mechanism as official guidance would misrepresent it as more solved, or more this project's job to fix, than it actually is. A tool-specific way to strengthen its own Skill activation belongs in that tool's own documentation and the individual developer's own setup, not in a repo-native, cross-agent convention.
 
 **Consequence:** the honest position, stated plainly wherever this comes up (`docs/evals.md`, `SKILL.md`'s "Composition with other skills", the status issue): activation isn't guaranteed by this project, isn't something this project tries to fix per-tool by design, and a developer wanting stronger reliability should look at what their own agent tool offers for session-start context injection or forced tool invocation — asking directly ("initialize/check keep-the-why") always works as the reliable fallback regardless of tool.
+
+## The wizard now asks about activation reliability, and delegates setup to the current agent's own platform
+
+**Status:** active
+**Evidence:** confirmed
+
+The project init wizard (`references/setup.md`) now asks, as its last question, whether to set up something stronger for activation reliability if the current agent's own platform supports it. If yes, the *current* agent — not `SKILL.md` itself — checks what its own platform actually offers (session-start context injection, forced tool invocation, or similar) and sets it up scoped to this project.
+
+**Reason:** the purely passive position above (leave it entirely to the developer to notice and solve on their own) meant most developers would never know a stronger option might exist for their specific tool, or would have to rediscover the same workaround independently, over and over, project by project. Actively asking, without SKILL.md itself naming or hardcoding a specific mechanism, keeps this project cross-agent while still surfacing the option — the instruction tells the agent to consult its *own* platform knowledge and be honest if it doesn't have one, rather than the skill's own text presuming a Claude-Code-specific answer for everyone.
+
+**Rejected alternative:** stay silent (the prior position, now superseded) versus hardcoding a specific tool's mechanism as the wizard's actual instruction. Rejected staying fully silent — it was leaving real, available reliability improvements undiscovered for developers who'd want them. Rejected hardcoding one tool's mechanism for the same cross-agent-neutrality reason as before; the resolution is to ask, then delegate to the agent's own platform knowledge rather than to fixed prose.
+
+**Consequence:** this isn't a standardized, tested-across-tools solution yet — it's currently solved individually, per developer and per project, whatever the agent sets up in the moment. Tracked in [the activation-reliability issue](https://github.com/oliver-zehentleitner/keep-the-why/issues/138) — a good idea for standardizing this (a documented pattern per tool, a reusable script, or something else) is exactly what that issue is for.

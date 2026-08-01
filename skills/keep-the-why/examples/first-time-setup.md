@@ -29,7 +29,11 @@ This happens to be a question the skill's own description matches, which is what
     >
     > **User:** defaults.
     >
-    > **Agent:** Last one: should I actively ask whether a related issue, ticket, or post-mortem exists when recording an entry — always, never, or only when a filter you define matches? [never]
+    > **Agent:** Should I actively ask whether a related issue, ticket, or post-mortem exists when recording an entry — always, never, or only when a filter you define matches? [never]
+    >
+    > **User:** defaults.
+    >
+    > **Agent:** Last one: activation isn't guaranteed by the Skill mechanism itself — want me to check whether this platform (Claude Code, here) offers something stronger and set it up scoped to this project? [no]
     >
     > **User:** defaults.
 

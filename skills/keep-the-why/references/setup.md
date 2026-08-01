@@ -57,8 +57,10 @@ Where the why-knowledge lives, whether the project has been set up at all, and h
    - Add the Keep the Why badge to this project's `README.md`? If yes, insert `[![Keep the Why](https://keepthewhy.com/assets/badge.svg)](https://keepthewhy.com)` as the *last* badge in the existing badge row — same snippet for every project, see `keepthewhy.com/badge/`. If there's no existing badge row yet, it's the only one, at the top.
    - How much confirmation before something gets written to `context/`: automatic (no interruption), always ask, or only ask when it's genuinely unclear? Default: only ask when unclear.
    - Should the agent actively ask whether a related issue, ticket, or post-mortem exists when recording something: always, never, or only when a filter criterion you define matches? Default: never.
-2. Create or update the entry-point file with the project config block, including `context-schema` set to the currently installed skill's `metadata.version` (frontmatter in `SKILL.md`) — a freshly created or newly adopted `context/` is up to date with the current format by definition, nothing to migrate.
-3. If the why-knowledge folder is being created fresh (not an existing folder being adopted), add a short `README.md` inside it:
+   - **Activation isn't guaranteed by the Skill mechanism itself** (see "Activation reliability is left to each agent tool" in `context/compatibility.md`) — want to set up something stronger for this project, if the current agent's own platform supports it? Default: no.
+2. If the previous question was answered yes: check what the *current* agent's own platform actually offers for stronger activation (session-start context injection, forced tool invocation, or similar) and set it up scoped to this project — e.g., for Claude Code, a `SessionStart` hook that checks this project's `keep-the-why:config` marker before injecting a reminder, rather than firing unconditionally on every session regardless of project. This is deliberately left generic here rather than naming one tool's mechanism as the instruction: don't invent or fake a mechanism for a platform that doesn't actually have one — if genuinely unsure what the current platform supports, say so plainly and ask rather than guessing (rule 14). No such setup exists yet as a standardized, tested recommendation across tools — see the tracking issue for where this stands.
+3. Create or update the entry-point file with the project config block, including `context-schema` set to the currently installed skill's `metadata.version` (frontmatter in `SKILL.md`) — a freshly created or newly adopted `context/` is up to date with the current format by definition, nothing to migrate.
+4. If the why-knowledge folder is being created fresh (not an existing folder being adopted), add a short `README.md` inside it:
 
     ```markdown
     <a href="https://keepthewhy.com"><img src="https://keepthewhy.com/assets/logo.png" alt="Keep the Why"></a>
@@ -103,8 +105,8 @@ Where the why-knowledge lives, whether the project has been set up at all, and h
     ```
 
     GitHub (and most code hosts) render a folder's `README.md` automatically when browsing it, so this is what someone sees first landing in the folder cold, without needing to already know what Keep the Why is. Skip this step if adopting an existing folder that already has its own README or equivalent — don't overwrite it.
-4. Run whichever starting mode was chosen.
-5. If declined entirely, write `init: declined` and stop — no further project-level questions, ever, unless asked again. (The personal wizard below is independent and can still run.)
+5. Run whichever starting mode was chosen.
+6. If declined entirely, write `init: declined` and stop — no further project-level questions, ever, unless asked again. (The personal wizard below is independent and can still run.)
 
 ## Personal preferences wizard (once per developer)
 
