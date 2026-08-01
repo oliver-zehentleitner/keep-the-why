@@ -4,6 +4,8 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.6.4] - 2026-08-01
+
 ### Added
 
 - The project init wizard (`references/setup.md`) now asks, as its last setup question, whether to set up something stronger for activation reliability if the current agent's own platform supports it — and if yes, has the *current* agent (not `SKILL.md` itself) check what its own platform actually offers and configure it scoped to the project, rather than hardcoding one vendor's mechanism (e.g. a Claude Code `SessionStart` hook) as universal instruction. Not yet a standardized, tested-across-tools solution — right now this is solved individually, per developer; tracked in the new dedicated issue [#138](https://github.com/oliver-zehentleitner/keep-the-why/issues/138). `context/compatibility.md`'s prior "left entirely to each tool, we do nothing" entry marked superseded by this more active stance; `examples/first-time-setup.md`'s wizard dialogue updated to show the new question; `README.md` and `docs/faq.md` updated with the current state and a link to #138.
