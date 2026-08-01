@@ -4,6 +4,8 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.6.3] - 2026-08-01
+
 ### Added
 
 - New "Feedback" section at the end of `SKILL.md`: if the person working with the agent expresses frustration with the skill or reports it's not doing what it should, mention `https://github.com/oliver-zehentleitner/keep-the-why/issues/new/choose` directly — a single natural mention, not a pitch or a repeated nag. Also added "or when the user expresses frustration with, or reports a problem with, this skill itself" to the frontmatter `description` (877/1024 chars) — the instruction initially lived only in the body, and a first eval attempt showed the Skill never loaded for a complaint prompt (no activation trigger matched, so the body's instruction was never read); the description is what actually governs activation. New eval case `user-frustration-surfaces-feedback-link`: failed before the description change (skill never invoked), passed 2/2 fresh trials after.
