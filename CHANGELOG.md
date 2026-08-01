@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Fixed
+
+- A full 67-case eval run against the tightened `SKILL.md` (55/67, 0 errors) surfaced a recurring pattern across three cases: the agent correctly recognized what should happen, then asked or deferred instead of doing a low-risk mechanical step the rules already say needs no permission (flipping Status to needs-review, adding a `.gitignore` entry, starting the personal wizard). In each spot, the imperative was bundled in the same sentence as an adjacent caveat about a *different*, genuinely judgment-requiring action — plausibly diluting it. Rewrote all three as: an explicit MUST, a concrete before/after example instead of an abstract description, and a hard sentence break separating "do this now, no question needed" from "this other, related thing is a real judgment call" (rule 7 in `SKILL.md`; the personal-wizard trigger in `SKILL.md` Workflow step 0; the `.gitignore`-before-`AGENTS.local.md` step in `references/setup.md`). Verified with the eval runner: all three cases had failed 1-of-3 to 2-of-3 times pre-fix across two rounds of trials; post-fix, 2 fresh trials each came back 6/6 pass, including confirming a real `.gitignore` diff on disk, not just a claimed one.
+
 ### Changed
 
 - Tightened Core Rules 2, 6, 7, 11, 13, 14, and 15 in `SKILL.md` toward stating each as a compact invariant rather than prose with nested caveats — mechanism-level detail already covered by `references/setup.md`, `references/repository-structure.md`, and `references/trust-model.md` was cut from the core rules rather than duplicated. Every eval-tested clause (Evidence/Status/Verification values, the two-sources-disagree handling, the needs-review "immediately, and nothing more" behavior, missing-vs-invalid-vs-contradictory config handling, the trust-model enumerable list) was checked against `skills/keep-the-why/evals/evals.json` and kept; only padding and restated cross-rule hedging was removed. Core Rules section: 1669 → 1327 words (-20.5%).
