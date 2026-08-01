@@ -9,7 +9,19 @@ skill installed, a fresh non-interactive Claude Code session runs the prompt,
 and an LLM judge grades the transcript plus the actual file changes against
 the expected behavior.
 
-## Latest results
+## Latest full-suite results
+
+**Stale as of this writing — a superseded snapshot, not the current state.**
+The numbers below (59/67, skill 0.6.2) predate two rounds of `SKILL.md`
+changes made since (a Core Rules tightening pass, then a fix for a
+"recognizes the right action but asks/defers instead of doing it" pattern the
+first full run surfaced — both verified against individual affected cases,
+neither against a fresh full 67-case run). A new full run is planned as part
+of the next release cycle; **for the current picture in the meantime, see the
+living status issue: [oliver-zehentleitner/keep-the-why#131](https://github.com/oliver-zehentleitner/keep-the-why/issues/131).**
+This page gets replaced with fresh numbers once that run completes — kept
+here, unedited otherwise, so the methodology and the shape of the analysis
+stay visible rather than disappearing while stale.
 
 **59 of 67 passed** — run 2026-07-31, skill 0.6.2, Claude Code CLI 2.1.220,
 agent and judge both Claude Sonnet 5 (`claude-sonnet-5`). No errors; every
