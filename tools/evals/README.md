@@ -70,6 +70,28 @@ errors.
 Six cases intentionally have no fixture directory and run on `_base` as-is;
 their prompts carry the whole scenario.
 
+## Resilience to the account's own session/spend limits
+
+`run.py` shells out to `claude -p` under your own logged-in account, so a
+large run can hit that account's session or monthly spend limit mid-run —
+this shows up as a normal, successful CLI response whose text just says so
+(e.g. "You've hit your session limit · resets ..."), not as an error exit
+code, so it has to be detected by content.
+
+When that happens: the runner marks the case `rate_limited` (no judge call
+wasted grading a limit message), and every other case still queued in that
+pass is skipped immediately without touching the API. Re-running the exact
+same command against the same `--results-dir` is always safe and cheap:
+any case with a stored `pass`/`fail` verdict is skipped outright, so only
+what's still unresolved gets attempted again. A stored `pass`/`fail` whose
+transcript turns out to actually be a limit message (e.g. from a run
+predating this check) is treated as unresolved too, not trusted.
+
+For a run that should survive account limits unattended, add
+`--retry-until-complete` (sleeps `--retry-interval` seconds, default 600,
+and retries only the unresolved cases, up to `--max-wait-hours`, default
+10) instead of babysitting it.
+
 ## Interpreting results
 
 The judge is an LLM: treat a `fail` as a lead to read, not a verdict to

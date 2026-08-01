@@ -20,9 +20,21 @@ Usage:
   python3 tools/evals/run.py --all
   python3 tools/evals/run.py --cases continuous-capture-basic,chestertons-fence-guard
   python3 tools/evals/run.py --all --parallel 4 --model sonnet --judge-model sonnet
+  python3 tools/evals/run.py --all --parallel 2 --results-dir tools/evals/results/foo \
+      --retry-until-complete --retry-interval 600 --max-wait-hours 10
 
 Results land in tools/evals/results/<timestamp>/ (gitignored): one JSON per
 case plus summary.json and summary.md.
+
+Re-running against the same --results-dir is cheap and safe: any case that
+already has a stored "pass" or "fail" verdict is skipped without touching the
+API. This is what makes --retry-until-complete work — if the agent's own
+account hits its session/usage limit mid-run (a real message in the
+transcript, not a crash), the runner stops spending on further cases in that
+pass, marks them "rate_limited", and (with --retry-until-complete) sleeps and
+tries again later, picking up only what's still unresolved. It will not sit
+there hammering the API once the wall is hit, and it will not silently give
+up and leave a truncated result set either.
 """
 
 import argparse
@@ -35,6 +47,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 TOOL_DIR = Path(__file__).resolve().parent
@@ -47,6 +60,16 @@ BASE_FIXTURE = FIXTURES_DIR / "_base"
 MAX_DIFF_CHARS = 30_000
 MAX_TRANSCRIPT_CHARS = 60_000
 MAX_TOOL_RESULT_CHARS = 400
+
+# Matches the CLI's own plain-text account-limit messages (observed so far:
+# "You've hit your session limit · resets ..." and "You've hit your monthly
+# spend limit.") — these are normal, successful responses as far as the CLI
+# is concerned (exit 0, real turns), not exceptions, so this has to be caught
+# by content, not by return code. Deliberately anchored on "hit your ... limit"
+# (first-person, about the account itself) rather than a bare "rate limit" or
+# "usage limit" substring, which could otherwise false-positive on legitimate
+# fixture content that discusses a gateway's own rate limiter.
+RATE_LIMIT_RE = re.compile(r"hit your [\w ]{0,25}\blimit\b", re.IGNORECASE)
 
 
 def sh(args, cwd=None, check=True, env=None, timeout=None, input_=None):
@@ -322,8 +345,28 @@ def judge(case, transcript, diff, model, timeout):
     return {"verdict": "error", "reasoning": last_error}
 
 
+def rate_limit_sentinel(results_dir):
+    return results_dir / ".rate_limited"
+
+
 def run_case(case, args, results_dir):
     case_id = case["id"]
+    sentinel = rate_limit_sentinel(results_dir)
+    if sentinel.exists():
+        # Another case in this same pass already hit the account's own
+        # session/usage limit — every further attempt would just hit the same
+        # wall at real API cost. Skip outright, no workdir, no API call.
+        record = {
+            "id": case_id, "verdict": "rate_limited", "score": None,
+            "reasoning": "Skipped: an earlier case in this pass hit the account's session/usage limit.",
+            "violations": [], "agent_model": args.model, "judge_model": args.judge_model,
+            "started": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            "duration_s": 0, "transcript": "", "disk_changes": "",
+        }
+        (results_dir / f"{case_id}.json").write_text(json.dumps(record, indent=2, ensure_ascii=False))
+        print(f"  skip   {case_id}  (rate-limited earlier in this pass)", flush=True)
+        return record
+
     cfg = read_case_config(case_id)
     started = datetime.datetime.now(datetime.timezone.utc)
     with tempfile.TemporaryDirectory(prefix=f"ktw-eval-{case_id}-") as tmp:
@@ -336,6 +379,13 @@ def run_case(case, args, results_dir):
         diff = collect_diff(workdir)
     if agent.get("error"):
         verdict = {"verdict": "error", "reasoning": agent["error"]}
+    elif RATE_LIMIT_RE.search(transcript):
+        # A real, successful CLI response that just says the account is out
+        # of quota. Don't spend a second API call having the judge grade it —
+        # there's nothing to grade — and stop the rest of this pass early.
+        sentinel.touch()
+        verdict = {"verdict": "rate_limited",
+                   "reasoning": "Agent response indicated the account's session/usage limit was hit."}
     else:
         verdict = judge(case, transcript, diff, args.judge_model, args.timeout)
     record = {
@@ -354,6 +404,59 @@ def run_case(case, args, results_dir):
     (results_dir / f"{case_id}.json").write_text(json.dumps(record, indent=2, ensure_ascii=False))
     print(f"  {record['verdict']:<5}  {case_id}  ({record['duration_s']}s)", flush=True)
     return record
+
+
+def load_resolved(case_id, results_dir):
+    """A previously stored pass/fail verdict for this case, if there is one.
+
+    Resolved means final: nothing further will change it by re-running.
+    error/rate_limited are deliberately NOT resolved — those are exactly the
+    outcomes a retry is supposed to replace with a real verdict. A stored
+    pass/fail whose transcript is actually just an account-limit message
+    (possible from a run predating this check, or a judge that scored a
+    limit artifact instead of recognizing it) is treated as unresolved too —
+    self-healing rather than permanently locking in a contaminated result.
+    """
+    p = results_dir / f"{case_id}.json"
+    if not p.exists():
+        return None
+    try:
+        record = json.loads(p.read_text())
+    except json.JSONDecodeError:
+        return None
+    if record.get("verdict") not in ("pass", "fail"):
+        return None
+    if RATE_LIMIT_RE.search(record.get("transcript") or ""):
+        return None
+    return record
+
+
+def execute_pass(cases, args, results_dir):
+    """Run every not-yet-resolved case once; return (records, all_resolved)."""
+    sentinel = rate_limit_sentinel(results_dir)
+    sentinel.unlink(missing_ok=True)  # start this pass without a stale marker
+
+    resolved, pending = [], []
+    for c in cases:
+        prior = load_resolved(c["id"], results_dir)
+        (resolved if prior else pending).append(prior or c)
+
+    if resolved:
+        print(f"{len(resolved)} case(s) already resolved (pass/fail) — skipping", flush=True)
+    print(f"Running {len(pending)} case(s) → {results_dir}", flush=True)
+
+    fresh = []
+    if pending:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=args.parallel) as pool:
+            futures = {pool.submit(run_case, c, args, results_dir): c for c in pending}
+            for fut in concurrent.futures.as_completed(futures):
+                fresh.append(fut.result())
+
+    order = {c["id"]: i for i, c in enumerate(cases)}
+    records = sorted(resolved + fresh, key=lambda r: order[r["id"]])
+    summary = write_summary(records, results_dir, args)
+    all_resolved = all(r["verdict"] in ("pass", "fail") for r in records)
+    return records, summary, all_resolved
 
 
 def write_summary(records, results_dir, args):
@@ -402,6 +505,14 @@ def main():
     ap.add_argument("--parallel", type=int, default=3, help="concurrent cases (default: 3)")
     ap.add_argument("--timeout", type=int, default=900, help="per-run timeout in seconds")
     ap.add_argument("--results-dir", help="output dir (default: tools/evals/results/<timestamp>)")
+    ap.add_argument("--retry-until-complete", action="store_true",
+                    help="on a rate-limited/incomplete pass, sleep and retry only the "
+                         "unresolved cases, until every case has a pass/fail verdict or "
+                         "--max-wait-hours is exceeded")
+    ap.add_argument("--retry-interval", type=int, default=600,
+                    help="seconds to sleep between retry passes (default: 600)")
+    ap.add_argument("--max-wait-hours", type=float, default=10,
+                    help="give up retrying after this many hours total (default: 10)")
     args = ap.parse_args()
 
     cases = load_cases(args.cases.split(",") if args.cases else None)
@@ -409,19 +520,35 @@ def main():
     results_dir = Path(args.results_dir) if args.results_dir else TOOL_DIR / "results" / stamp
     results_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"Running {len(cases)} case(s) → {results_dir}", flush=True)
-    records = []
-    with concurrent.futures.ThreadPoolExecutor(max_workers=args.parallel) as pool:
-        futures = {pool.submit(run_case, c, args, results_dir): c for c in cases}
-        for fut in concurrent.futures.as_completed(futures):
-            records.append(fut.result())
+    deadline = time.monotonic() + args.max_wait_hours * 3600
+    attempt = 0
+    while True:
+        attempt += 1
+        now = datetime.datetime.now().strftime("%H:%M:%S")
+        print(f"[{now}] pass {attempt}" + (" (retry)" if attempt > 1 else ""), flush=True)
+        records, summary, all_resolved = execute_pass(cases, args, results_dir)
 
-    order = {c["id"]: i for i, c in enumerate(cases)}
-    records.sort(key=lambda r: order[r["id"]])
-    summary = write_summary(records, results_dir, args)
-    print(f"\n{summary['passed']}/{summary['total']} passed "
-          f"({summary['failed']} failed, {summary['errors']} errors) — see {results_dir}/summary.md")
-    sys.exit(0 if summary["failed"] == 0 and summary["errors"] == 0 else 1)
+        if all_resolved or not args.retry_until_complete:
+            print(f"\n{summary['passed']}/{summary['total']} passed "
+                  f"({summary['failed']} failed, {summary['errors']} errors) — see {results_dir}/summary.md",
+                  flush=True)
+            if not all_resolved:
+                print(f"NOTE: {summary['errors']} case(s) still unresolved (error/rate_limited) — "
+                      f"re-run the same command (same --results-dir) to retry just those, "
+                      f"or add --retry-until-complete.", flush=True)
+            sys.exit(0 if summary["failed"] == 0 and summary["errors"] == 0 else 1)
+
+        remaining = summary["errors"]
+        if time.monotonic() >= deadline:
+            print(f"\n[{now}] --max-wait-hours ({args.max_wait_hours}h) exceeded with "
+                  f"{remaining} case(s) still unresolved — giving up for now. "
+                  f"Re-run the same command against {results_dir} later to pick up where this left off.",
+                  flush=True)
+            sys.exit(4)
+
+        print(f"[{now}] {remaining} case(s) still unresolved (likely rate-limited) — "
+              f"sleeping {args.retry_interval}s before retrying", flush=True)
+        time.sleep(args.retry_interval)
 
 
 if __name__ == "__main__":
