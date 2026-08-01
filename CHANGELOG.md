@@ -15,6 +15,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 - `docs/evals.md` — new docs page publishing the first full eval run (59/67 with Claude Code + Claude Sonnet 5 on skill 0.6.2) with an analysis of the 8 failures (5 quantify the documented skill-activation limitation, 3 are judgment misses with the skill active), stated caveats (single run, same-vendor judge, one agent), and reproduction instructions. Linked from `README.md`, `llms.txt`, and the mkdocs nav.
 - `overrides/README.md` — explains what the theme-override directory is for (mkdocs-material `custom_dir`, currently the Open Graph/Twitter-card meta tags in `main.html`) and why it sits at the repo root instead of inside `docs/`.
+- Linked a new living status/chronicle issue ([#131](https://github.com/oliver-zehentleitner/keep-the-why/issues/131)) from `README.md`, `tools/evals/README.md`, and `CONTRIBUTING.md`'s cross-agent bullet — current focus, what's working, what isn't yet, and how to help, kept up to date as a top-post with dated log entries below it. Numbers there are historical snapshots only; current pass-rate numbers still live exclusively at `docs/evals.md`, not restated in the issue.
 
 ### Changed
 

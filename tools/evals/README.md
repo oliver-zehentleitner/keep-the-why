@@ -77,6 +77,10 @@ trust blindly — open the case's JSON in `results/<timestamp>/` and read the
 transcript and reasoning before acting on it. Single runs are also subject to
 normal model variance; re-run a surprising case before concluding anything.
 
+## Ongoing status
+
+What's currently being improved, what's working, what isn't yet, and how to help (including running this suite against an agent other than Claude Code): [issue #131](https://github.com/oliver-zehentleitner/keep-the-why/issues/131), kept current as a living status page.
+
 ## Known limitations
 
 - One agent (Claude Code) and one run per case — no cross-agent matrix, no
