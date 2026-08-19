@@ -87,8 +87,6 @@ needing to be told again.
 - skills.sh: https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why — live, backs
   the `npx skills add` method above
 - SkillsLLM: live, verified, passed security scan — https://skillsllm.com/skill/keep-the-why
-- ASM Registry: pending — manifest pinned to v0.5.2, installable via `asm install keep-the-why`
-  once merged — https://github.com/luongnv89/asm-registry/pull/5
 - awesome-agent-skills: live, listed under "Context Engineering" —
   https://github.com/VoltAgent/awesome-agent-skills#context-engineering
 - GitHub Copilot plugin marketplace: ready for review, external plugin submission pinned to
