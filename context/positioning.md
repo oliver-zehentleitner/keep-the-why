@@ -2,6 +2,7 @@
 
 ## No name-by-name comparison against competing tools, only named standards
 
+**Type:** decision
 **Status:** active
 **Evidence:** confirmed
 

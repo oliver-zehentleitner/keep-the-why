@@ -2,6 +2,7 @@
 
 ## Setup/init state is tracked opportunistically, not via a real background schedule
 
+**Type:** decision
 **Status:** active
 **Evidence:** confirmed
 
@@ -13,6 +14,7 @@ The skill's periodic checks (update availability, `context/` staleness) run as a
 
 ## Config state lives in delimited blocks inside existing entry-point files, not a separate file
 
+**Type:** decision
 **Status:** active
 **Evidence:** confirmed
 
@@ -24,6 +26,7 @@ Setup state is written into `<!-- keep-the-why:config -->` / `<!-- keep-the-why:
 
 ## Setup state splits across a project block and a personal block
 
+**Type:** decision
 **Status:** active
 **Evidence:** confirmed
 
@@ -35,6 +38,7 @@ Where `context/` lives, whether the project has been initialized, and how much c
 
 ## Update-check failures get surfaced once, not swallowed indefinitely
 
+**Type:** decision
 **Status:** active
 **Evidence:** confirmed
 
@@ -46,6 +50,7 @@ If the update check can't run (no web access this session), the first failure is
 
 ## `context-schema` always tracks the released version, even when nothing migrated
 
+**Type:** incident
 **Status:** active
 **Evidence:** confirmed
 
@@ -57,6 +62,7 @@ Every release advances this repo's own `context-schema` (in this file's config b
 
 ## `capture-confirmation` is project-wide only, for now — deliberately, to test first
 
+**Type:** decision
 **Status:** active
 **Evidence:** confirmed
 
@@ -68,6 +74,7 @@ Every release advances this repo's own `context-schema` (in this file's config b
 
 ## `source-reference` asks about ticket/issue links, doesn't require one to exist, and ships project-wide only
 
+**Type:** decision
 **Status:** active
 **Evidence:** confirmed
 

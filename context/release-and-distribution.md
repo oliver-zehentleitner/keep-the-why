@@ -2,6 +2,7 @@
 
 ## Automation tokens need the `workflow` OAuth scope to push workflow files
 
+**Type:** constraint
 **Status:** active
 **Evidence:** confirmed
 
@@ -11,6 +12,7 @@ The workaround (split the workflow file into its own commit, have someone with t
 
 ## The installable skill lives under `skills/keep-the-why/`, not at the repo root
 
+**Type:** decision
 **Status:** active
 **Evidence:** confirmed
 
@@ -24,6 +26,7 @@ It also fixes a second, independent problem: cloning this whole repository into 
 
 ## `release.yml`'s checkout pins the actual release tag, not the workflow's trigger ref
 
+**Type:** decision
 **Status:** active
 **Evidence:** confirmed
 
@@ -35,6 +38,7 @@ The `GH Release` workflow's `checkout` step explicitly sets `ref: ${{ github.eve
 
 ## skills.sh rides the moving `latest` tag; awesome-copilot needs a pinned release instead
 
+**Type:** decision
 **Status:** active
 **Evidence:** confirmed
 
@@ -52,6 +56,7 @@ skills.sh resolves this repo's skill via the moving `latest` tag `release.yml` f
 
 ## `.claude-plugin/plugin.json` is a second, separate manifest — not a replacement for the root `plugin.json`
 
+**Type:** decision
 **Status:** active
 **Evidence:** confirmed
 

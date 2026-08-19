@@ -8,7 +8,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Added
 
-- Optional **Type** field for `context/` entries (`decision` | `workaround` | `incident` | `constraint`), placed before **Status** — lets a tool or agent filter entries by kind without loading full topic files. Documented in `references/repository-structure.md` (topic-file example + explanation) and `SKILL.md`'s Record step; migration guidance in `references/migrations.md`.
+- Optional **Type** field for `context/` entries (`decision` | `workaround` | `incident` | `constraint`), placed before **Status** — lets a tool or agent filter entries by kind without loading full topic files. Documented in `references/repository-structure.md` (topic-file example + explanation) and `SKILL.md`'s Record step; migration guidance in `references/migrations.md`. This repo's own 18 pre-existing `context/` entries backfilled with Type in this same release.
 
 ### Changed
 

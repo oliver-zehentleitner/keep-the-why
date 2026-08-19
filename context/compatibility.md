@@ -2,6 +2,7 @@
 
 ## "Composition with other skills" needed an explicit re-check instruction, found via real testing
 
+**Type:** incident
 **Status:** active
 **Evidence:** confirmed
 
@@ -21,6 +22,7 @@ Added a second paragraph to "Composition with other skills": checking whether Ke
 
 > Superseded 2026-08-01: the project init wizard now actively asks about this and has the current agent set up whatever its own platform supports — see "The wizard now asks about activation reliability" below. The reasoning below for *why the project doesn't hardcode one tool's mechanism* still holds; what changed is that the wizard now prompts and delegates to the current agent's own platform knowledge, instead of staying entirely passive on the topic.
 
+**Type:** decision
 **Status:** superseded
 **Evidence:** confirmed
 
@@ -34,6 +36,7 @@ Keep the Why doesn't build, recommend, or document a specific mechanism (e.g. a 
 
 ## The wizard now asks about activation reliability, and delegates setup to the current agent's own platform
 
+**Type:** decision
 **Status:** active
 **Evidence:** confirmed
 
