@@ -66,5 +66,6 @@ nav:
   - "Why this project is built this way":
       - Release and distribution: context/release-and-distribution.md
       - Skill configuration format: context/config-format.md
+      - Entry and layout format: context/entry-format.md
       - Positioning: context/positioning.md
       - Compatibility: context/compatibility.md
