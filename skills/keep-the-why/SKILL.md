@@ -96,7 +96,7 @@ For decisions that clear those checks, write concise, topic-oriented documentati
 - **alternative(s) considered, and why each was rejected** — even a one-liner beats silence
 - **reason the chosen path won**
 
-Include when relevant, not as a fixed template: context, constraints, consequences and failure modes, current status, evidence or related files for traceability.
+Include when relevant, not as a fixed template: context, constraints, consequences and failure modes, current status, evidence or related files for traceability. Tag the entry with a **Type** — `decision`, `workaround`, `incident`, or `constraint` — when one clearly fits; it's what lets a later filter for "every incident" or "every workaround" skip loading unrelated topic files (see `references/repository-structure.md`).
 
 Before the actual write, resolve the effective `capture-confirmation` setting (rule 11) — this is what decides whether that write needs a quick yes/no first, not whether it's warranted (already settled above).
 

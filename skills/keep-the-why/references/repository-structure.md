@@ -22,7 +22,7 @@ project/
     └── incidents.md
 ```
 
-Adjust freely. A one-file script doesn't need six `docs/` files; a large suite might need `context/` split by subsystem with its own sub-index. The shape should track the project's actual complexity, not a template.
+Adjust freely. A one-file script doesn't need six `docs/` files. `context/` stays flat — no subdirectories — even for a large project; if topic files alone stop scaling, namespace filenames instead (`auth-tokens.md`, `auth-oauth.md`) rather than nesting `context/auth/`. The shape should track the project's actual complexity, not a template.
 
 ## Which file does this belong in?
 
@@ -106,6 +106,7 @@ Keep entries to one line each. This file exists so an agent can decide what to l
 
 ## Snapshot-before-buffer ordering
 
+**Type:** decision
 **Status:** active
 **Evidence:** confirmed
 **Source:** maintainer interview, 2026-03-14; incident postmortem 2025-11, `incidents.md`
@@ -127,6 +128,8 @@ was enforced instead.
 ```
 
 Not every entry needs every field, but treat the decision as a fork, not a single point: what was chosen, and what specifically was rejected and why. Status, Evidence, and the rejected-alternative are the things worth keeping even in a minimal entry — the rejected alternative especially, since "we chose X" without "we didn't choose Y, because Z" is usually the less useful half of the story. It's what prevents the next person (or agent) from re-deriving or re-breaking the same thing (see Core rule 6 in `SKILL.md`). Status and Evidence are independent (Core rules 2 and 7) — a `superseded` entry can still show `confirmed` for what was true while it was active.
+
+**Type** (`decision` | `workaround` | `incident` | `constraint`) categorizes what kind of thing an entry is, independent of Status and Evidence. It exists so a tool or agent can select or filter entries — "every incident," "every workaround" — without loading full topic files to find out, which matters for token cost on a large `context/`. Fill it in on new entries when one value clearly fits; when an entry genuinely straddles two (a workaround adopted because of an incident), pick whichever a future search is more likely to be about rather than splitting the entry or leaving it blank. Existing entries pick up a Type the next time they're touched anyway, not through a dedicated backfill pass — same principle as "Retrofitting an existing project" below.
 
 **Source** isn't limited to confirmed entries — it's useful at any Evidence level, including documenting where you looked for an entry that ended up `unknown`. **Verification**, when there's something concrete to check a confirmed or inferred claim against, goes the same place Source does:
 

@@ -4,6 +4,14 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- Optional **Type** field for `context/` entries (`decision` | `workaround` | `incident` | `constraint`), placed before **Status** — lets a tool or agent filter entries by kind without loading full topic files. Documented in `references/repository-structure.md` (topic-file example + explanation) and `SKILL.md`'s Record step; migration guidance in `references/migrations.md`.
+
+### Changed
+
+- `references/repository-structure.md`: `context/` now explicitly stays flat, even for large projects — namespace filenames (`auth-tokens.md`, `auth-oauth.md`) instead of nesting subdirectories. Prompted by comparing against Google's Open Knowledge Format (OKF, formalizing Karpathy's "LLM Wiki" pattern), which organizes hierarchically by domain; rejected because a single repo's rationale doesn't have the kind of independent domains that pattern is meant to separate, and the flat layout already avoids the "stable link" problem OKF's directory model has to solve for itself. `references/setup.md`'s consistency-check grep description updated to match (no longer mentions descending into subsystem subdirectories).
+
 ## [0.6.4] - 2026-08-01
 
 ### Added

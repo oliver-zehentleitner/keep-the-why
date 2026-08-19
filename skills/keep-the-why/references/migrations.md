@@ -4,6 +4,35 @@ What changed in each version that affects the *format* of existing `context/` en
 
 Entries below assume 0.2.0 as the starting point — nothing before it tracked a `context-schema` at all, and 0.2.0 itself introduced no `context/` entry format change.
 
+## Unreleased — Type field added
+
+**What changed:** entries can now carry a **Type** header field (`decision` | `workaround` | `incident` | `constraint`), placed before **Status**. It categorizes what kind of thing an entry is, independent of Status/Evidence, so a tool or agent can filter — "every incident," "every workaround" — without loading full topic files to find out.
+
+**New field (see `references/repository-structure.md`):**
+
+- **Type:** decision | workaround | incident | constraint — optional, filled in when one value clearly fits.
+
+**Migrating an existing entry:**
+
+1. Not a backfill pass. Add **Type** to an entry the next time it's touched anyway, same as any other maintenance edit — matches "Retrofitting an existing project" in `repository-structure.md`.
+2. If an entry genuinely straddles two values (a workaround adopted because of an incident), pick whichever a future search is more likely to be about. Don't split the entry or leave Type blank just because more than one value would fit.
+3. If nothing fits cleanly, leave it out rather than forcing a wrong-feeling value — Type is there to help filtering, not to gate whether an entry counts.
+
+**Example — before:**
+
+```markdown
+**Status:** active
+**Evidence:** confirmed
+```
+
+**Example — after:**
+
+```markdown
+**Type:** workaround
+**Status:** active
+**Evidence:** confirmed
+```
+
 ## 0.3.0 — Evidence split from Status
 
 **What changed:** `context/` entries previously classified evidence as one of confirmed, inferred, unknown, *or* superseded — treating "superseded" as if it were a fourth evidence level. It isn't: whether a decision is still current (Status) and how well it's evidenced (Evidence) are independent questions. A superseded decision can have been thoroughly confirmed when it was still active. Also added: an optional Source/Verification pair for confirmed entries whose claim is worth tracing or could be checked against other evidence.
