@@ -22,7 +22,7 @@ project/
     └── incidents.md
 ```
 
-Adjust freely. A one-file script doesn't need six `docs/` files. `context/` stays flat — no subdirectories — even for a large project; if topic files alone stop scaling, namespace filenames instead (`auth-tokens.md`, `auth-oauth.md`) rather than nesting `context/auth/`. The shape should track the project's actual complexity, not a template.
+Adjust freely. A one-file script doesn't need six `docs/` files. `context/` stays flat — no subdirectories — even for a large project; if topic files alone stop scaling, namespace filenames instead (e.g. `auth-tokens.md` and `auth-oauth.md`, or `tokens-auth.md` and `oauth-auth.md` — prefix or suffix, whichever groups and sorts more usefully for that project) rather than nesting `context/auth/`. The shape should track the project's actual complexity, not a template.
 
 ## Which file does this belong in?
 
