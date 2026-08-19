@@ -4,6 +4,14 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- New `context/release-and-distribution.md` entry: the `[x.y.z]` `CHANGELOG.md` compare link always fails `Link Check` on the release PR's own merge-to-main push, since the tag it points to isn't created until the later, separate tagging step — self-resolving once tagged, not a real regression to chase. Hit for real releasing 0.7.0.
+
+### Changed
+
+- `references/repository-structure.md` and `context/entry-format.md`: clarified that the flat-`context/` filename-namespacing guidance isn't prefix-only (`auth-tokens.md`) — a suffix (`tokens-auth.md`) works just as well when it groups or sorts more usefully for a given project. The prior wording's examples all happened to be prefixes, which read as more restrictive than intended.
+
 ## [0.7.0] - 2026-08-19
 
 ### Added
