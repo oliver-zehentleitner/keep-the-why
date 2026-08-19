@@ -91,6 +91,8 @@ needing to be told again.
   https://github.com/VoltAgent/awesome-agent-skills#context-engineering
 - GitHub Copilot plugin marketplace: ready for review, external plugin submission pinned to
   v0.5.2 — https://github.com/github/awesome-copilot/issues/2470
+- ASM: pending, curated skill index for the `asm` CLI, installable via `asm install
+  keep-the-why` once merged — https://github.com/luongnv89/asm/issues/469
 
 ## Core Concept
 
