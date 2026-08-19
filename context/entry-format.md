@@ -31,3 +31,19 @@ Filled in on new entries when a value clearly fits; not a blocking requirement �
 **Rejected alternative (open vocabulary):** letting projects define their own Type values freely, as OKF does ("types are not centrally registered"). Rejected for this project specifically — an open vocabulary is more expressive but less reliably filterable, and the whole point of adding Type here is cheap, predictable filtering.
 
 **Consequence:** this is a `context-schema`-relevant change (see `references/migrations.md`, "0.7.0 — Type field added"). Released in 0.7.0: `context-schema` advanced to 0.7.0 alongside `metadata.version`, per `CONTRIBUTING.md`'s release checklist ("never trail the version just released, even when nothing migrated"). This repo's own pre-existing `context/` entries were backfilled with Type in the same release, on Oliver's explicit call — a deliberate departure from the "migrate when next touched, not a dedicated pass" default this same entry recommends for other projects retrofitting this onto their own existing entries.
+
+## `undefined` Type value flags entries where none of the four fit
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+
+An entry that actively considers Type but finds that none of `decision`, `workaround`, `incident`, `constraint` cleanly fits records `**Type:** undefined — <short reason>` instead of leaving the field blank. The trailing reason is required, not decorative — it says why none of the four fit, not just that none did.
+
+**Reason:** raised by Oliver — an entry where Type was genuinely evaluated and rejected needs to be distinguishable from one where Type was simply never considered; otherwise both collapse into the same blank field, and there's no way to `grep` for "cases the current vocabulary doesn't cover." `undefined` turns that gap into an explicit, filterable marker; the attached reason is what turns an accumulation of `undefined` entries into material for deciding whether the fixed vocabulary needs a fifth real value. This keeps Type a closed vocabulary in the sense the rejected-alternative reasoning above cared about — `undefined` is one more fixed member of the set, not an escape hatch into free text.
+
+**Rejected alternative:** leaving Type blank when nothing fits, as originally documented. Rejected because it's indistinguishable from "not yet reviewed" — blank entries can't be `grep`ed apart from each other, so there was no way to find and evaluate the misfit cases at all.
+
+**Rejected alternative (bare `other`):** an `other` value with no attached reason. Rejected — without the explanation, `other` degrades into the same kind of dumping-ground value the closed-vocabulary decision above was meant to avoid, and gives no material to act on later.
+
+**Consequence:** this is a `context-schema`-relevant change, same tier as the original Type field. Migration guidance in `references/migrations.md`.

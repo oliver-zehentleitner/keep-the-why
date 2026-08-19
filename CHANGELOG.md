@@ -7,6 +7,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 ### Added
 
 - New `context/release-and-distribution.md` entry: the `[x.y.z]` `CHANGELOG.md` compare link always fails `Link Check` on the release PR's own merge-to-main push, since the tag it points to isn't created until the later, separate tagging step — self-resolving once tagged, not a real regression to chase. Hit for real releasing 0.7.0.
+- New `undefined` value for the **Type** field, used with a required trailing reason (`undefined — <reason>`) when none of `decision`/`workaround`/`incident`/`constraint` fits. Replaces leaving Type blank in that case, so misfit entries stay `grep`-able as candidates for a future fifth value instead of being indistinguishable from entries that never considered Type at all. Documented in `context/entry-format.md`, `references/repository-structure.md`, `SKILL.md`'s Record step; migration guidance in `references/migrations.md`.
 
 ### Changed
 

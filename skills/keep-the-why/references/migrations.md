@@ -4,6 +4,34 @@ What changed in each version that affects the *format* of existing `context/` en
 
 Entries below assume 0.2.0 as the starting point — nothing before it tracked a `context-schema` at all, and 0.2.0 itself introduced no `context/` entry format change.
 
+## Unreleased — `undefined` Type value added
+
+**What changed:** entries where none of the four Type values (`decision` | `workaround` | `incident` | `constraint`) cleanly fit now record `**Type:** undefined — <reason>` instead of leaving the field blank. Supersedes point 3 of the 0.7.0 migration below — that guidance said to leave Type out when nothing fits; the current guidance is to mark it `undefined` with a reason instead, so misfit cases stay filterable rather than indistinguishable from entries that never considered Type at all.
+
+**New value (see `references/repository-structure.md`):**
+
+- **Type:** `undefined` — used only after actively confirming none of the four values fit; always followed by `— <short reason>`.
+
+**Migrating an existing entry:**
+
+1. Not a backfill pass. Entries that currently skip Type because nothing fit don't need a dedicated pass — same "next time touched" rule as the 0.7.0 migration below.
+2. When you do touch one and confirm none of the four values fit, add `**Type:** undefined — <short reason>` rather than leaving the field blank.
+
+**Example — before:**
+
+```markdown
+**Status:** active
+**Evidence:** confirmed
+```
+
+**Example — after:**
+
+```markdown
+**Type:** undefined — documents a naming convention, not a decision/workaround/incident/constraint
+**Status:** active
+**Evidence:** confirmed
+```
+
 ## 0.7.0 — Type field added
 
 **What changed:** entries can now carry a **Type** header field (`decision` | `workaround` | `incident` | `constraint`), placed before **Status**. It categorizes what kind of thing an entry is, independent of Status/Evidence, so a tool or agent can filter — "every incident," "every workaround" — without loading full topic files to find out.

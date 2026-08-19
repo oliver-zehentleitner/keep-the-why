@@ -174,6 +174,7 @@ This isn't a new pattern, either. Docs and changelogs are already commonly kept 
 | Decision / behavior | What was actually done |
 | Rejected alternative(s) | What else was considered, and why it lost |
 | Reason | Why the chosen path won |
+| **Type** | `decision` \| `workaround` \| `incident` \| `constraint` \| `undefined — <reason>` — fill in whenever a value clearly fits, retrofit existing entries the next time you touch them, so `context/` stays reliably filterable by `grep` |
 | **Status** | `active` \| `superseded` \| `open` \| `needs-review` |
 | **Evidence** | `confirmed` \| `inferred` \| `unknown` — how certain the rationale is |
 | Source | Where the rationale came from (interview, issue, commit, postmortem) |
