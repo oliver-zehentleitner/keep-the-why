@@ -67,3 +67,17 @@ Added `.claude-plugin/plugin.json` (the official Claude Code plugin manifest, ve
 **Rejected alternative:** try to find or invent one manifest format both ecosystems would accept. Rejected — not viable; the two schemas are independently defined by different vendors with different required fields and file locations. Maintaining two small, correctly-targeted manifests is simpler than fighting that.
 
 **Related:** the "Composition with other skills" section in `SKILL.md` was written generically (no specific framework named) rather than tailored to any one methodology-style skill framework we might integrate with — the positioning (cross-cutting persistence, not a workflow orchestrator) is true regardless of which specific framework it's composed alongside, and naming one by name in the skill's own evergreen content would date quickly and read as an unearned endorsement or dependency.
+
+## The `[x.y.z]` CHANGELOG compare link always 404s on the release PR's own merge-to-main push
+
+**Type:** constraint
+**Status:** active
+**Evidence:** confirmed
+
+`CONTRIBUTING.md`'s release checklist step 4 adds a `[x.y.z]: .../compare/v<prev>...v<x.y.z>` link to `CHANGELOG.md` in the same PR that bumps the version — but step 8 (creating the `vx.y.z` tag) happens *after* that PR merges. `Link Check` (`link-check.yml`, runs on every push to `main`) therefore always flags that link as a 404 on the merge-to-main push itself, purely because the tag it points to doesn't exist yet at that moment.
+
+**Reason:** the ordering is inherent to the checklist, not a mistake in a specific release — the compare link necessarily names a tag from a step that hasn't run yet. First seen releasing 0.7.0: `Link Check` failed on the `main` push for PR #149 with two 404s (`compare/v0.6.4...v0.7.0` and `compare/v0.7.0...HEAD`), both resolving to 200 immediately once `v0.7.0` was tagged and pushed minutes later; re-running the same failed workflow run then went green with no code change.
+
+**Rejected alternative:** reorder the checklist so tagging happens before the version-bump PR merges. Rejected — the tag is meant to point at the actual released commit on `main`, including whatever the PR itself changed; tagging a pre-merge branch commit instead would tag the wrong tree.
+
+**Consequence:** expected and self-resolving, not a real failure to chase — after tagging (step 8), re-run the specific failed `Link Check` run for that merge commit (`gh run rerun <id>`) rather than treating it as a regression to fix in a follow-up PR.
