@@ -34,11 +34,11 @@ Either form prompts for which of its 70+ supported agents (Claude Code, Codex, O
 
 | Name | Status | Info |
 |---|---|---|
+| [awesome-agent-skills](https://github.com/VoltAgent/awesome-agent-skills#context-engineering) | Live | Listed under "Context Engineering" |
 | [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why) | Live | Backs the `npx skills add` install method above |
 | [SkillsLLM](https://skillsllm.com/skill/keep-the-why) | Live | Verified, passed [SkillsLLM's security scan](https://skillsllm.com/security-check/IPmNycVdbOyq) |
-| [awesome-agent-skills](https://github.com/VoltAgent/awesome-agent-skills#context-engineering) | Live | Listed under "Context Engineering" |
-| [GitHub Copilot plugin marketplace](https://github.com/github/awesome-copilot) | Ready for review — [Issue #2470](https://github.com/github/awesome-copilot/issues/2470) | External plugin submission, pinned to `v0.5.2` |
 | [ASM](https://luongnv.com/asm/) | Pending — [Issue #469](https://github.com/luongnv89/asm/issues/469) | Curated skill index for the `asm` CLI; installable via `asm install keep-the-why` once merged |
+| [GitHub Copilot plugin marketplace](https://github.com/github/awesome-copilot) | Ready for review — [Issue #2470](https://github.com/github/awesome-copilot/issues/2470) | External plugin submission, pinned to `v0.5.2` |
 
 ## Also recommended: GitHub CLI
 
