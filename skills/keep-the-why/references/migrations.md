@@ -4,7 +4,7 @@ What changed in each version that affects the *format* of existing `context/` en
 
 Entries below assume 0.2.0 as the starting point — nothing before it tracked a `context-schema` at all, and 0.2.0 itself introduced no `context/` entry format change.
 
-## Unreleased — Type field added
+## 0.7.0 — Type field added
 
 **What changed:** entries can now carry a **Type** header field (`decision` | `workaround` | `incident` | `constraint`), placed before **Status**. It categorizes what kind of thing an entry is, independent of Status/Evidence, so a tool or agent can filter — "every incident," "every workaround" — without loading full topic files to find out.
 

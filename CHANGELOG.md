@@ -4,6 +4,8 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-08-19
+
 ### Added
 
 - Optional **Type** field for `context/` entries (`decision` | `workaround` | `incident` | `constraint`), placed before **Status** — lets a tool or agent filter entries by kind without loading full topic files. Documented in `references/repository-structure.md` (topic-file example + explanation) and `SKILL.md`'s Record step; migration guidance in `references/migrations.md`.
@@ -301,7 +303,8 @@ Initial release.
 - Logo, wordmark, and favicon.
 - `context/repo-conventions.md`, dogfooding the skill on its own repository from day one.
 
-[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.6.1...HEAD
+[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.6.4...v0.7.0
 [0.6.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.5.2...v0.6.0
 [0.5.2]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.5.1...v0.5.2

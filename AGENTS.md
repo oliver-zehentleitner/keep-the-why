@@ -13,7 +13,7 @@ there before re-litigating or accidentally reverting a decision.
 <!-- keep-the-why:config -->
 - context: `context/`
 - init: complete
-- context-schema: 0.6.4
+- context-schema: 0.7.0
 - capture-confirmation: confirm-always
 - source-reference: never
 <!-- /keep-the-why:config -->
