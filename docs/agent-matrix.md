@@ -28,10 +28,10 @@ than run through the judge (noted per cell).
 
 ## Results
 
-`–` means not yet tested. Each tested cell: verdict (and score, where
-judged) · skill version · date.
+**\* Legend:** `–` = not yet tested. Otherwise: verdict (and score /10,
+where LLM-judged) · skill version · date tested.
 
-| Model | Claude Code | Pi | opencode | Kimi Code | Codex CLI | Cline | Gemini CLI |
+| Model\* | Claude Code | Pi | opencode | Kimi Code | Codex CLI | Cline | Gemini CLI |
 |---|---|---|---|---|---|---|---|
 | Claude Sonnet 5 (native) | ✅ 9/10 · v0.9.0 · 2026-08-20 | – | – | – | – | – | – |
 | Qwen3.8 27B (Ollama, local, Q4_K_M) | – | ✅ pass¹ · v0.9.0 · 2026-08-20 | – | – | – | – | – |
