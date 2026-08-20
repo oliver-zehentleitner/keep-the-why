@@ -30,28 +30,36 @@ instructions only — no executable code.
   opencode  opencode (`opencode`, SST).
   kimi      Kimi Code (`kimi`, moonshotai). Models configured via
             `kimi provider` (~/.kimi-code/config.toml).
+  cline     Cline (`cline`, cline-bot). Provider/model configured via
+            `cline auth` (~/.cline/data/settings/providers.json).
 
-pi, opencode, and kimi don't get native-discovery treatment: we don't test
-whether they'd find the skill on their own (that's a Claude-Code-specific
-question, already covered by the claude driver's activation cases). Instead
-the skill is installed at a plain skills/keep-the-why/ path and the case
-prompt is prefixed with an explicit instruction to read its SKILL.md and
-follow it — this is what makes any tool-use-capable CLI usable here without
-needing its own skill-discovery convention, and it's what lets --model point
-at a model that has no notion of "skills" at all (a local Ollama model, or
-any model via OpenRouter). What's under test with these three drivers is
-instruction-following given the skill, not discovery. Verified live: on a
-machine that also has a global keep-the-why install (e.g. this one, via
-Claude Code's own skill), both pi and opencode initially resolved "read
-SKILL.md" to that global copy instead of the fixture-local one — the prompt
-wording now says the RELATIVE path explicitly and tells the agent not to use
-any other install it may know about; re-verified fixed for pi, watch for it
-on new drivers too.
+pi, opencode, kimi, and cline don't get native-discovery treatment: we
+don't test whether they'd find the skill on their own (that's a
+Claude-Code-specific question, already covered by the claude driver's
+activation cases). Instead the skill is installed at a plain
+skills/keep-the-why/ path and the case prompt is prefixed with an explicit
+instruction to read its SKILL.md and follow it — this is what makes any
+tool-use-capable CLI usable here without needing its own skill-discovery
+convention, and it's what lets --model point at a model that has no notion
+of "skills" at all (a local Ollama model, or any model via OpenRouter).
+What's under test with these drivers is instruction-following given the
+skill, not discovery. Verified live: on a machine that also has a global
+keep-the-why install (e.g. this one, via Claude Code's own skill), both pi
+and opencode initially resolved "read SKILL.md" to that global copy instead
+of the fixture-local one — the prompt wording now says the RELATIVE path
+explicitly and tells the agent not to use any other install it may know
+about; re-verified fixed for pi, watch for it on new drivers too. Separately
+(and more seriously): opencode did not treat the subprocess cwd as its
+project root at all without an explicit --dir flag — it operated on this
+repo's real directory until that was fixed (see git history). cline was
+verified to respect its own -c/--cwd flag correctly before being trusted
+here.
 
-NOTE: the pi, opencode, and kimi drivers (command flags, JSON event schema)
-were built from each project's own docs/live testing — pi and kimi verified
-against real transcripts (local Ollama and OpenRouter), opencode verified
-against OpenRouter. Re-check render_transcript_* against a fresh raw
+NOTE: the pi, opencode, kimi, and cline drivers (command flags, JSON event
+schema) were built from each project's own docs/live testing — pi and kimi
+verified against real transcripts (local Ollama and OpenRouter), opencode
+and cline verified against OpenRouter. Re-check render_transcript_* against
+a fresh raw
 transcript if a driver's CLI version changes noticeably.
 
 Usage:
@@ -112,14 +120,15 @@ SKILL_INSTALL_REL = {
     "pi": "skills/keep-the-why",
     "opencode": "skills/keep-the-why",
     "kimi": "skills/keep-the-why",
+    "cline": "skills/keep-the-why",
 }
 
 # Whether the case prompt gets prefixed with an explicit "read SKILL.md and
 # follow it" instruction. False only for claude, where discovery itself is
 # part of what's under test.
-EXPLICIT_LOAD = {"claude": False, "pi": True, "opencode": True, "kimi": True}
+EXPLICIT_LOAD = {"claude": False, "pi": True, "opencode": True, "kimi": True, "cline": True}
 
-DRIVER_LABELS = {"claude": "Claude Code", "pi": "Pi", "opencode": "opencode", "kimi": "Kimi Code"}
+DRIVER_LABELS = {"claude": "Claude Code", "pi": "Pi", "opencode": "opencode", "kimi": "Kimi Code", "cline": "Cline"}
 
 # Matches the CLI's own plain-text account-limit messages (observed so far:
 # "You've hit your session limit · resets ..." and "You've hit your monthly
@@ -405,11 +414,50 @@ def run_agent_kimi(prompt, cwd, model, timeout, disallowed_tools=None):
     return {"events": events, "error": error}
 
 
+def run_agent_cline(prompt, cwd, model, timeout, disallowed_tools=None):
+    # cline takes provider and model as separate flags, unlike the other
+    # drivers' combined "provider/model" --model string — split it here so
+    # --model stays the same shape (e.g. openrouter/qwen/qwen3.8-27b) across
+    # every driver at the run.py CLI level.
+    provider, _, model_id = model.partition("/")
+    # -c/--cwd: cline DOES respect this as its actual project root (verified
+    # live against the real repo, unlike opencode — see run_agent_opencode).
+    # --json: newline-delimited event stream, see render_transcript_cline.
+    # --auto-approve true: explicit rather than relying on the documented
+    # default, since a bare positional prompt is said to already imply it.
+    cmd = ["cline", "--cwd", str(cwd), "--json", "-P", provider, "-m", model_id,
+           "--auto-approve", "true", prompt]
+    if disallowed_tools:
+        print(f"  NOTE: cline driver has no documented tool-deny flag — "
+              f"case's disallowed_tools {disallowed_tools} not enforced.",
+              file=sys.stderr)
+    env = dict(os.environ)
+    try:
+        proc = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired as e:
+        return {"events": [], "error": f"timeout after {timeout}s",
+                "raw": (e.stdout or "")[:MAX_TRANSCRIPT_CHARS]}
+    events = []
+    for line in proc.stdout.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            events.append(json.loads(line))
+        except json.JSONDecodeError:
+            pass
+    error = None
+    if proc.returncode != 0 and not events:
+        error = f"cline exited {proc.returncode}: {proc.stderr[:2000]}"
+    return {"events": events, "error": error}
+
+
 AGENT_RUNNERS = {
     "claude": run_agent_claude,
     "pi": run_agent_pi,
     "opencode": run_agent_opencode,
     "kimi": run_agent_kimi,
+    "cline": run_agent_cline,
 }
 
 
@@ -526,11 +574,39 @@ def render_transcript_kimi(events):
     return _cap("\n\n".join(out))
 
 
+def render_transcript_cline(events):
+    """Flatten cline's --json event stream (agent_event/content_end, contentType text/tool)."""
+    out = []
+    for ev in events:
+        e = ev.get("event") or {}
+        t = e.get("type")
+        if t == "content_end":
+            ct = e.get("contentType")
+            if ct == "text":
+                text = (e.get("text") or "").strip()
+                if text:
+                    out.append(f"[assistant]\n{text}")
+            elif ct == "tool":
+                inp = json.dumps(e.get("input", {}), ensure_ascii=False)
+                if len(inp) > 1500:
+                    inp = inp[:1500] + "…(truncated)"
+                out.append(f"[tool call] {e.get('toolName')}: {inp}")
+                output = e.get("output")
+                output = json.dumps(output, ensure_ascii=False) if isinstance(output, (dict, list)) else str(output)
+                if len(output) > MAX_TOOL_RESULT_CHARS:
+                    output = output[:MAX_TOOL_RESULT_CHARS] + "…(truncated)"
+                out.append(f"[tool result] {output}")
+        elif t == "done":
+            out.append(f"[session ended] reason={e.get('reason')}")
+    return _cap("\n\n".join(out))
+
+
 TRANSCRIPT_RENDERERS = {
     "claude": render_transcript_claude,
     "pi": render_transcript_pi,
     "opencode": render_transcript_opencode,
     "kimi": render_transcript_kimi,
+    "cline": render_transcript_cline,
 }
 
 
