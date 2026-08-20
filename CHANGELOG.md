@@ -4,6 +4,12 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-08-20
+
+### Added
+
+- 2 new eval cases: `type-field-multiple-values-when-warranted` (an incident+workaround bundled fact — verifies the agent writes two separate `**Type:**` lines instead of picking one) and `open-question-gets-status-open-not-unknown` (a genuinely unexplainable code oddity found during a retrospective pass — verifies `Status: open`, not the invalid `Status: unknown`, paired with `Evidence: unknown`). Both smoke-tested locally, 2/2 pass.
+
 ### Fixed
 
 - `references/repository-structure.md` never explained or demonstrated `Status: open` on its own — only `needs-review` got a worked mention (via **Revisit when**). Two independently-written projects reached for `Status: unknown` on genuinely open questions instead, since `unknown` reads as the more natural English word — but that's an Evidence level, not a Status one. Added a dedicated **Status** paragraph with a worked `open` example and an explicit "not the same as `Evidence: unknown`" note, in both `references/repository-structure.md` and `SKILL.md` rule 7.
@@ -328,7 +334,8 @@ Initial release.
 - Logo, wordmark, and favicon.
 - `context/repo-conventions.md`, dogfooding the skill on its own repository from day one.
 
-[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.6.4...v0.7.0
 [0.6.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.6.0...v0.6.1
