@@ -4,6 +4,11 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- `tools/evals/run.py` gained a `--driver` flag (`claude`, `pi`, `opencode`, `kimi`) so eval cases can run against agentic CLIs other than Claude Code, including non-Claude models (local Ollama or any model via OpenRouter) for the non-Claude drivers. Claude Code keeps native skill discovery (what the activation-reliability cases test); the other drivers get the skill installed at a plain path and an explicit instruction to read and follow it, since discovery itself isn't what those drivers are being tested for.
+- New docs page `docs/agent-matrix.md`, linked prominently from the README: tracks which agent × model combinations have actually been spot-checked against the skill, separate from the full-suite Claude-Code-only numbers on the Evals page.
+
 ## [0.9.0] - 2026-08-20
 
 ### Added

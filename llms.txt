@@ -167,9 +167,11 @@ Produces, inside the project using the skill:
 
 A suite of eval cases ships with the skill, executed for real by a local runner in the
 repo (fixture project per case, fresh non-interactive agent session, LLM-judged
-verdicts), tested with Claude Code and Claude Sonnet. Current case count and numbers
-live in one place only, so they can't drift: https://keepthewhy.com/evals/ — including
-the failure analysis, stated caveats, and reproduction instructions.
+verdicts). Full-suite numbers are tracked against Claude Code and Claude Sonnet
+specifically and live in one place only, so they can't drift: https://keepthewhy.com/evals/
+— including the failure analysis, stated caveats, and reproduction instructions. Which
+other agents (Pi, opencode, Kimi Code, ...) and models the skill has actually been run
+against, and how: https://keepthewhy.com/agent-matrix/
 
 ## Related Work
 
@@ -229,6 +231,7 @@ HTML equivalent and details: https://keepthewhy.com/badge/
 - SKILL.md: https://github.com/oliver-zehentleitner/keep-the-why/blob/latest/skills/keep-the-why/SKILL.md
 - CHANGELOG: https://github.com/oliver-zehentleitner/keep-the-why/blob/latest/CHANGELOG.md
 - Docs: https://keepthewhy.com
+- Agent & model matrix (which agents/models the skill has actually been run against): https://keepthewhy.com/agent-matrix/
 - Setup (project + personal wizards, timer checks): https://keepthewhy.com/setup/
 - Migrations (context-schema version changes): https://keepthewhy.com/migrations/
 - Security (overview, links to trust model and vulnerability reporting): https://keepthewhy.com/security/

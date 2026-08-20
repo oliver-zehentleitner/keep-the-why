@@ -13,25 +13,53 @@ For each case:
    `fixtures/_base/` project (a small order-processing service with Keep the
    Why already set up), overlaid with the case's own `fixtures/<case-id>/`
    directory if one exists. The result is `git init`ed and committed, and the
-   skill package is copied into `.claude/skills/keep-the-why` the way a real
-   project-scoped install would place it.
-2. **Run the agent.** `claude -p "<case prompt>"` runs non-interactively in
-   that project, with the full transcript (including tool calls) captured via
-   `--output-format stream-json`, plus the resulting working-tree diff — what
-   the agent actually wrote matters as much as what it said.
-3. **Judge.** A second, independent `claude -p` call grades transcript + diff
+   skill package is copied into the driver's install path (see "Drivers"
+   below) the way a real project-scoped install would place it.
+2. **Run the agent.** The case prompt runs non-interactively in that project
+   via whichever CLI `--driver` selects, with the full transcript (including
+   tool calls) captured, plus the resulting working-tree diff — what the
+   agent actually wrote matters as much as what it said.
+3. **Judge.** A second, independent Claude call (always Claude, regardless of
+   `--driver`, so grading criteria stay constant) grades transcript + diff
    against the case's `expected_behavior` and returns a structured verdict
    (`pass`/`fail`, score, reasoning, violations). Because the session is
    non-interactive, ending the turn with a question counts as fully correct
    wherever the expected behavior involves asking the user something.
 
-Results land in `results/<timestamp>/` (gitignored): one JSON per case plus
-`summary.json` and `summary.md`.
+Results land in `results/<timestamp>-<driver>/` (gitignored): one JSON per
+case plus `summary.json` and `summary.md`.
+
+## Drivers
+
+`--driver` selects which agentic coding CLI runs the skill under test:
+
+| Driver | CLI | Skill discovery |
+|---|---|---|
+| `claude` (default) | [Claude Code](https://claude.com/claude-code) (`claude`) | Native — installed at `.claude/skills/keep-the-why`, the CLI decides for itself from the `SKILL.md` description whether to load it. This is what the activation-reliability cases actually test. |
+| `pi` | [Pi](https://pi.dev) (`pi`) | Explicit — see below |
+| `opencode` | [opencode](https://opencode.ai) (`opencode`) | Explicit — see below |
+
+`pi` and `opencode` don't get native-discovery treatment: whether they'd find
+the skill on their own is a Claude-Code-specific question, already covered by
+the `claude` driver's activation cases. Instead the skill is installed at a
+plain `skills/keep-the-why/` path and the case prompt is prefixed with an
+explicit instruction to read its `SKILL.md` and follow it. This is what makes
+any tool-use-capable CLI usable here without needing its own skill-discovery
+convention, and what lets `--model` point at a local model (e.g. Ollama) that
+has no notion of "skills" at all. What's under test with these two drivers is
+instruction-following given the skill, not discovery.
+
+**Verification status:** the `pi`/`opencode` drivers (CLI flags, JSON event
+schema) were built from each project's own docs, not yet run end-to-end
+against a real install of either — expect to adjust flag names or event
+field names in `run_agent_pi`/`render_transcript_pi` and
+`run_agent_opencode`/`render_transcript_opencode` in `run.py` once real
+transcripts exist to check them against.
 
 ## Usage
 
 ```bash
-# everything (67 cases; expect a long run and real API usage)
+# everything (70 cases; expect a long run and real API usage)
 python3 tools/evals/run.py --all
 
 # a subset
@@ -39,11 +67,16 @@ python3 tools/evals/run.py --cases continuous-capture-basic,chestertons-fence-gu
 
 # knobs
 python3 tools/evals/run.py --all --parallel 4 --model sonnet --judge-model sonnet
+
+# a different driver — model syntax is driver-specific
+python3 tools/evals/run.py --all --driver pi --model ollama/qwen3:8b --parallel 1
+python3 tools/evals/run.py --all --driver opencode --model ollama/qwen3:8b
 ```
 
-Requires the [Claude Code CLI](https://claude.com/claude-code) (`claude`) on
-`PATH` with working credentials. Exit code is non-zero if any case fails or
-errors.
+Requires the selected driver's CLI on `PATH` with working credentials/model
+config (for `pi`, a local Ollama model needs a matching entry in
+`~/.pi/agent/models.json`; for `opencode`, in `opencode.json`). Exit code is
+non-zero if any case fails or errors.
 
 ## Fixtures
 
@@ -71,6 +104,10 @@ Six cases intentionally have no fixture directory and run on `_base` as-is;
 their prompts carry the whole scenario.
 
 ## Resilience to the account's own session/spend limits
+
+This section applies to the `claude` driver only — the detection is a match
+against Claude Code's own plain-text limit message, so it simply won't fire
+for `pi`/`opencode` runs.
 
 `run.py` shells out to `claude -p` under your own logged-in account, so a
 large run can hit that account's session or monthly spend limit mid-run —
@@ -105,10 +142,13 @@ What's currently being improved, what's working, what isn't yet, and how to help
 
 ## Known limitations
 
-- One agent (Claude Code) and one run per case — no cross-agent matrix, no
-  flakiness statistics. Both are tracked as ideas in the issue tracker.
+- One run per case per driver — no flakiness statistics yet, and the
+  `pi`/`opencode` drivers aren't verified end-to-end against a real install
+  yet (see "Verification status" above). Both tracked as ideas in the issue
+  tracker.
 - Non-interactive: multi-turn flows (a full wizard dialogue, a confirmation
   answered with "yes") can only be tested up to the agent's first stopping
   point.
-- The judge shares a vendor with the agent under test; an independent judge
-  would be stronger.
+- The judge is always Claude, including when the agent under test is a
+  different vendor's model via `pi`/`opencode` — consistent grading, but not
+  an independent judge in the fullest sense.

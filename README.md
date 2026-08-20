@@ -22,6 +22,8 @@ Keep a Changelog records what changed. Keep the Why preserves why it changed.
 
 Documentation is normally extra work that happens after the code is done — reload the reasoning from memory, write it down again, file it somewhere else: a wiki, an ADR, a PR description nobody reopens. That's exactly why it so often doesn't happen. When an agent is already how you work — deciding, weighing trade-offs, explaining itself in the same conversation that produces the change — the reasoning shows up for free, as a byproduct of that conversation, not separate effort. Keep the Why's actual job is narrower than it sounds: don't let that reasoning get thrown away.
 
+**Tested with:** Claude Code · Pi · opencode · Kimi Code — see the [agent & model matrix](https://keepthewhy.com/agent-matrix/) for what's been run against what, and how.
+
 Website: [https://keepthewhy.com](https://keepthewhy.com/) · [llms.txt](https://keepthewhy.com/llms.txt) for AI agents/assistants looking up this project
 
 ## How it works
@@ -45,7 +47,7 @@ First activation in a project runs a short one-time setup instead of guessing at
 
 Because it's just Markdown in the repo, a `context/` update ships in the same commit or PR as the code change it explains — reviewed the same way, versioned the same way, no separate system to trust or keep in sync.
 
-The skill's behavior is exercised by a suite of eval cases, executed for real — a fixture project per case, a fresh agent session, LLM-judged verdicts, tested with Claude Code. Current case count, results, an honest failure analysis, the stated caveats, and how to reproduce or run the suite against other agents: [Evals](https://keepthewhy.com/evals/). Ongoing work — what's currently being improved, what's working, how to help: [tracking issue](https://github.com/oliver-zehentleitner/keep-the-why/issues/131).
+The skill's behavior is exercised by a suite of eval cases, executed for real — a fixture project per case, a fresh agent session, LLM-judged verdicts. Full-suite numbers (case count, results, an honest failure analysis, the stated caveats) are tracked against Claude Code specifically: [Evals](https://keepthewhy.com/evals/). Which other agents and models the skill has actually been run against, and how: [agent & model matrix](https://keepthewhy.com/agent-matrix/). Ongoing work — what's currently being improved, what's working, how to help: [tracking issue](https://github.com/oliver-zehentleitner/keep-the-why/issues/131).
 
 Where the captured knowledge actually lives, and how it relates to everything else a project already has, is one coherent picture — see "Where this fits" below.
 

@@ -4,27 +4,67 @@
 For each case in skills/keep-the-why/evals/evals.json:
   1. Materialize a throwaway git repo from tools/evals/fixtures/ (shared
      _base project, overlaid with the case's own fixture directory if one
-     exists), and install the skill package into .claude/skills/.
-  2. Run a real, fresh agent session (claude -p) with the case's prompt in
-     that repo, capturing the full transcript and the resulting working-tree
-     diff.
-  3. Have a second, independent agent call (the judge) grade transcript +
-     diff against the case's expected_behavior and return a structured
-     verdict.
+     exists), and install the skill package into the driver's install path.
+  2. Run a real, fresh agent session with the case's prompt in that repo
+     (via whichever CLI --driver selects), capturing the full transcript and
+     the resulting working-tree diff.
+  3. Have a second, independent Claude call (the judge — always Claude,
+     regardless of --driver, so grading criteria stay constant across
+     drivers) grade transcript + diff against the case's expected_behavior
+     and return a structured verdict.
 
 This is a development tool for this repository. It is deliberately NOT part
 of the installable skill package (skills/keep-the-why/), which ships
 instructions only — no executable code.
 
+## Drivers
+
+--driver selects which agentic coding CLI runs the skill under test:
+  claude    Claude Code (`claude`). Native skill discovery: the skill is
+            installed at .claude/skills/keep-the-why and the CLI decides for
+            itself, from the SKILL.md description, whether to load it — this
+            is what the activation-reliability eval cases actually test.
+  pi        Pi (`pi`, earendil-works/pi-mono). Any model pi's own
+            ~/.pi/agent/models.json knows about, including a local Ollama
+            model or OpenRouter via a custom provider baseUrl.
+  opencode  opencode (`opencode`, SST).
+  kimi      Kimi Code (`kimi`, moonshotai). Models configured via
+            `kimi provider` (~/.kimi-code/config.toml).
+
+pi, opencode, and kimi don't get native-discovery treatment: we don't test
+whether they'd find the skill on their own (that's a Claude-Code-specific
+question, already covered by the claude driver's activation cases). Instead
+the skill is installed at a plain skills/keep-the-why/ path and the case
+prompt is prefixed with an explicit instruction to read its SKILL.md and
+follow it — this is what makes any tool-use-capable CLI usable here without
+needing its own skill-discovery convention, and it's what lets --model point
+at a model that has no notion of "skills" at all (a local Ollama model, or
+any model via OpenRouter). What's under test with these three drivers is
+instruction-following given the skill, not discovery. Verified live: on a
+machine that also has a global keep-the-why install (e.g. this one, via
+Claude Code's own skill), both pi and opencode initially resolved "read
+SKILL.md" to that global copy instead of the fixture-local one — the prompt
+wording now says the RELATIVE path explicitly and tells the agent not to use
+any other install it may know about; re-verified fixed for pi, watch for it
+on new drivers too.
+
+NOTE: the pi, opencode, and kimi drivers (command flags, JSON event schema)
+were built from each project's own docs/live testing — pi and kimi verified
+against real transcripts (local Ollama and OpenRouter), opencode verified
+against OpenRouter. Re-check render_transcript_* against a fresh raw
+transcript if a driver's CLI version changes noticeably.
+
 Usage:
   python3 tools/evals/run.py --all
   python3 tools/evals/run.py --cases continuous-capture-basic,chestertons-fence-guard
   python3 tools/evals/run.py --all --parallel 4 --model sonnet --judge-model sonnet
+  python3 tools/evals/run.py --all --driver pi --model ollama/qwen3:8b --parallel 1
+  python3 tools/evals/run.py --all --driver opencode --model ollama/qwen3:8b
   python3 tools/evals/run.py --all --parallel 2 --results-dir tools/evals/results/foo \
       --retry-until-complete --retry-interval 600 --max-wait-hours 10
 
-Results land in tools/evals/results/<timestamp>/ (gitignored): one JSON per
-case plus summary.json and summary.md.
+Results land in tools/evals/results/<timestamp>-<driver>/ (gitignored): one
+JSON per case plus summary.json and summary.md.
 
 Re-running against the same --results-dir is cheap and safe: any case that
 already has a stored "pass" or "fail" verdict is skipped without touching the
@@ -34,7 +74,8 @@ transcript, not a crash), the runner stops spending on further cases in that
 pass, marks them "rate_limited", and (with --retry-until-complete) sleeps and
 tries again later, picking up only what's still unresolved. It will not sit
 there hammering the API once the wall is hit, and it will not silently give
-up and leave a truncated result set either.
+up and leave a truncated result set either. (The rate-limit detection is
+Claude-account-specific; it simply won't fire for the other drivers.)
 """
 
 import argparse
@@ -60,6 +101,25 @@ BASE_FIXTURE = FIXTURES_DIR / "_base"
 MAX_DIFF_CHARS = 30_000
 MAX_TRANSCRIPT_CHARS = 60_000
 MAX_TOOL_RESULT_CHARS = 400
+
+# Where the skill gets copied into each throwaway fixture project, per
+# driver. claude keeps the pre-existing .claude/skills/ location so the
+# activation-reliability cases (native discovery) don't change behavior;
+# pi/opencode get a plain, easy-to-reference path since we tell them about it
+# explicitly instead of relying on discovery (see module docstring).
+SKILL_INSTALL_REL = {
+    "claude": ".claude/skills/keep-the-why",
+    "pi": "skills/keep-the-why",
+    "opencode": "skills/keep-the-why",
+    "kimi": "skills/keep-the-why",
+}
+
+# Whether the case prompt gets prefixed with an explicit "read SKILL.md and
+# follow it" instruction. False only for claude, where discovery itself is
+# part of what's under test.
+EXPLICIT_LOAD = {"claude": False, "pi": True, "opencode": True, "kimi": True}
+
+DRIVER_LABELS = {"claude": "Claude Code", "pi": "Pi", "opencode": "opencode", "kimi": "Kimi Code"}
 
 # Matches the CLI's own plain-text account-limit messages (observed so far:
 # "You've hit your session limit · resets ..." and "You've hit your monthly
@@ -120,7 +180,7 @@ def copy_tree(src: Path, dst: Path):
             shutil.copy2(item, target)
 
 
-def build_workdir(case_id, cfg, workdir: Path):
+def build_workdir(case_id, cfg, workdir: Path, driver):
     if cfg.get("base") != "none" and BASE_FIXTURE.exists():
         copy_tree(BASE_FIXTURE, workdir)
     case_fixture = FIXTURES_DIR / case_id
@@ -168,17 +228,47 @@ def build_workdir(case_id, cfg, workdir: Path):
         sh(["git", "add", "-A"], cwd=workdir, env=env)
         sh(["git", "commit", "-q", "--allow-empty", "-m", commit["message"]], cwd=workdir, env=env)
 
-    # Install the skill the way a project-scoped install would: a real copy
-    # under .claude/skills/, untracked (simulates a personal/project install,
-    # and keeps the skill out of the repo the agent analyzes).
-    skill_target = workdir / ".claude" / "skills" / "keep-the-why"
+    # Install the skill the way a project-scoped install would: a real,
+    # untracked copy (keeps the skill out of the repo the agent analyzes)
+    # at the driver's install path.
+    skill_rel = SKILL_INSTALL_REL[driver]
+    skill_target = workdir / skill_rel
+    skill_target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(SKILL_DIR, skill_target)
     (workdir / ".git" / "info").mkdir(exist_ok=True)
     with open(workdir / ".git" / "info" / "exclude", "a") as f:
-        f.write(".claude/\n")
+        f.write(f"/{skill_rel}/\n")
 
 
-def run_agent(prompt, cwd, model, timeout, disallowed_tools=None):
+def build_prompt(case_prompt, driver):
+    """Case prompt as actually sent to the agent for this driver.
+
+    Unchanged for claude (discovery is part of what's under test there). For
+    drivers without native skill discovery, prefix an explicit pointer to the
+    installed SKILL.md — see module docstring "Drivers" section for why.
+    """
+    if not EXPLICIT_LOAD[driver]:
+        return case_prompt
+    skill_rel = SKILL_INSTALL_REL[driver]
+    return (
+        f"Before doing anything else, read the file at the RELATIVE path "
+        f"./{skill_rel}/SKILL.md, inside the current working directory of "
+        f"this session (do not use any other 'keep-the-why' skill you may "
+        f"already know about or have installed globally elsewhere on this "
+        f"machine — only the copy at that exact relative path is the one "
+        f"under test here). Follow its instructions for the rest of this "
+        f"session — including any of its references/*.md files it points "
+        f"you to for the situation at hand.\n\n{case_prompt}"
+    )
+
+
+def _cap(text, limit=MAX_TRANSCRIPT_CHARS):
+    if len(text) > limit:
+        return text[:limit] + "\n…(transcript truncated)"
+    return text
+
+
+def run_agent_claude(prompt, cwd, model, timeout, disallowed_tools=None):
     cmd = [
         "claude", "-p", prompt,
         "--model", model,
@@ -214,7 +304,108 @@ def run_agent(prompt, cwd, model, timeout, disallowed_tools=None):
     return {"events": events, "error": error}
 
 
-def render_transcript(events):
+def run_agent_pi(prompt, cwd, model, timeout, disallowed_tools=None):
+    # --approve: trust project-local files for this run, no interactive
+    # prompt (pi's equivalent of --dangerously-skip-permissions).
+    # --mode json: newline-delimited JSON event stream, documented at
+    # pi.dev/docs/latest/json — see render_transcript_pi for the event types
+    # consumed here. Flag names/positions verified against pi's own docs as
+    # of this writing, NOT yet against a real install (see module docstring).
+    cmd = ["pi", "--mode", "json", "--approve", "--model", model, prompt]
+    if disallowed_tools:
+        cmd += ["--exclude-tools", ",".join(disallowed_tools)]
+    env = dict(os.environ)
+    try:
+        proc = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired as e:
+        return {"events": [], "error": f"timeout after {timeout}s",
+                "raw": (e.stdout or "")[:MAX_TRANSCRIPT_CHARS]}
+    events = []
+    for line in proc.stdout.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            events.append(json.loads(line))
+        except json.JSONDecodeError:
+            pass
+    error = None
+    if proc.returncode != 0 and not events:
+        error = f"pi exited {proc.returncode}: {proc.stderr[:2000]}"
+    return {"events": events, "error": error}
+
+
+def run_agent_opencode(prompt, cwd, model, timeout, disallowed_tools=None):
+    # --auto: auto-approve permissions (opencode's equivalent of
+    # --dangerously-skip-permissions). --format json: JSONL event stream, see
+    # render_transcript_opencode. No documented per-run tool-deny flag as of
+    # this writing, so disallowed_tools is only logged, not enforced — see
+    # module docstring for the verification caveat.
+    cmd = ["opencode", "run", prompt, "--format", "json", "--model", model, "--auto"]
+    if disallowed_tools:
+        print(f"  NOTE: opencode driver has no documented tool-deny flag — "
+              f"case's disallowed_tools {disallowed_tools} not enforced.",
+              file=sys.stderr)
+    env = dict(os.environ)
+    try:
+        proc = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired as e:
+        return {"events": [], "error": f"timeout after {timeout}s",
+                "raw": (e.stdout or "")[:MAX_TRANSCRIPT_CHARS]}
+    events = []
+    for line in proc.stdout.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            events.append(json.loads(line))
+        except json.JSONDecodeError:
+            pass
+    error = None
+    if proc.returncode != 0 and not events:
+        error = f"opencode exited {proc.returncode}: {proc.stderr[:2000]}"
+    return {"events": events, "error": error}
+
+
+def run_agent_kimi(prompt, cwd, model, timeout, disallowed_tools=None):
+    # -p is inherently non-interactive/autonomous (cannot be combined with
+    # -y/--auto — the CLI rejects that). --output-format stream-json: one
+    # OpenAI-chat-style JSON object per line, see render_transcript_kimi.
+    cmd = ["kimi", "-p", prompt, "-m", model, "--output-format", "stream-json"]
+    if disallowed_tools:
+        print(f"  NOTE: kimi driver has no documented tool-deny flag — "
+              f"case's disallowed_tools {disallowed_tools} not enforced.",
+              file=sys.stderr)
+    env = dict(os.environ)
+    try:
+        proc = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired as e:
+        return {"events": [], "error": f"timeout after {timeout}s",
+                "raw": (e.stdout or "")[:MAX_TRANSCRIPT_CHARS]}
+    events = []
+    for line in proc.stdout.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            events.append(json.loads(line))
+        except json.JSONDecodeError:
+            pass
+    error = None
+    if proc.returncode != 0 and not events:
+        error = f"kimi exited {proc.returncode}: {proc.stderr[:2000]}"
+    return {"events": events, "error": error}
+
+
+AGENT_RUNNERS = {
+    "claude": run_agent_claude,
+    "pi": run_agent_pi,
+    "opencode": run_agent_opencode,
+    "kimi": run_agent_kimi,
+}
+
+
+def render_transcript_claude(events):
     """Flatten stream-json events into a readable transcript for the judge."""
     out = []
     for ev in events:
@@ -242,10 +433,97 @@ def render_transcript(events):
                     out.append(f"[tool result] {content}")
         elif t == "result":
             out.append(f"[session ended] subtype={ev.get('subtype')} turns={ev.get('num_turns')}")
-    text = "\n\n".join(out)
-    if len(text) > MAX_TRANSCRIPT_CHARS:
-        text = text[:MAX_TRANSCRIPT_CHARS] + "\n…(transcript truncated)"
-    return text
+    return _cap("\n\n".join(out))
+
+
+def render_transcript_pi(events):
+    """Flatten pi's --mode json event stream (pi.dev/docs/latest/json)."""
+    out = []
+    for ev in events:
+        t = ev.get("type")
+        if t == "message_end":
+            msg = ev.get("message") or {}
+            if msg.get("role") != "assistant":
+                continue
+            for block in msg.get("content", []) or []:
+                if isinstance(block, dict) and block.get("type") == "text" \
+                        and block.get("text", "").strip():
+                    out.append(f"[assistant]\n{block['text'].strip()}")
+        elif t == "tool_execution_start":
+            inp = json.dumps(ev.get("args", {}), ensure_ascii=False)
+            if len(inp) > 1500:
+                inp = inp[:1500] + "…(truncated)"
+            out.append(f"[tool call] {ev.get('toolName')}: {inp}")
+        elif t == "tool_execution_end":
+            result = ev.get("result")
+            result = json.dumps(result, ensure_ascii=False) if isinstance(result, (dict, list)) else str(result)
+            if len(result) > MAX_TOOL_RESULT_CHARS:
+                result = result[:MAX_TOOL_RESULT_CHARS] + "…(truncated)"
+            prefix = "[tool error]" if ev.get("isError") else "[tool result]"
+            out.append(f"{prefix} {result}")
+        elif t == "agent_end":
+            out.append("[session ended]")
+    return _cap("\n\n".join(out))
+
+
+def render_transcript_opencode(events):
+    """Flatten opencode's `run --format json` event stream."""
+    out = []
+    for ev in events:
+        t = ev.get("type")
+        part = ev.get("part") or {}
+        if t == "text":
+            text = (part.get("text") or "").strip()
+            if text:
+                out.append(f"[assistant]\n{text}")
+        elif t == "tool_use":
+            state = part.get("state") or {}
+            inp = json.dumps(state.get("input", {}), ensure_ascii=False)
+            if len(inp) > 1500:
+                inp = inp[:1500] + "…(truncated)"
+            out.append(f"[tool call] {part.get('tool')}: {inp}")
+            output = str(state.get("output", ""))
+            if len(output) > MAX_TOOL_RESULT_CHARS:
+                output = output[:MAX_TOOL_RESULT_CHARS] + "…(truncated)"
+            out.append(f"[tool result] {output}")
+        elif t == "step_finish":
+            out.append(f"[session ended] reason={part.get('reason')}")
+        elif t == "error":
+            out.append(f"[error] {json.dumps(ev, ensure_ascii=False)[:500]}")
+    return _cap("\n\n".join(out))
+
+
+def render_transcript_kimi(events):
+    """Flatten kimi's --output-format stream-json output (OpenAI-chat-style roles)."""
+    out = []
+    for ev in events:
+        role = ev.get("role")
+        if role == "assistant":
+            content = (ev.get("content") or "").strip()
+            if content:
+                out.append(f"[assistant]\n{content}")
+            for tc in ev.get("tool_calls") or []:
+                fn = tc.get("function", {}) or {}
+                args = fn.get("arguments", "")
+                if len(args) > 1500:
+                    args = args[:1500] + "…(truncated)"
+                out.append(f"[tool call] {fn.get('name')}: {args}")
+        elif role == "tool":
+            content = str(ev.get("content", ""))
+            if len(content) > MAX_TOOL_RESULT_CHARS:
+                content = content[:MAX_TOOL_RESULT_CHARS] + "…(truncated)"
+            out.append(f"[tool result] {content}")
+        elif role == "meta" and ev.get("type") == "session.resume_hint":
+            out.append("[session ended]")
+    return _cap("\n\n".join(out))
+
+
+TRANSCRIPT_RENDERERS = {
+    "claude": render_transcript_claude,
+    "pi": render_transcript_pi,
+    "opencode": render_transcript_opencode,
+    "kimi": render_transcript_kimi,
+}
 
 
 def collect_diff(workdir):
@@ -360,6 +638,7 @@ def run_case(case, args, results_dir):
             "id": case_id, "verdict": "rate_limited", "score": None,
             "reasoning": "Skipped: an earlier case in this pass hit the account's session/usage limit.",
             "violations": [], "agent_model": args.model, "judge_model": args.judge_model,
+            "driver": args.driver,
             "started": datetime.datetime.now(datetime.timezone.utc).isoformat(),
             "duration_s": 0, "transcript": "", "disk_changes": "",
         }
@@ -372,10 +651,11 @@ def run_case(case, args, results_dir):
     with tempfile.TemporaryDirectory(prefix=f"ktw-eval-{case_id}-") as tmp:
         workdir = Path(tmp) / "project"
         workdir.mkdir()
-        build_workdir(case_id, cfg, workdir)
-        agent = run_agent(case["prompt"], workdir, args.model, args.timeout,
-                          cfg.get("disallowed_tools"))
-        transcript = render_transcript(agent["events"])
+        build_workdir(case_id, cfg, workdir, args.driver)
+        prompt = build_prompt(case["prompt"], args.driver)
+        agent = AGENT_RUNNERS[args.driver](prompt, workdir, args.model, args.timeout,
+                                           cfg.get("disallowed_tools"))
+        transcript = TRANSCRIPT_RENDERERS[args.driver](agent["events"])
         diff = collect_diff(workdir)
     if agent.get("error"):
         verdict = {"verdict": "error", "reasoning": agent["error"]}
@@ -396,6 +676,7 @@ def run_case(case, args, results_dir):
         "violations": verdict.get("violations", []),
         "agent_model": args.model,
         "judge_model": args.judge_model,
+        "driver": args.driver,
         "started": started.isoformat(),
         "duration_s": round((datetime.datetime.now(datetime.timezone.utc) - started).total_seconds()),
         "transcript": transcript,
@@ -466,7 +747,7 @@ def write_summary(records, results_dir, args):
     errored = [r for r in records if r["verdict"] not in ("pass", "fail")]
     summary = {
         "skill_version": skill_version,
-        "agent": "claude-code",
+        "driver": args.driver,
         "agent_model": args.model,
         "judge_model": args.judge_model,
         "date": datetime.date.today().isoformat(),
@@ -480,7 +761,7 @@ def write_summary(records, results_dir, args):
     lines = [
         f"# Eval run — {summary['date']}",
         "",
-        f"Skill {skill_version} · agent: Claude Code (model `{args.model}`) · judge: `{args.judge_model}`",
+        f"Skill {skill_version} · agent: {DRIVER_LABELS[args.driver]} (model `{args.model}`) · judge: `{args.judge_model}`",
         "",
         f"**{len(passed)}/{len(records)} passed** ({len(failed)} failed, {len(errored)} errors)",
         "",
@@ -500,11 +781,18 @@ def main():
     group = ap.add_mutually_exclusive_group(required=True)
     group.add_argument("--all", action="store_true", help="run every case")
     group.add_argument("--cases", help="comma-separated case ids")
-    ap.add_argument("--model", default="sonnet", help="agent-under-test model (default: sonnet)")
-    ap.add_argument("--judge-model", default="sonnet", help="judge model (default: sonnet)")
+    ap.add_argument("--driver", choices=sorted(AGENT_RUNNERS), default="claude",
+                    help="agentic CLI to run the skill under test with (default: claude); "
+                         "see module docstring for what pi/opencode do differently")
+    ap.add_argument("--model", default="sonnet",
+                    help="agent-under-test model, syntax is driver-specific "
+                         "(default: sonnet; e.g. --driver pi --model ollama/qwen3:8b)")
+    ap.add_argument("--judge-model", default="sonnet",
+                    help="judge model (default: sonnet; always run via the claude driver, "
+                         "regardless of --driver, so grading stays consistent)")
     ap.add_argument("--parallel", type=int, default=3, help="concurrent cases (default: 3)")
     ap.add_argument("--timeout", type=int, default=900, help="per-run timeout in seconds")
-    ap.add_argument("--results-dir", help="output dir (default: tools/evals/results/<timestamp>)")
+    ap.add_argument("--results-dir", help="output dir (default: tools/evals/results/<timestamp>-<driver>)")
     ap.add_argument("--retry-until-complete", action="store_true",
                     help="on a rate-limited/incomplete pass, sleep and retry only the "
                          "unresolved cases, until every case has a pass/fail verdict or "
@@ -517,7 +805,7 @@ def main():
 
     cases = load_cases(args.cases.split(",") if args.cases else None)
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    results_dir = Path(args.results_dir) if args.results_dir else TOOL_DIR / "results" / stamp
+    results_dir = Path(args.results_dir) if args.results_dir else TOOL_DIR / "results" / f"{stamp}-{args.driver}"
     results_dir.mkdir(parents=True, exist_ok=True)
 
     deadline = time.monotonic() + args.max_wait_hours * 3600
