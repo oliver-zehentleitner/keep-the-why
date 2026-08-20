@@ -39,6 +39,18 @@ markdown_extensions:
 extra_css:
   - assets/extra.css
 
+extra:
+  social:
+    - icon: fontawesome/brands/x-twitter
+      link: https://x.com/keep_the_why
+      name: Keep the Why on X
+    - icon: fontawesome/brands/bluesky
+      link: https://bsky.app/profile/keep-the-why.bsky.social
+      name: Keep the Why on Bluesky
+    - icon: fontawesome/brands/mastodon
+      link: https://mastodon.social/@keep_the_why
+      name: Keep the Why on Mastodon
+
 nav:
   - Overview: index.md
   - Philosophy: philosophy.md

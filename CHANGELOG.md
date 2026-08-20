@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- Social links: X (`@keep_the_why`), Bluesky (`keep-the-why.bsky.social`), and Mastodon (`@keep_the_why@mastodon.social`) — badges in `README.md`, footer icons in `mkdocs.yml` (`extra.social`), and a `twitter:site` meta tag in `overrides/main.html` alongside the existing OG/Twitter card tags.
+
 ## [0.8.0] - 2026-08-20
 
 ### Added
