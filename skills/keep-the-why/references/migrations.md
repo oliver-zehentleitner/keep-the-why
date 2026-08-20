@@ -16,6 +16,7 @@ Entries below assume 0.2.0 as the starting point — nothing before it tracked a
 
 1. Not a backfill pass. Entries that currently skip Type because nothing fit don't need a dedicated pass — same "next time touched" rule as the 0.7.0 migration below.
 2. When you do touch one and confirm none of the four values fit, add `**Type:** undefined — <short reason>` rather than leaving the field blank.
+3. Project-wide, once: if `context/README.md`'s "Reading the entries" Type line doesn't mention `undefined`, update it to match `references/setup.md`'s current template.
 
 **Example — before:**
 
@@ -44,7 +45,8 @@ Entries below assume 0.2.0 as the starting point — nothing before it tracked a
 
 1. Not a backfill pass. Add **Type** to an entry the next time it's touched anyway, same as any other maintenance edit — matches "Retrofitting an existing project" in `repository-structure.md`.
 2. If an entry genuinely straddles two values (a workaround adopted because of an incident), pick whichever a future search is more likely to be about. Don't split the entry or leave Type blank just because more than one value would fit.
-3. If nothing fits cleanly, leave it out rather than forcing a wrong-feeling value — Type is there to help filtering, not to gate whether an entry counts.
+3. If nothing fits cleanly, leave it out rather than forcing a wrong-feeling value — Type is there to help filtering, not to gate whether an entry counts. (Superseded by the `undefined` value above — for a project migrating straight to the current version, apply that guidance instead of this step.)
+4. Project-wide, once: if `context/README.md`'s "Reading the entries" section doesn't mention Type at all, add it — same wording as `references/setup.md`'s current template.
 
 **Example — before:**
 

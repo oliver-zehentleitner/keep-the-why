@@ -12,6 +12,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 ### Fixed
 
 - The "Reading the entries" section of `context/README.md` (`references/setup.md`'s wizard template, `examples/first-time-setup.md`'s dialogue, and this repo's own `context/README.md`) listed Status and Evidence but never mentioned Type — a gap since 0.7.0 introduced the field, missed because that release only touched entry-format docs, not the `context/README.md` template every new project gets.
+- `references/migrations.md`'s 0.7.0 and `undefined`-value migration steps only told an agent to update *entries*, so a project migrating its `context-schema` forward would never get its own `context/README.md` "Reading the entries" list brought in sync — only newly created projects got the fix above. Both migrations now include a step for updating `context/README.md` itself; `references/setup.md`'s migration-runner step now explicitly covers applying steps to `context/README.md`, not just to entries.
 
 ### Changed
 
