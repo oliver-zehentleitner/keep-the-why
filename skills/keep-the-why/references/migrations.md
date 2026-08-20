@@ -4,6 +4,37 @@ What changed in each version that affects the *format* of existing `context/` en
 
 Entries below assume 0.2.0 as the starting point — nothing before it tracked a `context-schema` at all, and 0.2.0 itself introduced no `context/` entry format change.
 
+## 0.9.0 — `Type` accepts multiple values
+
+**What changed:** an entry that genuinely documents more than one kind of thing now gets one `**Type:**` line per applicable value, instead of being forced to pick a single one. Supersedes point 2 of the 0.7.0 migration below — that guidance said to pick whichever value a future search is more likely to be about when an entry straddles two; the current guidance is to add a line for each value that genuinely applies instead. `undefined` stays exclusive — it never combines with the other four, since it means none of them fit.
+
+**Changed guidance (see `references/repository-structure.md` and `context/entry-format.md`):**
+
+- **Type:** one line per value that genuinely applies (`decision` | `workaround` | `incident` | `constraint`) — most entries still get exactly one; `undefined — <reason>` stays a single, exclusive line used only when none of the four fit.
+
+**Migrating an existing entry:**
+
+1. Not a backfill pass. An entry that already picked one value under the old "pick whichever" guidance doesn't need a dedicated pass to recover the value it left out — same "next time touched" rule as the 0.7.0 and 0.8.0 migrations below.
+2. When you do touch such an entry, add a second `**Type:**` line if a second value genuinely applies now — don't add one just because the field technically allows it if the original single value still covers the entry fully.
+3. Project-wide, once: check `context/README.md`'s "Reading the entries" Type line — it already describes Type generically ("what kind of thing it is: decision, workaround, incident, or constraint") without claiming single-valued, so no wording change is required there. Nothing to do for this step.
+
+**Example — before:**
+
+```markdown
+**Type:** workaround
+**Status:** active
+**Evidence:** confirmed
+```
+
+**Example — after (only once a second value genuinely applies):**
+
+```markdown
+**Type:** workaround
+**Type:** incident
+**Status:** active
+**Evidence:** confirmed
+```
+
 ## 0.8.0 — `undefined` Type value added
 
 **What changed:** entries where none of the four Type values (`decision` | `workaround` | `incident` | `constraint`) cleanly fit now record `**Type:** undefined — <reason>` instead of leaving the field blank. Supersedes point 3 of the 0.7.0 migration below — that guidance said to leave Type out when nothing fits; the current guidance is to mark it `undefined` with a reason instead, so misfit cases stay filterable rather than indistinguishable from entries that never considered Type at all.

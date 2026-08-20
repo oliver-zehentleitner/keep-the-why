@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Changed
+
+- **Type** field on `context/` entries: an entry that genuinely documents more than one kind of thing now gets one `**Type:**` line per applicable value, instead of being forced to pick a single one via the old "pick whichever a future search is more likely to be about" guidance. `undefined` stays exclusive — a single line, never combined with the other four. Documented in `context/entry-format.md`, `references/repository-structure.md`, `SKILL.md`'s Record step; migration guidance in `references/migrations.md`.
+
 ## [0.8.0] - 2026-08-20
 
 ### Added

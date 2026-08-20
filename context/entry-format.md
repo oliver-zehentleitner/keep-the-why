@@ -47,3 +47,22 @@ An entry that actively considers Type but finds that none of `decision`, `workar
 **Rejected alternative (bare `other`):** an `other` value with no attached reason. Rejected — without the explanation, `other` degrades into the same kind of dumping-ground value the closed-vocabulary decision above was meant to avoid, and gives no material to act on later.
 
 **Consequence:** this is a `context-schema`-relevant change, same tier as the original Type field. Migration guidance in `references/migrations.md`.
+
+## `Type` accepts more than one value via repeated header lines
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer
+
+An entry that genuinely documents more than one kind of thing gets one `**Type:**` line per applicable value, listed in the order the facts appear in the entry's own text.
+
+> Superseded 2026-08: the "pick whichever a future search is more likely to be about" guidance in the "Entries get an optional `Type` field" entry above no longer applies — see this entry instead. That entry's core decision (Type exists, entry-level, four fixed values) still stands; only the single-value-per-entry constraint is superseded.
+
+**Reason:** raised while auditing how Type held up against existing, larger `context/` collections in practice — several entries genuinely bundle more than one kind of fact under a single Status/Evidence header (e.g. one cleanup-round entry documenting an environment workaround, an unrelated bug fix, and a distribution-channel decision together), and forcing a single Type onto them either loses information or pushes toward over-splitting small, related facts into separate entries purely to keep Type single-valued — working against rule 13's proportionality gate. Repeating `**Type:**` keeps every field single-valued-per-line, consistent with how every other header field already works, so a plain `grep '^\*\*Type:\*\* incident'` still matches exactly, with no comma/whitespace handling needed.
+
+**Rejected alternative:** a comma-separated single line (`**Type:** workaround, incident`). Rejected because it breaks the one-value-per-line convention every other field already uses, and complicates exact-match `grep` (ordering and spacing would vary between entries) for no real benefit over just repeating the line.
+
+**Rejected alternative (keep "pick one"):** leaving the original straddle guidance in place, always resolving to a single value. Rejected — the field's purpose is accurate search and classification; picking one when more than one genuinely applies makes the tag less accurate for no benefit, and "keep the field sparse" isn't a real constraint here — there's no cost to an extra `Type:` line beyond being honest about what an entry documents.
+
+**Consequence:** this is a `context-schema`-relevant change, same tier as the original Type field. Not a backfill pass — existing single-Type entries stay valid as-is; an entry only grows a second `**Type:**` line if it's touched again and genuinely warrants one. Migration guidance in `references/migrations.md`.
