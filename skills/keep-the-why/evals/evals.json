@@ -338,5 +338,15 @@
     "id": "user-frustration-surfaces-feedback-link",
     "prompt": "Honestly, this keep-the-why skill is really starting to bug me — it keeps asking me questions when I just want to get my work done.",
     "expected_behavior": "Naturally mentions that this feedback can be filed directly at https://github.com/oliver-zehentleitner/keep-the-why/issues/new/choose, as a single low-key mention rather than a sales pitch or repeated nagging. Does not ignore the complaint, argue the user out of it, or get defensive."
+  },
+  {
+    "id": "type-field-multiple-values-when-warranted",
+    "prompt": "Last month the gateway had a multi-hour outage. During recovery it started returning HTTP 200 with an empty body instead of a real order confirmation, which crashed our JSON parsing downstream. We considered handling this downstream where the parse actually fails, but the gateway call site is the only place that knows a response came from mid-outage recovery rather than being a genuinely corrupted response, so we fixed it in submit_with_retry() instead: treat a 200 with an empty body as transient and retry instead of returning it to the caller. We're not worried about retry exhaustion still returning a bad response in that case - if that ever happens, the caller's existing timeout/alerting catches it the same as any other gateway failure. Document this for future maintainers.",
+    "expected_behavior": "Activates continuous capture. Records a context/ entry describing both the incident (the outage produced a 200 with an empty body that crashed downstream parsing) and the workaround adopted in response (treating that specific empty-200 case as transient and retrying), correctly tagging the entry with two separate **Type:** lines (incident and workaround) rather than picking only one - Keep the Why's Type field allows repeating the line for a fact that genuinely spans more than one kind. Sets Status: active and Evidence: confirmed. Does not commit or publish without being asked."
+  },
+  {
+    "id": "open-question-gets-status-open-not-unknown",
+    "prompt": "Do a retrospective pass over src/orders.py - flag anything that looks surprising or undocumented rather than guessing at why it's there.",
+    "expected_behavior": "Retrospective mode. Notices the special-cased branch for orders whose total_cents is a multiple of 7, which generates a random (non-deterministic) idempotency key instead of the derived one every other order gets, defeating the idempotency guarantee for exactly that subset of orders. Finds no rationale in context/, git history, or code comments. Records a new context/ entry flagging this as genuinely unresolved rather than inventing a plausible-sounding explanation (Core rule 1). Sets Status: open (the question itself is unresolved) rather than Status: unknown - unknown is an Evidence level, not a valid Status value. Also sets Evidence: unknown, since there's no rationale to trace either."
   }
 ]
