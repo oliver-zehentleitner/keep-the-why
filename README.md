@@ -22,7 +22,7 @@ Keep a Changelog records what changed. Keep the Why preserves why it changed.
 
 Documentation is normally extra work that happens after the code is done — reload the reasoning from memory, write it down again, file it somewhere else: a wiki, an ADR, a PR description nobody reopens. That's exactly why it so often doesn't happen. When an agent is already how you work — deciding, weighing trade-offs, explaining itself in the same conversation that produces the change — the reasoning shows up for free, as a byproduct of that conversation, not separate effort. Keep the Why's actual job is narrower than it sounds: don't let that reasoning get thrown away.
 
-**Tested with:** Claude Code · Pi · opencode · Kimi Code — plus Codex CLI, Cline, and Gemini CLI on the roadmap. See the [agent & model matrix](https://keepthewhy.com/agent-matrix/) for what's actually been run against what, and how.
+**Tested with:** Claude Code, Pi, and more — see the [agent & model matrix](https://keepthewhy.com/agent-matrix/) for what's actually been run against what, and how.
 
 Website: [https://keepthewhy.com](https://keepthewhy.com/) · [llms.txt](https://keepthewhy.com/llms.txt) for AI agents/assistants looking up this project
 

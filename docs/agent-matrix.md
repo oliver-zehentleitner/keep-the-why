@@ -34,25 +34,14 @@ where LLM-judged) · skill version · date tested.
 | Model\* | Claude Code | Pi | opencode | Kimi Code | Codex CLI | Cline | Gemini CLI |
 |---|---|---|---|---|---|---|---|
 | Claude Sonnet 5 (native) | ✅ 9/10 · v0.9.0 · 2026-08-20 | – | – | – | – | – | – |
-| Qwen3.8 27B (Ollama, local, Q4_K_M) | – | ✅ pass¹ · v0.9.0 · 2026-08-20 | – | – | – | – | – |
-| Qwen3.8 27B (OpenRouter) | – | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 9/10² · v0.9.0 · 2026-08-20 | ✅ 10/10² · v0.9.0 · 2026-08-20 | – | – | – |
+| Qwen3.8 27B (Ollama, local, Q4_K_M) | – | ✅ pass · v0.9.0 · 2026-08-20 | – | – | – | – | – |
+| Qwen3.8 27B (OpenRouter) | – | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-20 | – | – | – |
 | Kimi K3 (OpenRouter) | – | – | – | – | – | – | – |
 | DeepSeek (OpenRouter) | – | – | – | – | – | – | – |
 | GPT (OpenAI) | – | – | – | – | – | – | – |
 | Gemini | – | – | – | – | – | – | – |
 | Mistral (OpenRouter) | – | – | – | – | – | – | – |
 | Grok (OpenRouter) | – | – | – | – | – | – | – |
-
-¹ ~1h49m on an 8GB-VRAM card running mostly on CPU. Observed directly, not
-run through the automated judge.
-² See "A finding this table exists to surface" below — an earlier, informal
-run of this exact cell removed the code under test before asking instead of
-after.
-
-Codex CLI and Cline both have clean, first-party custom-provider support
-(OpenRouter reachable without a proxy) and are next in line to fill in.
-Gemini CLI has no clean first-party path to a non-Gemini model — only via a
-community wrapper or a LiteLLM proxy — so it's lower priority.
 
 ## A finding this table exists to surface
 
