@@ -129,6 +129,27 @@ was enforced instead.
 
 Not every entry needs every field, but treat the decision as a fork, not a single point: what was chosen, and what specifically was rejected and why. Status, Evidence, and the rejected-alternative are the things worth keeping even in a minimal entry — the rejected alternative especially, since "we chose X" without "we didn't choose Y, because Z" is usually the less useful half of the story. It's what prevents the next person (or agent) from re-deriving or re-breaking the same thing (see Core rule 6 in `SKILL.md`). Status and Evidence are independent (Core rules 2 and 7) — a `superseded` entry can still show `confirmed` for what was true while it was active.
 
+**Status** (`active` | `superseded` | `open` | `needs-review`) tracks whether a decision or fact is still current — `active` and `superseded` are the common cases. `open` is for an entry that's a genuinely unresolved question rather than a settled decision: nothing to mark active or superseded yet, only the question and what's known so far. `needs-review` flags something that used to be settled but has a triggered **Revisit when** condition (below) not yet re-checked.
+
+`open` is easy to reach for the wrong word on — it's a Status, not an Evidence level, and answers a different question than `Evidence: unknown` does. `open` means the entry's central question has no answer yet. `unknown` means a *settled* claim's rationale can't be traced or confirmed. A genuinely open question usually carries both, since there's neither an answer nor a rationale for one:
+
+```markdown
+## Retry cap on a specific error code
+
+**Status:** open
+**Evidence:** unknown
+
+`submit_order()` retries indefinitely on error code `E-4021`, on a
+fixed interval, while every other error code fails immediately instead.
+
+**Why this needs an answer:** if `E-4021` can also fire for a permanent
+condition, not just a transient one, this retries forever instead of
+failing loud — unclear whether that's actually safe here or needs a
+cap. Flagging rather than guessing (Core rule 1).
+```
+
+But the two axes stay independent even here: a settled, `active` decision can also carry `Evidence: unknown` (rule 1's case for a claim nobody can currently back up), just as a `superseded` entry can carry `Evidence: confirmed` for what was true while it was active.
+
 **Type** (`decision` | `workaround` | `incident` | `constraint`) categorizes what kind of thing an entry is, independent of Status and Evidence. It exists so a tool or agent can select or filter entries — "every incident," "every workaround" — without loading full topic files to find out, which matters for token cost on a large `context/`. Fill it in on new entries when a value clearly fits — most entries get exactly one `**Type:**` line. An entry that genuinely documents more than one kind of thing (a bundled cleanup note covering a workaround and an unrelated bug fix, or a single fact that's genuinely both) gets one `**Type:**` line per value that applies, rather than picking one or splitting the entry — each line stays exact-`grep`able (`^\*\*Type:\*\* incident`) no matter how many others are present. If none of the four fit, use a single `undefined — <short reason>` line instead of leaving the field blank, so those cases stay `grep`-able as candidates for a future fifth value rather than indistinguishable from entries that never considered Type at all — `undefined` doesn't combine with the other four; it means none of them fit, not some of them. Existing entries pick up a Type the next time they're touched anyway, not through a dedicated backfill pass — same principle as "Retrofitting an existing project" below.
 
 **Source** isn't limited to confirmed entries — it's useful at any Evidence level, including documenting where you looked for an entry that ended up `unknown`. **Verification**, when there's something concrete to check a confirmed or inferred claim against, goes the same place Source does:

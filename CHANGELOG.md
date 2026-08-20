@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Fixed
+
+- `references/repository-structure.md` never explained or demonstrated `Status: open` on its own — only `needs-review` got a worked mention (via **Revisit when**). Two independently-written projects reached for `Status: unknown` on genuinely open questions instead, since `unknown` reads as the more natural English word — but that's an Evidence level, not a Status one. Added a dedicated **Status** paragraph with a worked `open` example and an explicit "not the same as `Evidence: unknown`" note, in both `references/repository-structure.md` and `SKILL.md` rule 7.
+
 ### Changed
 
 - **Type** field on `context/` entries: an entry that genuinely documents more than one kind of thing now gets one `**Type:**` line per applicable value, instead of being forced to pick a single one via the old "pick whichever a future search is more likely to be about" guidance. `undefined` stays exclusive — a single line, never combined with the other four. Documented in `context/entry-format.md`, `references/repository-structure.md`, `SKILL.md`'s Record step; migration guidance in `references/migrations.md`.
