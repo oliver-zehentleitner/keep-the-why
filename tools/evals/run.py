@@ -341,7 +341,15 @@ def run_agent_opencode(prompt, cwd, model, timeout, disallowed_tools=None):
     # render_transcript_opencode. No documented per-run tool-deny flag as of
     # this writing, so disallowed_tools is only logged, not enforced — see
     # module docstring for the verification caveat.
-    cmd = ["opencode", "run", prompt, "--format", "json", "--model", model, "--auto"]
+    #
+    # --dir is NOT optional here, verified the hard way: opencode does not
+    # treat the subprocess's OS-level cwd as its project root on its own —
+    # without an explicit --dir it operated on this very repo's real working
+    # directory instead of the isolated fixture (read real SKILL.md/AGENTS.md
+    # files, and in one run actually wrote a context/ entry into this repo,
+    # promptly reverted). cwd= below is kept anyway as defense in depth.
+    cmd = ["opencode", "run", prompt, "--format", "json", "--model", model,
+           "--dir", str(cwd), "--auto"]
     if disallowed_tools:
         print(f"  NOTE: opencode driver has no documented tool-deny flag — "
               f"case's disallowed_tools {disallowed_tools} not enforced.",

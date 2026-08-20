@@ -7,7 +7,11 @@ All notable changes to this project are documented here. Format follows [Keep a 
 ### Added
 
 - `tools/evals/run.py` gained a `--driver` flag (`claude`, `pi`, `opencode`, `kimi`) so eval cases can run against agentic CLIs other than Claude Code, including non-Claude models (local Ollama or any model via OpenRouter) for the non-Claude drivers. Claude Code keeps native skill discovery (what the activation-reliability cases test); the other drivers get the skill installed at a plain path and an explicit instruction to read and follow it, since discovery itself isn't what those drivers are being tested for.
-- New docs page `docs/agent-matrix.md`, linked prominently from the README: tracks which agent × model combinations have actually been spot-checked against the skill, separate from the full-suite Claude-Code-only numbers on the Evals page.
+- New docs page `docs/agent-matrix.md`, linked prominently from the README: tracks which agent × model combinations have actually been spot-checked against the skill, separate from the full-suite Claude-Code-only numbers on the Evals page. Now covers Pi, opencode, and Kimi Code against Qwen3.8 27B, Kimi K3, DeepSeek V3.2, GPT-5.2, Gemini 3.1 Pro, Mistral Medium 3.5, and Grok 4.6.
+
+### Fixed
+
+- `run_agent_opencode()` in `tools/evals/run.py` passed the fixture directory as the subprocess's OS-level `cwd` but never as opencode's own `--dir` flag. opencode does not treat process `cwd` as its project root on its own — every opencode eval run so far had actually operated on this repo's real working directory instead of the isolated fixture: it read the real `SKILL.md`/`AGENTS.md`, and one run wrote an (accurate but misplaced) `context/` entry directly into this repo, promptly reverted. Fixed by passing `--dir` explicitly; all opencode results on the agent & model matrix were re-run and corrected after the fix.
 
 ## [0.9.0] - 2026-08-20
 
