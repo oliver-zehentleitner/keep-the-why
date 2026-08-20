@@ -19,22 +19,40 @@ agent would find it unprompted. Full methodology, including why: [the eval
 runner's driver
 docs](https://github.com/oliver-zehentleitner/keep-the-why/blob/latest/tools/evals/README.md#drivers).
 
+A cell's result comes from an LLM judge (always Claude, regardless of which
+agent is under test, so grading stays consistent) that returns two things: a
+`pass`/`fail` verdict against the case's expected behavior, and a 0–10 score
+(10 = fully matches). A cell showing `9/10` passed but wasn't a perfect
+match; a cell showing `pass` with no number was observed directly rather
+than run through the judge (noted per cell).
+
 ## Results
 
-| Agent | Model | Provider | Result | Skill version | Date | Notes |
-|---|---|---|---|---|---|---|
-| Claude Code | Claude Sonnet 5 | Anthropic (native) | ✅ pass (9/10) | 0.9.0 | 2026-08-20 | Native discovery. Full-suite numbers tracked separately in [Evals](evals.md). |
-| Pi | Qwen3.8 27B | Ollama (local) | ✅ pass | 0.9.0 | 2026-08-20 | ~1h49m on an 8GB-VRAM card running mostly on CPU. Correct behavior observed directly; not run through the automated judge. |
-| Pi | Qwen3.8 27B | OpenRouter | ✅ pass (10/10) | 0.9.0 | 2026-08-20 | 247s. |
-| opencode | Qwen3.8 27B | OpenRouter | ✅ pass (9/10) | 0.9.0 | 2026-08-20 | 252s. See variance note below. |
-| Kimi Code | Qwen3.8 27B | OpenRouter | ✅ pass (10/10) | 0.9.0 | 2026-08-20 | 381s. See variance note below. |
+`–` means not yet tested. Each tested cell: verdict (and score, where
+judged) · skill version · date.
 
-**Not yet tested:** Codex CLI and Cline both have clean, first-party custom-provider
-support (OpenRouter reachable without a proxy) and are next in line. Gemini
-CLI has no clean first-party path to a non-Gemini model — only via a
-community wrapper or a LiteLLM proxy — so it's lower priority. Model-side,
-Kimi K3, DeepSeek, Grok, and Mistral are planned next, run through whichever
-agents above already have working OpenRouter configs.
+| Model | Claude Code | Pi | opencode | Kimi Code | Codex CLI | Cline | Gemini CLI |
+|---|---|---|---|---|---|---|---|
+| Claude Sonnet 5 (native) | ✅ 9/10 · v0.9.0 · 2026-08-20 | – | – | – | – | – | – |
+| Qwen3.8 27B (Ollama, local, Q4_K_M) | – | ✅ pass¹ · v0.9.0 · 2026-08-20 | – | – | – | – | – |
+| Qwen3.8 27B (OpenRouter) | – | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 9/10² · v0.9.0 · 2026-08-20 | ✅ 10/10² · v0.9.0 · 2026-08-20 | – | – | – |
+| Kimi K3 (OpenRouter) | – | – | – | – | – | – | – |
+| DeepSeek (OpenRouter) | – | – | – | – | – | – | – |
+| GPT (OpenAI) | – | – | – | – | – | – | – |
+| Gemini | – | – | – | – | – | – | – |
+| Mistral (OpenRouter) | – | – | – | – | – | – | – |
+| Grok (OpenRouter) | – | – | – | – | – | – | – |
+
+¹ ~1h49m on an 8GB-VRAM card running mostly on CPU. Observed directly, not
+run through the automated judge.
+² See "A finding this table exists to surface" below — an earlier, informal
+run of this exact cell removed the code under test before asking instead of
+after.
+
+Codex CLI and Cline both have clean, first-party custom-provider support
+(OpenRouter reachable without a proxy) and are next in line to fill in.
+Gemini CLI has no clean first-party path to a non-Gemini model — only via a
+community wrapper or a LiteLLM proxy — so it's lower priority.
 
 ## A finding this table exists to surface
 
