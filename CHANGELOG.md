@@ -4,6 +4,8 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-08-20
+
 ### Added
 
 - New `context/release-and-distribution.md` entry: the `[x.y.z]` `CHANGELOG.md` compare link always fails `Link Check` on the release PR's own merge-to-main push, since the tag it points to isn't created until the later, separate tagging step — self-resolving once tagged, not a real regression to chase. Hit for real releasing 0.7.0.
@@ -317,7 +319,8 @@ Initial release.
 - Logo, wordmark, and favicon.
 - `context/repo-conventions.md`, dogfooding the skill on its own repository from day one.
 
-[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.6.4...v0.7.0
 [0.6.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.5.2...v0.6.0

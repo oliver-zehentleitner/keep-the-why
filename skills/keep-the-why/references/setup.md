@@ -12,7 +12,7 @@ Setup state splits across two files, matching the existing `AGENTS.md`/`AGENTS.l
 <!-- keep-the-why:config -->
 - context: `context/`
 - init: complete
-- context-schema: 0.7.0
+- context-schema: 0.8.0
 - capture-confirmation: confirm-when-unsure
 - source-reference: never
 <!-- /keep-the-why:config -->
