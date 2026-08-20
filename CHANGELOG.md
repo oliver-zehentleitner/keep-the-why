@@ -9,6 +9,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 - New `context/release-and-distribution.md` entry: the `[x.y.z]` `CHANGELOG.md` compare link always fails `Link Check` on the release PR's own merge-to-main push, since the tag it points to isn't created until the later, separate tagging step — self-resolving once tagged, not a real regression to chase. Hit for real releasing 0.7.0.
 - New `undefined` value for the **Type** field, used with a required trailing reason (`undefined — <reason>`) when none of `decision`/`workaround`/`incident`/`constraint` fits. Replaces leaving Type blank in that case, so misfit entries stay `grep`-able as candidates for a future fifth value instead of being indistinguishable from entries that never considered Type at all. Documented in `context/entry-format.md`, `references/repository-structure.md`, `SKILL.md`'s Record step; migration guidance in `references/migrations.md`.
 
+### Fixed
+
+- The "Reading the entries" section of `context/README.md` (`references/setup.md`'s wizard template, `examples/first-time-setup.md`'s dialogue, and this repo's own `context/README.md`) listed Status and Evidence but never mentioned Type — a gap since 0.7.0 introduced the field, missed because that release only touched entry-format docs, not the `context/README.md` template every new project gets.
+
 ### Changed
 
 - `references/repository-structure.md` and `context/entry-format.md`: clarified that the flat-`context/` filename-namespacing guidance isn't prefix-only (`auth-tokens.md`) — a suffix (`tokens-auth.md`) works just as well when it groups or sorts more usefully for a given project. The prior wording's examples all happened to be prefixes, which read as more restrictive than intended.

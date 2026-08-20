@@ -89,6 +89,7 @@ Where the why-knowledge lives, whether the project has been set up at all, and h
 
     Each entry separates:
 
+    - **Type** — what kind of thing it is: decision, workaround, incident, or constraint (or undefined, with a reason, if none fit)
     - **Status** — whether a decision is active, superseded, open, or needs review
     - **Evidence** — whether its rationale is confirmed, inferred, or unknown
 
