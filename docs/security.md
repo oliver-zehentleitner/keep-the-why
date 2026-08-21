@@ -12,7 +12,7 @@ See [Trust model](trust-model.md) for the full reasoning, the read/write rules, 
 
 ## What Keep the Why does and doesn't add to your attack surface
 
-- No external service, no telemetry, no daemon, no database — see [Philosophy](philosophy.md). There's nothing running that Keep the Why itself could leak through.
+- No external service, no telemetry, no daemon, no database — see [Philosophy](philosophy.md). There's nothing running that Keep the Why itself could leak through. This covers Keep the Why only: third-party installers referenced in [Installation](installation.md) (e.g. `npx skills`) have their own, separate policies.
 - No secrets, credentials, or personal data belong in `context/` (Core rule 9) — retrospective recovery and interviews synthesize rationale, they don't transcribe raw material verbatim.
 - Actions with real side effects still go through whatever the agent running the skill already requires — permission prompts, sandboxing, trust verification. Keep the Why doesn't add a separate permission layer, and doesn't assume those mechanisms are bulletproof either.
 - `context/` is committed alongside the code, reviewed the same way — a change to it is as visible in a diff or a pull request as any other change.
