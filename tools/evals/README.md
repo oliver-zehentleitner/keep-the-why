@@ -36,25 +36,35 @@ case plus `summary.json` and `summary.md`.
 | Driver | CLI | Skill discovery |
 |---|---|---|
 | `claude` (default) | [Claude Code](https://claude.com/claude-code) (`claude`) | Native — installed at `.claude/skills/keep-the-why`, the CLI decides for itself from the `SKILL.md` description whether to load it. This is what the activation-reliability cases actually test. |
-| `pi` | [Pi](https://pi.dev) (`pi`) | Explicit — see below |
+| `cline` | [Cline](https://cline.bot) (`cline`) | Explicit — see below |
+| `codex` | [Codex CLI](https://github.com/openai/codex) (`codex`) | Explicit — see below |
+| `kimi` | [Kimi Code](https://github.com/MoonshotAI/kimi-code) (`kimi`) | Explicit — see below |
 | `opencode` | [opencode](https://opencode.ai) (`opencode`) | Explicit — see below |
+| `pi` | [Pi](https://pi.dev) (`pi`) | Explicit — see below |
 
-`pi` and `opencode` don't get native-discovery treatment: whether they'd find
-the skill on their own is a Claude-Code-specific question, already covered by
-the `claude` driver's activation cases. Instead the skill is installed at a
-plain `skills/keep-the-why/` path and the case prompt is prefixed with an
-explicit instruction to read its `SKILL.md` and follow it. This is what makes
-any tool-use-capable CLI usable here without needing its own skill-discovery
-convention, and what lets `--model` point at a local model (e.g. Ollama) that
-has no notion of "skills" at all. What's under test with these two drivers is
+`cline`, `codex`, `kimi`, `opencode`, and `pi` don't get native-discovery
+treatment: whether they'd find the skill on their own is a Claude-Code-specific
+question, already covered by the `claude` driver's activation cases. Instead
+the skill is installed at a plain `skills/keep-the-why/` path and the case
+prompt is prefixed with an explicit instruction to read its `SKILL.md` and
+follow it. This is what makes any tool-use-capable CLI usable here without
+needing its own skill-discovery convention, and what lets `--model` point at a
+model that has no notion of "skills" at all (a local Ollama model, or any
+model via OpenRouter). What's under test with these drivers is
 instruction-following given the skill, not discovery.
 
-**Verification status:** the `pi`/`opencode` drivers (CLI flags, JSON event
-schema) were built from each project's own docs, not yet run end-to-end
-against a real install of either — expect to adjust flag names or event
-field names in `run_agent_pi`/`render_transcript_pi` and
-`run_agent_opencode`/`render_transcript_opencode` in `run.py` once real
-transcripts exist to check them against.
+**Verification status:** all five non-`claude` drivers have been run
+end-to-end against real installs (local Ollama and/or OpenRouter) and their
+results published to [the agent & model
+matrix](https://keepthewhy.com/agent-matrix/). Two real bugs were only found
+this way, not from the docs: `opencode` didn't treat the fixture directory as
+its project root without an explicit `--dir` flag (it silently operated on
+this repo's real working directory instead), and `codex exec`'s default
+sandbox/approval mode denied every write attempt with no one to approve it in
+a non-interactive session, making every case look like "correctly didn't
+touch the file" when it had structurally been unable to — both fixed, see
+`CHANGELOG.md`. Re-check `render_transcript_*` against a fresh raw transcript
+if a driver's CLI version changes noticeably.
 
 ## Usage
 
@@ -69,13 +79,17 @@ python3 tools/evals/run.py --cases continuous-capture-basic,chestertons-fence-gu
 python3 tools/evals/run.py --all --parallel 4 --model sonnet --judge-model sonnet
 
 # a different driver — model syntax is driver-specific
-python3 tools/evals/run.py --all --driver pi --model ollama/qwen3:8b --parallel 1
-python3 tools/evals/run.py --all --driver opencode --model ollama/qwen3:8b
+python3 tools/evals/run.py --all --driver pi --model ollama/qwen3.8:27b --parallel 1
+python3 tools/evals/run.py --all --driver opencode --model openrouter/qwen/qwen3.8-27b
+python3 tools/evals/run.py --all --driver cline --model openrouter/moonshotai/kimi-k3
+python3 tools/evals/run.py --all --driver codex --model openrouter/x-ai/grok-4.6
 ```
 
 Requires the selected driver's CLI on `PATH` with working credentials/model
-config (for `pi`, a local Ollama model needs a matching entry in
-`~/.pi/agent/models.json`; for `opencode`, in `opencode.json`). Exit code is
+config: for `pi`, a local Ollama or OpenRouter model needs a matching entry in
+`~/.pi/agent/models.json`; for `opencode`, in `opencode.json`; for `kimi`, via
+`kimi provider`; for `cline`, via `cline auth`; for `codex`, a
+`[model_providers.<id>]` block in `~/.codex/config.toml`. Exit code is
 non-zero if any case fails or errors.
 
 ## Fixtures
@@ -142,10 +156,8 @@ What's currently being improved, what's working, what isn't yet, and how to help
 
 ## Known limitations
 
-- One run per case per driver — no flakiness statistics yet, and the
-  `pi`/`opencode` drivers aren't verified end-to-end against a real install
-  yet (see "Verification status" above). Both tracked as ideas in the issue
-  tracker.
+- One run per case per driver — no flakiness statistics yet. Tracked as an
+  idea in the issue tracker.
 - Non-interactive: multi-turn flows (a full wizard dialogue, a confirmation
   answered with "yes") can only be tested up to the agent's first stopping
   point.

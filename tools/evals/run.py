@@ -32,9 +32,11 @@ instructions only — no executable code.
             `kimi provider` (~/.kimi-code/config.toml).
   cline     Cline (`cline`, cline-bot). Provider/model configured via
             `cline auth` (~/.cline/data/settings/providers.json).
+  codex     Codex CLI (`codex`, openai/codex). Provider/model configured via
+            [model_providers.<id>] blocks in ~/.codex/config.toml.
 
-pi, opencode, kimi, and cline don't get native-discovery treatment: we
-don't test whether they'd find the skill on their own (that's a
+pi, opencode, kimi, cline, and codex don't get native-discovery treatment:
+we don't test whether they'd find the skill on their own (that's a
 Claude-Code-specific question, already covered by the claude driver's
 activation cases). Instead the skill is installed at a plain
 skills/keep-the-why/ path and the case prompt is prefixed with an explicit
@@ -51,16 +53,16 @@ explicitly and tells the agent not to use any other install it may know
 about; re-verified fixed for pi, watch for it on new drivers too. Separately
 (and more seriously): opencode did not treat the subprocess cwd as its
 project root at all without an explicit --dir flag — it operated on this
-repo's real directory until that was fixed (see git history). cline was
-verified to respect its own -c/--cwd flag correctly before being trusted
-here.
+repo's real directory until that was fixed (see git history). cline and
+codex were both verified to respect their own -c/--cwd and -C/--cd flags
+correctly before being trusted here.
 
-NOTE: the pi, opencode, kimi, and cline drivers (command flags, JSON event
-schema) were built from each project's own docs/live testing — pi and kimi
-verified against real transcripts (local Ollama and OpenRouter), opencode
-and cline verified against OpenRouter. Re-check render_transcript_* against
-a fresh raw
-transcript if a driver's CLI version changes noticeably.
+NOTE: the pi, opencode, kimi, cline, and codex drivers (command flags, JSON
+event schema) were built from each project's own docs/live testing — pi and
+kimi verified against real transcripts (local Ollama and OpenRouter),
+opencode, cline, and codex verified against OpenRouter. Re-check
+render_transcript_* against a fresh raw transcript if a driver's CLI
+version changes noticeably.
 
 Usage:
   python3 tools/evals/run.py --all
@@ -121,14 +123,15 @@ SKILL_INSTALL_REL = {
     "opencode": "skills/keep-the-why",
     "kimi": "skills/keep-the-why",
     "cline": "skills/keep-the-why",
+    "codex": "skills/keep-the-why",
 }
 
 # Whether the case prompt gets prefixed with an explicit "read SKILL.md and
 # follow it" instruction. False only for claude, where discovery itself is
 # part of what's under test.
-EXPLICIT_LOAD = {"claude": False, "pi": True, "opencode": True, "kimi": True, "cline": True}
+EXPLICIT_LOAD = {"claude": False, "pi": True, "opencode": True, "kimi": True, "cline": True, "codex": True}
 
-DRIVER_LABELS = {"claude": "Claude Code", "pi": "Pi", "opencode": "opencode", "kimi": "Kimi Code", "cline": "Cline"}
+DRIVER_LABELS = {"claude": "Claude Code", "pi": "Pi", "opencode": "opencode", "kimi": "Kimi Code", "cline": "Cline", "codex": "Codex CLI"}
 
 # Matches the CLI's own plain-text account-limit messages (observed so far:
 # "You've hit your session limit · resets ..." and "You've hit your monthly
@@ -452,12 +455,64 @@ def run_agent_cline(prompt, cwd, model, timeout, disallowed_tools=None):
     return {"events": events, "error": error}
 
 
+def run_agent_codex(prompt, cwd, model, timeout, disallowed_tools=None):
+    # -C/--cd is required, same lesson as opencode's --dir. --skip-git-repo-check:
+    # without it codex refuses to run in a directory it hasn't been told to
+    # trust, even a fresh fixture repo. --json: newline-delimited "item"/"turn"
+    # event stream, see render_transcript_codex.
+    #
+    # --approve-for-me is NOT optional, verified the hard way: codex exec's
+    # default sandbox/approval (workspace-write, on-request) has no one to
+    # answer an approval request in a non-interactive session, so every write
+    # attempt was silently denied — every eval case looked like "the agent
+    # correctly didn't touch the file" when the truth was it structurally
+    # couldn't, regardless of what it actually decided. --approve-for-me
+    # routes approval requests through automatic review instead, so real
+    # writes go through. --dangerously-bypass-approvals-and-sandbox would
+    # also work but is broader than needed, and this session's own
+    # permission layer rejects that flag outright.
+    # model_reasoning_effort=medium: also not optional for some OpenRouter
+    # models (verified: google/gemini-3.1-pro-preview and x-ai/grok-4.6 both
+    # 400'd with "Reasoning is mandatory for this endpoint and cannot be
+    # disabled" without it — codex doesn't recognize either model, so its
+    # fallback metadata omits reasoning entirely unless told otherwise).
+    # Harmless to set unconditionally for models that don't require it.
+    provider, _, model_id = model.partition("/")
+    cmd = ["codex", "exec", "--json", "-C", str(cwd), "--skip-git-repo-check",
+           "--approve-for-me", "-c", f"model_provider={provider}",
+           "-c", "model_reasoning_effort=medium", "-m", model_id, prompt]
+    if disallowed_tools:
+        print(f"  NOTE: codex driver has no documented tool-deny flag — "
+              f"case's disallowed_tools {disallowed_tools} not enforced.",
+              file=sys.stderr)
+    env = dict(os.environ)
+    try:
+        proc = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired as e:
+        return {"events": [], "error": f"timeout after {timeout}s",
+                "raw": (e.stdout or "")[:MAX_TRANSCRIPT_CHARS]}
+    events = []
+    for line in proc.stdout.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            events.append(json.loads(line))
+        except json.JSONDecodeError:
+            pass
+    error = None
+    if proc.returncode != 0 and not events:
+        error = f"codex exited {proc.returncode}: {proc.stderr[:2000]}"
+    return {"events": events, "error": error}
+
+
 AGENT_RUNNERS = {
     "claude": run_agent_claude,
     "pi": run_agent_pi,
     "opencode": run_agent_opencode,
     "kimi": run_agent_kimi,
     "cline": run_agent_cline,
+    "codex": run_agent_codex,
 }
 
 
@@ -601,12 +656,42 @@ def render_transcript_cline(events):
     return _cap("\n\n".join(out))
 
 
+def render_transcript_codex(events):
+    """Flatten codex's --json item/turn event stream (item.completed, item.type)."""
+    out = []
+    for ev in events:
+        t = ev.get("type")
+        if t != "item.completed":
+            if t == "turn.completed":
+                out.append("[session ended]")
+            continue
+        item = ev.get("item") or {}
+        it = item.get("type")
+        if it == "agent_message":
+            text = (item.get("text") or "").strip()
+            if text:
+                out.append(f"[assistant]\n{text}")
+        elif it == "command_execution":
+            cmd = item.get("command", "")
+            out.append(f"[tool call] bash: {cmd}")
+            output = str(item.get("aggregated_output", ""))
+            if len(output) > MAX_TOOL_RESULT_CHARS:
+                output = output[:MAX_TOOL_RESULT_CHARS] + "…(truncated)"
+            out.append(f"[tool result] {output}")
+        elif it in ("file_change", "mcp_tool_call"):
+            out.append(f"[tool call] {it}: {json.dumps(item, ensure_ascii=False)[:1500]}")
+        elif it == "error":
+            out.append(f"[error] {item.get('message')}")
+    return _cap("\n\n".join(out))
+
+
 TRANSCRIPT_RENDERERS = {
     "claude": render_transcript_claude,
     "pi": render_transcript_pi,
     "opencode": render_transcript_opencode,
     "kimi": render_transcript_kimi,
     "cline": render_transcript_cline,
+    "codex": render_transcript_codex,
 }
 
 
