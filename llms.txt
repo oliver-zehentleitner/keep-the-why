@@ -89,8 +89,8 @@ needing to be told again.
 - skills.sh: https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why — live, backs
   the `npx skills add` method above
 - SkillsLLM: live, verified, passed security scan — https://skillsllm.com/skill/keep-the-why
-- ASM: pending, curated skill index for the `asm` CLI, installable via `asm install
-  keep-the-why` once merged — https://github.com/luongnv89/asm/issues/469
+- ASM: live, curated skill index for the `asm` CLI, installable via `asm install
+  keep-the-why` — https://luongnv.com/asm/#/skills/oliver-zehentleitner%2Fkeep-the-why%3A%3Askills%2Fkeep-the-why%3A%3Akeep-the-why
 - GitHub Copilot plugin marketplace: ready for review, external plugin submission pinned to
   v0.5.2 — https://github.com/github/awesome-copilot/issues/2470
 
