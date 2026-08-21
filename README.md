@@ -105,10 +105,10 @@ Full install detail for every method, including tools without a skill runtime at
 
 | Name | Status | Info |
 |---|---|---|
+| [ASM](https://luongnv.com/asm/#/skills/oliver-zehentleitner%2Fkeep-the-why%3A%3Askills%2Fkeep-the-why%3A%3Akeep-the-why) | Live | Curated skill index for the `asm` CLI; installable via `asm install keep-the-why` |
 | [awesome-agent-skills](https://github.com/VoltAgent/awesome-agent-skills#context-engineering) | Live | Listed under "Context Engineering" |
 | [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why) | Live | Backs the `npx skills add` install method above |
 | [SkillsLLM](https://skillsllm.com/skill/keep-the-why) | Live | Verified, passed [SkillsLLM's security scan](https://skillsllm.com/security-check/IPmNycVdbOyq) |
-| [ASM](https://luongnv.com/asm/#/skills/oliver-zehentleitner%2Fkeep-the-why%3A%3Askills%2Fkeep-the-why%3A%3Akeep-the-why) | Live | Curated skill index for the `asm` CLI; installable via `asm install keep-the-why` |
 | [GitHub Copilot plugin marketplace](https://github.com/github/awesome-copilot) | Ready for review — [Issue #2470](https://github.com/github/awesome-copilot/issues/2470) | External plugin submission, pinned to `v0.5.2` |
 
 ## Example
