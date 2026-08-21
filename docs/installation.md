@@ -62,6 +62,16 @@ gh skill install oliver-zehentleitner/keep-the-why keep-the-why
 
 Either form prompts for which agent and scope (project or personal) to install for, and installs only the skill package (`skills/keep-the-why/` in this repo) — not the whole repository. Run `gh skill install --help` for non-interactive flags.
 
+## Also installable: asm
+
+With [`asm`](https://luongnv.com/asm/) (agent-skill-manager), pinned to a release, from the skill's subdirectory in this repo:
+
+```bash
+asm install github:oliver-zehentleitner/keep-the-why#latest:skills/keep-the-why --tool <tool>
+```
+
+Replace `<tool>` with your agent (`claude`, `codex`, `opencode`, `cline`, `gemini`, and more — run `asm install --help` for the full list). Replace `#latest` with an exact [tag](https://github.com/oliver-zehentleitner/keep-the-why/releases) to pin to a specific version instead of always the newest, or drop it to track `main` directly.
+
 ## Fallback: manual clone
 
 If neither CLI is available. The skill lives under `skills/keep-the-why/`, not at the repo root — clone to a scratch location and copy just that folder, rather than cloning the whole repo straight into your agent's skills directory (which would nest an embedded git repository inside yours and pull in docs/, mkdocs config, and CI files you don't need). Pinned to a release:

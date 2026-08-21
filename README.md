@@ -74,6 +74,14 @@ gh skill install oliver-zehentleitner/keep-the-why keep-the-why@latest
 
 Prompts for which agent and scope (project or personal) to install for. This installs just the skill package (`skills/keep-the-why/`), not the whole repo — no docs/, mkdocs config, or CI files end up in your project.
 
+**Also installable via [asm](https://luongnv.com/asm/)** (agent-skill-manager):
+
+```bash
+asm install github:oliver-zehentleitner/keep-the-why#latest:skills/keep-the-why --tool <tool>
+```
+
+Replace `<tool>` with your agent (`claude`, `codex`, `opencode`, `cline`, `gemini`, and more — run `asm install --help` for the full list).
+
 **Also installable as a Claude Code plugin** — `.claude-plugin/plugin.json` at the repo root (separate from the root `plugin.json`, which serves GitHub's Copilot CLI plugin marketplace format).
 
 **Fallback — manual clone**, if neither of the above is available. The skill lives under `skills/keep-the-why/` in this repo, not at the root, so clone to a scratch location and copy just that folder rather than cloning straight into your agent's skills directory (cloning the whole repo there would nest an embedded git repository inside yours, and pull in unrelated project files):
