@@ -68,8 +68,9 @@ rm -rf /tmp/keep-the-why
 ```
 
 Compatible with Claude Code, Codex CLI, Gemini CLI, GitHub Copilot, Cursor, Windsurf,
-Antigravity, Amp, Cline, Goose, Roo Code, OpenCode, Trae, Factory, JetBrains Junie, Warp, and
-other tools supporting the open Agent Skills format. Full paths per agent: see Installation below.
+Antigravity, Amp, Cline, Kimi Code, Pi, Goose, Roo Code, OpenCode, Trae, Factory, JetBrains
+Junie, Warp, and other tools supporting the open Agent Skills format. Full paths per agent: see
+Installation below.
 Also installable as a Claude Code plugin (`.claude-plugin/plugin.json` at the repo root, separate
 from the root `plugin.json` used by GitHub's Copilot CLI plugin marketplace format).
 

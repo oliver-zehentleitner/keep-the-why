@@ -79,12 +79,14 @@ The folder name must stay `keep-the-why` (has to match `name` in the frontmatter
 | Agent | Project-scoped | Personal | Last verified |
 |---|---|---|---|
 | Claude Code | `.claude/skills/keep-the-why` | `~/.claude/skills/keep-the-why` | 2026-07-10 |
+| Cline | `.cline/skills/keep-the-why` | `~/.cline/skills/keep-the-why` | 2026-07-10 |
+| Cursor | `.cursor/skills/keep-the-why` | — (no personal directory) | 2026-07-10 |
 | Gemini CLI | `.gemini/skills/keep-the-why` | `~/.gemini/skills/keep-the-why` | 2026-07-10 |
 | GitHub Copilot | `.github/skills/keep-the-why` | `~/.copilot/skills/keep-the-why` | 2026-07-10 |
-| Cursor | `.cursor/skills/keep-the-why` | — (no personal directory) | 2026-07-10 |
-| Cline | `.cline/skills/keep-the-why` | `~/.cline/skills/keep-the-why` | 2026-07-10 |
+| Kimi Code | `.kimi/skills/keep-the-why` | `~/.kimi/skills/keep-the-why` | 2026-08-21 |
+| Pi | `.pi/skills/keep-the-why` | `~/.pi/agent/skills/keep-the-why` | 2026-08-21 |
 
-These paths change as agent tooling evolves — if one doesn't work, check the agent's current docs rather than assuming this table is still accurate. **Codex CLI**, Antigravity, Amp, OpenCode, Warp, and more read the shared `.agents/skills/keep-the-why` path at project scope instead of a vendor-specific one — Codex specifically scans `.agents/skills` from your current working directory up to the repository root (per [OpenAI's Codex skills docs](https://developers.openai.com/codex/skills)) — and `~/.agents/skills/keep-the-why` personally. Also compatible with Windsurf, Goose, Roo Code, Trae, Factory, JetBrains Junie, and other tools supporting the open Agent Skills format — the directory convention varies, check your tool's own docs.
+These paths change as agent tooling evolves — if one doesn't work, check the agent's current docs rather than assuming this table is still accurate. **Codex CLI**, Antigravity, Amp, OpenCode, Warp, and more read the shared `.agents/skills/keep-the-why` path at project scope instead of a vendor-specific one — Codex specifically scans `.agents/skills` from your current working directory up to the repository root (per [OpenAI's Codex skills docs](https://developers.openai.com/codex/skills)) — and `~/.agents/skills/keep-the-why` personally. Pi and Kimi Code also fall back to this same shared path (project and personal) if their own brand directory above doesn't have it. Also compatible with Windsurf, Goose, Roo Code, Trae, Factory, JetBrains Junie, and other tools supporting the open Agent Skills format — the directory convention varies, check your tool's own docs.
 
 Start a new session afterward so the skill is picked up.
 
