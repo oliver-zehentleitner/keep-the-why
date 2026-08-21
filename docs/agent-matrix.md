@@ -45,8 +45,24 @@ Agents are ordered open source first (alphabetical), then closed source
 | Grok 4.6 (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-21 | – | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-20 | – |
 | Kimi K3 (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-21 | – | ❌ 3/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-20 | – |
 | Mistral Medium 3.5 (OpenRouter) | ❌ 2/10 · v0.9.0 · 2026-08-20 | ❌ 1/10 · v0.9.0 · 2026-08-21 | – | ❌ 2/10 · v0.9.0 · 2026-08-20 | ❌ 1/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | – |
-| Qwen3.8 27B (Ollama, local, Q4_K_M) | – | – | – | – | – | ✅ 9/10 · v0.9.0 · 2026-08-20 | – |
+| Qwen3.8 27B (Ollama, local, Q4_K_M) | – | – | – | – | ❌ 2/10 · v0.9.0 · 2026-08-21 | ✅ 9/10 · v0.9.0 · 2026-08-20 | – |
 | Qwen3.8 27B (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-21 | – | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-20 | – |
+
+The three remaining blanks in the Ollama row (Cline, Codex CLI, Kimi Code) aren't
+untried — each was attempted 2026-08-21 against a real local Ollama instance and
+hit a blocker specific to that driver, not the model or the skill:
+
+- **Codex CLI** requires `wire_api = "responses"` for any configured provider as
+  of 0.149.0 (`wire_api = "chat"` errors out at startup); Ollama's
+  OpenAI-compatible surface only implements Chat Completions, not the Responses
+  API. Structurally incompatible until one side adds support for the other.
+- **Cline** has an internal per-request client timeout (~300s, no CLI flag or
+  provider-config field found to raise it) that fired three times in a row
+  against this Ollama host's slower turns, cutting the session short before the
+  model could respond — a client-side ceiling, not a skill or model failure.
+- **Kimi Code** completed real turns but at a pace that made the full case
+  impractical here: one single turn took 145 minutes end to end, and a
+  10800s (3-hour) run still didn't reach a verdict.
 
 ## A finding this table exists to surface
 
