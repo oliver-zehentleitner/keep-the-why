@@ -83,6 +83,7 @@ python3 tools/evals/run.py --all --driver pi --model ollama/qwen3.8:27b --parall
 python3 tools/evals/run.py --all --driver opencode --model openrouter/qwen/qwen3.8-27b
 python3 tools/evals/run.py --all --driver cline --model openrouter/moonshotai/kimi-k3
 python3 tools/evals/run.py --all --driver codex --model openrouter/x-ai/grok-4.6
+python3 tools/evals/run.py --all --driver kimi --model openrouter/z-ai/glm-5.3
 ```
 
 Requires the selected driver's CLI on `PATH` with working credentials/model

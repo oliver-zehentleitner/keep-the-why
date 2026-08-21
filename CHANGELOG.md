@@ -7,7 +7,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 ### Added
 
 - `tools/evals/run.py` gained a `--driver` flag (`claude`, `pi`, `opencode`, `kimi`, `cline`, `codex`) so eval cases can run against agentic CLIs other than Claude Code, including non-Claude models (local Ollama or any model via OpenRouter) for the non-Claude drivers. Claude Code keeps native skill discovery (what the activation-reliability cases test); the other drivers get the skill installed at a plain path and an explicit instruction to read and follow it, since discovery itself isn't what those drivers are being tested for.
-- New docs page `docs/agent-matrix.md`, linked prominently from the README: tracks which agent × model combinations have actually been spot-checked against the skill, separate from the full-suite Claude-Code-only numbers on the Evals page. Now covers Pi, opencode, Kimi Code, Cline, and Codex CLI against Qwen3.8 27B, Kimi K3, DeepSeek V3.2, GPT-5.2, Gemini 3.1 Pro, Mistral Medium 3.5, and Grok 4.6. Agents ordered open-source-first then alphabetically; models ordered alphabetically.
+- New docs page `docs/agent-matrix.md`, linked prominently from the README: tracks which agent × model combinations have actually been spot-checked against the skill, separate from the full-suite Claude-Code-only numbers on the Evals page. Now covers Pi, opencode, Kimi Code, Cline, and Codex CLI against Qwen3.8 27B, Kimi K3, DeepSeek V3.2, GPT-5.2, Gemini 3.1 Pro, Mistral Medium 3.5, Grok 4.6, and GLM-5.3. Agents ordered open-source-first then alphabetically; models ordered alphabetically.
 
 ### Fixed
 
