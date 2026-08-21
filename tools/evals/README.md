@@ -93,6 +93,39 @@ config: for `pi`, a local Ollama or OpenRouter model needs a matching entry in
 `[model_providers.<id>]` block in `~/.codex/config.toml`. Exit code is
 non-zero if any case fails or errors.
 
+## Matrix runs
+
+`--matrix` runs every driver × model combination in
+[`matrix-config.json`](matrix-config.json) (or an override) instead of a
+single `--driver`/`--model` run — this is what produces the results on the
+[agent & model matrix](https://keepthewhy.com/agent-matrix/):
+
+```bash
+# the full standard matrix (5 drivers x 8 models = 40 combinations)
+python3 tools/evals/run.py --cases chestertons-fence-guard --matrix
+
+# a subset, and how many combinations run at once
+python3 tools/evals/run.py --cases chestertons-fence-guard --matrix \
+  --matrix-drivers pi,cline --matrix-models openrouter/qwen/qwen3.8-27b,openrouter/z-ai/glm-5.3 \
+  --matrix-parallel 2
+```
+
+Each combination is an ordinary run under the hood (same `execute_pass`, same
+per-case resumability), just many of them at once — a re-run against the same
+`--results-dir` only retries combinations that didn't fully resolve last
+time, same as re-running a single-driver command. Prints and saves a
+ready-to-paste `docs/agent-matrix.md`-style table
+(`<results-dir>/matrix-summary.md` and `.json`) — that page's prose sections
+are hand-curated and this doesn't touch them, so pasting rows in is still a
+manual step. Exit code is non-zero if anything failed or didn't resolve,
+which is what makes this safe to run unattended (e.g. a scheduled GitHub
+Actions job) — env-var credentials only, no interactive confirmation
+anywhere in the chain.
+
+Growing the matrix (a new model, a new driver once it's been verified
+end-to-end like the others) is a one-line edit to `matrix-config.json`, not a
+code change.
+
 ## Fixtures
 
 - `fixtures/_base/` — the default project every case starts from: completed

@@ -90,6 +90,7 @@ Claude-account-specific; it simply won't fire for the other drivers.)
 
 import argparse
 import concurrent.futures
+import copy
 import datetime
 import json
 import os
@@ -107,6 +108,7 @@ SKILL_DIR = REPO_ROOT / "skills" / "keep-the-why"
 EVALS_JSON = SKILL_DIR / "evals" / "evals.json"
 FIXTURES_DIR = TOOL_DIR / "fixtures"
 BASE_FIXTURE = FIXTURES_DIR / "_base"
+MATRIX_CONFIG_JSON = TOOL_DIR / "matrix-config.json"
 
 MAX_DIFF_CHARS = 30_000
 MAX_TRANSCRIPT_CHARS = 60_000
@@ -160,6 +162,17 @@ def load_cases(selected):
             sys.exit(f"unknown case id(s): {', '.join(missing)}")
         return [by_id[c] for c in selected]
     return cases
+
+
+def load_matrix_config():
+    """The repo's standing driver x model matrix (tools/evals/matrix-config.json).
+
+    Kept as data, not a Python constant, so growing the matrix (a new model,
+    a new driver once verified) is a one-line JSON edit, not a code change —
+    and so a CI job can read the exact same file without importing this
+    module.
+    """
+    return json.loads(MATRIX_CONFIG_JSON.read_text())
 
 
 def read_case_config(case_id):
@@ -945,6 +958,113 @@ def write_summary(records, results_dir, args):
     return summary
 
 
+def _model_slug(model):
+    """openrouter/z-ai/glm-5.3 -> z-ai-glm-5.3, for a results subdirectory name."""
+    rest = model.split("/", 1)[1] if model.startswith("openrouter/") else model
+    return rest.replace("/", "-")
+
+
+def run_matrix(cases, args):
+    """Run every driver x model combination in the matrix config (or the
+    --matrix-drivers/--matrix-models override), and print a ready-to-paste
+    docs/agent-matrix.md-style table. Each combination reuses execute_pass
+    exactly as a normal single run would — same per-combination results
+    directory, same resumability (a combination with only resolved cases on
+    a re-run is skipped at the case level, same as any other --results-dir
+    re-run), same exit-code convention. This is deliberately not a separate
+    tool: the matrix is just many ordinary runs, so anything that makes a
+    single run more correct (a driver fix, a new case) applies here for
+    free, and the same command works unattended in CI.
+    """
+    config = load_matrix_config()
+    drivers = args.matrix_drivers.split(",") if args.matrix_drivers else config["drivers"]
+    unknown = [d for d in drivers if d not in AGENT_RUNNERS]
+    if unknown:
+        sys.exit(f"unknown driver(s) in matrix: {', '.join(unknown)}")
+
+    if args.matrix_models:
+        models = [{"id": m, "label": m} for m in args.matrix_models.split(",")]
+    else:
+        models = config["models"]
+
+    stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    matrix_dir = Path(args.results_dir) if args.results_dir else TOOL_DIR / "results" / f"{stamp}-matrix"
+    matrix_dir.mkdir(parents=True, exist_ok=True)
+
+    combos = [(driver, model["id"], model["label"]) for driver in drivers for model in models]
+    print(f"Matrix: {len(drivers)} driver(s) x {len(models)} model(s) = "
+          f"{len(combos)} combination(s) → {matrix_dir}", flush=True)
+
+    def run_one(driver, model_id):
+        sub_args = copy.copy(args)
+        sub_args.driver = driver
+        sub_args.model = model_id
+        sub_dir = matrix_dir / f"{driver}-{_model_slug(model_id)}"
+        sub_dir.mkdir(parents=True, exist_ok=True)
+        _records, summary, all_resolved = execute_pass(cases, sub_args, sub_dir)
+        return driver, model_id, summary, all_resolved
+
+    results = {}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=args.matrix_parallel) as pool:
+        futures = [pool.submit(run_one, d, m) for d, m, _label in combos]
+        for fut in concurrent.futures.as_completed(futures):
+            driver, model_id, summary, all_resolved = fut.result()
+            results[(driver, model_id)] = (summary, all_resolved)
+            status = "resolved" if all_resolved else "UNRESOLVED"
+            print(f"  [{status}] {driver} / {model_id}: "
+                  f"{summary['passed']}/{summary['total']} passed", flush=True)
+
+    skill_version = re.search(r'version: "([^"]+)"', (SKILL_DIR / "SKILL.md").read_text()).group(1)
+    date = datetime.date.today().isoformat()
+
+    def cell(driver, model_id):
+        summary, all_resolved = results[(driver, model_id)]
+        if summary["total"] == 0:
+            return "–"
+        # Single-case matrix runs (the common case) collapse to one verdict;
+        # multi-case runs show an aggregate pass count instead of a score.
+        if summary["total"] == 1:
+            case = next(iter(summary["cases"].values()))
+            verdict, score = case["verdict"], case.get("score")
+            if verdict not in ("pass", "fail"):
+                return f"⚠️ {verdict}"
+            mark = "✅" if verdict == "pass" else "❌"
+            score_part = f"{score}/10" if score is not None else verdict
+            return f"{mark} {score_part} · v{skill_version} · {date}"
+        mark = "✅" if all_resolved and summary["failed"] == 0 else "❌" if all_resolved else "⚠️"
+        return f"{mark} {summary['passed']}/{summary['total']} · v{skill_version} · {date}"
+
+    lines = [
+        f"# Matrix run — {date}",
+        "",
+        f"Skill {skill_version} · judge: `{args.judge_model}` · "
+        f"{len(drivers)} driver(s) × {len(models)} model(s)",
+        "",
+        "| Model | " + " | ".join(DRIVER_LABELS[d] for d in drivers) + " |",
+        "|---|" + "---|" * len(drivers),
+    ]
+    for model in models:
+        row = [cell(d, model["id"]) for d in drivers]
+        lines.append(f"| {model['label']} | " + " | ".join(row) + " |")
+    table_md = "\n".join(lines) + "\n"
+
+    (matrix_dir / "matrix-summary.md").write_text(table_md)
+    (matrix_dir / "matrix-summary.json").write_text(json.dumps(
+        {"skill_version": skill_version, "date": date, "drivers": drivers,
+         "models": [m["id"] for m in models],
+         "results": {f"{d}/{m}": {"summary": s, "resolved": r}
+                      for (d, m), (s, r) in results.items()}},
+        indent=2))
+
+    print(f"\n{table_md}\nSaved to {matrix_dir}/matrix-summary.md — paste rows into "
+          f"docs/agent-matrix.md by hand (that page also has hand-written prose "
+          f"this doesn't touch).", flush=True)
+
+    all_ok = all(r for _s, r in results.values()) and all(
+        s["failed"] == 0 for s, _r in results.values())
+    return 0 if all_ok else 1
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     group = ap.add_mutually_exclusive_group(required=True)
@@ -970,9 +1090,32 @@ def main():
                     help="seconds to sleep between retry passes (default: 600)")
     ap.add_argument("--max-wait-hours", type=float, default=10,
                     help="give up retrying after this many hours total (default: 10)")
+    ap.add_argument("--matrix", action="store_true",
+                    help="run every driver x model combination from "
+                         "tools/evals/matrix-config.json instead of a single "
+                         "--driver/--model run; --driver/--model are ignored "
+                         "in this mode. Prints a docs/agent-matrix.md-style "
+                         "table and exits non-zero if anything failed or "
+                         "didn't resolve — safe to run unattended (e.g. CI).")
+    ap.add_argument("--matrix-drivers",
+                    help="comma-separated driver override for --matrix "
+                         "(default: the drivers list in matrix-config.json)")
+    ap.add_argument("--matrix-models",
+                    help="comma-separated model override for --matrix, full "
+                         "--model strings (default: the models list in "
+                         "matrix-config.json)")
+    ap.add_argument("--matrix-parallel", type=int, default=4,
+                    help="concurrent driver x model combinations for "
+                         "--matrix (default: 4) — separate from --parallel, "
+                         "which still controls concurrent cases within each "
+                         "combination")
     args = ap.parse_args()
 
     cases = load_cases(args.cases.split(",") if args.cases else None)
+
+    if args.matrix:
+        sys.exit(run_matrix(cases, args))
+
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     results_dir = Path(args.results_dir) if args.results_dir else TOOL_DIR / "results" / f"{stamp}-{args.driver}"
     results_dir.mkdir(parents=True, exist_ok=True)
