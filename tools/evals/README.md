@@ -68,6 +68,16 @@ larger default toolset (browser automation, image/video gen, TTS,
 Discord/Slack/WhatsApp, computer use, ...) down to the two toolsets
 equivalent to what the other drivers expose.
 
+**`kimi` means `@moonshot-ai/kimi-code` (npm, scoped), not `kimi-code`
+(unscoped).** The unscoped package is a real but entirely unrelated tool
+([whitesmith/kimi-code](https://github.com/whitesmith/kimi-code), a Groq
+proxy launcher for claude-code) that happens to install a same-named `kimi`
+binary — confirmed the hard way installing the wrong one first. Separately:
+npm's latest at time of writing, `@moonshot-ai/kimi-code` 0.38.0, crashes
+outright on any non-interactive `-p` prompt before producing a response (a
+genuine upstream bug, reproduced independent of this skill) — pin to 0.37.2
+until that's fixed upstream.
+
 **Verification status:** all six non-`claude` drivers have been run
 end-to-end against real installs (local Ollama and/or OpenRouter) and their
 results published to [the agent & model

@@ -45,7 +45,7 @@ Agents are ordered open source first (alphabetical), then closed source
 | Grok 4.6 (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-21 | – | – | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-20 | – |
 | Kimi K3 (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-21 | – | – | ❌ 3/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-20 | – |
 | Mistral Medium 3.5 (OpenRouter) | ❌ 2/10 · v0.9.0 · 2026-08-20 | ❌ 1/10 · v0.9.0 · 2026-08-21 | – | – | ❌ 2/10 · v0.9.0 · 2026-08-20 | ❌ 1/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | – |
-| Ox Alpha (OpenRouter, stealth) | – | – | – | ✅ 10/10 · v0.9.0 · 2026-08-24 | – | – | ❌ 3/10 · v0.9.0 · 2026-08-24 | – |
+| Ox Alpha (OpenRouter, stealth) | ✅ 10/10 · v0.9.0 · 2026-08-24 | ❌ 2/10 · v0.9.0 · 2026-08-24 | – | ✅ 10/10 · v0.9.0 · 2026-08-24 | ❌ 2/10 · v0.9.0 · 2026-08-24 | ❌ 2/10 · v0.9.0 · 2026-08-24 | ❌ 2/10 · v0.9.0 · 2026-08-24 | – |
 | Qwen3.8 27B (Ollama, local, Q4_K_M) | – | – | – | – | – | ❌ 2/10 · v0.9.0 · 2026-08-21 | ✅ 9/10 · v0.9.0 · 2026-08-20 | – |
 | Qwen3.8 27B (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-21 | – | – | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-20 | – |
 
@@ -67,10 +67,25 @@ hit a blocker specific to that driver, not the model or the skill:
 
 **Ox Alpha** is a stealth/anonymous model preview on OpenRouter
 (`stealth/ox-alpha`, added 2026-08-20) — provider identity undisclosed, free
-during the preview. Its two tested cells are themselves a small instance of
-this table's whole point: the same model passed cleanly through Hermes
-(10/10) and failed through Pi (3/10) on the identical case — see the next
-section.
+during the preview. Tested across the full driver row (Gemini CLI excepted —
+still not wired in) it split 2-4: Cline and Hermes passed cleanly (10/10
+each, investigated and asked before touching anything); Codex CLI, Kimi
+Code, opencode, and Pi all failed the same way (2/10 each — investigated
+correctly, then deleted anyway, hedging only after the fact). That's a
+cleaner, larger instance of this table's whole point than a single pair of
+cells — see the next section.
+
+Getting Kimi Code's cell required its own detour: `@moonshot-ai/kimi-code`
+0.38.0 (npm's latest at the time) crashes outright on any non-interactive
+`-p` prompt, before producing a response — a genuine upstream bug, reproduced
+independent of this skill, this case, or Ox Alpha (a trivial "Say OK." to an
+unrelated model crashed the same way). Pinned to 0.37.2 instead, which
+doesn't. Separately: `npm install -g kimi-code` (no scope) installs a
+same-named but *entirely unrelated* third-party tool
+([whitesmith/kimi-code](https://github.com/whitesmith/kimi-code), a Groq
+proxy launcher for claude-code) — the real package is scoped,
+`@moonshot-ai/kimi-code`. Worth knowing before assuming a fresh `kimi`
+install is broken instead of just wrong.
 
 ## A finding this table exists to surface
 
