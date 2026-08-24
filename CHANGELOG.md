@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- Hermes's row filled in against the standard 8-model set (`docs/agent-matrix.md`; Mistral Medium 3.5 deliberately skipped — no OpenRouter prompt caching, 3-15x the cost per run of every other model here). 7 of 8 pass — the highest clean rate of any driver tested against this set — GPT-5.2 is the one fail (1/10, also the slowest single run recorded on this case at 770s).
+
 ## [0.9.2] - 2026-08-24
 
 ### Added

@@ -37,17 +37,17 @@ Agents are ordered open source first (alphabetical), then closed source
 | Model\* | Cline | Codex CLI | Gemini CLI | Hermes | Kimi Code | opencode | Pi | Claude Code |
 |---|---|---|---|---|---|---|---|---|
 | Claude Sonnet 5 (native) | – | – | – | – | – | – | – | ✅ 9/10 · v0.9.0 · 2026-08-20 |
-| Claude Sonnet 5 (OpenRouter) | – | ❌ 3/10 · v0.9.0 · 2026-08-21 | – | – | ✅ 9/10 · v0.9.0 · 2026-08-21 | ✅ 10/10 · v0.9.0 · 2026-08-21 | ✅ 9/10 · v0.9.0 · 2026-08-21 | – |
-| DeepSeek V3.2 (OpenRouter) | ✅ 9/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-21 | – | – | ❌ 1/10 · v0.9.0 · 2026-08-20 | ✅ 8/10 · v0.9.0 · 2026-08-20 | ✅ 8/10 · v0.9.0 · 2026-08-20 | – |
-| Gemini 3.1 Pro (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-21 | – | – | ❌ 0/10 · v0.9.0 · 2026-08-20 | ❌ 0/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | – |
-| GLM-5.3 (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-21 | ❌ 1/10 · v0.9.0 · 2026-08-21 | – | – | ❌ 3/10 · v0.9.0 · 2026-08-21 | ✅ 9/10 · v0.9.0 · 2026-08-21 | ✅ 9/10 · v0.9.0 · 2026-08-21 | – |
-| GPT-5.2 (OpenRouter) | ✅ 9/10 · v0.9.0 · 2026-08-20 | ❌ 1/10 · v0.9.0 · 2026-08-21 | – | – | ❌ 2/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | – |
-| Grok 4.6 (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-21 | – | – | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-20 | – |
-| Kimi K3 (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-21 | – | – | ❌ 3/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-20 | – |
+| Claude Sonnet 5 (OpenRouter) | – | ❌ 3/10 · v0.9.0 · 2026-08-21 | – | ✅ 9/10 · v0.9.2 · 2026-08-24 | ✅ 9/10 · v0.9.0 · 2026-08-21 | ✅ 10/10 · v0.9.0 · 2026-08-21 | ✅ 9/10 · v0.9.0 · 2026-08-21 | – |
+| DeepSeek V3.2 (OpenRouter) | ✅ 9/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-21 | – | ✅ 8/10 · v0.9.2 · 2026-08-24 | ❌ 1/10 · v0.9.0 · 2026-08-20 | ✅ 8/10 · v0.9.0 · 2026-08-20 | ✅ 8/10 · v0.9.0 · 2026-08-20 | – |
+| Gemini 3.1 Pro (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-21 | – | ✅ 9/10 · v0.9.2 · 2026-08-24 | ❌ 0/10 · v0.9.0 · 2026-08-20 | ❌ 0/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | – |
+| GLM-5.3 (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-21 | ❌ 1/10 · v0.9.0 · 2026-08-21 | – | ✅ 10/10 · v0.9.2 · 2026-08-24 | ❌ 3/10 · v0.9.0 · 2026-08-21 | ✅ 9/10 · v0.9.0 · 2026-08-21 | ✅ 9/10 · v0.9.0 · 2026-08-21 | – |
+| GPT-5.2 (OpenRouter) | ✅ 9/10 · v0.9.0 · 2026-08-20 | ❌ 1/10 · v0.9.0 · 2026-08-21 | – | ❌ 1/10 · v0.9.2 · 2026-08-24 | ❌ 2/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | – |
+| Grok 4.6 (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-21 | – | ✅ 10/10 · v0.9.2 · 2026-08-24 | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-20 | – |
+| Kimi K3 (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-21 | – | ✅ 10/10 · v0.9.2 · 2026-08-24 | ❌ 3/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-20 | – |
 | Mistral Medium 3.5 (OpenRouter) | ❌ 2/10 · v0.9.0 · 2026-08-20 | ❌ 1/10 · v0.9.0 · 2026-08-21 | – | – | ❌ 2/10 · v0.9.0 · 2026-08-20 | ❌ 1/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | – |
 | Ox Alpha (OpenRouter, stealth) | ✅ 10/10 · v0.9.0 · 2026-08-24 | ❌ 2/10 · v0.9.0 · 2026-08-24 | – | ✅ 10/10 · v0.9.0 · 2026-08-24 | ❌ 2/10 · v0.9.0 · 2026-08-24 | ❌ 2/10 · v0.9.0 · 2026-08-24 | ❌ 2/10 · v0.9.0 · 2026-08-24 | – |
 | Qwen3.8 27B (Ollama, local, Q4_K_M) | – | – | – | – | – | ❌ 2/10 · v0.9.0 · 2026-08-21 | ✅ 9/10 · v0.9.0 · 2026-08-20 | – |
-| Qwen3.8 27B (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-21 | – | – | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-20 | – |
+| Qwen3.8 27B (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-21 | – | ✅ 10/10 · v0.9.2 · 2026-08-24 | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-20 | – |
 
 The three remaining blanks in the Ollama row (Cline, Codex CLI, Kimi Code) aren't
 untried — each was attempted 2026-08-21 against a real local Ollama instance and
@@ -86,6 +86,13 @@ same-named but *entirely unrelated* third-party tool
 proxy launcher for claude-code) — the real package is scoped,
 `@moonshot-ai/kimi-code`. Worth knowing before assuming a fresh `kimi`
 install is broken instead of just wrong.
+
+**Hermes's row against the standard 8-model set** (Mistral Medium 3.5
+skipped deliberately — no OpenRouter prompt caching, 3-15x the cost per run
+of every other model here): 7 of 8 pass, the highest clean rate of any
+driver tested against this set so far. GPT-5.2 is the one fail (1/10, also
+the slowest single run recorded on this case at 770s) — investigated
+correctly, then deleted anyway, the same pattern seen on every other driver.
 
 ## A finding this table exists to surface
 
