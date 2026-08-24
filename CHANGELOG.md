@@ -8,6 +8,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 - Hermes's row filled in against the full standard 9-model set (`docs/agent-matrix.md`). 8 of 9 pass — the highest clean rate of any driver tested against this set. GPT-5.2 is the one fail (1/10, also the slowest single run recorded on this case at 770s). Mistral Medium 3.5 is the more notable result: it passes here (9/10) — the only cell in the entire table where Mistral passes — while failing on every other driver.
 
+### Changed
+
+- `docs/evals.md`'s published numbers refreshed with the first full re-run since 0.6.2, closing out the stale-numbers gap tracked in [#131](https://github.com/oliver-zehentleitner/keep-the-why/issues/131): **56/70 passed**, run 2026-08-25, Claude Code + Claude Sonnet 5, suite now at 70 cases (was 67). `negative-conflicting-sources` — failing in both prior runs — now passes cleanly. Of the 14 failures, 11 never invoked the Skill tool at all despite every affected fixture's `SessionStart` hook explicitly instructing it to load the skill first — a stronger, numbered version of the activation-reliability gap tracked in [#138](https://github.com/oliver-zehentleitner/keep-the-why/issues/138); the other 3 all show the "recognizes but doesn't act" pattern flagged as still-open in #131 (skill loads, correctly identifies what to write, then asks or defers instead of writing it). Run checkout predates 0.9.1/0.9.2 by a few commits; diffed against `main` to confirm neither release touched `SKILL.md`/`references/` rule content (tooling and doc/version-number changes only), and that none of the 70 transcripts hit the driver-error-masking bug fixed below.
+
 ## [0.9.2] - 2026-08-24
 
 ### Added

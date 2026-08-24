@@ -11,65 +11,93 @@ the expected behavior.
 
 ## Latest full-suite results
 
-**Stale as of this writing — a superseded snapshot, not the current state.**
-The numbers below (59/67, skill 0.6.2) predate two rounds of `SKILL.md`
-changes made since (a Core Rules tightening pass, then a fix for a
-"recognizes the right action but asks/defers instead of doing it" pattern the
-first full run surfaced — both verified against individual affected cases,
-neither against a fresh full 67-case run). A new full run is planned as part
-of the next release cycle; **for the current picture in the meantime, see the
-living status issue: [oliver-zehentleitner/keep-the-why#131](https://github.com/oliver-zehentleitner/keep-the-why/issues/131).**
-This page gets replaced with fresh numbers once that run completes — kept
-here, unedited otherwise, so the methodology and the shape of the analysis
-stay visible rather than disappearing while stale.
-
-**59 of 67 passed** — run 2026-07-31, skill 0.6.2, Claude Code CLI 2.1.220,
+**56 of 70 passed** — run 2026-08-25, skill 0.9.0, Claude Code CLI 2.1.241,
 agent and judge both Claude Sonnet 5 (`claude-sonnet-5`). No errors; every
-case produced a graded verdict.
+case produced a graded verdict. Previous full run: 59/67, skill 0.6.2,
+2026-07-31.
 
-The 8 failures cluster into two honest categories, and both are more useful
-than a polished 67/67 would be:
+One clear improvement first: `negative-conflicting-sources` — the case that
+had failed in both prior runs (code said 3 retries, the architecture doc said
+5; the agent needs to record both and flag the conflict rather than declaring
+one authoritative) — now passes cleanly.
 
-**1. Activation gaps (5 cases).** In all five, the skill was never invoked at
-all: the session's user request was an ordinary small task (a quick question,
-a one-line edit, an FYI remark), the model handled it directly, and the
-skill's opportunistic behaviors — per-session timer checks, proactive capture,
-re-checking after another workflow concludes — never ran because the skill
-body never loaded. This is the same activation limitation already documented
-in ["Composition with other
+The 14 failures cluster into two categories, and the split between them
+shifted a lot since the last run:
+
+**1. Activation gaps (11 of 14 failures).** In every one of these, the Skill
+tool itself was never invoked — no `[tool call] Skill` in the transcript at
+all — even though every affected fixture's `SessionStart` hook explicitly
+instructed loading the skill before other work. This is the same activation
+limitation already documented in ["Composition with other
 skills"](https://github.com/oliver-zehentleitner/keep-the-why/blob/latest/skills/keep-the-why/SKILL.md)
-and `context/compatibility.md`: a Skill activates when the conversation
-matches its description, and nothing guarantees that for low-signal prompts.
-The evals now put a number on it instead of a caveat.
+and tracked in [issue #138](https://github.com/oliver-zehentleitner/keep-the-why/issues/138)
+— a Skill activates when the conversation matches its description, and
+nothing guarantees that for a low-signal prompt. What's new this run: the
+hook instruction alone isn't sufficient either. Some of the 11 did nothing
+skill-related at all (`init-declined-not-reasked`,
+`update-check-cannot-run-surfaced-once`, `update-check-repeat-failure-no-reask`,
+`source-reference-never-does-not-ask`,
+`recheck-after-other-skill-concludes-mid-conversation`) — the model just
+answered the prompt directly or asked an unrelated generic question. Others
+read `AGENTS.md`/`context/` directly and approximated the right behavior
+without ever running the formal workflow (`context-schema-missing-backfilled`,
+`significant-correction-is-not-a-decision`,
+`capture-mode-proactive-with-confirm-always`,
+`confirm-always-clear-case-still-asks-permission`,
+`agents-local-gitignore-not-covered`,
+`ambiguous-worth-capturing-asks-instead-of-guessing`) — closer, but each still
+missed at least one documented step (a `.gitignore` entry, a deterministic
+backfill rule, a `confirm-always` permission gate, a `CHANGELOG.md` entry).
 
-**2. Judgment misses with the skill active (3 cases).** The skill loaded,
-followed its workflow — and still got the judgment call wrong:
+**2. Recognizes but doesn't act (3 cases).** The skill loaded, correctly
+identified what needed to be written — then asked or deferred instead of
+writing it. This is the pattern already flagged as still-open in
+[issue #131](https://github.com/oliver-zehentleitner/keep-the-why/issues/131)
+("a first fix helped but didn't eliminate the pattern; a follow-up attempt
+made one case worse instead of better") — this run reconfirms it, not with
+one case but with all three skill-active failures:
 
-- `negative-conflicting-sources` (failed in both runs we did): code said
-  3 retries, the architecture doc said 5; instead of recording both and
-  flagging the conflict as unresolved, the agent declared the code
-  authoritative and rewrote the doc.
-- `context-schema-missing-backfilled`: asked the user about a missing field
-  that the documented rule says to backfill silently — over-asking is the
-  milder failure direction, but still a miss.
-- `ambiguous-worth-capturing-asks-instead-of-guessing`: the deliberately
-  borderline case; the agent wrote an entry directly instead of asking the
-  cheap yes/no question first. In an earlier run it failed in the opposite
-  direction — genuinely on the line, which is what the case is for.
+- `capture-confirmation-automatic-unclear-evidence`: config sets
+  `capture-confirmation: automatic`; the agent asked whether the constant was
+  picked for a specific reason instead of writing the entry with an honest
+  `Evidence: unknown`/`inferred`, as the rule requires.
+- `embedded-procedure-not-why-content`: correctly found both right
+  destinations (`context/` for the limitation, `CONTRIBUTING.md` for the
+  workaround procedure) but wrote neither, ending the turn on an unrelated
+  question about rejected alternatives instead.
+- `open-question-gets-status-open-not-unknown`: correctly found the
+  undocumented branch and correctly avoided inventing a rationale for it, but
+  asked the user whether to write it up instead of recording
+  `Status: open` / `Evidence: unknown` itself, as the case calls for.
 
 ## Caveats, stated plainly
 
-- One run per case: single-run verdicts are subject to normal model variance
-  (one borderline case demonstrably flips between runs). No flakiness
-  statistics yet.
+- One run per case: single-run verdicts are subject to normal model variance.
+  `ambiguous-worth-capturing-asks-instead-of-guessing` is a demonstrated case
+  of this — it has now failed in both directions across different runs
+  (over-eager write, then silent skip), which is exactly the borderline
+  behavior it's designed to probe. No flakiness statistics yet.
 - The judge is an LLM from the same vendor as the agent under test. Verdicts
   were designed to require citing concrete transcript/diff evidence, but an
   independent judge would be stronger.
-- One agent, one model. Results for Codex CLI, Gemini CLI, and other
-  Agent-Skills-capable tools don't exist yet — running the suite against
-  another agent and publishing the outcome is exactly the contribution
-  [`CONTRIBUTING.md`](https://github.com/oliver-zehentleitner/keep-the-why/blob/latest/CONTRIBUTING.md)
-  asks for.
+- This page covers Claude Code + Claude Sonnet 5 only, one run per case.
+  Cross-agent/cross-model spot checks (Cline, Codex CLI, Kimi Code, opencode,
+  Pi, each against up to 9 models) live separately on the
+  [agent & model matrix](https://keepthewhy.com/agent-matrix/) — one case per
+  combination there, not this full 70-case suite.
+- A full `--all` run can take much longer in wall-clock time than its actual
+  compute would suggest if it hits the account's own session/spend limit
+  mid-run — this run took about 6 hours end-to-end, the large majority of it
+  spent asleep between retries on 4 rate-limited cases, not doing work. See
+  `tools/evals/README.md`'s "Resilience to the account's own session/spend
+  limits" section.
+- This run's checkout predates the 0.9.1/0.9.2 releases by a few commits.
+  Diffed against current `main`: both releases changed only tooling (new eval
+  drivers, a runner bug fix for a driver-error-masking edge case that doesn't
+  occur in any of these 70 transcripts — every one ends cleanly with
+  `subtype=success`) and doc/version-number text, not `SKILL.md` or
+  `references/` rule content. These numbers are the current behavioral
+  picture even though they're labeled skill 0.9.0.
 
 ## Reproducing
 
