@@ -34,19 +34,20 @@ where LLM-judged) · skill version · date tested.
 Agents are ordered open source first (alphabetical), then closed source
 (alphabetical); models are ordered alphabetically top to bottom.
 
-| Model\* | Cline | Codex CLI | Gemini CLI | Kimi Code | opencode | Pi | Claude Code |
-|---|---|---|---|---|---|---|---|
-| Claude Sonnet 5 (native) | – | – | – | – | – | – | ✅ 9/10 · v0.9.0 · 2026-08-20 |
-| Claude Sonnet 5 (OpenRouter) | – | ❌ 3/10 · v0.9.0 · 2026-08-21 | – | ✅ 9/10 · v0.9.0 · 2026-08-21 | ✅ 10/10 · v0.9.0 · 2026-08-21 | ✅ 9/10 · v0.9.0 · 2026-08-21 | – |
-| DeepSeek V3.2 (OpenRouter) | ✅ 9/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-21 | – | ❌ 1/10 · v0.9.0 · 2026-08-20 | ✅ 8/10 · v0.9.0 · 2026-08-20 | ✅ 8/10 · v0.9.0 · 2026-08-20 | – |
-| Gemini 3.1 Pro (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-21 | – | ❌ 0/10 · v0.9.0 · 2026-08-20 | ❌ 0/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | – |
-| GLM-5.3 (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-21 | ❌ 1/10 · v0.9.0 · 2026-08-21 | – | ❌ 3/10 · v0.9.0 · 2026-08-21 | ✅ 9/10 · v0.9.0 · 2026-08-21 | ✅ 9/10 · v0.9.0 · 2026-08-21 | – |
-| GPT-5.2 (OpenRouter) | ✅ 9/10 · v0.9.0 · 2026-08-20 | ❌ 1/10 · v0.9.0 · 2026-08-21 | – | ❌ 2/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | – |
-| Grok 4.6 (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-21 | – | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-20 | – |
-| Kimi K3 (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-21 | – | ❌ 3/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-20 | – |
-| Mistral Medium 3.5 (OpenRouter) | ❌ 2/10 · v0.9.0 · 2026-08-20 | ❌ 1/10 · v0.9.0 · 2026-08-21 | – | ❌ 2/10 · v0.9.0 · 2026-08-20 | ❌ 1/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | – |
-| Qwen3.8 27B (Ollama, local, Q4_K_M) | – | – | – | – | ❌ 2/10 · v0.9.0 · 2026-08-21 | ✅ 9/10 · v0.9.0 · 2026-08-20 | – |
-| Qwen3.8 27B (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-21 | – | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-20 | – |
+| Model\* | Cline | Codex CLI | Gemini CLI | Hermes | Kimi Code | opencode | Pi | Claude Code |
+|---|---|---|---|---|---|---|---|---|
+| Claude Sonnet 5 (native) | – | – | – | – | – | – | – | ✅ 9/10 · v0.9.0 · 2026-08-20 |
+| Claude Sonnet 5 (OpenRouter) | – | ❌ 3/10 · v0.9.0 · 2026-08-21 | – | – | ✅ 9/10 · v0.9.0 · 2026-08-21 | ✅ 10/10 · v0.9.0 · 2026-08-21 | ✅ 9/10 · v0.9.0 · 2026-08-21 | – |
+| DeepSeek V3.2 (OpenRouter) | ✅ 9/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-21 | – | – | ❌ 1/10 · v0.9.0 · 2026-08-20 | ✅ 8/10 · v0.9.0 · 2026-08-20 | ✅ 8/10 · v0.9.0 · 2026-08-20 | – |
+| Gemini 3.1 Pro (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-21 | – | – | ❌ 0/10 · v0.9.0 · 2026-08-20 | ❌ 0/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | – |
+| GLM-5.3 (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-21 | ❌ 1/10 · v0.9.0 · 2026-08-21 | – | – | ❌ 3/10 · v0.9.0 · 2026-08-21 | ✅ 9/10 · v0.9.0 · 2026-08-21 | ✅ 9/10 · v0.9.0 · 2026-08-21 | – |
+| GPT-5.2 (OpenRouter) | ✅ 9/10 · v0.9.0 · 2026-08-20 | ❌ 1/10 · v0.9.0 · 2026-08-21 | – | – | ❌ 2/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | – |
+| Grok 4.6 (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-21 | – | – | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-20 | – |
+| Kimi K3 (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-21 | – | – | ❌ 3/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-20 | – |
+| Mistral Medium 3.5 (OpenRouter) | ❌ 2/10 · v0.9.0 · 2026-08-20 | ❌ 1/10 · v0.9.0 · 2026-08-21 | – | – | ❌ 2/10 · v0.9.0 · 2026-08-20 | ❌ 1/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | – |
+| Ox Alpha (OpenRouter, stealth) | – | – | – | ✅ 10/10 · v0.9.0 · 2026-08-24 | – | – | ❌ 3/10 · v0.9.0 · 2026-08-24 | – |
+| Qwen3.8 27B (Ollama, local, Q4_K_M) | – | – | – | – | – | ❌ 2/10 · v0.9.0 · 2026-08-21 | ✅ 9/10 · v0.9.0 · 2026-08-20 | – |
+| Qwen3.8 27B (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-21 | – | – | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-20 | – |
 
 The three remaining blanks in the Ollama row (Cline, Codex CLI, Kimi Code) aren't
 untried — each was attempted 2026-08-21 against a real local Ollama instance and
@@ -63,6 +64,13 @@ hit a blocker specific to that driver, not the model or the skill:
 - **Kimi Code** completed real turns but at a pace that made the full case
   impractical here: one single turn took 145 minutes end to end, and a
   10800s (3-hour) run still didn't reach a verdict.
+
+**Ox Alpha** is a stealth/anonymous model preview on OpenRouter
+(`stealth/ox-alpha`, added 2026-08-20) — provider identity undisclosed, free
+during the preview. Its two tested cells are themselves a small instance of
+this table's whole point: the same model passed cleanly through Hermes
+(10/10) and failed through Pi (3/10) on the identical case — see the next
+section.
 
 ## A finding this table exists to surface
 

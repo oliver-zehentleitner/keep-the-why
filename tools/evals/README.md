@@ -38,31 +38,48 @@ case plus `summary.json` and `summary.md`.
 | `claude` (default) | [Claude Code](https://claude.com/claude-code) (`claude`) | Native — installed at `.claude/skills/keep-the-why`, the CLI decides for itself from the `SKILL.md` description whether to load it. This is what the activation-reliability cases actually test. |
 | `cline` | [Cline](https://cline.bot) (`cline`) | Explicit — see below |
 | `codex` | [Codex CLI](https://github.com/openai/codex) (`codex`) | Explicit — see below |
+| `hermes` | [Hermes Agent](https://github.com/NousResearch/hermes-agent) (`hermes`) | Explicit — see below, and the important caveat right after |
 | `kimi` | [Kimi Code](https://github.com/MoonshotAI/kimi-code) (`kimi`) | Explicit — see below |
 | `opencode` | [opencode](https://opencode.ai) (`opencode`) | Explicit — see below |
 | `pi` | [Pi](https://pi.dev) (`pi`) | Explicit — see below |
 
-`cline`, `codex`, `kimi`, `opencode`, and `pi` don't get native-discovery
-treatment: whether they'd find the skill on their own is a Claude-Code-specific
-question, already covered by the `claude` driver's activation cases. Instead
-the skill is installed at a plain `skills/keep-the-why/` path and the case
-prompt is prefixed with an explicit instruction to read its `SKILL.md` and
-follow it. This is what makes any tool-use-capable CLI usable here without
-needing its own skill-discovery convention, and what lets `--model` point at a
-model that has no notion of "skills" at all (a local Ollama model, or any
-model via OpenRouter). What's under test with these drivers is
-instruction-following given the skill, not discovery.
+`cline`, `codex`, `hermes`, `kimi`, `opencode`, and `pi` don't get
+native-discovery treatment: whether they'd find the skill on their own is a
+Claude-Code-specific question, already covered by the `claude` driver's
+activation cases. Instead the skill is installed at a plain
+`skills/keep-the-why/` path and the case prompt is prefixed with an explicit
+instruction to read its `SKILL.md` and follow it. This is what makes any
+tool-use-capable CLI usable here without needing its own skill-discovery
+convention, and what lets `--model` point at a model that has no notion of
+"skills" at all (a local Ollama model, or any model via OpenRouter). What's
+under test with these drivers is instruction-following given the skill, not
+discovery.
 
-**Verification status:** all five non-`claude` drivers have been run
+**`hermes` means the `hermes` CLI, never the bare `hermes-agent` binary
+installed alongside it.** Verified the hard way: invoked directly with no
+workspace registered, `hermes-agent` (`run_agent.py`) ignores the launch
+directory entirely and runs its terminal/file tools against the real `$HOME`
+— confirmed with a canary file that a plain `ls` returned the operator's real
+home-directory listing, not the fixture. `hermes chat --in DIR` (what
+`run_agent_hermes` actually uses) scopes correctly — verified the exported
+session's recorded `cwd` matches the fixture dir and tool output matches
+fixture contents. `-t terminal,file` also deliberately narrows Hermes's much
+larger default toolset (browser automation, image/video gen, TTS,
+Discord/Slack/WhatsApp, computer use, ...) down to the two toolsets
+equivalent to what the other drivers expose.
+
+**Verification status:** all six non-`claude` drivers have been run
 end-to-end against real installs (local Ollama and/or OpenRouter) and their
 results published to [the agent & model
-matrix](https://keepthewhy.com/agent-matrix/). Two real bugs were only found
-this way, not from the docs: `opencode` didn't treat the fixture directory as
-its project root without an explicit `--dir` flag (it silently operated on
-this repo's real working directory instead), and `codex exec`'s default
-sandbox/approval mode denied every write attempt with no one to approve it in
-a non-interactive session, making every case look like "correctly didn't
-touch the file" when it had structurally been unable to — both fixed, see
+matrix](https://keepthewhy.com/agent-matrix/). Three real bugs were only
+found this way, not from the docs: `opencode` didn't treat the fixture
+directory as its project root without an explicit `--dir` flag (it silently
+operated on this repo's real working directory instead), `codex exec`'s
+default sandbox/approval mode denied every write attempt with no one to
+approve it in a non-interactive session, making every case look like
+"correctly didn't touch the file" when it had structurally been unable to,
+and `hermes-agent`'s missing directory scoping above — all three fixed (the
+first two in code, the third by never invoking that binary), see
 `CHANGELOG.md`. Re-check `render_transcript_*` against a fresh raw transcript
 if a driver's CLI version changes noticeably.
 
@@ -84,14 +101,17 @@ python3 tools/evals/run.py --all --driver opencode --model openrouter/qwen/qwen3
 python3 tools/evals/run.py --all --driver cline --model openrouter/moonshotai/kimi-k3
 python3 tools/evals/run.py --all --driver codex --model openrouter/x-ai/grok-4.6
 python3 tools/evals/run.py --all --driver kimi --model openrouter/z-ai/glm-5.3
+python3 tools/evals/run.py --all --driver hermes --model openrouter/stealth/ox-alpha
 ```
 
 Requires the selected driver's CLI on `PATH` with working credentials/model
 config: for `pi`, a local Ollama or OpenRouter model needs a matching entry in
 `~/.pi/agent/models.json`; for `opencode`, in `opencode.json`; for `kimi`, via
 `kimi provider`; for `cline`, via `cline auth`; for `codex`, a
-`[model_providers.<id>]` block in `~/.codex/config.toml`. Exit code is
-non-zero if any case fails or errors.
+`[model_providers.<id>]` block in `~/.codex/config.toml`; for `hermes`, an
+`OPENROUTER_API_KEY` env var (no per-model registration needed — any
+`provider/model` string is passed straight through to `--model`/`--provider`).
+Exit code is non-zero if any case fails or errors.
 
 ## Matrix runs
 
@@ -101,7 +121,7 @@ single `--driver`/`--model` run — this is what produces the results on the
 [agent & model matrix](https://keepthewhy.com/agent-matrix/):
 
 ```bash
-# the full standard matrix (5 drivers x 8 models = 40 combinations)
+# the full standard matrix (drivers x models from matrix-config.json)
 python3 tools/evals/run.py --cases chestertons-fence-guard --matrix
 
 # a subset, and how many combinations run at once

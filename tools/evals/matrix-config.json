@@ -1,5 +1,5 @@
 {
-  "drivers": ["cline", "codex", "kimi", "opencode", "pi"],
+  "drivers": ["cline", "codex", "hermes", "kimi", "opencode", "pi"],
   "models": [
     { "id": "openrouter/anthropic/claude-sonnet-5", "label": "Claude Sonnet 5 (OpenRouter)" },
     { "id": "openrouter/deepseek/deepseek-v3.2", "label": "DeepSeek V3.2 (OpenRouter)" },
@@ -9,6 +9,7 @@
     { "id": "openrouter/x-ai/grok-4.6", "label": "Grok 4.6 (OpenRouter)" },
     { "id": "openrouter/moonshotai/kimi-k3", "label": "Kimi K3 (OpenRouter)" },
     { "id": "openrouter/mistralai/mistral-medium-3-5", "label": "Mistral Medium 3.5 (OpenRouter)" },
-    { "id": "openrouter/qwen/qwen3.8-27b", "label": "Qwen3.8 27B (OpenRouter)" }
+    { "id": "openrouter/qwen/qwen3.8-27b", "label": "Qwen3.8 27B (OpenRouter)" },
+    { "id": "openrouter/stealth/ox-alpha", "label": "Ox Alpha (OpenRouter, stealth)" }
   ]
 }
