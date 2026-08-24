@@ -101,8 +101,8 @@ needing to be told again.
 - skills.sh: https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why — live, backs
   the `npx skills add` method above
 - SkillsLLM: live, verified, passed security scan — https://skillsllm.com/skill/keep-the-why
-- GitHub Copilot plugin marketplace: ready for review, external plugin submission pinned to
-  v0.5.2 — https://github.com/github/awesome-copilot/issues/2470
+- GitHub Copilot plugin marketplace: live, external plugin listing, version kept current via a
+  PR each release — https://awesome-copilot.github.com/plugin/keep-the-why/
 
 ## Core Concept
 

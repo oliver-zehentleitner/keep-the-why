@@ -76,11 +76,11 @@ skills.sh resolves this repo's skill via the moving `latest` tag `release.yml` f
 
 **Rejected alternative:** submit `ref: latest` anyway, since the validator doesn't reject the literal string. Rejected — passing an automated check by exploiting what it doesn't verify isn't the same as meeting the stated requirement, and this project doesn't want to misrepresent a submission's immutability to get a marketplace listing.
 
-**Consequence:** for `awesome-copilot` specifically, each meaningful release needs a fresh immutable ref (a version tag, e.g. `v0.5.1`) — unlike skills.sh, this one doesn't ride `latest` for free. Only the *first* submission goes through their Issue form and full maintainer review; per their `CONTRIBUTING.md` ("Updating listed external plugins via PR"), later version bumps for an already-approved listing go through a direct PR updating `plugins/external.json`, which only runs automated quality gates — lighter than the initial review, but still a PR we have to open per release. Their process also re-reviews approved listings every six months on the maintainer side (`re-review-due`); no action needed from us unless they flag `re-review-follow-up`.
+**Consequence:** for `awesome-copilot` specifically, each meaningful release needs a fresh immutable ref (a version tag, e.g. `v0.5.1`) — unlike skills.sh, this one doesn't ride `latest` for free. The initial submission (issue #2470, approved 2026-08-24) went through their Issue form and full maintainer review; every release since goes through the lighter path instead — a direct PR from a synced fork (`oliver-zehentleitner-aigent/awesome-copilot`) bumping `version`/`source.ref` in `plugins/external.json`, with `.github/plugin/marketplace.json` regenerated via `npm run plugin:generate-marketplace` in the same commit — automated quality gates only, no `/approve` needed, but still a PR to open every release (first one: github/awesome-copilot#2786, for 0.9.2). Their process also re-reviews approved listings every six months on the maintainer side (`re-review-due`); no action needed from us unless they flag `re-review-follow-up`.
 
 **Known consumers of this repo's tags** (keep current — a reason `release.yml`'s tag-move step, and future release tags generally, can't be dropped or changed casually):
 - skills.sh — via the moving `latest` tag
-- GitHub Copilot plugin marketplace (`awesome-copilot`), planned — via a pinned release tag, submitted through their external-plugin Issue form
+- GitHub Copilot plugin marketplace (`awesome-copilot`), live since 2026-08-24 — via a pinned release tag, bumped by a direct PR each release (see above)
 
 ## `.claude-plugin/plugin.json` is a second, separate manifest — not a replacement for the root `plugin.json`
 
