@@ -4,6 +4,8 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-08-24
+
 ### Added
 
 - `tools/evals/run.py` gained a `--driver` flag (`claude`, `pi`, `opencode`, `kimi`, `cline`, `codex`) so eval cases can run against agentic CLIs other than Claude Code, including non-Claude models (local Ollama or any model via OpenRouter) for the non-Claude drivers. Claude Code keeps native skill discovery (what the activation-reliability cases test); the other drivers get the skill installed at a plain path and an explicit instruction to read and follow it, since discovery itself isn't what those drivers are being tested for.
@@ -357,7 +359,8 @@ Initial release.
 - Logo, wordmark, and favicon.
 - `context/repo-conventions.md`, dogfooding the skill on its own repository from day one.
 
-[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.9.1...HEAD
+[0.9.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.6.4...v0.7.0
