@@ -4,6 +4,8 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.9.2] - 2026-08-24
+
 ### Added
 
 - Ox Alpha's row in `docs/agent-matrix.md` filled in across all six wired drivers (Gemini CLI still not wired in): Cline and Hermes pass (10/10 each), Codex CLI, Kimi Code, opencode, and Pi all fail the same way (2/10 each — investigate correctly, delete anyway). Getting Kimi Code's cell required pinning `@moonshot-ai/kimi-code` to 0.37.2: 0.38.0 (npm's latest) crashes outright on any non-interactive `-p` prompt, reproduced independent of this skill or Ox Alpha. Also found along the way: `npm install -g kimi-code` (unscoped) installs an entirely unrelated same-named third-party tool (`whitesmith/kimi-code`) — the real package is `@moonshot-ai/kimi-code`.
@@ -367,7 +369,8 @@ Initial release.
 - Logo, wordmark, and favicon.
 - `context/repo-conventions.md`, dogfooding the skill on its own repository from day one.
 
-[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.9.1...HEAD
+[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.9.2...HEAD
+[0.9.2]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.9.1...v0.9.2
 [0.9.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.7.0...v0.8.0

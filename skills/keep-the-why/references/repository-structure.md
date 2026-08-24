@@ -63,7 +63,7 @@ prior decisions and avoid re-litigating or accidentally reverting them.
 <!-- keep-the-why:config -->
 - context: `context/`
 - init: complete
-- context-schema: 0.9.1
+- context-schema: 0.9.2
 - capture-confirmation: confirm-when-unsure
 - source-reference: never
 <!-- /keep-the-why:config -->
