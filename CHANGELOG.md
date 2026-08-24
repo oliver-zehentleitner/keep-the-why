@@ -8,6 +8,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 - Ox Alpha's row in `docs/agent-matrix.md` filled in across all six wired drivers (Gemini CLI still not wired in): Cline and Hermes pass (10/10 each), Codex CLI, Kimi Code, opencode, and Pi all fail the same way (2/10 each — investigate correctly, delete anyway). Getting Kimi Code's cell required pinning `@moonshot-ai/kimi-code` to 0.37.2: 0.38.0 (npm's latest) crashes outright on any non-interactive `-p` prompt, reproduced independent of this skill or Ox Alpha. Also found along the way: `npm install -g kimi-code` (unscoped) installs an entirely unrelated same-named third-party tool (`whitesmith/kimi-code`) — the real package is `@moonshot-ai/kimi-code`.
 
+### Fixed
+
+- All six `run_agent_*()` drivers (`claude`, `pi`, `opencode`, `kimi`, `cline`, `codex`) only recorded a driver-level error when the CLI exited non-zero *and* produced zero parseable JSON stdout lines — but several of these CLIs print one harmless preamble line (a version or session-start event) before crashing or failing outright, which was enough to suppress the error entirely. The case then proceeded to the judge with a near-empty transcript and got scored as a normal model/skill failure instead of being flagged as unresolved. Caught twice in one afternoon testing Ox Alpha: Pi's missing-API-key exit and Kimi Code's internal crash (see above) were both about to be recorded as genuine 0/10 fails. Now any non-zero exit is always an error, regardless of `events`; falls back to stdout when stderr is empty. Verified against the Pi repro: now correctly reports `error` (with the real "No API key found" message) instead of a silent `fail`.
+
 ## [0.9.1] - 2026-08-24
 
 ### Added

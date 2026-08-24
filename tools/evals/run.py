@@ -337,8 +337,8 @@ def run_agent_claude(prompt, cwd, model, timeout, disallowed_tools=None):
         except json.JSONDecodeError:
             pass
     error = None
-    if proc.returncode != 0 and not events:
-        error = f"claude exited {proc.returncode}: {proc.stderr[:2000]}"
+    if proc.returncode != 0:
+        error = f"claude exited {proc.returncode}: {(proc.stderr or proc.stdout)[:2000]}"
     return {"events": events, "error": error}
 
 
@@ -368,8 +368,8 @@ def run_agent_pi(prompt, cwd, model, timeout, disallowed_tools=None):
         except json.JSONDecodeError:
             pass
     error = None
-    if proc.returncode != 0 and not events:
-        error = f"pi exited {proc.returncode}: {proc.stderr[:2000]}"
+    if proc.returncode != 0:
+        error = f"pi exited {proc.returncode}: {(proc.stderr or proc.stdout)[:2000]}"
     return {"events": events, "error": error}
 
 
@@ -408,8 +408,8 @@ def run_agent_opencode(prompt, cwd, model, timeout, disallowed_tools=None):
         except json.JSONDecodeError:
             pass
     error = None
-    if proc.returncode != 0 and not events:
-        error = f"opencode exited {proc.returncode}: {proc.stderr[:2000]}"
+    if proc.returncode != 0:
+        error = f"opencode exited {proc.returncode}: {(proc.stderr or proc.stdout)[:2000]}"
     return {"events": events, "error": error}
 
 
@@ -438,8 +438,8 @@ def run_agent_kimi(prompt, cwd, model, timeout, disallowed_tools=None):
         except json.JSONDecodeError:
             pass
     error = None
-    if proc.returncode != 0 and not events:
-        error = f"kimi exited {proc.returncode}: {proc.stderr[:2000]}"
+    if proc.returncode != 0:
+        error = f"kimi exited {proc.returncode}: {(proc.stderr or proc.stdout)[:2000]}"
     return {"events": events, "error": error}
 
 
@@ -497,8 +497,8 @@ def run_agent_cline(prompt, cwd, model, timeout, disallowed_tools=None):
         except json.JSONDecodeError:
             pass
     error = None
-    if proc.returncode != 0 and not events:
-        error = f"cline exited {proc.returncode}: {proc.stderr[:2000]}"
+    if proc.returncode != 0:
+        error = f"cline exited {proc.returncode}: {(proc.stderr or proc.stdout)[:2000]}"
     return {"events": events, "error": error}
 
 
@@ -548,8 +548,8 @@ def run_agent_codex(prompt, cwd, model, timeout, disallowed_tools=None):
         except json.JSONDecodeError:
             pass
     error = None
-    if proc.returncode != 0 and not events:
-        error = f"codex exited {proc.returncode}: {proc.stderr[:2000]}"
+    if proc.returncode != 0:
+        error = f"codex exited {proc.returncode}: {(proc.stderr or proc.stdout)[:2000]}"
     return {"events": events, "error": error}
 
 
