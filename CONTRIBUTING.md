@@ -2,13 +2,13 @@
 
 Keep the Why is small on purpose — contributions that keep it that way are especially welcome.
 
-The installable skill package lives under `skills/keep-the-why/` (SKILL.md, references/, examples/, evals/). Everything else at the repo root (docs/, mkdocs config, context/) is the project's own site and self-documentation, not part of what gets installed.
+The installable skill package lives under `skills/keep-the-why/` (SKILL.md, references/, examples/). Everything else at the repo root (docs/, mkdocs config, context/, `tools/evals/`) is the project's own site and self-documentation, not part of what gets installed.
 
 ## What's useful
 
 - Real examples from applying the skill to an actual repository (continuous, retrospective, or interview mode) — even a rough write-up in `skills/keep-the-why/examples/` is valuable.
 - Sharper wording in `skills/keep-the-why/SKILL.md` itself, especially anything that makes the Evidence (confirmed / inferred / unknown) or Status (active / superseded / open / needs-review) classification more reliable in practice.
-- Additional eval cases in `skills/keep-the-why/evals/evals.json` — particularly failure modes you've hit (hallucinated rationale, generic interview questions, index bloat) that aren't covered yet.
+- Additional eval cases in `tools/evals/evals.json` — particularly failure modes you've hit (hallucinated rationale, generic interview questions, index bloat) that aren't covered yet.
 - **Cross-agent test results.** The full set runs against Claude Code via the local runner in `tools/evals/` (fixture projects, real agent sessions, an LLM judge — see its README). Nobody's run it against Codex CLI, Gemini CLI, or other agents yet and published the results — that's the remaining gap, tracked with current status and findings in [issue #131](https://github.com/oliver-zehentleitner/keep-the-why/issues/131). If you run the evals against another agent, open an issue or PR with what you found (pass/fail per case, agent, and version) — that's exactly the kind of verified claim worth adding to the README once there's actual data behind it.
 - Corrections to the README's "Related work" section — if something is inaccurate or missing, say so.
 
@@ -30,7 +30,7 @@ For any change to the skill's rules, workflow, or reference docs, check whether 
 1. `skills/keep-the-why/SKILL.md` — Core Rules, Workflow, Reference file list
 2. The affected `skills/keep-the-why/references/*.md` files
 3. **`skills/keep-the-why/references/migrations.md`** — if the change alters the *format* of existing `context/` entries (new/renamed/restructured fields), add a migration entry in the same PR, not later at release time. Most changes don't touch the format at all; skip this when they don't.
-4. `skills/keep-the-why/evals/evals.json` — does the change need a new case, or invalidate an existing one? Validate with `python3 -c "import json; print(len(json.load(open('skills/keep-the-why/evals/evals.json'))))"`. A new or changed case usually also needs a matching fixture under `tools/evals/fixtures/` so the runner can execute it — see `tools/evals/README.md`. **If the case count changed, update every place that hardcodes it**: `docs/evals.md`'s opening line ("The skill ships N eval cases") and the `--all` comment in `tools/evals/README.md`. `README.md` and `llms.txt` deliberately don't hardcode it (see `CHANGELOG.md`) — leave those as "a suite of eval cases".
+4. `tools/evals/evals.json` — does the change need a new case, or invalidate an existing one? Validate with `python3 -c "import json; print(len(json.load(open('tools/evals/evals.json'))))"`. A new or changed case usually also needs a matching fixture under `tools/evals/fixtures/` so the runner can execute it — see `tools/evals/README.md`. **If the case count changed, update every place that hardcodes it**: `docs/evals.md`'s opening line ("The skill ships N eval cases") and the `--all` comment in `tools/evals/README.md`. `README.md` and `llms.txt` deliberately don't hardcode it (see `CHANGELOG.md`) — leave those as "a suite of eval cases".
 5. `docs/*.md` — include-wrapper pages and `mkdocs.yml` nav, if a reference file is new
 6. `README.md` — if the change affects something described or promised there
 7. `llms.txt` — if the change affects the Core Concept or payoff, not just implementation detail

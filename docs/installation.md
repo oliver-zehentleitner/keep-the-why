@@ -6,7 +6,7 @@ Keep the Why is a repo-native convention and agent skill; this page installs the
 
 Before installing anything that runs inside an agent, know what you're actually getting:
 
-- **No executable code.** The skill package (`skills/keep-the-why/`) is instructions only — `SKILL.md`, `references/*.md`, `examples/*.md`, `evals/evals.json`. No scripts, no binaries.
+- **No executable code.** The skill package (`skills/keep-the-why/`) is instructions only — `SKILL.md`, `references/*.md`, `examples/*.md`. No scripts, no binaries.
 - **No network access of its own.** There's nothing to run, so there's nothing that calls out anywhere. Whatever network access exists is your agent's own, not something this skill adds.
 - **No external services.** No database, no MCP server, no account, no API key.
 - **Install a tagged release, not `main`.** `main` is where active development happens and isn't guaranteed release-ready at any given moment — installing without pinning tracks it directly. A `latest` tag always points to the newest release, moved automatically by CI whenever one ships. Every install method below shows how to pin to it (or to an exact version, for full reproducibility).

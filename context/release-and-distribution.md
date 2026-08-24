@@ -16,13 +16,27 @@ The workaround (split the workflow file into its own commit, have someone with t
 **Status:** active
 **Evidence:** confirmed
 
-`SKILL.md`, `references/`, `examples/`, and `evals/` moved from the repo root into `skills/keep-the-why/`. Everything else (`docs/`, `mkdocs.yml`, `context/`, CI config) stays at the root — it's this project's own site and self-documentation, not part of what gets installed into someone else's project.
+`SKILL.md`, `references/`, and `examples/` moved from the repo root into `skills/keep-the-why/`. Everything else (`docs/`, `mkdocs.yml`, `context/`, CI config, `tools/evals/`) stays at the root — it's this project's own site and self-documentation, not part of what gets installed into someone else's project. (`evals/` rode along in this move too, at the time — see "`evals/` moved back out of `skills/keep-the-why/`" below for why that part was later reversed.)
 
 **Reason:** `gh skill install` (GitHub CLI v2.90.0+) discovers skills via the `skills/*/SKILL.md` convention. A repository with `SKILL.md` directly at its root doesn't match that pattern and isn't reliably discovered — a known, currently open upstream bug (cli/cli#13552) confirms this specifically for root-level single-skill repos. Moving the skill under `skills/keep-the-why/` isn't just tidier structure, it's what makes the recommended install path (`gh skill install oliver-zehentleitner/keep-the-why`) actually work.
 
 It also fixes a second, independent problem: cloning this whole repository into an agent's skills directory (the previous install method) nests an embedded git repository inside the target project and pulls in unrelated files (docs, mkdocs config, CI, evals) that have nothing to do with running the skill.
 
 **Rejected alternative:** keep `SKILL.md` at the root and only document the limitation (`gh skill install` won't discover it, use manual clone instead). Rejected because the manual-clone fallback has its own real problem (the embedded-repo issue above) — accepting both limitations to avoid one file move wasn't a good trade.
+
+## `evals/` moved back out of `skills/keep-the-why/`, into `tools/evals/`
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+
+`evals/evals.json` moved from `skills/keep-the-why/evals/evals.json` to `tools/evals/evals.json`, released in 0.9.1. Unlike `SKILL.md`, `references/`, and `examples/` (see above), `evals/` has no functional reason to ship inside the installed skill package: `SKILL.md` never references it, and its only consumer is `tools/evals/run.py`, development tooling that lives at the repo root. Its earlier co-location under `skills/keep-the-why/` was incidental — it rode along with the discovery-pattern move above, not a separate decision with its own reason.
+
+**Reason:** two independent pattern-matchers flagged the same literals in `evals/evals.json` — a Snyk scan on skills.sh (issue #154, a key-shaped string `sk_live_abc123` used to test credential-handling) and, circumstantially, Claude Code's own runtime safety classifier on a session with the skill active (issue #178, `[reasoning_extraction]`). Investigating #178 established that `evals.json` is never loaded by the skill agent at runtime — `SKILL.md` doesn't reference it, so it can't be the mechanism behind that specific report — but it genuinely is scanned as part of the installed artifact, since `skills/keep-the-why/` is the install boundary (`.claude-plugin/plugin.json`'s `"skills": ["skills/"]`, and the `gh skill install` / `npx skills add` paths both resolve to that directory). Moving it out removes it from anything that scans or installs "the skill," without touching the eval case's content or realism.
+
+**Rejected alternative:** defang the flagged literals in place (replace `sk_live_abc123` with an obviously fake placeholder) instead of moving the file. Rejected as the wrong fix for this file specifically: `evals.json` is test fixture data whose entire point is realistic shape, and it was never the skill's own runtime content in the first place — weakening it doesn't address the actual mismatch, which is packaging. (The same tactic may still be worth applying separately to `references/trust-model.md:57`, a literal injection payload that *is* referenced by the skill at runtime via Core Rule 15 — tracked in #178, not resolved by this change.)
+
+**Related:** #154, #178.
 
 ## `release.yml`'s checkout pins the actual release tag, not the workflow's trigger ref
 

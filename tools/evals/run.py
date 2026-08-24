@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Local eval runner for the keep-the-why skill.
 
-For each case in skills/keep-the-why/evals/evals.json:
+For each case in tools/evals/evals.json:
   1. Materialize a throwaway git repo from tools/evals/fixtures/ (shared
      _base project, overlaid with the case's own fixture directory if one
      exists), and install the skill package into the driver's install path.
@@ -117,7 +117,7 @@ from pathlib import Path
 TOOL_DIR = Path(__file__).resolve().parent
 REPO_ROOT = TOOL_DIR.parent.parent
 SKILL_DIR = REPO_ROOT / "skills" / "keep-the-why"
-EVALS_JSON = SKILL_DIR / "evals" / "evals.json"
+EVALS_JSON = TOOL_DIR / "evals.json"
 FIXTURES_DIR = TOOL_DIR / "fixtures"
 BASE_FIXTURE = FIXTURES_DIR / "_base"
 MATRIX_CONFIG_JSON = TOOL_DIR / "matrix-config.json"

@@ -22,7 +22,7 @@ jobs:
         run: python -m skills_ref.cli validate skills/keep-the-why
 
       - name: Validate evals.json is well-formed
-        run: python -m json.tool skills/keep-the-why/evals/evals.json >/dev/null
+        run: python -m json.tool tools/evals/evals.json >/dev/null
 
       - name: Check version consistency across the repo
         run: |

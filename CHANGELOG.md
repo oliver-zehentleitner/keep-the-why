@@ -25,6 +25,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 ### Security
 
 - Pinned every third-party GitHub Action across all four workflows (`actions/checkout`, `actions/setup-python`, `actions/upload-pages-artifact`, `actions/deploy-pages`, `lycheeverse/lychee-action`) to a full commit SHA instead of a mutable version tag, with the tag kept as a trailing comment for readability. Also pinned `skills-ref` in `validate-skill.yml` to a fixed version (`0.1.1`) instead of an unpinned `pip install`. A moving tag can be repointed by the action's maintainer — or an attacker with access to their account — to different code without any change on this repo's side; see the `tj-actions/changed-files` incident (March 2025) for a real-world case of exactly that.
+- Moved `evals/evals.json` out of the installable skill package (`skills/keep-the-why/evals/` → `tools/evals/evals.json`), since its only consumer is `tools/evals/run.py`, development tooling that was never part of what gets installed. Resolves a Snyk false-positive Critical (issue #154) that scanned a key-shaped eval-fixture literal (`sk_live_abc123`) as part of the shipped skill — the literal's realism is unchanged, only its packaging location moved. See `context/release-and-distribution.md` for the full reasoning, including why this doesn't fully explain the separate `[reasoning_extraction]` classifier report in issue #178.
 
 ## [0.9.0] - 2026-08-20
 

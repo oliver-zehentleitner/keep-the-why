@@ -1,5 +1,0 @@
-# Evals
-
-Eval scenarios for this skill: a prompt paired with the expected behavior, in the format Anthropic's own [skill-authoring guidance](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices) describes — including negative cases (prompts where the skill should *not* activate, or should stay minimal).
-
-**Status:** an automated runner for these cases lives in the repository at [`tools/evals/`](https://github.com/oliver-zehentleitner/keep-the-why/tree/main/tools/evals) — deliberately outside this skill package, which ships instructions only (`main` link on purpose: the runner is development tooling that isn't part of any release artifact). It materializes a fixture project per case, runs a real agent session against it, and grades transcript + file changes with an LLM judge. It drives six agentic CLIs (`claude`, `cline`, `codex`, `kimi`, `opencode`, `pi`) — see [`tools/evals/README.md`](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/tools/evals/README.md#drivers) for driver details and the [agent & model matrix](https://keepthewhy.com/agent-matrix/) for which combinations have actually been run.
