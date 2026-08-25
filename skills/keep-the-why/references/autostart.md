@@ -5,9 +5,9 @@ agent tool — referenced by `setup.md`'s wizard step 2, not a mandate. The
 current agent still decides what (if anything) to set up for its own
 platform; this file exists so that decision can draw on evidence someone
 already gathered, instead of only from-scratch improvisation every time.
-Growing and incomplete by design — see [issue
-#138](https://github.com/oliver-zehentleitner/keep-the-why/issues/138) to
-add a tool that isn't here yet.
+Growing and incomplete by design — a pull request adding a verified example
+for a tool that isn't here yet is welcome any time; for anything else, [open
+a new issue](https://github.com/oliver-zehentleitner/keep-the-why/issues/new).
 
 Each entry states plainly what was actually verified and how, so "listed
 here" never gets mistaken for "guaranteed to work for you" — check the
@@ -84,7 +84,8 @@ above is.
 
 Not yet verified for Cline, Codex CLI, Kimi Code, opencode, Pi, Gemini CLI,
 or anything else. If you've worked out something that measurably helps for
-one of these, contributing it here (with what you actually checked) is
-exactly the kind of help [issue
-#138](https://github.com/oliver-zehentleitner/keep-the-why/issues/138) asks
-for.
+one of these, a pull request adding it here (with what you actually checked)
+is exactly the kind of contribution this project wants. Hit a problem, or
+have something to report that isn't a ready-made example? [Open a new
+issue](https://github.com/oliver-zehentleitner/keep-the-why/issues/new)
+rather than commenting on a closed one.
