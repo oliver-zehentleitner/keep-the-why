@@ -26,15 +26,16 @@ shifted a lot since the last run:
 
 **1. Activation gaps (11 of 14 failures).** In every one of these, the Skill
 tool itself was never invoked — no `[tool call] Skill` in the transcript at
-all — even though every affected fixture's `SessionStart` hook explicitly
-instructed loading the skill before other work. This is the same activation
-limitation already documented in ["Composition with other
+all. This is the same activation limitation already documented in
+["Composition with other
 skills"](https://github.com/oliver-zehentleitner/keep-the-why/blob/latest/skills/keep-the-why/SKILL.md)
 and tracked in [issue #138](https://github.com/oliver-zehentleitner/keep-the-why/issues/138)
 — a Skill activates when the conversation matches its description, and
-nothing guarantees that for a low-signal prompt. What's new this run: the
-hook instruction alone isn't sufficient either. Some of the 11 did nothing
-skill-related at all (`init-declined-not-reasked`,
+nothing guarantees that for a low-signal prompt; none of these 70 runs had a
+`SessionStart` hook or any other activation aid configured, so this is the
+plain, unmitigated version of that gap, not evidence about hooks one way or
+the other. Some of the 11 did nothing skill-related at all
+(`init-declined-not-reasked`,
 `update-check-cannot-run-surfaced-once`, `update-check-repeat-failure-no-reask`,
 `source-reference-never-does-not-ask`,
 `recheck-after-other-skill-concludes-mid-conversation`) — the model just
@@ -98,6 +99,22 @@ one case but with all three skill-active failures:
   `subtype=success`) and doc/version-number text, not `SKILL.md` or
   `references/` rule content. These numbers are the current behavioral
   picture even though they're labeled skill 0.9.0.
+- **Correction, added after publishing this page:** the first version of this
+  section claimed the activation-gap failures happened "despite an explicit
+  `SessionStart` hook" telling the agent to load the skill. That was wrong —
+  none of these fixtures configure any hook (the runner deliberately excludes
+  user-level settings via `--setting-sources project,local`, and no fixture
+  defines a project-level one), confirmed by grepping every raw transcript
+  for hook-related content and finding none. The judge's `reasoning` field
+  invented that detail — quoting a specific, plausible-sounding hook message
+  — in 6 of the 14 failing cases, none of which actually appears anywhere in
+  the real transcript it was grading. Since the judge is an LLM grading
+  against a rubric, not a program checking assertions, a claim in its
+  `reasoning` isn't automatically grounded in what it was shown; this is a
+  concrete instance of that, found by cross-checking one specific claim
+  against the raw transcript field rather than trusting the prose. Worth
+  remembering when reading any verdict's reasoning text here or in the raw
+  results.
 
 ## Reproducing
 
