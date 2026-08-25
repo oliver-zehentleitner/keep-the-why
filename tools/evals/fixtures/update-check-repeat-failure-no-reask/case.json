@@ -1,6 +1,8 @@
 {
   "disallowed_tools": [
     "WebFetch",
-    "WebSearch"
+    "WebSearch",
+    "Bash(curl *)",
+    "Bash(wget *)"
   ]
 }

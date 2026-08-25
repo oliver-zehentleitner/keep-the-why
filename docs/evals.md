@@ -71,6 +71,39 @@ one case but with all three skill-active failures:
   asked the user whether to write it up instead of recording
   `Status: open` / `Evidence: unknown` itself, as the case calls for.
 
+## Activation-gap follow-up: a real SessionStart hook, tested
+
+**Not a new full-suite run — a targeted re-test of the 11 activation-gap
+failures above, done the same day (2026-08-25).** One of those 11
+(`init-declined-not-reasked`) starts from an empty project with no
+`AGENTS.md` at all, so there's no `keep-the-why:config` marker for a hook to
+find — out of scope for this by construction. The other 10 were re-run
+against the same fixtures plus one change: a project-scoped `SessionStart`
+hook, checked into `tools/evals/fixtures/_base/.claude/settings.json` (not
+the machine-level one a developer might have personally) — it greps
+`AGENTS.md` for the `keep-the-why:config` marker and, if found, injects
+"Load the keep-the-why skill now, before other work" as `additionalContext`
+before the first turn.
+
+**Result: 10/10 now invoke the Skill tool (was 0/10). 9/10 pass outright.**
+The one holdout, `update-check-cannot-run-surfaced-once`, turned out to be
+an unrelated fixture bug, not a skill or hook problem: its "simulate no web
+access" setup denies `WebFetch`/`WebSearch` but not `Bash`, so the agent
+reached the real GitHub API with `curl` and the simulated failure never
+actually happened — the same bug affected `update-check-repeat-failure-no-reask`,
+which had happened to still pass by coincidence (a real successful check is
+also valid output for that case's expected behavior). Fixed both fixtures'
+`case.json` to also deny `Bash(curl *)`/`Bash(wget *)`; re-run, both pass
+cleanly for the right reason this time (curl denied, agent reports the
+failure and asks/retries-quietly as expected). **Final: 10/10 pass.**
+
+This hook is now the `_base` fixture's default, so every future full run
+includes it — the 56/70 above remains the last true baseline *without* one.
+The next full `--all` run (not done today) is what turns this from "10 of 11
+formerly-failing cases, re-run in isolation" into a real before/after on the
+whole suite. Writeup and the reusable hook snippet: `docs/autostart.md`
+(planned, not published yet).
+
 ## Caveats, stated plainly
 
 - One run per case: single-run verdicts are subject to normal model variance.
