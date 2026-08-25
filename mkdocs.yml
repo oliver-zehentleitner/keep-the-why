@@ -64,6 +64,7 @@ nav:
   - Why I built this: why.md
   - Reference:
       - Setup: setup.md
+      - Autostart examples: autostart.md
       - Migrations: migrations.md
       - Methodology: methodology.md
       - Continuous capture: continuous-capture.md
