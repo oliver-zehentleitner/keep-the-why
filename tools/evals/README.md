@@ -40,10 +40,11 @@ case plus `summary.json` and `summary.md`.
 | `codex` | [Codex CLI](https://github.com/openai/codex) (`codex`) | Explicit — see below |
 | `hermes` | [Hermes Agent](https://github.com/NousResearch/hermes-agent) (`hermes`) | Explicit — see below, and the important caveat right after |
 | `kimi` | [Kimi Code](https://github.com/MoonshotAI/kimi-code) (`kimi`) | Explicit — see below |
+| `omp` | [oh-my-pi](https://omp.sh) (`omp`, can1357/oh-my-pi) | Explicit — see below |
 | `opencode` | [opencode](https://opencode.ai) (`opencode`) | Explicit — see below |
 | `pi` | [Pi](https://pi.dev) (`pi`) | Explicit — see below |
 
-`cline`, `codex`, `hermes`, `kimi`, `opencode`, and `pi` don't get
+`cline`, `codex`, `hermes`, `kimi`, `omp`, `opencode`, and `pi` don't get
 native-discovery treatment: whether they'd find the skill on their own is a
 Claude-Code-specific question, already covered by the `claude` driver's
 activation cases. Instead the skill is installed at a plain
@@ -78,7 +79,23 @@ outright on any non-interactive `-p` prompt before producing a response (a
 genuine upstream bug, reproduced independent of this skill) — pin to 0.37.2
 until that's fixed upstream.
 
-**Verification status:** all six non-`claude` drivers have been run
+**`omp` is a fork of `pi`** (can1357/oh-my-pi, forked from earendil-works/pi)
+rewritten as a "coding agent with the IDE wired in" — 31 built-in tools (LSP,
+debugger, AST edits, browser, ...) vs. `pi`'s 4, and a reported ~40k-token
+system prompt vs. `pi`'s minimal one, so this is a genuinely different
+harness under the same model, not a version bump of the `pi` driver. Its
+`--mode json` event schema was verified live (both a plain text turn and a
+real tool call, including the error path) to be identical, for every event
+type `render_transcript_omp` consumes, to `pi`'s — expected of a fork,
+confirmed rather than assumed. `--no-skills` disables `omp`'s own skill
+auto-discovery so an ambiguous "read SKILL.md" can't resolve to an unrelated
+global install instead of the fixture-local one — the same class of bug `pi`
+and `opencode` hit (see below), headed off here before it could bite. `omp`
+ships no `--exclude-tools`-style deny flag (only an allow-list via
+`--tools`), so `disallowed_tools` is logged, not enforced, same as
+`opencode`/`hermes`.
+
+**Verification status:** all seven non-`claude` drivers have been run
 end-to-end against real installs (local Ollama and/or OpenRouter) and their
 results published to [the agent & model
 matrix](https://keepthewhy.com/agent-matrix/). Three real bugs were only
@@ -112,15 +129,16 @@ python3 tools/evals/run.py --all --driver cline --model openrouter/moonshotai/ki
 python3 tools/evals/run.py --all --driver codex --model openrouter/x-ai/grok-4.6
 python3 tools/evals/run.py --all --driver kimi --model openrouter/z-ai/glm-5.3
 python3 tools/evals/run.py --all --driver hermes --model openrouter/stealth/ox-alpha
+python3 tools/evals/run.py --all --driver omp --model openrouter/qwen/qwen3.8-27b
 ```
 
 Requires the selected driver's CLI on `PATH` with working credentials/model
 config: for `pi`, a local Ollama or OpenRouter model needs a matching entry in
 `~/.pi/agent/models.json`; for `opencode`, in `opencode.json`; for `kimi`, via
 `kimi provider`; for `cline`, via `cline auth`; for `codex`, a
-`[model_providers.<id>]` block in `~/.codex/config.toml`; for `hermes`, an
-`OPENROUTER_API_KEY` env var (no per-model registration needed — any
-`provider/model` string is passed straight through to `--model`/`--provider`).
+`[model_providers.<id>]` block in `~/.codex/config.toml`; for `hermes` and
+`omp`, an `OPENROUTER_API_KEY` env var (no per-model registration needed —
+any `provider/model` string is passed straight through to `--model`).
 Exit code is non-zero if any case fails or errors.
 
 ## Matrix runs

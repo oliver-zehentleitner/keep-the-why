@@ -38,8 +38,25 @@ instructions only — no executable code.
             --model/--provider. MUST be invoked as `hermes chat`, never the
             bare `hermes-agent` binary installed alongside it — see
             run_agent_hermes for why (a real, verified isolation bug).
+  omp       oh-my-pi (`omp`, can1357/oh-my-pi). A fork of pi (see the `pi`
+            driver above) rewritten as a "coding agent with the IDE wired
+            in" — 31 built-in tools (LSP, debugger, AST edits, browser, ...)
+            vs. pi's 4, and a ~40k-token system prompt vs. pi's minimal one,
+            so this is a genuinely different harness under the same model,
+            not a version bump of the pi driver. Any OpenRouter model via
+            --model, no per-model registration needed (same as hermes).
+            `--mode json`'s event schema was verified, live, to be identical
+            to pi's for every event type render_transcript_omp consumes
+            (message_end / tool_execution_start / tool_execution_end,
+            including the isError flag / agent_end) — expected, since omp is
+            a fork, but confirmed rather than assumed. --no-skills disables
+            omp's own skill auto-discovery so it can't shadow the
+            fixture-local SKILL.md with an unrelated global install (this
+            host has one at ~/.pi/agent/skills/keep-the-why for the pi
+            driver) — the same class of bug noted for pi/opencode below,
+            headed off here before it could bite.
 
-pi, opencode, kimi, cline, codex, and hermes don't get native-discovery treatment:
+pi, opencode, kimi, cline, codex, omp, and hermes don't get native-discovery treatment:
 we don't test whether they'd find the skill on their own (that's a
 Claude-Code-specific question, already covered by the claude driver's
 activation cases). Instead the skill is installed at a plain
@@ -69,10 +86,10 @@ uses) was verified correct before being trusted: the exported session's
 recorded cwd matches the fixture dir and tool output matches fixture
 contents.
 
-NOTE: the pi, opencode, kimi, cline, codex, and hermes drivers (command
+NOTE: the pi, opencode, kimi, cline, codex, omp, and hermes drivers (command
 flags, JSON event schema) were built from each project's own docs/live
 testing — pi and kimi verified against real transcripts (local Ollama and
-OpenRouter), opencode, cline, codex, and hermes verified against
+OpenRouter), opencode, cline, codex, omp, and hermes verified against
 OpenRouter. Re-check render_transcript_* against a fresh raw transcript if
 a driver's CLI version changes noticeably.
 
@@ -139,14 +156,15 @@ SKILL_INSTALL_REL = {
     "cline": "skills/keep-the-why",
     "codex": "skills/keep-the-why",
     "hermes": "skills/keep-the-why",
+    "omp": "skills/keep-the-why",
 }
 
 # Whether the case prompt gets prefixed with an explicit "read SKILL.md and
 # follow it" instruction. False only for claude, where discovery itself is
 # part of what's under test.
-EXPLICIT_LOAD = {"claude": False, "pi": True, "opencode": True, "kimi": True, "cline": True, "codex": True, "hermes": True}
+EXPLICIT_LOAD = {"claude": False, "pi": True, "opencode": True, "kimi": True, "cline": True, "codex": True, "hermes": True, "omp": True}
 
-DRIVER_LABELS = {"claude": "Claude Code", "pi": "Pi", "opencode": "opencode", "kimi": "Kimi Code", "cline": "Cline", "codex": "Codex CLI", "hermes": "Hermes"}
+DRIVER_LABELS = {"claude": "Claude Code", "pi": "Pi", "opencode": "opencode", "kimi": "Kimi Code", "cline": "Cline", "codex": "Codex CLI", "hermes": "Hermes", "omp": "oh-my-pi"}
 
 # Matches the CLI's own plain-text account-limit messages (observed so far:
 # "You've hit your session limit · resets ..." and "You've hit your monthly
@@ -609,6 +627,56 @@ def run_agent_hermes(prompt, cwd, model, timeout, disallowed_tools=None):
     return {"events": [session_obj], "error": None}
 
 
+def run_agent_omp(prompt, cwd, model, timeout, disallowed_tools=None):
+    # --yolo: non-interactive approval bypass (omp's equivalent of
+    # --dangerously-skip-permissions, per docs/approval-mode.md — without it,
+    # writes sit on the client-side permission gate with nothing to answer
+    # it, the same failure shape codex hit before --approve-for-me).
+    # --mode json: newline-delimited JSON event stream. Verified live (not
+    # just from docs) to emit the identical shape pi's --mode json does for
+    # every event type render_transcript_omp consumes — expected of a pi
+    # fork, confirmed rather than assumed; see module docstring.
+    # --cwd: passed explicitly as defense in depth. A canary-file check
+    # (temp dir with a marker file, run outside any real project) confirmed
+    # omp already respects the subprocess's OS-level cwd correctly without
+    # this flag — unlike opencode, which silently operated on this repo's
+    # real directory until --dir was added (see module docstring) — but the
+    # flag costs nothing and removes the dependency on that behavior holding
+    # across future omp versions.
+    # --no-session: don't persist a session record for this throwaway run.
+    # --no-skills: disables omp's own skill auto-discovery. This host has an
+    # unrelated global keep-the-why install at ~/.pi/agent/skills/keep-the-why
+    # (for the pi driver) — without this flag, an ambiguous "read SKILL.md"
+    # could resolve to that instead of the fixture-local copy the prompt
+    # explicitly points at, the exact bug class pi and opencode hit before
+    # their prompts were made to say the relative path explicitly.
+    cmd = ["omp", "-p", "--mode", "json", "--yolo", "--model", model,
+           "--cwd", str(cwd), "--no-session", "--no-skills", prompt]
+    if disallowed_tools:
+        print(f"  NOTE: omp driver has no documented per-tool deny flag (only "
+              f"an allow-list via --tools) — case's disallowed_tools "
+              f"{disallowed_tools} not enforced.", file=sys.stderr)
+    env = dict(os.environ)
+    try:
+        proc = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired as e:
+        return {"events": [], "error": f"timeout after {timeout}s",
+                "raw": (e.stdout or "")[:MAX_TRANSCRIPT_CHARS]}
+    events = []
+    for line in proc.stdout.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            events.append(json.loads(line))
+        except json.JSONDecodeError:
+            pass
+    error = None
+    if proc.returncode != 0:
+        error = f"omp exited {proc.returncode}: {(proc.stderr or proc.stdout)[:2000]}"
+    return {"events": events, "error": error}
+
+
 AGENT_RUNNERS = {
     "claude": run_agent_claude,
     "pi": run_agent_pi,
@@ -617,6 +685,7 @@ AGENT_RUNNERS = {
     "cline": run_agent_cline,
     "codex": run_agent_codex,
     "hermes": run_agent_hermes,
+    "omp": run_agent_omp,
 }
 
 
@@ -833,6 +902,41 @@ def render_transcript_hermes(events):
     return _cap("\n\n".join(out))
 
 
+def render_transcript_omp(events):
+    """Flatten omp's --mode json event stream.
+
+    Identical logic to render_transcript_pi: omp is a fork of pi and, for
+    the event types this consumes, emits the same shape (verified live, see
+    run_agent_omp).
+    """
+    out = []
+    for ev in events:
+        t = ev.get("type")
+        if t == "message_end":
+            msg = ev.get("message") or {}
+            if msg.get("role") != "assistant":
+                continue
+            for block in msg.get("content", []) or []:
+                if isinstance(block, dict) and block.get("type") == "text" \
+                        and block.get("text", "").strip():
+                    out.append(f"[assistant]\n{block['text'].strip()}")
+        elif t == "tool_execution_start":
+            inp = json.dumps(ev.get("args", {}), ensure_ascii=False)
+            if len(inp) > 1500:
+                inp = inp[:1500] + "…(truncated)"
+            out.append(f"[tool call] {ev.get('toolName')}: {inp}")
+        elif t == "tool_execution_end":
+            result = ev.get("result")
+            result = json.dumps(result, ensure_ascii=False) if isinstance(result, (dict, list)) else str(result)
+            if len(result) > MAX_TOOL_RESULT_CHARS:
+                result = result[:MAX_TOOL_RESULT_CHARS] + "…(truncated)"
+            prefix = "[tool error]" if ev.get("isError") else "[tool result]"
+            out.append(f"{prefix} {result}")
+        elif t == "agent_end":
+            out.append("[session ended]")
+    return _cap("\n\n".join(out))
+
+
 TRANSCRIPT_RENDERERS = {
     "claude": render_transcript_claude,
     "pi": render_transcript_pi,
@@ -841,6 +945,7 @@ TRANSCRIPT_RENDERERS = {
     "cline": render_transcript_cline,
     "codex": render_transcript_codex,
     "hermes": render_transcript_hermes,
+    "omp": render_transcript_omp,
 }
 
 

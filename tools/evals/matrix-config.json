@@ -1,5 +1,5 @@
 {
-  "drivers": ["cline", "codex", "hermes", "kimi", "opencode", "pi"],
+  "drivers": ["cline", "codex", "hermes", "kimi", "omp", "opencode", "pi"],
   "models": [
     { "id": "openrouter/anthropic/claude-sonnet-5", "label": "Claude Sonnet 5 (OpenRouter)" },
     { "id": "openrouter/deepseek/deepseek-v3.2", "label": "DeepSeek V3.2 (OpenRouter)" },

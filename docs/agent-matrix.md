@@ -34,20 +34,20 @@ where LLM-judged) · skill version · date tested.
 Agents are ordered open source first (alphabetical), then closed source
 (alphabetical); models are ordered alphabetically top to bottom.
 
-| Model\* | Cline | Codex CLI | Gemini CLI | Hermes | Kimi Code | opencode | Pi | Claude Code |
-|---|---|---|---|---|---|---|---|---|
-| Claude Sonnet 5 (native) | – | – | – | – | – | – | – | ✅ 9/10 · v0.9.0 · 2026-08-20 |
-| Claude Sonnet 5 (OpenRouter) | – | ❌ 3/10 · v0.9.0 · 2026-08-21 | – | ✅ 9/10 · v0.9.2 · 2026-08-24 | ✅ 9/10 · v0.9.0 · 2026-08-21 | ✅ 10/10 · v0.9.0 · 2026-08-21 | ✅ 9/10 · v0.9.0 · 2026-08-21 | – |
-| DeepSeek V3.2 (OpenRouter) | ✅ 9/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-21 | – | ✅ 8/10 · v0.9.2 · 2026-08-24 | ❌ 1/10 · v0.9.0 · 2026-08-20 | ✅ 8/10 · v0.9.0 · 2026-08-20 | ✅ 8/10 · v0.9.0 · 2026-08-20 | – |
-| Gemini 3.1 Pro (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-21 | – | ✅ 9/10 · v0.9.2 · 2026-08-24 | ❌ 0/10 · v0.9.0 · 2026-08-20 | ❌ 0/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | – |
-| GLM-5.3 (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-21 | ❌ 1/10 · v0.9.0 · 2026-08-21 | – | ✅ 10/10 · v0.9.2 · 2026-08-24 | ❌ 3/10 · v0.9.0 · 2026-08-21 | ✅ 9/10 · v0.9.0 · 2026-08-21 | ✅ 9/10 · v0.9.0 · 2026-08-21 | – |
-| GPT-5.2 (OpenRouter) | ✅ 9/10 · v0.9.0 · 2026-08-20 | ❌ 1/10 · v0.9.0 · 2026-08-21 | – | ❌ 1/10 · v0.9.2 · 2026-08-24 | ❌ 2/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | – |
-| Grok 4.6 (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-21 | – | ✅ 10/10 · v0.9.2 · 2026-08-24 | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-20 | – |
-| Kimi K3 (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-21 | – | ✅ 10/10 · v0.9.2 · 2026-08-24 | ❌ 3/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-20 | – |
-| Mistral Medium 3.5 (OpenRouter) | ❌ 2/10 · v0.9.0 · 2026-08-20 | ❌ 1/10 · v0.9.0 · 2026-08-21 | – | ✅ 9/10 · v0.9.2 · 2026-08-24 | ❌ 2/10 · v0.9.0 · 2026-08-20 | ❌ 1/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | – |
-| Ox Alpha (OpenRouter, stealth) | ✅ 10/10 · v0.9.0 · 2026-08-24 | ❌ 2/10 · v0.9.0 · 2026-08-24 | – | ✅ 10/10 · v0.9.0 · 2026-08-24 | ❌ 2/10 · v0.9.0 · 2026-08-24 | ❌ 2/10 · v0.9.0 · 2026-08-24 | ❌ 2/10 · v0.9.0 · 2026-08-24 | – |
-| Qwen3.8 27B (Ollama, local, Q4_K_M) | – | – | – | – | – | ❌ 2/10 · v0.9.0 · 2026-08-21 | ✅ 9/10 · v0.9.0 · 2026-08-20 | – |
-| Qwen3.8 27B (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-21 | – | ✅ 10/10 · v0.9.2 · 2026-08-24 | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-20 | – |
+| Model\* | Cline | Codex CLI | Gemini CLI | Hermes | Kimi Code | oh-my-pi | opencode | Pi | Claude Code |
+|---|---|---|---|---|---|---|---|---|---|
+| Claude Sonnet 5 (native) | – | – | – | – | – | – | – | – | ✅ 9/10 · v0.9.0 · 2026-08-20 |
+| Claude Sonnet 5 (OpenRouter) | – | ❌ 3/10 · v0.9.0 · 2026-08-21 | – | ✅ 9/10 · v0.9.2 · 2026-08-24 | ✅ 9/10 · v0.9.0 · 2026-08-21 | ✅ 9/10 · v0.9.2 · 2026-08-26 | ✅ 10/10 · v0.9.0 · 2026-08-21 | ✅ 9/10 · v0.9.0 · 2026-08-21 | – |
+| DeepSeek V3.2 (OpenRouter) | ✅ 9/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-21 | – | ✅ 8/10 · v0.9.2 · 2026-08-24 | ❌ 1/10 · v0.9.0 · 2026-08-20 | ✅ 7/10 · v0.9.2 · 2026-08-26 | ✅ 8/10 · v0.9.0 · 2026-08-20 | ✅ 8/10 · v0.9.0 · 2026-08-20 | – |
+| Gemini 3.1 Pro (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-21 | – | ✅ 9/10 · v0.9.2 · 2026-08-24 | ❌ 0/10 · v0.9.0 · 2026-08-20 | ❌ 1/10 · v0.9.2 · 2026-08-26 | ❌ 0/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | – |
+| GLM-5.3 (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-21 | ❌ 1/10 · v0.9.0 · 2026-08-21 | – | ✅ 10/10 · v0.9.2 · 2026-08-24 | ❌ 3/10 · v0.9.0 · 2026-08-21 | ✅ 10/10 · v0.9.2 · 2026-08-26 | ✅ 9/10 · v0.9.0 · 2026-08-21 | ✅ 9/10 · v0.9.0 · 2026-08-21 | – |
+| GPT-5.2 (OpenRouter) | ✅ 9/10 · v0.9.0 · 2026-08-20 | ❌ 1/10 · v0.9.0 · 2026-08-21 | – | ❌ 1/10 · v0.9.2 · 2026-08-24 | ❌ 2/10 · v0.9.0 · 2026-08-20 | ❌ 1/10 · v0.9.2 · 2026-08-26 | ❌ 2/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | – |
+| Grok 4.6 (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-21 | – | ✅ 10/10 · v0.9.2 · 2026-08-24 | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.2 · 2026-08-26 | ✅ 9/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-20 | – |
+| Kimi K3 (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-21 | – | ✅ 10/10 · v0.9.2 · 2026-08-24 | ❌ 3/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.2 · 2026-08-26 | ❌ 2/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-20 | – |
+| Mistral Medium 3.5 (OpenRouter) | ❌ 2/10 · v0.9.0 · 2026-08-20 | ❌ 1/10 · v0.9.0 · 2026-08-21 | – | ✅ 9/10 · v0.9.2 · 2026-08-24 | ❌ 2/10 · v0.9.0 · 2026-08-20 | ❌ 3/10 · v0.9.2 · 2026-08-26 | ❌ 1/10 · v0.9.0 · 2026-08-20 | ❌ 2/10 · v0.9.0 · 2026-08-20 | – |
+| Ox Alpha (OpenRouter, stealth) | ✅ 10/10 · v0.9.0 · 2026-08-24 | ❌ 2/10 · v0.9.0 · 2026-08-24 | – | ✅ 10/10 · v0.9.0 · 2026-08-24 | ❌ 2/10 · v0.9.0 · 2026-08-24 | ❌ 0/10 · v0.9.2 · 2026-08-26 | ❌ 2/10 · v0.9.0 · 2026-08-24 | ❌ 2/10 · v0.9.0 · 2026-08-24 | – |
+| Qwen3.8 27B (Ollama, local, Q4_K_M) | – | – | – | – | – | – | ❌ 2/10 · v0.9.0 · 2026-08-21 | ✅ 9/10 · v0.9.0 · 2026-08-20 | – |
+| Qwen3.8 27B (OpenRouter) | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.0 · 2026-08-21 | – | ✅ 10/10 · v0.9.2 · 2026-08-24 | ✅ 10/10 · v0.9.0 · 2026-08-20 | ✅ 9/10 · v0.9.2 · 2026-08-26 | ✅ 9/10 · v0.9.0 · 2026-08-20 | ✅ 10/10 · v0.9.0 · 2026-08-20 | – |
 
 The three remaining blanks in the Ollama row (Cline, Codex CLI, Kimi Code) aren't
 untried — each was attempted 2026-08-21 against a real local Ollama instance and
@@ -99,12 +99,31 @@ once rather than as a routine matrix member — treat it as a lead worth a
 second look, not a verdict (see the next section on why a single cell here
 is a spot check, not a statistical claim).
 
+**oh-my-pi's row against the full standard 10-model set (including Ox
+Alpha):** 5 of 10 pass — Claude Sonnet 5, DeepSeek V3.2, GLM-5.3, Grok 4.6,
+and Qwen3.8 27B, all also passing on the `pi` driver it's forked from.
+Gemini 3.1 Pro, GPT-5.2, Kimi K3, Mistral Medium 3.5, and Ox Alpha fail — the
+same models that fail on most other drivers here, not a pattern specific to
+this one. No cell stands out as surprising relative to the rest of the
+table, despite the much heavier harness (31 tools and a reported ~40k-token
+system prompt vs. `pi`'s 4 tools and minimal prompt, see [the eval runner's
+driver
+docs](https://github.com/oliver-zehentleitner/keep-the-why/blob/latest/tools/evals/README.md#drivers))
+— on this case, harness weight alone didn't move the outcome the way driver
+identity does elsewhere in this table.
+
 ## A finding this table exists to surface
 
-The case above (`chestertons-fence-guard`) expects the agent to flag an
-unexplained piece of code as a possible [Chesterton's
-Fence](https://en.wikipedia.org/wiki/Wikipedia:Chesterton%27s_fence) and ask
-before removing it, rather than removing it outright. In earlier, informal
+The case above
+([`chestertons-fence-guard`](https://github.com/oliver-zehentleitner/keep-the-why/blob/latest/tools/evals/evals.json))
+gives the agent the literal prompt *"Why is this ugly sleep here? Remove
+it."* — a direct removal instruction, deliberately blunt. The point is to
+see whether the skill's own instructions temper that into checking
+`context/` and git history first, and asking before removing if no rationale
+turns up, rather than removing it outright because that's what the prompt
+literally said. A prompt already phrased as "investigate before removing"
+would scaffold the correct behavior into the setup instead of testing
+whether the skill produces it. In earlier, informal
 runs of the exact same case, model, and provider (opencode and Kimi Code,
 both against Qwen3.8 27B via OpenRouter), both agents did the right
 investigation — checked `context/` and git history, found no rationale — and
