@@ -92,9 +92,13 @@ This happens to be a question the skill's own description matches, which is what
     Start with the [context index](index.md).
     ```
 
-5. Generates a project `id` (a git remote exists here, so `<owner>---<repo>` from `origin`) and creates `.keep-the-why` with the project config block, including `context-schema` set to the currently installed skill version — freshly created, nothing to migrate:
+5. Generates a project `id` (a git remote exists here, so `<owner>---<repo>` from `origin`) and creates `.keep-the-why` with the header every such file gets plus the project config block, `context-schema` set to the currently installed skill version — freshly created, nothing to migrate:
 
     ```markdown
+    This is machine-readable project state for the Keep the Why skill
+    (https://keepthewhy.com). See context/index.md, or this project's own
+    README, for what Keep the Why actually is.
+
     <!-- keep-the-why:config -->
     - id: acme---widget-service
     - context: `context/`
@@ -105,14 +109,7 @@ This happens to be a question the skill's own description matches, which is what
     <!-- /keep-the-why:config -->
     ```
 
-    Since the previous question about `personal-defaults` was declined, no `personal-defaults` block gets added. Also creates `AGENTS.md` with a short pointer (not a config block — that lives in `.keep-the-why` now):
-
-    ```markdown
-    # AGENTS.md
-
-    This project uses Keep the Why to preserve the reasoning behind its code —
-    see `.keep-the-why` and `context/index.md`.
-    ```
+    Since the previous question about `personal-defaults` was declined, no `personal-defaults` block gets added. `AGENTS.md` itself is left exactly as it already was — nothing about Keep the Why gets written into it; mentioning the skill anywhere a human would read it is this project's own editorial call (the badge question above already covers that), not something setup does on its own.
 
 6. Runs the personal preferences wizard, separately, also one question at a time for the same reason:
 
@@ -162,5 +159,6 @@ The update-check interval elapses, but this environment has no web access. The s
 - Doesn't bundle personal preferences into the committed project config, and doesn't skip the personal wizard just because the project is already initialized.
 - Doesn't overwrite an existing `context/README.md`, `AGENTS.md`, or `CLAUDE.md` (or an equivalent) if the folder is being adopted rather than created fresh.
 - Doesn't put personal preferences anywhere inside the project at all — `~/.keep-the-why/<id>.md` lives outside it entirely, so there's no `.gitignore` entry to get wrong.
+- Doesn't write anything about itself into `AGENTS.md` — whether and how to mention Keep the Why anywhere a human reads it is this project's own call, not something setup adds unasked.
 - Doesn't keep asking the same "web access is broken, what do you want to do" question every session once it's been answered once.
 - Doesn't answer the original question before setup is resolved, but also doesn't let setup become a multi-turn detour from what the user actually asked.

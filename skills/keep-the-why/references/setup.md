@@ -9,6 +9,10 @@ Setup state splits across two files, one committed and shared, one personal to a
 **Project config**, in `.keep-the-why` at the project root, committed, shared by everyone:
 
 ```markdown
+This is machine-readable project state for the Keep the Why skill
+(https://keepthewhy.com). See context/index.md, or this project's own
+README, for what Keep the Why actually is.
+
 <!-- keep-the-why:config -->
 - id: oliver-zehentleitner---keep-the-why
 - context: `context/`
@@ -18,6 +22,8 @@ Setup state splits across two files, one committed and shared, one personal to a
 - source-reference: never
 <!-- /keep-the-why:config -->
 ```
+
+The header line is there for anyone who opens this specific file directly and has no other context for what it is — write it once, at creation, whether the file is freshly created or produced by migrating an existing project (below). It's not something the skill itself reads or depends on, same as the rest of this file's prose isn't. Whether and how a project otherwise mentions Keep the Why to a human — a README section, the badge — is that project's own call, not something this skill writes into its entry-point file; see "Project init wizard" below.
 
 `id` uniquely identifies this project across machines, clones, and worktrees — it's what a developer's personal file is keyed by (see "Personal config" below), and it's written once, at init, then never re-derived. Two forms:
 
@@ -171,7 +177,7 @@ Two additional fields in `.keep-the-why`'s `keep-the-why:config` block, both pre
     ```
 
     GitHub (and most code hosts) render a folder's `README.md` automatically when browsing it, so this is what someone sees first landing in the folder cold, without needing to already know what Keep the Why is. Skip this step if adopting an existing folder that already has its own README or equivalent — don't overwrite it. Also add `AGENTS.md` and `CLAUDE.md` inside the folder — see "Guarding `context/` itself" below — again skipping either one that already exists doing an equivalent job.
-5. Add a short pointer in the project's entry-point file (`AGENTS.md`, or whatever it already uses) mentioning that this project uses Keep the Why and that project state lives in `.keep-the-why` — a courtesy for a human reading that file cold, not something the skill itself depends on; step 3's detection reads `.keep-the-why` directly regardless of what any entry-point file says.
+5. Leave the project's entry-point file (`AGENTS.md`, or whatever it already uses) alone — nothing about Keep the Why needs to go there. Detection reads `.keep-the-why` directly, regardless of what any entry-point file says; whether to mention Keep the Why to a human reading that file (a line, a link to the badge — see `keepthewhy.com/badge/`) is the project's own editorial call, already covered by the badge question in step 1, not something this skill writes in on its own.
 6. Run whichever starting mode was chosen.
 7. If declined entirely, write `init: declined` and stop — no further project-level questions, ever, unless asked again. (The personal wizard below is independent and can still run.)
 

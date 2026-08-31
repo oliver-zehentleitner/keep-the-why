@@ -39,7 +39,7 @@ Project config moves from a block embedded in `AGENTS.md` (or whatever entry-poi
 
 **Rejected alternative:** keep the embedded-block scheme and only patch around its specific gaps (e.g. document the Claude Code symlink requirement more prominently). Rejected — the gaps trace back to the same root cause (state tied to whichever file a given agent happens to treat as its entry point), so patching each symptom individually would leave the next one undiscovered instead of removing the shared cause.
 
-**Consequence:** existing projects need to migrate — see `references/migrations.md`, "Project/personal config moves into dedicated `.keep-the-why` files."
+**Consequence:** existing projects need to migrate — see `references/migrations.md`, "Project/personal config moves into dedicated `.keep-the-why` files." `AGENTS.md` no longer gets a "this project uses Keep the Why" pointer written into it either, fresh or migrated — Oliver's call: that's the project's own editorial decision (a README section, the badge), not this skill's to add unasked; `.keep-the-why` instead carries its own short, human-readable header line so opening that specific file cold is self-explanatory. The one exception is a migrated project's leftover version-requirement note (see `migrations.md`) — kept specifically because setup detection is an LLM reading the whole file, not a literal marker match, so a plain-English note left where an older skill is already looking is something it can actually notice, unlike a change to logic it was never taught.
 
 ## Project identity is stored explicitly, not re-derived each session
 
