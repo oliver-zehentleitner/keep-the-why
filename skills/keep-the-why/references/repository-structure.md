@@ -101,7 +101,7 @@ Keep entries to one line each. This file exists so an agent can decide what to l
 
 Sort entries alphabetically by filename, and insert new ones in their sorted position rather than appending at the end. Two PRs adding unrelated topic files at the same time then land on different lines instead of both fighting over the last line — the cheapest way to cut down on `index.md` merge conflicts in a repo with concurrent PRs.
 
-An existing project with an unsorted `index.md` doesn't need a dedicated resort pass — same "next touched, not a big-bang migration" rule as retrofitting anything else (see "Retrofitting an existing project" below). Insert new entries in sorted position going forward; let the rest settle into order as entries get touched anyway.
+An existing project with an unsorted `index.md` should resort it fully, once — see `references/migrations.md`. This isn't the usual "next touched, not a big-bang migration" retrofit rule (below): resorting is mechanical, not per-entry judgment, and the fix doesn't reduce conflicts until the whole list is actually in order.
 
 ## Topic file — example shape
 

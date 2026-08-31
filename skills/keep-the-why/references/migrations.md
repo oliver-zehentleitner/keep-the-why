@@ -1,8 +1,33 @@
 # Migrations
 
-What changed in each version that affects the *format* of existing `context/` entries, and how to bring them up to date. Not every release needs an entry here — most changes affect the skill's own behavior, not what's already written in a project's `context/`. See `setup.md` for how and when this file gets consulted.
+What changed in each version that an existing project may need to know about or act on — not limited to changes to the `context/` entry *format*. Also covers structural/placement conventions (e.g. how `context/index.md` is ordered) and config defaults added to `AGENTS.md`/`AGENTS.local.md`. Not every release needs an entry here — only ones with something an existing project should check. See `setup.md` for how and when this file gets consulted; note that "consulted" doesn't always mean "asks the user to act" — a purely informational entry (e.g. a config field silently backfilled to a default) is recorded here for completeness but needs no prompt.
 
 Entries below assume 0.2.0 as the starting point — nothing before it tracked a `context-schema` at all, and 0.2.0 itself introduced no `context/` entry format change.
+
+## Unreleased — `context/index.md` entries sorted alphabetically
+
+**What changed:** new entries in `context/index.md` are inserted in alphabetical order by filename instead of appended at the end — see `context/entry-format.md` and [#194](https://github.com/oliver-zehentleitner/keep-the-why/issues/194). Not a `context/` entry-format change, but it does need action in an existing project: the merge-conflict reduction this convention exists for only works once the whole list is actually sorted.
+
+**Migrating an existing project:**
+
+1. Resort `context/index.md` fully, once, alphabetically by filename. Unlike a per-entry field backfill, this is mechanical (no per-entry judgment) and cheap even for a large index — do it now rather than waiting for entries to be touched individually.
+2. Insert any new entries in sorted position from that point on.
+
+**Example — before:**
+
+```markdown
+- [release-and-distribution.md](release-and-distribution.md) — ...
+- [config-format.md](config-format.md) — ...
+- [entry-format.md](entry-format.md) — ...
+```
+
+**Example — after:**
+
+```markdown
+- [config-format.md](config-format.md) — ...
+- [entry-format.md](entry-format.md) — ...
+- [release-and-distribution.md](release-and-distribution.md) — ...
+```
 
 ## 0.9.0 — `Type` accepts multiple values
 

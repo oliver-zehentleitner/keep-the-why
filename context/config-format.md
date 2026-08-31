@@ -60,6 +60,20 @@ Every release advances this repo's own `context-schema` (in this file's config b
 
 **Rejected alternative:** a separate `metadata.context-schema` field in `SKILL.md`, decoupled from `metadata.version`, so schema and release versioning could drift independently. Rejected — the existing single-version-axis model (check for applicable migrations, advance the number whether or not anything applied) already does everything a second version field would, without a second number to keep in sync.
 
+## `migrations.md` covers anything an existing project needs to act on, not only `context/` entry-format changes
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+
+`references/migrations.md` records what changed in each version that an existing project may need to know about or act on — structural/placement conventions (e.g. `context/index.md`'s sort order) and config defaults added to `AGENTS.md`/`AGENTS.local.md`, not only changes to the `context/` entry format itself. A purely informational entry (a field silently backfilled to a documented default) still gets recorded, just without the migrate-now/defer/decline prompt — that prompt is reserved for entries that actually require doing something.
+
+**Reason:** raised by Oliver while reviewing the `context/index.md` alphabetical-sort convention (see "`context/index.md` entries are sorted alphabetically by filename" in `context/entry-format.md`) — that change isn't a `context/` entry-format change, so it was initially left out of `migrations.md` on the (unstated, never actually agreed) assumption that the file was format-only. Oliver's position: `migrations.md` exists to answer "what do I need to do after updating," full stop — narrowing it to format changes just meant some actionable changes had nowhere to be tracked. No hard technical reason favored the narrow reading either — `setup.md`'s existing consult mechanism already checks `migrations.md` for entries in the version range between a project's `context-schema` and the installed `metadata.version`, regardless of what kind of change each entry represents, so widening the file's scope needed no change to the trigger logic.
+
+**Rejected alternative:** keep `migrations.md` scoped to `context/` entry-format changes only, as `setup.md:221` explicitly documented before this decision (`capture-confirmation`/`confirmation-flow`/`source-reference` backfills were called out as deliberately *not* going through `migrations.md`). Rejected — that carve-out was itself the misunderstanding being corrected here, not a separate design this decision needed to preserve.
+
+**Consequence:** `setup.md:221`'s carve-out language rewritten to say these settings still get an informational `migrations.md` entry, just without a prompt. `setup.md`'s step 5 (context-schema behind case) and `SKILL.md`'s equivalent summary both reworded to stop implying only entry-format changes are checked. `references/migrations.md`'s own opening paragraph rewritten to state the broader scope directly.
+
 ## `capture-confirmation` is project-wide only, for now — deliberately, to test first
 
 **Type:** decision
