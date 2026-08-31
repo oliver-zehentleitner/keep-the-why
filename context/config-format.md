@@ -60,7 +60,7 @@ Every release advances this repo's own `context-schema` (in this file's config b
 
 **Rejected alternative:** a separate `metadata.context-schema` field in `SKILL.md`, decoupled from `metadata.version`, so schema and release versioning could drift independently. Rejected — the existing single-version-axis model (check for applicable migrations, advance the number whether or not anything applied) already does everything a second version field would, without a second number to keep in sync.
 
-## `migrations.md` covers anything an existing project needs to act on, not only `context/` entry-format changes
+## `migrations.md` covers anything an existing project needs to know about or act on, not only `context/` entry-format changes
 
 **Type:** decision
 **Status:** active
