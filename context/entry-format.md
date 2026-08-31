@@ -66,3 +66,19 @@ An entry that genuinely documents more than one kind of thing gets one `**Type:*
 **Rejected alternative (keep "pick one"):** leaving the original straddle guidance in place, always resolving to a single value. Rejected — the field's purpose is accurate search and classification; picking one when more than one genuinely applies makes the tag less accurate for no benefit, and "keep the field sparse" isn't a real constraint here — there's no cost to an extra `Type:` line beyond being honest about what an entry documents.
 
 **Consequence:** this is a `context-schema`-relevant change, same tier as the original Type field. Not a backfill pass — existing single-Type entries stay valid as-is; an entry only grows a second `**Type:**` line if it's touched again and genuinely warrants one. Migration guidance in `references/migrations.md`.
+
+## `context/index.md` entries are sorted alphabetically by filename
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+
+New entries in `context/index.md` are inserted in alphabetical order by filename, not appended at the end of the list.
+
+**Reason:** raised in [#194](https://github.com/oliver-zehentleitner/keep-the-why/issues/194) — in a repo with several PRs open at once, always appending new entries at the end means any two PRs adding unrelated topic files insert at the same line and collide on merge, even though nothing about their content actually conflicts. Sorting alphabetically spreads insertions across different lines instead, so two such PRs only collide when they happen to add topics with adjacent filenames. Cheapest available fix — no tooling, no `context-schema` change, just a placement convention.
+
+**Rejected alternative:** appending at the end (the prior, undocumented default). Rejected because it guarantees a collision on the same line for any two concurrent PRs adding new topic files, regardless of what those topics are.
+
+**Rejected alternative (generated index):** regenerate `index.md` from a per-file description stored in each topic file, lockfile-style, so conflicts resolve by rerunning a script instead of manual reconciliation. Not rejected outright, just deferred — proposed in #194 as a follow-up if the alphabetical-sort convention alone doesn't bring the collision rate down enough in practice.
+
+**Consequence:** this repo's own `context/index.md` was re-sorted to match in the same change, and the `context/index.md` example in `references/repository-structure.md` updated accordingly. Not a `context-schema` change — it's a placement convention for the index file, not a change to entry or index format itself.

@@ -92,12 +92,14 @@ A `migration-prompt: <version> declined` line can appear here too, but only once
 # Context index
 
 - [architecture.md](architecture.md) — why the system is shaped this way
-- [sync.md](sync.md) — synchronization design, snapshot/buffer ordering
 - [compatibility.md](compatibility.md) — why certain old-looking code paths still exist
 - [incidents.md](incidents.md) — production incidents and what changed because of them
+- [sync.md](sync.md) — synchronization design, snapshot/buffer ordering
 ```
 
 Keep entries to one line each. This file exists so an agent can decide what to load, not to hold the content itself.
+
+Sort entries alphabetically by filename, and insert new ones in their sorted position rather than appending at the end. Two PRs adding unrelated topic files at the same time then land on different lines instead of both fighting over the last line — the cheapest way to cut down on `index.md` merge conflicts in a repo with concurrent PRs.
 
 ## Topic file — example shape
 
