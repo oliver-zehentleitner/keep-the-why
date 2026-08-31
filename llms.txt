@@ -87,10 +87,10 @@ A Skill activates when something in the conversation matches its description, no
 automatically on session start. After installing, start a new session and tell the agent
 something like "initialize Keep the Why in this project" to run the one-time setup wizard
 right away, instead of waiting for it to trigger organically. This is only needed once -
-setup writes a pointer into AGENTS.md itself (where context/ lives, that setup is complete),
-and most AGENTS.md-aware tools already read that file at the start of every session on their
-own, independent of this skill. Every later session picks the project back up without
-needing to be told again.
+setup creates a `.keep-the-why` file at the project root (where context/ lives, that setup
+is complete), checked directly by this skill at the start of every later session, independent
+of whichever entry-point file a given agent tool reads on its own. Every later session picks
+the project back up without needing to be told again.
 
 ## Also Listed On
 
@@ -136,8 +136,9 @@ starting mode, README badge, `capture-confirmation`, and `source-reference`) and
 personal wizard (proactive vs. explicit-only capture, `confirmation-flow`,
 update-check/consistency-check intervals) — see https://keepthewhy.com/setup/. When a later
 skill update requires action from an existing project — a `context/` entry-format change, a
-structural convention (like `context/index.md`'s sort order), or a new config default — a
-`context-schema` version tracked in the project's config is compared against the installed
+structural convention (like `context/index.md`'s sort order), a new config default, or a
+storage-location change (like config moving into a dedicated `.keep-the-why` file) — a
+`context-schema` version tracked in the project's own `.keep-the-why` file is compared against the installed
 skill's `metadata.version` and, if behind, offers a migration — see
 https://keepthewhy.com/migrations/. A developer can personally decline being asked about one
 specific migration without affecting the project or anyone else on it. Updating the skill
@@ -169,10 +170,17 @@ or a session instruction that doesn't clearly resolve to one option, is never tr
 as missing. Name the valid options and ask; don't silently coerce, normalize, or guess.
 
 Produces, inside the project using the skill:
-- `AGENTS.md` — lean entry point, pointers only, plus a small machine-readable config block
+- `AGENTS.md` — lean entry point, pointers only, no longer carrying this skill's own config
+- `.keep-the-why` — this skill's own project config, committed, including a project `id`
+  and optionally a `personal-defaults` block and pinned-version fields
 - `docs/` — how to use, operate, test, deploy
-- `context/` — why the project is the way it is, organized by topic, with its own `README.md`
-- `AGENTS.local.md` — personal preferences and notes, not committed
+- `context/` — why the project is the way it is, organized by topic, with its own `README.md`,
+  `AGENTS.md`, and `CLAUDE.md`
+- `AGENTS.local.md` — personal notes unrelated to this skill, not committed
+
+Outside the project entirely, on the developer's own machine: `~/.keep-the-why/<id>.md`
+(personal preferences for this specific project) and `~/.keep-the-why/config` (a machine-wide
+policy for how a project's suggested `personal-defaults` get handled).
 
 ## Testing / Evals
 

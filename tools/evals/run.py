@@ -159,6 +159,41 @@ SKILL_INSTALL_REL = {
     "omp": "skills/keep-the-why",
 }
 
+# A driver's CLI needs its own real login/config from $HOME to run at all —
+# a bare empty fake $HOME (see execute_pass) broke every claude run outright
+# ("Not logged in - Please run /login"), since that's exactly where its
+# credentials live. Copied into the fake $HOME before each run, verified
+# present on this host as of this writing. Only "claude" has actually been
+# exercised against this fix (this environment's own driver); the rest are
+# the analogous, unverified-but-documented paths for each tool, based on
+# what's actually on this machine, not guessed blind - confirm each before
+# trusting a future run against it. cline isn't listed: its own auth already
+# lives under an explicit --data-dir (see run_agent_cline), resolved via
+# Path.home() in this script's own process, never the subprocess env this
+# table feeds - unaffected by the fake $HOME either way. hermes and omp
+# aren't listed either: both authenticate purely via the OPENROUTER_API_KEY
+# env var, which isn't reset by overriding HOME, so there's no file to copy.
+HOME_PRESERVE = {
+    "claude": [".claude", ".claude.json"],
+    "pi": [".pi"],
+    "opencode": [".opencode", ".config/opencode"],
+    "kimi": [".kimi-code"],
+    "codex": [".codex"],
+}
+
+
+def seed_fake_home(real_home: Path, fake_home: Path, driver: str):
+    for rel in HOME_PRESERVE.get(driver, []):
+        src = real_home / rel
+        if not src.exists():
+            continue
+        dst = fake_home / rel
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        if src.is_dir():
+            shutil.copytree(src, dst, symlinks=True)
+        else:
+            shutil.copy2(src, dst)
+
 # Whether the case prompt gets prefixed with an explicit "read SKILL.md and
 # follow it" instruction. False only for claude, where discovery itself is
 # part of what's under test.
@@ -211,11 +246,20 @@ def read_case_config(case_id):
 
     Supported keys:
       base: "none" to skip the _base overlay (default: use _base)
-      remove: [paths] to delete after overlay (e.g. drop AGENTS.local.md)
+      remove: [paths] to delete from the project dir after overlay
+      personal: "none" to skip seeding the default personal config into the
+                fake $HOME (simulates a developer with no personal file yet
+                for this project — the ~/.keep-the-why/ equivalent of the old
+                "remove AGENTS.local.md" convention)
       commits: [{"message": str, "files": {path: content}, "author": str,
                  "date": str}] — extra commits after the initial one
       disallowed_tools: [tool names] passed to claude --disallowedTools
                         (e.g. deny WebFetch to simulate no web access)
+
+    A fixtures/<id>/home/ directory, if present, is overlaid onto the fake
+    $HOME after the default personal config is (or isn't) seeded — for a case
+    that needs a specific ~/.keep-the-why/<id>.md (an invalid or missing
+    field) or a ~/.keep-the-why/config (the global personal-defaults-policy).
     """
     p = FIXTURES_DIR / case_id / "case.json"
     if p.exists():
@@ -228,6 +272,11 @@ def copy_tree(src: Path, dst: Path):
         if item.name == "case.json" and item.parent == src:
             continue
         rel = item.relative_to(src)
+        # A case fixture's own home/ subtree is overlaid separately onto the
+        # fake $HOME (see build_workdir) — never into the project dir itself,
+        # regardless of which of the two this particular copy_tree call is for.
+        if rel.parts and rel.parts[0] == "home" and src.name != "home":
+            continue
         target = dst / rel
         if item.is_dir():
             target.mkdir(parents=True, exist_ok=True)
@@ -236,7 +285,16 @@ def copy_tree(src: Path, dst: Path):
             shutil.copy2(item, target)
 
 
-def build_workdir(case_id, cfg, workdir: Path, driver):
+DEFAULT_PERSONAL_CONFIG = """<!-- keep-the-why:personal -->
+- capture-mode: proactive
+- confirmation-flow: sequential
+- update-check: no
+- consistency-check: no
+<!-- /keep-the-why:personal -->
+"""
+
+
+def build_workdir(case_id, cfg, workdir: Path, driver, home: Path = None):
     if cfg.get("base") != "none" and BASE_FIXTURE.exists():
         copy_tree(BASE_FIXTURE, workdir)
     case_fixture = FIXTURES_DIR / case_id
@@ -254,10 +312,35 @@ def build_workdir(case_id, cfg, workdir: Path, driver):
     # don't all go stale (and start triggering migration prompts mid-eval)
     # on every release. Deliberately old pins (0.2.0, 0.9.9, ...) stay literal.
     version = re.search(r'version: "([^"]+)"', (SKILL_DIR / "SKILL.md").read_text()).group(1)
-    for md in workdir.rglob("*.md"):
-        text = md.read_text()
+    substitutable = list(workdir.rglob("*.md"))
+    keep_the_why_file = workdir / ".keep-the-why"
+    if keep_the_why_file.exists():
+        substitutable.append(keep_the_why_file)
+    for f in substitutable:
+        text = f.read_text()
         if "{{SKILL_VERSION}}" in text:
-            md.write_text(text.replace("{{SKILL_VERSION}}", version))
+            f.write_text(text.replace("{{SKILL_VERSION}}", version))
+
+    # Keep the Why's personal config lives outside the project entirely, at
+    # ~/.keep-the-why/<id>.md — seed the default here, in the fake $HOME this
+    # case run uses, the same role _base/AGENTS.local.md used to play before
+    # personal config moved out of the project. A case that wants a fresh,
+    # never-configured developer sets "personal": "none" in case.json instead
+    # of removing an in-project file. A case needing a *specific* personal
+    # file (an invalid or missing field, or a ~/.keep-the-why/config policy)
+    # provides its own fixtures/<case-id>/home/ directory, overlaid after —
+    # skipped entirely for a driver with no home to seed (home=None), and for
+    # a project without a `.keep-the-why` at all (empty-project/wizard cases).
+    if home is not None and keep_the_why_file.exists() and cfg.get("personal") != "none":
+        id_match = re.search(r"^\s*-\s*id:\s*(\S+)", keep_the_why_file.read_text(), re.MULTILINE)
+        if id_match:
+            personal_dir = home / ".keep-the-why"
+            personal_dir.mkdir(parents=True, exist_ok=True)
+            (personal_dir / f"{id_match.group(1)}.md").write_text(DEFAULT_PERSONAL_CONFIG)
+    if home is not None:
+        home_fixture = FIXTURES_DIR / case_id / "home"
+        if home_fixture.exists():
+            copy_tree(home_fixture, home)
 
     git_env = {
         **os.environ,
@@ -324,7 +407,7 @@ def _cap(text, limit=MAX_TRANSCRIPT_CHARS):
     return text
 
 
-def run_agent_claude(prompt, cwd, model, timeout, disallowed_tools=None):
+def run_agent_claude(prompt, cwd, model, timeout, disallowed_tools=None, home=None):
     cmd = [
         "claude", "-p", prompt,
         "--model", model,
@@ -340,6 +423,8 @@ def run_agent_claude(prompt, cwd, model, timeout, disallowed_tools=None):
     if disallowed_tools:
         cmd += ["--disallowedTools", ",".join(disallowed_tools)]
     env = {k: v for k, v in os.environ.items() if k != "CLAUDECODE"}
+    if home is not None:
+        env["HOME"] = str(home)
     try:
         proc = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired as e:
@@ -360,7 +445,7 @@ def run_agent_claude(prompt, cwd, model, timeout, disallowed_tools=None):
     return {"events": events, "error": error}
 
 
-def run_agent_pi(prompt, cwd, model, timeout, disallowed_tools=None):
+def run_agent_pi(prompt, cwd, model, timeout, disallowed_tools=None, home=None):
     # --approve: trust project-local files for this run, no interactive
     # prompt (pi's equivalent of --dangerously-skip-permissions).
     # --mode json: newline-delimited JSON event stream, documented at
@@ -371,6 +456,8 @@ def run_agent_pi(prompt, cwd, model, timeout, disallowed_tools=None):
     if disallowed_tools:
         cmd += ["--exclude-tools", ",".join(disallowed_tools)]
     env = dict(os.environ)
+    if home is not None:
+        env["HOME"] = str(home)
     try:
         proc = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired as e:
@@ -391,7 +478,7 @@ def run_agent_pi(prompt, cwd, model, timeout, disallowed_tools=None):
     return {"events": events, "error": error}
 
 
-def run_agent_opencode(prompt, cwd, model, timeout, disallowed_tools=None):
+def run_agent_opencode(prompt, cwd, model, timeout, disallowed_tools=None, home=None):
     # --auto: auto-approve permissions (opencode's equivalent of
     # --dangerously-skip-permissions). --format json: JSONL event stream, see
     # render_transcript_opencode. No documented per-run tool-deny flag as of
@@ -411,6 +498,8 @@ def run_agent_opencode(prompt, cwd, model, timeout, disallowed_tools=None):
               f"case's disallowed_tools {disallowed_tools} not enforced.",
               file=sys.stderr)
     env = dict(os.environ)
+    if home is not None:
+        env["HOME"] = str(home)
     try:
         proc = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired as e:
@@ -431,7 +520,7 @@ def run_agent_opencode(prompt, cwd, model, timeout, disallowed_tools=None):
     return {"events": events, "error": error}
 
 
-def run_agent_kimi(prompt, cwd, model, timeout, disallowed_tools=None):
+def run_agent_kimi(prompt, cwd, model, timeout, disallowed_tools=None, home=None):
     # -p is inherently non-interactive/autonomous (cannot be combined with
     # -y/--auto — the CLI rejects that). --output-format stream-json: one
     # OpenAI-chat-style JSON object per line, see render_transcript_kimi.
@@ -441,6 +530,8 @@ def run_agent_kimi(prompt, cwd, model, timeout, disallowed_tools=None):
               f"case's disallowed_tools {disallowed_tools} not enforced.",
               file=sys.stderr)
     env = dict(os.environ)
+    if home is not None:
+        env["HOME"] = str(home)
     try:
         proc = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired as e:
@@ -461,7 +552,7 @@ def run_agent_kimi(prompt, cwd, model, timeout, disallowed_tools=None):
     return {"events": events, "error": error}
 
 
-def run_agent_cline(prompt, cwd, model, timeout, disallowed_tools=None):
+def run_agent_cline(prompt, cwd, model, timeout, disallowed_tools=None, home=None):
     # cline takes provider and model as separate flags, unlike the other
     # drivers' combined "provider/model" --model string — split it here so
     # --model stays the same shape (e.g. openrouter/qwen/qwen3.8-27b) across
@@ -498,6 +589,8 @@ def run_agent_cline(prompt, cwd, model, timeout, disallowed_tools=None):
               f"case's disallowed_tools {disallowed_tools} not enforced.",
               file=sys.stderr)
     env = dict(os.environ)
+    if home is not None:
+        env["HOME"] = str(home)
     try:
         proc = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired as e:
@@ -520,7 +613,7 @@ def run_agent_cline(prompt, cwd, model, timeout, disallowed_tools=None):
     return {"events": events, "error": error}
 
 
-def run_agent_codex(prompt, cwd, model, timeout, disallowed_tools=None):
+def run_agent_codex(prompt, cwd, model, timeout, disallowed_tools=None, home=None):
     # -C/--cd is required, same lesson as opencode's --dir. --skip-git-repo-check:
     # without it codex refuses to run in a directory it hasn't been told to
     # trust, even a fresh fixture repo. --json: newline-delimited "item"/"turn"
@@ -551,6 +644,8 @@ def run_agent_codex(prompt, cwd, model, timeout, disallowed_tools=None):
               f"case's disallowed_tools {disallowed_tools} not enforced.",
               file=sys.stderr)
     env = dict(os.environ)
+    if home is not None:
+        env["HOME"] = str(home)
     try:
         proc = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired as e:
@@ -571,7 +666,7 @@ def run_agent_codex(prompt, cwd, model, timeout, disallowed_tools=None):
     return {"events": events, "error": error}
 
 
-def run_agent_hermes(prompt, cwd, model, timeout, disallowed_tools=None):
+def run_agent_hermes(prompt, cwd, model, timeout, disallowed_tools=None, home=None):
     # IMPORTANT: this is `hermes` (the full CLI), never `hermes-agent`
     # (the bare `run_agent.py` entry point installed alongside it). Verified
     # the hard way: invoked directly with no workspace registered,
@@ -600,6 +695,8 @@ def run_agent_hermes(prompt, cwd, model, timeout, disallowed_tools=None):
               f"via -t) — case's disallowed_tools {disallowed_tools} not enforced.",
               file=sys.stderr)
     env = dict(os.environ)
+    if home is not None:
+        env["HOME"] = str(home)
     try:
         proc = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired as e:
@@ -627,7 +724,7 @@ def run_agent_hermes(prompt, cwd, model, timeout, disallowed_tools=None):
     return {"events": [session_obj], "error": None}
 
 
-def run_agent_omp(prompt, cwd, model, timeout, disallowed_tools=None):
+def run_agent_omp(prompt, cwd, model, timeout, disallowed_tools=None, home=None):
     # --yolo: non-interactive approval bypass (omp's equivalent of
     # --dangerously-skip-permissions, per docs/approval-mode.md — without it,
     # writes sit on the client-side permission gate with nothing to answer
@@ -657,6 +754,8 @@ def run_agent_omp(prompt, cwd, model, timeout, disallowed_tools=None):
               f"an allow-list via --tools) — case's disallowed_tools "
               f"{disallowed_tools} not enforced.", file=sys.stderr)
     env = dict(os.environ)
+    if home is not None:
+        env["HOME"] = str(home)
     try:
         proc = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired as e:
@@ -949,7 +1048,7 @@ TRANSCRIPT_RENDERERS = {
 }
 
 
-def collect_diff(workdir):
+def collect_diff(workdir, home=None):
     """What the agent actually changed on disk: status, diff, new files."""
     status = sh(["git", "status", "--porcelain"], cwd=workdir).stdout
     diff = sh(["git", "diff"], cwd=workdir).stdout
@@ -968,6 +1067,23 @@ def collect_diff(workdir):
                 if len(content) > 4000:
                     content = content[:4000] + "…(truncated)"
                 parts.append(f"# new file: {rel}\n{content}")
+    # Keep the Why's personal config lives outside the project entirely, at
+    # ~/.keep-the-why/ — not git-tracked, so status/diff above never sees it.
+    # No prior state to diff against either (it's either absent, or seeded
+    # fresh per case) — a full current snapshot is what the judge needs.
+    if home is not None:
+        personal_dir = home / ".keep-the-why"
+        if personal_dir.is_dir():
+            for p in sorted(personal_dir.rglob("*")):
+                if p.is_file():
+                    try:
+                        content = p.read_text()
+                    except (UnicodeDecodeError, OSError):
+                        content = "(binary or unreadable)"
+                    if len(content) > 4000:
+                        content = content[:4000] + "…(truncated)"
+                    parts.append(f"# ~/.keep-the-why/{p.relative_to(personal_dir)} "
+                                 f"(personal config, outside the project)\n{content}")
     text = "\n\n".join(parts)
     if len(text) > MAX_DIFF_CHARS:
         text = text[:MAX_DIFF_CHARS] + "\n…(diff truncated)"
@@ -1074,12 +1190,30 @@ def run_case(case, args, results_dir):
     with tempfile.TemporaryDirectory(prefix=f"ktw-eval-{case_id}-") as tmp:
         workdir = Path(tmp) / "project"
         workdir.mkdir()
-        build_workdir(case_id, cfg, workdir, args.driver)
+        # Keep the Why's personal config now lives at ~/.keep-the-why/, outside
+        # any project directory — without a scoped HOME, every case run on this
+        # machine would read/write the operator's own real ~/.keep-the-why/
+        # files instead of an isolated per-case one, breaking fixture isolation
+        # and risking cross-contamination with the operator's actual personal
+        # setup (this host already has one, for unrelated reasons — see
+        # run_agent_omp's --no-skills comment). A fresh $HOME sibling to the
+        # project dir keeps every filesystem-level lookup the agent's own
+        # tools make (not just this project's files) inside the same
+        # TemporaryDirectory that gets torn down with everything else — but a
+        # genuinely *empty* one broke every claude run outright ("Not logged
+        # in"), since that's also where the CLI's own login/config lives;
+        # seed_fake_home() below copies just that driver's own real config
+        # over first, so the fake $HOME is isolated for ~/.keep-the-why/
+        # specifically, not for the CLI's ability to run at all.
+        fake_home = Path(tmp) / "home"
+        fake_home.mkdir()
+        seed_fake_home(Path.home(), fake_home, args.driver)
+        build_workdir(case_id, cfg, workdir, args.driver, home=fake_home)
         prompt = build_prompt(case["prompt"], args.driver)
         agent = AGENT_RUNNERS[args.driver](prompt, workdir, args.model, args.timeout,
-                                           cfg.get("disallowed_tools"))
+                                           cfg.get("disallowed_tools"), home=fake_home)
         transcript = TRANSCRIPT_RENDERERS[args.driver](agent["events"])
-        diff = collect_diff(workdir)
+        diff = collect_diff(workdir, home=fake_home)
     if agent.get("error"):
         verdict = {"verdict": "error", "reasoning": agent["error"]}
     elif RATE_LIMIT_RE.search(transcript):

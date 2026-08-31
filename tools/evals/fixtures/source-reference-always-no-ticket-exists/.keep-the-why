@@ -1,0 +1,8 @@
+<!-- keep-the-why:config -->
+- id: ktw-eval-fixture---order-service
+- context: `context/`
+- init: complete
+- context-schema: {{SKILL_VERSION}}
+- capture-confirmation: confirm-when-unsure
+- source-reference: always
+<!-- /keep-the-why:config -->

@@ -8,6 +8,7 @@ Concrete guidance for applying the structure described in `methodology.md`.
 project/
 ├── AGENTS.md
 ├── AGENTS.local.md          # not committed
+├── .keep-the-why             # this skill's own project config, committed
 ├── docs/
 │   ├── index.md
 │   ├── setup.md
@@ -16,11 +17,15 @@ project/
 │   └── troubleshooting.md
 └── context/
     ├── README.md              # short, GitHub renders it when someone browses the folder cold
+    ├── AGENTS.md               # guard: invoke this skill before editing, don't hand-write the schema
+    ├── CLAUDE.md               # @AGENTS.md import
     ├── index.md
     ├── architecture.md
     ├── <topic>.md            # one per recurring theme, named for the theme, not the file it touches
     └── incidents.md
 ```
+
+This skill's own personal config lives at `~/.keep-the-why/<id>.md`, outside the project entirely — never part of the repo, not shown above. See `references/setup.md`.
 
 Adjust freely. A one-file script doesn't need six `docs/` files. `context/` stays flat — no subdirectories — even for a large project; if topic files alone stop scaling, namespace filenames instead (e.g. `auth-tokens.md` and `auth-oauth.md`, or `tokens-auth.md` and `oauth-auth.md` — prefix or suffix, whichever groups and sorts more usefully for that project) rather than nesting `context/auth/`. The shape should track the project's actual complexity, not a template.
 
@@ -51,7 +56,8 @@ When something genuinely doesn't fit the table above (e.g. security disclosure p
 ```markdown
 # AGENTS.md
 
-This project uses Keep the Why to preserve the reasoning behind its code.
+This project uses Keep the Why to preserve the reasoning behind its code —
+see `.keep-the-why` and `context/index.md`.
 
 - Usage docs: see `docs/index.md`
 - Why things are the way they are: see `context/index.md`
@@ -59,8 +65,15 @@ This project uses Keep the Why to preserve the reasoning behind its code.
 
 Read `context/index.md` before making non-trivial changes to understand
 prior decisions and avoid re-litigating or accidentally reverting them.
+```
 
+Keep `AGENTS.md` short. Anything longer belongs in `docs/` or `context/`, not here — `AGENTS.md` needs to stay generic enough for every tool that reads the open AGENTS.md convention, not just this skill. It doesn't carry this skill's config block at all — that lives in `.keep-the-why` instead (see below), specifically so `AGENTS.md` can stay that generic, tool-agnostic pointer with nothing skill-specific baked into it; the one-line mention above is a courtesy for a human reading the file, not something the skill's own detection relies on.
+
+## `.keep-the-why` — project config example
+
+```markdown
 <!-- keep-the-why:config -->
+- id: acme---widget-service
 - context: `context/`
 - init: complete
 - context-schema: 0.9.2
@@ -69,22 +82,22 @@ prior decisions and avoid re-litigating or accidentally reverting them.
 <!-- /keep-the-why:config -->
 ```
 
-Keep the prose above the config block short. Anything longer belongs in `docs/` or `context/`, not here — `AGENTS.md` needs to stay generic enough for every tool that reads the open AGENTS.md convention, not just this skill. The config block is the exception: it's the skill's own machine-readable state, kept small and clearly delimited on purpose so it doesn't creep into being a second undocumented system living inside a file meant to stay generic. Only project-wide facts live here — personal automation preferences go in `AGENTS.local.md` instead, see below and `setup.md`. `context-schema`, `capture-confirmation`, and `source-reference` are shown here at real, current values rather than omitted — a project's actual config block always has all three, so an example without them would be misleading, not just terse.
+Committed, one per project. `id` is generated once at init and never recomputed — see "Project config" in `setup.md` for how, and why deriving it fresh each time (from a git remote or a path) would be the wrong call. The config block itself is the skill's own machine-readable state, kept small and clearly delimited on purpose so it doesn't creep into being an undocumented second system — same reasoning that used to justify embedding it in `AGENTS.md`, just now applied to a file with no other job to stay generic for. `context-schema`, `capture-confirmation`, and `source-reference` are shown here at real, current values rather than omitted — a project's actual config always has all three, so an example without them would be misleading, not just terse. A project can optionally add a `personal-defaults` block here too, and/or `pinned-version`/`pinned-path` fields — see `setup.md`.
 
-## `AGENTS.local.md` — personal config example
+## `~/.keep-the-why/<id>.md` — personal config example
 
 ```markdown
-<!-- keep-the-why:local -->
+<!-- keep-the-why:personal -->
 - capture-mode: proactive
 - confirmation-flow: sequential
 - update-check: every 14 days — last: 2026-07-21
 - consistency-check: every 30 days — last: 2026-07-21
-<!-- /keep-the-why:local -->
+<!-- /keep-the-why:personal -->
 ```
 
-Not committed. One developer's automation preferences aren't another's — see `setup.md` for why this is split from the project config block instead of living in `AGENTS.md` alongside it. `capture-confirmation` (whether writing needs permission first) is the one setting in this area that's project-wide instead — it lives in `AGENTS.md`'s config block, not here; see "The confirmation model" in `setup.md`.
+Never committed, never part of the repo at all — lives at `~/.keep-the-why/<id>.md` on the developer's own machine, one file per project per developer. One developer's automation preferences aren't another's — see `setup.md` for why this is split from the project config instead of living alongside it. `capture-confirmation` (whether writing needs permission first) is the one setting in this area that's project-wide instead — it lives in `.keep-the-why`'s config block, not here; see "The confirmation model" in `setup.md`.
 
-A `migration-prompt: <version> declined` line can appear here too, but only once a developer has actually said "stop asking me" about a specific `context/` schema migration — it's not part of the default block. Scoped to that one version, not a blanket opt-out; see "Context schema and migrations" in `setup.md`.
+A `migration-prompt: <version> declined` line can appear here too, but only once a developer has actually said "stop asking me" about a specific `context/` schema migration — it's not part of the default file. Scoped to that one version, not a blanket opt-out; see "Context schema and migrations" in `setup.md`. A `source: project defaults (...)` line can also appear, when the values came from the project's `personal-defaults` block rather than a fresh wizard run — see "Personal defaults, and the global ask-vs-accept policy" in `setup.md`.
 
 ## `context/index.md` — example
 

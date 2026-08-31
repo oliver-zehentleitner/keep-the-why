@@ -1,0 +1,7 @@
+{
+  "remove": [
+    ".keep-the-why",
+    "context/AGENTS.md",
+    "context/CLAUDE.md"
+  ]
+}

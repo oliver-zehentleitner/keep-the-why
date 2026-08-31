@@ -1,6 +1,6 @@
 # Evals
 
-The skill ships 70 eval cases (`tools/evals/evals.json`): a
+The skill ships 72 eval cases (`tools/evals/evals.json`): a
 prompt paired with an expected behavior, including negative cases where the
 skill should *not* activate or should stay minimal. A local runner in
 [`tools/evals/`](https://github.com/oliver-zehentleitner/keep-the-why/tree/main/tools/evals)

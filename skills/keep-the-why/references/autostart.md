@@ -16,10 +16,10 @@ find or already have one.
 
 ## Claude Code
 
-A project-scoped `SessionStart` hook: checks the current project's entry-point
-file for the `keep-the-why:config` marker before injecting anything, so it
-stays silent on projects that don't use Keep the Why rather than firing
-unconditionally on every session.
+A project-scoped `SessionStart` hook: checks for the current project's
+`.keep-the-why` config file before injecting anything, so it stays silent on
+projects that don't use Keep the Why rather than firing unconditionally on
+every session.
 
 ```json
 {
@@ -29,7 +29,7 @@ unconditionally on every session.
         "hooks": [
           {
             "type": "command",
-            "command": "found=\"\"; if [ -f AGENTS.md ] && grep -q '<!-- keep-the-why:config -->' AGENTS.md 2>/dev/null; then found=1; fi; if [ -z \"$found\" ]; then for f in */AGENTS.md; do if [ -f \"$f\" ] && grep -q '<!-- keep-the-why:config -->' \"$f\" 2>/dev/null; then found=1; break; fi; done; fi; if [ -n \"$found\" ]; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"This project uses the keep-the-why skill (AGENTS.md has a keep-the-why:config block). Load the keep-the-why skill now, before other work.\"}}'; fi; exit 0"
+            "command": "found=\"\"; if [ -f .keep-the-why ]; then found=1; fi; if [ -z \"$found\" ]; then for f in */.keep-the-why; do if [ -f \"$f\" ]; then found=1; break; fi; done; fi; if [ -n \"$found\" ]; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"This project uses the keep-the-why skill (a .keep-the-why config file exists). Load the keep-the-why skill now, before other work.\"}}'; fi; exit 0"
           }
         ]
       }
@@ -42,19 +42,19 @@ The `command` field, unescaped for readability — functionally identical:
 
 ```bash
 found=""
-if [ -f AGENTS.md ] && grep -q '<!-- keep-the-why:config -->' AGENTS.md 2>/dev/null; then
+if [ -f .keep-the-why ]; then
   found=1
 fi
 if [ -z "$found" ]; then
-  for f in */AGENTS.md; do
-    if [ -f "$f" ] && grep -q '<!-- keep-the-why:config -->' "$f" 2>/dev/null; then
+  for f in */.keep-the-why; do
+    if [ -f "$f" ]; then
       found=1
       break
     fi
   done
 fi
 if [ -n "$found" ]; then
-  echo '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"This project uses the keep-the-why skill (AGENTS.md has a keep-the-why:config block). Load the keep-the-why skill now, before other work."}}'
+  echo '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"This project uses the keep-the-why skill (a .keep-the-why config file exists). Load the keep-the-why skill now, before other work."}}'
 fi
 exit 0
 ```
@@ -62,8 +62,13 @@ exit 0
 Save as `.claude/settings.json` in the project root (checked into the repo —
 scoped to the project, not one developer's machine, so every collaborator
 and every session benefits automatically). Checks the project root and one
-level of subdirectories for the marker; adjust the `for f in */AGENTS.md`
-line if the entry-point file lives somewhere else in a given project.
+level of subdirectories for `.keep-the-why`; adjust the `for f in
+*/.keep-the-why` line for a different layout. A project still on the
+previous, `AGENTS.md`-embedded config location (not yet migrated, see
+`references/migrations.md`) won't match this version of the hook — its own
+`.claude/settings.json`, if it has one, would still be running the older
+grep-based check from before this change, which is fine, since it's checking
+for the config location that project actually has.
 
 **Evidence:** the eval suite's `_base` fixture carries exactly this hook
 (`tools/evals/fixtures/_base/.claude/settings.json`). Re-running the 10 (of

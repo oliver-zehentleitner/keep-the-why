@@ -113,7 +113,7 @@ if a driver's CLI version changes noticeably.
 ## Usage
 
 ```bash
-# everything (70 cases; expect a long run and real API usage)
+# everything (72 cases; expect a long run and real API usage)
 python3 tools/evals/run.py --all
 
 # a subset
@@ -177,24 +177,45 @@ code change.
 ## Fixtures
 
 - `fixtures/_base/` — the default project every case starts from: completed
-  Keep the Why setup (`AGENTS.md` config block at the current schema,
-  `AGENTS.local.md` personal block with timers off), a small `context/`, and a
-  few source files. Setup is deliberately complete so cases test the behavior
-  under test, not the init wizard — wizard cases override this.
-- `fixtures/<case-id>/` — files overlaid on top of `_base` for that case
-  (e.g. a different `AGENTS.md` with an invalid setting, a `context/` entry
-  containing an injection attempt, source code with the oddity the prompt
-  refers to).
+  Keep the Why setup (`.keep-the-why` config at the current schema, plus a
+  default personal config seeded into the fake `$HOME` — see below), a small
+  `context/`, and a few source files. Setup is deliberately complete so cases
+  test the behavior under test, not the init wizard — wizard cases override
+  this.
+- `fixtures/<case-id>/` — files overlaid on top of `_base`, into the fixture
+  *project* directory, for that case (e.g. a different `.keep-the-why` with an
+  invalid setting, a `context/` entry containing an injection attempt, source
+  code with the oddity the prompt refers to).
 - `fixtures/<case-id>/case.json` — optional per-case config:
   - `"base": "none"` — start from an empty directory instead of `_base`
     (first-activation/wizard cases)
-  - `"remove": [paths]` — delete paths after overlay (e.g. drop
-    `AGENTS.local.md` to simulate a new developer)
+  - `"remove": [paths]` — delete paths from the *project* directory after
+    overlay
+  - `"personal": "none"` — don't seed the default personal config into the
+    fake `$HOME` for this case, simulating a developer with no
+    `~/.keep-the-why/<id>.md` yet for this project (the equivalent of the old
+    "remove `AGENTS.local.md`" convention, from before personal config moved
+    outside the project)
   - `"commits": [{"message", "files", "author", "date"}]` — extra commits
     after the initial one, for cases where git history is part of the
     evidence (legacy analysis, injection in a commit message)
   - `"disallowed_tools": [names]` — passed to `--disallowedTools` (e.g. deny
     `WebFetch`/`WebSearch` to simulate a session without web access)
+- `fixtures/<case-id>/home/` — optional, overlaid onto the fake `$HOME`
+  (after the default personal config is seeded, or skipped per `"personal"`
+  above) rather than into the project — for a case needing a *specific*
+  `~/.keep-the-why/<id>.md` (an invalid or missing field, or values that
+  differ from the default) or a `~/.keep-the-why/config` (the global
+  `personal-defaults-policy`). `<id>` has to match whatever the case's
+  effective `.keep-the-why` actually carries as its `id` field.
+
+Keep the Why's personal config lives outside the project entirely, at
+`~/.keep-the-why/<id>.md` — each case run gets its own throwaway `$HOME`
+(a directory alongside the fixture project, torn down with it), so runs never
+read or write the operator's own real `~/.keep-the-why/` files. The judge sees
+its contents the same way it sees new project files: `collect_diff` appends a
+snapshot of everything under the fake `$HOME`'s `.keep-the-why/` alongside the
+project's own `git status`/`git diff` output.
 
 Six cases intentionally have no fixture directory and run on `_base` as-is;
 their prompts carry the whole scenario.

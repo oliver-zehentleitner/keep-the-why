@@ -4,6 +4,51 @@ What changed in each version that an existing project may need to know about or 
 
 Entries below assume 0.2.0 as the starting point — nothing before it tracked a `context-schema` at all, and 0.2.0 itself introduced no `context/` entry format change.
 
+## Unreleased — Project/personal config moves into dedicated `.keep-the-why` files
+
+**What changed:** the project config block (`<!-- keep-the-why:config -->`) moves out of the entry-point file (`AGENTS.md`, or whatever a project already uses) into a dedicated `.keep-the-why` file at the project root. The personal config block (`<!-- keep-the-why:local -->`) moves out of `AGENTS.local.md` into a dedicated, non-project file at `~/.keep-the-why/<id>.md`, keyed by a new `id` field the project file now carries. See "Why dedicated files, not entry-point blocks" in `context/config-format.md` for the reasoning, and `references/setup.md` for the full format and detection logic. Three optional additions ship alongside the relocation, none of which existing projects are required to adopt: a `personal-defaults` block a project can offer new developers (plus a machine-wide `~/.keep-the-why/config` policy governing whether that's asked about or auto-applied), `pinned-version`/`pinned-path` fields for pinning to a vendored skill copy, and `context/AGENTS.md` + `context/CLAUDE.md` guard files. Not a `context/` entry-format change — existing entries are untouched — but it needs real action from an existing project, not a silent backfill.
+
+**Migrating an existing project (do this now, not on next touch — the whole point only holds once it's actually done):**
+
+1. Generate the project's `id` (see "Project config" in `setup.md`) and create `.keep-the-why`, carrying over every existing field from the old `AGENTS.md` block verbatim (`context`, `init`, `context-schema`, `capture-confirmation`, `source-reference`), plus the new `id` field.
+2. Ask whether the project wants to add a `personal-defaults` block for future developers — same question the project init wizard now asks, framed the same way.
+3. Remove the `<!-- keep-the-why:config -->` block from the entry-point file, along with any prose that specifically pointed at it or at `AGENTS.local.md` for this skill's own state. Replace with a short one-line mention that the project uses Keep the Why and that its state lives in `.keep-the-why` — for a human reading the file cold, not load-bearing for the skill itself. **Also add a line noting the project was migrated and that any Keep the Why skill installation reading this file needs to be at `metadata.version` 0.10.0 or later** — an older installed skill won't know to look for `.keep-the-why` at all and could otherwise mistake a fully-set-up project for an uninitialized one.
+4. If `context/` doesn't already have `AGENTS.md` and `CLAUDE.md` guard files (see "Guarding `context/` itself" in `setup.md`), add them now, in the same pass.
+5. Separately, per developer, the *next* time each one activates the skill in this checkout (this doesn't happen all at once for everyone the moment the project-level part above lands, and that's fine — it's driven by local file presence, not by anything shared or git-tracked): if this checkout still has a `<!-- keep-the-why:local -->` block in `AGENTS.local.md`, carry its values and `last:` timestamps over verbatim into `~/.keep-the-why/<id>.md`, then remove the block from `AGENTS.local.md` — a pure relocation of that developer's own already-stated preferences, no questions needed. A developer who never had a personal block before this migration isn't affected by this step at all; they go through ordinary first-activation handling (personal wizard, or the project's `personal-defaults` if it offers one) exactly as if the project had always used `.keep-the-why`.
+
+**Known limitation:** an installed skill older than 0.10.0 has no way to know `.keep-the-why` exists — it looks for the config block in the entry-point file, doesn't find it (step 3 removed it), and could mistake an already-migrated project for one that was never set up. Not fixable retroactively (an old skill can't be taught a convention that didn't exist when it was released) — the one-line note step 3 adds exists specifically to make this visible to a human before it causes confusion, and updating the skill before opening an already-migrated project avoids it entirely.
+
+**Example — before (`AGENTS.md`):**
+
+```markdown
+<!-- keep-the-why:config -->
+- context: `context/`
+- init: complete
+- context-schema: 0.9.2
+- capture-confirmation: confirm-when-unsure
+- source-reference: never
+<!-- /keep-the-why:config -->
+```
+
+**Example — after (`.keep-the-why`, new file; `AGENTS.md` keeps only a pointer):**
+
+```markdown
+<!-- keep-the-why:config -->
+- id: acme---widget-service
+- context: `context/`
+- init: complete
+- context-schema: 0.10.0
+- capture-confirmation: confirm-when-unsure
+- source-reference: never
+<!-- /keep-the-why:config -->
+```
+
+```markdown
+This project uses Keep the Why — see `.keep-the-why` and `context/index.md`.
+Migrated from the AGENTS.md-embedded config on 2026-08-31 — requires
+Keep the Why skill version 0.10.0 or later.
+```
+
 ## Unreleased — `context/index.md` entries sorted alphabetically
 
 **What changed:** new entries in `context/index.md` are inserted in alphabetical order by filename instead of appended at the end — see `context/entry-format.md` and [#194](https://github.com/oliver-zehentleitner/keep-the-why/issues/194). Not a `context/` entry-format change, but it does need action in an existing project: the merge-conflict reduction this convention exists for only works once the whole list is actually sorted.
