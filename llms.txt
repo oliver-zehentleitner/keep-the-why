@@ -85,8 +85,10 @@ from the root `plugin.json` used by GitHub's Copilot CLI plugin marketplace form
 
 A Skill activates when something in the conversation matches its description, not
 automatically on session start. After installing, start a new session and tell the agent
-something like "initialize Keep the Why in this project" to run the one-time setup wizard
-right away, instead of waiting for it to trigger organically. This is only needed once -
+something like "initialize Keep the Why in this project" to run the one-time setup wizard -
+setup on a brand-new project only ever runs from a request like this, never from an unrelated
+question the skill's description happens to match; that's a deliberate gate, not a speed
+difference. This is only needed once -
 setup creates a `.keep-the-why` file at the project root (where context/ lives, that setup
 is complete), checked directly by this skill at the start of every later session, independent
 of whichever entry-point file a given agent tool reads on its own. Every later session picks

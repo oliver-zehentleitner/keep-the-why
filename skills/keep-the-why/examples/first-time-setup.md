@@ -2,15 +2,21 @@
 
 ## Situation
 
-The skill has just been installed in a project. There's no `.keep-the-why`, no `context/`, nothing to indicate it's ever been used here before.
+The skill has just been installed in a project. There's no `.keep-the-why`, no `context/`, nothing to indicate it's ever been used here before, and nobody has said anything about setting it up.
 
 **User:** "Why does this retry logic look so defensive?"
 
-This happens to be a question the skill's own description matches, which is what activates it here — a Skill doesn't turn on just because a session starts. Saying so directly ("initialize Keep the Why in this project") works the same way and doesn't require a relevant question to come up first; see [Installation](https://keepthewhy.com/installation/).
+This happens to be a question the skill's own description matches, which is what activates it here — a Skill doesn't turn on just because a session starts. But an organic match on an unrelated question is never grounds to propose setting anything up in a project that's never opted in — see "Detection and the two independent wizards" in `references/setup.md`. So here, the skill checks `.keep-the-why` (missing) and the legacy block (also missing), confirms there's no explicit request to set up Keep the Why anywhere in this conversation, and does nothing project-setup-related: no wizard, no mention that this project has no Keep the Why setup, not even a one-line offer. It just answers the retry-logic question normally, exactly as if this skill had never activated at all.
+
+## A later session, this time asked directly
+
+**User:** "Initialize Keep the Why in this project."
+
+This names the skill and its purpose directly — not a task that happens to match the description, an actual request. That's what clears the gate; see [Installation](https://keepthewhy.com/installation/) for other phrasings that count.
 
 ## What the skill does
 
-1. Before answering, checks `.keep-the-why` for a pinned version (none — nothing to defer to), then for a project config file (`.keep-the-why`) and a personal config file (`~/.keep-the-why/<id>.md`). Finds neither, and no legacy block in `AGENTS.md`/`AGENTS.local.md` either — this is a genuinely first activation, not a missing-context case and not a migration.
+1. Checks `.keep-the-why` for a pinned version (none — nothing to defer to), then for a project config file (`.keep-the-why`) and a personal config file (`~/.keep-the-why/<id>.md`). Finds neither, and no legacy block in `AGENTS.md`/`AGENTS.local.md` either — this is a genuinely first activation, not a missing-context case and not a migration. This time there's an explicit request in the conversation, so the project init wizard runs.
 2. Runs the project init wizard, one question at a time. This developer has no stored `confirmation-flow` yet (nothing to read it from — it's itself one of the questions the personal wizard hasn't asked yet), so the wizard defaults to `sequential`, not a bundled block:
 
     > **Agent:** This project isn't set up with Keep the Why yet. Quick setup, one question at a time — say "defaults" any time to take the rest as-is. First: where should the why-knowledge live? [`context/`]
@@ -140,7 +146,7 @@ This happens to be a question the skill's own description matches, which is what
     <!-- /keep-the-why:personal -->
     ```
 
-8. Only then answers the original question about the retry logic — using retrospective recovery on just that piece of code, since "fresh start" was chosen, not a full-history pass.
+8. Confirms setup is done and asks what to work on first — there's no pending question from this explicit-request turn to answer, unlike the earlier organic activation, which had already answered the retry-logic question directly without any of this running.
 
 ## A second developer opens the same project later
 
@@ -161,4 +167,5 @@ The update-check interval elapses, but this environment has no web access. The s
 - Doesn't put personal preferences anywhere inside the project at all — `~/.keep-the-why/<id>.md` lives outside it entirely, so there's no `.gitignore` entry to get wrong.
 - Doesn't write anything about itself into `AGENTS.md` — whether and how to mention Keep the Why anywhere a human reads it is this project's own call, not something setup adds unasked.
 - Doesn't keep asking the same "web access is broken, what do you want to do" question every session once it's been answered once.
-- Doesn't answer the original question before setup is resolved, but also doesn't let setup become a multi-turn detour from what the user actually asked.
+- Doesn't propose, mention, or run any project setup from an organic activation on a project with no `.keep-the-why` and no legacy block — not even a low-key "want me to set this up?" offer. Answers the actual question and stops there; setup only starts from an explicit request, in a separate turn if that's when it comes.
+- Doesn't let setup become a multi-turn detour from what the user actually asked, once it does run (the explicit-request case) — it's its own self-contained flow, not interleaved with answering an unrelated question from earlier in the conversation.
