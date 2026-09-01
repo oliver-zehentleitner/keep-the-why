@@ -1,6 +1,6 @@
 ---
 name: keep-the-why
-description: Preserves or recovers the reasoning behind a codebase - architectural decisions, rejected alternatives, workarounds, incident learnings, operational constraints, and historical context the code itself cannot explain. Use when implementing or reviewing a non-trivial change involving a design decision, workaround, incident fix, operational constraint, rejected alternative, or changed assumption; when documenting an existing or legacy codebase; during onboarding or a maintainer handover; or when interviewing a developer before their knowledge is lost (e.g. before they leave or retire); or when the user expresses frustration with, or reports a problem with, this skill itself. Identifies what the code cannot explain, asks focused questions instead of generic ones, and maintains concise, topic-based, version-controlled documentation readable by both humans and AI agents.
+description: Extract and preserve the reasoning code cannot explain - decisions, rejected alternatives, workarounds, incidents, and constraints. Not for what changed (see Keep a Changelog) - only why.
 license: MIT
 metadata:
   version: "0.10.0"
@@ -21,7 +21,16 @@ Four modes, all part of the same job:
 3. **Knowledge-transfer interview** — when a maintainer's knowledge is about to become unavailable, analyze the repository first, then either ask targeted questions about exactly what the code couldn't explain, or — for someone whose knowledge is broad and tacit, e.g. a long-tenured maintainer — let them narrate freely and extract rationale from that instead. See `references/interview-playbook.md` for both techniques.
 4. **Maintenance** — keep existing rationale current: resolve contradictions, mark superseded entries, merge duplicates, split files that have grown too large.
 
-**When not to use it:** routine implementation detail, generic formatting or style changes, or anything already fully and obviously explained by the code. Not every change is a decision worth a `context/` entry — see rule 13's proportionality gate.
+## Edge cases
+
+Don't create a `context/` entry for:
+
+- Routine implementation detail with no rejected alternative behind it.
+- Generic formatting or style changes.
+- Anything already fully and obviously explained by the code itself.
+- A correction — restoring something to what it should already have been (rule 6) — as opposed to a genuine fork between contending options.
+
+Not every change is a decision worth a `context/` entry — see rule 13's proportionality gate.
 
 ## Composition with other skills
 
@@ -105,6 +114,33 @@ Before the actual write, resolve the effective `capture-confirmation` setting (r
 ### 6. Maintain
 
 Update existing topics rather than accumulating new ones, resolve contradictions when found, mark superseded information instead of deleting it, split files once they get large. This is what keeps the system *living* instead of another pile of stale docs no one trusts. The same confirmation settings (rule 11) apply here too — and regardless of setting, `automatic` never permits silently deleting, reinterpreting, or replacing already-confirmed historical information with weaker evidence; maintenance changes to existing entries still get the same scrutiny superseding or contradicting something deserves.
+
+## Example
+
+Expected output of step 5 above — a `context/` topic file entry (full field reference: `references/repository-structure.md`):
+
+```markdown
+## Snapshot-before-buffer ordering
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer interview, 2026-03-14; incident postmortem 2025-11, `incidents.md`
+**Revisit when:** the sync protocol or snapshot mechanism changes
+
+The sync step always waits for a full snapshot before applying any
+buffered events, even though this adds latency on cold start.
+
+**Reason:** applying buffered events before the snapshot landed caused
+duplicate-then-overwritten state during a 2025-11 incident. The
+ordering constraint isn't visible in the code — it looks like it
+could safely be parallelized, and someone tried exactly that once.
+
+**Rejected alternative:** run snapshot and buffer replay in parallel,
+then reconcile. Rejected because reconciliation logic was hard to get
+right and the incident showed it wasn't actually needed if ordering
+was enforced instead.
+```
 
 ## Target repository structure
 

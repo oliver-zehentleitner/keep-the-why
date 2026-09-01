@@ -4,6 +4,12 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Changed
+
+- `SKILL.md` frontmatter `description` shortened from 118 to 27 words and reworded to start with a recognized action verb ("Extract and preserve...", was "Preserves or recovers..."), with an explicit negative-trigger clause pointing to `CHANGELOG.md`/Keep a Changelog for "what changed" — the removed detail (the four modes, the frustration/problem-report trigger) was already duplicated in the body's `## When to use this skill` and `## Feedback` sections, so nothing was lost. Prompted by an `asm eval` (agent-skill-manager) run scoring this skill 71/100 (C), citing the 877-char description as both over that tool's ~250-char runtime-truncation budget and unrecognized as imperative.
+- `SKILL.md` gained a `## Edge cases` section (the prior inline "When not to use it" sentence, restructured as a bullet list with one addition: corrections per rule 6 are explicitly out of scope) and an `## Example` section showing the expected `context/` topic-file output of workflow step 5, reusing the existing example already in `references/repository-structure.md` rather than inventing new content.
+- Net effect of the above, re-scored with the same `asm eval`: 71/100 (C) → 90/100 (A); `skill-best-practice` sub-score 86/100 → 100/100 pass. The two remaining lower-scoring categories (context efficiency, more imperative voice throughout) would require splitting `## Core rules` across files or flattening its intentionally precise wording — left alone as genuine trade-offs, not pursued here.
+
 ## [0.10.0] - 2026-09-01
 
 ### Added
