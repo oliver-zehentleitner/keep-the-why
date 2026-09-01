@@ -5,3 +5,9 @@
 # architecture.md) resolve only after the runner overlays the shared _base
 # fixture at runtime, so checking them as repo files produces false positives.
 exclude_path = ["tools/evals/fixtures"]
+
+# mcpmarket.com rate-limits lychee's request bursts with 429s (seen repeatedly
+# on the "Also listed on" link across README.md/llms.txt/docs/installation.md,
+# unrelated to the link's actual validity) - skip it rather than have Link
+# Check flake red on every push that touches any of those files.
+exclude = ["^https://mcpmarket\\.com/"]
