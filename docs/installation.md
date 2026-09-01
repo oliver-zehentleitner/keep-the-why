@@ -32,13 +32,14 @@ Either form prompts for which of its 70+ supported agents (Claude Code, Codex, O
 
 ## Also listed on
 
-| Name | Status | Info |
-|---|---|---|
-| [ASM](https://luongnv.com/asm/#/skills/oliver-zehentleitner%2Fkeep-the-why%3A%3Askills%2Fkeep-the-why%3A%3Akeep-the-why) | Live | Curated skill index for the `asm` CLI; installable via `asm install keep-the-why` |
-| [awesome-agent-skills](https://github.com/VoltAgent/awesome-agent-skills#context-engineering) | Live | Listed under "Context Engineering" |
-| [GitHub Copilot plugin marketplace](https://awesome-copilot.github.com/plugin/keep-the-why/) | Live | Installable via `copilot plugin install keep-the-why@awesome-copilot` |
-| [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why) | Live | Backs the `npx skills add` install method above |
-| [SkillsLLM](https://skillsllm.com/skill/keep-the-why) | Live | Verified, passed [SkillsLLM's security scan](https://skillsllm.com/security-check/IPmNycVdbOyq) |
+| Name | Info |
+|---|---|
+| [ASM](https://luongnv.com/asm/#/skills/oliver-zehentleitner%2Fkeep-the-why%3A%3Askills%2Fkeep-the-why%3A%3Akeep-the-why) | Curated skill index for the `asm` CLI; installable via `asm install keep-the-why` |
+| [awesome-agent-skills](https://github.com/VoltAgent/awesome-agent-skills#context-engineering) | Listed under "Context Engineering" |
+| [GitHub Copilot plugin marketplace](https://awesome-copilot.github.com/plugin/keep-the-why/) | Installable via `copilot plugin install keep-the-why@awesome-copilot` |
+| [MCP Market](https://mcpmarket.com/tools/skills/keep-the-why) | Skill marketplace listing |
+| [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why) | Backs the `npx skills add` install method above |
+| [SkillsLLM](https://skillsllm.com/skill/keep-the-why) | Verified, passed [SkillsLLM's security scan](https://skillsllm.com/security-check/IPmNycVdbOyq) |
 
 ## Also recommended: GitHub CLI
 
@@ -110,10 +111,10 @@ Re-run whichever install command you used the first time. If you pinned to `late
 
 Start a new session afterward, same as a fresh install — a session already in progress keeps whatever `SKILL.md` it already loaded and won't pick up the update mid-conversation. To confirm the update actually took, check the `metadata.version` field in your installed `skills/keep-the-why/SKILL.md`, or ask your agent to report it.
 
-This is separate from whether your project's own `context/` needs anything done to it. Updating the skill replaces its own files wholesale — nothing to do on your side just because a release changed how `SKILL.md` describes itself internally. A release only asks something of your project when it changes the *format* of `context/` entries, tracked via `context-schema` in your `AGENTS.md` — see `setup.md` and `migrations.md`. The two are independent: a release can update the skill's own frontmatter shape (as `0.3.1` did) without touching `context-schema` at all.
+This is separate from whether your project's own `context/` needs anything done to it. Updating the skill replaces its own files wholesale — nothing to do on your side just because a release changed how `SKILL.md` describes itself internally. A release asks something of your project when `migrations.md` has an entry that applies — not just `context/` entry-format changes, also structural conventions (like `context/index.md`'s sort order), new config defaults, and storage-location changes (like config moving into a dedicated `.keep-the-why` file) — tracked via `context-schema` in your project's `.keep-the-why`; see `setup.md` and `migrations.md`. The two are independent: a release can update the skill's own frontmatter shape (as `0.3.1` did) without touching `context-schema` at all.
 
 ## Verifying it loaded
 
 A Skill activates when something in the conversation matches its description — not automatically the moment a session starts. Start a session in a project where the skill is installed and either ask something that should trigger it organically (e.g. "why does this workaround exist, and can you document it?") or, for a fresh project, just say so directly — "initialize Keep the Why in this project" or similar runs the one-time setup wizard immediately rather than waiting for it to come up on its own. If it doesn't seem to activate either way, double-check that `SKILL.md` sits directly inside the skill folder (not nested deeper) and that the folder name matches `name: keep-the-why` in the frontmatter exactly.
 
-This explicit nudge is only needed for the first activation in a project. Setup writes a short pointer into `AGENTS.md` itself (where `context/` lives, that setup is complete) — and most AGENTS.md-aware tools already read that file at the start of every session, independently of this skill. Every session after the first one picks the project back up on its own; there's nothing project-specific to repeat.
+This explicit nudge is only needed for the first activation in a project. Setup creates a `.keep-the-why` file at the project root (where `context/` lives, that setup is complete), checked by this skill directly at the start of every later session — `AGENTS.md` itself is left untouched; mentioning Keep the Why anywhere a human would read it (a README section, the badge) is the project's own call, not something setup writes in. Every session after the first one picks the project back up on its own; there's nothing project-specific to repeat.

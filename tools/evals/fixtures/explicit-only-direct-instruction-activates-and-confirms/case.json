@@ -7,5 +7,6 @@
         "notes/ops.md": "The corporate egress proxy silently drops websocket connections idle >60s; polling sidesteps it.\n"
       }
     }
-  ]
+  ],
+  "personal": "none"
 }

@@ -62,12 +62,12 @@
   {
     "id": "init-wizard-first-activation",
     "prompt": "Set up Keep the Why in this project, please.",
-    "expected_behavior": "Does not silently create context/ or start capturing without asking. Detects the absence of both the project config block and the personal config block, and runs both wizards separately: project wizard asks where why-knowledge should live, how to start (fresh / retrospective / interview), whether to add the README badge, and how much confirmation is needed before writing to context/ (capture-confirmation); personal wizard asks capture-mode preference, how multiple pending confirmations and wizard questions should be presented (confirmation-flow: sequential or batch), and update-check/consistency-check intervals. Since this developer has no stored confirmation-flow yet, both wizards present their own questions one at a time (sequential, confirmation-flow's own default) rather than bundling them into one message - it waits for an answer before asking the next question. Offers defaults as a fast path (a single word can cover one question or everything remaining) rather than demanding a fully custom answer to each. Writes the project block (including capture-confirmation) to the entry-point file and the personal block (including confirmation-flow) to AGENTS.local.md, not mixed into one block. Since context/ is being created fresh (not adopted), also adds a short README.md inside it explaining what the folder is."
+    "expected_behavior": "Does not silently create context/ or start capturing without asking. Detects the absence of both the project config block and the personal config block, and runs both wizards separately: project wizard asks where why-knowledge should live, how to start (fresh / retrospective / interview), whether to add the README badge, and how much confirmation is needed before writing to context/ (capture-confirmation); personal wizard asks capture-mode preference, how multiple pending confirmations and wizard questions should be presented (confirmation-flow: sequential or batch), and update-check/consistency-check intervals. Since this developer has no stored confirmation-flow yet, both wizards present their own questions one at a time (sequential, confirmation-flow's own default) rather than bundling them into one message - it waits for an answer before asking the next question. Offers defaults as a fast path (a single word can cover one question or everything remaining) rather than demanding a fully custom answer to each. Writes the project block (including capture-confirmation) to .keep-the-why and the personal block (including confirmation-flow) to ~/.keep-the-why/<id>.md, not mixed into one block. Since context/ is being created fresh (not adopted), also adds a short README.md inside it explaining what the folder is."
   },
   {
     "id": "init-already-complete-new-developer-still-asked-personal",
-    "prompt": "A different developer opens this same project, which already has an AGENTS.md with a keep-the-why project config block showing init: complete, but no AGENTS.local.md for this developer yet.",
-    "expected_behavior": "Does not re-run the project init wizard - context location, starting mode, and capture-confirmation are already settled project-wide. Does run the personal preferences wizard for this developer, since AGENTS.local.md doesn't exist for them yet - capture mode, confirmation-flow, and check intervals are per-developer, not inherited from the project config. Their answers, including confirmation-flow, can differ from whatever the first developer chose."
+    "prompt": "A different developer opens this same project, which already has a .keep-the-why file showing init: complete, but no ~/.keep-the-why/<id>.md for this developer yet on this machine.",
+    "expected_behavior": "Does not re-run the project init wizard - context location, starting mode, and capture-confirmation are already settled project-wide, in .keep-the-why. Does run the personal preferences wizard for this developer, since they have no ~/.keep-the-why/<id>.md yet for this project - capture mode, confirmation-flow, and check intervals are per-developer, not inherited from the project config. Their answers, including confirmation-flow, can differ from whatever the first developer chose."
   },
   {
     "id": "init-declined-not-reasked",
@@ -90,11 +90,6 @@
     "expected_behavior": "Retries the check silently without asking the user how to handle it again - on-failure is already set to retry-quietly from the earlier answer. Does not advance 'last'. If a later session succeeds, 'last' advances to that session's date and on-failure's job is done for this cycle."
   },
   {
-    "id": "agents-local-gitignore-not-covered",
-    "prompt": "Running the personal preferences wizard for the first time in a project. AGENTS.local.md doesn't exist yet, and .gitignore has no entry for it.",
-    "expected_behavior": "Before creating AGENTS.local.md, checks whether .gitignore excludes it. Since it doesn't, adds an AGENTS.local.md entry to .gitignore (creating .gitignore if it doesn't exist) before creating the file - not after, and not skipped. Personal preferences described as 'not committed' should actually be prevented from being committed, not just documented as such."
-  },
-  {
     "id": "abandoned-change-still-captured",
     "prompt": "User asks to simplify a retry wrapper that looks over-engineered. While discussing how to simplify it, it becomes clear the wrapper handles a rate-limiter's per-request Retry-After header that a plain retry loop would miss, causing cascading failures under load. The user agrees not to touch it after hearing this.",
     "expected_behavior": "Records the discovered reasoning in context/ even though no code change happens - there's no diff or commit that would otherwise capture it. Notes what was being considered (a plain retry loop), what stopped it (the Retry-After behavior), and why, rather than treating 'no code was changed' as 'nothing to document.'"
@@ -106,13 +101,28 @@
   },
   {
     "id": "context-schema-behind-offers-migration",
-    "prompt": "The project's AGENTS.md config block shows context-schema: 0.2.0 — several versions behind the installed skill. One of the releases in between, 0.3.0, changed the context/ entry format (Status split from Evidence).",
+    "prompt": "The project's .keep-the-why config shows context-schema: 0.2.0 — several versions behind the installed skill. One of the releases in between, 0.3.0, changed the context/ entry format (Status split from Evidence).",
     "expected_behavior": "Notices context-schema is behind the installed version during the setup check, checks references/migrations.md, finds the 0.3.0 entry applies, and explains what changed before asking whether to migrate existing context/ entries now or next session - does not migrate silently, and does not skip the check just because the project's project-level init is already complete."
   },
   {
     "id": "context-schema-missing-backfilled",
-    "prompt": "The project's AGENTS.md config block has no context-schema field at all - it was set up before this field existed.",
+    "prompt": "The project's .keep-the-why config has no context-schema field at all - it was set up before this field existed.",
     "expected_behavior": "Backfills context-schema to 0.2.0 (the last version before any context/ format change) rather than treating the missing field as an error or leaving it unset, then proceeds with the normal behind/current comparison against the installed version."
+  },
+  {
+    "id": "config-migrates-to-dedicated-file",
+    "prompt": "Start of a new session in this project. Quick task: explain briefly why order submission uses an idempotency key.",
+    "expected_behavior": "Detects a legacy keep-the-why:config block still embedded in AGENTS.md and no .keep-the-why file at the project root - recognizes this as an existing project that predates .keep-the-why, not a fresh, never-initialized one. Creates .keep-the-why (with its own short explanatory header line, plus the config block) with a generated project id and the field values carried over unchanged from the old block (context, init, context-schema, capture-confirmation, source-reference), and removes the old block from AGENTS.md. Does not add a generic 'this project uses Keep the Why' pointer to AGENTS.md - that's the project's own editorial call, not this skill's. Does leave one line in AGENTS.md noting the project was migrated and needs the keep-the-why skill at version 0.10.0 or later, specifically so an older skill reading the file (as an LLM, not a literal marker match) can still notice it. Does not silently treat the missing .keep-the-why as an uninitialized project and re-run the full init wizard from scratch."
+  },
+  {
+    "id": "personal-file-migrates-from-agents-local",
+    "prompt": "Start of a new session in this project. Quick task: explain briefly why order submission uses an idempotency key.",
+    "expected_behavior": "Finds no ~/.keep-the-why/<id>.md for this project yet, but finds this checkout still has a keep-the-why:local block in AGENTS.local.md. Carries its values and last: timestamps over verbatim into ~/.keep-the-why/<id>.md, then removes the block from AGENTS.local.md - a relocation of this developer's own already-stated preferences. Does not run the personal preferences wizard from scratch, since these preferences were already explicitly set once."
+  },
+  {
+    "id": "pinned-version-hard-stop-when-missing",
+    "prompt": "Start of a new session in this project. Quick task: explain briefly why order submission uses an idempotency key.",
+    "expected_behavior": "Before anything else, notices .keep-the-why names a pinned-version different from the installed skill's own metadata.version, and that pinned-path doesn't exist on disk. Stops instead of silently continuing with the installed skill version - explains what was expected (the pinned version and path) versus what's actually there, and why running a different, unpinned version could matter. Offers explicit choices rather than picking one: re-vendor the pinned copy, remove the stale pinned-version/pinned-path fields from .keep-the-why, or proceed with the installed version for this session only. Does not silently fall back to the installed skill without saying so, and does not claim to remember a 'proceed anyway' choice for next time."
   },
   {
     "id": "migration-insufficient-info-marked-unknown",
@@ -132,16 +142,16 @@
   {
     "id": "migration-prompt-personally-declined",
     "prompt": "context-schema is behind the installed version with an applicable migration in migrations.md. The developer says 'don't ask me about this one again.'",
-    "expected_behavior": "Records migration-prompt: <version> declined in the personal AGENTS.local.md block, scoped to the specific target version - not a blanket suppression of all future migration prompts. Does NOT change context-schema in the project's AGENTS.md - the project-wide fact that context/ hasn't been migrated is unaffected, only this developer's own prompting."
+    "expected_behavior": "Records migration-prompt: <version> declined in the personal ~/.keep-the-why/<id>.md file, scoped to the specific target version - not a blanket suppression of all future migration prompts. Does NOT change context-schema in the project's .keep-the-why - the project-wide fact that context/ hasn't been migrated is unaffected, only this developer's own prompting."
   },
   {
     "id": "migration-prompt-declined-by-one-developer-still-asked-for-another",
-    "prompt": "Developer A previously declined the migration-prompt for version 0.3.0 in their own AGENTS.local.md. Developer B, working in the same project, has never been asked.",
+    "prompt": "Developer A previously declined the migration-prompt for version 0.3.0 in their own ~/.keep-the-why/<id>.md. Developer B, working in the same project, has never been asked.",
     "expected_behavior": "Developer B still gets the migration prompt normally - Developer A's decline is personal and doesn't suppress it for anyone else. If Developer B says yes and migrates context/, context-schema advances project-wide; Developer A's now-stale declined entry becomes irrelevant rather than actively wrong."
   },
   {
     "id": "context-schema-ahead-of-installed-skill",
-    "prompt": "The project's AGENTS.md config block has a context-schema value newer than the installed skill's metadata.version — the project was set up or migrated by a newer skill release than the one running here.",
+    "prompt": "The project's .keep-the-why config has a context-schema value newer than the installed skill's metadata.version — the project was set up or migrated by a newer skill release than the one running here.",
     "expected_behavior": "Does not treat this the same as context-schema being equal to or behind the installed version. Recognizes the installed skill is older than what the project's context/ was set up or migrated with, says so once, and recommends updating the skill rather than silently proceeding. Avoids writing to existing context/ entries until this is resolved, since an older skill may misinterpret a newer entry format. Does not attempt to 'migrate' anything - there's nothing to migrate, the skill itself needs to catch up."
   },
   {
@@ -197,7 +207,7 @@
   {
     "id": "session-instruction-overrides-stored-confirmation-settings",
     "prompt": "Just write everything down directly today, don't ask me each time. To start: capture that we rejected websockets in favor of polling because the corporate proxy kills idle connections.",
-    "expected_behavior": "Follows the session instruction for the rest of this conversation, writing without asking permission even though the stored project setting is confirm-always. Does not edit AGENTS.md to change the stored setting unless the user separately asks for that - the override is scoped to this session, not a silent config change."
+    "expected_behavior": "Follows the session instruction for the rest of this conversation, writing without asking permission even though the stored project setting is confirm-always. Does not edit .keep-the-why to change the stored setting unless the user separately asks for that - the override is scoped to this session, not a silent config change."
   },
   {
     "id": "user-declines-confirmation-no-write",
@@ -227,7 +237,7 @@
   {
     "id": "confirmation-flow-missing-field-asks-once",
     "prompt": "Quick Keep the Why maintenance check on this repo, please.",
-    "expected_behavior": "Does not silently backfill confirmation-flow to sequential just because it's the documented default value - there's no prior behavior for this axis to preserve, unlike capture-confirmation's missing-field case. Asks the one-line question ('one at a time, or as a list?') once, records the answer in AGENTS.local.md, and doesn't ask again in later sessions."
+    "expected_behavior": "Does not silently backfill confirmation-flow to sequential just because it's the documented default value - there's no prior behavior for this axis to preserve, unlike capture-confirmation's missing-field case. Asks the one-line question ('one at a time, or as a list?') once, records the answer in ~/.keep-the-why/<id>.md, and doesn't ask again in later sessions."
   },
   {
     "id": "confirmation-flow-invalid-value-asks-not-defaults",
@@ -261,8 +271,8 @@
   },
   {
     "id": "wizard-respects-known-confirmation-flow-batch",
-    "prompt": "This checkout's AGENTS.local.md already has a personal config block with confirmation-flow: batch (the personal wizard ran in an earlier session), but the project has no keep-the-why config block yet. The user asks to initialize Keep the Why in this project.",
-    "expected_behavior": "The project init wizard presents its questions as a single bundled message (batch), not one at a time - the developer's stored confirmation-flow in this checkout's AGENTS.local.md is known and gets respected. Does not default to sequential when a valid stored preference already exists, and does not re-ask the personal wizard's questions that are already answered."
+    "prompt": "This developer's ~/.keep-the-why/<id>.md already has a personal config block with confirmation-flow: batch (the personal wizard ran in an earlier session), but the project has no .keep-the-why file yet. The user asks to initialize Keep the Why in this project.",
+    "expected_behavior": "The project init wizard presents its questions as a single bundled message (batch), not one at a time - the developer's stored confirmation-flow in ~/.keep-the-why/<id>.md is known and gets respected. Does not default to sequential when a valid stored preference already exists, and does not re-ask the personal wizard's questions that are already answered."
   },
   {
     "id": "wizard-bundling-is-not-the-silent-default",

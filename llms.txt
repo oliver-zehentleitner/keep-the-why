@@ -87,22 +87,23 @@ A Skill activates when something in the conversation matches its description, no
 automatically on session start. After installing, start a new session and tell the agent
 something like "initialize Keep the Why in this project" to run the one-time setup wizard
 right away, instead of waiting for it to trigger organically. This is only needed once -
-setup writes a pointer into AGENTS.md itself (where context/ lives, that setup is complete),
-and most AGENTS.md-aware tools already read that file at the start of every session on their
-own, independent of this skill. Every later session picks the project back up without
-needing to be told again.
+setup creates a `.keep-the-why` file at the project root (where context/ lives, that setup
+is complete), checked directly by this skill at the start of every later session, independent
+of whichever entry-point file a given agent tool reads on its own. Every later session picks
+the project back up without needing to be told again.
 
 ## Also Listed On
 
-- ASM: live, curated skill index for the `asm` CLI, installable via `asm install
+- ASM: curated skill index for the `asm` CLI, installable via `asm install
   keep-the-why` — https://luongnv.com/asm/#/skills/oliver-zehentleitner%2Fkeep-the-why%3A%3Askills%2Fkeep-the-why%3A%3Akeep-the-why
-- awesome-agent-skills: live, listed under "Context Engineering" —
+- awesome-agent-skills: listed under "Context Engineering" —
   https://github.com/VoltAgent/awesome-agent-skills#context-engineering
-- GitHub Copilot plugin marketplace: live, installable via `copilot plugin install
+- GitHub Copilot plugin marketplace: installable via `copilot plugin install
   keep-the-why@awesome-copilot` — https://awesome-copilot.github.com/plugin/keep-the-why/
-- skills.sh: https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why — live, backs
+- MCP Market: skill marketplace listing — https://mcpmarket.com/tools/skills/keep-the-why
+- skills.sh: https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why — backs
   the `npx skills add` method above
-- SkillsLLM: live, verified, passed security scan — https://skillsllm.com/skill/keep-the-why
+- SkillsLLM: verified, passed security scan — https://skillsllm.com/skill/keep-the-why
 
 ## Core Concept
 
@@ -135,13 +136,15 @@ First activation in a project runs a one-time setup: a project wizard (where `co
 starting mode, README badge, `capture-confirmation`, and `source-reference`) and a separate
 personal wizard (proactive vs. explicit-only capture, `confirmation-flow`,
 update-check/consistency-check intervals) — see https://keepthewhy.com/setup/. When a later
-skill update changes the `context/` entry format, a `context-schema` version tracked in the
-project's config is compared against the installed skill's `metadata.version` and, if behind,
-offers a migration — see https://keepthewhy.com/migrations/. A developer can personally
-decline being asked about one specific migration without affecting the project or anyone else
-on it. Updating the skill itself (new `metadata.version`, new frontmatter shape, etc.) is
-independent of this — it only asks something of a project when the `context/` entry format
-actually changes.
+skill update requires action from an existing project — a `context/` entry-format change, a
+structural convention (like `context/index.md`'s sort order), a new config default, or a
+storage-location change (like config moving into a dedicated `.keep-the-why` file) — a
+`context-schema` version tracked in the project's own `.keep-the-why` file is compared against the installed
+skill's `metadata.version` and, if behind, offers a migration — see
+https://keepthewhy.com/migrations/. A developer can personally decline being asked about one
+specific migration without affecting the project or anyone else on it. Updating the skill
+itself (new `metadata.version`, new frontmatter shape, etc.) is independent of this — it only
+asks something of a project when `migrations.md` has an applicable entry.
 
 Two more settings decide how writing itself gets confirmed, independent of when the skill
 looks for something worth capturing (`capture-mode`) or whether an entry is warranted at all
@@ -168,10 +171,17 @@ or a session instruction that doesn't clearly resolve to one option, is never tr
 as missing. Name the valid options and ask; don't silently coerce, normalize, or guess.
 
 Produces, inside the project using the skill:
-- `AGENTS.md` — lean entry point, pointers only, plus a small machine-readable config block
+- `AGENTS.md` — lean entry point, pointers only, no longer carrying this skill's own config
+- `.keep-the-why` — this skill's own project config, committed, including a project `id`
+  and optionally a `personal-defaults` block and pinned-version fields
 - `docs/` — how to use, operate, test, deploy
-- `context/` — why the project is the way it is, organized by topic, with its own `README.md`
-- `AGENTS.local.md` — personal preferences and notes, not committed
+- `context/` — why the project is the way it is, organized by topic, with its own `README.md`,
+  `AGENTS.md`, and `CLAUDE.md`
+- `AGENTS.local.md` — personal notes unrelated to this skill, not committed
+
+Outside the project entirely, on the developer's own machine: `~/.keep-the-why/<id>.md`
+(personal preferences for this specific project) and `~/.keep-the-why/config` (a machine-wide
+policy for how a project's suggested `personal-defaults` get handled).
 
 ## Testing / Evals
 

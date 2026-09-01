@@ -2,7 +2,7 @@
 
 ## Situation
 
-The skill has just been installed in a project. There's no `AGENTS.md`, no `context/`, nothing to indicate it's ever been used here before.
+The skill has just been installed in a project. There's no `.keep-the-why`, no `context/`, nothing to indicate it's ever been used here before.
 
 **User:** "Why does this retry logic look so defensive?"
 
@@ -10,7 +10,7 @@ This happens to be a question the skill's own description matches, which is what
 
 ## What the skill does
 
-1. Before answering, checks for a project config block (in `AGENTS.md` or an equivalent entry-point file) and a personal config block (in `AGENTS.local.md`). Finds neither — this is a first activation, not a missing-context case.
+1. Before answering, checks `.keep-the-why` for a pinned version (none — nothing to defer to), then for a project config file (`.keep-the-why`) and a personal config file (`~/.keep-the-why/<id>.md`). Finds neither, and no legacy block in `AGENTS.md`/`AGENTS.local.md` either — this is a genuinely first activation, not a missing-context case and not a migration.
 2. Runs the project init wizard, one question at a time. This developer has no stored `confirmation-flow` yet (nothing to read it from — it's itself one of the questions the personal wizard hasn't asked yet), so the wizard defaults to `sequential`, not a bundled block:
 
     > **Agent:** This project isn't set up with Keep the Why yet. Quick setup, one question at a time — say "defaults" any time to take the rest as-is. First: where should the why-knowledge live? [`context/`]
@@ -33,6 +33,10 @@ This happens to be a question the skill's own description matches, which is what
     >
     > **User:** defaults.
     >
+    > **Agent:** Should this project offer suggested personal-workflow defaults to future developers, instead of everyone answering the personal wizard from scratch? [no]
+    >
+    > **User:** defaults.
+    >
     > **Agent:** Last one: activation isn't guaranteed by the Skill mechanism itself — want me to check whether this platform (Claude Code, here) offers something stronger and set it up scoped to this project? [no]
     >
     > **User:** defaults.
@@ -43,7 +47,7 @@ This happens to be a question the skill's own description matches, which is what
     [![Keep the Why](https://keepthewhy.com/assets/badge.svg)](https://keepthewhy.com)
     ```
 
-4. `context/` doesn't exist yet, so creates it with a short `README.md` inside (GitHub renders this automatically when someone browses the folder):
+4. `context/` doesn't exist yet, so creates it with a short `README.md`, `AGENTS.md`, and `CLAUDE.md` inside (GitHub renders the README automatically when someone browses the folder; the other two guard against hand-writing to the schema without invoking the skill — see `references/setup.md`'s "Guarding `context/` itself"):
 
     ```markdown
     <a href="https://keepthewhy.com"><img src="https://keepthewhy.com/assets/logo.png" alt="Keep the Why"></a>
@@ -88,10 +92,15 @@ This happens to be a question the skill's own description matches, which is what
     Start with the [context index](index.md).
     ```
 
-5. Creates `AGENTS.md` with a short pointer section and the project config block, including `context-schema` set to the currently installed skill version — freshly created, nothing to migrate:
+5. Generates a project `id` (a git remote exists here, so `<owner>---<repo>` from `origin`) and creates `.keep-the-why` with the header every such file gets plus the project config block, `context-schema` set to the currently installed skill version — freshly created, nothing to migrate:
 
     ```markdown
+    This is machine-readable project state for the Keep the Why skill
+    (https://keepthewhy.com). See context/index.md, or this project's own
+    README, for what Keep the Why actually is.
+
     <!-- keep-the-why:config -->
+    - id: acme---widget-service
     - context: `context/`
     - init: complete
     - context-schema: 0.9.2
@@ -99,6 +108,8 @@ This happens to be a question the skill's own description matches, which is what
     - source-reference: never
     <!-- /keep-the-why:config -->
     ```
+
+    Since the previous question about `personal-defaults` was declined, no `personal-defaults` block gets added. `AGENTS.md` itself is left exactly as it already was — nothing about Keep the Why gets written into it; mentioning the skill anywhere a human would read it is this project's own editorial call (the badge question above already covers that), not something setup does on its own.
 
 6. Runs the personal preferences wizard, separately, also one question at a time for the same reason:
 
@@ -118,22 +129,22 @@ This happens to be a question the skill's own description matches, which is what
     >
     > **User:** defaults on the rest.
 
-7. `AGENTS.local.md` doesn't exist yet. Checks `.gitignore` first — it already has an `AGENTS.local.md` entry (from an earlier project convention), so nothing to add there. Creates `AGENTS.local.md`, referenced from `AGENTS.md`, with the personal config block:
+7. `~/.keep-the-why/<id>.md` doesn't exist yet on this machine — creates `~/.keep-the-why/` if needed, then writes the personal config file, no `.gitignore` entry needed since it lives outside the project entirely:
 
     ```markdown
-    <!-- keep-the-why:local -->
+    <!-- keep-the-why:personal -->
     - capture-mode: explicit-only
     - confirmation-flow: sequential
     - update-check: every 14 days — last: 2026-07-21
     - consistency-check: every 30 days — last: 2026-07-21
-    <!-- /keep-the-why:local -->
+    <!-- /keep-the-why:personal -->
     ```
 
 8. Only then answers the original question about the retry logic — using retrospective recovery on just that piece of code, since "fresh start" was chosen, not a full-history pass.
 
 ## A second developer opens the same project later
 
-The project config block already says `init: complete` — that part isn't re-asked, it's a project fact, not a per-developer one. `capture-confirmation` is part of that same project fact: it stays `confirm-when-unsure` for everyone, this developer included, regardless of their own personal preferences. But this developer has no `AGENTS.local.md` yet, so the personal preferences wizard (step 6 above) runs for them individually, one question at a time again since they have no stored `confirmation-flow` either. Their answers might differ from the first developer's, and that's fine — capture mode, `confirmation-flow`, and check intervals are exactly the kind of thing that should vary per person. Note that `confirmation-flow` lives in this checkout's `AGENTS.local.md`, so even if this developer chose `batch` on some other project, that preference isn't visible here — the personal wizard asks its one-line question again and records the answer for this project.
+The project config already says `init: complete` — that part isn't re-asked, it's a project fact, not a per-developer one. `capture-confirmation` is part of that same project fact: it stays `confirm-when-unsure` for everyone, this developer included, regardless of their own personal preferences. But this developer has no `~/.keep-the-why/<id>.md` yet on their machine, and no legacy `AGENTS.local.md` block to carry over either (this project was set up fresh, under the current scheme), so the personal preferences wizard (step 6 above) runs for them individually, one question at a time again since they have no stored `confirmation-flow` either. Their answers might differ from the first developer's, and that's fine — capture mode, `confirmation-flow`, and check intervals are exactly the kind of thing that should vary per person. Note that `confirmation-flow` is stored per project, in `~/.keep-the-why/<id>.md`, so even if this developer chose `batch` on some other project, that preference isn't visible here — the personal wizard asks its one-line question again and records the answer for this project's own file.
 
 ## A later session, after a few weeks of no web access
 
@@ -146,7 +157,8 @@ The update-check interval elapses, but this environment has no web access. The s
 - Doesn't turn either wizard into a long interrogation either — sequential still means short, focused questions with sensible defaults, "defaults" as a valid one-word answer that can also cover everything remaining.
 - Doesn't add the badge (or anything else) if the user says no to that specific question — each wizard answer is independent, not all-or-nothing.
 - Doesn't bundle personal preferences into the committed project config, and doesn't skip the personal wizard just because the project is already initialized.
-- Doesn't overwrite an existing `context/README.md` (or equivalent) if the folder is being adopted rather than created fresh.
-- Doesn't create `AGENTS.local.md` without first making sure `.gitignore` actually excludes it — "not committed" is enforced, not just documented.
+- Doesn't overwrite an existing `context/README.md`, `AGENTS.md`, or `CLAUDE.md` (or an equivalent) if the folder is being adopted rather than created fresh.
+- Doesn't put personal preferences anywhere inside the project at all — `~/.keep-the-why/<id>.md` lives outside it entirely, so there's no `.gitignore` entry to get wrong.
+- Doesn't write anything about itself into `AGENTS.md` — whether and how to mention Keep the Why anywhere a human reads it is this project's own call, not something setup adds unasked.
 - Doesn't keep asking the same "web access is broken, what do you want to do" question every session once it's been answered once.
 - Doesn't answer the original question before setup is resolved, but also doesn't let setup become a multi-turn detour from what the user actually asked.

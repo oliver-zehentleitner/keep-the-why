@@ -61,7 +61,7 @@ Where the captured knowledge actually lives, and how it relates to everything el
 npx skills add https://github.com/oliver-zehentleitner/keep-the-why/tree/latest/skills/keep-the-why
 ```
 
-Prompts you to select one of 70+ supported agents (Claude Code, Codex, OpenCode, and more) and choose whether to install the skill at project or personal scope, then symlinks or copies the skill package in. Also listed on [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why). Start a new session afterward so the skill is picked up, then tell your agent something like "initialize Keep the Why in this project" — a Skill activates when something in the conversation matches it, not automatically on session start, so asking directly runs the one-time setup wizard right away instead of waiting for it to come up organically. This is only needed once: setup writes a pointer to `context/` into `AGENTS.md` itself, which most AGENTS.md-aware tools already read at the start of every session — later sessions pick the project back up without needing to be told again.
+Prompts you to select one of 70+ supported agents (Claude Code, Codex, OpenCode, and more) and choose whether to install the skill at project or personal scope, then symlinks or copies the skill package in. Also listed on [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why). Start a new session afterward so the skill is picked up, then tell your agent something like "initialize Keep the Why in this project" — a Skill activates when something in the conversation matches it, not automatically on session start, so asking directly runs the one-time setup wizard right away instead of waiting for it to come up organically. This is only needed once: setup creates a `.keep-the-why` file at the project root, checked directly by this skill at the start of every later session — later sessions pick the project back up without needing to be told again.
 
 <details markdown="1">
 <summary>Other install methods — GitHub CLI, manual clone, agent-specific paths</summary>
@@ -114,13 +114,14 @@ Full install detail for every method, including tools without a skill runtime at
 
 ### Also listed on
 
-| Name | Status | Info |
-|---|---|---|
-| [ASM](https://luongnv.com/asm/#/skills/oliver-zehentleitner%2Fkeep-the-why%3A%3Askills%2Fkeep-the-why%3A%3Akeep-the-why) | Live | Curated skill index for the `asm` CLI; installable via `asm install keep-the-why` |
-| [awesome-agent-skills](https://github.com/VoltAgent/awesome-agent-skills#context-engineering) | Live | Listed under "Context Engineering" |
-| [GitHub Copilot plugin marketplace](https://awesome-copilot.github.com/plugin/keep-the-why/) | Live | Installable via `copilot plugin install keep-the-why@awesome-copilot` |
-| [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why) | Live | Backs the `npx skills add` install method above |
-| [SkillsLLM](https://skillsllm.com/skill/keep-the-why) | Live | Verified, passed [SkillsLLM's security scan](https://skillsllm.com/security-check/IPmNycVdbOyq) |
+| Name | Info |
+|---|---|
+| [ASM](https://luongnv.com/asm/#/skills/oliver-zehentleitner%2Fkeep-the-why%3A%3Askills%2Fkeep-the-why%3A%3Akeep-the-why) | Curated skill index for the `asm` CLI; installable via `asm install keep-the-why` |
+| [awesome-agent-skills](https://github.com/VoltAgent/awesome-agent-skills#context-engineering) | Listed under "Context Engineering" |
+| [GitHub Copilot plugin marketplace](https://awesome-copilot.github.com/plugin/keep-the-why/) | Installable via `copilot plugin install keep-the-why@awesome-copilot` |
+| [MCP Market](https://mcpmarket.com/tools/skills/keep-the-why) | Skill marketplace listing |
+| [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why) | Backs the `npx skills add` install method above |
+| [SkillsLLM](https://skillsllm.com/skill/keep-the-why) | Verified, passed [SkillsLLM's security scan](https://skillsllm.com/security-check/IPmNycVdbOyq) |
 
 ## Example
 

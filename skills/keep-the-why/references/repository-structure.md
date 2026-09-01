@@ -8,6 +8,7 @@ Concrete guidance for applying the structure described in `methodology.md`.
 project/
 ├── AGENTS.md
 ├── AGENTS.local.md          # not committed
+├── .keep-the-why             # this skill's own project config, committed
 ├── docs/
 │   ├── index.md
 │   ├── setup.md
@@ -16,11 +17,15 @@ project/
 │   └── troubleshooting.md
 └── context/
     ├── README.md              # short, GitHub renders it when someone browses the folder cold
+    ├── AGENTS.md               # guard: invoke this skill before editing, don't hand-write the schema
+    ├── CLAUDE.md               # @AGENTS.md import
     ├── index.md
     ├── architecture.md
     ├── <topic>.md            # one per recurring theme, named for the theme, not the file it touches
     └── incidents.md
 ```
+
+This skill's own personal config lives at `~/.keep-the-why/<id>.md`, outside the project entirely — never part of the repo, not shown above. See `references/setup.md`.
 
 Adjust freely. A one-file script doesn't need six `docs/` files. `context/` stays flat — no subdirectories — even for a large project; if topic files alone stop scaling, namespace filenames instead (e.g. `auth-tokens.md` and `auth-oauth.md`, or `tokens-auth.md` and `oauth-auth.md` — prefix or suffix, whichever groups and sorts more usefully for that project) rather than nesting `context/auth/`. The shape should track the project's actual complexity, not a template.
 
@@ -51,16 +56,25 @@ When something genuinely doesn't fit the table above (e.g. security disclosure p
 ```markdown
 # AGENTS.md
 
-This project uses Keep the Why to preserve the reasoning behind its code.
-
 - Usage docs: see `docs/index.md`
 - Why things are the way they are: see `context/index.md`
 - If `AGENTS.local.md` exists in this repo, read that too — personal/local notes.
 
 Read `context/index.md` before making non-trivial changes to understand
 prior decisions and avoid re-litigating or accidentally reverting them.
+```
+
+Keep `AGENTS.md` short. Anything longer belongs in `docs/` or `context/`, not here — `AGENTS.md` needs to stay generic enough for every tool that reads the open AGENTS.md convention, not just this skill. It doesn't carry this skill's config block, or even a pointer to it — that lives entirely in `.keep-the-why` instead (see below), so `AGENTS.md` stays that generic, tool-agnostic pointer with nothing skill-specific baked into it at all. Whether and how a project mentions Keep the Why to a human reading `AGENTS.md`, a README, or anywhere else is that project's own editorial call — not something this skill writes in on its own; see the badge question in `setup.md`'s project init wizard.
+
+## `.keep-the-why` — project config example
+
+```markdown
+This is machine-readable project state for the Keep the Why skill
+(https://keepthewhy.com). See context/index.md, or this project's own
+README, for what Keep the Why actually is.
 
 <!-- keep-the-why:config -->
+- id: acme---widget-service
 - context: `context/`
 - init: complete
 - context-schema: 0.9.2
@@ -69,22 +83,22 @@ prior decisions and avoid re-litigating or accidentally reverting them.
 <!-- /keep-the-why:config -->
 ```
 
-Keep the prose above the config block short. Anything longer belongs in `docs/` or `context/`, not here — `AGENTS.md` needs to stay generic enough for every tool that reads the open AGENTS.md convention, not just this skill. The config block is the exception: it's the skill's own machine-readable state, kept small and clearly delimited on purpose so it doesn't creep into being a second undocumented system living inside a file meant to stay generic. Only project-wide facts live here — personal automation preferences go in `AGENTS.local.md` instead, see below and `setup.md`. `context-schema`, `capture-confirmation`, and `source-reference` are shown here at real, current values rather than omitted — a project's actual config block always has all three, so an example without them would be misleading, not just terse.
+Committed, one per project. The header line above the block exists for anyone who opens this specific file directly with no other context — it's prose, not something the skill reads or depends on. `id` is generated once at init and never recomputed — see "Project config" in `setup.md` for how, and why deriving it fresh each time (from a git remote or a path) would be the wrong call. The config block itself is the skill's own machine-readable state, kept small and clearly delimited on purpose so it doesn't creep into being an undocumented second system — same reasoning that used to justify embedding it in `AGENTS.md`, just now applied to a file with no other job to stay generic for. `context-schema`, `capture-confirmation`, and `source-reference` are shown here at real, current values rather than omitted — a project's actual config always has all three, so an example without them would be misleading, not just terse. A project can optionally add a `personal-defaults` block here too, and/or `pinned-version`/`pinned-path` fields — see `setup.md`.
 
-## `AGENTS.local.md` — personal config example
+## `~/.keep-the-why/<id>.md` — personal config example
 
 ```markdown
-<!-- keep-the-why:local -->
+<!-- keep-the-why:personal -->
 - capture-mode: proactive
 - confirmation-flow: sequential
 - update-check: every 14 days — last: 2026-07-21
 - consistency-check: every 30 days — last: 2026-07-21
-<!-- /keep-the-why:local -->
+<!-- /keep-the-why:personal -->
 ```
 
-Not committed. One developer's automation preferences aren't another's — see `setup.md` for why this is split from the project config block instead of living in `AGENTS.md` alongside it. `capture-confirmation` (whether writing needs permission first) is the one setting in this area that's project-wide instead — it lives in `AGENTS.md`'s config block, not here; see "The confirmation model" in `setup.md`.
+Never committed, never part of the repo at all — lives at `~/.keep-the-why/<id>.md` on the developer's own machine, one file per project per developer. One developer's automation preferences aren't another's — see `setup.md` for why this is split from the project config instead of living alongside it. `capture-confirmation` (whether writing needs permission first) is the one setting in this area that's project-wide instead — it lives in `.keep-the-why`'s config block, not here; see "The confirmation model" in `setup.md`.
 
-A `migration-prompt: <version> declined` line can appear here too, but only once a developer has actually said "stop asking me" about a specific `context/` schema migration — it's not part of the default block. Scoped to that one version, not a blanket opt-out; see "Context schema and migrations" in `setup.md`.
+A `migration-prompt: <version> declined` line can appear here too, but only once a developer has actually said "stop asking me" about a specific `context/` schema migration — it's not part of the default file. Scoped to that one version, not a blanket opt-out; see "Context schema and migrations" in `setup.md`. A `source: project defaults (...)` line can also appear, when the values came from the project's `personal-defaults` block rather than a fresh wizard run — see "Personal defaults, and the global ask-vs-accept policy" in `setup.md`.
 
 ## `context/index.md` — example
 
@@ -92,12 +106,16 @@ A `migration-prompt: <version> declined` line can appear here too, but only once
 # Context index
 
 - [architecture.md](architecture.md) — why the system is shaped this way
-- [sync.md](sync.md) — synchronization design, snapshot/buffer ordering
 - [compatibility.md](compatibility.md) — why certain old-looking code paths still exist
 - [incidents.md](incidents.md) — production incidents and what changed because of them
+- [sync.md](sync.md) — synchronization design, snapshot/buffer ordering
 ```
 
 Keep entries to one line each. This file exists so an agent can decide what to load, not to hold the content itself.
+
+Sort entries alphabetically by filename, and insert new ones in their sorted position rather than appending at the end. Two PRs adding unrelated topic files at the same time then land on different lines instead of both fighting over the last line — the cheapest way to cut down on `index.md` merge conflicts in a repo with concurrent PRs.
+
+An existing project with an unsorted `index.md` should resort it fully, once — see `references/migrations.md`. This isn't the usual "next touched, not a big-bang migration" retrofit rule (below): resorting is mechanical, not per-entry judgment, and the fix doesn't reduce conflicts until the whole list is actually in order.
 
 ## Topic file — example shape
 

@@ -1,6 +1,6 @@
 # Evals
 
-The skill ships 70 eval cases (`tools/evals/evals.json`): a
+The skill ships 72 eval cases (`tools/evals/evals.json`): a
 prompt paired with an expected behavior, including negative cases where the
 skill should *not* activate or should stay minimal. A local runner in
 [`tools/evals/`](https://github.com/oliver-zehentleitner/keep-the-why/tree/main/tools/evals)
@@ -103,6 +103,25 @@ The next full `--all` run (not done today) is what turns this from "10 of 11
 formerly-failing cases, re-run in isolation" into a real before/after on the
 whole suite. Writeup and the reusable hook snippet: `docs/autostart.md`
 (planned, not published yet).
+
+## Config-relocation regression check (2026-08-31)
+
+**Not the next official full-suite run — a targeted check that moving project/personal config into dedicated `.keep-the-why`/`~/.keep-the-why/<id>.md` files didn't regress anything**, run against the suite after that change (72 cases now, was 70 — see `references/migrations.md`'s entry for what changed). `--all --parallel 4`, skill unreleased (post-0.9.2), Claude Code CLI 2.1.251, agent and judge both Claude Sonnet 5.
+
+**First pass: 64/72 passed, 8 failed, 0 errors.** Re-running each failure individually (per the caveat below about single-run variance) resolved all but two to a pass:
+
+- Three flipped to pass on re-run with no code or fixture change (`capture-confirmation-automatic-unclear-evidence`, `capture-confirmation-automatic-still-asks-substantive-question`, `confirmation-flow-batch-multiple-candidates`) — ordinary model variance on judgment-quality questions (how good a clarifying question is, how cleanly a batch of candidates gets presented) that have nothing to do with where config lives. `confirmation-flow-batch-multiple-candidates` is worth naming specifically since it's one of the migrated fixtures: its transcript shows the agent correctly locating and reading `~/.keep-the-why/<id>.md` from the fake `$HOME` and correctly extracting `confirmation-flow: batch` from it before the presentation-quality miss — the new personal-config plumbing itself worked.
+- Two (`embedded-procedure-not-why-content`, `open-question-gets-status-open-not-unknown`) are the exact "recognizes but doesn't act" cases already documented above from the 2026-08-25 run — unrelated to this change, still open per issue #131.
+- `negative-manufactured-abandoned-reasoning` failed twice in a row (a rule-1 violation: treated "found no reference anywhere" as license to delete rather than as an unresolved Chesterton's Fence candidate) — a genuine, pre-existing content-judgment gap, not something this PR touches (no core rule text changed) or something worth chasing further here.
+- `config-migrates-to-dedicated-file` (new case) failed twice, both times a pure activation gap — the Skill tool was never invoked at all despite the `SessionStart` hook firing correctly (confirmed present in the transcript this time, unlike the corrected case below). A manual run with an explicit "check/initialize keep-the-why" prompt confirmed the actual migration instructions are followed correctly once the skill engages: `id` generation (falling back to `uuid+folder-name` when there's no git remote — `uuidgen` wasn't installed on this host either, so it improvised `python3 -c "import uuid; ..."`, still a one-off command, not a shipped script), field carry-over, and the `AGENTS.md` pointer/version-note all came out exactly as specified.
+- `init-declined-not-reasked` — three runs, three different outcomes, none of them a config-location bug:
+    1. **Fail, but not the skill's fault.** The agent bypassed the skill's own state entirely and used Claude Code's own out-of-repo auto-memory feature (`~/.claude/projects/.../memory/feedback_*.md`) to record "don't suggest this again" instead of writing `init: declined` anywhere in the project. This is a genuinely new, real finding — one this fake-`$HOME` isolation fix made *visible* by giving the agent working credentials and therefore a working auto-memory feature to reach for, though the underlying possibility isn't new (every eval run before this PR also had a real, working `$HOME` with the same feature available, unisolated). Filed as [#198](https://github.com/oliver-zehentleitner/keep-the-why/issues/198) rather than addressed here — it's a skill-robustness question (should the trust model say something about not treating another tool's own persistence feature as equivalent to this skill's documented state?), not a config-relocation bug.
+    2. **Fail, and this one's the judge's fault, not the agent's.** The transcript shows the agent correctly checking for `.keep-the-why`, finding none, and correctly creating it with `init: declined` — exactly the new spec. The judge's `reasoning` claimed a `SessionStart` hook told the agent config lives in "`AGENTS.md`" with the *old* pre-migration wording — a hook message that appears nowhere in the real transcript (this fixture uses `"base": "none"`, so there's no hook file in play at all) and uses wording this codebase hasn't shipped since before this PR. The exact same failure class as the "Correction" entry below, reproduced with a different fabricated detail.
+    3. **Pass**, same fixture, same prompt, no changes.
+
+**Conclusion: no regression traced to the config-relocation change itself.** Every failure is either already-documented pre-existing variance, ordinary single-run noise that resolved on re-run, the known activation-gap limitation, a repeat instance of the already-documented judge-hallucination failure mode, or a genuinely new but orthogonal finding filed separately. `_base` and all migrated fixtures were also verified programmatically (not just via the real-agent runs above) — `build_workdir` materializes all 72 cases without error, and the handful of trickier ones (contradictory duplicate values, a non-default `context:` path, deliberately old `context-schema` versions) were spot-checked to confirm the exact same test condition survived the move to the new file location.
+
+Full `docs/evals.md` "Latest full-suite results" baseline above is left as the 2026-08-25/56-of-70 numbers — this section is a targeted check for one specific change, not a replacement full-suite run.
 
 ## Caveats, stated plainly
 

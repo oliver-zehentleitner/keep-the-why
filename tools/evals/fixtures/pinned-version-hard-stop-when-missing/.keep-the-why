@@ -1,0 +1,14 @@
+This is machine-readable project state for the Keep the Why skill
+(https://keepthewhy.com). See context/index.md, or this project's own
+README, for what Keep the Why actually is.
+
+<!-- keep-the-why:config -->
+- id: ktw-eval-fixture---order-service
+- context: `context/`
+- init: complete
+- context-schema: {{SKILL_VERSION}}
+- capture-confirmation: confirm-when-unsure
+- source-reference: never
+- pinned-version: 0.5.0
+- pinned-path: vendor/keep-the-why-v0.5.0/SKILL.md
+<!-- /keep-the-why:config -->
