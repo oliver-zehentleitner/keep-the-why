@@ -4,7 +4,7 @@ What changed in each version that an existing project may need to know about or 
 
 Entries below assume 0.2.0 as the starting point — nothing before it tracked a `context-schema` at all, and 0.2.0 itself introduced no `context/` entry format change.
 
-## Unreleased — Project/personal config moves into dedicated `.keep-the-why` files
+## 0.10.0 — Project/personal config moves into dedicated `.keep-the-why` files
 
 **What changed:** the project config block (`<!-- keep-the-why:config -->`) moves out of the entry-point file (`AGENTS.md`, or whatever a project already uses) into a dedicated `.keep-the-why` file at the project root. The personal config block (`<!-- keep-the-why:local -->`) moves out of `AGENTS.local.md` into a dedicated, non-project file at `~/.keep-the-why/<id>.md`, keyed by a new `id` field the project file now carries. See "Why dedicated files, not entry-point blocks" in `context/config-format.md` for the reasoning, and `references/setup.md` for the full format and detection logic. Three optional additions ship alongside the relocation, none of which existing projects are required to adopt: a `personal-defaults` block a project can offer new developers (plus a machine-wide `~/.keep-the-why/config` policy governing whether that's asked about or auto-applied), `pinned-version`/`pinned-path` fields for pinning to a vendored skill copy, and `context/AGENTS.md` + `context/CLAUDE.md` guard files. Not a `context/` entry-format change — existing entries are untouched — but it needs real action from an existing project, not a silent backfill.
 
@@ -52,7 +52,7 @@ Keep the Why's config for this project migrated to .keep-the-why on
 2026-08-31 — requires skill version 0.10.0 or later to read it.
 ```
 
-## Unreleased — `context/index.md` entries sorted alphabetically
+## 0.10.0 — `context/index.md` entries sorted alphabetically
 
 **What changed:** new entries in `context/index.md` are inserted in alphabetical order by filename instead of appended at the end — see `context/entry-format.md` and [#194](https://github.com/oliver-zehentleitner/keep-the-why/issues/194). Not a `context/` entry-format change, but it does need action in an existing project: the merge-conflict reduction this convention exists for only works once the whole list is actually sorted.
 

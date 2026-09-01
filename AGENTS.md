@@ -10,13 +10,8 @@ Read `context/index.md` before making non-trivial changes — naming, docs
 tooling, and repo structure have already been argued through once; check
 there before re-litigating or accidentally reverting a decision.
 
-<!-- keep-the-why:config -->
-- context: `context/`
-- init: complete
-- context-schema: 0.9.2
-- capture-confirmation: confirm-always
-- source-reference: never
-<!-- /keep-the-why:config -->
+Keep the Why's config for this project migrated to .keep-the-why on
+2026-09-01 — requires skill version 0.10.0 or later to read it.
 
 ## Working conventions (no why needed, just follow these)
 

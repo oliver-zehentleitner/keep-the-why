@@ -4,6 +4,8 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-09-01
+
 ### Added
 
 - A judge anti-hallucination rule in `tools/evals/run.py`'s `JUDGE_PROMPT`: every concrete factual claim in the judge's `reasoning` must be traceable to something literally present in the transcript/diff it was given, or stated as inference rather than fact — a direct response to the one confirmed judge hallucination already on record (the fabricated `SessionStart`-hook detail, see `docs/evals.md`).
@@ -24,6 +26,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Fixed
 
+- `.github/workflows/validate-skill.yml`'s "Check version consistency across the repo" step still greped `AGENTS.md` for `context-schema` — stale since the config move above relocated that field to `.keep-the-why`. Caught while migrating this repo's own `context/` for the 0.10.0 release (checklist step 6): the check would otherwise report a mismatch against every project's own migrated config, this repo's included. Now checks `.keep-the-why` instead.
 - `update-check-cannot-run-surfaced-once` and `update-check-repeat-failure-no-reask` fixtures simulated "no web access this session" by denying `WebFetch`/`WebSearch` only — Bash could still reach the network directly, so the agent used `curl` and got a real, successful GitHub API response instead of the intended failure. Found while re-testing both under the new `SessionStart` hook above (`update-check-repeat-failure-no-reask` had been passing already, but by coincidence — a genuine successful check is also valid output for its expected behavior, so the bug was silent). Fixed by also denying `Bash(curl *)`/`Bash(wget *)` in both `case.json` files; both now correctly simulate the failure and pass for the right reason.
 
 ## [0.9.2] - 2026-08-24
