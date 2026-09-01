@@ -4,6 +4,8 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.10.1] - 2026-09-01
+
 ### Changed
 
 - `SKILL.md` frontmatter `description` shortened from 118 to 27 words and reworded to start with a recognized action verb ("Extract and preserve...", was "Preserves or recovers..."), with an explicit negative-trigger clause pointing to `CHANGELOG.md`/Keep a Changelog for "what changed" — the removed detail (the four modes, the frustration/problem-report trigger) was already duplicated in the body's `## When to use this skill` and `## Feedback` sections, so nothing was lost. Prompted by an `asm eval` (agent-skill-manager) run scoring this skill 71/100 (C), citing the 877-char description as both over that tool's ~250-char runtime-truncation budget and unrecognized as imperative.
@@ -404,7 +406,8 @@ Initial release.
 - Logo, wordmark, and favicon.
 - `context/repo-conventions.md`, dogfooding the skill on its own repository from day one.
 
-[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.10.1...HEAD
+[0.10.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.9.2...v0.10.0
 [0.9.2]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.9.1...v0.9.2
 [0.9.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.9.0...v0.9.1
