@@ -66,3 +66,17 @@ An organic activation — the skill's own broad description happening to match a
 **Rejected alternative:** keep proposing setup on organic activation, but only once per project, remembering the decline (the design this replaces). Rejected — this still means the very first organic activation in a never-opted-in project interrupts with a setup question nobody asked for; remembering not to ask again is a mitigation, not a fix for the actual complaint.
 
 **Consequence:** `init: declined` still exists, but with a narrower job — it no longer needs to suppress organic re-asking (the gate already does that unconditionally), it only prevents a *later, separate* explicit request-then-retraction on the same project from re-running the wizard from scratch if resumed. See `references/setup.md`'s "Detection and the two independent wizards." This also makes a related, independently-reported finding largely moot: an agent that once substituted the skill's own `init: declined` mechanism with Claude Code's own out-of-repo auto-memory feature to suppress being asked again (issue #198) had nothing to suppress in the first place once organic activation stopped proposing setup — there's no longer a recurring, unwanted question to route around.
+
+## Marker-based SessionStart hooks checking only `AGENTS.md` silently broke after the `.keep-the-why` migration
+
+**Type:** incident
+**Status:** active
+**Evidence:** confirmed
+
+The 0.10.0 config relocation (`config-format.md`) moved the `<!-- keep-the-why:config -->` marker out of `AGENTS.md` into `.keep-the-why`. `references/autostart.md`'s documented Claude Code hook example was updated to check `.keep-the-why` in the same PR (#197) that did the migration — but a developer's own *personal*, machine-wide `SessionStart` hook, copied out of that example earlier and living outside any repo, isn't reachable by a project-level PR. It went silent for this repo the moment it migrated: no error, the activation nudge just stopped firing.
+
+**Reason:** `references/migrations.md`'s 0.10.0 entry tells a *project* what to update; it has no way to reach a developer's own already-copied automation built against the old marker location. Found live, after the release had already shipped, when this repo's own personal hook stopped nudging.
+
+**Consequence:** this repo's own `.claude/settings.json` now ships the project-scoped hook directly, rather than relying solely on a developer's personal setup for it. Worth a deliberate check next time a marker/detection-location change ships: a project migration note can tell a project what changed, but not a developer's personal tooling built against the old shape.
+
+**Revisit when:** the `.keep-the-why` marker or detection mechanism changes again.

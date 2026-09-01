@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- `.claude/settings.json` at the project root, committed: the `SessionStart` hook documented in `references/autostart.md`'s Claude Code section, checking for `.keep-the-why` and injecting a reminder to load the skill. This repo dogfooded the eval fixture's version of the hook but never actually shipped a live one of its own — caught after the `.keep-the-why` migration ([0.10.0](#0100---2026-09-01)) silently broke the *personal* variant of this same hook some developers had set up against the old `AGENTS.md`-embedded marker instead.
+
 ## [0.10.1] - 2026-09-01
 
 ### Changed

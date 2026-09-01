@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "found=\"\"; if [ -f .keep-the-why ]; then found=1; fi; if [ -z \"$found\" ]; then for f in */.keep-the-why; do if [ -f \"$f\" ]; then found=1; break; fi; done; fi; if [ -n \"$found\" ]; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"This project uses the keep-the-why skill (a .keep-the-why config file exists). Load the keep-the-why skill now, before other work.\"}}'; fi; exit 0"
+          }
+        ]
+      }
+    ]
+  }
+}
