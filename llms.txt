@@ -94,16 +94,16 @@ needing to be told again.
 
 ## Also Listed On
 
-- ASM: live, curated skill index for the `asm` CLI, installable via `asm install
+- ASM: curated skill index for the `asm` CLI, installable via `asm install
   keep-the-why` — https://luongnv.com/asm/#/skills/oliver-zehentleitner%2Fkeep-the-why%3A%3Askills%2Fkeep-the-why%3A%3Akeep-the-why
-- awesome-agent-skills: live, listed under "Context Engineering" —
+- awesome-agent-skills: listed under "Context Engineering" —
   https://github.com/VoltAgent/awesome-agent-skills#context-engineering
-- GitHub Copilot plugin marketplace: live, installable via `copilot plugin install
+- GitHub Copilot plugin marketplace: installable via `copilot plugin install
   keep-the-why@awesome-copilot` — https://awesome-copilot.github.com/plugin/keep-the-why/
-- MCP Market: live, skill marketplace listing — https://mcpmarket.com/tools/skills/keep-the-why
-- skills.sh: https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why — live, backs
+- MCP Market: skill marketplace listing — https://mcpmarket.com/tools/skills/keep-the-why
+- skills.sh: https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why — backs
   the `npx skills add` method above
-- SkillsLLM: live, verified, passed security scan — https://skillsllm.com/skill/keep-the-why
+- SkillsLLM: verified, passed security scan — https://skillsllm.com/skill/keep-the-why
 
 ## Core Concept
 
