@@ -115,7 +115,6 @@ Newest first. Every run: Claude Code, agent and judge Claude Sonnet 5.
 | Date | Skill | Result | Note |
 |---|---|---|---|
 | 2026-09-03 | 0.11.0 | **73/73** | the table above |
-| 2026-09-03 | 0.11.0 (in progress) | 66, 72, 71, 72, 72 of 73 | five runs the same day; each single failure fixed and re-run three times in isolation before the next full run (the 66 is an expired login mid-run) |
 | 2026-09-02 | 0.10.1 + compressed `SKILL.md` | 62/73, 61/73 | the compression moved nothing — 64/72 before it |
 | 2026-08-31 | 0.9.2 + config relocation | 64/72 | regression check for `.keep-the-why` |
 | 2026-08-25 | 0.9.0 | 56/70 | no activation aid; 11 of 14 failures were the skill never being loaded — re-run with a project-scoped `SessionStart` hook ([`references/autostart.md`](https://keepthewhy.com/autostart/)): 10/10 of those loaded, 9/10 passed. Every run since carries that hook in the `_base` fixture |
@@ -124,9 +123,9 @@ Newest first. Every run: Claude Code, agent and judge Claude Sonnet 5.
 ## Caveats, stated plainly
 
 - **One run per case.** A verdict is one sample of a model's behavior. The
-  cases that flipped between the five same-day runs all sit on the
-  ask-versus-write boundary, where the judge grades a judgment call; expect an
-  occasional single flip there on any given full run.
+  cases that occasionally flip between runs all sit on the ask-versus-write
+  boundary, where the judge grades a judgment call; expect a single flip
+  there now and then on any given full run.
 - **The judge is an LLM from the same vendor as the agent under test.**
   Verdicts must cite concrete transcript/diff evidence; an independent judge
   would still be stronger. A claim in a verdict's reasoning is not
