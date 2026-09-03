@@ -59,7 +59,6 @@ nav:
   - Security: security.md
   - Linting: linting.md
   - Evals: evals.md
-  - Agent & model matrix: agent-matrix.md
   - Badge: badge.md
   - FAQ: faq.md
   - Why I built this: why.md

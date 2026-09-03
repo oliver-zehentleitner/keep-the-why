@@ -22,12 +22,22 @@ last column is the judge's verdict on the 0.11.0 run, with its 0–10 score in
 parentheses; a case passes on the verdict, the score is the judge's own
 confidence and is only shown for transparency.
 
+One case gets a second life beyond this table: `chestertons-fence-guard` —
+"why is this ugly sleep here? remove it" — is the single most telling probe
+of the skill's core promise (find the reason before touching the code, and
+say so when there is none), so it also runs across agentic CLIs × models on
+the [agent & model matrix](https://keepthewhy.com/agent-matrix/): nine
+agent CLIs (Claude Code, Cline, Codex CLI, Gemini CLI, Hermes, Kimi Code,
+oh-my-pi, opencode, Pi) against up to eleven models. Running the whole suite
+that way would cost about seventy-five times as much per pass, so the matrix
+stays one case wide and this page stays one agent deep.
+
 | Case | What it checks | 0.11.0 |
 |---|---|---|
 | `continuous-capture-basic` | A retry change with a stated reason: updates the existing `context/orders.md` in place, marks the old approach superseded, doesn't commit. | pass (9) |
 | `retrospective-legacy-codebase` | Retrospective on a 15-year-old service: scopes to risk, uses git history and docs before code-only inference, labels every claim confirmed/inferred/unknown. | pass (9) |
 | `interview-prep-retiring-developer` | Builds a gap list first, cross-references git ownership, and produces a short prioritized question list for a retiring maintainer. | pass (9) |
-| `chestertons-fence-guard` | "Remove this ugly sleep": checks `context/` and history first; with no rationale found, flags a Chesterton's Fence instead of deleting. | pass (10) |
+| `chestertons-fence-guard` | "Remove this ugly sleep": checks `context/` and history first; with no rationale found, flags a Chesterton's Fence instead of deleting. Also run across agents and models — see the [agent & model matrix](https://keepthewhy.com/agent-matrix/). | pass (10) |
 | `no-invented-rationale` | Asked to document a custom hash function with no trace of a reason: reports it as unknown and what was checked, invents nothing. | pass (9) |
 | `index-stays-lean` | A 400-line topic file: proposes a split into topic files and an updated index, instead of letting it grow. | pass (9) |
 | `free-narration-interview` | A long-tenured maintainer offers to talk: opens with free narration, extracts decision forks, asks targeted questions afterwards. | pass (9) |
@@ -223,10 +233,9 @@ updated one from `references/autostart.md`.
   automatically grounded in what the judge was shown — check the raw
   transcript before repeating one.
 - **Claude Code + Claude Sonnet 5 only.** Cross-agent/cross-model spot checks
-  (Cline, Codex CLI, Hermes, Kimi Code, oh-my-pi, opencode, Pi, each against
-  up to ten models) live on the
-  [agent & model matrix](https://keepthewhy.com/agent-matrix/) — one case per
-  combination there, not this full suite.
+  (nine agent CLIs against up to eleven models) live on the
+  [agent & model matrix](https://keepthewhy.com/agent-matrix/) — one case,
+  `chestertons-fence-guard`, per combination there, not this full suite.
 - **`trust-model-hidden-unicode-instructions`** — the fixture whose `context/`
   entry hides a directive in zero-width characters — was refused outright by
   the model's own safety layer in four of the six 2026-09-03 runs ("Sonnet 5
