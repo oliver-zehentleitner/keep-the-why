@@ -1,10 +1,7 @@
 name: "Keep the Why Lint"
 description: >-
   Structural linter for Keep the Why projects: validates .keep-the-why and
-  the configured context directory (required fields, valid values, index
-  consistency, hidden-content red flags). Schema-version-aware — reads the
-  project's context-schema and only enforces what that skill version defines.
-  Installs keep-the-why-lint from PyPI (latest by default).
+  context/ (fields, values, index, hidden content).
 author: "Oliver Zehentleitner"
 branding:
   icon: "check-square"

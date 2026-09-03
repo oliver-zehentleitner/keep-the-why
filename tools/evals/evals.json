@@ -165,6 +165,11 @@
     "expected_behavior": "Strips the leading 'v' from the tag and compares the versions semantically, recognizing 0.10.0 is newer than 0.9.0 - not a naive string or floating-point comparison that would wrongly treat 0.9.0 as larger than 0.10.0, and not treating 'v0.10.0' != '0.9.0' as a meaningless mismatch."
   },
   {
+    "id": "update-check-ignores-non-skill-releases",
+    "prompt": "During an update check: the installed skill's metadata.version is '0.10.1'. The releases API returns, in this order: 'lint-latest' (the release GitHub marks as latest), 'v0.10.1', 'v0.10.0', 'lint-v0.10.1.2'. Is a newer skill version available? Explain which entries count.",
+    "expected_behavior": "Answers that the skill is up to date. Recognizes that only releases whose tag_name matches the bare v<major>.<minor>.<patch> pattern are skill releases, so 'lint-latest' and 'lint-v0.10.1.2' are ignored entirely - not reported as a newer version, not reported as a parse error, and not used just because GitHub marks one of them as the repository's latest release. Takes the semantic-version maximum of the remaining tags (v0.10.1) rather than trusting list order or position 0, and compares it semantically against 0.10.1."
+  },
+  {
     "id": "consistency-check-respects-configured-context-path",
     "prompt": "Quick Keep the Why maintenance check on this repo, please — anything that needs attention?",
     "expected_behavior": "Scopes the Revisit when search to docs/why/ (the configured location), not a hardcoded context/ directory that doesn't exist in this project. Searches recursively in case the project has split it into subsystem subdirectories."

@@ -149,6 +149,25 @@ The consumer snippet references the root composite action as `uses: oliver-zehen
 
 **Consequence:** an `action.yml` change reaches consumers only through a linter publish — a revision bump such as `0.10.1.1 → 0.10.1.2` even when no check changed. Accepted: a release is the right unit for that, and the fourth version segment exists for exactly this kind of linter-only change.
 
+## Bare `v<major>.<minor>.<patch>` tags are reserved for the skill; every other artifact is prefixed
+
+**Type:** decision
+**Type:** constraint
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer decision, 2026-09-03, after the first Marketplace release of the action
+**Revisit when:** a release artifact other than the skill needs a bare version tag, or the update check moves off the GitHub releases API
+
+The skill's update check (`references/setup.md`) queries `/releases`, keeps only releases whose `tag_name` matches `^v\d+\.\d+\.\d+$`, and takes the semantic-version maximum. Everything else this repository releases — the linter's `lint-v<version>` tags, the moving `lint-latest` that carries the action's Marketplace listing — must use a prefix, and `release.yml` refuses to build a skill release from a tag that doesn't match the bare pattern.
+
+**Reason:** the update check used `/releases/latest`. GitHub marks the most recently published non-draft, non-prerelease release as "latest", regardless of tag shape — so the moment the action got its own Marketplace release, every skill consumer's update check received `lint-v0.10.1.2` (later `lint-latest`) instead of `v0.10.1`: a tag that doesn't parse as a version after stripping the `v`. The repository now ships more than one releasable artifact, and the check has to say which releases it means rather than trusting GitHub's single "latest" pointer.
+
+**Rejected alternative:** keep `/releases/latest` and re-mark the skill release as latest (`gh release edit v<version> --latest`) after every linter release. Manual, easy to forget, and the Marketplace listing intentionally sits on one long-lived `lint-latest` release that gets re-pointed rather than re-created — every re-point would race the skill release for the "latest" flag again.
+
+**Rejected alternative:** query `/tags` instead of `/releases`. Same filtering needed, but a tag can exist without a release (and without the skill zip), and the tags endpoint carries no draft/prerelease flags.
+
+**Consequence:** the pattern is a contract between three places — the update check, `release.yml`'s guard, and whoever names the next artifact's tags. A prefixed artifact tag that also matches the bare pattern is impossible by construction; a bare tag on a non-skill artifact is what the guard exists to catch.
+
 ## The skill's `description` stays under 250 characters, negative-trigger clause last
 
 **Type:** constraint

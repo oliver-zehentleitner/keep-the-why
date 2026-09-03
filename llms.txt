@@ -204,8 +204,10 @@ fields, valid values, index consistency, and `.keep-the-why` integrity. It reads
 project's `context-schema` and only enforces what that skill version defines, so unmigrated
 projects don't fail on structure their version never had. Content-level truth is out of its
 scope by design. Versioned `<schema>.<revision>` (e.g. 0.10.1.0), independently of the skill.
-GitHub Actions: `uses: oliver-zehentleitner/keep-the-why@lint-latest` (installs latest from PyPI;
-the `lint-latest` tag moves with every linter publish, `lint-v<version>` pins the action);
+GitHub Actions: `uses: oliver-zehentleitner/keep-the-why@lint-latest` — published on the GitHub
+Marketplace as keep-the-why-lint (https://github.com/marketplace/actions/keep-the-why-lint); installs
+latest from PyPI, the `lint-latest` tag moves with every linter publish, `lint-v<version>` pins
+the action;
 anywhere else: `pip install keep-the-why-lint && ktw-lint .`. Usage, GitLab/pre-commit
 snippets, and every finding code: https://keepthewhy.com/linting/
 
