@@ -148,3 +148,29 @@ The consumer snippet references the root composite action as `uses: oliver-zehen
 **Rejected alternative:** move `latest` by hand to a commit that has `action.yml`. Would silently redefine what "latest skill release" means for every skill installer that resolves the same tag.
 
 **Consequence:** an `action.yml` change reaches consumers only through a linter publish — a revision bump such as `0.10.1.1 → 0.10.1.2` even when no check changed. Accepted: a release is the right unit for that, and the fourth version segment exists for exactly this kind of linter-only change.
+
+## The skill's `description` stays under 250 characters, negative-trigger clause last
+
+**Type:** constraint
+**Status:** active
+**Evidence:** confirmed
+**Source:** the asm registry's evaluator (`src/evaluator-core.ts` in luongnv89/asm: "Description fits the runtime context budget", target ≤ 250 chars); #205 (877 → 188 chars, score 71 → 90); PR #223 (188 → 318 → 239)
+**Revisit when:** the Agent Skills spec or a registry this skill is listed on publishes a different budget, or the `/skills` listing stops truncating tail-first
+
+`description` in `SKILL.md`'s frontmatter is the one piece of the skill every agent loads *before* deciding whether to activate it, and the one piece registries show in listings. Both put it on a budget: asm targets ≤ 250 characters and warns above it, and Claude Code's `/skills` listing truncates the tail — so the last clause, "Not for what changed (see Keep a Changelog) - only why", is exactly what gets cut first, and that clause is the negative trigger keeping the skill from activating on plain change-log work. This has been overrun twice: #205 found an 877-character description (score 71/100, C), and the 2026-09-03 evals pass extended it to 318 to make setup, decline, and interview requests match the skill (score 84/100, B, with the truncation warning). Both times the fix was the same: fold the activation-relevant nouns into one dense clause and keep the negative trigger at the end (now 239 characters).
+
+**Reason:** the description is the only text that decides activation — the body is loaded afterwards — so trigger words genuinely belong in it, but they compete for the same budget as the negative clause. Appending a sentence per new trigger family is what blew the budget; compressing the trigger list is what fits. Everything that explains *how* the skill behaves belongs in the body, never in the description.
+
+**Rejected alternative:** keep the longer description and accept the registry warning, on the grounds that activation matters more than a score. Rejected because the warning describes a real loss, not a cosmetic one — a truncated listing drops the negative trigger, so the longer text buys activation on one side and pays for it with mis-activation on the other. Narrowing the description to fewer situations is a different question and was rejected separately (see "Project setup only ever runs from an explicit request" in `compatibility.md`).
+
+**Consequence:** before changing `description`, measure it (`grep -m1 '^description:' skills/keep-the-why/SKILL.md | sed 's/^description: //' | wc -c`, keep ≤ 250) and run `asm eval skills/keep-the-why`; new trigger words go into the existing noun list, not into a new sentence; the "Not for … - only why" clause stays last.
+
+## `LICENSE` is duplicated into `skills/keep-the-why/`, because registries check the skill root
+
+**Type:** constraint
+**Status:** active
+**Evidence:** confirmed
+**Source:** asm evaluator (`scoreLicense`): 10/10 needs a recognised SPDX id in frontmatter *and* a `LICENSE`/`LICENSE.md`/`LICENSE.txt` next to `SKILL.md`; 5/10 with the frontmatter field alone — which is what the registry showed for this skill until PR #223
+**Revisit when:** the installable skill moves back to the repo root, or the license changes (both copies must change together)
+
+The skill lives in a subdirectory (see "The installable skill lives under `skills/keep-the-why/`" above), so the repository's root `LICENSE` is outside the skill root a registry inspects. A verbatim copy sits next to `SKILL.md`. Two files, one license — when it changes, change both.
