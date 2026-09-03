@@ -102,6 +102,7 @@ the project back up without needing to be told again.
   https://github.com/VoltAgent/awesome-agent-skills#context-engineering
 - GitHub Copilot plugin marketplace: installable via `copilot plugin install
   keep-the-why@awesome-copilot` — https://awesome-copilot.github.com/plugin/keep-the-why/
+- GitHub Marketplace: the keep-the-why-lint action — https://github.com/marketplace/actions/keep-the-why-lint
 - MCP Market: skill marketplace listing — https://mcpmarket.com/tools/skills/keep-the-why
 - skills.sh: https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why — backs
   the `npx skills add` method above
@@ -205,7 +206,8 @@ project's `context-schema` and only enforces what that skill version defines, so
 projects don't fail on structure their version never had. Content-level truth is out of its
 scope by design. Versioned `<schema>.<revision>` (e.g. 0.10.1.0), independently of the skill.
 GitHub Actions: `uses: oliver-zehentleitner/keep-the-why@lint-latest` (installs latest from PyPI;
-the `lint-latest` tag moves with every linter publish, `lint-v<version>` pins the action);
+the `lint-latest` tag moves with every linter publish, `lint-v<version>` pins the action;
+Marketplace listing: https://github.com/marketplace/actions/keep-the-why-lint);
 anywhere else: `pip install keep-the-why-lint && ktw-lint .`. Usage, GitLab/pre-commit
 snippets, and every finding code: https://keepthewhy.com/linting/
 

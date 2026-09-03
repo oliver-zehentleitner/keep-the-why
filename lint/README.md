@@ -54,7 +54,7 @@ ktw-lint . --strict        # warnings fail too
 
 The Keep the Why [project init wizard](https://keepthewhy.com/setup/) offers to wire the linter into your CI during setup — detected from the repository, never guessed — and [CI linting setup](https://keepthewhy.com/ci-linting/) has the full detection rules. By hand, these are the same snippets:
 
-**GitHub Actions** — `.github/workflows/ktw-lint.yml`. The root of the `keep-the-why` repository is a composite action that installs the latest linter from PyPI; the `lint-latest` tag moves with every linter publish, so there's nothing to pin on your side (pin `@lint-v<version>` if you want a fixed action revision):
+**GitHub Actions** — `.github/workflows/ktw-lint.yml`. The root of the `keep-the-why` repository is a composite action ([on the GitHub Marketplace](https://github.com/marketplace/actions/keep-the-why-lint)) that installs the latest linter from PyPI; the `lint-latest` tag moves with every linter publish, so there's nothing to pin on your side (pin `@lint-v<version>` if you want a fixed action revision):
 
 ```yaml
 name: ktw-lint

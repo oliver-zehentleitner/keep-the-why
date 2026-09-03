@@ -30,7 +30,7 @@ The project init wizard offers to write these for you (GitHub Actions or GitLab 
 
 {% include-markdown "../skills/keep-the-why/references/ci-linting.md" start="<!-- snippets:start -->" end="<!-- snippets:end -->" %}
 
-Inside GitHub Actions, findings show up as file/line annotations on the PR. The action always installs the latest linter from PyPI, and the `lint-latest` tag it's referenced by moves with every linter publish — nothing to pin on your side unless you want to (`@lint-v<version>` pins the action, the `version:` input pins the package).
+Inside GitHub Actions, findings show up as file/line annotations on the PR. The action is [listed on the GitHub Marketplace](https://github.com/marketplace/actions/keep-the-why-lint); it always installs the latest linter from PyPI, and the `lint-latest` tag it's referenced by moves with every linter publish — nothing to pin on your side unless you want to (`@lint-v<version>` pins the action, the `version:` input pins the package).
 
 ## What it checks
 
