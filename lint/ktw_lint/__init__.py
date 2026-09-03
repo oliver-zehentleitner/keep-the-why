@@ -13,6 +13,6 @@ changes. PEP 440, not strict SemVer — PyPI rejects the SemVer build-
 metadata spelling this would otherwise use.
 """
 
-__version__ = "0.10.1.2"
+__version__ = "0.11.0.0"
 
-SUPPORTED_SCHEMA = (0, 10, 1)
+SUPPORTED_SCHEMA = (0, 11, 0)
