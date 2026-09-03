@@ -110,15 +110,16 @@ stays one case wide and this page stays one agent deep.
 
 ## Run history
 
-Newest first. Every run: Claude Code, agent and judge Claude Sonnet 5.
+Newest first. The judge has so far always been the same model as the agent
+under test; the model column names both.
 
-| Date | Skill | Result | Note |
-|---|---|---|---|
-| 2026-09-03 | 0.11.0 | **73/73** | the table above |
-| 2026-09-02 | 0.10.1 + compressed `SKILL.md` | 62/73, 61/73 | the compression moved nothing — 64/72 before it |
-| 2026-08-31 | 0.9.2 + config relocation | 64/72 | regression check for `.keep-the-why` |
-| 2026-08-25 | 0.9.0 | 56/70 | no activation aid; 11 of 14 failures were the skill never being loaded — re-run with a project-scoped `SessionStart` hook ([`references/autostart.md`](https://keepthewhy.com/autostart/)): 10/10 of those loaded, 9/10 passed. Every run since carries that hook in the `_base` fixture |
-| 2026-07-31 | 0.6.2 | 59/67 | first full run |
+| Date | Skill | Agent | Model | Result | Note |
+|---|---|---|---|---|---|
+| 2026-09-03 | 0.11.0 | Claude Code 2.1.258 | Claude Sonnet 5 | **73/73** | the table above |
+| 2026-09-02 | 0.10.1 + compressed `SKILL.md` | Claude Code 2.1.258 | Claude Sonnet 5 | 62/73, 61/73 | the compression moved nothing — 64/72 before it |
+| 2026-08-31 | 0.9.2 + config relocation | Claude Code 2.1.251 | Claude Sonnet 5 | 64/72 | regression check for `.keep-the-why` |
+| 2026-08-25 | 0.9.0 | Claude Code 2.1.241 | Claude Sonnet 5 | 56/70 | no activation aid; 11 of 14 failures were the skill never being loaded — re-run with a project-scoped `SessionStart` hook ([`references/autostart.md`](https://keepthewhy.com/autostart/)): 10/10 of those loaded, 9/10 passed. Every run since carries that hook in the `_base` fixture |
+| 2026-07-31 | 0.6.2 | Claude Code | Claude Sonnet 5 | 59/67 | first full run |
 
 ## Caveats, stated plainly
 
