@@ -110,8 +110,7 @@ stays one case wide and this page stays one agent deep.
 
 ## Run history
 
-Newest first. The judge has so far always been the same model as the agent
-under test; the model column names both.
+The judge has so far always been the same model as the agent under test.
 
 | Date | Skill | Agent | Model | Result | Note |
 |---|---|---|---|---|---|
