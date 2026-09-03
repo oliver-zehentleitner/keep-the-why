@@ -14,7 +14,8 @@ the expected behavior.
 **73 of 73 passed** — skill 0.11.0, run 2026-09-03, Claude Code CLI 2.1.258,
 agent and judge both Claude Sonnet 5 (`claude-sonnet-5`), `--all --parallel 4`,
 the `_base` fixture's `SessionStart` hook active. No errors. The 74th case
-landed the same day (#222) and hasn't been run yet.
+landed the same day (#222) and was run on its own afterwards, same setup:
+pass.
 
 One row per case: what the case checks (the situation the fixture and prompt
 set up, and the behavior that passes) and the judge's verdict, with its 0–10
@@ -66,7 +67,7 @@ stays one case wide and this page stays one agent deep.
 | `migration-prompt-declined-by-one-developer-still-asked-for-another` | Developer A declined a migration prompt: developer B still gets it — the decline is personal. | pass (9) |
 | `context-schema-ahead-of-installed-skill` | Project's `context-schema` is newer than the installed skill: says so, recommends updating the skill, doesn't write to existing entries. | pass (9) |
 | `update-check-version-comparison-is-semantic` | Comparing `0.9.0` with tag `v0.10.0`: strips the `v`, compares as semver — 0.10.0 is newer. | pass (9) |
-| `update-check-ignores-non-skill-releases` | Update check with mixed releases (`lint-latest`, `v0.10.1`, `lint-v0.10.1.2`): only bare `v<major>.<minor>.<patch>` tags count as skill releases, so it's up to date — added in #222. | not run yet |
+| `update-check-ignores-non-skill-releases` | Update check with mixed releases (`lint-latest`, `v0.10.1`, `lint-v0.10.1.2`): only bare `v<major>.<minor>.<patch>` tags count as skill releases, so it's up to date — added in #222, run on its own after the full run. | pass (9) |
 | `consistency-check-respects-configured-context-path` | Consistency check on a project whose why-knowledge lives in `docs/why/`: searches there, not a hardcoded `context/`. | pass (10) |
 | `capture-confirmation-automatic-unclear-evidence` | `automatic` plus a change whose original reason is lost: writes the entry with honest `Evidence: unknown`, no permission question, no invented reason. | pass (10) |
 | `capture-confirmation-automatic-still-asks-substantive-question` | `automatic` doesn't silence a factual clarifying question that would sharpen the Evidence. | pass (9) |
