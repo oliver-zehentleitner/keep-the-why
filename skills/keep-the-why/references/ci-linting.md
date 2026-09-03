@@ -19,7 +19,7 @@ Before writing anything, check that nothing equivalent already exists (a workflo
 
 ## What gets written
 
-- **GitHub Actions:** `.github/workflows/ktw-lint.yml`, the snippet below verbatim. The root of the `keep-the-why` repository is a composite action that installs the latest linter from PyPI, referenced via the moving `lint-latest` tag — which follows linter publishes, not skill releases (the skill's own `latest` tag doesn't carry the action until the next skill release) — so the consumer never pins anything. A project that wants a fixed action revision uses the matching `lint-v<version>` tag instead.
+- **GitHub Actions:** `.github/workflows/ktw-lint.yml`, the snippet below verbatim. The root of the `keep-the-why` repository is a composite action that installs the latest linter from PyPI, referenced via the moving `lint-latest` tag — which follows linter publishes, not skill releases (the skill's own `latest` tag doesn't carry the action until the next skill release) — so the consumer never pins anything. A project that wants a fixed action revision uses the matching `lint-v<version>` tag (or its commit SHA) instead — that pins the wrapper only; the linter it installs is pinned separately via the `version` input, since the wrapper installs from PyPI at job time.
 - **GitLab CI:** the `ktw-lint` job below, appended to `.gitlab-ci.yml`. If the file defines `stages:`, give the job a `stage:` from that list (`test` if present, otherwise ask which) — a job without a stage falls back to `test`, which fails the pipeline when custom stages don't include it. If there's no `.gitlab-ci.yml` at all but the remote is GitLab, creating one with only this job makes it the project's first pipeline — say that plainly before doing it.
 - **pre-commit:** the hook below, added under an existing `repo: local` entry if there is one, otherwise as a new one. The keep-the-why repository root is not a Python package, so the hook pulls the linter from PyPI via `additional_dependencies` rather than pointing `repo:` at the skill repository.
 - `strict: "false"` / no `--strict` by default: warnings (a missing `Type` on an old entry, a missing guard file) are "next time touched" material per the skill's own rules and shouldn't block a fresh project's CI. Mention that `--strict` exists.
@@ -46,7 +46,7 @@ jobs:
         with:
           path: "."
           strict: "false"    # "true" turns warnings (e.g. missing Type on old entries) into failures
-          # version: "0.10.1.0"   # optional: pin the linter instead of tracking latest
+          # version: "0.10.1.0"   # optional: pin the linter itself; @lint-v<version> above pins only the wrapper
 ```
 
 **GitLab CI** — job for `.gitlab-ci.yml`:

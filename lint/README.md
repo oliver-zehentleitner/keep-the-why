@@ -73,7 +73,7 @@ jobs:
         with:
           path: "."
           strict: "false"    # "true" turns warnings (e.g. missing Type on old entries) into failures
-          # version: "0.10.1.0"   # optional: pin the linter instead of tracking latest
+          # version: "0.10.1.0"   # optional: pin the linter itself; @lint-v<version> above pins only the wrapper
 ```
 
 **GitLab CI** — job for `.gitlab-ci.yml`:
