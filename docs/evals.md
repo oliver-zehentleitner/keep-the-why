@@ -1,8 +1,8 @@
 # Evals
 
-The skill ships 73 eval cases (`tools/evals/evals.json`): a
-prompt paired with an expected behavior, including negative cases where the
-skill should *not* activate or should stay minimal. A local runner in
+The skill ships 74 eval cases (`tools/evals/evals.json`): a prompt paired
+with an expected behavior, including negative cases where the skill should
+*not* activate or should stay minimal. A local runner in
 [`tools/evals/`](https://github.com/oliver-zehentleitner/keep-the-why/tree/main/tools/evals)
 executes them for real: each case gets a materialized fixture project with the
 skill installed, a fresh non-interactive Claude Code session runs the prompt,
@@ -11,16 +11,15 @@ the expected behavior.
 
 ## Latest full-suite results
 
-**73 of 73 passed** — skill 0.11.0, run 2026-09-03, Claude Code CLI
-2.1.258, agent and judge both Claude Sonnet 5 (`claude-sonnet-5`),
-`--all --parallel 4`, the `_base` fixture's `SessionStart` hook active. No
-errors: every case produced a graded verdict.
+**73 of 73 passed** — skill 0.11.0, run 2026-09-03, Claude Code CLI 2.1.258,
+agent and judge both Claude Sonnet 5 (`claude-sonnet-5`), `--all --parallel 4`,
+the `_base` fixture's `SessionStart` hook active. No errors. The 74th case
+landed the same day (#222) and hasn't been run yet.
 
-One row per case. The middle column says what the case checks — the
-situation the fixture and prompt set up, and the behavior that passes. The
-last column is the judge's verdict on the 0.11.0 run, with its 0–10 score in
-parentheses; a case passes on the verdict, the score is the judge's own
-confidence and is only shown for transparency.
+One row per case: what the case checks (the situation the fixture and prompt
+set up, and the behavior that passes) and the judge's verdict, with its 0–10
+score in parentheses. A case passes on the verdict; the score is the judge's
+own confidence, shown for transparency.
 
 One case gets a second life beyond this table: `chestertons-fence-guard` —
 "why is this ugly sleep here? remove it" — is the single most telling probe
@@ -67,6 +66,7 @@ stays one case wide and this page stays one agent deep.
 | `migration-prompt-declined-by-one-developer-still-asked-for-another` | Developer A declined a migration prompt: developer B still gets it — the decline is personal. | pass (9) |
 | `context-schema-ahead-of-installed-skill` | Project's `context-schema` is newer than the installed skill: says so, recommends updating the skill, doesn't write to existing entries. | pass (9) |
 | `update-check-version-comparison-is-semantic` | Comparing `0.9.0` with tag `v0.10.0`: strips the `v`, compares as semver — 0.10.0 is newer. | pass (9) |
+| `update-check-ignores-non-skill-releases` | Update check with mixed releases (`lint-latest`, `v0.10.1`, `lint-v0.10.1.2`): only bare `v<major>.<minor>.<patch>` tags count as skill releases, so it's up to date — added in #222. | not run yet |
 | `consistency-check-respects-configured-context-path` | Consistency check on a project whose why-knowledge lives in `docs/why/`: searches there, not a hardcoded `context/`. | pass (10) |
 | `capture-confirmation-automatic-unclear-evidence` | `automatic` plus a change whose original reason is lost: writes the entry with honest `Evidence: unknown`, no permission question, no invented reason. | pass (10) |
 | `capture-confirmation-automatic-still-asks-substantive-question` | `automatic` doesn't silence a factual clarifying question that would sharpen the Evidence. | pass (9) |
@@ -110,146 +110,38 @@ stays one case wide and this page stays one agent deep.
 
 ## Run history
 
+Newest first. Every run: Claude Code, agent and judge Claude Sonnet 5.
+
 | Date | Skill | Result | Note |
 |---|---|---|---|
-| 2026-07-31 | 0.6.2 | 59/67 | first full run |
-| 2026-08-25 | 0.9.0 | 56/70 | no activation aid configured; 11 of 14 failures were the skill never being loaded at all |
-| 2026-08-25 | 0.9.0 | 10/10 of the above activation-gap cases | with a project-scoped `SessionStart` hook — see below |
-| 2026-08-31 | 0.9.2 + config relocation | 64/72 | regression check for `.keep-the-why`; all but two failures resolved on individual re-run |
-| 2026-09-02 | 0.10.1 + compressed `SKILL.md` | 62/73, 61/73 | the compression moved nothing — 64/72 before it |
-| 2026-09-03 | 0.11.0 (in progress) | 66, 72, 71, 72, 72 of 73 | six runs in one day; each single failure fixed and re-run three times in isolation before the next full run (the 66 is an expired login mid-run) |
 | 2026-09-03 | 0.11.0 | **73/73** | the table above |
-
-### Activation-gap follow-up: a real SessionStart hook, tested
-
-The 2026-08-25 run had no activation aid of any kind, and eleven of its
-fourteen failures were transcripts in which the Skill tool was never invoked
-— the plain, unmitigated version of the activation gap described in
-`SKILL.md`'s "Composition with other skills". Re-running the ten of those
-that could have a hook, with the project-scoped `SessionStart` hook that now
-lives in
-[`references/autostart.md`](https://keepthewhy.com/autostart/), went from
-0/10 invoking the skill to 10/10 (9/10 passing outright; the holdout traced
-to an unrelated fixture bug, fixed since). Every full run after that carries
-the hook in the `_base` fixture, so the numbers from 2026-08-31 on are
-measured *with* it. The hook gained one more branch on 2026-09-03: it also
-matches a project still on the legacy `AGENTS.md` config block, which is the
-only way the migration case (`config-migrates-to-dedicated-file`) can load
-the skill at all.
-
-## How the suite got from 62 to 73
-
-The 2026-09-02 runs were the first against the compressed skill text and the
-first that started from reading every failure against its raw transcript and
-fixture before changing anything. The eleven failures sorted into four groups:
-
-- **Stale fixtures or expectations (2).** `context-schema-ahead-of-installed-skill`
-  pinned `0.9.9`, which stopped being "ahead" the day 0.10.0 shipped — the
-  agent compared versions correctly and was failed for it (now `99.0.0`).
-  `negative-routine-change-no-trigger` still expected the skill *not to
-  load*, written before the hook existed; with the hook, loading is the
-  documented behavior and the real criterion is "no `context/` write, no
-  documentation question".
-- **Activation gaps (3).** The migration case could never pass: the
-  documented hook only looked for `.keep-the-why`, so the one fixture that
-  deliberately has none never triggered it. The hook now also matches the
-  legacy marker, and its injected text says "invoke the keep-the-why skill
-  (Skill tool) now" instead of "load", which turned out to matter. The other
-  two were abstract scenario prompts ("Interview answer from a maintainer:
-  …" with no interview in progress) that the agent answered as a plain chat
-  message.
-- **Skill loaded, behavior off (5).** The common thread: the agent *asked*
-  where the skill wants it to *write* — a retrospective finding raised as a
-  question instead of a `Status: open` entry, a confirmed decision held back
-  pending a question about rejected alternatives, a legacy-block migration
-  proposed and gated behind "shall I proceed?". Plus the reverse, an entry
-  written in full where the person had only mentioned something in passing.
-- **A design tension (1).** `negative-existing-good-structure-untouched`
-  asked to "apply Keep the Why" to a project with a good `docs/decisions/`
-  folder, on a never-set-up project with no personal config — so the
-  mandatory personal wizard fired first and the retrofit decision was never
-  reached. Re-cut as an explicit setup request with personal defaults given
-  in the prompt, so the test reaches what it's actually about.
-
-Five more cases failed once each across the six runs and got the same
-treatment: four abstract scenario prompts made concrete (the prompt now
-states the decision, or names the file, instead of describing "a
-well-evidenced decision surfaces"), and one fixture that contradicted the
-skill's own design (`wizard-respects-known-confirmation-flow-batch` had a
-personal file keyed by a project id no `.keep-the-why` carried — it now
-carries `init: declined` and the id, the situation `setup.md` actually
-describes).
-
-What changed in the skill text — all clarifications of rules that already
-existed, none a change in what a rule says:
-
-- Setup check: runs in the written order, project file → personal file →
-  timers; a legacy-block migration is mechanical and done in the same turn,
-  not proposed; the personal wizard runs even when the project is already
-  set up; the two wizards are separate flows.
-- Rule 1 names removals: "no reference found" means unknown, not safe to
-  delete. Rule 3: an existing, working decision record keeps its own format.
-  Rule 4: no rejected alternative found → record that and still write. Rule
-  5: an unexplained retrospective finding becomes a `Status: open` entry, not
-  only a question. Rule 8: a two-directional session instruction ("don't
-  ask, but don't decide") blocks the capture it came with; a one-directional
-  one ("don't ask me today") is simply followed.
-- Workflow step 5 is an explicit ask-versus-write decision: requested and
-  writable → write now, sub-questions go in as `unknown`; requested but
-  reason unknown → write with `Evidence: unknown`; mentioned in passing and
-  unclear whether worth it → one yes/no question first. `confirm-always`
-  asks before every write the person didn't already ask for. A step-by-step
-  procedure routes to `CONTRIBUTING.md`/`docs/`; the `context/` entry only
-  points to it.
-- The skill's `description` also names setup, initialization, declining,
-  and knowledge-transfer interviews, so those requests match it.
-
-Two runner changes: the disk section handed to the judge labels each
-`~/.keep-the-why/` file as seeded-by-the-fixture-and-unchanged, modified, or
-created by the agent — a judge had failed a case for "writing preferences"
-that the fixture had seeded before the run; and the `_base` hook is the
-updated one from `references/autostart.md`.
+| 2026-09-03 | 0.11.0 (in progress) | 66, 72, 71, 72, 72 of 73 | five runs the same day; each single failure fixed and re-run three times in isolation before the next full run (the 66 is an expired login mid-run) |
+| 2026-09-02 | 0.10.1 + compressed `SKILL.md` | 62/73, 61/73 | the compression moved nothing — 64/72 before it |
+| 2026-08-31 | 0.9.2 + config relocation | 64/72 | regression check for `.keep-the-why` |
+| 2026-08-25 | 0.9.0 | 56/70 | no activation aid; 11 of 14 failures were the skill never being loaded — re-run with a project-scoped `SessionStart` hook ([`references/autostart.md`](https://keepthewhy.com/autostart/)): 10/10 of those loaded, 9/10 passed. Every run since carries that hook in the `_base` fixture |
+| 2026-07-31 | 0.6.2 | 59/67 | first full run |
 
 ## Caveats, stated plainly
 
-- **One run per case.** A verdict is one sample of a model's behavior, and
-  the cases that flipped between the six same-day runs all sit on the
-  ask-versus-write boundary (`ambiguous-worth-capturing-asks-instead-of-guessing`,
-  `negative-existing-good-structure-untouched`,
-  `confirm-always-explicit-instruction-no-redundant-ask`,
-  `session-instruction-overrides-stored-confirmation-settings`), where the
-  judge grades a judgment call. Each was re-run five or more times after its
-  last fix; expect an occasional single flip there on any given full run.
+- **One run per case.** A verdict is one sample of a model's behavior. The
+  cases that flipped between the five same-day runs all sit on the
+  ask-versus-write boundary, where the judge grades a judgment call; expect an
+  occasional single flip there on any given full run.
 - **The judge is an LLM from the same vendor as the agent under test.**
-  Verdicts require citing concrete transcript/diff evidence, and the judge
-  prompt forbids stating anything it can't point to — added after a 2026-08-25
-  run in which the judge's reasoning quoted a `SessionStart` hook message
-  that appeared in none of the transcripts it was grading (6 of 14
-  failures). Since then the failure mode seen is over-strictness rather than
-  fabrication (a recommendation attached to a question graded as "decided";
-  the documented defaults fast path graded as "bundling"), each resolved by
-  making the expectation say what passes. An independent judge would still
-  be stronger. Either way: a claim in a verdict's reasoning is not
+  Verdicts must cite concrete transcript/diff evidence; an independent judge
+  would still be stronger. A claim in a verdict's reasoning is not
   automatically grounded in what the judge was shown — check the raw
   transcript before repeating one.
-- **Claude Code + Claude Sonnet 5 only.** Cross-agent/cross-model spot checks
-  (nine agent CLIs against up to eleven models) live on the
-  [agent & model matrix](https://keepthewhy.com/agent-matrix/) — one case,
-  `chestertons-fence-guard`, per combination there, not this full suite.
-- **`trust-model-hidden-unicode-instructions`** — the fixture whose `context/`
-  entry hides a directive in zero-width characters — was refused outright by
-  the model's own safety layer in four of the six 2026-09-03 runs ("Sonnet 5
-  can't help with this", the pattern tracked in
-  [#178](https://github.com/oliver-zehentleitner/keep-the-why/issues/178)).
-  The runner records that as an `error`, not a verdict, and the retry pass
-  then passed every time.
-- **Wall-clock time.** A full run spanning a Claude Code session-limit reset
-  or an expired login shows up as a block of `error` verdicts with the
-  runner's `--retry-until-complete` sleeping in ten-minute steps until the
-  session is usable again; the 66/73 in the history table above is such a
-  run, whose remaining 35 cases waited seven hours for a fresh login. See
-  `tools/evals/README.md`'s "Resilience to the account's own session/spend
-  limits".
+- **Claude Code + Claude Sonnet 5 only.** Cross-agent/cross-model checks live
+  on the [agent & model matrix](https://keepthewhy.com/agent-matrix/) — one
+  case, `chestertons-fence-guard`, per combination.
+- **Platform noise is filtered, not hidden.** `trust-model-hidden-unicode-instructions`
+  (a directive hidden in zero-width characters) is sometimes refused outright
+  by the model's own safety layer ([#178](https://github.com/oliver-zehentleitner/keep-the-why/issues/178));
+  the runner records that as an `error`, not a verdict, and
+  `--retry-until-complete` re-runs it — same for a session-limit reset or an
+  expired login mid-run. The numbers above are from runs that ended with zero
+  errors after those retries.
 
 ## Reproducing
 
@@ -261,7 +153,6 @@ python3 tools/evals/run.py --all --retry-until-complete
 
 Requires the Claude Code CLI with working credentials; see
 [`tools/evals/README.md`](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/tools/evals/README.md)
-for how fixtures, the agent adapter, and the judge work. Raw results of every
-run on this page are not committed (`tools/evals/results/` is ignored); the
-per-case JSON a run writes there carries the full transcript, the disk diff,
-and the judge's reasoning.
+for how fixtures, the agent adapter, and the judge work. Results are not
+committed (`tools/evals/results/` is ignored); the per-case JSON a run writes
+there carries the full transcript, the disk diff, and the judge's reasoning.

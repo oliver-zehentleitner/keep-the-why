@@ -90,7 +90,7 @@ reproducing while the hook only knew the new location.
 entry-point file to grep, out of scope — went from 0/10 invoking the Skill
 tool to 10/10; 9/10 passed outright, and the one holdout traced to an
 unrelated fixture bug (all 10 pass since that fix). Full writeup:
-[`docs/evals.md`](https://keepthewhy.com/evals/#activation-gap-follow-up-a-real-sessionstart-hook-tested),
+[`docs/evals.md`](https://keepthewhy.com/evals/#run-history),
 [PR #190](https://github.com/oliver-zehentleitner/keep-the-why/pull/190).
 
 A user-scoped variant (same script, in `~/.claude/settings.json` instead) is
