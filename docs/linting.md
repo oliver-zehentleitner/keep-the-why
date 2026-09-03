@@ -2,7 +2,7 @@
 
 Nothing in Keep the Why is enforced the way a compiler enforces correctness — that's stated plainly in "What this skill is not." Part of that gap *is* mechanically closable, though: whether every entry carries its required fields, whether the values are from the documented sets, whether `index.md` is complete and sorted, whether `.keep-the-why` is internally consistent. That part has a linter:
 
-**keep-the-why-lint** — [on PyPI](https://pypi.org/project/keep-the-why-lint/), developed in this repository under [`lint/`](https://github.com/oliver-zehentleitner/keep-the-why/tree/main/lint). Python 3.10+, no dependencies beyond the standard library.
+**keep-the-why-lint** — [on PyPI](https://pypi.org/project/keep-the-why-lint/) as a package, [on the GitHub Marketplace](https://github.com/marketplace/actions/keep-the-why-lint) as an action, developed in this repository under [`lint/`](https://github.com/oliver-zehentleitner/keep-the-why/tree/main/lint). Python 3.10+, no dependencies beyond the standard library.
 
 What it deliberately does *not* check: content. Whether recorded rationale is true, complete, or honest isn't mechanically checkable, and the linter doesn't pretend otherwise — Evidence classification stays a judgment call; the linter only guarantees the field is there and holds a legal value.
 
@@ -30,7 +30,7 @@ The project init wizard offers to write these for you (GitHub Actions or GitLab 
 
 {% include-markdown "../skills/keep-the-why/references/ci-linting.md" start="<!-- snippets:start -->" end="<!-- snippets:end -->" %}
 
-Inside GitHub Actions, findings show up as file/line annotations on the PR. The action is [listed on the GitHub Marketplace](https://github.com/marketplace/actions/keep-the-why-lint); it always installs the latest linter from PyPI, and the `lint-latest` tag it's referenced by moves with every linter publish — nothing to pin on your side unless you want to (`@lint-v<version>` pins the action, the `version:` input pins the package).
+Inside GitHub Actions, findings show up as file/line annotations on the PR. The action always installs the latest linter from PyPI, and the `lint-latest` tag it's referenced by moves with every linter publish — nothing to pin on your side unless you want to (`@lint-v<version>` pins the action, the `version:` input pins the package).
 
 ## What it checks
 

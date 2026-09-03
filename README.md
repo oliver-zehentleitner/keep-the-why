@@ -4,6 +4,7 @@
 [![Validate Skill](https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/validate-skill.yml/badge.svg)](https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/validate-skill.yml)
 [![ktw-lint](https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/ktw-lint.yml/badge.svg)](https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/ktw-lint.yml)
 [![keep-the-why-lint (package)](https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/lint-package.yml/badge.svg)](https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/lint-package.yml)
+[![GitHub Marketplace](https://img.shields.io/badge/GitHub%20Marketplace-keep--the--why--lint-2088FF?logo=githubactions&logoColor=white)](https://github.com/marketplace/actions/keep-the-why-lint)
 [![Link Check](https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/link-check.yml/badge.svg)](https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/link-check.yml)
 [![Read the Docs](https://img.shields.io/badge/read-%20docs-yellow)](https://keepthewhy.com/)
 [![Telegram](https://img.shields.io/badge/community-telegram-41ab8c)](https://t.me/unicorndevs)
@@ -119,7 +120,6 @@ Full install detail for every method, including tools without a skill runtime at
 - [ASM](https://luongnv.com/asm/#/skills/oliver-zehentleitner%2Fkeep-the-why%3A%3Askills%2Fkeep-the-why%3A%3Akeep-the-why)
 - [awesome-agent-skills](https://github.com/VoltAgent/awesome-agent-skills#context-engineering)
 - [GitHub Copilot plugin marketplace](https://awesome-copilot.github.com/plugin/keep-the-why/)
-- [GitHub Marketplace](https://github.com/marketplace/actions/keep-the-why-lint) — the keep-the-why-lint action
 - [MCP Market](https://mcpmarket.com/tools/skills/keep-the-why)
 - [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why)
 - [SkillsLLM](https://skillsllm.com/skill/keep-the-why)
@@ -200,7 +200,7 @@ This isn't a new pattern, either. Docs and changelogs are already commonly kept 
 
 Not every field belongs on every entry — Status, Evidence, and the rejected alternative carry the most weight even in a minimal one. Full spec and a worked example: [`references/repository-structure.md`](https://keepthewhy.com/repository-structure/).
 
-The structural half of this format is CI-checkable: [keep-the-why-lint](https://pypi.org/project/keep-the-why-lint/) (developed in this repository under `lint/`) validates required fields, value sets, index consistency, and `.keep-the-why` integrity — schema-version-aware, so unmigrated projects don't fail on structure their version never defined. Content (whether the rationale is *true*) stays a human judgment; the linter doesn't pretend otherwise. One line in GitHub Actions (`uses: oliver-zehentleitner/keep-the-why@lint-latest`, [on the GitHub Marketplace](https://github.com/marketplace/actions/keep-the-why-lint)), or `pip install keep-the-why-lint` anywhere else — see [Linting](https://keepthewhy.com/linting/). This repository lints its own `context/` with it in CI.
+The structural half of this format is CI-checkable: [keep-the-why-lint](https://pypi.org/project/keep-the-why-lint/) (developed in this repository under `lint/`) validates required fields, value sets, index consistency, and `.keep-the-why` integrity — schema-version-aware, so unmigrated projects don't fail on structure their version never defined. Content (whether the rationale is *true*) stays a human judgment; the linter doesn't pretend otherwise. One line in GitHub Actions (`uses: oliver-zehentleitner/keep-the-why@lint-latest`, published as [keep-the-why-lint on the GitHub Marketplace](https://github.com/marketplace/actions/keep-the-why-lint)), or `pip install keep-the-why-lint` anywhere else — see [Linting](https://keepthewhy.com/linting/). This repository lints its own `context/` with it in CI.
 
 ## Related work
 

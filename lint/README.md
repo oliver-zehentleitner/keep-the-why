@@ -3,6 +3,7 @@
 [![Downloads](https://pepy.tech/badge/keep-the-why-lint)](https://pepy.tech/project/keep-the-why-lint)
 [![License](https://img.shields.io/github/license/oliver-zehentleitner/keep-the-why.svg?color=blue)](https://github.com/oliver-zehentleitner/keep-the-why/blob/latest/LICENSE)
 [![keep-the-why-lint (package)](https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/lint-package.yml/badge.svg)](https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/lint-package.yml)
+[![GitHub Marketplace](https://img.shields.io/badge/GitHub%20Marketplace-keep--the--why--lint-2088FF?logo=githubactions&logoColor=white)](https://github.com/marketplace/actions/keep-the-why-lint)
 [![ktw-lint](https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/ktw-lint.yml/badge.svg)](https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/ktw-lint.yml)
 [![Read the Docs](https://img.shields.io/badge/read-%20docs-yellow)](https://keepthewhy.com/linting/)
 [![Telegram](https://img.shields.io/badge/community-telegram-41ab8c)](https://t.me/unicorndevs)
