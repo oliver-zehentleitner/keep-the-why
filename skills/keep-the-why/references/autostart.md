@@ -17,9 +17,10 @@ find or already have one.
 ## Claude Code
 
 A project-scoped `SessionStart` hook: checks for the current project's
-`.keep-the-why` config file before injecting anything, so it stays silent on
-projects that don't use Keep the Why rather than firing unconditionally on
-every session.
+`.keep-the-why` config file — or, for a project not yet migrated, the legacy
+`<!-- keep-the-why:config -->` marker in `AGENTS.md` — before injecting
+anything, so it stays silent on projects that don't use Keep the Why rather
+than firing unconditionally on every session.
 
 ```json
 {
@@ -29,7 +30,7 @@ every session.
         "hooks": [
           {
             "type": "command",
-            "command": "found=\"\"; if [ -f .keep-the-why ]; then found=1; fi; if [ -z \"$found\" ]; then for f in */.keep-the-why; do if [ -f \"$f\" ]; then found=1; break; fi; done; fi; if [ -n \"$found\" ]; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"This project uses the keep-the-why skill (a .keep-the-why config file exists). Load the keep-the-why skill now, before other work.\"}}'; fi; exit 0"
+            "command": "found=\"\"; if [ -f .keep-the-why ]; then found=1; fi; if [ -z \"$found\" ] && [ -f AGENTS.md ] && grep -q '<!-- keep-the-why:config -->' AGENTS.md 2>/dev/null; then found=1; fi; if [ -z \"$found\" ]; then for f in */.keep-the-why; do if [ -f \"$f\" ]; then found=1; break; fi; done; fi; if [ -z \"$found\" ]; then for f in */AGENTS.md; do if [ -f \"$f\" ] && grep -q '<!-- keep-the-why:config -->' \"$f\" 2>/dev/null; then found=1; break; fi; done; fi; if [ -n \"$found\" ]; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"This project uses the keep-the-why skill (a .keep-the-why config file exists, or AGENTS.md still carries a legacy keep-the-why:config block). Invoke the keep-the-why skill (Skill tool) now, before doing anything else in this session, whatever the first request is about.\"}}'; fi; exit 0"
           }
         ]
       }
@@ -45,6 +46,9 @@ found=""
 if [ -f .keep-the-why ]; then
   found=1
 fi
+if [ -z "$found" ] && [ -f AGENTS.md ] && grep -q '<!-- keep-the-why:config -->' AGENTS.md 2>/dev/null; then
+  found=1
+fi
 if [ -z "$found" ]; then
   for f in */.keep-the-why; do
     if [ -f "$f" ]; then
@@ -53,8 +57,16 @@ if [ -z "$found" ]; then
     fi
   done
 fi
+if [ -z "$found" ]; then
+  for f in */AGENTS.md; do
+    if [ -f "$f" ] && grep -q '<!-- keep-the-why:config -->' "$f" 2>/dev/null; then
+      found=1
+      break
+    fi
+  done
+fi
 if [ -n "$found" ]; then
-  echo '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"This project uses the keep-the-why skill (a .keep-the-why config file exists). Load the keep-the-why skill now, before other work."}}'
+  echo '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"This project uses the keep-the-why skill (a .keep-the-why config file exists, or AGENTS.md still carries a legacy keep-the-why:config block). Invoke the keep-the-why skill (Skill tool) now, before doing anything else in this session, whatever the first request is about."}}'
 fi
 exit 0
 ```
@@ -62,13 +74,14 @@ exit 0
 Save as `.claude/settings.json` in the project root (checked into the repo —
 scoped to the project, not one developer's machine, so every collaborator
 and every session benefits automatically). Checks the project root and one
-level of subdirectories for `.keep-the-why`; adjust the `for f in
-*/.keep-the-why` line for a different layout. A project still on the
-previous, `AGENTS.md`-embedded config location (not yet migrated, see
-`references/migrations.md`) won't match this version of the hook — its own
-`.claude/settings.json`, if it has one, would still be running the older
-grep-based check from before this change, which is fine, since it's checking
-for the config location that project actually has.
+level of subdirectories for either marker; adjust the two `for f in */...`
+loops for a different layout. A project still on the previous,
+`AGENTS.md`-embedded config location (not yet migrated, see
+`references/migrations.md`) is matched through the legacy marker on purpose:
+the skill then loads and runs the migration itself, instead of the session
+silently treating a project that already opted in as one that never did —
+exactly the failure the eval case `config-migrates-to-dedicated-file` kept
+reproducing while the hook only knew the new location.
 
 **Evidence:** the eval suite's `_base` fixture carries exactly this hook
 (`tools/evals/fixtures/_base/.claude/settings.json`). Re-running the 10 (of
@@ -84,7 +97,8 @@ A user-scoped variant (same script, in `~/.claude/settings.json` instead) is
 also in real daily use — set up once, applies across every Keep-the-Why
 project on that machine rather than needing to be added per-repo. Same
 mechanism, not separately eval-verified the way the project-scoped version
-above is.
+above is. The legacy-marker branch above was carried by that user-scoped
+variant first and folded back into the documented script in 2026-09.
 
 ## Other agents
 

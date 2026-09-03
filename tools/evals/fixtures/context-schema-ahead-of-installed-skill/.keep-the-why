@@ -6,7 +6,7 @@ README, for what Keep the Why actually is.
 - id: ktw-eval-fixture---order-service
 - context: `context/`
 - init: complete
-- context-schema: 0.9.9
+- context-schema: 99.0.0
 - capture-confirmation: confirm-when-unsure
 - source-reference: never
 <!-- /keep-the-why:config -->

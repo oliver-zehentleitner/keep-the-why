@@ -541,6 +541,19 @@ def build_workdir(case_id, cfg, workdir: Path, driver, home: Path = None):
         home_fixture = FIXTURES_DIR / case_id / "home"
         if home_fixture.exists():
             copy_tree(home_fixture, home)
+        # Snapshot whatever ~/.keep-the-why/ holds *before* the agent runs, so
+        # the disk section handed to the judge can say which personal files
+        # were seeded by the fixture and left untouched versus written by the
+        # agent. Without this, a judge reading "here is ~/.keep-the-why/<id>.md
+        # with capture-mode: proactive" has no way to tell a fixture seed from
+        # an agent write — and has failed a case on exactly that misreading.
+        # Kept outside ~/.keep-the-why/ itself so the skill never sees it.
+        snapshot_dir = home / ".ktw-eval-seed-snapshot"
+        personal_dir = home / ".keep-the-why"
+        if snapshot_dir.exists():
+            shutil.rmtree(snapshot_dir)
+        if personal_dir.is_dir():
+            copy_tree(personal_dir, snapshot_dir)
 
     git_env = {
         **os.environ,
@@ -1269,21 +1282,46 @@ def collect_diff(workdir, home=None):
                 parts.append(f"# new file: {rel}\n{content}")
     # Keep the Why's personal config lives outside the project entirely, at
     # ~/.keep-the-why/ — not git-tracked, so status/diff above never sees it.
-    # No prior state to diff against either (it's either absent, or seeded
-    # fresh per case) — a full current snapshot is what the judge needs.
+    # build_workdir snapshots the seeded state into ~/.ktw-eval-seed-snapshot/
+    # so each file can be labeled as fixture-seeded-and-unchanged, changed, or
+    # newly created by the agent — the judge must not mistake a seed for a
+    # write. Files the agent deleted are listed too.
     if home is not None:
         personal_dir = home / ".keep-the-why"
+        snapshot_dir = home / ".ktw-eval-seed-snapshot"
+        seeded = {}
+        if snapshot_dir.is_dir():
+            for p in sorted(snapshot_dir.rglob("*")):
+                if p.is_file():
+                    try:
+                        seeded[str(p.relative_to(snapshot_dir))] = p.read_text()
+                    except (UnicodeDecodeError, OSError):
+                        seeded[str(p.relative_to(snapshot_dir))] = None
+        seen = set()
         if personal_dir.is_dir():
             for p in sorted(personal_dir.rglob("*")):
                 if p.is_file():
+                    rel = str(p.relative_to(personal_dir))
+                    seen.add(rel)
                     try:
                         content = p.read_text()
                     except (UnicodeDecodeError, OSError):
                         content = "(binary or unreadable)"
+                    if rel in seeded and seeded[rel] == content:
+                        label = ("SEEDED BY THE FIXTURE BEFORE THE RUN, UNCHANGED — "
+                                 "the agent did not write this")
+                    elif rel in seeded:
+                        label = "seeded by the fixture, MODIFIED by the agent during the run"
+                    else:
+                        label = "did not exist before the run — CREATED by the agent"
                     if len(content) > 4000:
                         content = content[:4000] + "…(truncated)"
-                    parts.append(f"# ~/.keep-the-why/{p.relative_to(personal_dir)} "
-                                 f"(personal config, outside the project)\n{content}")
+                    parts.append(f"# ~/.keep-the-why/{rel} "
+                                 f"(personal config, outside the project; {label})\n{content}")
+        for rel in seeded:
+            if rel not in seen:
+                parts.append(f"# ~/.keep-the-why/{rel} (personal config, outside the project; "
+                             f"seeded by the fixture, DELETED by the agent during the run)")
     text = "\n\n".join(parts)
     if len(text) > MAX_DIFF_CHARS:
         text = text[:MAX_DIFF_CHARS] + "\n…(diff truncated)"

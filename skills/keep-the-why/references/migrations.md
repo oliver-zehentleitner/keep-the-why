@@ -28,9 +28,9 @@ Entries below assume 0.2.0 as the starting point — nothing before it tracked a
 
 **What changed:** the project config block (`<!-- keep-the-why:config -->`) moves out of the entry-point file (`AGENTS.md`, or whatever a project already uses) into a dedicated `.keep-the-why` file at the project root. The personal config block (`<!-- keep-the-why:local -->`) moves out of `AGENTS.local.md` into a dedicated, non-project file at `~/.keep-the-why/<id>.md`, keyed by a new `id` field the project file now carries. See "Why dedicated files, not entry-point blocks" in `context/config-format.md` for the reasoning, and `references/setup.md` for the full format and detection logic. Three optional additions ship alongside the relocation, none of which existing projects are required to adopt: a `personal-defaults` block a project can offer new developers (plus a machine-wide `~/.keep-the-why/config` policy governing whether that's asked about or auto-applied), `pinned-version`/`pinned-path` fields for pinning to a vendored skill copy, and `context/AGENTS.md` + `context/CLAUDE.md` guard files. Not a `context/` entry-format change — existing entries are untouched — but it needs real action from an existing project, not a silent backfill.
 
-**Migrating an existing project (do this now, not on next touch — the whole point only holds once it's actually done):**
+**Migrating an existing project (do this now, not on next touch — the whole point only holds once it's actually done):** steps 1, 3 and 4 are a mechanical relocation of state the project already opted into — perform them directly in the session that finds the legacy block, no "shall I migrate?" question first; step 2 is the only question in this list.
 
-1. Generate the project's `id` (see "Project config" in `setup.md`) and create `.keep-the-why`, with the header line every `.keep-the-why` gets (see `setup.md`), carrying over every existing field from the old `AGENTS.md` block verbatim (`context`, `init`, `context-schema`, `capture-confirmation`, `source-reference`), plus the new `id` field.
+1. Generate the project's `id` (see "Project config" in `setup.md`) and create `.keep-the-why`, with the header line every `.keep-the-why` gets (see `setup.md`), carrying over every existing field from the old `AGENTS.md` block verbatim (`context`, `init`, `context-schema`, `capture-confirmation`, `source-reference`), plus the new `id` field. Verbatim includes `context-schema`: the relocation step itself copies the old value (say, `0.9.2`) — it is not a schema migration. The normal behind-schema comparison (`setup.md`, "Context schema and migrations") then runs against the new file exactly as it would have against the old block, and advances the field the way it always does: right away when nothing between the two versions applies to this project, otherwise only after the applicable migration has actually been done or explicitly deferred by the user.
 2. Ask whether the project wants to add a `personal-defaults` block for future developers — same question the project init wizard now asks, framed the same way.
 3. Remove the `<!-- keep-the-why:config -->` block from the entry-point file, along with any prose that specifically pointed at it or at `AGENTS.local.md` for this skill's own state — don't replace it with a general "this project uses Keep the Why" mention; that's the project's own editorial call (a README section, the badge), not this skill's to add. **Do leave one line noting the project was migrated and that any Keep the Why skill installation reading this file needs to be at `metadata.version` 0.10.0 or later.** This is the one exception to "don't write pointers into the entry-point file": an older installed skill won't know to look for `.keep-the-why` at all, but it's still an LLM reading the whole file, not a program doing a literal marker match — a plain-English note left where it's already looking is something it can actually notice and act on, unlike a change to detection logic it was never taught.
 4. If `context/` doesn't already have `AGENTS.md` and `CLAUDE.md` guard files (see "Guarding `context/` itself" in `setup.md`), add them now, in the same pass.
@@ -61,11 +61,13 @@ README, for what Keep the Why actually is.
 - id: acme---widget-service
 - context: `context/`
 - init: complete
-- context-schema: 0.10.0
+- context-schema: 0.9.2
 - capture-confirmation: confirm-when-unsure
 - source-reference: never
 <!-- /keep-the-why:config -->
 ```
+
+`context-schema` is shown at `0.9.2` here on purpose: the relocation carries every field over verbatim (step 1) and doesn't stand in for the schema migrations between `0.9.2` and the installed version — those go through the normal "behind → check `migrations.md` → discuss now / defer / stop asking" flow (`setup.md`, "Context schema and migrations") in the same session, and `context-schema` advances when that check completes (immediately if nothing applies).
 
 ```markdown
 Keep the Why's config for this project migrated to .keep-the-why on

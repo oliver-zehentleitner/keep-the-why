@@ -188,4 +188,4 @@ When a project already has documentation that doesn't match this shape:
 
 1. Don't restructure everything at once. Start by adding a `context/` layer next to whatever `docs/` already exists.
 2. Migrate content only when touching it anyway, not as a dedicated big-bang pass.
-3. If the existing structure is already good (clear, current, distinguishes how from why in some other way), don't replace it just to match this template. Adapt this methodology to it instead.
+3. If the existing structure is already good (clear, current, distinguishes how from why in some other way), don't replace it just to match this template. Adapt this methodology to it instead — new entries this skill writes there follow its own field set; existing records keep their own format until touched for another reason (item 2) and don't get retro-tagged with `Type`/`Status`/`Evidence` as a setup step.

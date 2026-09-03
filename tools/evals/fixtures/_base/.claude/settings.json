@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "found=\"\"; if [ -f .keep-the-why ]; then found=1; fi; if [ -z \"$found\" ]; then for f in */.keep-the-why; do if [ -f \"$f\" ]; then found=1; break; fi; done; fi; if [ -n \"$found\" ]; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"This project uses the keep-the-why skill (a .keep-the-why config file exists). Load the keep-the-why skill now, before other work.\"}}'; fi; exit 0"
+            "command": "found=\"\"; if [ -f .keep-the-why ]; then found=1; fi; if [ -z \"$found\" ] && [ -f AGENTS.md ] && grep -q '<!-- keep-the-why:config -->' AGENTS.md 2>/dev/null; then found=1; fi; if [ -z \"$found\" ]; then for f in */.keep-the-why; do if [ -f \"$f\" ]; then found=1; break; fi; done; fi; if [ -z \"$found\" ]; then for f in */AGENTS.md; do if [ -f \"$f\" ] && grep -q '<!-- keep-the-why:config -->' \"$f\" 2>/dev/null; then found=1; break; fi; done; fi; if [ -n \"$found\" ]; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"This project uses the keep-the-why skill (a .keep-the-why config file exists, or AGENTS.md still carries a legacy keep-the-why:config block). Invoke the keep-the-why skill (Skill tool) now, before doing anything else in this session, whatever the first request is about.\"}}'; fi; exit 0"
           }
         ]
       }

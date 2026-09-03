@@ -11,6 +11,124 @@ the expected behavior.
 
 ## Latest full-suite results
 
+**73 of 73 passed** — run 2026-09-03, skill 0.10.1 plus the unreleased
+changes below, Claude Code CLI 2.1.258, agent and judge both Claude Sonnet 5
+(`claude-sonnet-5`), `--all --parallel 4`, the `_base` fixture's `SessionStart`
+hook active. No errors; every case produced a graded verdict. The five full
+runs immediately before it on the same day, against the same text apart from
+the last wording fixes noted below: **72/73**, **71/73**, **72/73**, **72/73**
+and **72/73** — each one's single failure traced to a wording gap, fixed,
+re-run three times in isolation, then the whole suite again.
+
+This is the first full run since the skill's text was compressed (0.10.1's
+15 rules → 11) and the first that started from a systematic pass over every
+failure instead of re-running failures one at a time. Starting point was
+**62/73** on 2026-09-02 (the compressed text, nothing else changed — 61/73 in
+a second run the same day, so the compression itself had moved nothing).
+Every one of the eleven failures was read against its raw transcript and
+fixture before anything was changed, and they sorted into four groups:
+
+- **Stale fixtures or expectations (2).** `context-schema-ahead-of-installed-skill`
+  pinned `0.9.9`, which stopped being "ahead" the day 0.10.0 shipped — the
+  agent compared versions correctly and was failed for it (now `99.0.0`).
+  `negative-routine-change-no-trigger` still expected the skill *not to load*,
+  written before the `SessionStart` hook existed; with the hook, loading is
+  the documented behavior and the real criterion is "no `context/` write, no
+  documentation question" — the expectation now says so.
+- **Activation gaps (3).** `config-migrates-to-dedicated-file` could never
+  pass: the documented hook only looked for `.keep-the-why`, so the one
+  fixture that deliberately has none (a project still on the legacy `AGENTS.md`
+  block) never triggered it — the skill was never loaded, on every run since
+  the case was added. The hook now also matches the legacy marker, and its
+  injected text says "invoke the keep-the-why skill (Skill tool) now" instead
+  of "load", which turned out to matter. The other two were abstract scenario
+  prompts ("Interview answer from a maintainer: …" with no interview in
+  progress) that the agent answered as a plain chat message.
+- **Skill loaded, behavior off (5).** The common thread: the agent *asked*
+  where the skill wants it to *write* — a retrospective finding raised as a
+  question instead of a `Status: open` entry, a confirmed decision held back
+  pending a question about rejected alternatives, a legacy-block migration
+  proposed and gated behind "shall I proceed?". Plus the reverse, an entry
+  written in full where the person had only mentioned something in passing.
+  These are wording fixes in `SKILL.md` (below), not rule changes.
+- **A design tension (1).** `negative-existing-good-structure-untouched`
+  asked to "apply Keep the Why" to a project with a good `docs/decisions/`
+  folder, on a never-set-up project with no personal config — so the
+  mandatory personal wizard fired first and the retrofit decision was never
+  reached. Re-cut as an explicit setup request with personal defaults given
+  in the prompt, so the test reaches what it's actually about.
+
+Getting from there to the numbers above took six full runs and about
+fifty targeted re-runs, each candidate re-run at least three times in a row
+before being counted as fixed. Along the way five more cases failed once
+each and got the same treatment: four abstract scenario prompts made
+concrete (the prompt now states the decision, or names the file, instead of
+describing "a well-evidenced decision surfaces"), and one fixture that
+contradicted the skill's own design (`wizard-respects-known-confirmation-flow-batch`
+had a personal file keyed by a project id no `.keep-the-why` carried — it
+now carries `init: declined` and the id, the situation `setup.md` actually
+describes).
+
+What changed in the skill text, all clarifications of rules that already
+existed, none a change in what the rules say:
+
+- Setup check: runs in the written order, project file → personal file →
+  timers; a legacy-block migration is mechanical and done in the same turn,
+  not proposed; the personal wizard runs even when the project is already
+  set up.
+- Rule 1 now names removals: "no reference found" means unknown, not safe to
+  delete. Rule 4: no rejected alternative found → record that and still
+  write. Rule 5: a retrospective finding with no rationale becomes a
+  `Status: open` entry, not only a question. Rule 8: an ambiguous session
+  instruction blocks the capture it came with, since writing is exactly what
+  the unresolved setting governs. Rule 3: an existing, working decision
+  record keeps its own format.
+- Workflow step 5 is now an explicit ask-versus-write decision: requested
+  and writable → write now, sub-questions go in as `unknown`; requested but
+  reason unknown → write with `Evidence: unknown`; mentioned in passing and
+  unclear whether worth it → one yes/no question first. A step-by-step
+  procedure routes to `CONTRIBUTING.md`/`docs/`, the `context/` entry only
+  points to it. `confirm-always` asks before every write the person didn't
+  already ask for — a direct instruction is that confirmation (this one was
+  a regression introduced by the first draft of the list, caught by
+  `confirm-always-explicit-instruction-no-redundant-ask` on the next run).
+- The two setup wizards are named as two separate flows, project first —
+  one run had folded them into a single "question 1 of 8" sequence.
+- Rule 8's new sentence on ambiguous session instructions got its
+  counter-example: "just write everything down today, don't ask me each
+  time" names one direction and is an override to follow, not a tension to
+  ask about — one run had read it as circular and asked.
+- The skill's `description` now also names setup, initialization, declining,
+  and knowledge-transfer interviews, so those requests match it.
+
+Two runner changes: the disk section handed to the judge now labels each
+`~/.keep-the-why/` file as seeded-by-the-fixture-and-unchanged, modified, or
+created by the agent — a judge had failed a case for "writing preferences"
+that the fixture had seeded before the run; and `references/autostart.md`
+carries the updated hook.
+
+What the remaining variance looks like: the cases that flipped between the
+three same-day full runs all sit on the ask-versus-write boundary
+(`ambiguous-worth-capturing-asks-instead-of-guessing`,
+`negative-existing-good-structure-untouched`,
+`confirm-always-explicit-instruction-no-redundant-ask`), where the judge
+grades a judgment call. Each was re-run five or more times after its last
+fix; expect an occasional single flip there on any given full run.
+
+Two platform notes. `trust-model-hidden-unicode-instructions` — the fixture
+whose `context/` entry hides a directive in zero-width characters — was
+refused outright by the model's own safety layer in four of the six runs
+("Sonnet 5 can't help with this", the pattern already tracked in
+[#178](https://github.com/oliver-zehentleitner/keep-the-why/issues/178));
+the runner records that as an `error`, not a verdict, and the retry pass
+then passed both times. And a full run that spans a Claude Code session-limit reset,
+or an expired OAuth session, shows up as a block of `error` verdicts with the
+runner's `--retry-until-complete` sleeping in ten-minute steps until the
+session is usable again — that's what the 600-second retry loop is for, and
+the numbers above are from runs that completed with zero errors after those retries.
+
+## 2026-08-25 full run (skill 0.9.0)
+
 **56 of 70 passed** — run 2026-08-25, skill 0.9.0, Claude Code CLI 2.1.241,
 agent and judge both Claude Sonnet 5 (`claude-sonnet-5`). No errors; every
 case produced a graded verdict. Previous full run: 59/67, skill 0.6.2,

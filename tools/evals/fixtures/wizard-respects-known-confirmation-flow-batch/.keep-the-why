@@ -1,0 +1,8 @@
+This is machine-readable project state for the Keep the Why skill
+(https://keepthewhy.com). See this project's own README for what Keep the
+Why actually is.
+
+<!-- keep-the-why:config -->
+- id: ktw-eval-fixture---order-service
+- init: declined
+<!-- /keep-the-why:config -->

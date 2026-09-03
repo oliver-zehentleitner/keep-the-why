@@ -1,7 +1,6 @@
 {
   "remove": [
-    "context",
-    ".keep-the-why"
+    "context"
   ],
   "personal": "none"
 }

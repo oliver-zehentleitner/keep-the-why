@@ -32,6 +32,8 @@ Work through the codebase (or the relevant subsystem, if scoping to one) and bui
 
 Classify every entry — confirmed, inferred, unknown — per the core rules. It's fine, and expected, for a first retrospective pass to leave a nontrivial number of entries as "unknown, needs interview" rather than force an answer.
 
+A candidate that stays unresolved after sources 1–4 is still *recorded* — as an entry with `Status: open` and `Evidence: unknown` (rule 5) — not only raised as a question in conversation. A retrospective pass the user asked for is itself the instruction to record what it finds (rule 8), so under `confirm-when-unsure` writing that open entry doesn't wait for a separate permission question; a clarifying question to a person comes on top, not instead.
+
 ## Scoping a large or unfamiliar codebase
 
 For a codebase too large to analyze end-to-end in one pass:
