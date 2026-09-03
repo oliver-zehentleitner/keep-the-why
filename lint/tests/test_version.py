@@ -18,7 +18,8 @@ class VersionScheme(unittest.TestCase):
         from ktw_lint import checks
 
         gates = [
-            value for name, value in vars(checks).items()
+            value
+            for name, value in vars(checks).items()
             if name.startswith("GATE_") and isinstance(value, tuple)
         ]
         self.assertTrue(gates)

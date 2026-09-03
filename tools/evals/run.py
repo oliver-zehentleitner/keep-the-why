@@ -199,12 +199,31 @@ def seed_fake_home(real_home: Path, fake_home: Path, driver: str):
         else:
             shutil.copy2(src, dst)
 
+
 # Whether the case prompt gets prefixed with an explicit "read SKILL.md and
 # follow it" instruction. False only for claude, where discovery itself is
 # part of what's under test.
-EXPLICIT_LOAD = {"claude": False, "pi": True, "opencode": True, "kimi": True, "cline": True, "codex": True, "hermes": True, "omp": True}
+EXPLICIT_LOAD = {
+    "claude": False,
+    "pi": True,
+    "opencode": True,
+    "kimi": True,
+    "cline": True,
+    "codex": True,
+    "hermes": True,
+    "omp": True,
+}
 
-DRIVER_LABELS = {"claude": "Claude Code", "pi": "Pi", "opencode": "opencode", "kimi": "Kimi Code", "cline": "Cline", "codex": "Codex CLI", "hermes": "Hermes", "omp": "oh-my-pi"}
+DRIVER_LABELS = {
+    "claude": "Claude Code",
+    "pi": "Pi",
+    "opencode": "opencode",
+    "kimi": "Kimi Code",
+    "cline": "Cline",
+    "codex": "Codex CLI",
+    "hermes": "Hermes",
+    "omp": "oh-my-pi",
+}
 
 # The literal non-interactive/permission-bypass flag each driver is invoked
 # with (read out of each run_agent_*'s own cmd list, not guessed) — every
@@ -228,8 +247,8 @@ PERMISSION_BYPASS = {
 # "\n\n". _transcript_blocks() below splits on them to analyze a transcript
 # generically, without caring which driver produced it.
 _BLOCK_MARKER_RE = re.compile(
-    r'(?:\A|\n\n)(\[assistant\]|\[tool call\]|\[tool result\]|\[tool error\]|'
-    r'\[driver error\]|\[error\])'
+    r"(?:\A|\n\n)(\[assistant\]|\[tool call\]|\[tool result\]|\[tool error\]|"
+    r"\[driver error\]|\[error\])"
 )
 
 # Substrings inside a [tool call] block that indicate the agent actually
@@ -237,11 +256,15 @@ _BLOCK_MARKER_RE = re.compile(
 # done so. Kept as one named, documented constant so it's easy to extend
 # (e.g. a new context-reading convention) without hunting for a scattered
 # inline regex.
-_EVIDENCE_CALL_RE = re.compile(r'\bgit\s+(?:log|show|blame|diff)\b|context/', re.IGNORECASE)
+_EVIDENCE_CALL_RE = re.compile(
+    r"\bgit\s+(?:log|show|blame|diff)\b|context/", re.IGNORECASE
+)
 
 # A context/ entry's Evidence line, as written by the agent (i.e. only
 # matched against *added* content in a diff — see _extract_evidence_claim).
-_EVIDENCE_CLAIM_RE = re.compile(r'Evidence:\s*(confirmed|inferred|unknown)', re.IGNORECASE)
+_EVIDENCE_CLAIM_RE = re.compile(
+    r"Evidence:\s*(confirmed|inferred|unknown)", re.IGNORECASE
+)
 
 
 def _transcript_blocks(transcript):
@@ -289,7 +312,10 @@ def _evidence_tool_calls_found(transcript):
         if marker != "[tool call]":
             continue
         paired = content
-        if i + 1 < len(blocks) and blocks[i + 1][0] in ("[tool result]", "[tool error]"):
+        if i + 1 < len(blocks) and blocks[i + 1][0] in (
+            "[tool result]",
+            "[tool error]",
+        ):
             paired += "\n" + blocks[i + 1][1]
         if _EVIDENCE_CALL_RE.search(paired):
             return True
@@ -414,8 +440,14 @@ RATE_LIMIT_RE = re.compile(r"hit your [\w ]{0,25}\blimit\b", re.IGNORECASE)
 
 def sh(args, cwd=None, check=True, env=None, timeout=None, input_=None):
     return subprocess.run(
-        args, cwd=cwd, check=check, env=env, timeout=timeout,
-        capture_output=True, text=True, input=input_,
+        args,
+        cwd=cwd,
+        check=check,
+        env=env,
+        timeout=timeout,
+        capture_output=True,
+        text=True,
+        input=input_,
     )
 
 
@@ -511,7 +543,9 @@ def build_workdir(case_id, cfg, workdir: Path, driver, home: Path = None):
     # {{SKILL_VERSION}} placeholder instead of a hardcoded version, so they
     # don't all go stale (and start triggering migration prompts mid-eval)
     # on every release. Deliberately old pins (0.2.0, 0.9.9, ...) stay literal.
-    version = re.search(r'version: "([^"]+)"', (SKILL_DIR / "SKILL.md").read_text()).group(1)
+    version = re.search(
+        r'version: "([^"]+)"', (SKILL_DIR / "SKILL.md").read_text()
+    ).group(1)
     substitutable = list(workdir.rglob("*.md"))
     keep_the_why_file = workdir / ".keep-the-why"
     if keep_the_why_file.exists():
@@ -531,12 +565,20 @@ def build_workdir(case_id, cfg, workdir: Path, driver, home: Path = None):
     # provides its own fixtures/<case-id>/home/ directory, overlaid after —
     # skipped entirely for a driver with no home to seed (home=None), and for
     # a project without a `.keep-the-why` at all (empty-project/wizard cases).
-    if home is not None and keep_the_why_file.exists() and cfg.get("personal") != "none":
-        id_match = re.search(r"^\s*-\s*id:\s*(\S+)", keep_the_why_file.read_text(), re.MULTILINE)
+    if (
+        home is not None
+        and keep_the_why_file.exists()
+        and cfg.get("personal") != "none"
+    ):
+        id_match = re.search(
+            r"^\s*-\s*id:\s*(\S+)", keep_the_why_file.read_text(), re.MULTILINE
+        )
         if id_match:
             personal_dir = home / ".keep-the-why"
             personal_dir.mkdir(parents=True, exist_ok=True)
-            (personal_dir / f"{id_match.group(1)}.md").write_text(DEFAULT_PERSONAL_CONFIG)
+            (personal_dir / f"{id_match.group(1)}.md").write_text(
+                DEFAULT_PERSONAL_CONFIG
+            )
     if home is not None:
         home_fixture = FIXTURES_DIR / case_id / "home"
         if home_fixture.exists():
@@ -557,12 +599,18 @@ def build_workdir(case_id, cfg, workdir: Path, driver, home: Path = None):
 
     git_env = {
         **os.environ,
-        "GIT_AUTHOR_NAME": "Eval Fixture", "GIT_AUTHOR_EMAIL": "fixture@example.com",
-        "GIT_COMMITTER_NAME": "Eval Fixture", "GIT_COMMITTER_EMAIL": "fixture@example.com",
+        "GIT_AUTHOR_NAME": "Eval Fixture",
+        "GIT_AUTHOR_EMAIL": "fixture@example.com",
+        "GIT_COMMITTER_NAME": "Eval Fixture",
+        "GIT_COMMITTER_EMAIL": "fixture@example.com",
     }
     sh(["git", "init", "-q", "-b", "main"], cwd=workdir, env=git_env)
     sh(["git", "add", "-A"], cwd=workdir, env=git_env)
-    sh(["git", "commit", "-q", "-m", "Initial commit", "--allow-empty"], cwd=workdir, env=git_env)
+    sh(
+        ["git", "commit", "-q", "-m", "Initial commit", "--allow-empty"],
+        cwd=workdir,
+        env=git_env,
+    )
 
     for commit in cfg.get("commits", []):
         for rel, content in commit.get("files", {}).items():
@@ -578,7 +626,11 @@ def build_workdir(case_id, cfg, workdir: Path, driver, home: Path = None):
             env["GIT_AUTHOR_DATE"] = commit["date"]
             env["GIT_COMMITTER_DATE"] = commit["date"]
         sh(["git", "add", "-A"], cwd=workdir, env=env)
-        sh(["git", "commit", "-q", "--allow-empty", "-m", commit["message"]], cwd=workdir, env=env)
+        sh(
+            ["git", "commit", "-q", "--allow-empty", "-m", commit["message"]],
+            cwd=workdir,
+            env=env,
+        )
 
     # Install the skill the way a project-scoped install would: a real,
     # untracked copy (keeps the skill out of the repo the agent analyzes)
@@ -622,16 +674,22 @@ def _cap(text, limit=MAX_TRANSCRIPT_CHARS):
 
 def run_agent_claude(prompt, cwd, model, timeout, disallowed_tools=None, home=None):
     cmd = [
-        "claude", "-p", prompt,
-        "--model", model,
-        "--output-format", "stream-json",
+        "claude",
+        "-p",
+        prompt,
+        "--model",
+        model,
+        "--output-format",
+        "stream-json",
         "--verbose",
         "--dangerously-skip-permissions",
-        "--max-turns", "40",
+        "--max-turns",
+        "40",
         # Only project-level settings: the run must see the fixture project's
         # skill and config, not this machine's user-level CLAUDE.md, memory,
         # or personal skills — those would contaminate the scenario.
-        "--setting-sources", "project,local",
+        "--setting-sources",
+        "project,local",
     ]
     if disallowed_tools:
         cmd += ["--disallowedTools", ",".join(disallowed_tools)]
@@ -639,10 +697,15 @@ def run_agent_claude(prompt, cwd, model, timeout, disallowed_tools=None, home=No
     if home is not None:
         env["HOME"] = str(home)
     try:
-        proc = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout)
+        proc = subprocess.run(
+            cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout
+        )
     except subprocess.TimeoutExpired as e:
-        return {"events": [], "error": f"timeout after {timeout}s",
-                "raw": (e.stdout or "")[:MAX_TRANSCRIPT_CHARS]}
+        return {
+            "events": [],
+            "error": f"timeout after {timeout}s",
+            "raw": (e.stdout or "")[:MAX_TRANSCRIPT_CHARS],
+        }
     events = []
     for line in proc.stdout.splitlines():
         line = line.strip()
@@ -654,7 +717,9 @@ def run_agent_claude(prompt, cwd, model, timeout, disallowed_tools=None, home=No
             pass
     error = None
     if proc.returncode != 0:
-        error = f"claude exited {proc.returncode}: {(proc.stderr or proc.stdout)[:2000]}"
+        error = (
+            f"claude exited {proc.returncode}: {(proc.stderr or proc.stdout)[:2000]}"
+        )
     return {"events": events, "error": error}
 
 
@@ -672,10 +737,15 @@ def run_agent_pi(prompt, cwd, model, timeout, disallowed_tools=None, home=None):
     if home is not None:
         env["HOME"] = str(home)
     try:
-        proc = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout)
+        proc = subprocess.run(
+            cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout
+        )
     except subprocess.TimeoutExpired as e:
-        return {"events": [], "error": f"timeout after {timeout}s",
-                "raw": (e.stdout or "")[:MAX_TRANSCRIPT_CHARS]}
+        return {
+            "events": [],
+            "error": f"timeout after {timeout}s",
+            "raw": (e.stdout or "")[:MAX_TRANSCRIPT_CHARS],
+        }
     events = []
     for line in proc.stdout.splitlines():
         line = line.strip()
@@ -704,20 +774,37 @@ def run_agent_opencode(prompt, cwd, model, timeout, disallowed_tools=None, home=
     # directory instead of the isolated fixture (read real SKILL.md/AGENTS.md
     # files, and in one run actually wrote a context/ entry into this repo,
     # promptly reverted). cwd= below is kept anyway as defense in depth.
-    cmd = ["opencode", "run", prompt, "--format", "json", "--model", model,
-           "--dir", str(cwd), "--auto"]
+    cmd = [
+        "opencode",
+        "run",
+        prompt,
+        "--format",
+        "json",
+        "--model",
+        model,
+        "--dir",
+        str(cwd),
+        "--auto",
+    ]
     if disallowed_tools:
-        print(f"  NOTE: opencode driver has no documented tool-deny flag — "
-              f"case's disallowed_tools {disallowed_tools} not enforced.",
-              file=sys.stderr)
+        print(
+            f"  NOTE: opencode driver has no documented tool-deny flag — "
+            f"case's disallowed_tools {disallowed_tools} not enforced.",
+            file=sys.stderr,
+        )
     env = dict(os.environ)
     if home is not None:
         env["HOME"] = str(home)
     try:
-        proc = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout)
+        proc = subprocess.run(
+            cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout
+        )
     except subprocess.TimeoutExpired as e:
-        return {"events": [], "error": f"timeout after {timeout}s",
-                "raw": (e.stdout or "")[:MAX_TRANSCRIPT_CHARS]}
+        return {
+            "events": [],
+            "error": f"timeout after {timeout}s",
+            "raw": (e.stdout or "")[:MAX_TRANSCRIPT_CHARS],
+        }
     events = []
     for line in proc.stdout.splitlines():
         line = line.strip()
@@ -729,7 +816,9 @@ def run_agent_opencode(prompt, cwd, model, timeout, disallowed_tools=None, home=
             pass
     error = None
     if proc.returncode != 0:
-        error = f"opencode exited {proc.returncode}: {(proc.stderr or proc.stdout)[:2000]}"
+        error = (
+            f"opencode exited {proc.returncode}: {(proc.stderr or proc.stdout)[:2000]}"
+        )
     return {"events": events, "error": error}
 
 
@@ -739,17 +828,24 @@ def run_agent_kimi(prompt, cwd, model, timeout, disallowed_tools=None, home=None
     # OpenAI-chat-style JSON object per line, see render_transcript_kimi.
     cmd = ["kimi", "-p", prompt, "-m", model, "--output-format", "stream-json"]
     if disallowed_tools:
-        print(f"  NOTE: kimi driver has no documented tool-deny flag — "
-              f"case's disallowed_tools {disallowed_tools} not enforced.",
-              file=sys.stderr)
+        print(
+            f"  NOTE: kimi driver has no documented tool-deny flag — "
+            f"case's disallowed_tools {disallowed_tools} not enforced.",
+            file=sys.stderr,
+        )
     env = dict(os.environ)
     if home is not None:
         env["HOME"] = str(home)
     try:
-        proc = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout)
+        proc = subprocess.run(
+            cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout
+        )
     except subprocess.TimeoutExpired as e:
-        return {"events": [], "error": f"timeout after {timeout}s",
-                "raw": (e.stdout or "")[:MAX_TRANSCRIPT_CHARS]}
+        return {
+            "events": [],
+            "error": f"timeout after {timeout}s",
+            "raw": (e.stdout or "")[:MAX_TRANSCRIPT_CHARS],
+        }
     events = []
     for line in proc.stdout.splitlines():
         line = line.strip()
@@ -795,20 +891,40 @@ def run_agent_cline(prompt, cwd, model, timeout, disallowed_tools=None, home=Non
     default_settings = Path.home() / ".cline" / "data" / "settings"
     if default_settings.is_dir():
         shutil.copytree(default_settings, Path(data_dir) / "settings")
-    cmd = ["cline", "--cwd", str(cwd), "--json", "-P", provider, "-m", model_id,
-           "--auto-approve", "true", "--data-dir", data_dir, prompt]
+    cmd = [
+        "cline",
+        "--cwd",
+        str(cwd),
+        "--json",
+        "-P",
+        provider,
+        "-m",
+        model_id,
+        "--auto-approve",
+        "true",
+        "--data-dir",
+        data_dir,
+        prompt,
+    ]
     if disallowed_tools:
-        print(f"  NOTE: cline driver has no documented tool-deny flag — "
-              f"case's disallowed_tools {disallowed_tools} not enforced.",
-              file=sys.stderr)
+        print(
+            f"  NOTE: cline driver has no documented tool-deny flag — "
+            f"case's disallowed_tools {disallowed_tools} not enforced.",
+            file=sys.stderr,
+        )
     env = dict(os.environ)
     if home is not None:
         env["HOME"] = str(home)
     try:
-        proc = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout)
+        proc = subprocess.run(
+            cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout
+        )
     except subprocess.TimeoutExpired as e:
-        return {"events": [], "error": f"timeout after {timeout}s",
-                "raw": (e.stdout or "")[:MAX_TRANSCRIPT_CHARS]}
+        return {
+            "events": [],
+            "error": f"timeout after {timeout}s",
+            "raw": (e.stdout or "")[:MAX_TRANSCRIPT_CHARS],
+        }
     finally:
         shutil.rmtree(data_dir, ignore_errors=True)
     events = []
@@ -849,21 +965,41 @@ def run_agent_codex(prompt, cwd, model, timeout, disallowed_tools=None, home=Non
     # fallback metadata omits reasoning entirely unless told otherwise).
     # Harmless to set unconditionally for models that don't require it.
     provider, _, model_id = model.partition("/")
-    cmd = ["codex", "exec", "--json", "-C", str(cwd), "--skip-git-repo-check",
-           "--approve-for-me", "-c", f"model_provider={provider}",
-           "-c", "model_reasoning_effort=medium", "-m", model_id, prompt]
+    cmd = [
+        "codex",
+        "exec",
+        "--json",
+        "-C",
+        str(cwd),
+        "--skip-git-repo-check",
+        "--approve-for-me",
+        "-c",
+        f"model_provider={provider}",
+        "-c",
+        "model_reasoning_effort=medium",
+        "-m",
+        model_id,
+        prompt,
+    ]
     if disallowed_tools:
-        print(f"  NOTE: codex driver has no documented tool-deny flag — "
-              f"case's disallowed_tools {disallowed_tools} not enforced.",
-              file=sys.stderr)
+        print(
+            f"  NOTE: codex driver has no documented tool-deny flag — "
+            f"case's disallowed_tools {disallowed_tools} not enforced.",
+            file=sys.stderr,
+        )
     env = dict(os.environ)
     if home is not None:
         env["HOME"] = str(home)
     try:
-        proc = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout)
+        proc = subprocess.run(
+            cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout
+        )
     except subprocess.TimeoutExpired as e:
-        return {"events": [], "error": f"timeout after {timeout}s",
-                "raw": (e.stdout or "")[:MAX_TRANSCRIPT_CHARS]}
+        return {
+            "events": [],
+            "error": f"timeout after {timeout}s",
+            "raw": (e.stdout or "")[:MAX_TRANSCRIPT_CHARS],
+        }
     events = []
     for line in proc.stdout.splitlines():
         line = line.strip()
@@ -901,39 +1037,84 @@ def run_agent_hermes(prompt, cwd, model, timeout, disallowed_tools=None, home=No
     # part of the "final response info" — verified with a raw, unpiped
     # capture that it's written to stderr instead. Search both.
     provider, _, model_id = model.partition("/")
-    cmd = ["hermes", "chat", "-q", prompt, "--model", model_id, "--provider", provider,
-           "-t", "terminal,file", "--in", str(cwd), "--yolo", "-Q", "--max-turns", "40"]
+    cmd = [
+        "hermes",
+        "chat",
+        "-q",
+        prompt,
+        "--model",
+        model_id,
+        "--provider",
+        provider,
+        "-t",
+        "terminal,file",
+        "--in",
+        str(cwd),
+        "--yolo",
+        "-Q",
+        "--max-turns",
+        "40",
+    ]
     if disallowed_tools:
-        print(f"  NOTE: hermes driver has no per-tool deny flag (only toolset-level "
-              f"via -t) — case's disallowed_tools {disallowed_tools} not enforced.",
-              file=sys.stderr)
+        print(
+            f"  NOTE: hermes driver has no per-tool deny flag (only toolset-level "
+            f"via -t) — case's disallowed_tools {disallowed_tools} not enforced.",
+            file=sys.stderr,
+        )
     env = dict(os.environ)
     if home is not None:
         env["HOME"] = str(home)
     try:
-        proc = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout)
+        proc = subprocess.run(
+            cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout
+        )
     except subprocess.TimeoutExpired as e:
-        return {"events": [], "error": f"timeout after {timeout}s",
-                "raw": (e.stdout or "")[:MAX_TRANSCRIPT_CHARS]}
-    m = re.search(r"^session_id:\s*(\S+)", proc.stdout + "\n" + proc.stderr, re.MULTILINE)
+        return {
+            "events": [],
+            "error": f"timeout after {timeout}s",
+            "raw": (e.stdout or "")[:MAX_TRANSCRIPT_CHARS],
+        }
+    m = re.search(
+        r"^session_id:\s*(\S+)", proc.stdout + "\n" + proc.stderr, re.MULTILINE
+    )
     if not m:
-        return {"events": [], "error": f"hermes exited {proc.returncode}, no session_id "
-                f"found in output: {(proc.stderr or proc.stdout)[:2000]}"}
+        return {
+            "events": [],
+            "error": f"hermes exited {proc.returncode}, no session_id "
+            f"found in output: {(proc.stderr or proc.stdout)[:2000]}",
+        }
     session_id = m.group(1)
     # The transcript (including tool calls) isn't in `hermes chat`'s own
     # stdout — it's pulled separately from hermes's session store, the same
     # store `hermes sessions browse`/`--resume` reads from.
     try:
         exp = subprocess.run(
-            ["hermes", "sessions", "export", "-", "--session-id", session_id, "--format", "jsonl"],
-            cwd=cwd, env=env, capture_output=True, text=True, timeout=60)
+            [
+                "hermes",
+                "sessions",
+                "export",
+                "-",
+                "--session-id",
+                session_id,
+                "--format",
+                "jsonl",
+            ],
+            cwd=cwd,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
     except subprocess.TimeoutExpired:
         return {"events": [], "error": f"timeout exporting session {session_id}"}
     try:
         session_obj = json.loads(exp.stdout.strip())
     except json.JSONDecodeError:
-        return {"events": [], "error": f"could not parse session export for "
-                f"{session_id}: {exp.stderr[:2000]}"}
+        return {
+            "events": [],
+            "error": f"could not parse session export for "
+            f"{session_id}: {exp.stderr[:2000]}",
+        }
     return {"events": [session_obj], "error": None}
 
 
@@ -960,20 +1141,40 @@ def run_agent_omp(prompt, cwd, model, timeout, disallowed_tools=None, home=None)
     # could resolve to that instead of the fixture-local copy the prompt
     # explicitly points at, the exact bug class pi and opencode hit before
     # their prompts were made to say the relative path explicitly.
-    cmd = ["omp", "-p", "--mode", "json", "--yolo", "--model", model,
-           "--cwd", str(cwd), "--no-session", "--no-skills", prompt]
+    cmd = [
+        "omp",
+        "-p",
+        "--mode",
+        "json",
+        "--yolo",
+        "--model",
+        model,
+        "--cwd",
+        str(cwd),
+        "--no-session",
+        "--no-skills",
+        prompt,
+    ]
     if disallowed_tools:
-        print(f"  NOTE: omp driver has no documented per-tool deny flag (only "
-              f"an allow-list via --tools) — case's disallowed_tools "
-              f"{disallowed_tools} not enforced.", file=sys.stderr)
+        print(
+            f"  NOTE: omp driver has no documented per-tool deny flag (only "
+            f"an allow-list via --tools) — case's disallowed_tools "
+            f"{disallowed_tools} not enforced.",
+            file=sys.stderr,
+        )
     env = dict(os.environ)
     if home is not None:
         env["HOME"] = str(home)
     try:
-        proc = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout)
+        proc = subprocess.run(
+            cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout
+        )
     except subprocess.TimeoutExpired as e:
-        return {"events": [], "error": f"timeout after {timeout}s",
-                "raw": (e.stdout or "")[:MAX_TRANSCRIPT_CHARS]}
+        return {
+            "events": [],
+            "error": f"timeout after {timeout}s",
+            "raw": (e.stdout or "")[:MAX_TRANSCRIPT_CHARS],
+        }
     events = []
     for line in proc.stdout.splitlines():
         line = line.strip()
@@ -1028,7 +1229,9 @@ def render_transcript_claude(events):
                         content = content[:MAX_TOOL_RESULT_CHARS] + "…(truncated)"
                     out.append(f"[tool result] {content}")
         elif t == "result":
-            out.append(f"[session ended] subtype={ev.get('subtype')} turns={ev.get('num_turns')}")
+            out.append(
+                f"[session ended] subtype={ev.get('subtype')} turns={ev.get('num_turns')}"
+            )
     return _cap("\n\n".join(out))
 
 
@@ -1042,8 +1245,11 @@ def render_transcript_pi(events):
             if msg.get("role") != "assistant":
                 continue
             for block in msg.get("content", []) or []:
-                if isinstance(block, dict) and block.get("type") == "text" \
-                        and block.get("text", "").strip():
+                if (
+                    isinstance(block, dict)
+                    and block.get("type") == "text"
+                    and block.get("text", "").strip()
+                ):
                     out.append(f"[assistant]\n{block['text'].strip()}")
         elif t == "tool_execution_start":
             inp = json.dumps(ev.get("args", {}), ensure_ascii=False)
@@ -1052,7 +1258,11 @@ def render_transcript_pi(events):
             out.append(f"[tool call] {ev.get('toolName')}: {inp}")
         elif t == "tool_execution_end":
             result = ev.get("result")
-            result = json.dumps(result, ensure_ascii=False) if isinstance(result, (dict, list)) else str(result)
+            result = (
+                json.dumps(result, ensure_ascii=False)
+                if isinstance(result, (dict, list))
+                else str(result)
+            )
             if len(result) > MAX_TOOL_RESULT_CHARS:
                 result = result[:MAX_TOOL_RESULT_CHARS] + "…(truncated)"
             prefix = "[tool error]" if ev.get("isError") else "[tool result]"
@@ -1143,7 +1353,11 @@ def render_transcript_cline(events):
                     inp = inp[:1500] + "…(truncated)"
                 out.append(f"[tool call] {e.get('toolName')}: {inp}")
                 output = e.get("output")
-                output = json.dumps(output, ensure_ascii=False) if isinstance(output, (dict, list)) else str(output)
+                output = (
+                    json.dumps(output, ensure_ascii=False)
+                    if isinstance(output, (dict, list))
+                    else str(output)
+                )
                 if len(output) > MAX_TOOL_RESULT_CHARS:
                     output = output[:MAX_TOOL_RESULT_CHARS] + "…(truncated)"
                 out.append(f"[tool result] {output}")
@@ -1178,7 +1392,9 @@ def render_transcript_codex(events):
                 output = output[:MAX_TOOL_RESULT_CHARS] + "…(truncated)"
             out.append(f"[tool result] {output}")
         elif it in ("file_change", "mcp_tool_call"):
-            out.append(f"[tool call] {it}: {json.dumps(item, ensure_ascii=False)[:1500]}")
+            out.append(
+                f"[tool call] {it}: {json.dumps(item, ensure_ascii=False)[:1500]}"
+            )
         elif it == "error":
             out.append(f"[error] {item.get('message')}")
     return _cap("\n\n".join(out))
@@ -1229,8 +1445,11 @@ def render_transcript_omp(events):
             if msg.get("role") != "assistant":
                 continue
             for block in msg.get("content", []) or []:
-                if isinstance(block, dict) and block.get("type") == "text" \
-                        and block.get("text", "").strip():
+                if (
+                    isinstance(block, dict)
+                    and block.get("type") == "text"
+                    and block.get("text", "").strip()
+                ):
                     out.append(f"[assistant]\n{block['text'].strip()}")
         elif t == "tool_execution_start":
             inp = json.dumps(ev.get("args", {}), ensure_ascii=False)
@@ -1239,7 +1458,11 @@ def render_transcript_omp(events):
             out.append(f"[tool call] {ev.get('toolName')}: {inp}")
         elif t == "tool_execution_end":
             result = ev.get("result")
-            result = json.dumps(result, ensure_ascii=False) if isinstance(result, (dict, list)) else str(result)
+            result = (
+                json.dumps(result, ensure_ascii=False)
+                if isinstance(result, (dict, list))
+                else str(result)
+            )
             if len(result) > MAX_TOOL_RESULT_CHARS:
                 result = result[:MAX_TOOL_RESULT_CHARS] + "…(truncated)"
             prefix = "[tool error]" if ev.get("isError") else "[tool result]"
@@ -1308,20 +1531,26 @@ def collect_diff(workdir, home=None):
                     except (UnicodeDecodeError, OSError):
                         content = "(binary or unreadable)"
                     if rel in seeded and seeded[rel] == content:
-                        label = ("SEEDED BY THE FIXTURE BEFORE THE RUN, UNCHANGED — "
-                                 "the agent did not write this")
+                        label = (
+                            "SEEDED BY THE FIXTURE BEFORE THE RUN, UNCHANGED — "
+                            "the agent did not write this"
+                        )
                     elif rel in seeded:
                         label = "seeded by the fixture, MODIFIED by the agent during the run"
                     else:
                         label = "did not exist before the run — CREATED by the agent"
                     if len(content) > 4000:
                         content = content[:4000] + "…(truncated)"
-                    parts.append(f"# ~/.keep-the-why/{rel} "
-                                 f"(personal config, outside the project; {label})\n{content}")
+                    parts.append(
+                        f"# ~/.keep-the-why/{rel} "
+                        f"(personal config, outside the project; {label})\n{content}"
+                    )
         for rel in seeded:
             if rel not in seen:
-                parts.append(f"# ~/.keep-the-why/{rel} (personal config, outside the project; "
-                             f"seeded by the fixture, DELETED by the agent during the run)")
+                parts.append(
+                    f"# ~/.keep-the-why/{rel} (personal config, outside the project; "
+                    f"seeded by the fixture, DELETED by the agent during the run)"
+                )
     text = "\n\n".join(parts)
     if len(text) > MAX_DIFF_CHARS:
         text = text[:MAX_DIFF_CHARS] + "\n…(diff truncated)"
@@ -1373,27 +1602,49 @@ JSON object, no markdown fences, with exactly these keys:
 
 
 def judge(case, transcript, diff, model, timeout):
-    prompt = (JUDGE_PROMPT
-              .replace("{PROMPT}", case["prompt"])
-              .replace("{EXPECTED}", case["expected_behavior"])
-              .replace("{TRANSCRIPT}", transcript or "(empty transcript)")
-              .replace("{DIFF}", diff or "(no changes)"))
-    cmd = ["claude", "-p", prompt, "--model", model, "--output-format", "json",
-           "--max-turns", "4"]
+    prompt = (
+        JUDGE_PROMPT.replace("{PROMPT}", case["prompt"])
+        .replace("{EXPECTED}", case["expected_behavior"])
+        .replace("{TRANSCRIPT}", transcript or "(empty transcript)")
+        .replace("{DIFF}", diff or "(no changes)")
+    )
+    cmd = [
+        "claude",
+        "-p",
+        prompt,
+        "--model",
+        model,
+        "--output-format",
+        "json",
+        "--max-turns",
+        "4",
+    ]
     env = {k: v for k, v in os.environ.items() if k != "CLAUDECODE"}
     last_error = None
     for _attempt in range(2):
         try:
-            proc = subprocess.run(cmd, capture_output=True, text=True, env=env,
-                                  timeout=timeout, cwd=tempfile.gettempdir())
+            proc = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                env=env,
+                timeout=timeout,
+                cwd=tempfile.gettempdir(),
+            )
         except subprocess.TimeoutExpired:
             last_error = "judge timeout"
             continue
         try:
             data = json.loads(proc.stdout)
             if isinstance(data, list):  # newer CLIs emit the event list here
-                result = next((ev.get("result", "") for ev in data
-                               if isinstance(ev, dict) and ev.get("type") == "result"), "")
+                result = next(
+                    (
+                        ev.get("result", "")
+                        for ev in data
+                        if isinstance(ev, dict) and ev.get("type") == "result"
+                    ),
+                    "",
+                )
             else:
                 result = data.get("result", "")
             match = re.search(r"\{.*\}", result, re.DOTALL)
@@ -1418,17 +1669,28 @@ def run_case(case, args, results_dir):
         # session/usage limit — every further attempt would just hit the same
         # wall at real API cost. Skip outright, no workdir, no API call.
         record = {
-            "id": case_id, "verdict": "rate_limited", "score": None,
+            "id": case_id,
+            "verdict": "rate_limited",
+            "score": None,
             "reasoning": "Skipped: an earlier case in this pass hit the account's session/usage limit.",
-            "violations": [], "agent_model": args.model, "judge_model": args.judge_model,
-            "driver": args.driver, "permission_bypass": PERMISSION_BYPASS[args.driver],
+            "violations": [],
+            "agent_model": args.model,
+            "judge_model": args.judge_model,
+            "driver": args.driver,
+            "permission_bypass": PERMISSION_BYPASS[args.driver],
             "started": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-            "duration_s": 0, "transcript": "", "disk_changes": "",
-            "disk_changed": None, "ended_with_no_response": None,
-            "evidence_tool_calls_found": None, "evidence_claim": None,
+            "duration_s": 0,
+            "transcript": "",
+            "disk_changes": "",
+            "disk_changed": None,
+            "ended_with_no_response": None,
+            "evidence_tool_calls_found": None,
+            "evidence_claim": None,
             "restraint_category": None,
         }
-        (results_dir / f"{case_id}.json").write_text(json.dumps(record, indent=2, ensure_ascii=False))
+        (results_dir / f"{case_id}.json").write_text(
+            json.dumps(record, indent=2, ensure_ascii=False)
+        )
         print(f"  skip   {case_id}  (rate-limited earlier in this pass)", flush=True)
         return record
 
@@ -1457,8 +1719,14 @@ def run_case(case, args, results_dir):
         seed_fake_home(Path.home(), fake_home, args.driver)
         build_workdir(case_id, cfg, workdir, args.driver, home=fake_home)
         prompt = build_prompt(case["prompt"], args.driver)
-        agent = AGENT_RUNNERS[args.driver](prompt, workdir, args.model, args.timeout,
-                                           cfg.get("disallowed_tools"), home=fake_home)
+        agent = AGENT_RUNNERS[args.driver](
+            prompt,
+            workdir,
+            args.model,
+            args.timeout,
+            cfg.get("disallowed_tools"),
+            home=fake_home,
+        )
         transcript = TRANSCRIPT_RENDERERS[args.driver](agent["events"])
         diff = collect_diff(workdir, home=fake_home)
     if agent.get("error"):
@@ -1466,19 +1734,35 @@ def run_case(case, args, results_dir):
         # A driver-level error (crash, timeout) means there's no real agent
         # behavior to categorize — an empty/partial transcript would
         # otherwise misclassify as e.g. "restrained" for the wrong reason.
-        restraint = {k: None for k in (
-            "disk_changed", "ended_with_no_response",
-            "evidence_tool_calls_found", "evidence_claim", "restraint_category")}
+        restraint = {
+            k: None
+            for k in (
+                "disk_changed",
+                "ended_with_no_response",
+                "evidence_tool_calls_found",
+                "evidence_claim",
+                "restraint_category",
+            )
+        }
     elif RATE_LIMIT_RE.search(transcript):
         # A real, successful CLI response that just says the account is out
         # of quota. Don't spend a second API call having the judge grade it —
         # there's nothing to grade — and stop the rest of this pass early.
         sentinel.touch()
-        verdict = {"verdict": "rate_limited",
-                   "reasoning": "Agent response indicated the account's session/usage limit was hit."}
-        restraint = {k: None for k in (
-            "disk_changed", "ended_with_no_response",
-            "evidence_tool_calls_found", "evidence_claim", "restraint_category")}
+        verdict = {
+            "verdict": "rate_limited",
+            "reasoning": "Agent response indicated the account's session/usage limit was hit.",
+        }
+        restraint = {
+            k: None
+            for k in (
+                "disk_changed",
+                "ended_with_no_response",
+                "evidence_tool_calls_found",
+                "evidence_claim",
+                "restraint_category",
+            )
+        }
     else:
         verdict = judge(case, transcript, diff, args.judge_model, args.timeout)
         restraint = restraint_analysis(transcript, diff)
@@ -1493,12 +1777,16 @@ def run_case(case, args, results_dir):
         "driver": args.driver,
         "permission_bypass": PERMISSION_BYPASS[args.driver],
         "started": started.isoformat(),
-        "duration_s": round((datetime.datetime.now(datetime.timezone.utc) - started).total_seconds()),
+        "duration_s": round(
+            (datetime.datetime.now(datetime.timezone.utc) - started).total_seconds()
+        ),
         "transcript": transcript,
         "disk_changes": diff,
         **restraint,
     }
-    (results_dir / f"{case_id}.json").write_text(json.dumps(record, indent=2, ensure_ascii=False))
+    (results_dir / f"{case_id}.json").write_text(
+        json.dumps(record, indent=2, ensure_ascii=False)
+    )
     print(f"  {record['verdict']:<5}  {case_id}  ({record['duration_s']}s)", flush=True)
     return record
 
@@ -1539,7 +1827,10 @@ def execute_pass(cases, args, results_dir):
         (resolved if prior else pending).append(prior or c)
 
     if resolved:
-        print(f"{len(resolved)} case(s) already resolved (pass/fail) — skipping", flush=True)
+        print(
+            f"{len(resolved)} case(s) already resolved (pass/fail) — skipping",
+            flush=True,
+        )
     print(f"Running {len(pending)} case(s) → {results_dir}", flush=True)
 
     fresh = []
@@ -1557,7 +1848,9 @@ def execute_pass(cases, args, results_dir):
 
 
 def write_summary(records, results_dir, args):
-    skill_version = re.search(r'version: "([^"]+)"', (SKILL_DIR / "SKILL.md").read_text()).group(1)
+    skill_version = re.search(
+        r'version: "([^"]+)"', (SKILL_DIR / "SKILL.md").read_text()
+    ).group(1)
     passed = [r for r in records if r["verdict"] == "pass"]
     failed = [r for r in records if r["verdict"] == "fail"]
     errored = [r for r in records if r["verdict"] not in ("pass", "fail")]
@@ -1578,9 +1871,14 @@ def write_summary(records, results_dir, args):
         "failed": len(failed),
         "errors": len(errored),
         "restraint_categories": restraint_counts,
-        "cases": {r["id"]: {"verdict": r["verdict"], "score": r.get("score"),
-                             "restraint_category": r.get("restraint_category")}
-                  for r in records},
+        "cases": {
+            r["id"]: {
+                "verdict": r["verdict"],
+                "score": r.get("score"),
+                "restraint_category": r.get("restraint_category"),
+            }
+            for r in records
+        },
     }
     (results_dir / "summary.json").write_text(json.dumps(summary, indent=2))
     lines = [
@@ -1593,15 +1891,21 @@ def write_summary(records, results_dir, args):
         "",
     ]
     if restraint_counts:
-        breakdown = ", ".join(f"{cat}: {n}" for cat, n in sorted(restraint_counts.items()))
-        lines.append(f"Restraint categories (mechanical, not judge-scored): {breakdown}")
+        breakdown = ", ".join(
+            f"{cat}: {n}" for cat, n in sorted(restraint_counts.items())
+        )
+        lines.append(
+            f"Restraint categories (mechanical, not judge-scored): {breakdown}"
+        )
         lines.append("")
     if failed or errored:
         lines.append("| Case | Verdict | Score | Notes |")
         lines.append("|---|---|---|---|")
         for r in failed + errored:
             note = (r.get("reasoning") or "").replace("\n", " ")[:200]
-            lines.append(f"| {r['id']} | {r['verdict']} | {r.get('score', '—')} | {note} |")
+            lines.append(
+                f"| {r['id']} | {r['verdict']} | {r.get('score', '—')} | {note} |"
+            )
     (results_dir / "summary.md").write_text("\n".join(lines) + "\n")
     return summary
 
@@ -1625,7 +1929,9 @@ def run_matrix(cases, args):
     free, and the same command works unattended in CI.
     """
     config = load_matrix_config()
-    drivers = args.matrix_drivers.split(",") if args.matrix_drivers else config["drivers"]
+    drivers = (
+        args.matrix_drivers.split(",") if args.matrix_drivers else config["drivers"]
+    )
     unknown = [d for d in drivers if d not in AGENT_RUNNERS]
     if unknown:
         sys.exit(f"unknown driver(s) in matrix: {', '.join(unknown)}")
@@ -1636,12 +1942,21 @@ def run_matrix(cases, args):
         models = config["models"]
 
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    matrix_dir = Path(args.results_dir) if args.results_dir else TOOL_DIR / "results" / f"{stamp}-matrix"
+    matrix_dir = (
+        Path(args.results_dir)
+        if args.results_dir
+        else TOOL_DIR / "results" / f"{stamp}-matrix"
+    )
     matrix_dir.mkdir(parents=True, exist_ok=True)
 
-    combos = [(driver, model["id"], model["label"]) for driver in drivers for model in models]
-    print(f"Matrix: {len(drivers)} driver(s) x {len(models)} model(s) = "
-          f"{len(combos)} combination(s) → {matrix_dir}", flush=True)
+    combos = [
+        (driver, model["id"], model["label"]) for driver in drivers for model in models
+    ]
+    print(
+        f"Matrix: {len(drivers)} driver(s) x {len(models)} model(s) = "
+        f"{len(combos)} combination(s) → {matrix_dir}",
+        flush=True,
+    )
 
     def run_one(driver, model_id):
         sub_args = copy.copy(args)
@@ -1653,16 +1968,23 @@ def run_matrix(cases, args):
         return driver, model_id, summary, all_resolved
 
     results = {}
-    with concurrent.futures.ThreadPoolExecutor(max_workers=args.matrix_parallel) as pool:
+    with concurrent.futures.ThreadPoolExecutor(
+        max_workers=args.matrix_parallel
+    ) as pool:
         futures = [pool.submit(run_one, d, m) for d, m, _label in combos]
         for fut in concurrent.futures.as_completed(futures):
             driver, model_id, summary, all_resolved = fut.result()
             results[(driver, model_id)] = (summary, all_resolved)
             status = "resolved" if all_resolved else "UNRESOLVED"
-            print(f"  [{status}] {driver} / {model_id}: "
-                  f"{summary['passed']}/{summary['total']} passed", flush=True)
+            print(
+                f"  [{status}] {driver} / {model_id}: "
+                f"{summary['passed']}/{summary['total']} passed",
+                flush=True,
+            )
 
-    skill_version = re.search(r'version: "([^"]+)"', (SKILL_DIR / "SKILL.md").read_text()).group(1)
+    skill_version = re.search(
+        r'version: "([^"]+)"', (SKILL_DIR / "SKILL.md").read_text()
+    ).group(1)
     date = datetime.date.today().isoformat()
 
     def cell(driver, model_id):
@@ -1683,18 +2005,32 @@ def run_matrix(cases, args):
             # can't quietly hide e.g. the file having actually been deleted
             # (the real bug this caught on the old Cline column).
             category = case.get("restraint_category")
-            code_part = f" [{RESTRAINT_CODES[category]}]" if category in RESTRAINT_CODES else ""
+            code_part = (
+                f" [{RESTRAINT_CODES[category]}]" if category in RESTRAINT_CODES else ""
+            )
             return f"{mark} {score_part}{code_part} · v{skill_version} · {date}"
-        mark = "✅" if all_resolved and summary["failed"] == 0 else "❌" if all_resolved else "⚠️"
-        cats = [c.get("restraint_category") for c in summary["cases"].values()
-                if c.get("restraint_category") in RESTRAINT_CODES]
+        mark = (
+            "✅"
+            if all_resolved and summary["failed"] == 0
+            else "❌" if all_resolved else "⚠️"
+        )
+        cats = [
+            c.get("restraint_category")
+            for c in summary["cases"].values()
+            if c.get("restraint_category") in RESTRAINT_CODES
+        ]
         breakdown = ""
         if cats:
             counts = {}
             for c in cats:
                 counts[c] = counts.get(c, 0) + 1
-            breakdown = (" [" + " ".join(f"{RESTRAINT_CODES[c]}{n}"
-                                          for c, n in sorted(counts.items())) + "]")
+            breakdown = (
+                " ["
+                + " ".join(
+                    f"{RESTRAINT_CODES[c]}{n}" for c, n in sorted(counts.items())
+                )
+                + "]"
+            )
         return f"{mark} {summary['passed']}/{summary['total']}{breakdown} · v{skill_version} · {date}"
 
     lines = [
@@ -1714,19 +2050,32 @@ def run_matrix(cases, args):
     table_md = "\n".join(lines) + "\n"
 
     (matrix_dir / "matrix-summary.md").write_text(table_md)
-    (matrix_dir / "matrix-summary.json").write_text(json.dumps(
-        {"skill_version": skill_version, "date": date, "drivers": drivers,
-         "models": [m["id"] for m in models],
-         "results": {f"{d}/{m}": {"summary": s, "resolved": r}
-                      for (d, m), (s, r) in results.items()}},
-        indent=2))
+    (matrix_dir / "matrix-summary.json").write_text(
+        json.dumps(
+            {
+                "skill_version": skill_version,
+                "date": date,
+                "drivers": drivers,
+                "models": [m["id"] for m in models],
+                "results": {
+                    f"{d}/{m}": {"summary": s, "resolved": r}
+                    for (d, m), (s, r) in results.items()
+                },
+            },
+            indent=2,
+        )
+    )
 
-    print(f"\n{table_md}\nSaved to {matrix_dir}/matrix-summary.md — paste rows (and the "
-          f"restraint-codes legend line) into docs/agent-matrix.md by hand (that page "
-          f"also has hand-written prose this doesn't touch).", flush=True)
+    print(
+        f"\n{table_md}\nSaved to {matrix_dir}/matrix-summary.md — paste rows (and the "
+        f"restraint-codes legend line) into docs/agent-matrix.md by hand (that page "
+        f"also has hand-written prose this doesn't touch).",
+        flush=True,
+    )
 
     all_ok = all(r for _s, r in results.values()) and all(
-        s["failed"] == 0 for s, _r in results.values())
+        s["failed"] == 0 for s, _r in results.values()
+    )
     return 0 if all_ok else 1
 
 
@@ -1735,45 +2084,84 @@ def main():
     group = ap.add_mutually_exclusive_group(required=True)
     group.add_argument("--all", action="store_true", help="run every case")
     group.add_argument("--cases", help="comma-separated case ids")
-    ap.add_argument("--driver", choices=sorted(AGENT_RUNNERS), default="claude",
-                    help="agentic CLI to run the skill under test with (default: claude); "
-                         "see module docstring for what pi/opencode do differently")
-    ap.add_argument("--model", default="sonnet",
-                    help="agent-under-test model, syntax is driver-specific "
-                         "(default: sonnet; e.g. --driver pi --model ollama/qwen3:8b)")
-    ap.add_argument("--judge-model", default="sonnet",
-                    help="judge model (default: sonnet; always run via the claude driver, "
-                         "regardless of --driver, so grading stays consistent)")
-    ap.add_argument("--parallel", type=int, default=3, help="concurrent cases (default: 3)")
-    ap.add_argument("--timeout", type=int, default=900, help="per-run timeout in seconds")
-    ap.add_argument("--results-dir", help="output dir (default: tools/evals/results/<timestamp>-<driver>)")
-    ap.add_argument("--retry-until-complete", action="store_true",
-                    help="on a rate-limited/incomplete pass, sleep and retry only the "
-                         "unresolved cases, until every case has a pass/fail verdict or "
-                         "--max-wait-hours is exceeded")
-    ap.add_argument("--retry-interval", type=int, default=600,
-                    help="seconds to sleep between retry passes (default: 600)")
-    ap.add_argument("--max-wait-hours", type=float, default=10,
-                    help="give up retrying after this many hours total (default: 10)")
-    ap.add_argument("--matrix", action="store_true",
-                    help="run every driver x model combination from "
-                         "tools/evals/matrix-config.json instead of a single "
-                         "--driver/--model run; --driver/--model are ignored "
-                         "in this mode. Prints a docs/agent-matrix.md-style "
-                         "table and exits non-zero if anything failed or "
-                         "didn't resolve — safe to run unattended (e.g. CI).")
-    ap.add_argument("--matrix-drivers",
-                    help="comma-separated driver override for --matrix "
-                         "(default: the drivers list in matrix-config.json)")
-    ap.add_argument("--matrix-models",
-                    help="comma-separated model override for --matrix, full "
-                         "--model strings (default: the models list in "
-                         "matrix-config.json)")
-    ap.add_argument("--matrix-parallel", type=int, default=4,
-                    help="concurrent driver x model combinations for "
-                         "--matrix (default: 4) — separate from --parallel, "
-                         "which still controls concurrent cases within each "
-                         "combination")
+    ap.add_argument(
+        "--driver",
+        choices=sorted(AGENT_RUNNERS),
+        default="claude",
+        help="agentic CLI to run the skill under test with (default: claude); "
+        "see module docstring for what pi/opencode do differently",
+    )
+    ap.add_argument(
+        "--model",
+        default="sonnet",
+        help="agent-under-test model, syntax is driver-specific "
+        "(default: sonnet; e.g. --driver pi --model ollama/qwen3:8b)",
+    )
+    ap.add_argument(
+        "--judge-model",
+        default="sonnet",
+        help="judge model (default: sonnet; always run via the claude driver, "
+        "regardless of --driver, so grading stays consistent)",
+    )
+    ap.add_argument(
+        "--parallel", type=int, default=3, help="concurrent cases (default: 3)"
+    )
+    ap.add_argument(
+        "--timeout", type=int, default=900, help="per-run timeout in seconds"
+    )
+    ap.add_argument(
+        "--results-dir",
+        help="output dir (default: tools/evals/results/<timestamp>-<driver>)",
+    )
+    ap.add_argument(
+        "--retry-until-complete",
+        action="store_true",
+        help="on a rate-limited/incomplete pass, sleep and retry only the "
+        "unresolved cases, until every case has a pass/fail verdict or "
+        "--max-wait-hours is exceeded",
+    )
+    ap.add_argument(
+        "--retry-interval",
+        type=int,
+        default=600,
+        help="seconds to sleep between retry passes (default: 600)",
+    )
+    ap.add_argument(
+        "--max-wait-hours",
+        type=float,
+        default=10,
+        help="give up retrying after this many hours total (default: 10)",
+    )
+    ap.add_argument(
+        "--matrix",
+        action="store_true",
+        help="run every driver x model combination from "
+        "tools/evals/matrix-config.json instead of a single "
+        "--driver/--model run; --driver/--model are ignored "
+        "in this mode. Prints a docs/agent-matrix.md-style "
+        "table and exits non-zero if anything failed or "
+        "didn't resolve — safe to run unattended (e.g. CI).",
+    )
+    ap.add_argument(
+        "--matrix-drivers",
+        help="comma-separated driver override for --matrix "
+        "(default: the drivers list in matrix-config.json)",
+    )
+    ap.add_argument(
+        "--matrix-models",
+        help="comma-separated model override for --matrix, full "
+        "--model strings (default: the models list in "
+        "matrix-config.json)",
+    )
+    ap.add_argument(
+        "--matrix-parallel",
+        type=int,
+        default=4,
+        help="concurrent driver x model combinations for "
+        "--matrix (default: 4) — separate from --parallel, "
+        "which still controls concurrent cases within each "
+        "combination",
+    )
     args = ap.parse_args()
 
     cases = load_cases(args.cases.split(",") if args.cases else None)
@@ -1782,7 +2170,11 @@ def main():
         sys.exit(run_matrix(cases, args))
 
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    results_dir = Path(args.results_dir) if args.results_dir else TOOL_DIR / "results" / f"{stamp}-{args.driver}"
+    results_dir = (
+        Path(args.results_dir)
+        if args.results_dir
+        else TOOL_DIR / "results" / f"{stamp}-{args.driver}"
+    )
     results_dir.mkdir(parents=True, exist_ok=True)
 
     deadline = time.monotonic() + args.max_wait_hours * 3600
@@ -1790,29 +2182,41 @@ def main():
     while True:
         attempt += 1
         now = datetime.datetime.now().strftime("%H:%M:%S")
-        print(f"[{now}] pass {attempt}" + (" (retry)" if attempt > 1 else ""), flush=True)
+        print(
+            f"[{now}] pass {attempt}" + (" (retry)" if attempt > 1 else ""), flush=True
+        )
         records, summary, all_resolved = execute_pass(cases, args, results_dir)
 
         if all_resolved or not args.retry_until_complete:
-            print(f"\n{summary['passed']}/{summary['total']} passed "
-                  f"({summary['failed']} failed, {summary['errors']} errors) — see {results_dir}/summary.md",
-                  flush=True)
+            print(
+                f"\n{summary['passed']}/{summary['total']} passed "
+                f"({summary['failed']} failed, {summary['errors']} errors) — see {results_dir}/summary.md",
+                flush=True,
+            )
             if not all_resolved:
-                print(f"NOTE: {summary['errors']} case(s) still unresolved (error/rate_limited) — "
-                      f"re-run the same command (same --results-dir) to retry just those, "
-                      f"or add --retry-until-complete.", flush=True)
+                print(
+                    f"NOTE: {summary['errors']} case(s) still unresolved (error/rate_limited) — "
+                    f"re-run the same command (same --results-dir) to retry just those, "
+                    f"or add --retry-until-complete.",
+                    flush=True,
+                )
             sys.exit(0 if summary["failed"] == 0 and summary["errors"] == 0 else 1)
 
         remaining = summary["errors"]
         if time.monotonic() >= deadline:
-            print(f"\n[{now}] --max-wait-hours ({args.max_wait_hours}h) exceeded with "
-                  f"{remaining} case(s) still unresolved — giving up for now. "
-                  f"Re-run the same command against {results_dir} later to pick up where this left off.",
-                  flush=True)
+            print(
+                f"\n[{now}] --max-wait-hours ({args.max_wait_hours}h) exceeded with "
+                f"{remaining} case(s) still unresolved — giving up for now. "
+                f"Re-run the same command against {results_dir} later to pick up where this left off.",
+                flush=True,
+            )
             sys.exit(4)
 
-        print(f"[{now}] {remaining} case(s) still unresolved (likely rate-limited) — "
-              f"sleeping {args.retry_interval}s before retrying", flush=True)
+        print(
+            f"[{now}] {remaining} case(s) still unresolved (likely rate-limited) — "
+            f"sleeping {args.retry_interval}s before retrying",
+            flush=True,
+        )
         time.sleep(args.retry_interval)
 
 

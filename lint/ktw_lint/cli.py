@@ -37,14 +37,20 @@ def main(argv=None) -> int:
         ".keep-the-why and the configured context directory. Structure only — "
         "whether the recorded rationale is true is not mechanically checkable.",
     )
-    parser.add_argument("path", nargs="?", default=".", help="project root (default: current directory)")
-    parser.add_argument("--strict", action="store_true", help="treat warnings as errors")
+    parser.add_argument(
+        "path", nargs="?", default=".", help="project root (default: current directory)"
+    )
+    parser.add_argument(
+        "--strict", action="store_true", help="treat warnings as errors"
+    )
     parser.add_argument(
         "--github",
         action="store_true",
         help="emit GitHub Actions annotations (auto-enabled when GITHUB_ACTIONS is set)",
     )
-    parser.add_argument("--version", action="version", version=f"ktw-lint {__version__}")
+    parser.add_argument(
+        "--version", action="version", version=f"ktw-lint {__version__}"
+    )
     args = parser.parse_args(argv)
 
     root = os.path.abspath(args.path)

@@ -16,7 +16,9 @@ from dataclasses import dataclass, field
 KNOWN_FIELDS = ("Type", "Status", "Evidence", "Source", "Verification", "Revisit when")
 
 _HEADING_RE = re.compile(r"^(#{1,6})\s+(.*?)\s*$")
-_FIELD_RE = re.compile(r"^\*\*(Type|Status|Evidence|Source|Verification|Revisit when):\*\*\s*(.*?)\s*$")
+_FIELD_RE = re.compile(
+    r"^\*\*(Type|Status|Evidence|Source|Verification|Revisit when):\*\*\s*(.*?)\s*$"
+)
 _FENCE_RE = re.compile(r"^\s*(```|~~~)")
 
 
@@ -68,7 +70,9 @@ def parse_topic_text(text: str):
             continue
         fld = _FIELD_RE.match(raw)
         if fld:
-            current.fields.append(FieldLine(name=fld.group(1), value=fld.group(2), line=lineno))
+            current.fields.append(
+                FieldLine(name=fld.group(1), value=fld.group(2), line=lineno)
+            )
     return entries
 
 

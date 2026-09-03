@@ -75,7 +75,10 @@ class LintProject(unittest.TestCase):
     def base_project(self, config=GOOD_CONFIG, topic=GOOD_ENTRY):
         self.write(".keep-the-why", config)
         self.write("context/sync.md", topic)
-        self.write("context/index.md", "# Context index\n\n- [sync.md](sync.md) — sync design\n")
+        self.write(
+            "context/index.md",
+            "# Context index\n\n- [sync.md](sync.md) — sync design\n",
+        )
         self.write("context/README.md", "# Project context\n")
         self.write("context/AGENTS.md", "Invoke the keep-the-why skill first.\n")
         self.write("context/CLAUDE.md", "@AGENTS.md\n")
@@ -92,13 +95,17 @@ class LintProject(unittest.TestCase):
     def test_clean_project(self):
         self.base_project()
         findings, linter = self.run_lint()
-        self.assertEqual(self.codes(findings), [], msg=[f.format_text() for f in findings])
+        self.assertEqual(
+            self.codes(findings), [], msg=[f.format_text() for f in findings]
+        )
         self.assertEqual(linter.schema, (0, 10, 1))
 
     def test_exit_codes(self):
         self.base_project()
         self.assertEqual(self.cli([self.root]), 0)
-        self.write("context/sync.md", GOOD_ENTRY.replace("**Evidence:** confirmed\n", ""))
+        self.write(
+            "context/sync.md", GOOD_ENTRY.replace("**Evidence:** confirmed\n", "")
+        )
         self.assertEqual(self.cli([self.root]), 1)
 
     def test_strict_turns_warnings_into_failure(self):
@@ -118,7 +125,9 @@ class LintProject(unittest.TestCase):
         legacy = GOOD_CONFIG.replace("- id: acme---widget-service\n", "")
         self.write("AGENTS.md", "# AGENTS\n\n" + legacy)
         findings, _ = self.run_lint()
-        self.assertEqual(self.codes(findings), [], msg=[f.format_text() for f in findings])
+        self.assertEqual(
+            self.codes(findings), [], msg=[f.format_text() for f in findings]
+        )
 
     def test_missing_required_field(self):
         self.base_project(config=GOOD_CONFIG.replace("- init: complete\n", ""))
@@ -156,7 +165,9 @@ class LintProject(unittest.TestCase):
 
     def test_missing_schema_warns_and_gates_everything_off(self):
         config = GOOD_CONFIG.replace("- context-schema: 0.10.1\n", "")
-        entry = GOOD_ENTRY.replace("**Status:** active\n", "").replace("**Evidence:** confirmed\n", "")
+        entry = GOOD_ENTRY.replace("**Status:** active\n", "").replace(
+            "**Evidence:** confirmed\n", ""
+        )
         self.base_project(config=config, topic=entry)
         findings, linter = self.run_lint()
         codes = self.codes(findings)
@@ -174,7 +185,8 @@ class LintProject(unittest.TestCase):
 
     def test_pinned_pair(self):
         config = GOOD_CONFIG.replace(
-            "<!-- /keep-the-why:config -->", "- pinned-version: 0.9.5\n<!-- /keep-the-why:config -->"
+            "<!-- /keep-the-why:config -->",
+            "- pinned-version: 0.9.5\n<!-- /keep-the-why:config -->",
         )
         self.base_project(config=config)
         findings, _ = self.run_lint()
@@ -188,7 +200,9 @@ class LintProject(unittest.TestCase):
         self.base_project(config=config)
         findings, _ = self.run_lint()
         self.assertIn("E006", self.codes(findings))
-        self.write(".claude/skills/keep-the-why/SKILL.md", "---\nname: keep-the-why\n---\n")
+        self.write(
+            ".claude/skills/keep-the-why/SKILL.md", "---\nname: keep-the-why\n---\n"
+        )
         findings, _ = self.run_lint()
         self.assertNotIn("E006", self.codes(findings))
 
@@ -216,7 +230,9 @@ class LintProject(unittest.TestCase):
     # -- entries ---------------------------------------------------------
 
     def test_missing_status_and_evidence(self):
-        entry = GOOD_ENTRY.replace("**Status:** active\n", "").replace("**Evidence:** confirmed\n", "")
+        entry = GOOD_ENTRY.replace("**Status:** active\n", "").replace(
+            "**Evidence:** confirmed\n", ""
+        )
         self.base_project(topic=entry)
         findings, _ = self.run_lint()
         codes = self.codes(findings)
@@ -239,7 +255,10 @@ class LintProject(unittest.TestCase):
         entry = GOOD_ENTRY + "\n**Verification:** contradicted\n"
         self.base_project(topic=entry)
         self.assertIn("E111", self.codes(self.run_lint()[0]))
-        entry = GOOD_ENTRY + "\n**Verification:** contradicted — code caps at 5, interview said 3\n"
+        entry = (
+            GOOD_ENTRY
+            + "\n**Verification:** contradicted — code caps at 5, interview said 3\n"
+        )
         self.base_project(topic=entry)
         self.assertNotIn("E111", self.codes(self.run_lint()[0]))
 
@@ -247,7 +266,9 @@ class LintProject(unittest.TestCase):
         entry = GOOD_ENTRY.replace("**Type:** decision", "**Type:** undefined")
         self.base_project(topic=entry)
         self.assertIn("E107", self.codes(self.run_lint()[0]))
-        entry = GOOD_ENTRY.replace("**Type:** decision", "**Type:** undefined — names a convention")
+        entry = GOOD_ENTRY.replace(
+            "**Type:** decision", "**Type:** undefined — names a convention"
+        )
         self.base_project(topic=entry)
         self.assertNotIn("E107", self.codes(self.run_lint()[0]))
         entry = GOOD_ENTRY.replace(
@@ -257,7 +278,9 @@ class LintProject(unittest.TestCase):
         self.assertIn("E108", self.codes(self.run_lint()[0]))
 
     def test_multi_type_gated_by_schema(self):
-        entry = GOOD_ENTRY.replace("**Type:** decision", "**Type:** workaround\n**Type:** incident")
+        entry = GOOD_ENTRY.replace(
+            "**Type:** decision", "**Type:** workaround\n**Type:** incident"
+        )
         self.base_project(topic=entry)
         self.assertNotIn("E110", self.codes(self.run_lint()[0]))
         self.base_project(config=GOOD_CONFIG.replace("0.10.1", "0.8.0"), topic=entry)
@@ -265,7 +288,9 @@ class LintProject(unittest.TestCase):
         self.assertIn("E110", codes)
 
     def test_duplicate_type_value(self):
-        entry = GOOD_ENTRY.replace("**Type:** decision", "**Type:** incident\n**Type:** incident")
+        entry = GOOD_ENTRY.replace(
+            "**Type:** decision", "**Type:** incident\n**Type:** incident"
+        )
         self.base_project(topic=entry)
         self.assertIn("E109", self.codes(self.run_lint()[0]))
 
@@ -277,7 +302,10 @@ class LintProject(unittest.TestCase):
         self.assertEqual([f.code for f in findings if f.severity == "error"], [])
 
     def test_type_after_status_warns(self):
-        entry = GOOD_ENTRY.replace("**Type:** decision\n**Status:** active", "**Status:** active\n**Type:** decision")
+        entry = GOOD_ENTRY.replace(
+            "**Type:** decision\n**Status:** active",
+            "**Status:** active\n**Type:** decision",
+        )
         self.base_project(topic=entry)
         self.assertIn("W103", self.codes(self.run_lint()[0]))
 
@@ -303,7 +331,9 @@ class LintProject(unittest.TestCase):
 
     def test_index_broken_link_and_unlisted_topic(self):
         self.base_project()
-        self.write("context/index.md", "# Context index\n\n- [gone.md](gone.md) — nope\n")
+        self.write(
+            "context/index.md", "# Context index\n\n- [gone.md](gone.md) — nope\n"
+        )
         codes = self.codes(self.run_lint()[0])
         self.assertIn("E202", codes)
         self.assertIn("E203", codes)

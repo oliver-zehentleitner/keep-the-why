@@ -5,6 +5,7 @@
 [![keep-the-why-lint (package)](https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/lint-package.yml/badge.svg)](https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/lint-package.yml)
 [![GitHub Marketplace](https://img.shields.io/badge/GitHub%20Marketplace-keep--the--why--lint-2088FF?logo=githubactions&logoColor=white)](https://github.com/marketplace/actions/keep-the-why-lint)
 [![ktw-lint](https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/ktw-lint.yml/badge.svg)](https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/ktw-lint.yml)
+[![Black](https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/black.yml/badge.svg)](https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/black.yml)
 [![Read the Docs](https://img.shields.io/badge/read-%20docs-yellow)](https://keepthewhy.com/linting/)
 [![Telegram](https://img.shields.io/badge/community-telegram-41ab8c)](https://t.me/unicorndevs)
 [![X](https://img.shields.io/badge/x-%40keep__the__why-000000?logo=x)](https://x.com/keep_the_why)
