@@ -250,9 +250,14 @@ transcript turns out to actually be a limit message (e.g. from a run
 predating this check) is treated as unresolved too, not trusted.
 
 For a run that should survive account limits unattended, add
-`--retry-until-complete` (sleeps `--retry-interval` seconds, default 600,
-and retries only the unresolved cases, up to `--max-wait-hours`, default
-10) instead of babysitting it.
+`--retry-until-complete` (retries only the unresolved cases, up to
+`--max-wait-hours`, default 10) instead of babysitting it. The wait between
+retry passes depends on *why* cases are unresolved: while any case is
+`rate_limited` it sleeps `--retry-interval` seconds (default 600 — quota
+windows reset on an hours scale); when every unresolved case is a plain
+`error` — a safety-classifier refusal, a driver crash, a timeout — it sleeps
+only `--error-retry-interval` seconds (default 30), since those are retriable
+at once.
 
 ## Interpreting results
 

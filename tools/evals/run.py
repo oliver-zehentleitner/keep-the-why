@@ -116,7 +116,9 @@ API. This is what makes --retry-until-complete work — if the agent's own
 account hits its session/usage limit mid-run (a real message in the
 transcript, not a crash), the runner stops spending on further cases in that
 pass, marks them "rate_limited", and (with --retry-until-complete) sleeps and
-tries again later, picking up only what's still unresolved. It will not sit
+tries again later, picking up only what's still unresolved. Plain errors (a
+safety-classifier refusal, a crash, a timeout) with no rate limit in play are
+retried after the much shorter --error-retry-interval instead. It will not sit
 there hammering the API once the wall is hit, and it will not silently give
 up and leave a truncated result set either. (The rate-limit detection is
 Claude-account-specific; it simply won't fire for the other drivers.)
@@ -2124,7 +2126,19 @@ def main():
         "--retry-interval",
         type=int,
         default=600,
-        help="seconds to sleep between retry passes (default: 600)",
+        help="seconds to sleep before a retry pass when the account's "
+        "session/usage limit was hit (default: 600) — those windows reset "
+        "on an hours scale, polling faster is pure waste",
+    )
+    ap.add_argument(
+        "--error-retry-interval",
+        type=int,
+        default=30,
+        help="seconds to sleep before a retry pass when every unresolved case "
+        "is a plain error — a safety-classifier refusal, a driver crash, a "
+        "timeout — and nothing is rate-limited (default: 30). Such errors "
+        "are retriable at once; the long --retry-interval only applies "
+        "while a rate limit is in play",
     )
     ap.add_argument(
         "--max-wait-hours",
@@ -2212,12 +2226,24 @@ def main():
             )
             sys.exit(4)
 
+        # Two very different reasons a case can be unresolved, and they call
+        # for very different waits. A rate_limited verdict means the account
+        # itself is out of quota until its window resets — hours, so the long
+        # interval. A plain error (the model's safety classifier refusing a
+        # case, a driver crash, a timeout) is retriable right away; waiting
+        # the full rate-limit interval for it cost up to 50 minutes of idle
+        # time per full run before this distinction existed.
+        rate_limited = any(r.get("verdict") == "rate_limited" for r in records)
+        if rate_limited:
+            interval, why = args.retry_interval, "rate-limited"
+        else:
+            interval, why = args.error_retry_interval, "error, not rate-limited"
         print(
-            f"[{now}] {remaining} case(s) still unresolved (likely rate-limited) — "
-            f"sleeping {args.retry_interval}s before retrying",
+            f"[{now}] {remaining} case(s) still unresolved ({why}) — "
+            f"sleeping {interval}s before retrying",
             flush=True,
         )
-        time.sleep(args.retry_interval)
+        time.sleep(interval)
 
 
 if __name__ == "__main__":
