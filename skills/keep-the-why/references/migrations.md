@@ -8,7 +8,7 @@ Entries below assume 0.2.0 as the starting point — nothing before it tracked a
 
 **What changed:** a setup request that is called off no longer writes `init: declined` to a new `.keep-the-why` — it writes nothing at all. The flag dated from the time an organic activation could propose setup and needed a "don't ask again" marker; since 0.10.0 setup only ever starts from an explicit request, so there was nothing left for the flag to suppress, while the file it created made every `.keep-the-why`-gated autostart hook fire on a project that had just said no.
 
-**Existing projects:** a `.keep-the-why` whose config block carries `init: declined` (and nothing but the `id`) can simply be deleted — the skill now treats such a file exactly like no file. Leaving it in place is harmless. `keep-the-why-lint` keeps accepting the value so an untouched file doesn't turn red.
+**Existing projects:** a `.keep-the-why` whose config block carries `init: declined` (and nothing but the `id`) is a leftover of a setup that never happened — delete the file. The skill has no special handling for the value anymore: it's an unrecognized `init` value, so the setup check names the valid option (`complete`) and asks, rather than guessing; `keep-the-why-lint` reports it as an invalid value. Both point at the same one-line fix.
 
 ## 0.11.0 — CI linting available (informational, no action required)
 
