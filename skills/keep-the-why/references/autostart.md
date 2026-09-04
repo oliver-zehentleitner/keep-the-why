@@ -86,8 +86,8 @@ reproducing while the hook only knew the new location.
 **Evidence:** the eval suite's `_base` fixture carries exactly this hook
 (`tools/evals/fixtures/_base/.claude/settings.json`). Re-running the 10 (of
 11) activation-gap failures from the 2026-08-25 full run that could have one
-— `init-declined-not-reasked` starts from an empty project with no
-entry-point file to grep, out of scope — went from 0/10 invoking the Skill
+— `init-retracted-writes-nothing` (then `init-declined-not-reasked`) starts
+from an empty project with no entry-point file to grep, out of scope — went from 0/10 invoking the Skill
 tool to 10/10; 9/10 passed outright, and the one holdout traced to an
 unrelated fixture bug (all 10 pass since that fix). Full writeup:
 [`docs/evals.md`](https://keepthewhy.com/evals/#run-history),

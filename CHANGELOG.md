@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Removed
+
+- `init: declined` — a setup request that is called off now writes nothing at all instead of a `.keep-the-why` carrying `init: declined`. The flag existed to stop an organic activation from proposing setup again; since 0.10.0 setup only ever starts from an explicit request, so the flag suppressed nothing — while the file it created made every `.keep-the-why`-gated autostart hook fire on a project that had just declined. Files still carrying the value are treated like no file and may be deleted (`references/migrations.md`); `keep-the-why-lint` keeps accepting the value. Eval case `init-declined-not-reasked` became `init-retracted-writes-nothing` with the inverted expectation; `wizard-respects-known-confirmation-flow-batch` was removed, its starting state can no longer arise. Surfaced by the three full eval runs of 2026-09-03 (`docs/evals.md`), where the old case flipped on activation rather than on skill behavior; closes the loop on #198.
+
 ## [0.11.0] - 2026-09-03
 
 ### Added

@@ -67,4 +67,21 @@ An organic activation — the skill's own broad description happening to match a
 
 **Rejected alternative:** keep proposing setup on organic activation, but only once per project, remembering the decline (the design this replaces). Rejected — this still means the very first organic activation in a never-opted-in project interrupts with a setup question nobody asked for; remembering not to ask again is a mitigation, not a fix for the actual complaint.
 
-**Consequence:** `init: declined` still exists, but with a narrower job — it no longer needs to suppress organic re-asking (the gate already does that unconditionally), it only prevents a *later, separate* explicit request-then-retraction on the same project from re-running the wizard from scratch if resumed. See `references/setup.md`'s "Detection and the two independent wizards." This also makes a related, independently-reported finding largely moot: an agent that once substituted the skill's own `init: declined` mechanism with Claude Code's own out-of-repo auto-memory feature to suppress being asked again (issue #198) had nothing to suppress in the first place once organic activation stopped proposing setup — there's no longer a recurring, unwanted question to route around.
+**Consequence (superseded 2026-09-04, see the next entry):** at the time, `init: declined` was kept with a narrower job — preventing a later explicit request-then-retraction from re-running the wizard from scratch. That job turned out to be empty (the same section said a fresh explicit request should ask again regardless), and the flag was retired. The related finding about an agent substituting Claude Code's auto-memory for the flag (issue #198) resolves the same way: there is nothing of the skill's own to record at that moment.
+
+## `init: declined` retired: a called-off setup request writes nothing
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer decision 2026-09-04, after the three full eval runs of 2026-09-03 (`docs/evals.md`, run history); [#198](https://github.com/oliver-zehentleitner/keep-the-why/issues/198)
+
+When an explicit setup request is declined at the first question or retracted in the same sentence, the wizard stops and writes nothing — no `.keep-the-why`, no `id`, no marker anywhere. Earlier versions wrote a `.keep-the-why` carrying `init: declined`.
+
+**Reason:** since setup only ever starts from an explicit request (entry above), there is no unprompted question left for a "don't ask again" flag to suppress; and the section describing the flag also said a fresh explicit request should run the wizard regardless of it. A flag that neither suppresses nor blocks anything is a leftover of a change not carried through. It also had a real cost: the file it created is exactly what `.keep-the-why`-gated autostart hooks key on, so a project that had just said no got the skill loaded on every session from then on. The eval case that required writing the flag flipped in 2 of 3 runs for a reason unrelated to the skill's logic — a retracted request reads to the agent as "nothing to do", so the skill was never loaded and the agent used its own memory instead — which is what exposed the flag as pointless.
+
+**Rejected alternative:** force the skill to load on any prompt naming it (a `UserPromptSubmit` hook) so the flag gets written reliably. Rejected — it would have made the agent reliably write a file the developer had just declined; the mechanism it protected was the problem, not the activation.
+
+**Rejected alternative:** sharpen the skill's `description` so retracted requests still trigger it. Rejected for the same reason, plus the description is the most expensive real estate in the skill and the effect would be unmeasurable at the eval's sample size.
+
+**Consequence:** existing files with `init: declined` are read as "no project file" and may be deleted; the linter keeps accepting the value so untouched files don't fail. The personal wizard doesn't run on a called-off setup either — its file is keyed by the project `id`, which only exists once the project is set up.

@@ -4,6 +4,12 @@ What changed in each version that an existing project may need to know about or 
 
 Entries below assume 0.2.0 as the starting point — nothing before it tracked a `context-schema` at all, and 0.2.0 itself introduced no `context/` entry format change.
 
+## Unreleased — `init: declined` retired (informational; one optional deletion)
+
+**What changed:** a setup request that is called off no longer writes `init: declined` to a new `.keep-the-why` — it writes nothing at all. The flag dated from the time an organic activation could propose setup and needed a "don't ask again" marker; since 0.10.0 setup only ever starts from an explicit request, so there was nothing left for the flag to suppress, while the file it created made every `.keep-the-why`-gated autostart hook fire on a project that had just said no.
+
+**Existing projects:** a `.keep-the-why` whose config block carries `init: declined` (and nothing but the `id`) can simply be deleted — the skill now treats such a file exactly like no file. Leaving it in place is harmless. `keep-the-why-lint` keeps accepting the value so an untouched file doesn't turn red.
+
 ## 0.11.0 — CI linting available (informational, no action required)
 
 **What changed:** the project init wizard now offers to wire `keep-the-why-lint` — a structural linter for `.keep-the-why` and the context directory, gated by the project's `context-schema` — into the project's CI (GitHub Actions or GitLab CI, detected from the repository) and, where pre-commit is already in use, into pre-commit. Purely additive: no config field, no entry-format change, nothing an existing project must do.

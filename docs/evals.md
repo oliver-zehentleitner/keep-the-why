@@ -1,6 +1,6 @@
 # Evals
 
-The skill ships 74 eval cases (`tools/evals/evals.json`): a prompt paired
+The skill ships 73 eval cases (`tools/evals/evals.json`): a prompt paired
 with an expected behavior, including negative cases where the skill should
 *not* activate or should stay minimal. A local runner in
 [`tools/evals/`](https://github.com/oliver-zehentleitner/keep-the-why/tree/main/tools/evals)
@@ -10,6 +10,13 @@ and an LLM judge grades the transcript plus the actual file changes against
 the expected behavior.
 
 ## Latest full-suite results
+
+The runs below were made against the 74-case suite of 2026-09-03. Since then
+`init-declined-not-reasked` became `init-retracted-writes-nothing` with the
+opposite expectation (a retracted setup request writes nothing, the
+`init: declined` flag is retired) and `wizard-respects-known-confirmation-flow-batch`
+was removed because the state it started from can no longer arise. The rows
+below keep their original names and verdicts; the next full run will show 73.
 
 **72, 71 and 73 of 74 passed** across three consecutive full runs — skill
 0.11.0, 2026-09-03, Claude Code CLI 2.1.259, agent and judge both Claude

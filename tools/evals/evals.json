@@ -75,9 +75,9 @@
     "expected_behavior": "Does not re-run the project init wizard - context location, starting mode, and capture-confirmation are already settled project-wide, in .keep-the-why. Does run the personal preferences wizard for this developer, since they have no ~/.keep-the-why/<id>.md yet for this project - capture mode, confirmation-flow, and check intervals are per-developer, not inherited from the project config. Their answers, including confirmation-flow, can differ from whatever the first developer chose."
   },
   {
-    "id": "init-declined-not-reasked",
+    "id": "init-retracted-writes-nothing",
     "prompt": "Initialize Keep the Why in this project - actually, wait, no. I don't want it active here, and don't ask again.",
-    "expected_behavior": "This was an explicit request that's now being called off mid-flow, not an organic suggestion the skill made unprompted - the wizard doesn't run to completion, but the decline is still recorded: writes init: declined to a newly created .keep-the-why (generating a project id for it) and stops, rather than treating the retraction as if nothing had been asked at all. Does not silently drop the interaction with no trace anywhere. A later explicit request to set it up again should still be honored fresh if it comes - declining once doesn't forbid asking a second time, it only means an organic activation on this project still won't propose setup on its own (which was already true regardless of this flag)."
+    "expected_behavior": "An explicit setup request retracted in the same sentence, on a project that has never opted in. The wizard doesn't start (or stops before writing anything) and nothing is written into the project: no .keep-the-why, no id, no context/ directory. The reply says in a sentence that nothing was set up and that nothing here will ask on its own - an explicit request later starts fresh. What fails: creating .keep-the-why with any init value (the retired init: declined included), asking any wizard question, or offering to set it up anyway. Whether the agent leaves a note in its own harness memory (e.g. Claude Code's auto-memory) is out of scope: neither required nor penalized - the skill has nothing of its own to record here."
   },
   {
     "id": "negative-timer-check-age-without-trigger",
@@ -278,11 +278,6 @@
     "id": "capture-confirmation-missing-vs-invalid-distinction-holds",
     "prompt": "Capture in context/ that Redis is used strictly as a cache — persistence was rejected for recovery complexity.",
     "expected_behavior": "Backfills capture-confirmation to confirm-when-unsure silently, without asking - this is the documented, legitimate default-for-missing-field case, explicitly not the same situation as a present-but-unrecognized value. Doesn't second-guess or hedge with a clarifying question just because other cases in the confirmation model do ask - a genuinely missing field with a defined default is not ambiguous."
-  },
-  {
-    "id": "wizard-respects-known-confirmation-flow-batch",
-    "prompt": "This developer's ~/.keep-the-why/<id>.md already has a personal config block with confirmation-flow: batch - the personal wizard ran in an earlier session in which project setup was started and then called off, so the project's .keep-the-why only records init: declined and the id. The user now asks, explicitly and fresh: initialize Keep the Why in this project.",
-    "expected_behavior": "A fresh explicit request re-runs the project init wizard despite init: declined (declining once doesn't forbid asking a second time). The wizard presents its questions as a single bundled message (batch), not one at a time - the developer's stored confirmation-flow in ~/.keep-the-why/<id>.md, keyed by the id the project's .keep-the-why carries, is known and gets respected. Does not default to sequential when a valid stored preference already exists, and does not re-ask the personal wizard's questions that are already answered."
   },
   {
     "id": "wizard-bundling-is-not-the-silent-default",
