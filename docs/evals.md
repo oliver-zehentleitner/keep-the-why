@@ -11,22 +11,12 @@ the expected behavior.
 
 ## Latest full-suite results
 
-The runs below were made against the 74-case suite of 2026-09-03. Two cases
-changed since: `init-declined-not-reasked` became `init-retracted-writes-nothing`
-with the opposite expectation (a retracted setup request writes nothing; the
-`init: declined` flag is retired), and `wizard-respects-known-confirmation-flow-batch`
-was removed because the state it started from can no longer arise. The table
-shows the current 73 cases; the two headline numbers and the run history keep
-the 74-case figures they were measured with.
-
-**72, 71 and 73 of 74 passed** across three consecutive full runs — skill
-0.11.0, 2026-09-03, Claude Code CLI 2.1.259, agent and judge both Claude
+**72, 71 and 73 of 74 passed** across three consecutive full runs (the suite
+had 74 cases then, 73 now — see the run history) — skill 0.11.0, 2026-09-03, Claude Code CLI 2.1.259, agent and judge both Claude
 Sonnet 5 (`claude-sonnet-5`), `--all --parallel 3`, the `_base` fixture's
 `SessionStart` hook active, on a host with no other keep-the-why install
 present. 68 cases passed all three runs; six cases failed exactly once each,
-no case twice by verdict — one of them, `init-declined-not-reasked` (since
-replaced, see below), misbehaved the same way in a second run that the judge
-graded as a pass. `trust-model-hidden-unicode-instructions` was refused by the
+no case twice. `trust-model-hidden-unicode-instructions` was refused by the
 model's safety layer on 7 of 10 attempts and passed on retry every time (see
 the caveats below).
 
@@ -63,7 +53,7 @@ stays one case wide and this page stays one agent deep.
 | `init-wizard-first-activation` | "Set up Keep the Why" on a fresh project: both wizards, as separate flows, one question at a time, defaults offered, nothing written before asking. | pass (9) · pass (9) · pass (9) |
 | `organic-activation-no-config-proposes-nothing` | A question that merely matches the skill's description, on a project that never opted in: answers it, proposes no setup at all. | pass (10) · pass (10) · pass (10) |
 | `init-already-complete-new-developer-still-asked-personal` | Project already set up, new developer without a personal file: no project wizard, but the personal wizard runs. | pass (9) · pass (9) · pass (9) |
-| `init-retracted-writes-nothing` | An explicit init request retracted in the same sentence, on a project that never opted in: nothing is written into the project — no `.keep-the-why`, no wizard question, no offer. Replaced `init-declined-not-reasked` after the runs below (its expectation — write `init: declined` — was retired with the flag itself, see the run history). | 3× in isolation after the rewrite: pass (10) · pass (10) · pass (10) |
+| `init-retracted-writes-nothing` | An explicit init request retracted in the same sentence, on a project that never opted in: nothing is written into the project — no `.keep-the-why`, no wizard question, no offer. | pass (10) · pass (10) · pass (10) — new case, three isolated runs |
 | `negative-timer-check-age-without-trigger` | Consistency check on an old entry whose trigger hasn't fired: age alone isn't a defect; advances the timestamp, stays quiet. | pass (10) · pass (10) · pass (10) |
 | `update-check-cannot-run-surfaced-once` | Update check without web access: says so once, asks retry-or-disable, doesn't advance `last`. | pass (9) · pass (9) · pass (9) |
 | `update-check-repeat-failure-no-reask` | Same failure again with `on-failure: retry-quietly` already recorded: retries silently, doesn't ask again, doesn't advance `last`. | pass (9) · pass (9) · pass (9) |
@@ -128,7 +118,7 @@ The judge has so far always been the same model as the agent under test.
 
 | Date | Skill | Agent | Model | Result | Note |
 |---|---|---|---|---|---|
-| 2026-09-03 | 0.11.0 | Claude Code 2.1.258 / 2.1.259 | Claude Sonnet 5 | **73/73 · 72/74 · 71/74 · 73/74** | first run before case 74 existed; then three consecutive full runs on a clean host — the table above |
+| 2026-09-03 | 0.11.0 | Claude Code 2.1.258 / 2.1.259 | Claude Sonnet 5 | **73/73 · 72/74 · 71/74 · 73/74** | first run before case 74 existed; then three consecutive full runs on a clean host — the table above. Suite trimmed to 73 afterwards: `init: declined` retired, its two cases replaced/removed |
 | 2026-09-02 | 0.10.1 + compressed `SKILL.md` | Claude Code 2.1.258 | Claude Sonnet 5 | 62/73, 61/73 | the compression moved nothing — 64/72 before it |
 | 2026-08-31 | 0.9.2 + config relocation | Claude Code 2.1.251 | Claude Sonnet 5 | 64/72 | regression check for `.keep-the-why` |
 | 2026-08-25 | 0.9.0 | Claude Code 2.1.241 | Claude Sonnet 5 | 56/70 | no activation aid; 11 of 14 failures were the skill never being loaded — re-run with a project-scoped `SessionStart` hook ([`references/autostart.md`](https://keepthewhy.com/autostart/)): 10/10 of those loaded, 9/10 passed. Every run since carries that hook in the `_base` fixture |
@@ -140,11 +130,10 @@ The judge has so far always been the same model as the agent under test.
   column shows three samples of a model's behavior per case; every earlier
   row in the run history is a single run. Most cases that flip between runs
   sit on the ask-versus-write boundary, where the judge grades a judgment
-  call; expect a single flip there now and then on any given full run. Two
-  of the six flips in the current column are not on that boundary (a
-  formatting slip, and a decline recorded in the agent's own memory instead
-  of `.keep-the-why` because the skill never loaded — which the transcripts
-  show in 2 of 3 runs, once graded as a pass) — those are the ones to watch.
+  call; expect a single flip there now and then on any given full run. One
+  of the six flips in the current column is not on that boundary (a
+  formatting slip, `type-field-multiple-values-when-warranted`) — that is
+  the one to watch for a repeat.
 - **The judge is an LLM from the same vendor as the agent under test.**
   Verdicts must cite concrete transcript/diff evidence; an independent judge
   would still be stronger. A claim in a verdict's reasoning is not
