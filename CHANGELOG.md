@@ -4,6 +4,14 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- `references/autostart.md` restructured around three start paths — every session machine-wide (developer-level, gated on `.keep-the-why`), the project asks (a project-scoped hook and/or a "Keep the Why" section in the project's entry-point file), or only when a developer asks — with per-agent sections stating what is verified how. New: the entry-point section, tool-neutral and the form to pick for a pinned, vendored skill. Verified for Claude Code by eval case `autostart-project-instruction-loads-skill` (hook removed, section in `AGENTS.md`, `CLAUDE.md` importing it, a plain code question: 3/3 invoked the skill first; same-day control without the section: 0/3) and for Hermes Agent by a single live run (reads `AGENTS.md` on its own, loaded `SKILL.md` first). Suite is 74 cases.
+
+### Changed
+
+- Project init wizard: the last question now asks how the skill should get loaded in future sessions, offering the three start paths (default: only when a developer asks); step 2 writes the entry-point section when that path is chosen; step 6's "leave the entry-point file alone" has that one exception.
+
 ### Removed
 
 - `init: declined` — a setup request that is called off now writes nothing at all instead of a `.keep-the-why` carrying `init: declined`. The flag existed to stop an organic activation from proposing setup again; since 0.10.0 setup only ever starts from an explicit request, so the flag suppressed nothing — while the file it created made every `.keep-the-why`-gated autostart hook fire on a project that had just declined. A file still carrying the value is a leftover to delete: the skill treats it as an unrecognized `init` value and asks, `keep-the-why-lint` reports it (`references/migrations.md`). Eval case `init-declined-not-reasked` became `init-retracted-writes-nothing` with the inverted expectation; `wizard-respects-known-confirmation-flow-batch` was removed, its starting state can no longer arise. Surfaced by the three full eval runs of 2026-09-03 (`docs/evals.md`), where the old case flipped on activation rather than on skill behavior; closes the loop on #198.

@@ -1,6 +1,6 @@
 # Evals
 
-The skill ships 73 eval cases (`tools/evals/evals.json`): a prompt paired
+The skill ships 74 eval cases (`tools/evals/evals.json`): a prompt paired
 with an expected behavior, including negative cases where the skill should
 *not* activate or should stay minimal. A local runner in
 [`tools/evals/`](https://github.com/oliver-zehentleitner/keep-the-why/tree/main/tools/evals)
@@ -11,8 +11,8 @@ the expected behavior.
 
 ## Latest full-suite results
 
-**72, 71 and 73 of 74 passed** across three consecutive full runs (the suite
-had 74 cases then, 73 now — see the run history) — skill 0.11.0, 2026-09-03, Claude Code CLI 2.1.259, agent and judge both Claude
+**72, 71 and 73 of 74 passed** across three consecutive full runs (the suite's
+composition has changed since — see the run history) — skill 0.11.0, 2026-09-03, Claude Code CLI 2.1.259, agent and judge both Claude
 Sonnet 5 (`claude-sonnet-5`), `--all --parallel 3`, the `_base` fixture's
 `SessionStart` hook active, on a host with no other keep-the-why install
 present. 68 cases passed all three runs; six cases failed exactly once each,
@@ -39,6 +39,7 @@ stays one case wide and this page stays one agent deep.
 | Case | What it checks | 0.11.0 — three runs |
 |---|---|---|
 | `continuous-capture-basic` | A retry change with a stated reason: updates the existing `context/orders.md` in place, marks the old approach superseded, doesn't commit. | pass (9) · pass (9) · pass (9) |
+| `autostart-project-instruction-loads-skill` | No hook; `AGENTS.md` carries the "Keep the Why" start section, `CLAUDE.md` imports it; a plain code question that never names the skill: invokes the skill first, answers honestly that `context/` records no rationale for the retry policy. | pass (9) · pass (9) · pass (9) — new case, three isolated runs; same-day control without the section: 0/3 loaded the skill |
 | `retrospective-legacy-codebase` | Retrospective on a 15-year-old service: scopes to risk, uses git history and docs before code-only inference, labels every claim confirmed/inferred/unknown. | pass (9) · pass (9) · pass (9) |
 | `interview-prep-retiring-developer` | Builds a gap list first, cross-references git ownership, and produces a short prioritized question list for a retiring maintainer. | pass (9) · pass (9) · pass (9) |
 | `chestertons-fence-guard` | "Remove this ugly sleep": checks `context/` and history first; with no rationale found, flags a Chesterton's Fence instead of deleting. Also run across agents and models — see the [agent & model matrix](https://keepthewhy.com/agent-matrix/). | pass (9) · pass (9) · pass (9) |
@@ -118,7 +119,7 @@ The judge has so far always been the same model as the agent under test.
 
 | Date | Skill | Agent | Model | Result | Note |
 |---|---|---|---|---|---|
-| 2026-09-03 | 0.11.0 | Claude Code 2.1.258 / 2.1.259 | Claude Sonnet 5 | **73/73 · 72/74 · 71/74 · 73/74** | first run before case 74 existed; then three consecutive full runs on a clean host — the table above. Suite trimmed to 73 afterwards: `init: declined` retired, its two cases replaced/removed |
+| 2026-09-03 | 0.11.0 | Claude Code 2.1.258 / 2.1.259 | Claude Sonnet 5 | **73/73 · 72/74 · 71/74 · 73/74** | first run before case 74 existed; then three consecutive full runs on a clean host — the table above. Suite changed afterwards: `init: declined` retired (its two cases replaced/removed), `autostart-project-instruction-loads-skill` added |
 | 2026-09-02 | 0.10.1 + compressed `SKILL.md` | Claude Code 2.1.258 | Claude Sonnet 5 | 62/73, 61/73 | the compression moved nothing — 64/72 before it |
 | 2026-08-31 | 0.9.2 + config relocation | Claude Code 2.1.251 | Claude Sonnet 5 | 64/72 | regression check for `.keep-the-why` |
 | 2026-08-25 | 0.9.0 | Claude Code 2.1.241 | Claude Sonnet 5 | 56/70 | no activation aid; 11 of 14 failures were the skill never being loaded — re-run with a project-scoped `SessionStart` hook ([`references/autostart.md`](https://keepthewhy.com/autostart/)): 10/10 of those loaded, 9/10 passed. Every run since carries that hook in the `_base` fixture |

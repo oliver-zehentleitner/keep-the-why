@@ -52,6 +52,24 @@ The project init wizard (`references/setup.md`) now asks, as its last question, 
 
 **Update 2026-09-03:** the documented Claude Code hook now also matches a project still on the legacy `<!-- keep-the-why:config -->` block in `AGENTS.md`, and its injected text says "invoke the keep-the-why skill (Skill tool) now" rather than "load". Both came out of the eval suite: the migration case had never once loaded the skill because the hook only knew the new file location, and "load" was read as advice where "invoke the Skill tool" is read as an instruction (`docs/evals.md`, "Latest full-suite results"). Same position as above otherwise — one verified example, not a mandate.
 
+
+## Three start paths, all gated on `.keep-the-why`
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer decision 2026-09-04; eval case `autostart-project-instruction-loads-skill` and its same-day control (`docs/evals.md`); one live Hermes run
+
+`references/autostart.md` now defines how the skill gets loaded as three start paths rather than a list of per-tool tricks: every session machine-wide (developer-level, gated on the file), the project asks (a project-scoped hook where the tool has one, and/or a "Keep the Why" section in the entry-point file that any agent reading it follows), or only when a developer asks. Per-agent sections say which paths are verified how. The wizard's last question offers the three paths; the entry-point section is the one thing the wizard may write into `AGENTS.md`.
+
+**Reason:** the skill does nothing without `.keep-the-why` (or an explicit setup request), so loading it is only worth anything on an opted-in project — every path therefore gates on the file, and "load it always" is deliberately not one of the paths: it would put `SKILL.md` into every session of every project for nothing. The entry-point section exists because hooks are per-tool and only verified for Claude Code, while every agent reads its entry-point file — and it is the natural home for a pinned, vendored skill, since it names the exact `SKILL.md` the project committed. Measured before being listed as verified: with the section and no hook, Claude Code invoked the skill first in 3 of 3 runs on a plain code question; without the section, 0 of 3.
+
+**Rejected alternative:** an unconditional session-start load (no file check). Rejected — context cost in every unrelated project, for a skill that would then do nothing.
+
+**Rejected alternative:** keep the entry-point file untouched under all circumstances (the previous step-6 rule in `setup.md`). Rejected — that rule protected against the skill writing its *state* there, which `.keep-the-why` now holds; a start instruction the project explicitly chose is the project's own editorial content, like the badge.
+
+**Consequence:** the entry-point section is instruction-following, not a hook — verified on Claude Code (eval) and Hermes (single live run), listed as "should work" everywhere else until someone measures it. The eval runner's non-Claude drivers hand the skill over explicitly and so can't measure this path; a measurement there needs a driver option to skip that hand-over.
+
 ## Project setup only ever runs from an explicit request, never from an organic activation
 
 **Type:** decision

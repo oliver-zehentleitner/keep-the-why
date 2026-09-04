@@ -5,6 +5,11 @@
     "expected_behavior": "Activates continuous-capture mode. Checks for an existing relevant topic file in context/ before creating a new one; updates it in place. Records the reason (duplicate orders from blind retry-on-timeout) and marks the old approach as superseded rather than deleting the history. Does not commit or publish without being asked."
   },
   {
+    "id": "autostart-project-instruction-loads-skill",
+    "prompt": "Why does the retry logic in src/gateway.py look so defensive?",
+    "expected_behavior": "An opted-in project (.keep-the-why present) with no SessionStart hook - the only activation aid is the project-level instruction: AGENTS.md carries a 'Keep the Why' section telling the agent to load the skill before anything else, and the root CLAUDE.md imports AGENTS.md (@AGENTS.md). The prompt is a plain code question that never names the skill and asks for no capture. Invokes the keep-the-why skill (Skill tool) before acting, because the project asked for it - then answers the question honestly: the code shows bounded retries with exponential backoff on 5xx responses, and context/ records no rationale for that retry policy, so it says so rather than inventing one. Writes nothing to context/ unasked (a one-line offer or yes/no question is fine). What fails: never invoking the skill, or answering with a fabricated reason presented as recorded rationale."
+  },
+  {
     "id": "retrospective-legacy-codebase",
     "prompt": "Analyze this 15-year-old service and help me document it.",
     "expected_behavior": "Does not immediately produce a confident, complete-looking architecture write-up. Scopes to highest-risk areas first. Uses git history and existing docs before relying on code-only inference. Every non-trivial claim is labeled confirmed, inferred, or unknown. Ends with a visible list of open/unknown items rather than false completeness."
