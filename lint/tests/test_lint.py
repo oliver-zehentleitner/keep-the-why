@@ -156,7 +156,7 @@ class LintProject(unittest.TestCase):
     def test_duplicate_and_unknown_fields(self):
         config = GOOD_CONFIG.replace(
             "<!-- /keep-the-why:config -->",
-            "- init: declined\n- frobnicate: yes\n<!-- /keep-the-why:config -->",
+            "- init: complete\n- frobnicate: yes\n<!-- /keep-the-why:config -->",
         )
         self.base_project(config=config)
         findings, _ = self.run_lint()
