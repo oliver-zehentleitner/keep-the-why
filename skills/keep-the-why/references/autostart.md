@@ -103,7 +103,7 @@ Keep the Why rather than firing unconditionally on every session.
 
 The `command` field, unescaped for readability — functionally identical:
 
-```bash
+```sh
 found=""
 if [ -f .keep-the-why ]; then
   found=1

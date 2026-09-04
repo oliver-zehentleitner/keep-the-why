@@ -272,7 +272,7 @@ HTML equivalent and details: https://keepthewhy.com/badge/
 - Agent & model matrix (which agents/models the skill has actually been run against): https://keepthewhy.com/agent-matrix/
 - Setup (project + personal wizards, timer checks): https://keepthewhy.com/setup/
 - Migrations (context-schema version changes): https://keepthewhy.com/migrations/
-- Security (overview, links to trust model and vulnerability reporting): https://keepthewhy.com/security/
+- Security (overview, what automated scanners report and why, links to trust model and vulnerability reporting): https://keepthewhy.com/security/
 - Trust model (context/ as data, not instructions): https://keepthewhy.com/trust-model/
 - Badge: https://keepthewhy.com/badge/
 - Philosophy (why no database/daemon/dashboard, deliberately): https://keepthewhy.com/philosophy/

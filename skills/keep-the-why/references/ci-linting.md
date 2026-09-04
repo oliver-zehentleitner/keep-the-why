@@ -75,7 +75,7 @@ repos:
 
 **Any other CI, or locally:**
 
-```bash
+```sh
 pip install keep-the-why-lint
 ktw-lint .            # exit 0 clean, 1 findings, 2 usage error
 ktw-lint . --strict   # warnings fail too

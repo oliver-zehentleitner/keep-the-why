@@ -4,6 +4,7 @@ This document outlines security procedures and general policies for the
 
   * [Reporting a Bug](#reporting-a-bug)
   * [Disclosure Policy](#disclosure-policy)
+  * [Automated Scanner Findings](#automated-scanner-findings)
   * [Comments on this Policy](#comments-on-this-policy)
 
 ## Reporting a Bug
@@ -31,6 +32,14 @@ involving the following steps:
   * Confirm the problem and determine the affected versions.
   * Audit the skill's instructions and reference files for any similar issues.
   * Prepare a fix and publish it as a new GitHub release as fast as possible.
+
+## Automated Scanner Findings
+Registries such as skills.sh, SkillsLLM, and agent-skill-manager scan the
+skill package automatically, and some of them show a warning label for it.
+What each scanner reports, and why the findings that remain are expected for
+a skill whose job includes reading issue and pull-request threads, is
+explained at https://keepthewhy.com/security/ — please check there before
+reporting one of those labels as a vulnerability.
 
 ## Comments on this Policy
 If you have suggestions on how this process could be improved please submit a
