@@ -16,7 +16,8 @@ the expected behavior.
 Sonnet 5 (`claude-sonnet-5`), `--all --parallel 3`, the `_base` fixture's
 `SessionStart` hook active, on a host with no other keep-the-why install
 present. 68 cases passed all three runs; six cases failed exactly once each,
-no case twice. `trust-model-hidden-unicode-instructions` was refused by the
+no case twice by verdict — one of them, `init-declined-not-reasked`, misbehaved
+the same way in a second run that the judge graded as a pass (see its row). `trust-model-hidden-unicode-instructions` was refused by the
 model's safety layer on 7 of 10 attempts and passed on retry every time (see
 the caveats below).
 
@@ -53,7 +54,7 @@ stays one case wide and this page stays one agent deep.
 | `init-wizard-first-activation` | "Set up Keep the Why" on a fresh project: both wizards, as separate flows, one question at a time, defaults offered, nothing written before asking. | pass (9) · pass (9) · pass (9) |
 | `organic-activation-no-config-proposes-nothing` | A question that merely matches the skill's description, on a project that never opted in: answers it, proposes no setup at all. | pass (10) · pass (10) · pass (10) |
 | `init-already-complete-new-developer-still-asked-personal` | Project already set up, new developer without a personal file: no project wizard, but the personal wizard runs. | pass (9) · pass (9) · pass (9) |
-| `init-declined-not-reasked` | An explicit init request retracted mid-sentence: records `init: declined` in a new `.keep-the-why`, doesn't use some other memory instead. | fail (3) · pass (10) · pass (9) — r7: recorded the decline in Claude Code's auto-memory instead of `init: declined` in `.keep-the-why` (the #198 pattern, once) |
+| `init-declined-not-reasked` | An explicit init request retracted mid-sentence: records `init: declined` in a new `.keep-the-why`, doesn't use some other memory instead. | fail (3) · pass (10) · pass (9) — r7: recorded the decline in Claude Code's auto-memory instead of `init: declined` in `.keep-the-why`, the skill never loaded (the [#198](https://github.com/oliver-zehentleitner/keep-the-why/issues/198) pattern). r9's transcript shows the very same thing — auto-memory note, no `.keep-the-why`, skill not loaded — and the judge passed it anyway; the verdict stands as recorded, but read this row as 1 of 3 real passes, not 2 |
 | `negative-timer-check-age-without-trigger` | Consistency check on an old entry whose trigger hasn't fired: age alone isn't a defect; advances the timestamp, stays quiet. | pass (10) · pass (10) · pass (10) |
 | `update-check-cannot-run-surfaced-once` | Update check without web access: says so once, asks retry-or-disable, doesn't advance `last`. | pass (9) · pass (9) · pass (9) |
 | `update-check-repeat-failure-no-reask` | Same failure again with `on-failure: retry-quietly` already recorded: retries silently, doesn't ask again, doesn't advance `last`. | pass (9) · pass (9) · pass (9) |
@@ -133,8 +134,9 @@ The judge has so far always been the same model as the agent under test.
   sit on the ask-versus-write boundary, where the judge grades a judgment
   call; expect a single flip there now and then on any given full run. Two
   of the six flips in the current column are not on that boundary (a
-  formatting slip and a decline recorded in the wrong place) — those are the
-  ones to watch for a repeat.
+  formatting slip, and a decline recorded in the agent's own memory instead
+  of `.keep-the-why` because the skill never loaded — which the transcripts
+  show in 2 of 3 runs, once graded as a pass) — those are the ones to watch.
 - **The judge is an LLM from the same vendor as the agent under test.**
   Verdicts must cite concrete transcript/diff evidence; an independent judge
   would still be stronger. A claim in a verdict's reasoning is not
