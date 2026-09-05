@@ -49,7 +49,7 @@ def load_resolved(case_id, results_dir):
     return record
 
 
-def _cell(text, limit=260):
+def _cell(text, limit=320):
     text = " ".join(str(text).split())
     return text[: limit - 1] + "…" if len(text) > limit else text
 
@@ -69,9 +69,14 @@ def _case_row(r):
     notes = []
     if r["verdict"] not in ("pass", "fail"):
         notes.append(r.get("reasoning") or r["verdict"])
+    if r.get("judge_verdict") == "pass" and r.get("checks_passed") is False:
+        notes.append(
+            "judge said pass, the deterministic checks say fail — read this one"
+        )
     for c in checks:
         if not c["ok"]:
-            notes.append(f"check {c['check']}: {c['detail']}")
+            # detail already names the pattern and path; the spec would repeat it
+            notes.append(f"check failed: {c['detail']}")
     if r["verdict"] == "fail":
         notes += [f"✗ {v}" for v in (r.get("violations") or [])]
     if r.get("deductions"):
@@ -80,12 +85,6 @@ def _case_row(r):
         ]
     if r["verdict"] == "fail" and not notes:
         notes.append(r.get("reasoning") or "")
-    if (
-        r.get("judge_verdict")
-        and r.get("checks_passed") is False
-        and r["judge_verdict"] == "pass"
-    ):
-        notes.append("judge said pass — disagreement with the deterministic checks")
     return (
         f"| {r['id']} | {r['verdict']} | {r.get('score') if r.get('score') is not None else '—'} "
         f"| {loaded_cell} | {checks_cell} | {restraint_cell} | {_cell(' · '.join(notes) or '10/10, nothing withheld')} |"
