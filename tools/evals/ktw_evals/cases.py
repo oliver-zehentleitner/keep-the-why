@@ -42,6 +42,13 @@ def read_case_config(case_id):
                  "date": str}] — extra commits after the initial one
       disallowed_tools: [tool names] passed to claude --disallowedTools
                         (e.g. deny WebFetch to simulate no web access)
+      explicit_load: false to send the case prompt bare on every driver,
+                     without the "read SKILL.md first" prefix the non-claude
+                     drivers normally get — for cases that measure whether
+                     the agent loads the skill unprompted
+      skill_install: install path for the skill on every driver (default:
+                     the driver's own, see drivers.SKILL_INSTALL_REL) — for
+                     cases whose fixture names the path in an instruction
 
     A fixtures/<id>/home/ directory, if present, is overlaid onto the fake
     $HOME after the default personal config is (or isn't) seeded — for a case

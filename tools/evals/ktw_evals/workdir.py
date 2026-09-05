@@ -151,7 +151,11 @@ def build_workdir(case_id, cfg, workdir: Path, driver, home: Path = None):
     # Install the skill the way a project-scoped install would: a real,
     # untracked copy (keeps the skill out of the repo the agent analyzes)
     # at the driver's install path.
-    skill_rel = SKILL_INSTALL_REL[driver]
+    # A case may pin the install path for every driver (case.json
+    # "skill_install") — the Path 2 activation cases do, because the
+    # project's own instruction names `.claude/skills/keep-the-why/SKILL.md`
+    # and the test is whether the agent follows *that*, not a driver default.
+    skill_rel = cfg.get("skill_install") or SKILL_INSTALL_REL[driver]
     skill_target = workdir / skill_rel
     skill_target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(SKILL_DIR, skill_target)

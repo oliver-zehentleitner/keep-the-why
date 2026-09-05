@@ -26,6 +26,19 @@ For each case:
    non-interactive, ending the turn with a question counts as fully correct
    wherever the expected behavior involves asking the user something.
 
+Between 2 and 3, for a case that declares `checks` in `evals.json`, the
+**deterministic checks** run against the workdir itself: was a file written
+under `context/`, was `.keep-the-why` left alone, did a literal secret land
+anywhere on disk, was the skill loaded by a real tool call. A failed check
+is a failed case and the judge isn't called for it (`--judge-always`
+overrides that and stores the judge's own verdict as `judge_verdict` next to
+the final one — a judge `pass` on a case the checks failed is a judge blind
+spot, and worth reading). The check types are documented at the top of
+`ktw_evals/checks.py`; the rule for adding one to a case is that it must be
+*certain* from the expected behavior, not merely likely — a check that needs
+interpretation belongs in `expected_behavior` for the judge. 43 of the 74
+cases carry checks.
+
 Results land in `results/<timestamp>-<driver>/` (gitignored): one JSON per
 case plus `summary.json` and `summary.md`.
 
@@ -41,11 +54,13 @@ next to it, one module per responsibility:
 | `cases.py` | `evals.json`, per-case `case.json`, `matrix-config.json` loading |
 | `workdir.py` | materializing the throwaway project and fake `$HOME`; `collect_diff()` afterwards |
 | `drivers/` | one module per agent CLI (`run_agent_*` + `render_transcript_*`); the registry and per-driver tables in `__init__.py` |
-| `analysis.py` | `restraint_analysis()` — the mechanical, judge-free categorization |
+| `analysis.py` | `restraint_analysis()` and `skill_load_found()` — mechanical, judge-free reads of a transcript |
+| `checks.py` | the deterministic per-case checks declared in `evals.json` (`checks`) |
 | `judge.py` | the judge prompt and the Claude call that grades a case |
 | `results.py` | stored verdicts, the rate-limit sentinel, `summary.json` / `summary.md` |
 | `runner.py` | `run_case()`, `execute_pass()`, and the retry loop |
 | `matrix.py` | `--matrix` orchestration and its table |
+| `tests/` | offline tests for `checks.py` — `python3 -m unittest discover -s tools/evals/tests` |
 
 Adding a driver means one new module under `drivers/` plus its rows in the
 `__init__.py` tables; nothing else needs to know.
@@ -281,6 +296,27 @@ only `--error-retry-interval` seconds (default 30), since those are retriable
 at once.
 
 ## Interpreting results
+
+`summary.md` reports one pass count and, under it, four numbers that a pass
+count runs together:
+
+- **Skill loaded** — a tool call in the transcript loaded the skill (the
+  `Skill` tool, or a read of `SKILL.md`). Mechanical; prose claiming to have
+  loaded it doesn't count. This is the activation number. Each record also
+  carries `skill_loaded_at`, the ordinal of that tool call: 1 means the very
+  first thing the agent did, which is what a project's "before anything
+  else" instruction asks for; a control run with no instruction at all once
+  read `SKILL.md` as its seventh call while exploring, which is activation
+  of a different kind.
+- **Completed** — the run ended with a real verdict and a final response
+  (no driver error, no rate limit, no session cut off mid-tool-call).
+- **Deterministic checks** — of the cases that declare `checks`, how many
+  passed all of them.
+- **Judge pass** — of the cases the judge graded, how many it passed.
+
+A drop in the first number is an activation problem (the 2026-08-25 row in
+`docs/evals.md`); a drop in the second is the harness or the account; only
+the last two say anything about the skill's behavior.
 
 The judge is an LLM: treat a `fail` as a lead to read, not a verdict to
 trust blindly — open the case's JSON in `results/<timestamp>/` and read the

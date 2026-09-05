@@ -86,6 +86,57 @@ def _evidence_tool_calls_found(transcript):
     return False
 
 
+# A [tool call] that loads the skill under test: Claude Code's Skill tool
+# invoked with this skill's name ({"skill": "keep-the-why"}), opencode's
+# native `skill` tool ({"name": "keep-the-why"} — it discovers
+# .claude/skills/ on its own, seen live 2026-09-05), or any driver reading
+# its SKILL.md (the path the explicit-load prompt names, or the
+# .claude/skills/ install path). Matched on tool calls (paired with their
+# own result, same as _evidence_tool_calls_found), never on assistant prose
+# — an agent *saying* it loaded the skill is exactly what this exists to
+# not trust.
+_SKILL_LOAD_RE = re.compile(
+    r'"skill":\s*"keep-the-why"'
+    r'|^\s*skill:\s*\{[^}]*"keep-the-why"'
+    r"|keep-the-why/SKILL\.md",
+    re.IGNORECASE,
+)
+
+
+def skill_load_position(transcript):
+    """1-based ordinal of the first tool call that loaded the skill (see
+    _SKILL_LOAD_RE), or None. 1 means it was the very first thing the agent
+    did — what a project's "before anything else" instruction asks for; a
+    later position means the skill was read at some point, which is still
+    activation but not the same claim (a control run without any
+    instruction read SKILL.md as its sixth call while exploring)."""
+    blocks = list(_transcript_blocks(transcript))
+    ordinal = 0
+    for i, (marker, content) in enumerate(blocks):
+        if marker != "[tool call]":
+            continue
+        ordinal += 1
+        paired = content
+        if i + 1 < len(blocks) and blocks[i + 1][0] in (
+            "[tool result]",
+            "[tool error]",
+        ):
+            paired += "\n" + blocks[i + 1][1]
+        if _SKILL_LOAD_RE.search(paired):
+            return ordinal
+    return None
+
+
+def skill_load_found(transcript):
+    """True if at least one tool call in the transcript loaded the skill.
+    This is the activation number: for the claude driver it says whether
+    the SessionStart hook / project instruction / native discovery actually
+    got the skill into context; for every other driver, whether the agent
+    followed the explicit-load prefix (or, with explicit_load off, the
+    project's own instruction)."""
+    return skill_load_position(transcript) is not None
+
+
 def _extract_evidence_claim(diff_text):
     """The first Evidence: confirmed/inferred/unknown value the agent itself
     wrote, or None. Only looks at genuinely *added* content — "+" lines

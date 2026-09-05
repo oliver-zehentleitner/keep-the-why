@@ -113,16 +113,24 @@ PERMISSION_BYPASS = {
 }
 
 
-def build_prompt(case_prompt, driver):
+def build_prompt(case_prompt, driver, cfg=None):
     """Case prompt as actually sent to the agent for this driver.
 
     Unchanged for claude (discovery is part of what's under test there). Every
     other driver is handed the skill explicitly, via a prefixed pointer to the
-    installed SKILL.md — see the module docstring's "Drivers" section for why.
+    installed SKILL.md — see run.py's module docstring, "Drivers", for why.
+
+    A case can switch the prefix off for every driver with case.json
+    "explicit_load": false — the activation cases do, since whether the
+    agent loads the skill *unprompted* is exactly what they measure. Such a
+    case usually pins "skill_install" as well, so the path the project's own
+    instruction names is where the skill actually is.
     """
-    if not EXPLICIT_LOAD[driver]:
+    cfg = cfg or {}
+    explicit = cfg.get("explicit_load", EXPLICIT_LOAD[driver])
+    if not explicit:
         return case_prompt
-    skill_rel = SKILL_INSTALL_REL[driver]
+    skill_rel = cfg.get("skill_install") or SKILL_INSTALL_REL[driver]
     return (
         f"Before doing anything else, read the file at the RELATIVE path "
         f"./{skill_rel}/SKILL.md, inside the current working directory of "
