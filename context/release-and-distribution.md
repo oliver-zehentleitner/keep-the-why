@@ -149,6 +149,20 @@ The consumer snippet references the root composite action as `uses: oliver-zehen
 
 **Consequence:** an `action.yml` change reaches consumers only through a linter publish — a revision bump such as `0.10.1.1 → 0.10.1.2` even when no check changed. Accepted: a release is the right unit for that, and the fourth version segment exists for exactly this kind of linter-only change.
 
+## The GitHub Action installs the latest linter by default; pinning is opt-in, per package, with `version:`
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** Oliver, 2026-09-05, when an external review of 0.11.0 proposed the opposite (a versioned action tag installing its matching linter version by default)
+**Revisit when:** a linter release breaks consumers on `@lint-latest` badly enough that "rolling by default" cost more than one pin would have
+
+`action.yml` runs `pip install --upgrade keep-the-why-lint` unless the `version:` input is set. `@lint-latest` moves with every linter publish. `@lint-v<version>` and `@<sha>` on the `uses:` line pin the wrapper only, and the docs say so in as many words.
+
+**Reason:** a skill release that adds a structural gate is followed by a linter release that knows it; a project on the default gets that without touching its workflow. The alternative — a pinned action tag that also pins the package — means every skill update turns into a workflow edit in every consuming repository, which is the kind of maintenance the linter was meant to remove, not add. The schema gating already protects the other direction (an old project is never judged by a newer schema), so rolling forward is the safe default, and anyone with a concrete reason can pin the package with one line.
+
+**Rejected alternative:** the reviewed proposal, a versioned action tag whose default installs the matching linter version. Correct for reproducibility in the abstract, wrong for this tool's maintenance profile: it would silently freeze consumers who pinned the action for supply-chain reasons, at exactly the moment a schema gate they need arrives. The docs now spell out the "wrapper only" trap instead.
+
 ## Bare `v<major>.<minor>.<patch>` tags are reserved for the skill; every other artifact is prefixed
 
 **Type:** decision

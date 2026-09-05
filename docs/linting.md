@@ -30,7 +30,21 @@ The project init wizard offers to write these for you (GitHub Actions or GitLab 
 
 {% include-markdown "../skills/keep-the-why/references/ci-linting.md" start="<!-- snippets:start -->" end="<!-- snippets:end -->" %}
 
-Inside GitHub Actions, findings show up as file/line annotations on the PR. The action always installs the latest linter from PyPI, and the `lint-latest` tag it's referenced by moves with every linter publish — nothing to pin on your side unless you want to (`@lint-v<version>` pins the action, the `version:` input pins the package).
+Inside GitHub Actions, findings show up as file/line annotations on the PR.
+
+### Versions and pinning
+
+The action installs the **latest** `keep-the-why-lint` from PyPI by default, and the `lint-latest` tag it is referenced by moves with every linter publish. That is deliberate: a skill release that adds a structural gate is followed by a linter release that knows it, and a workflow on `@lint-latest` with no version pinned picks that up on its own — nothing to touch in the project after a skill update. The gating handles the other direction (an older project is never held to a newer schema), so rolling forward is the safe default.
+
+Pin only when you have a reason — a linter release that misbehaves on your `context/`, a compliance rule that wants every tool version fixed. Pin the **package**, with the `version:` input; that is what decides which checks run:
+
+```yaml
+      - uses: oliver-zehentleitner/keep-the-why@lint-latest
+        with:
+          version: "0.11.0.1"    # linter pinned; remove the line to go back to latest
+```
+
+Two things that look like pinning and aren't: `@lint-v<version>` on the `uses:` line pins only the *wrapper* (the few lines of `action.yml`) — the package still floats unless `version:` is set too. And `@<commit-sha>` on the `uses:` line, the usual supply-chain hardening for actions, does the same: wrapper only. For a fully reproducible job, combine one of those with `version:`. Anywhere else (GitLab CI, pre-commit, a plain shell), `pip install keep-the-why-lint==<version>` is the pin.
 
 ## What it checks
 
