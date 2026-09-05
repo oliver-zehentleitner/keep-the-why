@@ -32,6 +32,25 @@ The project init wizard offers to write these for you (GitHub Actions or GitLab 
 
 Inside GitHub Actions, findings show up as file/line annotations on the PR. The action always installs the latest linter from PyPI, and the `lint-latest` tag it's referenced by moves with every linter publish — nothing to pin on your side unless you want to (`@lint-v<version>` pins the action, the `version:` input pins the package).
 
+## Hardening for shared repositories
+
+The linter checks structure. In a repository with many contributors, a few conventional GitHub settings turn it from a hint into a gate, and cover what it deliberately doesn't check:
+
+- **Require the check.** Branch protection (or a ruleset) on the default branch with the `ktw-lint` job as a required status check, and `strict: "true"` once the existing `context/` is clean — warnings are "fix next time you touch it" material for a solo project, and a merge blocker for a team.
+- **Own the rationale.** A `CODEOWNERS` line for the context directory and the config file, so a change to a confirmed decision is reviewed by someone who can confirm it:
+
+  ```
+  /context/        @your-org/architecture
+  /.keep-the-why   @your-org/architecture
+  ```
+
+  The linter accepts any well-formed `Evidence: confirmed`; whether the claim is true is exactly the review this line routes.
+- **Pin by ref, update by PR.** `@lint-v<version>` or `@<commit-sha>` on the `uses:` line pins action and linter together (see [Versions and pinning](#versions-and-pinning)); Dependabot's `github-actions` ecosystem then proposes the bump as a pull request, which is where a new linter release should meet a shared repository. Rolling `@lint-latest` is right for a project that wants every new gate the day it ships and has nobody to review workflow bumps.
+- **Pair with a secret scanner.** Hidden-content checks catch encoded blobs and invisible characters, not credentials in plain sight — gitleaks or GitHub's own secret scanning belongs next to it, since `context/` is prose that people paste into.
+- **Keep the runtime footprint the reason it is small.** The linter is stdlib-only and installs from PyPI; nothing else runs in the job. If a policy requires hashes, `pip install keep-the-why-lint==<version>` with `--require-hashes` and a constraints file works like for any package.
+
+None of this is specific to Keep the Why; it is the same set of settings any team applies to a directory whose content is a decision record.
+
 ## What it checks
 
 **`.keep-the-why` / legacy config block** — block present and parseable; required fields (`context`, `init`, `context-schema`, `capture-confirmation`, `source-reference`, plus `id` for dedicated files since 0.10.0); values from the documented sets; `filtered` source-reference carries its criteria; no field recorded twice (conflicting duplicates are exactly the state the skill refuses to guess about); no unknown fields; `context-schema` is plain semver; `pinned-version`/`pinned-path` only as a pair, with the path existing; the configured context location exists; `personal-defaults` blocks carry no `last:` timestamps. Both configured paths are confined to the repository: an absolute path, a `..` escape, or a symlink that leaves the tree is an error and is not read — a CI job runs this on pull requests from strangers, and the config file is data, not a place to point the linter at the runner's filesystem.
