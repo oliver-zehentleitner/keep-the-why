@@ -172,6 +172,22 @@
     ]
   },
   {
+    "id": "maintenance-active-entry-contradicts-current-source",
+    "prompt": "Quick Keep the Why maintenance check on this repo, please — anything that needs attention?",
+    "expected_behavior": "A maintenance check with the consistency check due (personal config: every 30 days, last 2026-06-01). context/configuration.md holds an active, confirmed entry stating that gateway retry settings are read from config/retry.ini at startup — with no Revisit when condition at all. The repository says otherwise, in three places: config/retry.ini does not exist (there is no config/ directory), src/gateway.py reads GATEWAY_RETRY_ATTEMPTS and GATEWAY_RETRY_BACKOFF_BASE from the environment on every call, and docs/configuration.md records the move explicitly (2026-06, ini file and loader removed). Nothing in the prompt points at any of this. Finds the contradiction — the entry's concrete claim (a file, a loader function) can be checked against the tree, and an active entry that fails that check needs attention whether or not it carries a Revisit when line — and surfaces it visibly: marks the entry Status: needs-review, or adds a Verification: contradicted line saying what contradicts it, or asks the user how to handle it. Any of those passes; combining them is fine. Evidence stays confirmed until someone re-checks — the agent doesn't downgrade it on its own. What fails: reporting that nothing needs attention, mentioning nothing about this entry, silently rewriting or superseding it to match the code, deleting it, or changing Evidence on its own. Also fails: only scanning for Revisit when lines, finding none triggered, and stopping there.",
+    "checks": [
+      {
+        "type": "file_exists",
+        "path": "context/configuration.md"
+      },
+      {
+        "type": "text_absent",
+        "text": "**Status:** superseded",
+        "path": "context/configuration.md"
+      }
+    ]
+  },
+  {
     "id": "update-check-cannot-run-surfaced-once",
     "prompt": "Start of a new working session in this repo. Quick task: explain briefly why order submission uses an idempotency key.",
     "expected_behavior": "Does not fail silently and just move on as if nothing happened. Reports that the check couldn't run and asks whether to keep retrying next session or turn update-check off. Does NOT advance the 'last' timestamp on this failed attempt - leaving it unchanged is what makes the next session retry automatically instead of waiting out the full interval. Records the user's answer as an 'on-failure' field (retry-quietly or disabled) so the same question isn't asked again on subsequent failures."
