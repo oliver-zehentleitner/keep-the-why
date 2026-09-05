@@ -8,7 +8,8 @@ import tempfile
 import time
 from pathlib import Path
 
-from .analysis import restraint_analysis
+from .analysis import restraint_analysis, skill_load_found, skill_load_position
+from .checks import run_checks
 from .cases import read_case_config
 from .drivers import (
     AGENT_RUNNERS,
@@ -20,6 +21,17 @@ from .drivers import (
 from .judge import judge
 from .results import RATE_LIMIT_RE, load_resolved, rate_limit_sentinel, write_summary
 from .workdir import build_workdir, collect_diff
+
+
+def _checks_verdict(failed):
+    return {
+        "verdict": "fail",
+        "score": 0,
+        "reasoning": "Deterministic check(s) failed: "
+        + "; ".join(f"{c['check']} — {c['detail']}" for c in failed)
+        + ".",
+        "violations": [f"{c['check']}: {c['detail']}" for c in failed],
+    }
 
 
 def run_case(case, args, results_dir):
@@ -48,6 +60,11 @@ def run_case(case, args, results_dir):
             "evidence_tool_calls_found": None,
             "evidence_claim": None,
             "restraint_category": None,
+            "skill_loaded": None,
+            "skill_loaded_at": None,
+            "checks": [],
+            "checks_passed": None,
+            "judge_verdict": None,
         }
         (results_dir / f"{case_id}.json").write_text(
             json.dumps(record, indent=2, ensure_ascii=False)
@@ -79,7 +96,7 @@ def run_case(case, args, results_dir):
         fake_home.mkdir()
         seed_fake_home(Path.home(), fake_home, args.driver)
         build_workdir(case_id, cfg, workdir, args.driver, home=fake_home)
-        prompt = build_prompt(case["prompt"], args.driver)
+        prompt = build_prompt(case["prompt"], args.driver, cfg)
         agent = AGENT_RUNNERS[args.driver](
             prompt,
             workdir,
@@ -90,8 +107,17 @@ def run_case(case, args, results_dir):
         )
         transcript = TRANSCRIPT_RENDERERS[args.driver](agent["events"])
         diff = collect_diff(workdir, home=fake_home)
+        # Deterministic checks need the workdir itself, so they run here,
+        # before the TemporaryDirectory is torn down — evaluated regardless
+        # of how the run ended; what they *mean* is decided below.
+        checks = run_checks(case.get("checks") or [], workdir, fake_home, transcript)
+    judge_verdict = None
+    checks_passed = all(c["ok"] for c in checks) if checks else None
+    skill_loaded = None
+    skill_loaded_at = None
     if agent.get("error"):
         verdict = {"verdict": "error", "reasoning": agent["error"]}
+        checks_passed = None  # no real run to check
         # A driver-level error (crash, timeout) means there's no real agent
         # behavior to categorize — an empty/partial transcript would
         # otherwise misclassify as e.g. "restrained" for the wrong reason.
@@ -114,6 +140,7 @@ def run_case(case, args, results_dir):
             "verdict": "rate_limited",
             "reasoning": "Agent response indicated the account's session/usage limit was hit.",
         }
+        checks_passed = None
         restraint = {
             k: None
             for k in (
@@ -125,8 +152,27 @@ def run_case(case, args, results_dir):
             )
         }
     else:
-        verdict = judge(case, transcript, diff, args.judge_model, args.timeout)
+        skill_loaded_at = skill_load_position(transcript)
+        skill_loaded = skill_loaded_at is not None
         restraint = restraint_analysis(transcript, diff)
+        failed = [c for c in checks if not c["ok"]]
+        if failed and not args.judge_always:
+            # A deterministic check settles it; no judge call for a case
+            # that already failed on something a machine can see.
+            verdict = _checks_verdict(failed)
+        else:
+            verdict = judge(case, transcript, diff, args.judge_model, args.timeout)
+            judge_verdict = verdict.get("verdict")
+            if failed and verdict.get("verdict") in ("pass", "fail"):
+                # --judge-always: the judge's view is kept in judge_verdict
+                # (a pass here is a judge blind spot worth reading), but the
+                # deterministic failure decides the case.
+                verdict = {
+                    **_checks_verdict(failed),
+                    "reasoning": f"{_checks_verdict(failed)['reasoning']} "
+                    f"Judge (advisory, --judge-always): {judge_verdict} — "
+                    f"{verdict.get('reasoning')}",
+                }
     record = {
         "id": case_id,
         "verdict": verdict.get("verdict"),
@@ -144,6 +190,11 @@ def run_case(case, args, results_dir):
         "transcript": transcript,
         "disk_changes": diff,
         **restraint,
+        "skill_loaded": skill_loaded,
+        "skill_loaded_at": skill_loaded_at,
+        "checks": checks,
+        "checks_passed": checks_passed,
+        "judge_verdict": judge_verdict,
     }
     (results_dir / f"{case_id}.json").write_text(
         json.dumps(record, indent=2, ensure_ascii=False)

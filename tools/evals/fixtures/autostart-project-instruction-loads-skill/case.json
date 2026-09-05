@@ -1,5 +1,7 @@
 {
   "remove": [
     ".claude/settings.json"
-  ]
+  ],
+  "explicit_load": false,
+  "skill_install": ".claude/skills/keep-the-why"
 }

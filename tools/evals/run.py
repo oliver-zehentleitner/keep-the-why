@@ -202,6 +202,14 @@ def main():
         help="give up retrying after this many hours total (default: 10)",
     )
     ap.add_argument(
+        "--judge-always",
+        action="store_true",
+        help="call the judge even when a case already failed a deterministic "
+        "check (default: skip it — the check settles the case). The judge's "
+        "own verdict is then stored as judge_verdict next to the final one, "
+        "which is how a judge blind spot gets found",
+    )
+    ap.add_argument(
         "--matrix",
         action="store_true",
         help="run every driver x model combination from "

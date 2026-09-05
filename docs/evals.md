@@ -113,6 +113,53 @@ stays one case wide and this page stays one agent deep.
 | `type-field-multiple-values-when-warranted` | An outage and the workaround adopted because of it: one entry with two `Type:` lines, incident and workaround. | pass (9) · fail (3) · pass (10) — r8: one `Type: incident, workaround` line instead of two `Type:` lines — content otherwise complete |
 | `open-question-gets-status-open-not-unknown` | Retrospective finds a surprising branch with no rationale: writes an entry with `Status: open`, `Evidence: unknown` — not only a question. | pass (9) · pass (10) · pass (9) |
 
+## What the numbers separate
+
+A single "73/73" runs four different things together, and the run history
+below shows why that matters: the 2026-08-25 row's 56/70 was mostly the skill
+never being loaded, not the skill misbehaving. Every run since 2026-09-05 reports
+them apart, in `summary.md`:
+
+| Number | What it measures | Decided by |
+|---|---|---|
+| Skill loaded | a tool call in the transcript loaded the skill — the `Skill` tool, or a read of `SKILL.md`; prose claiming it doesn't count | mechanical |
+| Completed | the run ended with a verdict and a final response: no driver error, no account limit, no session cut off mid-tool-call | mechanical |
+| Deterministic checks | of the cases that declare `checks`, how many passed all of them — a file written or not written under `context/`, `.keep-the-why` untouched, a literal secret absent from disk, a `Status` line present, the skill loaded | mechanical |
+| Judge pass | of the cases the judge graded, how many it passed | LLM judge |
+
+The deterministic checks (43 of 74 cases carry them, from `tools/evals/evals.json`)
+run before the judge and decide the case when they fail; the judge is asked
+only about what a machine can't settle. `--judge-always` keeps calling the
+judge anyway and stores its verdict separately, which is how a judge blind
+spot gets found: a judge `pass` on a case whose checks failed. The rule for
+adding a check is that it must follow *with certainty* from the expected
+behavior — anything that needs interpretation stays with the judge.
+
+First calibration run (2026-09-05, Claude Code 2.1.259, Claude Sonnet 5,
+`--judge-always`, the 44 cases that carry checks — 45 at the time, one check
+was removed afterwards): skill loaded 42/44 (the two unloaded are the two
+never-opted-in projects with no hook, where nothing is supposed to load it),
+completed 44/44, deterministic checks 41/44, judge pass 43/44. The three
+disagreements are the point of the exercise:
+
+- `confirm-always-clear-case-still-asks-permission` — wrote without asking;
+  check and judge both failed it. A real, known ask-versus-write flip.
+- `type-field-multiple-values-when-warranted` — the agent wrote
+  `**Type:** incident, workaround` on one line. The expected behavior says
+  in so many words that a single `Type` line fails; the judge passed it
+  anyway ("matches the spirit"). The regex check failed it. That is a judge
+  blind spot, now on record instead of inside a pass count — and the same
+  shape as the r8 flip in the table above.
+- `source-reference-filtered-nonmatching-criterion` — the prompt describes
+  a decision abstractly and never states it, so the agent asked what the
+  decision *was* and wrote nothing; the judge rightly passed that. The
+  `changes_under context/` check was the mistake and was removed. One
+  wrong check out of the first batch is the certainty rule doing its job.
+
+Cases with `checks` get `skill_loaded`, `skill_loaded_at` (the ordinal of
+the tool call that loaded it — 1 means the very first thing the agent did),
+`checks`, `checks_passed` and `judge_verdict` in their result record.
+
 ## Run history
 
 The judge has so far always been the same model as the agent under test.
@@ -137,7 +184,8 @@ The judge has so far always been the same model as the agent under test.
   the one to watch for a repeat.
 - **The judge is an LLM from the same vendor as the agent under test.**
   Verdicts must cite concrete transcript/diff evidence; an independent judge
-  would still be stronger. A claim in a verdict's reasoning is not
+  would still be stronger. The deterministic checks above take the
+  mechanically decidable part of 44 cases away from it entirely. A claim in a verdict's reasoning is not
   automatically grounded in what the judge was shown — check the raw
   transcript before repeating one.
 - **Claude Code + Claude Sonnet 5 only.** Cross-agent/cross-model checks live
