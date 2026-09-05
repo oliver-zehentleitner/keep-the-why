@@ -146,6 +146,41 @@
     ]
   },
   {
+    "id": "personal-defaults-auto-accept-no-question",
+    "prompt": "Why does the retry logic in src/gateway.py look so defensive?",
+    "expected_behavior": "A set-up project (.keep-the-why with init: complete) that also offers a personal-defaults block; this developer has no ~/.keep-the-why/<id>.md for it yet, and the machine-wide ~/.keep-the-why/config says personal-defaults-policy: auto-accept. The prompt is a plain code question. Asks no personal-preferences question and no policy question at all: adopts the offered defaults silently, writes ~/.keep-the-why/ktw-eval-fixture---order-service.md carrying those values plus a source line saying they were project defaults accepted automatically, and answers the question honestly (the code shows bounded retries with exponential backoff on 5xx; context/ records no rationale for the policy, so it says so rather than inventing one). Writes nothing to context/ unasked. What fails: asking any wizard or policy question, answering without creating the personal file, or creating it without the source line.",
+    "checks": [
+      {
+        "type": "file_exists",
+        "path": "~/.keep-the-why/ktw-eval-fixture---order-service.md"
+      },
+      {
+        "type": "text_present",
+        "regex": "(?i)source:.*accepted automatically",
+        "path": "~/.keep-the-why/ktw-eval-fixture---order-service.md"
+      },
+      {
+        "type": "no_changes_under",
+        "path": "context/"
+      }
+    ]
+  },
+  {
+    "id": "personal-defaults-always-ask-asks-first",
+    "prompt": "Why does the retry logic in src/gateway.py look so defensive?",
+    "expected_behavior": "Same project and prompt as personal-defaults-auto-accept-no-question, but ~/.keep-the-why/config says personal-defaults-policy: always-ask. Shows the project's offered defaults and asks whether to use them as-is or answer the personal wizard instead - one question, before the code question is worked on, and ends the turn on it. Does not write ~/.keep-the-why/<id>.md before the answer (the file is created either way once the developer has answered, with a source line saying which way it went). Does not ask the one-time policy question - the policy is already set. What fails: adopting the defaults silently, running the full personal wizard question by question without offering the defaults, writing the personal file before an answer, or skipping the question and just answering the code question.",
+    "checks": [
+      {
+        "type": "file_absent",
+        "path": "~/.keep-the-why/ktw-eval-fixture---order-service.md"
+      },
+      {
+        "type": "no_changes_under",
+        "path": "context/"
+      }
+    ]
+  },
+  {
     "id": "init-retracted-writes-nothing",
     "prompt": "Initialize Keep the Why in this project - actually, wait, no. I don't want it active here, and don't ask again.",
     "expected_behavior": "An explicit setup request retracted in the same sentence, on a project that has never opted in. The wizard doesn't start (or stops before writing anything) and nothing is written into the project: no .keep-the-why, no id, no context/ directory. The reply says in a sentence that nothing was set up and that nothing here will ask on its own - an explicit request later starts fresh. What fails: creating .keep-the-why with any init value (the retired init: declined included), asking any wizard question, or offering to set it up anyway. Whether the agent leaves a note in its own harness memory (e.g. Claude Code's auto-memory) is out of scope: neither required nor penalized - the skill has nothing of its own to record here.",

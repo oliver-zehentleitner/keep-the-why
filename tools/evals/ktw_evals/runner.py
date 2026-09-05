@@ -4,6 +4,7 @@ one pass over every unresolved case, and the retry loop around passes."""
 import concurrent.futures
 import datetime
 import json
+import sys
 import tempfile
 import time
 from pathlib import Path
@@ -234,7 +235,31 @@ def execute_pass(cases, args, results_dir):
     return records, summary, all_resolved
 
 
+def refuse_tempdir_inside_home():
+    """Fail loud if case workdirs would land under the operator's real home.
+
+    The fake $HOME each case runs with isolates the agent from the real
+    ~/.keep-the-why/ only as long as the agent can't tell where the real
+    home is. A workdir path under it (TMPDIR pointed at a directory inside
+    the repository, say) hands that away: seen for real on 2026-09-05, two
+    of three runs of a case that writes the personal file wrote it into the
+    operator's actual ~/.keep-the-why/. Not a warning — a run that has
+    already started is exactly the one that leaks.
+    """
+    tmp = Path(tempfile.gettempdir()).resolve()
+    home = Path.home().resolve()
+    if tmp == home or tmp.is_relative_to(home):
+        sys.exit(
+            f"refusing to run: the temp directory ({tmp}) is inside the "
+            f"operator's home ({home}). A case workdir under the real home "
+            f"lets the agent infer where the real ~/.keep-the-why/ is and "
+            f"write there instead of into the fake $HOME. Set TMPDIR to a "
+            f"location outside your home, e.g. TMPDIR=/var/tmp."
+        )
+
+
 def run_until_resolved(cases, args, results_dir):
+    refuse_tempdir_inside_home()
     """The pass/retry loop behind a single --driver/--model run: one pass, and
     with --retry-until-complete further passes over whatever is still
     unresolved, until everything has a pass/fail verdict or --max-wait-hours

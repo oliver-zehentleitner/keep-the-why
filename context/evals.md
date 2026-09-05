@@ -48,3 +48,18 @@ A case in `evals.json` may declare `checks` (file written / not written under a 
 
 **Rejected alternative:** reporting only the judge number on the cases that activated — hides the activation problem, which is the one that has actually bitten.
 
+## Case workdirs must not live under the operator's home; the runner refuses to start if they would
+
+**Type:** incident
+**Type:** constraint
+**Status:** active
+**Evidence:** confirmed
+**Source:** 2026-09-05, two of three runs of `personal-defaults-auto-accept-no-question` with `TMPDIR` pointed inside the repository; the leaked file was found in the real `~/.keep-the-why/` and removed
+**Revisit when:** the fake `$HOME` mechanism is replaced by something the agent can't see through (a container per case, a different user)
+
+The eval runner's per-case fake `$HOME` isolates the agent from the operator's real `~/.keep-the-why/`. That isolation is only as good as the agent's ignorance of where the real home is. When `/tmp` (a 2 GB tmpfs on this host) ran full and `TMPDIR` was pointed at `tools/evals/results/tmp` inside the checkout, every case path began with `/home/claude-agent/…` — and two agents, told to write `~/.keep-the-why/<id>.md`, wrote it as `/home/claude-agent/.keep-the-why/<id>.md`, the real one, while the shell-level `ls ~/.keep-the-why` in the same session correctly showed the fake home. The run's own deterministic check caught it (the expected file was missing from the fake home), which is how it was noticed at all.
+
+**Reason:** `run_until_resolved()` and `run_matrix()` now call `refuse_tempdir_inside_home()` — a hard stop, not a warning, because a run that has started is the one that leaks. `TMPDIR=/var/tmp` (disk-backed, outside home) is the documented answer for a small `/tmp`.
+
+**Rejected alternative:** scrubbing the real home path from what the agent sees (a symlinked workdir, a chroot-ish rename). Fragile — `pwd`, tool results and error messages all carry the path — and a guard that refuses the unsafe layout costs nothing.
+

@@ -95,6 +95,25 @@ Same fields as a personal file, minus `last:` timestamps — those are inherentl
 
 If a project has no `personal-defaults` block at all, none of this applies — the personal wizard runs as it always has, regardless of the global policy, since there's nothing to offer or accept.
 
+## Ephemeral environments (devcontainers, Codespaces, CI agents)
+
+The personal file is per developer and per machine, so a fresh container has none — and the rule that a missing personal file runs the personal wizard before anything else holds there too, on purpose: a throwaway environment is still someone's session, and the skill has no way to tell "this developer hasn't been asked yet" from "this is a container". Two ways to answer the question once, in the image, instead of in every session:
+
+**Bake the personal file.** For one project, the simplest: write `~/.keep-the-why/<id>.md` into the image (the `<id>` is the `id` line in the project's `.keep-the-why`) with the values the environment should run with. Timers are the one thing to think about — `update-check: no` and `consistency-check: no` for an environment that is rebuilt anyway, since a `last:` timestamp baked into an image never advances.
+
+```markdown
+<!-- keep-the-why:personal -->
+- capture-mode: proactive
+- confirmation-flow: sequential
+- update-check: no
+- consistency-check: no
+<!-- /keep-the-why:personal -->
+```
+
+**Bake the policy, let the project offer the defaults.** For an image shared across projects: the project carries a `personal-defaults` block (above), and the image carries `~/.keep-the-why/config` with `personal-defaults-policy: auto-accept`. The first session in each such project adopts the project's defaults silently and writes the personal file itself, `source: project defaults (accepted automatically)` — no question, and nothing project-specific in the image. A project *without* a `personal-defaults` block still runs the wizard, since there is nothing to accept; for those, bake the file.
+
+A non-interactive agent (CI, a scheduled job) with neither in place will stop at the wizard's first question, which is the correct outcome — it cannot answer, and the skill will not guess.
+
 ## Pinned versions
 
 A project can pin `.keep-the-why` to an exact, vendored copy of the skill instead of whatever happens to be installed on a given developer's machine — useful when a project's `context/` was set up against, and tested with, a specific release, and shouldn't silently run under a different one just because that's what's on someone's laptop (personal-scope installs fully shadow a project-scoped skill of the same name in some tools, so without this, the vendored copy a project actually committed could never run at all for a developer who also has the skill installed personally).

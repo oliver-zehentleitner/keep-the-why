@@ -12,7 +12,7 @@ from .analysis import RESTRAINT_CODES, RESTRAINT_LEGEND
 from .cases import load_matrix_config
 from .common import TOOL_DIR, skill_version
 from .drivers import AGENT_RUNNERS, DRIVER_LABELS
-from .runner import execute_pass
+from .runner import execute_pass, refuse_tempdir_inside_home
 
 
 def _model_slug(model):
@@ -33,6 +33,7 @@ def run_matrix(cases, args):
     single run more correct (a driver fix, a new case) applies here for
     free, and the same command works unattended in CI.
     """
+    refuse_tempdir_inside_home()
     config = load_matrix_config()
     drivers = (
         args.matrix_drivers.split(",") if args.matrix_drivers else config["drivers"]

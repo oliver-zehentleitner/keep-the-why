@@ -157,7 +157,7 @@ if a driver's CLI version changes noticeably.
 ## Usage
 
 ```bash
-# everything (73 cases; expect a long run and real API usage)
+# everything (77 cases; expect a long run and real API usage)
 python3 tools/evals/run.py --all
 
 # a subset
@@ -184,6 +184,28 @@ config: for `pi`, a local Ollama or OpenRouter model needs a matching entry in
 `omp`, an `OPENROUTER_API_KEY` env var (no per-model registration needed —
 any `provider/model` string is passed straight through to `--model`).
 Exit code is non-zero if any case fails or errors.
+
+### Disk: point `TMPDIR` somewhere with room — but never inside your home
+
+Every case materializes its project *and* a fake `$HOME` under the system
+temp directory, and the fake `$HOME` starts as a copy of the driver's own
+config (`~/.claude` for the claude driver — easily 150–200 MB). On a host
+where `/tmp` is a small tmpfs, a handful of parallel cases fills it and the
+run dies at the copy step with `No space left on device`; a crashed run can
+also leave its `ktw-eval-*` directories behind. The runner honors `TMPDIR`:
+
+```bash
+TMPDIR=/var/tmp python3 tools/evals/run.py --all
+```
+
+Pick a location **outside the operator's home directory**. The fake `$HOME`
+keeps the agent away from your real `~/.keep-the-why/`, but only as long as
+the agent can't guess where your real home is — and a project path like
+`/home/you/…/tmp/ktw-eval-…/project` tells it. Seen for real: with `TMPDIR`
+under the repository, two of three runs of a case that writes the personal
+file wrote it to the operator's actual `~/.keep-the-why/` instead of the
+fake one. The runner now refuses to start when the temp directory resolves
+to somewhere under `Path.home()`.
 
 ## Matrix runs
 
