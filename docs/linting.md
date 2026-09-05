@@ -30,7 +30,25 @@ The project init wizard offers to write these for you (GitHub Actions or GitLab 
 
 {% include-markdown "../skills/keep-the-why/references/ci-linting.md" start="<!-- snippets:start -->" end="<!-- snippets:end -->" %}
 
-Inside GitHub Actions, findings show up as file/line annotations on the PR. The action always installs the latest linter from PyPI, and the `lint-latest` tag it's referenced by moves with every linter publish — nothing to pin on your side unless you want to (`@lint-v<version>` pins the action, the `version:` input pins the package).
+Inside GitHub Actions, findings show up as file/line annotations on the PR.
+
+### Versions and pinning
+
+The `uses:` ref decides both the action and the linter it installs, the way pinning an action usually works:
+
+| `uses:` ref | Action | Linter installed |
+|---|---|---|
+| `@lint-latest` (the documented default) | moves with every linter release | the newest — no edit needed after a skill update |
+| `@lint-v<version>` | that release | that release's linter |
+| `@<commit-sha>` | that commit | the linter that commit belongs to |
+
+Latest is the default on purpose: a skill release that adds a structural gate is followed by a linter release that knows it, and a workflow on `@lint-latest` picks that up on its own. The gating protects the other direction (an older project is never held to a newer schema), so rolling forward is the safe default. Pin when you have a reason — a linter release that misbehaves on your `context/`, a policy that wants every tool version fixed — and pin by ref, like any other action:
+
+```yaml
+      - uses: oliver-zehentleitner/keep-the-why@lint-v0.11.0.0   # action and linter pinned together
+```
+
+The `version:` input is for the odd case of mixing — a pinned action with a different linter, or `version: "latest"` on a pinned ref to keep the linter rolling anyway. Anywhere else (GitLab CI, pre-commit, a plain shell), `pip install keep-the-why-lint==<version>` is the pin.
 
 ## What it checks
 

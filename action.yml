@@ -17,7 +17,12 @@ inputs:
     required: false
     default: "false"
   version:
-    description: "keep-the-why-lint version to install (empty = latest from PyPI)"
+    description: >-
+      keep-the-why-lint version to install. Empty (the default) installs the
+      version this checkout of the action belongs to — so @lint-latest, which
+      moves with every linter release, installs the newest, and @lint-v<version>
+      or @<sha> pins action and linter together, as pinning an action usually
+      means. "latest" always installs PyPI's newest regardless of the ref.
     required: false
     default: ""
   python-version:
@@ -36,11 +41,30 @@ runs:
       shell: bash
       env:
         KTW_LINT_VERSION: ${{ inputs.version }}
+        KTW_ACTION_PATH: ${{ github.action_path }}
       run: |
-        if [ -n "$KTW_LINT_VERSION" ]; then
-          python -m pip install --quiet "keep-the-why-lint==$KTW_LINT_VERSION"
-        else
+        if [ -z "$KTW_LINT_VERSION" ]; then
+          # No version given: the one this checkout of the action belongs to.
+          # lint-latest is moved to the lint-v<version> tag after each
+          # publish, so on that ref this is PyPI's newest; on a pinned ref it
+          # is the linter that ref was released with.
+          KTW_LINT_VERSION=$(sed -n 's/^__version__ = "\(.*\)"$/\1/p' "$KTW_ACTION_PATH/lint/ktw_lint/__init__.py")
+          if [ -z "$KTW_LINT_VERSION" ]; then
+            echo "::error::could not read the linter version from the action checkout"
+            exit 1
+          fi
+        fi
+        if [ "$KTW_LINT_VERSION" = "latest" ]; then
           python -m pip install --quiet --upgrade keep-the-why-lint
+        else
+          for attempt in 1 2 3; do
+            if python -m pip install --quiet "keep-the-why-lint==$KTW_LINT_VERSION"; then break; fi
+            if [ "$attempt" = 3 ]; then
+              echo "::error::keep-the-why-lint $KTW_LINT_VERSION is not installable from PyPI"
+              exit 1
+            fi
+            sleep 20  # a release published moments ago can take a little while to reach every mirror
+          done
         fi
 
     - name: Run ktw-lint

@@ -71,11 +71,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: oliver-zehentleitner/keep-the-why@lint-latest   # or @lint-v<version> to pin the action
+      - uses: oliver-zehentleitner/keep-the-why@lint-latest   # rolling; @lint-v<version> pins action and linter together
         with:
           path: "."
           strict: "false"    # "true" turns warnings (e.g. missing Type on old entries) into failures
-          # version: "0.10.1.0"   # optional: pin the linter itself; @lint-v<version> above pins only the wrapper
+          # version: "latest"     # only to mix: a pinned ref with a rolling linter, or vice versa — https://keepthewhy.com/linting/#versions-and-pinning
 ```
 
 **GitLab CI** — job for `.gitlab-ci.yml`:

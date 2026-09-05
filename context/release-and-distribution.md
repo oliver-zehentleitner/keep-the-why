@@ -149,6 +149,22 @@ The consumer snippet references the root composite action as `uses: oliver-zehen
 
 **Consequence:** an `action.yml` change reaches consumers only through a linter publish — a revision bump such as `0.10.1.1 → 0.10.1.2` even when no check changed. Accepted: a release is the right unit for that, and the fourth version segment exists for exactly this kind of linter-only change.
 
+## The GitHub Action installs the linter its own ref belongs to; `lint-latest` therefore rolls, a pinned ref pins both
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** Oliver, 2026-09-05; the wrapper-only pin was flagged by an external review of 0.11.0, and a first draft of this decision (keep the package floating, document the trap) was reversed the same day
+**Revisit when:** the linter's version ever stops living in a file the action checkout contains
+
+`action.yml` reads `__version__` from `lint/ktw_lint/__init__.py` in its own checkout and installs exactly that, unless `version:` says otherwise. `lint-latest` is moved to the `lint-v<version>` tag after each publish, so on that ref the result is PyPI's newest; on `@lint-v<version>` or `@<sha>` it is the linter that ref was released with. `version: "latest"` forces the newest regardless of ref.
+
+**Reason:** two things at once. Latest must be the default, because a skill release that adds a structural gate is followed by a linter release that knows it, and nobody should have to edit a workflow after every skill update — `@lint-latest` delivers that. And pinning must mean what it means for every other action: the ref fixes everything the action does. A ref that pinned the wrapper while the package kept floating was a trap the review rightly named — the consumers most likely to pin (supply-chain policy) were the ones getting the least reproducibility.
+
+**Rejected alternative:** leaving the package floating on every ref and documenting the trap instead. Drafted, then dropped: "read the docs to learn that pinning doesn't pin" is not a convention anyone expects. Also rejected: a version-derived default only on tagged refs, with `latest` on everything else — two behaviors for one input, and `lint-latest` makes the simple rule produce the right answer anyway.
+
+**Consequence:** this repository's own `action-smoke` job (`uses: ./` on a PR) passes `version: "latest"` explicitly, because a PR that bumps `__init__.py` names a version PyPI doesn't have yet. A pinned install retries three times with a short pause before failing loud, for the minutes right after a publish when not every mirror has the release.
+
 ## Bare `v<major>.<minor>.<patch>` tags are reserved for the skill; every other artifact is prefixed
 
 **Type:** decision
