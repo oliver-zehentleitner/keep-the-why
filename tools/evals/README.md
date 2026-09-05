@@ -29,6 +29,27 @@ For each case:
 Results land in `results/<timestamp>-<driver>/` (gitignored): one JSON per
 case plus `summary.json` and `summary.md`.
 
+## Layout
+
+`run.py` is the command-line entry point and keeps the long-form driver
+notes in its module docstring; the code lives in the `ktw_evals/` package
+next to it, one module per responsibility:
+
+| Module | What it holds |
+|---|---|
+| `common.py` | repository paths, size caps, `sh()`, `skill_version()` |
+| `cases.py` | `evals.json`, per-case `case.json`, `matrix-config.json` loading |
+| `workdir.py` | materializing the throwaway project and fake `$HOME`; `collect_diff()` afterwards |
+| `drivers/` | one module per agent CLI (`run_agent_*` + `render_transcript_*`); the registry and per-driver tables in `__init__.py` |
+| `analysis.py` | `restraint_analysis()` — the mechanical, judge-free categorization |
+| `judge.py` | the judge prompt and the Claude call that grades a case |
+| `results.py` | stored verdicts, the rate-limit sentinel, `summary.json` / `summary.md` |
+| `runner.py` | `run_case()`, `execute_pass()`, and the retry loop |
+| `matrix.py` | `--matrix` orchestration and its table |
+
+Adding a driver means one new module under `drivers/` plus its rows in the
+`__init__.py` tables; nothing else needs to know.
+
 ## Drivers
 
 `--driver` selects which agentic coding CLI runs the skill under test:
