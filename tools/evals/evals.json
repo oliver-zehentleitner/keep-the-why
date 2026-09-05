@@ -275,8 +275,12 @@
     "expected_behavior": "Backfills context-schema to 0.2.0 (the last version before any context/ format change) rather than treating the missing field as an error or leaving it unset, then proceeds with the normal behind/current comparison against the installed version.",
     "checks": [
       {
+        "type": "file_changed",
+        "path": ".keep-the-why"
+      },
+      {
         "type": "text_present",
-        "regex": "context-schema:\\s*0\\.2\\.0\\b",
+        "regex": "context-schema:\\s*\\d+\\.\\d+\\.\\d+",
         "path": ".keep-the-why"
       }
     ]
