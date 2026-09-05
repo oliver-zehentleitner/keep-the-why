@@ -53,3 +53,18 @@ An `##` heading in a topic file with no recognized field lines gets `W102`, not 
 `**Verification:** contradicted. Retested …` is valid — the value word is what's constrained, and anything after it (period, colon, dash, plain sentence) counts as the explanation `contradicted` requires. `Type: undefined — <reason>` keeps its documented dash form, since that one *is* specified.
 
 **Reason:** the first dogfood run failed on `compatibility.md`, which separates `contradicted` from its explanation with a period. That entry is correct per the schema's wording ("must say what contradicts it"); the linter's initial dash-only parsing was the bug. Structure checks must follow the documented format, not an implementer's assumption about punctuation.
+
+## Configured paths are confined to the repository, and an escape is an error rather than a silent fallback
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** external review of 0.11.0, 2026-09-04; reproduced before the fix (`context: ../outside` listed and read the files there)
+**Revisit when:** the linter grows a mode that deliberately reads outside the project (it has no reason to today)
+
+`context` and `pinned-path` from `.keep-the-why` are resolved with symlinks followed and must land inside the project root; absolute paths are rejected without resolving. A symlinked file inside the context directory that resolves outside the tree is skipped. Every case is `E009`, an error — the linter does not fall back to `context/` and continue.
+
+**Reason:** the linter is a CI tool that processes a configuration file from whatever pull request triggered it, including one from a stranger. The file has to be treated as data even in the one place where it names a filesystem location. The two paths were previously joined onto the root with `os.path.join`, which happily takes `..` and replaces the root with an absolute path outright. What leaked was small (file names, line numbers, heading text echoed in findings) — the point is the boundary, not the payload.
+
+**Rejected alternative:** silently falling back to `context/` when the configured location escapes. That would lint the wrong directory and report green on a project whose config is broken or hostile; an error that names the field is what the skill's own "fail loud" rule asks for. Also rejected: not following symlinks at all (`os.path.abspath` instead of `realpath`) — a link inside the tree that points outside is exactly the escape that check exists for.
+

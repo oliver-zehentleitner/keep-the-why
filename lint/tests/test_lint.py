@@ -44,7 +44,9 @@ Body text.
 """
 
 
-class LintProject(unittest.TestCase):
+class _ProjectFixture(unittest.TestCase):
+    """Temp-dir project builder shared by the test classes below; no tests here."""
+
     def setUp(self):
         self._tmp = tempfile.TemporaryDirectory()
         self.root = self._tmp.name
@@ -90,6 +92,8 @@ class LintProject(unittest.TestCase):
     def codes(self, findings):
         return sorted(f.code for f in findings)
 
+
+class LintProject(_ProjectFixture):
     # -- happy path ------------------------------------------------------
 
     def test_clean_project(self):
@@ -384,3 +388,98 @@ class LintProject(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PathConfinement(_ProjectFixture):
+    """Configured paths never lead the linter outside the project root (E009)."""
+
+    def setUp(self):
+        super().setUp()
+        self._outside_tmp = tempfile.TemporaryDirectory()
+        self.outside = self._outside_tmp.name
+        with open(os.path.join(self.outside, "leak.md"), "w", encoding="utf-8") as fh:
+            fh.write("# Leak\n\n## Heading only\n\ntext\n")
+
+    def tearDown(self):
+        self._outside_tmp.cleanup()
+        super().tearDown()
+
+    def config_with_context(self, value):
+        return GOOD_CONFIG.replace("- context: `context/`", f"- context: `{value}`")
+
+    def assert_rejected(self, findings):
+        self.assertIn("E009", self.codes(findings))
+        # nothing from the outside directory was read: its heading-only
+        # section would otherwise surface as W102, its missing index as E201
+        for code in ("W102", "E201", "W201"):
+            self.assertNotIn(code, self.codes(findings))
+
+    def test_dotdot_context_is_rejected(self):
+        self.base_project(config=self.config_with_context("../"))
+        findings, _ = self.run_lint()
+        self.assert_rejected(findings)
+
+    def test_absolute_context_is_rejected(self):
+        self.base_project(config=self.config_with_context(self.outside))
+        findings, _ = self.run_lint()
+        self.assert_rejected(findings)
+
+    def test_windows_style_absolute_context_is_rejected(self):
+        # os.path.isabs only recognizes the drive form on Windows; on POSIX
+        # `C:\...` is a relative name that simply doesn't exist (E007), and
+        # either way nothing outside the tree gets read.
+        self.base_project(config=self.config_with_context(r"C:\Users\x\context"))
+        findings, _ = self.run_lint()
+        self.assertTrue({"E007", "E009"} & set(self.codes(findings)))
+        self.assertNotIn("W102", self.codes(findings))
+
+    def test_symlinked_context_dir_leaving_the_tree_is_rejected(self):
+        self.base_project(config=self.config_with_context("linked/"))
+        os.symlink(self.outside, os.path.join(self.root, "linked"))
+        findings, _ = self.run_lint()
+        self.assert_rejected(findings)
+
+    def test_symlinked_file_inside_context_leaving_the_tree_is_skipped(self):
+        self.base_project()
+        os.symlink(
+            os.path.join(self.outside, "leak.md"),
+            os.path.join(self.root, "context", "leak.md"),
+        )
+        findings, _ = self.run_lint()
+        codes = self.codes(findings)
+        self.assertIn("E009", codes)
+        self.assertNotIn("W102", codes)  # the linked file's content was not read
+        # and the index check didn't treat the skipped file as a real topic
+        self.assertNotIn("E203", codes)
+
+    def test_pinned_path_outside_the_tree_is_rejected(self):
+        config = GOOD_CONFIG.replace(
+            "- source-reference: never\n",
+            "- source-reference: never\n"
+            "- pinned-version: 0.10.1\n"
+            f"- pinned-path: {self.outside}\n",
+        )
+        self.base_project(config=config)
+        findings, _ = self.run_lint()
+        self.assertIn("E009", self.codes(findings))
+        self.assertNotIn("E006", self.codes(findings))
+
+    def test_nested_context_dir_is_fine(self):
+        self.base_project(config=self.config_with_context("docs/why/"))
+        os.makedirs(os.path.join(self.root, "docs"), exist_ok=True)
+        os.rename(
+            os.path.join(self.root, "context"), os.path.join(self.root, "docs", "why")
+        )
+        findings, _ = self.run_lint()
+        self.assertEqual(
+            self.codes(findings), [], msg=[f.format_text() for f in findings]
+        )
+
+    def test_symlinked_project_root_is_fine(self):
+        self.base_project()
+        link = os.path.join(self.outside, "root-link")
+        os.symlink(self.root, link)
+        findings = Linter(link).run(_load_config(link))
+        self.assertEqual(
+            self.codes(findings), [], msg=[f.format_text() for f in findings]
+        )

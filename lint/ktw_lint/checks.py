@@ -112,22 +112,42 @@ def _split_value(value: str):
 
 class Linter:
     def __init__(self, root: str):
-        self.root = root
+        # realpath, so that a symlinked root and a path that only *looks*
+        # outside it compare correctly in _confined().
+        self.root = os.path.realpath(root)
         self.findings: list = []
         self.schema = FALLBACK_SCHEMA
         self.context_dir = "context"
+        self.context_rejected = False  # E009: configured location left the tree
 
     # -- helpers ---------------------------------------------------------
 
     def add(self, severity, code, path, line, message):
         self.findings.append(Finding(severity, code, path, line, message))
 
+    def _confined(self, relpath) -> bool:
+        """True when `relpath` resolves to somewhere inside the project root.
+
+        Configured paths (`context`, `pinned-path`) come from a file the
+        linter is asked to trust only as data. An absolute path, a `..`
+        escape, or a symlink pointing outside the repository must not make
+        the linter read from there — a CI job runs this on pull requests
+        from strangers. Symlinks are followed for the comparison, so a link
+        inside the tree that leaves it counts as outside.
+        """
+        if os.path.isabs(relpath):
+            return False
+        resolved = os.path.realpath(os.path.join(self.root, relpath))
+        return resolved == self.root or resolved.startswith(self.root + os.sep)
+
     def _read(self, relpath):
         with open(os.path.join(self.root, relpath), encoding="utf-8") as fh:
             return fh.read()
 
     def _exists(self, relpath):
-        return os.path.exists(os.path.join(self.root, relpath))
+        return self._confined(relpath) and os.path.exists(
+            os.path.join(self.root, relpath)
+        )
 
     # -- config ----------------------------------------------------------
 
@@ -294,7 +314,16 @@ class Linter:
                     pinned_version[0],
                     f"pinned-version '{pinned_version[1]}' is not a plain semver version (X.Y.Z)",
                 )
-            if not self._exists(pinned_path[1]):
+            if not self._confined(pinned_path[1]):
+                self.add(
+                    ERROR,
+                    "E009",
+                    path,
+                    pinned_path[0],
+                    f"pinned-path '{pinned_path[1]}' points outside the repository — "
+                    "absolute paths, '..' and symlinks leaving the tree are not followed",
+                )
+            elif not self._exists(pinned_path[1]):
                 self.add(
                     ERROR,
                     "E006",
@@ -306,7 +335,18 @@ class Linter:
         ctx_field = block.first("context")
         if ctx_field:
             self.context_dir = context_dir_from_value(ctx_field[1])
-            if not self._exists(self.context_dir):
+            if not self._confined(self.context_dir):
+                self.add(
+                    ERROR,
+                    "E009",
+                    path,
+                    ctx_field[0],
+                    f"configured context location '{self.context_dir}' points outside "
+                    "the repository — absolute paths, '..' and symlinks leaving the tree "
+                    "are not followed",
+                )
+                self.context_rejected = True
+            elif not self._exists(self.context_dir):
                 self.add(
                     ERROR,
                     "E007",
@@ -668,15 +708,29 @@ class Linter:
 
         self.check_config(parsed)
 
+        if self.context_rejected:
+            return self.findings
         context_abs = os.path.join(self.root, self.context_dir)
         if not os.path.isdir(context_abs):
             return self.findings
 
-        all_md = sorted(
-            name
-            for name in os.listdir(context_abs)
-            if name.endswith(".md") and os.path.isfile(os.path.join(context_abs, name))
-        )
+        all_md = []
+        for name in sorted(os.listdir(context_abs)):
+            relpath = os.path.join(self.context_dir, name)
+            if not name.endswith(".md") or not os.path.isfile(
+                os.path.join(context_abs, name)
+            ):
+                continue
+            if not self._confined(relpath):
+                self.add(
+                    ERROR,
+                    "E009",
+                    relpath,
+                    0,
+                    f"{relpath} is a symlink leaving the repository — not read",
+                )
+                continue
+            all_md.append(name)
         topic_files = [name for name in all_md if name not in NON_TOPIC_FILES]
 
         for name in topic_files:
