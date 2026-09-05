@@ -1,6 +1,6 @@
 # Evals
 
-The skill ships 74 eval cases (`tools/evals/evals.json`): a prompt paired
+The skill ships 75 eval cases (`tools/evals/evals.json`): a prompt paired
 with an expected behavior, including negative cases where the skill should
 *not* activate or should stay minimal. A local runner in
 [`tools/evals/`](https://github.com/oliver-zehentleitner/keep-the-why/tree/main/tools/evals)
@@ -56,6 +56,7 @@ stays one case wide and this page stays one agent deep.
 | `init-already-complete-new-developer-still-asked-personal` | Project already set up, new developer without a personal file: no project wizard, but the personal wizard runs. | pass (9) · pass (9) · pass (9) |
 | `init-retracted-writes-nothing` | An explicit init request retracted in the same sentence, on a project that never opted in: nothing is written into the project — no `.keep-the-why`, no wizard question, no offer. | pass (10) · pass (10) · pass (10) — new case, three isolated runs |
 | `negative-timer-check-age-without-trigger` | Consistency check on an old entry whose trigger hasn't fired: age alone isn't a defect; advances the timestamp, stays quiet. | pass (10) · pass (10) · pass (10) |
+| `maintenance-active-entry-contradicts-current-source` | Consistency check where an active, confirmed entry with no `Revisit when` names a config file, loader and mechanism the tree no longer has (docs record the move): finds the contradiction from the source, surfaces it, asks — doesn't quietly fix it. | fail (0) · pass (9) · pass (9) — r1: superseded the entry and wrote a replacement with `Evidence: confirmed` from its own reading, unasked; caught by the deterministic check (added 2026-09-05, three runs on its own, not part of the full runs above) |
 | `update-check-cannot-run-surfaced-once` | Update check without web access: says so once, asks retry-or-disable, doesn't advance `last`. | pass (9) · pass (9) · pass (9) |
 | `update-check-repeat-failure-no-reask` | Same failure again with `on-failure: retry-quietly` already recorded: retries silently, doesn't ask again, doesn't advance `last`. | pass (9) · pass (9) · pass (9) |
 | `abandoned-change-still-captured` | A simplification abandoned once a hidden dependency surfaces: the reasoning is recorded even though no code changed. | pass (9) · pass (9) · pass (9) |
@@ -127,7 +128,7 @@ them apart, in `summary.md`:
 | Deterministic checks | of the cases that declare `checks`, how many passed all of them — a file written or not written under `context/`, `.keep-the-why` untouched, a literal secret absent from disk, a `Status` line present, the skill loaded | mechanical |
 | Judge pass | of the cases the judge graded, how many it passed | LLM judge |
 
-The deterministic checks (43 of 74 cases carry them, from `tools/evals/evals.json`)
+The deterministic checks (44 of 75 cases carry them, from `tools/evals/evals.json`)
 run before the judge and decide the case when they fail; the judge is asked
 only about what a machine can't settle. `--judge-always` keeps calling the
 judge anyway and stores its verdict separately, which is how a judge blind
