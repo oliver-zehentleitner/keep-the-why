@@ -70,8 +70,12 @@ jobs:
       # Exercises the action.yml in this PR — ktw-lint.yml uses the released
       # @lint-latest action, so a change to action.yml would otherwise go
       # untested until the next linter publish moves that tag.
+      # version: latest, explicitly — the action's own default installs the
+      # version in lint/ktw_lint/__init__.py, which on a PR that bumps it is
+      # not on PyPI yet.
       - name: Run the root action against this repository
         uses: ./
         with:
           path: "."
           strict: "false"
+          version: "latest"
