@@ -30,11 +30,25 @@ fabricated a specific tool detail that appeared in none of the real \
 transcripts it was grading (see docs/evals.md). If you're inferring rather \
 than quoting, say so explicitly instead of stating it as observed fact.
 
+- Break the expected behavior into its individual requirements first — \
+typically three to eight: each thing the agent must do, must not do, or must \
+say. Grade each one on its own, with the piece of transcript or diff that \
+decides it. The verdict follows from the core requirements; the score from \
+all of them.
+- A score below 10 must be accounted for: one "deductions" entry per point \
+withheld, naming the requirement it comes from and the evidence. A 10 has \
+an empty list. A reader of a 9 must be able to see the missing point without \
+re-reading the transcript.
+
 Do not use any tools — everything needed is in this prompt. Return ONLY a \
 JSON object, no markdown fences, with exactly these keys:
 {"verdict": "pass" or "fail",
  "score": 0-10 (10 = fully matches expected behavior),
  "reasoning": "2-5 sentences citing concrete evidence from transcript/diff",
+ "expectations": [{"expectation": "one requirement from the expected behavior, in a few words",
+                   "met": true or false,
+                   "evidence": "the transcript/diff detail that decides it, quoted or described"}, ...],
+ "deductions": ["one entry per point below 10: requirement + evidence", ...],
  "violations": ["short bullet per expectation not met", ...]}
 
 ## Test prompt given to the agent
@@ -101,6 +115,13 @@ def judge(case, transcript, diff, model, timeout):
             verdict = json.loads(match.group(0))
             if verdict.get("verdict") not in ("pass", "fail"):
                 raise ValueError(f"bad verdict value: {verdict.get('verdict')!r}")
+            # The granular fields are new; a judge that omits them (an older
+            # cached prompt, a truncated answer) still yields a usable verdict.
+            verdict.setdefault("expectations", [])
+            verdict.setdefault("deductions", [])
+            verdict.setdefault("violations", [])
+            if not isinstance(verdict["expectations"], list):
+                verdict["expectations"] = []
             return verdict
         except (json.JSONDecodeError, AttributeError, ValueError) as e:
             last_error = f"unparseable judge output ({e}): {proc.stdout[:1000]}"

@@ -48,6 +48,8 @@ def run_case(case, args, results_dir):
             "score": None,
             "reasoning": "Skipped: an earlier case in this pass hit the account's session/usage limit.",
             "violations": [],
+            "expectations": [],
+            "deductions": [],
             "agent_model": args.model,
             "judge_model": args.judge_model,
             "driver": args.driver,
@@ -173,6 +175,8 @@ def run_case(case, args, results_dir):
                     "reasoning": f"{_checks_verdict(failed)['reasoning']} "
                     f"Judge (advisory, --judge-always): {judge_verdict} — "
                     f"{verdict.get('reasoning')}",
+                    "expectations": verdict.get("expectations", []),
+                    "deductions": verdict.get("deductions", []),
                 }
     record = {
         "id": case_id,
@@ -180,6 +184,8 @@ def run_case(case, args, results_dir):
         "score": verdict.get("score"),
         "reasoning": verdict.get("reasoning"),
         "violations": verdict.get("violations", []),
+        "expectations": verdict.get("expectations", []),
+        "deductions": verdict.get("deductions", []),
         "agent_model": args.model,
         "judge_model": args.judge_model,
         "driver": args.driver,

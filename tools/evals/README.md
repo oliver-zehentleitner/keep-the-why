@@ -340,6 +340,17 @@ A drop in the first number is an activation problem (the 2026-08-25 row in
 `docs/evals.md`); a drop in the second is the harness or the account; only
 the last two say anything about the skill's behavior.
 
+Below that, one row per case — passes included — with the skill-load
+ordinal, checks passed/declared, the restraint code, and a last column that
+answers the question a score raises: for a fail, the failed checks and the
+judge's violations; for a 9, the judge's `deductions` (one entry per point
+withheld, each naming the requirement and the evidence); for a 10, nothing
+withheld. The judge also returns `expectations`: the expected behavior
+broken into its individual requirements, each marked met or not with the
+transcript/diff detail that decides it. That list lives in the case JSON —
+it is how "asked first, then deleted anyway" reads as two facts instead of
+one score.
+
 The judge is an LLM: treat a `fail` as a lead to read, not a verdict to
 trust blindly — open the case's JSON in `results/<timestamp>/` and read the
 transcript and reasoning before acting on it. Single runs are also subject to

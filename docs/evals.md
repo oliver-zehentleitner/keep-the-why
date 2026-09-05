@@ -130,7 +130,7 @@ them apart, in `summary.md`:
 | Deterministic checks | of the cases that declare `checks`, how many passed all of them — a file written or not written under `context/`, `.keep-the-why` untouched, a literal secret absent from disk, a `Status` line present, the skill loaded | mechanical |
 | Judge pass | of the cases the judge graded, how many it passed | LLM judge |
 
-The deterministic checks (46 of 77 cases carry them, from `tools/evals/evals.json`)
+The deterministic checks (47 of 77 cases carry them, from `tools/evals/evals.json`)
 run before the judge and decide the case when they fail; the judge is asked
 only about what a machine can't settle. `--judge-always` keeps calling the
 judge anyway and stores its verdict separately, which is how a judge blind
@@ -161,7 +161,12 @@ disagreements are the point of the exercise:
 
 Cases with `checks` get `skill_loaded`, `skill_loaded_at` (the ordinal of
 the tool call that loaded it — 1 means the very first thing the agent did),
-`checks`, `checks_passed` and `judge_verdict` in their result record.
+`checks`, `checks_passed` and `judge_verdict` in their result record. Every
+graded case also gets the judge's `expectations` — the expected behavior
+broken into its requirements, each met or not with the deciding evidence —
+and `deductions`, one entry per point below 10. `summary.md` shows one row
+per case, passes included, with the deductions in the last column: a 9 says
+where the point went without anyone re-reading the transcript.
 
 ## Run history
 

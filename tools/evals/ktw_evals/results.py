@@ -6,6 +6,7 @@ import json
 import re
 
 from .common import skill_version
+from .analysis import RESTRAINT_CODES, RESTRAINT_LEGEND
 from .drivers import DRIVER_LABELS, PERMISSION_BYPASS
 
 # Matches the CLI's own plain-text account-limit messages (observed so far:
@@ -46,6 +47,49 @@ def load_resolved(case_id, results_dir):
     if RATE_LIMIT_RE.search(record.get("transcript") or ""):
         return None
     return record
+
+
+def _cell(text, limit=260):
+    text = " ".join(str(text).split())
+    return text[: limit - 1] + "…" if len(text) > limit else text
+
+
+def _case_row(r):
+    checks = r.get("checks") or []
+    if r.get("checks_passed") is None and not checks:
+        checks_cell = "—"
+    else:
+        checks_cell = f"{sum(1 for c in checks if c['ok'])}/{len(checks)}"
+    loaded = r.get("skill_loaded_at")
+    loaded_cell = (
+        f"#{loaded}" if loaded else ("no" if r.get("skill_loaded") is False else "—")
+    )
+    category = r.get("restraint_category")
+    restraint_cell = RESTRAINT_CODES.get(category, "—")
+    notes = []
+    if r["verdict"] not in ("pass", "fail"):
+        notes.append(r.get("reasoning") or r["verdict"])
+    for c in checks:
+        if not c["ok"]:
+            notes.append(f"check {c['check']}: {c['detail']}")
+    if r["verdict"] == "fail":
+        notes += [f"✗ {v}" for v in (r.get("violations") or [])]
+    if r.get("deductions"):
+        notes += [
+            f"−1 {d}" if not str(d).startswith("−") else d for d in r["deductions"]
+        ]
+    if r["verdict"] == "fail" and not notes:
+        notes.append(r.get("reasoning") or "")
+    if (
+        r.get("judge_verdict")
+        and r.get("checks_passed") is False
+        and r["judge_verdict"] == "pass"
+    ):
+        notes.append("judge said pass — disagreement with the deterministic checks")
+    return (
+        f"| {r['id']} | {r['verdict']} | {r.get('score') if r.get('score') is not None else '—'} "
+        f"| {loaded_cell} | {checks_cell} | {restraint_cell} | {_cell(' · '.join(notes) or '10/10, nothing withheld')} |"
+    )
 
 
 def write_summary(records, results_dir, args):
@@ -101,6 +145,12 @@ def write_summary(records, results_dir, args):
                 "skill_loaded": r.get("skill_loaded"),
                 "checks_passed": r.get("checks_passed"),
                 "judge_verdict": r.get("judge_verdict"),
+                "skill_loaded_at": r.get("skill_loaded_at"),
+                "deductions": r.get("deductions") or [],
+                "violations": r.get("violations") or [],
+                "failed_checks": [
+                    c["check"] for c in (r.get("checks") or []) if not c["ok"]
+                ],
             }
             for r in records
         },
@@ -128,13 +178,19 @@ def write_summary(records, results_dir, args):
             f"Restraint categories (mechanical, not judge-scored): {breakdown}"
         )
         lines.append("")
-    if failed or errored:
-        lines.append("| Case | Verdict | Score | Notes |")
-        lines.append("|---|---|---|---|")
-        for r in failed + errored:
-            note = (r.get("reasoning") or "").replace("\n", " ")[:200]
-            lines.append(
-                f"| {r['id']} | {r['verdict']} | {r.get('score', '—')} | {note} |"
-            )
+    # One row per case, passes included: what a reader needs to know why a
+    # case scored what it did, without opening its JSON. Failures first.
+    lines += [
+        "| Case | Verdict | Score | Skill loaded | Checks | Restraint | Why not 10 / what failed |",
+        "|---|---|---|---|---|---|---|",
+    ]
+    for r in failed + errored + passed:
+        lines.append(_case_row(r))
+    lines += [
+        "",
+        "Skill loaded: the ordinal of the tool call that loaded the skill (1 = first "
+        "thing the agent did). Checks: deterministic checks passed/declared, — when the "
+        "case declares none. Restraint: " + RESTRAINT_LEGEND + ".",
+    ]
     (results_dir / "summary.md").write_text("\n".join(lines) + "\n")
     return summary
