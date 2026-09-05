@@ -87,13 +87,19 @@ def _evidence_tool_calls_found(transcript):
 
 
 # A [tool call] that loads the skill under test: Claude Code's Skill tool
-# invoked with this skill's name, or any driver reading its SKILL.md (the
-# path the explicit-load prompt names, or the .claude/skills/ install path).
-# Matched on tool calls (paired with their own result, same as
-# _evidence_tool_calls_found), never on assistant prose — an agent *saying*
-# it loaded the skill is exactly what this exists to not trust.
+# invoked with this skill's name ({"skill": "keep-the-why"}), opencode's
+# native `skill` tool ({"name": "keep-the-why"} — it discovers
+# .claude/skills/ on its own, seen live 2026-09-05), or any driver reading
+# its SKILL.md (the path the explicit-load prompt names, or the
+# .claude/skills/ install path). Matched on tool calls (paired with their
+# own result, same as _evidence_tool_calls_found), never on assistant prose
+# — an agent *saying* it loaded the skill is exactly what this exists to
+# not trust.
 _SKILL_LOAD_RE = re.compile(
-    r'"skill":\s*"keep-the-why"|keep-the-why/SKILL\.md', re.IGNORECASE
+    r'"skill":\s*"keep-the-why"'
+    r'|^\s*skill:\s*\{[^}]*"keep-the-why"'
+    r"|keep-the-why/SKILL\.md",
+    re.IGNORECASE,
 )
 
 

@@ -190,15 +190,61 @@ Whether Hermes has a session-start hook usable for path 1 wasn't checked.
 Path 3: `hermes chat -q "Read ./skills/keep-the-why/SKILL.md and follow it. <request>"`
 — the eval suite's own mode for this agent.
 
+## Codex CLI
+
+Codex reads `AGENTS.md` from the working directory on its own, so the
+entry-point section (path 2) works as written, no import line needed.
+
+**Evidence:** eval case `autostart-project-instruction-loads-skill`, run
+with the Codex CLI driver and the prompt sent bare (no "read SKILL.md"
+prefix; the skill at `.claude/skills/keep-the-why/`, where the section
+points). 2026-09-05, codex-cli 0.149.0, Claude Sonnet 5 via OpenRouter:
+3 of 3 runs read `SKILL.md` unprompted, as the first or second tool call
+(the other being a look at `.keep-the-why`). Control — same fixture and
+prompt, section removed: 1 of 3 read it, as the seventh call, while
+exploring the tree after the question was already answered — that is
+curiosity, not the project asking.
+
+Whether Codex has a session-start hook usable for path 1 wasn't checked.
+Path 3: the eval suite's own mode for this agent.
+
+## opencode
+
+opencode reads `AGENTS.md` on its own and, beyond that, has a native `skill`
+tool that discovers `.claude/skills/` — so with the section in place it
+doesn't read `SKILL.md` by hand, it invokes the skill the way Claude Code
+does.
+
+**Evidence:** the same eval case, same fixture and bare prompt, opencode
+driver. 2026-09-05, opencode 1.18.22, Claude Sonnet 5 via OpenRouter: 3 of
+3 runs invoked `skill: keep-the-why` as the very first tool call. Control
+without the section: 0 of 3 loaded it in any form — the native discovery
+alone does not make the skill load; the project has to ask.
+
+Path 1 not checked. Path 3: the eval suite's own mode.
+
+## Cline
+
+Cline picks up `AGENTS.md` from the working directory as project rules, so
+the section works as written.
+
+**Evidence:** the same eval case, same fixture and bare prompt, Cline
+driver. 2026-09-05, Cline 3.0.61, Claude Sonnet 5 via OpenRouter: 3 of 3
+runs read `.claude/skills/keep-the-why/SKILL.md` unprompted, as the first
+or second tool call. Control without the section: 0 of 3.
+
+Path 1 not checked. Path 3: the eval suite's own mode.
+
 ## Other agents
 
 - **Path 2, entry-point section:** should work on any agent that reads
   `AGENTS.md` (or its own equivalent) at session start — that is the whole
   point of the file — but it is instruction-following, not a hook, and it is
-  verified above only for Claude Code (eval) and Hermes (live). If you've
-  checked it on Cline, Codex CLI, Kimi Code, oh-my-pi, opencode, Pi, Gemini
-  CLI or anything else, a pull request adding what you saw is exactly the
-  kind of contribution this file wants.
+  verified above only for Claude Code, Codex CLI, opencode and Cline (eval,
+  3 of 3 each against a 0 or 1 of 3 control) and Hermes (one live run). If
+  you've checked it on Kimi Code, oh-my-pi, Pi, Gemini CLI or anything else,
+  a pull request adding what you saw is exactly the kind of contribution
+  this file wants.
 - **Path 1 and project-scoped hooks:** whether an agent has a session-start
   mechanism at all, and what it looks like, only that agent's own
   documentation knows; nothing is listed here until someone has run it.

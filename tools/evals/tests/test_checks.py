@@ -218,6 +218,10 @@ class Checks(unittest.TestCase):
         )
         explicit = '[tool call] read_file: {"path": "./skills/keep-the-why/SKILL.md"}\n\n[tool result] ...'
         self.assertTrue(self.run_one({"type": "skill_loaded"}, explicit)[0])
+        opencode = '[tool call] skill: {"name": "keep-the-why"}\n\n[tool result] ...'
+        self.assertTrue(self.run_one({"type": "skill_loaded"}, opencode)[0])
+        other = '[tool call] skill: {"name": "something-else"}\n\n[tool result] ...'
+        self.assertFalse(self.run_one({"type": "skill_loaded"}, other)[0])
 
     def test_unknown_type_fails_loudly(self):
         ok, detail = self.run_one({"type": "nope"})
