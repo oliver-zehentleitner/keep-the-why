@@ -362,8 +362,8 @@ Current numbers, per-case results and the stated caveats: `docs/evals.md`,
 updated with every release (release checklist, "Measure the release").
 What changed and why: `CHANGELOG.md`. Open problems and ideas, one issue
 each: the [issue tracker](https://github.com/oliver-zehentleitner/keep-the-why/issues)
-— including the missing Gemini CLI driver, the most useful addition to this
-runner right now.
+— including the missing Gemini CLI driver ([#262](https://github.com/oliver-zehentleitner/keep-the-why/issues/262)),
+the most useful addition to this runner right now.
 
 ## Known limitations
 
