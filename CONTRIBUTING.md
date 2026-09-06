@@ -36,7 +36,8 @@ For any change to the skill's rules, workflow, or reference docs, check whether 
 7. `llms.txt` — if the change affects the Core Concept or payoff, not just implementation detail
 8. `CHANGELOG.md` — add a line under `[Unreleased]`. Reuse the existing `### Added` / `### Changed` / `### Fixed` heading for that category if one's already there in this `[Unreleased]` block — don't open a second one. Within a category, keep entries alphabetically ordered by their first word, not insertion order.
 9. `context/` — if the change itself was a non-obvious decision worth dogfooding (pick the topic file it actually belongs in, or start a new one — see `references/repository-structure.md`)
-10. `mkdocs build --strict` before committing — catches broken links and nav mistakes
+10. The four local checks CI runs, before pushing: `black --check --extend-exclude tools/evals/fixtures .`, `cd lint && python3 -m unittest discover -s tests`, `python3 -m unittest discover -s tools/evals/tests`, and `PYTHONPATH=lint python3 -m ktw_lint --strict .` (this repository's own `context/` must stay clean)
+11. `mkdocs build --strict` before committing — catches broken links and nav mistakes
 
 ## Release checklist (maintainer)
 

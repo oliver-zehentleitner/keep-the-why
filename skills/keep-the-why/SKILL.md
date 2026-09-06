@@ -190,6 +190,7 @@ Load these only when the situation calls for them:
 
 - [`references/setup.md`](references/setup.md) — first activation, init wizards, config format, confirmation model, timer checks, migrations.
 - [`references/ci-linting.md`](references/ci-linting.md) — wiring `keep-the-why-lint` into a project's CI or pre-commit during setup: detection rules and the exact snippets.
+- [`references/autostart.md`](references/autostart.md) — getting the skill loaded at session start: the three start paths, and per agent what is verified how.
 - [`references/migrations.md`](references/migrations.md) — when `context-schema` is behind: what changed per version and how to migrate.
 - [`references/methodology.md`](references/methodology.md) — reasoning behind the docs/context split and topic-file structure.
 - [`references/repository-structure.md`](references/repository-structure.md) — default layout, field definitions, entry format, file routing.

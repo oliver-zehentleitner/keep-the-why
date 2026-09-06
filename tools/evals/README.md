@@ -362,8 +362,9 @@ What's currently being improved, what's working, what isn't yet, and how to help
 
 ## Known limitations
 
-- One run per case per driver — no flakiness statistics yet. Tracked as an
-  idea in the issue tracker.
+- No repeat mode: the runner does one run per case; the three-runs-per-case
+  numbers in `docs/evals.md` come from three separate full runs. Cases that
+  flip between runs mostly sit on the ask-versus-write boundary.
 - Non-interactive: multi-turn flows (a full wizard dialogue, a confirmation
   answered with "yes") can only be tested up to the agent's first stopping
   point.
