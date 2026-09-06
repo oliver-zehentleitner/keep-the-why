@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Changed
+
+- Release checklist: a step to re-run the Link Check on `main` after the tag is pushed — the CHANGELOG compare links written in the prepare PR point at a tag that doesn't exist until then, so the run after the prepare merge is red on exactly those two links (seen on 0.12.0). The agent does this, and the eval run that follows.
+
 ## [0.12.0] - 2026-09-06
 
 ### Added
