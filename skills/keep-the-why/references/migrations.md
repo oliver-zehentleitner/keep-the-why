@@ -4,6 +4,16 @@ What changed in each version that an existing project may need to know about or 
 
 Entries below assume 0.2.0 as the starting point — nothing before it tracked a `context-schema` at all, and 0.2.0 itself introduced no `context/` entry format change.
 
+## Unreleased — start paths, ephemeral environments, action refs (informational, no action required)
+
+**What changed:** three additions an existing project can adopt, none of which changes `.keep-the-why`, the personal file, or the `context/` entry format.
+
+- **Start paths.** `references/autostart.md` now defines three ways the skill gets loaded at session start — every session machine-wide (a developer-level hook), the project asks (a project-scoped hook and/or a "Keep the Why" section in the project's entry-point file, `AGENTS.md` or its equivalent), or only when a developer asks — with per-agent sections stating what is verified how (Claude Code, Codex CLI, opencode, Cline by eval; Hermes live). The project init wizard asks about this as its last question for *new* projects.
+- **Ephemeral environments.** `references/setup.md`, "Ephemeral environments": how a devcontainer, Codespace or CI agent answers the personal wizard once, in the image — by baking the personal file, or by baking `~/.keep-the-why/config` with `personal-defaults-policy: auto-accept` and letting the project's `personal-defaults` block supply the values. Both mechanisms existed since 0.10.0; the recipe is new.
+- **Action refs.** The GitHub Action now installs the linter its own ref belongs to: `@lint-latest` keeps rolling, `@lint-v<version>` and `@<commit-sha>` pin action and linter together. Older tags keep their old `action.yml`, so nothing already pinned changes behavior.
+
+**Existing projects:** all optional. A project that wants the skill loaded without anyone asking picks a start path from `autostart.md` and, for the entry-point route, pastes the section into its `AGENTS.md` (or equivalent) — the wizard's step 2 wording, by hand or by asking the agent. A project whose developers work in throwaway environments bakes one of the two files. A project on `@lint-latest` does nothing; one that pinned the action for reproducibility now gets the reproducibility it pinned for on its next bump.
+
 ## Unreleased — `init: declined` retired (informational; one optional deletion)
 
 **What changed:** a setup request that is called off no longer writes `init: declined` to a new `.keep-the-why` — it writes nothing at all. The flag dated from the time an organic activation could propose setup and needed a "don't ask again" marker; since 0.10.0 setup only ever starts from an explicit request, so there was nothing left for the flag to suppress, while the file it created made every `.keep-the-why`-gated autostart hook fire on a project that had just said no.
