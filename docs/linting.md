@@ -45,7 +45,7 @@ The `uses:` ref decides both the action and the linter it installs, the way pinn
 Latest is the default on purpose: a skill release that adds a structural gate is followed by a linter release that knows it, and a workflow on `@lint-latest` picks that up on its own. The gating protects the other direction (an older project is never held to a newer schema), so rolling forward is the safe default. Pin when you have a reason — a linter release that misbehaves on your `context/`, a policy that wants every tool version fixed — and pin by ref, like any other action:
 
 ```yaml
-      - uses: oliver-zehentleitner/keep-the-why@lint-v0.11.0.0   # action and linter pinned together
+      - uses: oliver-zehentleitner/keep-the-why@lint-v0.12.0.0   # action and linter pinned together
 ```
 
 The `version:` input is for the odd case of mixing — a pinned action with a different linter, or `version: "latest"` on a pinned ref to keep the linter rolling anyway. Anywhere else (GitLab CI, pre-commit, a plain shell), `pip install keep-the-why-lint==<version>` is the pin.

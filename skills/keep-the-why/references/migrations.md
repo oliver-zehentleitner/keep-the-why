@@ -4,7 +4,7 @@ What changed in each version that an existing project may need to know about or 
 
 Entries below assume 0.2.0 as the starting point — nothing before it tracked a `context-schema` at all, and 0.2.0 itself introduced no `context/` entry format change.
 
-## Unreleased — start paths, ephemeral environments, action refs (informational, no action required)
+## 0.12.0 — start paths, ephemeral environments, action refs (informational, no action required)
 
 **What changed:** three additions an existing project can adopt, none of which changes `.keep-the-why`, the personal file, or the `context/` entry format.
 
@@ -14,7 +14,7 @@ Entries below assume 0.2.0 as the starting point — nothing before it tracked a
 
 **Existing projects:** all optional. A project that wants the skill loaded without anyone asking picks a start path from `autostart.md` and, for the entry-point route, pastes the section into its `AGENTS.md` (or equivalent) — the wizard's step 2 wording, by hand or by asking the agent. A project whose developers work in throwaway environments bakes one of the two files. A project on `@lint-latest` does nothing; one that pinned the action for reproducibility now gets the reproducibility it pinned for on its next bump.
 
-## Unreleased — `init: declined` retired (informational; one optional deletion)
+## 0.12.0 — `init: declined` retired (informational; one optional deletion)
 
 **What changed:** a setup request that is called off no longer writes `init: declined` to a new `.keep-the-why` — it writes nothing at all. The flag dated from the time an organic activation could propose setup and needed a "don't ask again" marker; since 0.10.0 setup only ever starts from an explicit request, so there was nothing left for the flag to suppress, while the file it created made every `.keep-the-why`-gated autostart hook fire on a project that had just said no.
 

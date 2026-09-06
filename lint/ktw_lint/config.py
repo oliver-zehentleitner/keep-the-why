@@ -6,7 +6,7 @@ The config format is a delimited block of `- key: value` lines:
     - id: acme---widget-service
     - context: `context/`
     - init: complete
-    - context-schema: 0.11.0
+    - context-schema: 0.12.0
     - capture-confirmation: confirm-when-unsure
     - source-reference: never
     <!-- /keep-the-why:config -->

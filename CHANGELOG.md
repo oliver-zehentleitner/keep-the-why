@@ -4,6 +4,8 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-09-06
+
 ### Added
 
 - `case.json` keys `explicit_load: false` (send the prompt bare on every driver, without the "read SKILL.md first" prefix) and `skill_install` (pin the install path for every driver). `autostart-project-instruction-loads-skill` uses both, so it measures the same thing on every driver: does the agent load the skill because the project's `AGENTS.md` asks, unprompted. Its expected behavior now says what loading means outside Claude Code (reading `.claude/skills/keep-the-why/SKILL.md`, as the section itself instructs) — the judge had failed a Codex CLI run that did exactly that as its first action, on the words "Skill tool". Each result record carries `skill_loaded_at`, the ordinal of the tool call that loaded the skill.
@@ -17,6 +19,8 @@ All notable changes to this project are documented here. Format follows [Keep a 
 - Eval runner: refuses to start when the temp directory resolves to somewhere under the operator's home (`refuse_tempdir_inside_home()`, called by the single-run loop and `--matrix`). Found the hard way: with `/tmp` full and `TMPDIR` pointed inside the checkout, two of three runs of a case that writes the personal file wrote it to the operator's real `~/.keep-the-why/` — the case workdir path told the agent where the real home was, defeating the fake `$HOME`. The run's own deterministic check is what noticed. `tools/evals/README.md` documents `TMPDIR=/var/tmp` for a small `/tmp` and why it must be outside home; incident entry in `context/evals.md`.
 
 - Granular judge output: the judge now returns `expectations` (the expected behavior broken into its individual requirements, each marked met or not with the transcript/diff detail that decides it) and `deductions` (one entry per point below 10, naming the requirement and the evidence; empty at 10). Both land in the case record. `summary.md` shows one row per case — passes included — with the skill-load ordinal, checks passed/declared, the restraint code and a last column carrying the failed checks and violations of a fail, the deductions of a 9, or "nothing withheld". A run's result now says *why* a case scored 9 and whether the agent asked first and then acted anyway, without opening the JSON. `chestertons-fence-guard` gained the deterministic check `file_unchanged src/export.py` (the sleep may be questioned, never removed in a session that can't get an answer); 47 of 77 cases carry checks.
+
+- `keep-the-why-lint` 0.12.0.0: knows schema 0.12.0 — no new structural gate, since nothing in this release changes what `context/` or `.keep-the-why` must look like — so a project on 0.12.0 gets no `W003`; carries the path confinement (`E009`) to PyPI. Published before the skill tag, per the reordered release checklist.
 
 - `references/autostart.md` restructured around three start paths — every session machine-wide (developer-level, gated on `.keep-the-why`), the project asks (a project-scoped hook and/or a "Keep the Why" section in the project's entry-point file), or only when a developer asks — with per-agent sections stating what is verified how. New: the entry-point section, tool-neutral and the form to pick for a pinned, vendored skill. Verified for Claude Code by eval case `autostart-project-instruction-loads-skill` (hook removed, section in `AGENTS.md`, `CLAUDE.md` importing it, a plain code question: 3/3 invoked the skill first; same-day control without the section: 0/3) and for Hermes Agent by a single live run (reads `AGENTS.md` on its own, loaded `SKILL.md` first). Then, 2026-09-05, the same case run on three more harnesses with the prompt sent bare and the skill at `.claude/skills/keep-the-why/` (Claude Sonnet 5 via OpenRouter, three runs each plus three controls without the section): Codex CLI 3/3 read `SKILL.md` as the first or second call (control 1/3, as the seventh call while exploring), opencode 3/3 invoked it through its native `skill` tool as the very first call (control 0/3), Cline 3/3 read it first or second (control 0/3). Per-agent sections in `autostart.md`.
 
@@ -502,7 +506,8 @@ Initial release.
 - Logo, wordmark, and favicon.
 - `context/repo-conventions.md`, dogfooding the skill on its own repository from day one.
 
-[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.10.1...v0.11.0
 [0.10.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.9.2...v0.10.0
