@@ -120,7 +120,7 @@ Every finding code, with its meaning and severity: [Finding codes](https://keept
 
 ## Version scheme
 
-Versioned as `<schema>.<revision>` — e.g. `0.10.1.0`. The first three segments are the newest skill schema this release knows every structural gate of; the fourth is the linter's own revision, bumped for linter-only changes (`0.10.1.1`). A skill release without structural changes doesn't need a linter release: the gating handles newer `context-schema` values, and `W003` warns when a project's schema is newer than the newest one the linter knows, so you can check [migrations](https://keepthewhy.com/migrations/) for whether an update matters.
+Versioned as `<schema>.<revision>` — e.g. `0.10.1.0`. The first three segments are the newest skill schema this release knows every structural gate of; the fourth is the linter's own revision, bumped for linter-only changes (`0.10.1.1`). Every skill release is preceded by a linter release that knows the new version, even when nothing structural changed, so a project that updates the skill never lints against a linter that doesn't know its `context-schema`; `W003` warns when that happens anyway (a project ahead of the newest published linter), and [migrations](https://keepthewhy.com/migrations/) says whether an update matters.
 
 PEP 440, not strict SemVer — PyPI rejects the build-metadata spelling SemVer would use for this. Releases are tagged `lint-v<version>` in the repository, and the moving `lint-latest` tag — the ref the GitHub Action snippet uses — follows the newest one; both are created by the publish workflow only after a successful upload, never by hand.
 

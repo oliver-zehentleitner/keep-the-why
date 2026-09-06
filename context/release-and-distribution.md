@@ -128,6 +128,23 @@ Added `.claude-plugin/plugin.json` (the official Claude Code plugin manifest, ve
 
 **Consequence:** the repository root is not a Python package (`pyproject.toml` lives in `lint/`), so a native pre-commit hook repo (`repo: …/keep-the-why`) is not possible — pre-commit users declare a local hook pulling the package from PyPI instead. Accepted as the price of the separation. PyPI releases are tagged `lint-v<version>` by the publish workflow itself, only after a successful upload, so PyPI stays the source of truth and the tag can't disagree with it; `release.yml`'s `v*.*.*` trigger deliberately doesn't match that pattern, so the releases page stays skill-only.
 
+## A release publishes the linter first, then the skill — every time, structural change or not
+
+**Type:** decision
+**Type:** constraint
+**Status:** active
+**Evidence:** confirmed
+**Source:** Oliver, 2026-09-06, when the release checklist was reviewed for completeness after the 0.11.0 follow-up work
+**Revisit when:** the linter stops gating on `context-schema`, or the skill and the linter stop being released from one repository
+
+The release checklist in `CONTRIBUTING.md` is ordered: one preparation PR bumps skill and linter together (`SUPPORTED_SCHEMA` and `__version__` to the new version, gates added if anything structural changed), then `publish-lint.yml` ships the linter to PyPI and moves `lint-latest`, then — only once the new package resolves from PyPI — the skill is tagged. Every skill release gets a linter release, even one that adds no gate.
+
+**Reason:** the linter warns `W003` when a project's `context-schema` is newer than the newest schema it knows. A project that updates the skill the day it ships and advances its `context-schema` — exactly what `setup.md` tells it to do — would lint against a linter that doesn't know the version yet, in its very next CI job, for as long as the linter lags. Publishing the linter first closes that window before it opens; CI keeps working for every current project through the release. The earlier position ("a skill release without structural changes doesn't need a linter release, W003 covers it") traded a release step for a warning that fired precisely on the projects doing the right thing.
+
+**Rejected alternative:** publish both from one tag in one workflow. Tempting, but the two have different failure modes (PyPI trusted publishing vs. a GitHub release) and different cadences (the linter also ships revisions on its own), and a combined workflow that half-succeeds is harder to reason about than two steps with a documented order and a wait between them.
+
+**Consequence:** the release has more steps than it did, and the checklist says so in its first sentence — the order is the point, and a release that skips it isn't done.
+
 ## The GitHub Action rides its own moving `lint-latest` tag, not the skill's `latest`
 
 **Type:** decision
