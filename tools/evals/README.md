@@ -358,7 +358,12 @@ normal model variance; re-run a surprising case before concluding anything.
 
 ## Ongoing status
 
-What's currently being improved, what's working, what isn't yet, and how to help (including running this suite against an agent other than Claude Code): [issue #131](https://github.com/oliver-zehentleitner/keep-the-why/issues/131), kept current as a living status page.
+Current numbers, per-case results and the stated caveats: `docs/evals.md`,
+updated with every release (release checklist, "Measure the release").
+What changed and why: `CHANGELOG.md`. Open problems and ideas, one issue
+each: the [issue tracker](https://github.com/oliver-zehentleitner/keep-the-why/issues)
+— including the missing Gemini CLI driver, the most useful addition to this
+runner right now.
 
 ## Known limitations
 

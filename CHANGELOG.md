@@ -8,6 +8,8 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 - Release checklist: a step to re-run the Link Check on `main` after the tag is pushed — the CHANGELOG compare links written in the prepare PR point at a tag that doesn't exist until then, so the run after the prepare merge is red on exactly those two links (seen on 0.12.0). The agent does this, and the eval run that follows.
 
+- The eval status issue (#131, "living status page") is closed; its content had moved into places that are maintained per release — numbers and caveats in `docs/evals.md`, activation per agent in `autostart.md`, the matrix page, this file — and it had not been updated through the two most active weeks. `README.md`, `CONTRIBUTING.md` and `tools/evals/README.md` point at those instead; `CONTRIBUTING.md`'s cross-agent paragraph no longer claims nobody has run the suite against another agent.
+
 ## [0.12.0] - 2026-09-06
 
 ### Added
