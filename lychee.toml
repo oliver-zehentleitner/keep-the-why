@@ -10,4 +10,7 @@ exclude_path = ["tools/evals/fixtures"]
 # on the "Also listed on" link across README.md/llms.txt/docs/installation.md,
 # unrelated to the link's actual validity) - skip it rather than have Link
 # Check flake red on every push that touches any of those files.
-exclude = ["^https://mcpmarket\\.com/"]
+# x.com answers lychee with 403 Forbidden for the profile link behind the X badge
+# (README.md, lint/README.md) — bot-blocking on their side, not a dead link;
+# opening it in a browser works. Same treatment as mcpmarket.com.
+exclude = ["^https://mcpmarket\\.com/", "^https://x\\.com/"]
