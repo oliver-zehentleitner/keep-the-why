@@ -64,6 +64,20 @@ The `GH Release` workflow's `checkout` step explicitly sets `ref: ${{ github.eve
 
 **Rejected alternative:** leave it as-is, reasoning that we never actually use manual dispatch. Rejected — the input field existing at all implies it's meant to work correctly, and a latent bug that only bites on a rarely-used path is still worth fixing once known.
 
+## `release.yml` gates on the tag agreeing with the commit, not only on the tag's shape
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** external review of 0.12.0, 2026-09-07
+**Revisit when:** a version-carrying file is added or one of the seven moves (the gate's grep list has to follow), or the linter stops being released before the skill
+
+Before `gh release create` and the `latest` move, the workflow compares the tag's version against `SKILL.md`, both plugin manifests, `llms.txt`, this repository's `context-schema`, the linter's `SUPPORTED_SCHEMA`, and the newest `CHANGELOG.md` section, and checks PyPI for a `keep-the-why-lint <version>.x`. Any mismatch fails the run; nothing is created.
+
+**Reason:** the tag is the workflow's only input, and `latest` — what skills.sh and the update check resolve — moves on it. `validate-skill.yml` keeps the files consistent with *each other* on every push, but no push-time check can see a tag that does not exist yet; the only place the tag and the commit meet is this workflow. The PyPI check turns the release checklist's "linter first" order from a convention into a gate: a skill tag ahead of its linter would give every project on the new `context-schema` a `W003` in its next CI run.
+
+**Rejected alternative:** keep the checklist as the only guard. Rejected — every version-carrying file has drifted once already and been caught by a machine; the tag is the one that had none. Also rejected: checking only `SKILL.md`. The other six are as cheap to check and each has its own consumer (plugin marketplaces, `llms.txt` readers, the dogfood lint, the linter's own `W003`).
+
 ## skills.sh rides the moving `latest` tag; awesome-copilot needs a pinned release instead
 
 **Type:** decision

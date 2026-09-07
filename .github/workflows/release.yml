@@ -33,6 +33,45 @@ jobs:
             exit 1
           fi
 
+      - name: Refuse a tag that does not match the checked-out versions
+        # The tag is the only input this workflow gets, and `latest` moves
+        # on it. Everything else on the commit — the skill's own version,
+        # the plugin manifests, this repository's context-schema, the
+        # linter the release checklist publishes first — has to say the
+        # same version, or `latest` would point at a skill that reports a
+        # different version than its release name.
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          WANT="${TAG#v}"
+          fail=0
+          check() {  # check <label> <found>
+            if [ "$2" = "$WANT" ]; then
+              echo "ok   $1: $2"
+            else
+              echo "::error::$1 is '$2', tag says '$WANT'"
+              fail=1
+            fi
+          }
+          check "SKILL.md metadata.version" \
+            "$(grep -oP '(?<=version: ")[0-9]+\.[0-9]+\.[0-9]+' skills/keep-the-why/SKILL.md | head -1)"
+          check "plugin.json version" \
+            "$(grep -oP '(?<="version": ")[0-9]+\.[0-9]+\.[0-9]+' plugin.json | head -1)"
+          check ".claude-plugin/plugin.json version" \
+            "$(grep -oP '(?<="version": ")[0-9]+\.[0-9]+\.[0-9]+' .claude-plugin/plugin.json | head -1)"
+          check "llms.txt Version" \
+            "$(grep -oP '(?<=^Version: )[0-9]+\.[0-9]+\.[0-9]+' llms.txt | head -1)"
+          check ".keep-the-why context-schema" \
+            "$(grep -oP '(?<=- context-schema: )[0-9]+\.[0-9]+\.[0-9]+' .keep-the-why | head -1)"
+          check "lint SUPPORTED_SCHEMA" \
+            "$(grep -oP '(?<=SUPPORTED_SCHEMA = \()[0-9]+, [0-9]+, [0-9]+' lint/ktw_lint/__init__.py | tr -d ' ' | tr ',' '.')"
+          check "CHANGELOG section" \
+            "$(grep -oP '(?<=^## \[)[0-9]+\.[0-9]+\.[0-9]+(?=\])' CHANGELOG.md | head -1)"
+          if ! python3 -c "import urllib.request,json,sys; v=json.load(urllib.request.urlopen('https://pypi.org/pypi/keep-the-why-lint/json'))['releases']; sys.exit(0 if any(r.startswith('$WANT.') for r in v) else 1)"; then
+            echo "::error::no keep-the-why-lint $WANT.x on PyPI — the release checklist publishes the linter first"
+            fail=1
+          fi
+          exit $fail
+
       - name: Package skill
         run: |
           cd skills/keep-the-why

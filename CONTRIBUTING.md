@@ -63,7 +63,7 @@ Steps 1–3 and 6–8 are also checked automatically by the "Check version consi
 
 **Publish the skill:**
 
-11. Tag `vX.Y.Z` and push the tag — the `GH Release` workflow creates the release and moves the `latest` tag automatically.
+11. Tag `vX.Y.Z` and push the tag — the `GH Release` workflow creates the release and moves the `latest` tag automatically. It refuses first if the tag disagrees with the commit: `SKILL.md`, both `plugin.json` files, `llms.txt`, `.keep-the-why`'s `context-schema`, the linter's `SUPPORTED_SCHEMA` and the newest CHANGELOG section must all carry the tag's version, and `keep-the-why-lint <version>.x` must already be on PyPI (steps 9–10). A refused run creates nothing and moves nothing — fix the commit or the tag and push the tag again.
 12. Re-run the Link Check workflow on `main` (`gh workflow run link-check.yml --ref main`, or the Actions UI). The `[x.y.z]` compare links written into `CHANGELOG.md` in step 5 point at a tag that only exists from step 11 on, so the Link Check run triggered by the prepare-PR merge is red on those two links; the re-run turns `main` green without waiting for the next push. Check it actually is.
 13. Once the tag exists, open a PR against `github/awesome-copilot` bumping this plugin's `version`/`source.ref` in `plugins/external.json` (from a synced fork — `oliver-zehentleitner-aigent/awesome-copilot`), then regenerate `.github/plugin/marketplace.json` with `npm run plugin:generate-marketplace` and include it in the same commit — see `context/release-and-distribution.md`'s "skills.sh rides the moving `latest` tag; awesome-copilot needs a pinned release instead." A standing step now that the repo is listed there, not a one-time thing.
 
