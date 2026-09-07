@@ -1,5 +1,5 @@
 ---
-description: Keep the Why is a repo-native convention and agent skill that preserves the reasoning behind a codebase as project memory, kept in the repo.
+description: Keep the Why is a repo-native convention and agent skill that preserves the reasoning behind a codebase as project memory, kept in the repo — so a later session can ask why the code is the way it is and get an answer grounded in what was actually decided.
 hide:
   - navigation
   - toc
@@ -13,7 +13,7 @@ hide:
 
 <p class="ktw-hero__tagline">Keep a Changelog records what changed. Keep the Why preserves why it changed.</p>
 
-**Keep the Why** is a repo-native convention and agent skill for preserving the reasoning behind a codebase — architecture decisions, rejected alternatives, workarounds, incident learnings, operational constraints that the code alone can't explain — as project memory, kept in the repo. It captures that reasoning as a byproduct of working with your agent, and every later session has it: ask your agent why the code is the way it is and get the real answer, grounded in what was actually decided, not a reconstruction — with rejected approaches known before anyone tries them again.
+{% include-markdown "../README.md" start="<!-- ktw-intro:start -->" end="<!-- ktw-intro:end -->" %}
 
 <p class="ktw-hero__actions">
 <a class="md-button md-button--primary" href="installation/">Install</a>

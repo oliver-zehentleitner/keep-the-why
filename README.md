@@ -21,7 +21,9 @@
 
 Keep a Changelog records what changed. Keep the Why preserves why it changed.
 
-**Keep the Why** is a repo-native convention and agent skill for preserving the reasoning behind a codebase — architecture decisions, rejected alternatives, workarounds, incident learnings, operational constraints that the code alone can't explain — as project memory, kept in the repo. It captures that reasoning as a byproduct of working with your agent — so it stops re-suggesting rejected approaches, gives better answers, speeds up onboarding, and makes legacy projects tractable again. It works continuously as you develop, or retrospectively on an existing repo.
+<!-- ktw-intro:start -->
+**Keep the Why** is a repo-native convention and agent skill for preserving the reasoning behind a codebase — architecture decisions, rejected alternatives, workarounds, incident learnings, operational constraints that the code alone can't explain — as project memory, kept in the repo. It captures that reasoning as a byproduct of working with your agent, and every later session has it: ask your agent why the code is the way it is and get an answer grounded in what was actually decided, not a reconstruction — rejected approaches known before anyone tries them again, onboarding faster, legacy projects tractable again. It works continuously as you develop, or retrospectively on an existing repo.
+<!-- ktw-intro:end -->
 
 **The payoff, made concrete:** a new hire, or an AI agent that's never touched the codebase before, doesn't have to track down whoever wrote the original code — and doesn't just repeat what was already tried and rejected. The same context makes changes safer across the board — no more guessing whether an odd piece of code is a [Chesterton's Fence](https://en.wikipedia.org/wiki/Wikipedia:Chesterton%27s_fence) worth keeping or just cruft nobody got around to removing — turning a legacy project back into something tractable instead of a black box only one person ever understood. "Ask Bob" stops being the fallback.
 
