@@ -33,7 +33,7 @@
   padding: .5rem 0 2rem;
   max-width: 48rem;
 }
-.ktw-hero__tagline {
+.md-typeset .ktw-hero__tagline {
   font-size: 1.7rem;
   line-height: 1.25;
   font-weight: 700;
@@ -118,7 +118,7 @@
   .ktw-cards {
     grid-template-columns: 1fr;
   }
-  .ktw-hero__tagline {
+  .md-typeset .ktw-hero__tagline {
     font-size: 1.4rem;
   }
 }

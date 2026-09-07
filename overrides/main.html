@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 
 {% block extrahead %}
-  {% set og_title = page.title if page and page.title else config.site_name %}
+  {#- Shared-link title: the site name plus its one-line claim on the front page, "Page - Site" elsewhere — never the nav label alone. -#}
+  {% set og_title = (config.site_name ~ " — project memory for your codebase") if (page and page.is_homepage) else ((page.title ~ " - " ~ config.site_name) if page and page.title else config.site_name) %}
   {% set og_description = (page.meta.description if page and page.meta and page.meta.description else config.site_description) %}
   {% set og_url = page.canonical_url if page and page.canonical_url else config.site_url %}
   <meta property="og:type" content="website">
