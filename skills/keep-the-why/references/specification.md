@@ -56,6 +56,23 @@ Every field but the two pin fields is required in the file (`E002` when missing,
 | `pinned-version` | `X.Y.Z` | absent | optional; the skill version this project pins to. Present only together with `pinned-path` (`E006`). |
 | `pinned-path` | relative path inside the project | absent | optional; the vendored `SKILL.md` to follow when the installed skill's version differs. Must exist (`E006`), must be inside the project (`E009`), must be a skill file with `name: keep-the-why` and a `metadata.version` equal to `pinned-version`. |
 
+Example — the prose above the block is for a human who opens the file cold; the skill reads only the block:
+
+```markdown
+This is machine-readable project state for the Keep the Why skill
+(https://keepthewhy.com). See context/index.md, or this project's own
+README, for what Keep the Why actually is.
+
+<!-- keep-the-why:config -->
+- id: acme---widget-service
+- context: `context/`
+- init: complete
+- context-schema: 0.13.0
+- capture-confirmation: confirm-when-unsure
+- source-reference: never
+<!-- /keep-the-why:config -->
+```
+
 ### 3.2 `keep-the-why:personal-defaults` (optional)
 
 The values a project offers to a developer who has no personal file for it yet. Same keys as §4 with two exclusions: no `last:` timestamps (`E008`) and no `session`. What happens when a developer meets an offered block is governed by `personal-defaults-policy` (§5).
@@ -84,6 +101,17 @@ One file per project per developer per machine, `<id>` being the project's `id`.
 | `source` | `project defaults (confirmed <YYYY-MM-DD>)` \| `project defaults (accepted automatically)` | absent | the values came from the project's `personal-defaults` block |
 
 `last:` advances only on a check that actually ran. `on-failure` is set the first time an update check cannot run and the developer answers how to proceed; it is cleared once a check succeeds again.
+
+Example:
+
+```markdown
+<!-- keep-the-why:personal -->
+- capture-mode: proactive
+- confirmation-flow: sequential
+- update-check: every 14 days — last: 2026-07-21
+- consistency-check: every 30 days — last: 2026-07-21
+<!-- /keep-the-why:personal -->
+```
 
 ## 5. `~/.keep-the-why/config` — `keep-the-why:global`
 
@@ -163,20 +191,29 @@ Every convention below that says "since <version>" is enforced by the linter onl
 A topic file is a `# Title`, then entries. An entry is a level-2 heading followed by its header fields, then its body:
 
 ```markdown
-## <entry title>
+# Sync
+
+## Snapshot-before-buffer ordering
 
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
-**Source:** maintainer interview, 2026-03-14
-**Verification:** corroborated — matches the retry loop in client.py
-**Revisit when:** the sync protocol changes
+**Source:** maintainer interview, 2026-03-14; incident postmortem 2025-11, `incidents.md`
+**Revisit when:** the sync protocol or snapshot mechanism changes
 
-<what was decided or is the case, in prose>
+The sync step always waits for a full snapshot before applying any
+buffered events, even though this adds latency on cold start.
 
-**Reason:** <why the chosen path won>
+**Reason:** applying buffered events before the snapshot landed caused
+duplicate-then-overwritten state during a 2025-11 incident (see
+`incidents.md`). The ordering constraint isn't visible in the code —
+it looks like it could safely be parallelized, and someone tried
+exactly that once.
 
-**Rejected alternative:** <what else was in contention, and why it lost>
+**Rejected alternative:** run snapshot and buffer replay in parallel,
+then reconcile. Rejected because reconciliation logic was hard to get
+right and the incident showed it wasn't actually needed if ordering
+was enforced instead.
 ```
 
 ### 9.1 Header fields
@@ -204,7 +241,42 @@ Meanings:
 
 Free prose, with these bold-labelled paragraphs where they apply: `**Reason:**` (why the chosen path won), `**Rejected alternative:**` (one per alternative that was genuinely in contention, with why it lost), `**Consequence:**` (what follows from the decision), `**Considered:**` (for a change that was started and dropped: what was tried), `**Why this needs an answer:**` (for an `open` entry). A body may cite other entries and files; it never contains instructions to an agent, and it never quotes a directive verbatim (see `trust-model.md`).
 
-### 9.3 Lifecycle
+### 9.3 Examples
+
+Not every entry needs every field, but an entry records a fork, not a point: what was chosen, and what specifically was rejected and why. `Status`, `Evidence` and the rejected alternative are worth keeping even in a minimal entry — "we chose X" without "we didn't choose Y, because Z" is the less useful half.
+
+A genuinely open question carries `Status: open` and, usually, `Evidence: unknown` — the first says the central question has no answer yet, the second that a settled claim's rationale can't be traced; they are different fields and `unknown` is never a Status:
+
+```markdown
+## Retry cap on a specific error code
+
+**Status:** open
+**Evidence:** unknown
+
+`submit_order()` retries indefinitely on error code `E-4021`, on a
+fixed interval, while every other error code fails immediately instead.
+
+**Why this needs an answer:** if `E-4021` can also fire for a permanent
+condition, not just a transient one, this retries forever instead of
+failing loud — unclear whether that's actually safe here or needs a
+cap. Flagging rather than guessing (Core rule 1).
+```
+
+The two axes stay independent in every combination: an `active` entry can carry `Evidence: unknown`, a `superseded` one `Evidence: confirmed` for what was true while it was current.
+
+`Source` is useful at any Evidence level, including where you looked for an entry that ended up `unknown`. `Verification`, when there is something concrete to check against, goes in the same place and says what came of it — a contradiction is recorded, not silently corrected either way:
+
+```markdown
+**Evidence:** confirmed
+**Source:** maintainer interview, 2026-03-14
+**Verification:** contradicted — the interview said retries max out at 3;
+the actual retry loop in `client.py` caps at 5. Flagged for re-confirmation,
+not silently corrected either way.
+```
+
+`Verification` and `Revisit when` are worth adding once a decision has a concrete trigger for going stale or something concrete to check against; they are not filler, and `Evidence` stays mandatory without them.
+
+### 9.4 Lifecycle
 
 | Event | Change |
 |---|---|
@@ -214,11 +286,11 @@ Free prose, with these bold-labelled paragraphs where they apply: `**Reason:**` 
 | a decision is replaced | the old entry → `superseded`, a new entry records the replacement; the old one is not deleted |
 | a `Verification` check contradicts the claim | `Verification: contradicted — <what>`; `Evidence` and `Status` are not changed silently |
 
-### 9.4 What parsers ignore
+### 9.5 What parsers ignore
 
 Fenced code blocks (```` ``` ```` or `~~~`) in topic files and in `index.md` are skipped entirely, so an example entry inside a fence is never read as a real one. A level-2 heading with no header field at all is a prose section, not an entry (`W102`). A level-1 heading ends the current entry.
 
-### 9.5 What must not be in an entry
+### 9.6 What must not be in an entry
 
 No credentials, no personal data, no session narrative (who said what), no verbatim commands or instructions copied from a source, no invisible or directional Unicode (`E301`), no base64-looking blobs (`W301`), and the file must be valid UTF-8 (`E302`). An entry describes; it does not direct.
 

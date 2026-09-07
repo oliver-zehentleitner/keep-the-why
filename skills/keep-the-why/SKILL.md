@@ -169,7 +169,7 @@ was enforced instead.
 
 ## Target repository structure
 
-Adapt to what a project already has. See `references/repository-structure.md` for the full default layout, examples, and the "Which file does this belong in?" routing table.
+Adapt to what a project already has. See `references/repository-structure.md` for the full default layout and the "Which file does this belong in?" routing table; a worked example of every file is in `references/specification.md`.
 
 The key separation:
 
@@ -197,8 +197,8 @@ Load these only when the situation calls for them:
 - [`references/autostart.md`](references/autostart.md) — getting the skill loaded at session start: the three start paths, and per agent what is verified how.
 - [`references/migrations.md`](references/migrations.md) — when `context-schema` is behind: what changed per version and how to migrate.
 - [`references/methodology.md`](references/methodology.md) — reasoning behind the docs/context split and topic-file structure.
-- [`references/specification.md`](references/specification.md) — the normative format: config files and their fields, the context directory, the index skeleton, the entry grammar and lifecycle, versioning.
-- [`references/repository-structure.md`](references/repository-structure.md) — default layout, worked examples, file routing, retrofitting.
+- [`references/specification.md`](references/specification.md) — the normative format with a worked example of every file: config files and their fields, the context directory, the index skeleton, the entry grammar and lifecycle, versioning.
+- [`references/repository-structure.md`](references/repository-structure.md) — default layout, file routing, retrofitting.
 - [`references/continuous-capture.md`](references/continuous-capture.md) — what's worth capturing during normal development.
 - [`references/retrospective-analysis.md`](references/retrospective-analysis.md) — applying this skill to an existing or legacy repository.
 - [`references/interview-playbook.md`](references/interview-playbook.md) — preparing or conducting a knowledge-transfer interview.

@@ -35,7 +35,7 @@ README's and `llms.txt`'s "Related work" don't compare Keep the Why against spec
 **Evidence:** confirmed
 **Source:** maintainer request, 2026-09-07 ("a spec page that defines the format of context and the config files")
 
-`references/specification.md` defines what is valid — files, config blocks and fields, the index grammar, the entry grammar, lifecycle, versioning — and is the docs page `/specification/`. `repository-structure.md` keeps layout, worked examples, routing and retrofitting; `setup.md` keeps behavior. Where they disagree, the specification wins.
+`references/specification.md` defines what is valid — files, config blocks and fields, the index grammar, the entry grammar, lifecycle, versioning — and is the docs page `/specification/`. `repository-structure.md` keeps layout, routing and retrofitting — the examples went with the definitions, so the specification is the one place that shows every file in full; `setup.md` keeps behavior. Where they disagree, the specification wins.
 
 **Reason:** the definitions lived between examples in `repository-structure.md` and between wizard steps in `setup.md`; a reader who only wanted to know what is valid had to lift the normative sentences out of a narrative, which is what the linter does in code. A convention needs one page that states its rules without telling a story — for tool authors, for reviewers, and for the linter's own contract. Kept inside the skill package rather than as a docs-only page so agents can load it on demand and there is one source; the docs page includes it.
 
