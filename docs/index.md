@@ -85,7 +85,7 @@ Everything lives in `context/`, one file per topic, versioned with the code. A l
 
 `keep-the-why-lint` validates the structure in CI — required fields, valid values, index consistency — plus security checks such as hidden Unicode and others. It says plainly what it cannot check: whether a recorded reason is true. That part stays with review.
 
-[Linting →](linting.md) · [Security →](security.md)
+[Linting →](linting.md) · [GitHub Marketplace](https://github.com/marketplace/actions/keep-the-why-lint) · [PyPI](https://pypi.org/project/keep-the-why-lint/) · [Security →](security.md)
 
 </div>
 
