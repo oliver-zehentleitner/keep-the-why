@@ -45,6 +45,6 @@ jobs:
           check llms.txt '(?<=^Version: )[0-9]+\.[0-9]+\.[0-9]+'
           check .keep-the-why '(?<=context-schema: )[0-9]+\.[0-9]+\.[0-9]+'
           check skills/keep-the-why/references/setup.md '(?<=context-schema: )[0-9]+\.[0-9]+\.[0-9]+'
-          check skills/keep-the-why/references/repository-structure.md '(?<=context-schema: )[0-9]+\.[0-9]+\.[0-9]+'
+          check skills/keep-the-why/references/specification.md '(?<=context-schema: )[0-9]+\.[0-9]+\.[0-9]+'
           check skills/keep-the-why/examples/first-time-setup.md '(?<=context-schema: )[0-9]+\.[0-9]+\.[0-9]+'
           exit $fail
