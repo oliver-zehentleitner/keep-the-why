@@ -78,6 +78,20 @@ Before `gh release create` and the `latest` move, the workflow compares the tag'
 
 **Rejected alternative:** keep the checklist as the only guard. Rejected — every version-carrying file has drifted once already and been caught by a machine; the tag is the one that had none. Also rejected: checking only `SKILL.md`. The other six are as cheap to check and each has its own consumer (plugin marketplaces, `llms.txt` readers, the dogfood lint, the linter's own `W003`).
 
+## Release authority is every write-access account, deliberately unprotected
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** security audit of the whole repository, 2026-09-07; maintainer call the same day
+**Revisit when:** a third account gets write access, or the bot's credentials leave the maintainer's own machine
+
+The `pypi` environment has no required reviewer and no deployment-branch policy, and no tag ruleset restricts `v*`, `latest` or `lint-*`. Anyone with write access can run `publish-lint.yml` and push a skill tag that creates a release and moves `latest`. Write access is two accounts: the maintainer and the assisting agent's bot account, whose token lives on the maintainer's own machine.
+
+**Reason:** the protections would guard against a compromised write-access account, and the only such account besides the maintainer's runs on the maintainer's system — a compromise of one is a compromise of both, so a required-reviewer step would ask the compromised party to approve itself. The releases are run by the agent on the maintainer's explicit request (`CONTRIBUTING.md`, release checklist), which the protection would turn into a two-step dance with no security gained.
+
+**Rejected alternative:** required reviewer on `pypi` plus a tag ruleset allowing only the maintainer. Rejected for now for the reason above; it becomes right the moment the two-accounts-one-machine premise stops holding.
+
 ## skills.sh rides the moving `latest` tag; awesome-copilot needs a pinned release instead
 
 **Type:** decision

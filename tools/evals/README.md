@@ -185,6 +185,18 @@ config: for `pi`, a local Ollama or OpenRouter model needs a matching entry in
 any `provider/model` string is passed straight through to `--model`).
 Exit code is non-zero if any case fails or errors.
 
+### Permissions: the agent runs unrestricted, on your machine
+
+Every driver is invoked with its permission bypass (`--dangerously-skip-permissions`,
+`--yolo`, `--auto`, …) and inherits your full environment, API keys included.
+The fake `$HOME` isolates the skill's own files, nothing else: the agent can
+reach the rest of the filesystem and the network like any process you start.
+The fixtures deliberately contain prompt-injection payloads, because the trust
+model is what several cases test. Run the suite on a machine you would let an
+unknown script run on — a disposable VM or container — and source the API keys
+for the run rather than keeping them in your shell profile. Treat a fixture
+contributed by pull request as code: read it before running it locally.
+
 ### Disk: point `TMPDIR` somewhere with room — but never inside your home
 
 Every case materializes its project *and* a fake `$HOME` under the system

@@ -1,0 +1,16 @@
+# Keeps the SHA-pinned actions in .github/workflows/ and action.yml current.
+# Every `uses:` is pinned to a commit with a version comment; without this,
+# nothing ever moves those pins.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: monthly

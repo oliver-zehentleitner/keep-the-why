@@ -1,0 +1,10 @@
+# Review routing, not enforcement (the main ruleset does not require code-owner
+# review). The same lines docs/linting.md suggests to projects that adopt the
+# linter as a gate: the decision record, the config, and everything that ships.
+/context/                 @oliver-zehentleitner
+/.keep-the-why            @oliver-zehentleitner
+/.github/                 @oliver-zehentleitner
+/action.yml               @oliver-zehentleitner
+/lint/                    @oliver-zehentleitner
+/skills/                  @oliver-zehentleitner
+/tools/evals/fixtures/    @oliver-zehentleitner

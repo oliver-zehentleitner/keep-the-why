@@ -8,6 +8,10 @@ on:
     - cron: "0 6 * * 1"
   workflow_dispatch:
 
+# Read-only token: nothing here writes to the repository.
+permissions:
+  contents: read
+
 jobs:
   lychee:
     runs-on: ubuntu-latest
