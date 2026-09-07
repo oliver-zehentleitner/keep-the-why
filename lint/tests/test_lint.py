@@ -556,8 +556,7 @@ class ConfigFileIntegrity(_ProjectFixture):
 
     def test_unterminated_personal_defaults_block(self):
         config = GOOD_CONFIG + (
-            "\n<!-- keep-the-why:personal-defaults -->\n"
-            "- capture-mode: proactive\n"
+            "\n<!-- keep-the-why:personal-defaults -->\n" "- capture-mode: proactive\n"
         )
         self.base_project(config=config)
         findings, _ = self.run_lint()
@@ -602,7 +601,9 @@ class ConfigFileIntegrity(_ProjectFixture):
 
     def test_nul_in_context_is_a_finding_not_a_traceback(self):
         self.base_project(
-            config=GOOD_CONFIG.replace("- context: `context/`", "- context: `foo\x00bar`")
+            config=GOOD_CONFIG.replace(
+                "- context: `context/`", "- context: `foo\x00bar`"
+            )
         )
         findings, linter = self.run_lint()
         self.assertIn("E009", self.codes(findings))
@@ -622,6 +623,8 @@ class ConfigFileIntegrity(_ProjectFixture):
 
     def test_cli_survives_a_nul_in_the_config(self):
         self.base_project(
-            config=GOOD_CONFIG.replace("- context: `context/`", "- context: `foo\x00bar`")
+            config=GOOD_CONFIG.replace(
+                "- context: `context/`", "- context: `foo\x00bar`"
+            )
         )
         self.assertEqual(self.cli([self.root]), 1)
