@@ -109,7 +109,7 @@ Everything lives in `context/`, one file per topic, versioned with the code. A l
 <a href="https://skillsllm.com/security-check/IPmNycVdbOyq"><img src="https://skillsllm.com/security-check/badge.svg?owner=oliver-zehentleitner&repo=keep-the-why" alt="Security: SkillsLLM"></a>
 </p>
 
-The skill validated against the Agent Skills spec on every push; this repository's own `context/` linted by its own linter, in strict mode; the package scanned by an independent registry.
+The skill is validated against the Agent Skills spec on every push; this repository's own `context/` is linted by its own linter, in strict mode; the package is scanned by an independent registry.
 { .ktw-caption }
 
 </div>
