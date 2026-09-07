@@ -47,7 +47,7 @@ Entries below assume 0.2.0 as the starting point — nothing before it tracked a
 ## Z
 ```
 
-## 0.12.1 — `id` is a file name; configured paths stay inside the project (one mechanical check)
+## 0.13.0 — `id` is a file name; configured paths stay inside the project (one mechanical check)
 
 **What changed:** the three filesystem locations `.keep-the-why` can name are each confined to one directory, and the skill now says so instead of leaving it to the linter. `id` is letters, digits, `.`, `_`, `-` only — it names `~/.keep-the-why/<id>.md`, and anything else could make that file land elsewhere. The uuid form's `<folder-name>` is slugified like the repo name (`My Cool Project` → `My-Cool-Project`). `context` and `pinned-path` are relative and resolve inside the project; a pinned `SKILL.md` is followed only if it says `name: keep-the-why` at the pinned version. A value outside its boundary is not read, written or followed — the skill names it and asks; `keep-the-why-lint` reports `E009`/`E010`. Details: `setup.md`, "Project config" and "Pinned versions"; `trust-model.md`, "Paths named by configuration".
 

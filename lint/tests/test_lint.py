@@ -618,7 +618,7 @@ class ConfigFileIntegrity(_ProjectFixture):
             ".",
             "foo\x00bar",
             "foo\x01bar",
-            "my cool project",  # the pre-0.12.1 rule, now the same code
+            "my cool project",  # the pre-0.13.0 rule, now the same code
         ):
             with self.subTest(id=value):
                 self.base_project(config=self.config_with_id(value))
