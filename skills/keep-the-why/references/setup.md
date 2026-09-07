@@ -91,7 +91,7 @@ Same fields as a personal file, minus `last:` timestamps — those are inherentl
 <!-- /keep-the-why:global -->
 ```
 
-`session` (default `attended`; nobody has to write it) declares whether sessions on this machine have someone present to answer. `unattended` is for an image that runs a scheduled agent, a CI job, or an autonomous loop: a write that would need a permission question then becomes a `Status: pending-confirmation` entry instead of a question nobody answers — see "Unattended sessions" under the confirmation model. It is the config-side way of declaring what a task can also declare in its own words; the skill never infers it from a session merely being quiet.
+`session` (default `attended`; nobody has to write it) declares whether sessions on this machine have someone present to answer. `unattended` is for an image that runs a scheduled agent, a CI job, or an autonomous loop: a write that would need a permission question then becomes a `Status: pending-confirmation` entry instead of a question nobody answers — see "Unattended sessions" under the confirmation model. It is machine-wide on purpose: a host that runs an agent unattended does so for every project on it, which is why this is not a per-project personal-file field. A task can declare the same thing in its own words; the skill never infers it from a session merely being quiet.
 
 `personal-defaults-policy` decides what happens when a *new* developer (no personal file yet for this project) lands on a project that *does* offer `personal-defaults`:
 
@@ -121,7 +121,7 @@ The personal file is per developer and per machine, so a fresh container has non
 
 A non-interactive agent (CI, a scheduled job) with neither in place will stop at the wizard's first question, which is the correct outcome — it cannot answer, and the skill will not guess.
 
-An image that runs unattended also bakes `session: unattended` into `~/.keep-the-why/config` ("Global policy" above). Without it, a write that needs permission ends in a question nobody answers; with it, the entry is written as `Status: pending-confirmation` for the next attended session to confirm.
+An image that runs unattended also carries `session: unattended` in `~/.keep-the-why/config` ("Global policy" above) — one appended line at image build time, `echo '- session: unattended' >> ~/.keep-the-why/config`, is the whole preparation, and it holds for every project the agent touches on that machine. Without it, a write that needs permission ends in a question nobody answers; with it, the entry is written as `Status: pending-confirmation` for the next attended session to confirm.
 
 ## Pinned versions
 
