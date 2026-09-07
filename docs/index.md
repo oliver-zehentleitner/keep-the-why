@@ -14,11 +14,10 @@ hide:
 
 {% include-markdown "../README.md" start="<!-- ktw-intro:start -->" end="<!-- ktw-intro:end -->" %}
 
-<p class="ktw-hero__actions">
-<a class="md-button md-button--primary" href="installation/">Install</a>
-<a class="md-button" href="readme/">Read the README</a>
-<a class="md-button" href="https://github.com/oliver-zehentleitner/keep-the-why">GitHub</a>
-</p>
+[Install](installation.md){ .md-button .md-button--primary }
+[Read the README](readme.md){ .md-button }
+[GitHub](https://github.com/oliver-zehentleitner/keep-the-why){ .md-button }
+{ .ktw-hero__actions }
 
 </div>
 
@@ -49,7 +48,8 @@ The payment gateway's rate limiter returns 429 with a per-request `Retry-After` 
 
 </div>
 
-<p class="ktw-caption">A change that was started and then dropped — no commit, no diff, no pull request, and normally no trace. This is what Keep the Why keeps: one entry in a topic file, plain Markdown, reviewed in the same pull request as the code around it. Every entry says how well its claim is backed (<code>Evidence</code>) and whether it still holds (<code>Status</code>); "unknown" is a valid answer. <a href="examples/abandoned-change/">The full example →</a> · <a href="repository-structure/">Field reference →</a></p>
+A change that was started and then dropped — no commit, no diff, no pull request, and normally no trace. This is what Keep the Why keeps: one entry in a topic file, plain Markdown, reviewed in the same pull request as the code around it. Every entry says how well its claim is backed (`Evidence`) and whether it still holds (`Status`); "unknown" is a valid answer. [The full example →](examples/abandoned-change.md) · [Field reference →](repository-structure.md)
+{ .ktw-caption }
 
 </div>
 
@@ -65,7 +65,7 @@ The payment gateway's rate limiter returns 429 with a per-request `Retry-After` 
 
 The agent notices rationale as it surfaces — a decision, an alternative that lost, a workaround, a change that was started and abandoned — and writes it down with your confirmation. No separate documentation step. Works retrospectively on an existing repository too.
 
-[Continuous capture →](continuous-capture/) · [Retrospective →](retrospective-analysis/)
+[Continuous capture →](continuous-capture.md) · [Retrospective →](retrospective-analysis.md)
 
 </div>
 
@@ -75,7 +75,7 @@ The agent notices rationale as it surfaces — a decision, an alternative that l
 
 Everything lives in `context/`, one file per topic, versioned with the code. A lean index tells an agent what to load. No daemon, no database, no service — anything that can read a repository can read it.
 
-[Repository structure →](repository-structure/) · [Philosophy →](philosophy/)
+[Repository structure →](repository-structure.md) · [Philosophy →](philosophy.md)
 
 </div>
 
@@ -85,7 +85,7 @@ Everything lives in `context/`, one file per topic, versioned with the code. A l
 
 `keep-the-why-lint` validates the structure in CI — required fields, valid values, index consistency — plus security checks such as hidden Unicode and others. It says plainly what it cannot check: whether a recorded reason is true. That part stays with review.
 
-[Linting →](linting/) · [Security →](security/)
+[Linting →](linting.md) · [Security →](security.md)
 
 </div>
 
@@ -99,7 +99,7 @@ Everything lives in `context/`, one file per topic, versioned with the code. A l
 
 {% include-markdown "../README.md" start="<!-- ktw-tested-with:start -->" end="<!-- ktw-tested-with:end -->" %}
 
-**Latest full run:** {% include-markdown "evals.md" start="<!-- ktw-latest:start -->" end="<!-- ktw-latest:end -->" %} — with the four numbers a pass count runs together, the per-case verdicts, and the caveats: [Evals →](evals/)
+**Latest full run:** {% include-markdown "evals.md" start="<!-- ktw-latest:start -->" end="<!-- ktw-latest:end -->" %} — with the four numbers a pass count runs together, the per-case verdicts, and the caveats: [Evals →](evals.md)
 
 <p class="ktw-trust__badges">
 <a href="https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/validate-skill.yml"><img src="https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/validate-skill.yml/badge.svg" alt="Validate Skill"></a>
@@ -107,7 +107,8 @@ Everything lives in `context/`, one file per topic, versioned with the code. A l
 <a href="https://skillsllm.com/security-check/IPmNycVdbOyq"><img src="https://skillsllm.com/security-check/badge.svg?owner=oliver-zehentleitner&repo=keep-the-why" alt="Security: SkillsLLM"></a>
 </p>
 
-<p class="ktw-caption">The skill validated against the Agent Skills spec on every push; this repository's own <code>context/</code> linted by its own linter, in strict mode; the package scanned by an independent registry.</p>
+The skill validated against the Agent Skills spec on every push; this repository's own `context/` linted by its own linter, in strict mode; the package scanned by an independent registry.
+{ .ktw-caption }
 
 </div>
 
@@ -137,13 +138,14 @@ Everything lives in `context/`, one file per topic, versioned with the code. A l
 
 </div>
 
-<p class="ktw-caption">The full list, and where Keep the Why fits next to ADRs, <code>AGENTS.md</code> and Keep a Changelog: <a href="readme/#what-this-is-not">README →</a></p>
+The full list, and where Keep the Why fits next to ADRs, `AGENTS.md` and Keep a Changelog: [README →](readme.md#what-this-is-not)
+{ .ktw-caption }
 
 </div>
 
 <div class="ktw-footer" markdown>
 
-[README](readme/) · [Installation](installation/) · [Philosophy](philosophy/) · [Security](security/) · [FAQ](faq/) · [Why I built this](why/) · [llms.txt](llms.txt) for AI agents
+[README](readme.md) · [Installation](installation.md) · [Philosophy](philosophy.md) · [Security](security.md) · [FAQ](faq.md) · [Why I built this](why.md) · [llms.txt](https://keepthewhy.com/llms.txt) for AI agents
 
 </div>
 
