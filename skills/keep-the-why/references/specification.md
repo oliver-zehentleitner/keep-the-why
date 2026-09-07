@@ -67,7 +67,7 @@ README, for what Keep the Why actually is.
 - id: acme---widget-service
 - context: `context/`
 - init: complete
-- context-schema: 0.13.0
+- context-schema: 0.13.1
 - capture-confirmation: confirm-when-unsure
 - source-reference: never
 <!-- /keep-the-why:config -->

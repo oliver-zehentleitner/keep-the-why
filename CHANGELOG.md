@@ -4,9 +4,15 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.13.1] - 2026-09-07
+
 ### Added
 
 - `references/specification.md`, and keepthewhy.com/specification/: the normative definition of the format in one place — the three config files field by field with values and defaults, the block syntax, the resolution order, `context-schema` and the gate table, the context directory, the `index.md` grammar, the entry grammar with every field and value, the lifecycle transitions, what parsers ignore, what an entry must not contain, and a conformance section. Definitions and the worked examples moved out of `repository-structure.md`, which keeps the default layout, the routing table, the `AGENTS.md` example and retrofitting; `SKILL.md`, `setup.md`, the README and `llms.txt` point at the new file. The context README template the wizard writes names the fifth `Status` value. A convention needs a page that says what is valid without telling a story — maintainer request. Three fixes from an external read of the split, same day: the two pages' intros describe each other the same way (`repository-structure.md` is placement, routing, adoption; the specification is the format, with an example under each artifact — the global config and the guard files got theirs); `needs-review` is defined as "previously current, a `Revisit when` trigger fired, not yet re-checked", independent of `Evidence`, in the specification, rule 5 and `migrations.md`; and the specification's docs page includes the file without relative-URL rewriting, which had turned the index grammar line `- [<file>](<file>)` into a link to a non-existent path.
+
+### Changed
+
+- `keep-the-why-lint` 0.13.1.0: knows schema 0.13.1 — no new gate, nothing in this release changes what `context/` or `.keep-the-why` must look like; a project on 0.13.1 gets no `W003`. Published before the skill tag, per the checklist.
 
 ## [0.13.0] - 2026-09-07
 
@@ -554,7 +560,8 @@ Initial release.
 - Logo, wordmark, and favicon.
 - `context/repo-conventions.md`, dogfooding the skill on its own repository from day one.
 
-[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.13.1...HEAD
+[0.13.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.13.0...v0.13.1
 [0.13.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.10.1...v0.11.0
