@@ -8,7 +8,9 @@
 > just the code but everything around it: why it is the way it is, what was tried and
 > rejected, which constraints the source doesn't show. So does the next person. Onboarding
 > gets faster, legacy projects become tractable again. It works continuously as you develop,
-> or retrospectively on an existing repo.
+> where the reasoning comes for free. Starting on an existing repository works too, within
+> limits — history, issues and code give back only part of the why, a maintainer has to fill
+> in the rest, and that takes real effort. It is never too late to begin, though.
 
 The payoff, made concrete: a new hire, or an agent that's never touched the codebase before,
 doesn't have to track down whoever wrote the original code — and doesn't just repeat what was
