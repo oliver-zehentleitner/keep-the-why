@@ -53,7 +53,7 @@ extra:
       name: Keep the Why on Mastodon
 
 nav:
-  - Home: index.md
+  - Overview: index.md
   - README: readme.md
   - Philosophy: philosophy.md
   - Installation: installation.md
