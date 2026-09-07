@@ -115,3 +115,17 @@ Every `context/index.md` has thirty-six level-2 headings — `## 0` … `## 9`, 
 
 **Consequence:** schema-relevant, gated with 0.13.0 in `keep-the-why-lint` (`E205` skeleton, `E206` placement); a one-time mechanical rebuild for existing projects, done now, like the 0.10.0 resort. The index is a few dozen tokens longer per session and looks sparse on a code host — accepted.
 
+## A contradiction the consistency check finds is surfaced, not resolved by superseding
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** the 0.13.2 eval series, 2026-09-07 — `maintenance-active-entry-contradicts-current-source` failed 2 of 3 runs the same way; maintainer go the same day
+
+When a maintenance pass finds an `active`, `confirmed` entry whose concrete claim the tree no longer supports, the agent makes that visible — `Status: needs-review`, a `Verification: contradicted` line naming what contradicts it, or a question — and leaves Evidence and Status otherwise alone. `superseded` is reached by a person re-checking the entry or by a replacement decision being recorded, not by the agent's reading of the code.
+
+**Reason:** `SKILL.md`'s Maintain section said "resolve contradictions, mark superseded information" and the specification's lifecycle table said a `Verification` check that contradicts a claim changes neither Evidence nor Status silently. The two agents that failed the case did exactly what the skill body told them: three sources agreed the ini loader was gone, they were not unsure, so under `confirm-when-unsure` they superseded the confirmed entry and wrote a new active one. That is the agent deciding on its own reading that a maintainer-confirmed fact is history — the "replacing already-confirmed information with weaker evidence" the same paragraph forbids, since code-reading is inferred evidence at best. The skill body now says what the specification already said; during a maintenance pass the body is what the agent has in context, the specification is loaded on demand.
+
+**Rejected alternative:** leaving the rule to the specification alone and treating the two fails as model variance. Rejected — the isolated rerun passed 3/3, but both fails were the same shape and both cited the Maintain paragraph; a rule the agent follows literally into a fail is a wording problem, not noise.
+
+**Consequence:** no format change, no migration, no linter gate — the lifecycle table was already normative. The eval case encodes the behavior; this entry records why the skill body had to say it too.

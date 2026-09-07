@@ -35,7 +35,7 @@ Why this project is built the way it is.
 
 ## E
 
-- [entry-format.md](entry-format.md) — design of `context/` entries and layout themselves: flat directory (no subdirectories), the `Type` field
+- [entry-format.md](entry-format.md) — design of `context/` entries and layout themselves: flat directory (no subdirectories), the `Type` field, a found contradiction surfaced rather than superseded
 - [evals.md](evals.md) — design of the eval runner and suite (`tools/evals/`): package layout, what the judge and the mechanical checks each decide
 
 ## F
