@@ -17,7 +17,7 @@ The linter reads your project's `context-schema` from `.keep-the-why` (or the le
 | 0.8.0 | `undefined — <reason>` Type value, exclusive |
 | 0.9.0 | Multiple `Type` lines per entry |
 | 0.10.0 | Dedicated `.keep-the-why` (`id` required), sorted `index.md`, guard files |
-| 0.13.0 | Fifth `Status` value `pending-confirmation` (an error below this schema); `pending-confirmation-check` as a `personal-defaults` field |
+| 0.13.0 | Fifth `Status` value `pending-confirmation` (an error below this schema); `pending-confirmation-check` as a `personal-defaults` field; `index.md` letter skeleton (`## 0-9`, `## A`–`## Z`, every topic under its letter) |
 
 A gate can be prepared ahead of the skill release that ships it — `0.13.0` was, as the release checklist publishes the linter before the skill tag. The linter enforces such a gate only once a project's `context-schema` reaches that version, which no real project's does before the release is out; until then a project writing the new value on an older schema gets an error naming the version it needs, rather than the value silently passing before it is part of any shipped schema.
 
@@ -78,7 +78,7 @@ None of this is specific to Keep the Why; it is the same set of settings any tea
 
 **Entries** (level-2 headings in topic files; fenced code blocks are skipped, so example entries in documentation never get linted as real ones) — `Status` and `Evidence` present, single, and valid; `Type` values valid, `undefined` carries a reason and combines with nothing; no duplicate `Type` values; `Verification` starts with a valid value, and `contradicted` must say what contradicts it; a heading with no schema fields at all is a warning, not an error — it may be a legitimate prose section.
 
-**`index.md`** — exists; every link resolves; every topic file is listed; sorted alphabetically by filename (an error since 0.10.0 — the convention's merge-conflict benefit only exists when the whole list is sorted).
+**`index.md`** — exists; every link resolves; every topic file is listed; sorted alphabetically by filename (an error since 0.10.0 — the convention's merge-conflict benefit only exists when the whole list is sorted); since 0.13.0, the fixed `## 0-9`, `## A`–`## Z` heading skeleton is present and in order and every topic sits under its letter.
 
 **Guard files** — `README.md`, `AGENTS.md`, `CLAUDE.md` inside the context directory (warnings; an equivalent doing the same job is fine).
 
@@ -112,6 +112,7 @@ None of this is specific to Keep the Why; it is the same set of settings any tea
 | E112 | error | more than one `Status`/`Evidence` line |
 | E113 | error | `Status: pending-confirmation` below `context-schema` 0.13.0 |
 | E201–E204 | error | `index.md` missing / broken link / unlisted topic file / not sorted |
+| E205/E206 | error | `index.md` heading skeleton missing or out of order / topic listed under the wrong letter (since 0.13.0) |
 | E301 | error | invisible or directional Unicode character |
 | E302 | error | file is not valid UTF-8 |
 | W001 | warning | `context-schema` missing (assumed 0.2.0) |

@@ -12,7 +12,7 @@ big-bang backfill the methodology explicitly rejects).
     0.9.0   multiple Type lines allowed
     0.10.0  dedicated .keep-the-why (id field), sorted index, guard files
     0.13.0  Status value `pending-confirmation`; personal-defaults field
-            pending-confirmation-check
+            pending-confirmation-check; index.md letter skeleton
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ from .config import (
     context_dir_from_value,
     parse_semver,
 )
-from .entries import parse_index_text, parse_topic_text
+from .entries import parse_index_headings, parse_index_text, parse_topic_text
 from .findings import ERROR, WARNING, Finding
 
 GATE_STATUS_EVIDENCE = (0, 3, 0)
@@ -36,6 +36,17 @@ GATE_UNDEFINED = (0, 8, 0)
 GATE_MULTI_TYPE = (0, 9, 0)
 GATE_DEDICATED_CONFIG = (0, 10, 0)
 GATE_PENDING_CONFIRMATION = (0, 13, 0)
+GATE_INDEX_SKELETON = (0, 13, 0)
+
+INDEX_HEADINGS = ("0-9",) + tuple("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+
+def index_bucket(filename: str) -> str:
+    """The skeleton heading a topic file belongs under: its first character,
+    uppercased, or 0-9 for a digit or anything else that isn't a letter."""
+    first = filename[:1].upper()
+    return first if first in INDEX_HEADINGS[1:] else "0-9"
+
 
 FALLBACK_SCHEMA = (0, 2, 0)  # the skill's own backfill default for a missing field
 
@@ -702,7 +713,10 @@ class Linter:
                 "context index.md is missing — it's the load-bearing file for selective loading",
             )
             return
-        rows = parse_index_text(self._read(index_path))
+        index_text = self._read(index_path)
+        rows = parse_index_text(index_text)
+        if self.schema >= GATE_INDEX_SKELETON:
+            self._check_index_skeleton(index_path, index_text, rows)
         listed = []
         for line, _text, target in rows:
             target = target.split("#", 1)[0]
@@ -737,6 +751,46 @@ class Linter:
                 listed[0][0] if listed else 0,
                 "index entries are not sorted alphabetically by filename (convention since 0.10.0)",
             )
+
+    def _check_index_skeleton(self, index_path, text, rows):
+        """E205/E206: the fixed 0-9, A-Z heading skeleton and entry placement."""
+        headings = parse_index_headings(text)
+        names = [h for _line, h in headings]
+        if names != list(INDEX_HEADINGS):
+            missing = [h for h in INDEX_HEADINGS if h not in names]
+            extra = [h for h in names if h not in INDEX_HEADINGS]
+            if missing:
+                detail = f"missing: {', '.join(missing)}"
+            elif extra:
+                detail = f"unexpected: {', '.join(extra)}"
+            else:
+                detail = "headings are out of order"
+            self.add(
+                ERROR,
+                "E205",
+                index_path,
+                headings[0][0] if headings else 0,
+                f"index.md needs the fixed heading skeleton `## 0-9`, `## A` … `## Z` — "
+                f"all twenty-seven, in order, empty ones included (convention since 0.13.0); {detail}",
+            )
+            return
+        for line, _text, target in rows:
+            target = target.split("#", 1)[0]
+            if not target.endswith(".md"):
+                continue
+            current = None
+            for hline, name in headings:
+                if hline < line:
+                    current = name
+            expected = index_bucket(target)
+            if current != expected:
+                self.add(
+                    ERROR,
+                    "E206",
+                    index_path,
+                    line,
+                    f"'{target}' is listed under `## {current}`, its heading is `## {expected}`",
+                )
 
     # -- guard files -----------------------------------------------------
 

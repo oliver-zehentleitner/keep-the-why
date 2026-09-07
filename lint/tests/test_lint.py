@@ -44,6 +44,19 @@ Body text.
 """
 
 
+INDEX_HEADINGS = ["0-9"] + [chr(c) for c in range(ord("A"), ord("Z") + 1)]
+
+
+def skeleton_index(entries_by_letter):
+    """An index.md in the 0.13.0 letter skeleton, entries given per heading."""
+    out = ["# Context index", ""]
+    for h in INDEX_HEADINGS:
+        out += [f"## {h}", ""]
+        if h in entries_by_letter:
+            out += entries_by_letter[h] + [""]
+    return "\n".join(out) + "\n"
+
+
 class _ProjectFixture(unittest.TestCase):
     """Temp-dir project builder shared by the test classes below; no tests here."""
 
@@ -79,7 +92,7 @@ class _ProjectFixture(unittest.TestCase):
         self.write("context/sync.md", topic)
         self.write(
             "context/index.md",
-            "# Context index\n\n- [sync.md](sync.md) — sync design\n",
+            skeleton_index({"S": ["- [sync.md](sync.md) — sync design"]}),
         )
         self.write("context/README.md", "# Project context\n")
         self.write("context/AGENTS.md", "Invoke the keep-the-why skill first.\n")
@@ -207,6 +220,70 @@ class LintProject(_ProjectFixture):
         )
         self.base_project(config=config.replace("on-start", "sometimes"))
         self.assertIn("E003", self.codes(self.run_lint()[0]))
+
+    def test_index_skeleton_gated_by_schema(self):
+        # the flat index is fine below 0.13.0 and an error from 0.13.0 on
+        flat = "# Context index\n\n- [sync.md](sync.md) — sync design\n"
+        self.base_project()
+        self.write("context/index.md", flat)
+        self.assertNotIn("E205", self.codes(self.run_lint()[0]))
+        self.base_project(config=GOOD_CONFIG.replace("0.10.1", "0.13.0"))
+        self.write("context/index.md", flat)
+        codes = self.codes(self.run_lint()[0])
+        self.assertIn("E205", codes)
+        self.assertNotIn("E206", codes)  # placement is not judged without the skeleton
+
+    def test_index_skeleton_complete_and_placement(self):
+        self.base_project(config=GOOD_CONFIG.replace("0.10.1", "0.13.0"))
+        heads = ["0-9"] + [chr(c) for c in range(ord("A"), ord("Z") + 1)]
+
+        def index(entries_by_letter):
+            out = ["# Context index", ""]
+            for h in heads:
+                out += [f"## {h}", ""]
+                out += entries_by_letter.get(h, [])
+                if h in entries_by_letter:
+                    out.append("")
+            return "\n".join(out) + "\n"
+
+        self.write(
+            "context/index.md", index({"S": ["- [sync.md](sync.md) — sync design"]})
+        )
+        findings, _ = self.run_lint()
+        self.assertEqual(
+            self.codes(findings), [], msg=[f.format_text() for f in findings]
+        )
+        # wrong letter
+        self.write(
+            "context/index.md", index({"A": ["- [sync.md](sync.md) — sync design"]})
+        )
+        self.assertIn("E206", self.codes(self.run_lint()[0]))
+        # a heading missing
+        self.write(
+            "context/index.md",
+            index({"S": ["- [sync.md](sync.md) — sync design"]}).replace(
+                "## Q\n\n", ""
+            ),
+        )
+        findings, _ = self.run_lint()
+        e205 = [f for f in findings if f.code == "E205"]
+        self.assertEqual(len(e205), 1)
+        self.assertIn("missing: Q", e205[0].message)
+        # digits and odd names go under 0-9
+        self.write("context/2fa.md", GOOD_ENTRY)
+        self.write(
+            "context/index.md",
+            index(
+                {
+                    "0-9": ["- [2fa.md](2fa.md) — second factor"],
+                    "S": ["- [sync.md](sync.md) — sync design"],
+                }
+            ),
+        )
+        findings, _ = self.run_lint()
+        self.assertEqual(
+            self.codes(findings), [], msg=[f.format_text() for f in findings]
+        )
 
     def test_schema_newer_than_linter_warns(self):
         self.base_project(config=GOOD_CONFIG.replace("0.10.1", "9.9.9"))

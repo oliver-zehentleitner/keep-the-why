@@ -105,17 +105,40 @@ A `migration-prompt: <version> declined` line can appear here too, but only once
 ```markdown
 # Context index
 
+## 0-9
+
+## A
+
 - [architecture.md](architecture.md) — why the system is shaped this way
+
+## B
+
+## C
+
 - [compatibility.md](compatibility.md) — why certain old-looking code paths still exist
-- [incidents.md](incidents.md) — production incidents and what changed because of them
+
+## D
+
+…one heading per letter, all the way to Z, most of them empty…
+
+## S
+
 - [sync.md](sync.md) — synchronization design, snapshot/buffer ordering
+
+## T
+
+…
+
+## Z
 ```
 
 Keep entries to one line each. This file exists so an agent can decide what to load, not to hold the content itself.
 
-Sort entries alphabetically by filename, and insert new ones in their sorted position rather than appending at the end. Two PRs adding unrelated topic files at the same time then land on different lines instead of both fighting over the last line — the cheapest way to cut down on `index.md` merge conflicts in a repo with concurrent PRs.
+The file carries a fixed skeleton of twenty-seven level-2 headings — `## 0-9`, then `## A` through `## Z`, in that order, always all of them, empty ones included — and every topic file is listed under the heading of its filename's first character (a digit or anything that isn't a letter goes under `0-9`), sorted alphabetically within the section. The example above is cut short; a real index has every heading.
 
-An existing project with an unsorted `index.md` should resort it fully, once — see `references/migrations.md`. This isn't the usual "next touched, not a big-bang migration" retrofit rule (below): resorting is mechanical, not per-entry judgment, and the fix doesn't reduce conflicts until the whole list is actually in order.
+The skeleton exists for one reason: merge conflicts. Two pull requests that add topic files starting with different letters can never collide, because a heading line always separates their insertions — no matter how small the index is. Plain alphabetical sorting (the convention since 0.10.0) only helped once the list was long enough for two new names to land apart; in a small index, `billing.md` and `caching.md` from two branches still met in the same gap between `auth.md` and `deploy.md`. Twenty-seven mostly empty headings cost a few dozen tokens per session and look sparse on a code host; that is the price, and it is deliberate.
+
+An existing project with an index in the old flat or unsorted form rebuilds it into the skeleton fully, once — see `references/migrations.md`. This isn't the usual "next touched, not a big-bang migration" retrofit rule (below): the rebuild is mechanical, not per-entry judgment, and the protection doesn't exist until every entry sits under its heading.
 
 ## Topic file — example shape
 

@@ -56,6 +56,31 @@
     "expected_behavior": "Recognizes the file has grown large enough to hurt agent-context efficiency and proposes a split (e.g. sync-initial-load.md, sync-incremental-updates.md, sync-conflict-resolution.md) with context/index.md updated to point to the new files, rather than continuing to append indefinitely to one file."
   },
   {
+    "id": "index-new-topic-lands-under-its-letter",
+    "prompt": "For the record: the API rate limiter stays token-bucket, not leaky-bucket - burst tolerance matters for the mobile clients, and leaky-bucket's smoothing broke their batch uploads in testing. Capture that in context/ as a new topic file, rate-limiting.md.",
+    "expected_behavior": "A direct instruction naming the change and its reason, on a project with capture-confirmation: automatic - so it writes without asking. Creates context/rate-limiting.md with a proper entry (Type decision, Status active, Evidence confirmed, the reason, leaky-bucket as the rejected alternative), and adds one line for it to context/index.md under the `## R` heading of the fixed letter skeleton - not appended at the end of the file, not under another letter, and without touching the other headings. Does not rewrite architecture.md's existing index line.",
+    "checks": [
+      {
+        "type": "file_exists",
+        "path": "context/rate-limiting.md"
+      },
+      {
+        "type": "file_changed",
+        "path": "context/index.md"
+      },
+      {
+        "type": "text_present",
+        "regex": "(?ms)^## R\\s*\\n(?:(?!^## )[^\\n]*\\n)*?- \\[rate-limiting\\.md\\]\\(rate-limiting\\.md\\)",
+        "path": "context/index.md"
+      },
+      {
+        "type": "text_present",
+        "regex": "(?m)^## Z\\s*$",
+        "path": "context/index.md"
+      }
+    ]
+  },
+  {
     "id": "free-narration-interview",
     "prompt": "A developer who has maintained this system for her entire tenure, since the very beginning, is willing to sit down and talk through it for a couple of hours before she leaves. Her knowledge is broad and tacit, not organized around specific questions. Capture what comes up.",
     "expected_behavior": "Does not open with a scripted question list. Runs retrospective analysis first for later cross-checking, then opens with an invitation to narrate freely rather than a specific question. Does not redirect tangents back to a prepared agenda. Extracts decision-forks (chosen/rejected/why) from the flowing narration into normal topic-organized context/ entries, not a raw transcript. After the session, cross-checks against the gap list and proposes short targeted follow-up questions only for what free narration didn't cover."

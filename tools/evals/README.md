@@ -36,7 +36,7 @@ the final one — a judge `pass` on a case the checks failed is a judge blind
 spot, and worth reading). The check types are documented at the top of
 `ktw_evals/checks.py`; the rule for adding one to a case is that it must be
 *certain* from the expected behavior, not merely likely — a check that needs
-interpretation belongs in `expected_behavior` for the judge. 54 of the 84
+interpretation belongs in `expected_behavior` for the judge. 55 of the 85
 cases carry checks.
 
 Results land in `results/<timestamp>-<driver>/` (gitignored): one JSON per
@@ -157,7 +157,7 @@ if a driver's CLI version changes noticeably.
 ## Usage
 
 ```bash
-# everything (84 cases; expect a long run and real API usage)
+# everything (85 cases; expect a long run and real API usage)
 python3 tools/evals/run.py --all
 
 # a subset

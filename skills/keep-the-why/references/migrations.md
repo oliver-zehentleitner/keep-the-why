@@ -4,7 +4,7 @@ What changed in each version that an existing project may need to know about or 
 
 Entries below assume 0.2.0 as the starting point — nothing before it tracked a `context-schema` at all, and 0.2.0 itself introduced no `context/` entry format change.
 
-## 0.13.0 — `Status` accepts a fifth value, `pending-confirmation`; two optional settings
+## 0.13.0 — `pending-confirmation` Status, two optional settings, and an `index.md` letter skeleton (one mechanical step)
 
 **What changed:** a new `Status` value, `pending-confirmation`, for an entry written during an unattended session — one declared so by the task or by `session: unattended` in `~/.keep-the-why/config` (or, per project, in the personal file, which wins), never inferred — at a point where the project's `capture-confirmation` setting would normally require asking permission first. Rather than inventing confidence to skip the ask, or dropping the information because there was no one to ask, the entry gets written with `Status: pending-confirmation` standing in for whatever Status it would otherwise carry. See Core rule 5 and step 5 in `SKILL.md`, `references/repository-structure.md`, and "Unattended sessions" under the confirmation model in `references/setup.md`. Two settings come with it, both optional, both defaulting to the old behavior: `session: attended | unattended` in `~/.keep-the-why/config`, overridable per project by the same line in the personal file (default `attended`), and `pending-confirmation-check: on-start | no` in the personal file (default `no`) — when on, a session starts by listing entries that still wait for a first confirmation, silently when there are none. The check also runs on request at any time.
 
@@ -19,6 +19,28 @@ Entries below assume 0.2.0 as the starting point — nothing before it tracked a
 ```markdown
 **Status:** pending-confirmation
 **Evidence:** inferred
+```
+
+**Also changed — `context/index.md` gets a fixed letter skeleton:** twenty-seven level-2 headings, `## 0-9` then `## A` through `## Z`, always all of them, and every topic file listed under the heading of its filename's first character, sorted within the section — see "`context/index.md` — example" in `references/repository-structure.md` and [#194](https://github.com/oliver-zehentleitner/keep-the-why/issues/194). The 0.10.0 sort order stays; the headings add a separator line between any two letters, so two pull requests adding differently-named topic files can no longer collide, however small the index.
+
+**Migrating an existing project (index):** rebuild `context/index.md` into the skeleton fully, once — keep the title and any intro line, then the twenty-seven headings in order with each existing entry moved under its letter. Mechanical, no per-entry judgment; do it now rather than next time touched, same reasoning as the 0.10.0 resort: the protection only exists once every entry sits under its heading. `keep-the-why-lint` reports a missing or misordered heading as `E205` and an entry under the wrong heading as `E206` from `context-schema` 0.13.0 on.
+
+**Example — after:**
+
+```markdown
+# Context index
+
+## 0-9
+
+## A
+
+- [architecture.md](architecture.md) — …
+
+## B
+
+…
+
+## Z
 ```
 
 ## 0.12.1 — `id` is a file name; configured paths stay inside the project (one mechanical check)

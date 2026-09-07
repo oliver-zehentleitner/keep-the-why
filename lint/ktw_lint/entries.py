@@ -79,6 +79,25 @@ def parse_topic_text(text: str):
 _INDEX_LINK_RE = re.compile(r"^\s*-\s*\[([^\]]+)\]\(([^)]+)\)")
 
 
+_INDEX_HEADING_RE = re.compile(r"^##\s+(.*?)\s*$")
+
+
+def parse_index_headings(text: str):
+    """(line, heading_text) for every level-2 heading in index.md, in order."""
+    rows = []
+    in_fence = False
+    for lineno, raw in enumerate(text.splitlines(), start=1):
+        if _FENCE_RE.match(raw):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+        match = _INDEX_HEADING_RE.match(raw)
+        if match:
+            rows.append((lineno, match.group(1)))
+    return rows
+
+
 def parse_index_text(text: str):
     """(line, link_text, link_target) for every list-item link in index.md."""
     rows = []
