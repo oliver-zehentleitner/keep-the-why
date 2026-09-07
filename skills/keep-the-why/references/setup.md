@@ -4,7 +4,7 @@ How the skill detects whether a project is already set up, runs the one-time ini
 
 ## Two config files, two different scopes
 
-Setup state splits across two files, one committed and shared, one personal to a developer and a machine: what's true about the *project* versus what's a personal workflow choice. Neither lives inside the project's entry-point file (`AGENTS.md`, `CLAUDE.md`, or whatever a project already uses) — see "Why dedicated files, not entry-point blocks" in `context/config-format.md` for why, and `references/migrations.md` for bringing an existing project from the previous location to this one.
+Field-by-field definitions of both files, and of the machine-wide `~/.keep-the-why/config`, are in `references/specification.md`; this section is about what the fields do. Setup state splits across two files, one committed and shared, one personal to a developer and a machine: what's true about the *project* versus what's a personal workflow choice. Neither lives inside the project's entry-point file (`AGENTS.md`, `CLAUDE.md`, or whatever a project already uses) — see "Why dedicated files, not entry-point blocks" in `context/config-format.md` for why, and `references/migrations.md` for bringing an existing project from the previous location to this one.
 
 **Project config**, in `.keep-the-why` at the project root, committed, shared by everyone:
 
@@ -192,7 +192,7 @@ Reached only via the second bullet above — an explicit request to set up or in
     Each entry separates:
 
     - **Type** — what kind of thing it is: decision, workaround, incident, or constraint (or undefined, with a reason, if none fit)
-    - **Status** — whether a decision is active, superseded, open, or needs review
+    - **Status** — whether a decision is active, superseded, open, needs review, or still waits for a first confirmation
     - **Evidence** — whether its rationale is confirmed, inferred, or unknown
 
     Old reasoning is retained when it remains useful for understanding how the

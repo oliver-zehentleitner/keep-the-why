@@ -58,6 +58,7 @@ nav:
   - Philosophy: philosophy.md
   - Installation: installation.md
   - Repository structure: repository-structure.md
+  - Specification: specification.md
   - Security: security.md
   - Linting: linting.md
   - Evals: evals.md

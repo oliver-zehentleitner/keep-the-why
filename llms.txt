@@ -283,6 +283,7 @@ HTML equivalent and details: https://keepthewhy.com/badge/
 - CHANGELOG: https://github.com/oliver-zehentleitner/keep-the-why/blob/latest/CHANGELOG.md
 - Docs: https://keepthewhy.com
 - Agent & model matrix (which agents/models the skill has actually been run against): https://keepthewhy.com/agent-matrix/
+- Specification (the normative format: config files and fields, the context directory, index skeleton, entry grammar and lifecycle, versioning): https://keepthewhy.com/specification/
 - Setup (project + personal wizards, timer checks): https://keepthewhy.com/setup/
 - Migrations (context-schema version changes): https://keepthewhy.com/migrations/
 - Security (overview, what automated scanners report and why, links to trust model and vulnerability reporting): https://keepthewhy.com/security/
