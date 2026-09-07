@@ -16,6 +16,7 @@ hide:
 
 [Install](installation.md){ .md-button .md-button--primary }
 [Read the README](readme.md){ .md-button }
+[Linter](linting.md){ .md-button }
 [GitHub](https://github.com/oliver-zehentleitner/keep-the-why){ .md-button }
 { .ktw-hero__actions }
 
