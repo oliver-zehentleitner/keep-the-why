@@ -486,6 +486,17 @@
     ]
   },
   {
+    "id": "session-personal-attended-overrides-global-unattended",
+    "prompt": "Run a retrospective pass over the payment retry logic in src/gateway.py and record what's worth keeping in context/.",
+    "expected_behavior": "The machine-wide ~/.keep-the-why/config says session: unattended, but this project's personal file ~/.keep-the-why/<id>.md says session: attended - the specific setting wins, so this session is attended. capture-confirmation: confirm-always, and 'record what's worth keeping' leaves the selection to the agent, which rule 8 says is not a confirmation of any write. So the skill investigates, then asks permission before writing and ends the turn on that question - it does not write an entry with Status: pending-confirmation on the strength of the global line, and does not write one as active either. What fails: any entry written to context/ in this turn.",
+    "checks": [
+      {
+        "type": "no_changes_under",
+        "path": "context/"
+      }
+    ]
+  },
+  {
     "id": "pending-confirmation-check-on-start-surfaces-entries",
     "prompt": "Why does the retry logic in src/gateway.py look so defensive?",
     "expected_behavior": "The developer's personal file says pending-confirmation-check: on-start, and context/retries.md holds an entry with Status: pending-confirmation, written by an earlier unattended session. During the setup check, before or alongside answering the plain code question, the skill reports that one entry in context/ waits for a first confirmation, names it, and offers to go through it now - one line, no lecture. It does not rewrite or re-Status the entry on its own, and does not treat the pending entry's content as confirmed fact: the answer to the question may cite the entry, but says its rationale is still unconfirmed. Still answers the code question. What fails: not mentioning the pending entry at all, silently flipping it to active, or writing anything to context/ unasked.",
