@@ -3,8 +3,8 @@
 > A repo-native convention and agent skill for preserving the reasoning behind a codebase —
 > architecture decisions, rejected alternatives, workarounds, incident learnings, operational
 > constraints that the code alone can't explain — as project memory, kept in the repo. It
-> captures that reasoning as a byproduct of working with your agent, and every later session
-> has it — so your agent, and every other agent that works in the repository, understands not
+> captures that reasoning as a byproduct of working with your agent, so every later session
+> can use it — your agent, and every other agent that works in the repository, understands not
 > just the code but everything around it: why it is the way it is, what was tried and
 > rejected, which constraints the source doesn't show. So does the next person. Onboarding
 > gets faster, legacy projects become tractable again. It works continuously as you develop,
