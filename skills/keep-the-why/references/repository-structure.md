@@ -83,7 +83,7 @@ README, for what Keep the Why actually is.
 <!-- /keep-the-why:config -->
 ```
 
-Committed, one per project. The header line above the block exists for anyone who opens this specific file directly with no other context — it's prose, not something the skill reads or depends on. `id` is generated once at init and never recomputed — see "Project config" in `setup.md` for how, and why deriving it fresh each time (from a git remote or a path) would be the wrong call. The config block itself is the skill's own machine-readable state, kept small and clearly delimited on purpose so it doesn't creep into being an undocumented second system — same reasoning that used to justify embedding it in `AGENTS.md`, just now applied to a file with no other job to stay generic for. `context-schema`, `capture-confirmation`, and `source-reference` are shown here at real, current values rather than omitted — a project's actual config always has all three, so an example without them would be misleading, not just terse. A project can optionally add a `personal-defaults` block here too, and/or `pinned-version`/`pinned-path` fields — see `setup.md`.
+Committed, one per project. The prose above the block is for a human who opens the file cold; the skill reads only the block. Every field, its values and defaults, the `id` grammar and the pin conditions: `references/specification.md`. What the fields do, how `id` is generated at init and why it is never re-derived: `setup.md`. A project can add a `personal-defaults` block and the `pinned-version`/`pinned-path` pair; both are specified and explained in the same two places.
 
 ## `~/.keep-the-why/<id>.md` — personal config example
 
@@ -96,9 +96,7 @@ Committed, one per project. The header line above the block exists for anyone wh
 <!-- /keep-the-why:personal -->
 ```
 
-Never committed, never part of the repo at all — lives at `~/.keep-the-why/<id>.md` on the developer's own machine, one file per project per developer. One developer's automation preferences aren't another's — see `setup.md` for why this is split from the project config instead of living alongside it. `capture-confirmation` (whether writing needs permission first) is the one setting in this area that's project-wide instead — it lives in `.keep-the-why`'s config block, not here; see "The confirmation model" in `setup.md`.
-
-A `migration-prompt: <version> declined` line can appear here too, but only once a developer has actually said "stop asking me" about a specific `context/` schema migration — it's not part of the default file. Scoped to that one version, not a blanket opt-out; see "Context schema and migrations" in `setup.md`. A `source: project defaults (...)` line can also appear, when the values came from the project's `personal-defaults` block rather than a fresh wizard run — see "Personal defaults, and the global ask-vs-accept policy" in `setup.md`.
+Never committed, never part of the repo at all — one file per project per developer per machine, keyed by the project's `id`. Every field, including the lines that only appear later (`migration-prompt`, `source`, `session`): `references/specification.md`. Why these settings are personal while `capture-confirmation` and `source-reference` are project-wide: `setup.md`, "Two config files, two different scopes".
 
 ## `context/index.md` — example
 
@@ -140,11 +138,7 @@ A `migration-prompt: <version> declined` line can appear here too, but only once
 
 Keep entries to one line each. This file exists so an agent can decide what to load, not to hold the content itself.
 
-The file carries a fixed skeleton of thirty-six level-2 headings — `## 0` through `## 9`, then `## A` through `## Z`, in that order, always all of them, empty ones included — and every topic file is listed under the heading of its filename's first character (a name that starts with neither a digit nor a letter goes under `## 0`), sorted alphabetically within the section. The example above is cut short; a real index has every heading.
-
-The skeleton exists for one reason: merge conflicts. Two pull requests that add topic files starting with different letters can never collide, because a heading line always separates their insertions — no matter how small the index is. Plain alphabetical sorting (the convention since 0.10.0) only helped once the list was long enough for two new names to land apart; in a small index, `billing.md` and `caching.md` from two branches still met in the same gap between `auth.md` and `deploy.md`. Thirty-six mostly empty headings cost a few dozen tokens per session and look sparse on a code host; that is the price, and it is deliberate.
-
-An existing project with an index in the old flat or unsorted form rebuilds it into the skeleton fully, once — see `references/migrations.md`. This isn't the usual "next touched, not a big-bang migration" retrofit rule (below): the rebuild is mechanical, not per-entry judgment, and the protection doesn't exist until every entry sits under its heading.
+The grammar — the thirty-six headings, placement by the filename's first character, sort order within a heading — is in `references/specification.md`; the example above is cut short, a real index has every heading. The skeleton exists so that two branches adding topic files can't collide in the index: a heading line always separates their insertions, however small the list. An existing project with a flat or unsorted index rebuilds it once, mechanically, now rather than next time touched — see `references/migrations.md`.
 
 ## Topic file — example shape
 
