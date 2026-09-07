@@ -4,9 +4,15 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.13.2] - 2026-09-07
+
 ### Changed
 
 - `docs/security.md` says what is true now: two new sections — the linter as a CI tool on untrusted input (never reads outside the checkout, `id` is a file name, malformed input is a finding not a traceback, escaped findings, no network, no dependencies) and how this repository is protected (SHA-pinned actions with Dependabot, read-only tokens, trusted publishing, the release gate, required checks on `main`, CODEOWNERS, the external reviews and the audit) — and, in the same place, what is deliberately not hardened: the moving `latest` tags, the eval runner's permission bypass, floating build inputs. The attack-surface list gains the declared-unattended rule. The page had stopped at the 0.11.0 state.
+
+- `keep-the-why-lint` 0.13.2.0: knows schema 0.13.2 — no new gate. Published before the skill tag, per the checklist.
+
+- `SKILL.md`'s "Example: expected output" points at `references/specification.md` for the field reference — the last pointer the specification split had missed. Found by an external re-check of 0.13.1.
 
 ## [0.13.1] - 2026-09-07
 
@@ -564,7 +570,8 @@ Initial release.
 - Logo, wordmark, and favicon.
 - `context/repo-conventions.md`, dogfooding the skill on its own repository from day one.
 
-[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.13.1...HEAD
+[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.13.2...HEAD
+[0.13.2]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.13.1...v0.13.2
 [0.13.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.13.0...v0.13.1
 [0.13.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.11.0...v0.12.0
