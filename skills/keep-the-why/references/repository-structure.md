@@ -1,6 +1,6 @@
 # Repository structure
 
-Where things go: the default layout, which file a piece of knowledge belongs in, what the entry-point file looks like, and how to adopt this in a project that already has documentation. What each file must contain — fields, values, grammar — and a worked example of every file is `specification.md`.
+Where things go: the default layout, which file a piece of knowledge belongs in, what the entry-point file looks like, and how to adopt this in a project that already has documentation. What each file must contain — fields, values, grammar, with examples — is `specification.md`.
 
 ## Default layout
 

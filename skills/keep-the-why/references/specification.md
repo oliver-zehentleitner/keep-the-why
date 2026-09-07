@@ -1,6 +1,6 @@
 # Specification
 
-The normative definition of everything Keep the Why reads and writes: the two config files, the machine-wide policy file, the `context/` directory, and the entry format. This file defines *what is valid*; `SKILL.md` and `setup.md` define *what the skill does with it*, and `repository-structure.md` shows worked examples and where things go. Where prose elsewhere and this file disagree, this file wins.
+The normative definition of everything Keep the Why reads and writes: the two config files, the machine-wide policy file, the `context/` directory, and the entry format. This file defines *what is valid*, with an example under each artifact; `SKILL.md` and `setup.md` define *what the skill does with it*; `repository-structure.md` says where things go — layout, routing, adoption. Where prose elsewhere and this file disagree, this file wins.
 
 The specification is versioned with the skill: its version is the `metadata.version` in `SKILL.md`'s frontmatter, a project records the version it was last checked against in `context-schema`, and every change that affects an existing project is listed in `migrations.md`. `keep-the-why-lint` is the reference implementation of the mechanically checkable part; its finding codes are named below where they apply.
 
@@ -122,6 +122,15 @@ One file per machine, all projects.
 | `personal-defaults-policy` | `always-ask` \| `auto-accept` | asked the first time it matters | what to do when a project offers `personal-defaults` and this developer has no personal file for it yet |
 | `session` | `attended` \| `unattended` | `attended` | whether sessions on this machine have someone present to answer; a personal file's own `session` line wins for its project |
 
+Example:
+
+```markdown
+<!-- keep-the-why:global -->
+- personal-defaults-policy: always-ask
+- session: unattended
+<!-- /keep-the-why:global -->
+```
+
 ## 6. Resolution order
 
 For every setting that exists at more than one level:
@@ -156,7 +165,17 @@ Every convention below that says "since <version>" is enforced by the linter onl
 - **Flat.** Topic files sit directly in `<context>/`; no subdirectories. A large project namespaces filenames (`auth-tokens.md`, `auth-oauth.md`) instead of nesting.
 - **Topic files** are `<name>.md`, one per recurring theme, named for the theme. Lowercase kebab-case is the convention; the first character decides the index heading (§8.1).
 - **`README.md`** explains, for a reader landing cold, what the directory is and how to read an entry. Not a topic file; not listed in the index.
-- **`AGENTS.md`** contains the guard instruction (invoke the skill before creating or editing anything here; don't write to the schema by hand); **`CLAUDE.md`** contains `@AGENTS.md`. Neither carries a config block. Both are warnings when missing (`W201`), since an equivalent doing the same job is fine.
+- **`AGENTS.md`** contains the guard instruction; **`CLAUDE.md`** contains `@AGENTS.md`. Neither carries a config block. Both are warnings when missing (`W201`), since an equivalent doing the same job is fine. The two files in full:
+
+  ```markdown
+  Before creating or editing anything in this directory, invoke the keep-the-why skill. Don't write to the schema by hand.
+  ```
+
+  ```markdown
+  @AGENTS.md
+  ```
+
+- **`README.md`**'s template — what it says about reading an entry — is written by the project init wizard; the text is in `setup.md`, "Project init wizard", step 4.
 - Non-topic files in `<context>/`: `README.md`, `AGENTS.md`, `CLAUDE.md`, `index.md`.
 
 ### 8.1 `index.md`
@@ -231,7 +250,7 @@ Header fields are lines of the form `**<Field>:** <value>` directly after the he
 
 Meanings:
 
-- **`Status`** is where the entry is in its life. `active`: current. `superseded`: no longer current, kept because it explains how things got here — never deleted. `open`: the entry's central question has no answer yet. `needs-review`: confirmed once, and a `Revisit when` trigger has fired since; not yet re-checked. `pending-confirmation`: written in a session declared unattended at a point where `capture-confirmation` would have required asking; never confirmed by anyone yet.
+- **`Status`** is where the entry is in its life. `active`: current. `superseded`: no longer current, kept because it explains how things got here — never deleted. `open`: the entry's central question has no answer yet. `needs-review`: previously considered current, but a `Revisit when` trigger has fired and the entry has not been re-checked yet — whatever its `Evidence`. `pending-confirmation`: written in a session declared unattended at a point where `capture-confirmation` would have required asking; never confirmed by anyone yet.
 - **`Evidence`** is how well the *origin* of the claim is established, not whether the claim is true today. `confirmed`: stated by a maintainer or backed by an authoritative source. `inferred`: reasonably derived from code, history or documents. `unknown`: cannot be established. A settled `active` entry can carry `unknown`; a `superseded` one can carry `confirmed` for what was true while it was current. The two axes never collapse into each other, and `unknown` is not a `Status`.
 - **`Type`** is what kind of thing the entry is, for selecting entries without opening files: `^\*\*Type:\*\* incident` finds every incident.
 - **`Verification`** is whether something concrete was checked against the claim, and what came of it.

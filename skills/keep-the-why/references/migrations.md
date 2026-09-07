@@ -10,7 +10,7 @@ Entries below assume 0.2.0 as the starting point — nothing before it tracked a
 
 **New value (see `references/repository-structure.md`):**
 
-- **Status:** `pending-confirmation` — never got a first human confirmation because no one was present to give one during an unattended session. Distinct from `needs-review`: that flags a claim confirmed once whose trigger fired again; this flags a claim that never got a first confirmation at all. Resolving it replaces the flag with `active`, `superseded`, or `open`.
+- **Status:** `pending-confirmation` — never got a first human confirmation because no one was present to give one during an unattended session. Distinct from `needs-review`: that flags an entry that was current until a `Revisit when` trigger fired, whatever its Evidence; this flags a claim that never got a first confirmation at all. Resolving it replaces the flag with `active`, `superseded`, or `open`.
 
 **Migrating an existing project:** informational, not a backfill pass — this doesn't touch any existing entry's recorded Status, and neither setting has to be written anywhere. An existing project only sees the value going forward, the first time a declared-unattended session actually hits a would-need-to-ask point. `keep-the-why-lint` accepts the value from `context-schema` 0.13.0 on (`E113` below it) and knows `pending-confirmation-check` as a `personal-defaults` field.
 
