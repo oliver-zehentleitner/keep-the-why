@@ -35,25 +35,22 @@ hide:
 
 <div class="ktw-entry" markdown>
 
-<p class="ktw-entry__path"><code>context/sync.md</code></p>
+<p class="ktw-entry__path"><code>context/retries.md</code></p>
 
-### Snapshot-before-buffer ordering
+### Why retry_with_jitter isn't a plain retry loop
 
-**Type:** decision<br>
+**Type:** constraint<br>
 **Status:** active<br>
 **Evidence:** confirmed<br>
-**Source:** maintainer interview, 2026-03-14; incident postmortem 2025-11, `incidents.md`<br>
-**Revisit when:** the sync protocol or snapshot mechanism changes
+**Source:** discovered while considering simplifying it, 2026-07-22
 
-The sync step always waits for a full snapshot before applying any buffered events, even though this adds latency on cold start.
+The payment gateway's rate limiter returns 429 with a per-request `Retry-After` header. A fixed-delay retry loop would frequently retry before the limiter resets, causing repeated 429s under load.
 
-**Reason:** applying buffered events before the snapshot landed caused duplicate-then-overwritten state during a 2025-11 incident. The ordering constraint isn't visible in the code — it looks like it could safely be parallelized, and someone tried exactly that once.
-
-**Rejected alternative:** run snapshot and buffer replay in parallel, then reconcile. Rejected because reconciliation logic was hard to get right and the incident showed it wasn't actually needed if ordering was enforced instead.
+**Considered:** replacing it with a plain retry loop, since the wrapper looked like unnecessary complexity with nothing documenting why. Not adopted once the `Retry-After` behavior surfaced during review.
 
 </div>
 
-<p class="ktw-caption">One entry, one topic file, plain Markdown in the repository — reviewed in the same pull request as the code it explains. Every entry says how well its claim is backed (<code>Evidence</code>) and whether it still holds (<code>Status</code>); "unknown" is a valid answer. <a href="repository-structure/">Field reference →</a></p>
+<p class="ktw-caption">A change that was started and then dropped — no commit, no diff, no pull request, and normally no trace. This is what Keep the Why keeps: one entry in a topic file, plain Markdown, reviewed in the same pull request as the code around it. Every entry says how well its claim is backed (<code>Evidence</code>) and whether it still holds (<code>Status</code>); "unknown" is a valid answer. <a href="examples/abandoned-change/">The full example →</a> · <a href="repository-structure/">Field reference →</a></p>
 
 </div>
 
