@@ -103,11 +103,12 @@ Everything lives in `context/`, one file per topic, versioned with the code. A l
 **Latest full run:** {% include-markdown "evals.md" start="<!-- ktw-latest:start -->" end="<!-- ktw-latest:end -->" %} — with the four numbers a pass count runs together, the per-case verdicts, and the caveats: [Evals →](evals/)
 
 <p class="ktw-trust__badges">
+<a href="https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/validate-skill.yml"><img src="https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/validate-skill.yml/badge.svg" alt="Validate Skill"></a>
+<a href="https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/ktw-lint.yml"><img src="https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/ktw-lint.yml/badge.svg" alt="ktw-lint"></a>
 <a href="https://skillsllm.com/security-check/IPmNycVdbOyq"><img src="https://skillsllm.com/security-check/badge.svg?owner=oliver-zehentleitner&repo=keep-the-why" alt="Security: SkillsLLM"></a>
-<a href="https://github.com/marketplace/actions/keep-the-why-lint"><img src="https://img.shields.io/badge/GitHub%20Marketplace-keep--the--why--lint-2088FF?logo=githubactions&logoColor=white" alt="GitHub Marketplace: keep-the-why-lint"></a>
-<a href="https://pypi.org/project/keep-the-why-lint/"><img src="https://img.shields.io/pypi/v/keep-the-why-lint.svg?label=pypi%20keep-the-why-lint" alt="PyPI: keep-the-why-lint"></a>
-<a href="https://github.com/oliver-zehentleitner/keep-the-why/releases"><img src="https://img.shields.io/github/v/release/oliver-zehentleitner/keep-the-why?filter=v*&sort=semver&label=github" alt="GitHub release"></a>
 </p>
+
+<p class="ktw-caption">The skill validated against the Agent Skills spec on every push; this repository's own <code>context/</code> linted by its own linter, in strict mode; the package scanned by an independent registry.</p>
 
 </div>
 
