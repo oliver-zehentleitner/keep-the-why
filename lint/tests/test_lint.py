@@ -87,7 +87,7 @@ class _ProjectFixture(unittest.TestCase):
 
     def run_lint(self):
         linter = Linter(self.root)
-        return linter.run(_load_config(self.root)), linter
+        return linter.run(_load_config(self.root, linter)), linter
 
     def codes(self, findings):
         return sorted(f.code for f in findings)
@@ -479,7 +479,8 @@ class PathConfinement(_ProjectFixture):
         self.base_project()
         link = os.path.join(self.outside, "root-link")
         os.symlink(self.root, link)
-        findings = Linter(link).run(_load_config(link))
+        linter = Linter(link)
+        findings = linter.run(_load_config(link, linter))
         self.assertEqual(
             self.codes(findings), [], msg=[f.format_text() for f in findings]
         )
@@ -628,3 +629,85 @@ class ConfigFileIntegrity(_ProjectFixture):
             )
         )
         self.assertEqual(self.cli([self.root]), 1)
+
+
+class UntrustedInputRobustness(_ProjectFixture):
+    """Whatever the config file or a knowledge file contains, the linter
+    reports and exits — it never reads outside the tree, never raises, and
+    never passes raw control characters through to the terminal or to a
+    GitHub annotation."""
+
+    def setUp(self):
+        super().setUp()
+        self._outside_tmp = tempfile.TemporaryDirectory()
+        self.outside = self._outside_tmp.name
+
+    def tearDown(self):
+        self._outside_tmp.cleanup()
+        super().tearDown()
+
+    def test_config_file_symlinked_outside_the_tree_is_not_read(self):
+        self.base_project()
+        os.remove(os.path.join(self.root, ".keep-the-why"))
+        outside = os.path.join(self.outside, "planted")
+        with open(outside, "w", encoding="utf-8") as fh:
+            fh.write(
+                GOOD_CONFIG.replace(
+                    "- init: complete", "- init: complete\n- planted: hunter2"
+                )
+            )
+        os.symlink(outside, os.path.join(self.root, ".keep-the-why"))
+        findings, _ = self.run_lint()
+        codes = self.codes(findings)
+        self.assertIn("E009", codes)
+        self.assertNotIn("E001", codes)  # not "no config found" on top
+        self.assertNotIn("E005", codes)  # the planted field was never parsed
+        self.assertFalse(any("hunter2" in f.message for f in findings))
+
+    def test_legacy_agents_md_symlinked_outside_is_not_read(self):
+        outside = os.path.join(self.outside, "AGENTS.md")
+        with open(outside, "w", encoding="utf-8") as fh:
+            fh.write(GOOD_CONFIG)
+        os.symlink(outside, os.path.join(self.root, "AGENTS.md"))
+        findings, _ = self.run_lint()
+        self.assertIn("E009", self.codes(findings))
+        self.assertNotIn("E001", self.codes(findings))
+
+    def test_invalid_utf8_in_a_topic_file_is_a_finding(self):
+        self.base_project()
+        with open(os.path.join(self.root, "context", "sync.md"), "ab") as fh:
+            fh.write(b"\n\xff\xfe not text\n")
+        findings, _ = self.run_lint()
+        e302 = [f for f in findings if f.code == "E302"]
+        self.assertEqual(len(e302), 1)
+        self.assertEqual(e302[0].path, "context/sync.md")
+        self.assertEqual(e302[0].line, 17)
+        # the decodable part was still linted normally
+        self.assertNotIn("E101", self.codes(findings))
+
+    def test_invalid_utf8_in_the_config_is_a_finding(self):
+        self.base_project()
+        with open(os.path.join(self.root, ".keep-the-why"), "ab") as fh:
+            fh.write(b"\xff")
+        findings, _ = self.run_lint()
+        self.assertIn("E302", self.codes(findings))
+        self.assertNotIn(
+            "E001", self.codes(findings)
+        )  # the block before it still parsed
+        self.assertEqual(self.cli([self.root]), 1)
+
+    def test_control_characters_are_escaped_in_the_output(self):
+        self.base_project(
+            config=GOOD_CONFIG.replace(
+                "- init: complete", "- init: \x1b[31mEVIL\x1b[0m"
+            )
+        )
+        findings, _ = self.run_lint()
+        e003 = [f for f in findings if f.code == "E003"][0]
+        for rendered in (e003.format_text(), e003.format_github()):
+            self.assertNotIn("\x1b", rendered)
+            self.assertIn("\\x1bEVIL", rendered.replace("[31m", "").replace("[0m", ""))
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            main([self.root])
+        self.assertNotIn("\x1b", out.getvalue())

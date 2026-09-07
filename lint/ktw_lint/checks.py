@@ -128,6 +128,10 @@ class Linter:
         self.schema = FALLBACK_SCHEMA
         self.context_dir = "context"
         self.context_rejected = False  # E009: configured location left the tree
+        self.config_rejected = False  # E009: the config file itself left the tree
+        self._undecodable = (
+            set()
+        )  # E302 reported once per file, however often it is read
 
     # -- helpers ---------------------------------------------------------
 
@@ -156,8 +160,26 @@ class Linter:
         return resolved == self.root or resolved.startswith(self.root + os.sep)
 
     def _read(self, relpath):
-        with open(os.path.join(self.root, relpath), encoding="utf-8") as fh:
-            return fh.read()
+        """Text of a file inside the tree. Invalid UTF-8 is a finding (E302),
+        not a traceback — the undecodable bytes are replaced and the rest is
+        still linted."""
+        with open(os.path.join(self.root, relpath), "rb") as fh:
+            raw = fh.read()
+        try:
+            return raw.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            if relpath in self._undecodable:
+                return raw.decode("utf-8", errors="replace")
+            self._undecodable.add(relpath)
+            self.add(
+                ERROR,
+                "E302",
+                relpath,
+                raw.count(b"\n", 0, exc.start) + 1,
+                f"not valid UTF-8 (byte {exc.start}: {exc.reason}) — knowledge files are "
+                "plain UTF-8 text; whatever this is, it isn't meant to be read as one",
+            )
+            return raw.decode("utf-8", errors="replace")
 
     def _exists(self, relpath):
         return self._confined(relpath) and os.path.exists(
@@ -741,6 +763,8 @@ class Linter:
 
     def run(self, parsed: ParsedConfig | None):
         if parsed is None:
+            if self.config_rejected:
+                return self.findings  # E009 already says why there is nothing to lint
             self.add(
                 ERROR,
                 "E001",

@@ -16,16 +16,28 @@ from .config import parse_config_text
 from .findings import ERROR, WARNING
 
 
-def _load_config(root: str):
-    dedicated = os.path.join(root, ".keep-the-why")
-    if os.path.isfile(dedicated):
-        with open(dedicated, encoding="utf-8") as fh:
-            return parse_config_text(fh.read(), ".keep-the-why", legacy=False)
-    legacy = os.path.join(root, "AGENTS.md")
-    if os.path.isfile(legacy):
-        with open(legacy, encoding="utf-8") as fh:
-            parsed = parse_config_text(fh.read(), "AGENTS.md", legacy=True)
-        if parsed.config is not None:
+def _load_config(root: str, linter: Linter):
+    """The project config: `.keep-the-why`, or the legacy block in AGENTS.md.
+
+    Read through the linter so the config file gets the same treatment as
+    everything below it: a symlink leaving the tree is E009 and not read,
+    invalid UTF-8 is E302 and still parsed.
+    """
+    for name, legacy in ((".keep-the-why", False), ("AGENTS.md", True)):
+        if not os.path.isfile(os.path.join(root, name)):
+            continue
+        if not linter._confined(name):
+            linter.add(
+                ERROR,
+                "E009",
+                name,
+                0,
+                f"{name} is a symlink leaving the repository — not read",
+            )
+            linter.config_rejected = True
+            return None
+        parsed = parse_config_text(linter._read(name), name, legacy=legacy)
+        if not legacy or parsed.config is not None:
             return parsed
     return None
 
@@ -61,7 +73,7 @@ def main(argv=None) -> int:
     as_github = args.github or os.environ.get("GITHUB_ACTIONS") == "true"
 
     linter = Linter(root)
-    findings = linter.run(_load_config(root))
+    findings = linter.run(_load_config(root, linter))
     findings.sort(key=lambda f: (f.path, f.line, f.code))
 
     for finding in findings:

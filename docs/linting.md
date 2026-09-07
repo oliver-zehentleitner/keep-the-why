@@ -79,7 +79,7 @@ None of this is specific to Keep the Why; it is the same set of settings any tea
 
 **Guard files** — `README.md`, `AGENTS.md`, `CLAUDE.md` inside the context directory (warnings; an equivalent doing the same job is fine).
 
-**Hidden content** — invisible/directional Unicode (zero-width characters, bidi overrides) is an error; base64-looking blobs are a warning. This is the one mechanically checkable slice of the [trust model](trust-model.md): if it needs decoding to be read, it doesn't belong in an entry meant to be read. This is *not* a secret scanner — pair it with one (e.g. gitleaks) if you need that.
+**Hidden content** — invisible/directional Unicode (zero-width characters, bidi overrides) is an error; a file that is not valid UTF-8 is an error; base64-looking blobs are a warning. This is the one mechanically checkable slice of the [trust model](trust-model.md): if it needs decoding to be read, it doesn't belong in an entry meant to be read. This is *not* a secret scanner — pair it with one (e.g. gitleaks) if you need that.
 
 ### Finding codes
 
@@ -93,7 +93,7 @@ None of this is specific to Keep the Why; it is the same set of settings any tea
 | E006 | error | `pinned-version`/`pinned-path` pair violation, or pinned path missing |
 | E007 | error | configured context location doesn't exist |
 | E008 | error | `last:` timestamp inside `personal-defaults` |
-| E009 | error | configured `context` / `pinned-path`, or a symlink inside the context directory, points outside the repository (or contains a control character) |
+| E009 | error | configured `context` / `pinned-path`, the config file itself, or a symlink inside the context directory, points outside the repository (or contains a control character) |
 | E010 | error | `id` is not a safe file name (path separator, `..`, space, control character) |
 | E011 | error | config or `personal-defaults` block never closed |
 | E012 | error | second start marker for the same block |
@@ -109,6 +109,7 @@ None of this is specific to Keep the Why; it is the same set of settings any tea
 | E112 | error | more than one `Status`/`Evidence` line |
 | E201–E204 | error | `index.md` missing / broken link / unlisted topic file / not sorted |
 | E301 | error | invisible or directional Unicode character |
+| E302 | error | file is not valid UTF-8 |
 | W001 | warning | `context-schema` missing (assumed 0.2.0) |
 | W002 | warning | unrecognized check-interval shape in `personal-defaults` |
 | W003 | warning | project `context-schema` newer than the newest schema this linter knows |
