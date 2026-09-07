@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Changed
+
+- `docs/evals.md` carries the 0.13.2 release measurement: three consecutive full runs on the tag (81, 83 and 77 of 85), the four numbers per run, rows for the eight cases added since 0.12.0, a note on every failed run, a new run-history row, and rewritten caveats — which cases flipped and how often, that six of the eight single flips landed in one run with nothing changed between runs, that no genuine activation miss occurred in 255 sessions, and that the five judge-versus-check disagreements now go both ways (the check catches described-but-undone actions, the judge catches an over-confident `Evidence` label or a bundled wizard the disk never sees).
+
 ## [0.13.2] - 2026-09-07
 
 ### Changed
