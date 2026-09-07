@@ -21,16 +21,20 @@ Entries below assume 0.2.0 as the starting point — nothing before it tracked a
 **Evidence:** inferred
 ```
 
-**Also changed — `context/index.md` gets a fixed letter skeleton:** twenty-seven level-2 headings, `## 0-9` then `## A` through `## Z`, always all of them, and every topic file listed under the heading of its filename's first character, sorted within the section — see "`context/index.md` — example" in `references/repository-structure.md` and [#194](https://github.com/oliver-zehentleitner/keep-the-why/issues/194). The 0.10.0 sort order stays; the headings add a separator line between any two letters, so two pull requests adding differently-named topic files can no longer collide, however small the index.
+**Also changed — `context/index.md` gets a fixed letter skeleton:** thirty-six level-2 headings, `## 0` through `## 9` then `## A` through `## Z`, always all of them, and every topic file listed under the heading of its filename's first character, sorted within the section — see "`context/index.md` — example" in `references/repository-structure.md` and [#194](https://github.com/oliver-zehentleitner/keep-the-why/issues/194). The 0.10.0 sort order stays; the headings add a separator line between any two letters, so two pull requests adding differently-named topic files can no longer collide, however small the index.
 
-**Migrating an existing project (index):** rebuild `context/index.md` into the skeleton fully, once — keep the title and any intro line, then the twenty-seven headings in order with each existing entry moved under its letter. Mechanical, no per-entry judgment; do it now rather than next time touched, same reasoning as the 0.10.0 resort: the protection only exists once every entry sits under its heading. `keep-the-why-lint` reports a missing or misordered heading as `E205` and an entry under the wrong heading as `E206` from `context-schema` 0.13.0 on.
+**Migrating an existing project (index):** rebuild `context/index.md` into the skeleton fully, once — keep the title and any intro line, then the thirty-six headings in order with each existing entry moved under its letter. Mechanical, no per-entry judgment; do it now rather than next time touched, same reasoning as the 0.10.0 resort: the protection only exists once every entry sits under its heading. `keep-the-why-lint` reports a missing or misordered heading as `E205` and an entry under the wrong heading as `E206` from `context-schema` 0.13.0 on.
 
 **Example — after:**
 
 ```markdown
 # Context index
 
-## 0-9
+## 0
+
+…
+
+## 9
 
 ## A
 

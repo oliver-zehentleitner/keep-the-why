@@ -44,7 +44,7 @@ Body text.
 """
 
 
-INDEX_HEADINGS = ["0-9"] + [chr(c) for c in range(ord("A"), ord("Z") + 1)]
+INDEX_HEADINGS = list("0123456789") + [chr(c) for c in range(ord("A"), ord("Z") + 1)]
 
 
 def skeleton_index(entries_by_letter):
@@ -235,16 +235,7 @@ class LintProject(_ProjectFixture):
 
     def test_index_skeleton_complete_and_placement(self):
         self.base_project(config=GOOD_CONFIG.replace("0.10.1", "0.13.0"))
-        heads = ["0-9"] + [chr(c) for c in range(ord("A"), ord("Z") + 1)]
-
-        def index(entries_by_letter):
-            out = ["# Context index", ""]
-            for h in heads:
-                out += [f"## {h}", ""]
-                out += entries_by_letter.get(h, [])
-                if h in entries_by_letter:
-                    out.append("")
-            return "\n".join(out) + "\n"
+        index = skeleton_index
 
         self.write(
             "context/index.md", index({"S": ["- [sync.md](sync.md) — sync design"]})
@@ -269,13 +260,13 @@ class LintProject(_ProjectFixture):
         e205 = [f for f in findings if f.code == "E205"]
         self.assertEqual(len(e205), 1)
         self.assertIn("missing: Q", e205[0].message)
-        # digits and odd names go under 0-9
+        # a digit-initial name goes under its digit
         self.write("context/2fa.md", GOOD_ENTRY)
         self.write(
             "context/index.md",
             index(
                 {
-                    "0-9": ["- [2fa.md](2fa.md) — second factor"],
+                    "2": ["- [2fa.md](2fa.md) — second factor"],
                     "S": ["- [sync.md](sync.md) — sync design"],
                 }
             ),

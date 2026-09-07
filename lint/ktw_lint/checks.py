@@ -38,14 +38,14 @@ GATE_DEDICATED_CONFIG = (0, 10, 0)
 GATE_PENDING_CONFIRMATION = (0, 13, 0)
 GATE_INDEX_SKELETON = (0, 13, 0)
 
-INDEX_HEADINGS = ("0-9",) + tuple("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+INDEX_HEADINGS = tuple("0123456789") + tuple("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 
 def index_bucket(filename: str) -> str:
     """The skeleton heading a topic file belongs under: its first character,
-    uppercased, or 0-9 for a digit or anything else that isn't a letter."""
+    uppercased; a name starting with neither a digit nor a letter goes under 0."""
     first = filename[:1].upper()
-    return first if first in INDEX_HEADINGS[1:] else "0-9"
+    return first if first in INDEX_HEADINGS else "0"
 
 
 FALLBACK_SCHEMA = (0, 2, 0)  # the skill's own backfill default for a missing field
@@ -753,7 +753,7 @@ class Linter:
             )
 
     def _check_index_skeleton(self, index_path, text, rows):
-        """E205/E206: the fixed 0-9, A-Z heading skeleton and entry placement."""
+        """E205/E206: the fixed 0-9, A-Z heading skeleton (one per character) and entry placement."""
         headings = parse_index_headings(text)
         names = [h for _line, h in headings]
         if names != list(INDEX_HEADINGS):
@@ -770,8 +770,8 @@ class Linter:
                 "E205",
                 index_path,
                 headings[0][0] if headings else 0,
-                f"index.md needs the fixed heading skeleton `## 0-9`, `## A` … `## Z` — "
-                f"all twenty-seven, in order, empty ones included (convention since 0.13.0); {detail}",
+                f"index.md needs the fixed heading skeleton `## 0` … `## 9`, `## A` … `## Z` — "
+                f"all thirty-six, in order, empty ones included (convention since 0.13.0); {detail}",
             )
             return
         for line, _text, target in rows:

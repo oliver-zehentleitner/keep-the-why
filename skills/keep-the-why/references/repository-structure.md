@@ -105,7 +105,13 @@ A `migration-prompt: <version> declined` line can appear here too, but only once
 ```markdown
 # Context index
 
-## 0-9
+## 0
+
+## 1
+
+…one heading per digit, through 9…
+
+## 9
 
 ## A
 
@@ -134,9 +140,9 @@ A `migration-prompt: <version> declined` line can appear here too, but only once
 
 Keep entries to one line each. This file exists so an agent can decide what to load, not to hold the content itself.
 
-The file carries a fixed skeleton of twenty-seven level-2 headings — `## 0-9`, then `## A` through `## Z`, in that order, always all of them, empty ones included — and every topic file is listed under the heading of its filename's first character (a digit or anything that isn't a letter goes under `0-9`), sorted alphabetically within the section. The example above is cut short; a real index has every heading.
+The file carries a fixed skeleton of thirty-six level-2 headings — `## 0` through `## 9`, then `## A` through `## Z`, in that order, always all of them, empty ones included — and every topic file is listed under the heading of its filename's first character (a name that starts with neither a digit nor a letter goes under `## 0`), sorted alphabetically within the section. The example above is cut short; a real index has every heading.
 
-The skeleton exists for one reason: merge conflicts. Two pull requests that add topic files starting with different letters can never collide, because a heading line always separates their insertions — no matter how small the index is. Plain alphabetical sorting (the convention since 0.10.0) only helped once the list was long enough for two new names to land apart; in a small index, `billing.md` and `caching.md` from two branches still met in the same gap between `auth.md` and `deploy.md`. Twenty-seven mostly empty headings cost a few dozen tokens per session and look sparse on a code host; that is the price, and it is deliberate.
+The skeleton exists for one reason: merge conflicts. Two pull requests that add topic files starting with different letters can never collide, because a heading line always separates their insertions — no matter how small the index is. Plain alphabetical sorting (the convention since 0.10.0) only helped once the list was long enough for two new names to land apart; in a small index, `billing.md` and `caching.md` from two branches still met in the same gap between `auth.md` and `deploy.md`. Thirty-six mostly empty headings cost a few dozen tokens per session and look sparse on a code host; that is the price, and it is deliberate.
 
 An existing project with an index in the old flat or unsorted form rebuilds it into the skeleton fully, once — see `references/migrations.md`. This isn't the usual "next touched, not a big-bang migration" retrofit rule (below): the rebuild is mechanical, not per-entry judgment, and the protection doesn't exist until every entry sits under its heading.
 

@@ -99,7 +99,7 @@ An unattended session — a scheduled cloud agent, an autonomous loop, a CI job 
 
 **Consequence:** `context-schema`-relevant, same tier as the Type-field additions above: the linter accepts the value from 0.13.0 on and reports `E113` below it. Not a backfill — existing entries keep their Status. Two optional settings, both defaulting to the previous behavior, so nothing changes for a project that writes neither.
 
-## `context/index.md` carries a fixed `0-9`, `A`–`Z` heading skeleton, empty headings included
+## `context/index.md` carries a fixed `0`–`9`, `A`–`Z` heading skeleton, empty headings included
 
 **Type:** decision
 **Status:** active
@@ -107,11 +107,11 @@ An unattended session — a scheduled cloud agent, an autonomous loop, a CI job 
 **Source:** [#194](https://github.com/oliver-zehentleitner/keep-the-why/issues/194), the reporter's collision pattern; maintainer proposal and call, 2026-09-07
 **Revisit when:** a project reports the sparse index as a real cost, or the collision reports on #194-shaped teams don't stop
 
-Every `context/index.md` has twenty-seven level-2 headings — `## 0-9`, `## A` … `## Z` — always all of them, and every topic file is listed under its filename's first character, sorted within the section. The sort order from 0.10.0 stays; the headings are added on top.
+Every `context/index.md` has thirty-six level-2 headings — `## 0` … `## 9`, `## A` … `## Z` — always all of them, and every topic file is listed under its filename's first character, sorted within the section. The sort order from 0.10.0 stays; the headings are added on top.
 
-**Reason:** git conflicts when two insertions touch. Alphabetical order alone only separates two new topic files once the list is long enough for their names to land apart; in the small index a team with many concurrent pull requests actually has — the #194 case — `billing.md` and `caching.md` from two branches still meet in the same gap between `auth.md` and `deploy.md`. A heading line between every letter makes two differently-initialed additions unable to collide, regardless of index size. Pre-defining all twenty-seven, empty ones included, is what makes that a guarantee: the space is laid out once, and additions fill it granularly instead of creating structure at the same spot.
+**Reason:** git conflicts when two insertions touch. Alphabetical order alone only separates two new topic files once the list is long enough for their names to land apart; in the small index a team with many concurrent pull requests actually has — the #194 case — `billing.md` and `caching.md` from two branches still meet in the same gap between `auth.md` and `deploy.md`. A heading line between every letter makes two differently-initialed additions unable to collide, regardless of index size. Pre-defining all thirty-six, empty ones included, is what makes that a guarantee: the space is laid out once, and additions fill it granularly instead of creating structure at the same spot.
 
-**Rejected alternative:** headings only for letters in use. Cleaner to look at, but the first file of a new letter then creates its heading in the same gap as before, which is exactly the small-index case the skeleton is for. Also rejected: a generated index or a lock file (the heavier option from the #194 thread) — tooling for a problem a fixed layout solves.
+**Rejected alternative:** one shared `0-9` heading for the digits (the first cut, same day) — a digit-initial name is rare, but a shared bucket is the one place where the guarantee would not hold, and ten headings cost nothing more than one. Also rejected: headings only for letters in use. Cleaner to look at, but the first file of a new letter then creates its heading in the same gap as before, which is exactly the small-index case the skeleton is for. Also rejected: a generated index or a lock file (the heavier option from the #194 thread) — tooling for a problem a fixed layout solves.
 
 **Consequence:** schema-relevant, gated with 0.13.0 in `keep-the-why-lint` (`E205` skeleton, `E206` placement); a one-time mechanical rebuild for existing projects, done now, like the 0.10.0 resort. The index is a few dozen tokens longer per session and looks sparse on a code host — accepted.
 
