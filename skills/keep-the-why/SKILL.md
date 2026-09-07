@@ -142,7 +142,7 @@ Update existing topics rather than accumulating new ones, resolve contradictions
 
 ## Example: expected output
 
-A `context/` topic file entry (full field reference: `references/repository-structure.md`):
+A `context/` topic file entry (full field reference: `references/specification.md`):
 
 ```markdown
 ## Snapshot-before-buffer ordering
