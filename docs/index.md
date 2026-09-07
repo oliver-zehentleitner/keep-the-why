@@ -84,7 +84,7 @@ Everything lives in `context/`, one file per topic, versioned with the code. A l
 
 ### Check
 
-`keep-the-why-lint` validates the structure in CI — required fields, valid values, index consistency, hidden content — and says plainly what it cannot check: whether a recorded reason is true. That part stays with review.
+`keep-the-why-lint` validates the structure in CI — required fields, valid values, index consistency — and the things an agent must never read as instructions: invisible and directional Unicode, base64-looking blobs, a config path that leaves the repository. It says plainly what it cannot check: whether a recorded reason is true. That part stays with review.
 
 [Linting →](linting/) · [Security →](security/)
 
