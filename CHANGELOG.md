@@ -4,9 +4,12 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.13.3] - 2026-09-07
+
 ### Changed
 
 - `docs/evals.md` carries the 0.13.2 release measurement: three consecutive full runs on the tag (81, 83 and 77 of 85), the four numbers per run, rows for the eight cases added since 0.12.0, a note on every failed run, a new run-history row, and rewritten caveats — which cases flipped and how often, that six of the eight single flips landed in one run with nothing changed between runs, that no genuine activation miss occurred in 255 sessions, and that the five judge-versus-check disagreements now go both ways (the check catches described-but-undone actions, the judge catches an over-confident `Evidence` label or a bundled wizard the disk never sees).
+- `keep-the-why-lint` 0.13.3.0: knows schema 0.13.3 — no new gate. Published before the skill tag, per the checklist.
 - `SKILL.md` Maintain section, and `references/setup.md`'s maintenance bullet: a contradiction the consistency check itself turns up is surfaced — `Status: needs-review`, `Verification: contradicted`, or a question — not settled by superseding the entry on the agent's reading of the code; that was already the specification's lifecycle rule, and two agents in the 0.13.2 series followed the skill body's "resolve contradictions, mark superseded" literally into a fail.
 - `tools/evals/evals.json`: `capture-confirmation-automatic-still-asks-substantive-question` expects any genuine factual question about the change, with the cause question as the example rather than the required wording — the agent asked one in every one of six runs on 0.13.2 and passed only when it happened to be that one.
 - `tools/evals/run.py`: fixture commits accept `"days_ago"` as an alternative to a fixed `"date"`, so a prompt's "two weeks ago" or "last month" stays true on every run; the three fixtures whose commit dates had drifted since the case was written use it (one agent had started asking about the date discrepancy instead of the case's question).
@@ -577,7 +580,8 @@ Initial release.
 - Logo, wordmark, and favicon.
 - `context/repo-conventions.md`, dogfooding the skill on its own repository from day one.
 
-[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.13.2...HEAD
+[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.13.3...HEAD
+[0.13.3]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.13.2...v0.13.3
 [0.13.2]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.13.1...v0.13.2
 [0.13.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.13.0...v0.13.1
 [0.13.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.12.0...v0.13.0

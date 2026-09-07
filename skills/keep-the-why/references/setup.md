@@ -17,7 +17,7 @@ README, for what Keep the Why actually is.
 - id: oliver-zehentleitner---keep-the-why
 - context: `context/`
 - init: complete
-- context-schema: 0.13.2
+- context-schema: 0.13.3
 - capture-confirmation: confirm-when-unsure
 - source-reference: never
 <!-- /keep-the-why:config -->

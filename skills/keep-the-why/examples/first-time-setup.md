@@ -113,7 +113,7 @@ This names the skill and its purpose directly — not a task that happens to mat
     - id: acme---widget-service
     - context: `context/`
     - init: complete
-    - context-schema: 0.13.2
+    - context-schema: 0.13.3
     - capture-confirmation: confirm-when-unsure
     - source-reference: never
     <!-- /keep-the-why:config -->
