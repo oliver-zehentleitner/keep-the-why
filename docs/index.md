@@ -10,7 +10,7 @@ hide:
 
 <div class="ktw-hero__text" markdown>
 
-<p class="ktw-hero__tagline">Keep a Changelog records what changed. Keep the Why preserves why it changed.</p>
+<p class="ktw-hero__tagline">Keep a Changelog records what changed.<br>Keep the Why preserves why it changed.</p>
 
 {% include-markdown "../README.md" start="<!-- ktw-intro:start -->" end="<!-- ktw-intro:end -->" %}
 
