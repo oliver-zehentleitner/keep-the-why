@@ -20,7 +20,6 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 - The eval status issue (#131, "living status page") is closed; its content had moved into places that are maintained per release — numbers and caveats in `docs/evals.md`, activation per agent in `autostart.md`, the matrix page, this file — and it had not been updated through the two most active weeks. `README.md`, `CONTRIBUTING.md` and `tools/evals/README.md` point at those instead; `CONTRIBUTING.md`'s cross-agent paragraph no longer claims nobody has run the suite against another agent.
 
-
 ## [0.12.0] - 2026-09-06
 
 ### Added
