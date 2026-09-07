@@ -63,7 +63,7 @@ Decisions that shipped, alternatives that lost, workarounds, constraints — Kee
 
 ### Capture
 
-The agent notices rationale as it surfaces — a decision, an alternative that lost, a workaround, a change that was started and abandoned — and writes it down with your confirmation. No separate documentation step. Works retrospectively on an existing repository too.
+The agent notices rationale as it surfaces — a decision, an alternative that lost, a workaround, a change that was started and abandoned — and writes it down. No separate documentation step. Works retrospectively on an existing repository too.
 
 [Continuous capture →](continuous-capture.md) · [Retrospective →](retrospective-analysis.md)
 
