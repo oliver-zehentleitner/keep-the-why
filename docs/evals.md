@@ -25,7 +25,7 @@ times. `trust-model-hidden-unicode-instructions` was refused by the model's
 safety layer twice in run 1 and passed on the third attempt (see the caveats
 below).
 
-The four numbers a pass count runs together, per run:
+What a single pass count hides — four numbers, per run:
 
 | Run | Passed | Skill loaded | Completed | Deterministic checks | Judge pass |
 |---|---|---|---|---|---|
