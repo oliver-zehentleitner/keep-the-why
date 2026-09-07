@@ -16,6 +16,11 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      # The tag reaches the scripts as an environment variable, never by
+      # `${{ }}` interpolation into `run:` — a tag name is a valid git ref
+      # even when it contains quotes or semicolons.
+      TAG: ${{ github.event.inputs.tag || github.ref_name }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
@@ -27,7 +32,6 @@ jobs:
         # exactly that pattern, so every other artifact released from this
         # repository must carry a prefix (lint-v<version>, lint-latest, ...).
         run: |
-          TAG="${{ github.event.inputs.tag || github.ref_name }}"
           if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "::error::'$TAG' is not a skill release tag (expected v<major>.<minor>.<patch>)"
             exit 1
@@ -41,7 +45,6 @@ jobs:
         # same version, or `latest` would point at a skill that reports a
         # different version than its release name.
         run: |
-          TAG="${{ github.event.inputs.tag || github.ref_name }}"
           WANT="${TAG#v}"
           fail=0
           check() {  # check <label> <found>
@@ -81,13 +84,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="${{ github.event.inputs.tag || github.ref_name }}"
           gh release create "$TAG" keep-the-why-skill.zip \
             --title "$TAG" \
             --generate-notes
 
       - name: Move latest tag
         run: |
-          TAG="${{ github.event.inputs.tag || github.ref_name }}"
           git tag -f latest "$TAG"
           git push origin latest --force
