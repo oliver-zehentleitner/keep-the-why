@@ -7,6 +7,8 @@ All notable changes to this project are documented here. Format follows [Keep a 
 ### Changed
 
 - `docs/evals.md` carries the 0.13.2 release measurement: three consecutive full runs on the tag (81, 83 and 77 of 85), the four numbers per run, rows for the eight cases added since 0.12.0, a note on every failed run, a new run-history row, and rewritten caveats — which cases flipped and how often, that six of the eight single flips landed in one run with nothing changed between runs, that no genuine activation miss occurred in 255 sessions, and that the five judge-versus-check disagreements now go both ways (the check catches described-but-undone actions, the judge catches an over-confident `Evidence` label or a bundled wizard the disk never sees).
+- `tools/evals/evals.json`: `capture-confirmation-automatic-still-asks-substantive-question` expects any genuine factual question about the change, with the cause question as the example rather than the required wording — the agent asked one in every one of six runs on 0.13.2 and passed only when it happened to be that one.
+- `tools/evals/run.py`: fixture commits accept `"days_ago"` as an alternative to a fixed `"date"`, so a prompt's "two weeks ago" or "last month" stays true on every run; the three fixtures whose commit dates had drifted since the case was written use it (one agent had started asking about the date discrepancy instead of the case's question).
 
 ## [0.13.2] - 2026-09-07
 

@@ -1,6 +1,7 @@
 """Materializing a case's throwaway project (and fake $HOME), and collecting
 what the agent changed in it afterwards."""
 
+import datetime
 import os
 import re
 import shutil
@@ -42,6 +43,28 @@ DEFAULT_PERSONAL_CONFIG = """<!-- keep-the-why:personal -->
 - consistency-check: no
 <!-- /keep-the-why:personal -->
 """
+
+
+def commit_date(commit):
+    """The timestamp for a fixture commit: `date` verbatim, or `days_ago`
+    resolved against today. A prompt that says "two weeks ago" stays true on
+    every run only if the commit moves with the calendar; a fixed `date`
+    drifts until an agent starts asking about the discrepancy instead of the
+    case's actual question."""
+    if commit.get("date") and commit.get("days_ago") is not None:
+        raise ValueError(
+            f"commit {commit.get('message')!r}: date and days_ago are exclusive"
+        )
+    if commit.get("date"):
+        return commit["date"]
+    if commit.get("days_ago") is not None:
+        when = datetime.datetime.now() - datetime.timedelta(
+            days=int(commit["days_ago"])
+        )
+        return when.replace(hour=10, minute=0, second=0, microsecond=0).strftime(
+            "%Y-%m-%dT%H:%M:%S"
+        )
+    return None
 
 
 def build_workdir(case_id, cfg, workdir: Path, driver, home: Path = None):
@@ -138,9 +161,10 @@ def build_workdir(case_id, cfg, workdir: Path, driver, home: Path = None):
             name, _, email = commit["author"].partition(" <")
             env["GIT_AUTHOR_NAME"] = name
             env["GIT_AUTHOR_EMAIL"] = email.rstrip(">") or "fixture@example.com"
-        if commit.get("date"):
-            env["GIT_AUTHOR_DATE"] = commit["date"]
-            env["GIT_COMMITTER_DATE"] = commit["date"]
+        when = commit_date(commit)
+        if when:
+            env["GIT_AUTHOR_DATE"] = when
+            env["GIT_COMMITTER_DATE"] = when
         sh(["git", "add", "-A"], cwd=workdir, env=env)
         sh(
             ["git", "commit", "-q", "--allow-empty", "-m", commit["message"]],

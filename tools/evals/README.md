@@ -274,9 +274,13 @@ code change.
     `~/.keep-the-why/<id>.md` yet for this project (the equivalent of the old
     "remove `AGENTS.local.md`" convention, from before personal config moved
     outside the project)
-  - `"commits": [{"message", "files", "author", "date"}]` — extra commits
-    after the initial one, for cases where git history is part of the
-    evidence (legacy analysis, injection in a commit message)
+  - `"commits": [{"message", "files", "author", "date" | "days_ago"}]` —
+    extra commits after the initial one, for cases where git history is part
+    of the evidence (legacy analysis, injection in a commit message).
+    `"days_ago"` dates the commit relative to the run, for a prompt that says
+    "two weeks ago" or "last month" — a fixed `"date"` there drifts with the
+    calendar until the agent asks about the discrepancy instead of the
+    case's question
   - `"disallowed_tools": [names]` — passed to `--disallowedTools` (e.g. deny
     `WebFetch`/`WebSearch` to simulate a session without web access)
 - `fixtures/<case-id>/home/` — optional, overlaid onto the fake `$HOME`

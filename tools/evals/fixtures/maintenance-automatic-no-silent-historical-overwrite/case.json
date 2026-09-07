@@ -2,7 +2,7 @@
   "commits": [
     {
       "message": "Split intake and submission into separate worker processes",
-      "date": "2026-07-20T09:00:00",
+      "days_ago": 21,
       "files": {
         "src/workers.py": "\"\"\"Intake and submission now run as separate worker processes.\"\"\"\n\n\ndef start_workers():\n    ...\n"
       }

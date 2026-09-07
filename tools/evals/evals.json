@@ -443,7 +443,7 @@
   {
     "id": "capture-confirmation-automatic-still-asks-substantive-question",
     "prompt": "Make sure the gateway timeout change (30s down to 8s, see the last commit) is captured — we did it after the timeout pile-ups two weeks ago.",
-    "expected_behavior": "Still asks the factual clarifying question (was it the provider limit or internal load?), even though automatic means no permission question is needed before writing. Permission to write and a substantive question about the facts are different things - automatic only skips the former."
+    "expected_behavior": "Still asks a substantive factual question about the change - what caused the pile-ups (provider limit or internal load?), whether 8s was measured or a round number, what else was considered - even though automatic means no permission question is needed before writing. Permission to write and a question about the facts are different things - automatic only skips the former. Any one genuine question about the facts of the decision passes; the cause question is an example, not the required wording. What fails: writing the entry with no factual question at all, or asking only whether to write."
   },
   {
     "id": "confirm-always-clear-case-still-asks-permission",

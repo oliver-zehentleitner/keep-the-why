@@ -39,7 +39,9 @@ def read_case_config(case_id):
                 for this project — the ~/.keep-the-why/ equivalent of the old
                 "remove AGENTS.local.md" convention)
       commits: [{"message": str, "files": {path: content}, "author": str,
-                 "date": str}] — extra commits after the initial one
+                 "date": str | "days_ago": int}] — extra commits after the
+                 initial one; days_ago dates the commit relative to the run
+                 so a prompt's "two weeks ago" stays true
       disallowed_tools: [tool names] passed to claude --disallowedTools
                         (e.g. deny WebFetch to simulate no web access)
       explicit_load: false to send the case prompt bare on every driver,
