@@ -1,7 +1,6 @@
 ---
 description: "Keep the Why is a repo-native convention and agent skill that preserves the reasoning behind a codebase as project memory, kept in the repo — so your agent understands not just the code but everything around it."
 hide:
-  - navigation
   - toc
 ---
 

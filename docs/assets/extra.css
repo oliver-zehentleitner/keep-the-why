@@ -30,11 +30,8 @@
   font-weight: 700;
 }
 .ktw-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-  gap: 2.5rem;
-  align-items: center;
-  padding: 1rem 0 2rem;
+  padding: .5rem 0 2rem;
+  max-width: 48rem;
 }
 .ktw-hero__tagline {
   font-size: 1.7rem;
@@ -51,6 +48,9 @@
 }
 .ktw-hero__actions .md-button {
   margin: 0;
+}
+.ktw-hero__demo {
+  margin-top: 1.6rem;
 }
 .ktw-hero__demo img {
   display: block;
@@ -114,11 +114,7 @@
   border-top: 1px solid var(--ktw-border);
   font-size: .8rem;
 }
-@media screen and (max-width: 60em) {
-  .ktw-hero {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
+@media screen and (max-width: 76.1875em) {
   .ktw-cards {
     grid-template-columns: 1fr;
   }

@@ -22,7 +22,7 @@ README's and `llms.txt`'s "Related work" don't compare Keep the Why against spec
 **Source:** maintainer request, 2026-09-07 ("a landing page as index, link the README from there"); the technical form was the assisting agent's call, accepted
 **Revisit when:** the page needs anything CSS can't do (a live element, a carousel, tabs), or Material's `hide:` front matter stops removing the sidebars
 
-`docs/index.md` is a Material page with `hide: navigation, toc`, its content plain Markdown with `<div markdown>` blocks (`md_in_html`, already enabled) and a landing-page section in `extra.css` built on Material's own color variables. The README is its own page (`/readme/`), included whole as before.
+`docs/index.md` is a Material page with `hide: toc` (the navigation sidebar stays — without tabs in the header it is the site's only menu, and the first production look had it hidden), its content plain Markdown with `<div markdown>` blocks (`md_in_html`, already enabled) and a landing-page section in `extra.css` built on Material's own color variables. The README is its own page (`/readme/`), included whole as before.
 
 **Reason:** the two facts on the page that change per release — the "Tested with" line and the latest eval headline — are included from the README and `docs/evals.md` between HTML-comment markers, so the page cannot drift from its sources; that is the same one-place rule the README and `llms.txt` follow. Markdown keeps the page editable like every other doc, keeps light and dark mode for free, and adds nothing to the toolchain.
 
