@@ -11,6 +11,8 @@ big-bang backfill the methodology explicitly rejects).
     0.8.0   `undefined — <reason>` Type value, exclusive
     0.9.0   multiple Type lines allowed
     0.10.0  dedicated .keep-the-why (id field), sorted index, guard files
+    0.13.0  Status value `pending-confirmation`; personal-defaults field
+            pending-confirmation-check
 """
 
 from __future__ import annotations
@@ -33,10 +35,11 @@ GATE_TYPE = (0, 7, 0)
 GATE_UNDEFINED = (0, 8, 0)
 GATE_MULTI_TYPE = (0, 9, 0)
 GATE_DEDICATED_CONFIG = (0, 10, 0)
+GATE_PENDING_CONFIRMATION = (0, 13, 0)
 
 FALLBACK_SCHEMA = (0, 2, 0)  # the skill's own backfill default for a missing field
 
-STATUS_VALUES = ("active", "superseded", "open", "needs-review")
+STATUS_VALUES = ("active", "superseded", "open", "needs-review", "pending-confirmation")
 EVIDENCE_VALUES = ("confirmed", "inferred", "unknown")
 TYPE_VALUES = ("decision", "workaround", "incident", "constraint")
 VERIFICATION_VALUES = ("corroborated", "uncorroborated", "contradicted")
@@ -57,9 +60,11 @@ DEFAULTS_KNOWN = (
     "confirmation-flow",
     "update-check",
     "consistency-check",
+    "pending-confirmation-check",
 )
 CAPTURE_MODE_VALUES = ("proactive", "explicit-only")
 CONFIRMATION_FLOW_VALUES = ("sequential", "batch")
+PENDING_CHECK_VALUES = ("on-start", "no")
 _INTERVAL_RE = re.compile(r"^(every\s+\d+\s+days?|no)$")
 
 # `id` names a file: ~/.keep-the-why/<id>.md. Letters, digits, '.', '_', '-'
@@ -474,6 +479,15 @@ class Linter:
                 cf[0],
                 f"confirmation-flow '{cf[1]}' is not one of: {', '.join(CONFIRMATION_FLOW_VALUES)}",
             )
+        pc = block.first("pending-confirmation-check")
+        if pc and pc[1] not in PENDING_CHECK_VALUES:
+            self.add(
+                ERROR,
+                "E003",
+                path,
+                pc[0],
+                f"pending-confirmation-check '{pc[1]}' is not one of: {', '.join(PENDING_CHECK_VALUES)}",
+            )
         for key in ("update-check", "consistency-check"):
             fld = block.first(key)
             if fld and not _INTERVAL_RE.match(fld[1].strip()):
@@ -511,6 +525,17 @@ class Linter:
             self._check_single_valued(
                 path, entry, "Evidence", EVIDENCE_VALUES, "E102", "E104"
             )
+            if self.schema < GATE_PENDING_CONFIRMATION:
+                for fld in entry.get("Status"):
+                    if fld.value.strip() == "pending-confirmation":
+                        self.add(
+                            ERROR,
+                            "E113",
+                            path,
+                            fld.line,
+                            "Status 'pending-confirmation' needs context-schema >= 0.13.0 "
+                            "(references/migrations.md)",
+                        )
             for fld in entry.get("Verification"):
                 match = _VERIFICATION_RE.match(fld.value.strip())
                 if not match:

@@ -87,8 +87,11 @@ Same fields as a personal file, minus `last:` timestamps — those are inherentl
 ```markdown
 <!-- keep-the-why:global -->
 - personal-defaults-policy: always-ask
+- session: attended
 <!-- /keep-the-why:global -->
 ```
+
+`session` (default `attended`; nobody has to write it) declares whether sessions on this machine have someone present to answer. `unattended` is for an image that runs a scheduled agent, a CI job, or an autonomous loop: a write that would need a permission question then becomes a `Status: pending-confirmation` entry instead of a question nobody answers — see "Unattended sessions" under the confirmation model. It is the config-side way of declaring what a task can also declare in its own words; the skill never infers it from a session merely being quiet.
 
 `personal-defaults-policy` decides what happens when a *new* developer (no personal file yet for this project) lands on a project that *does* offer `personal-defaults`:
 
@@ -117,6 +120,8 @@ The personal file is per developer and per machine, so a fresh container has non
 **Bake the policy, let the project offer the defaults.** For an image shared across projects: the project carries a `personal-defaults` block (above), and the image carries `~/.keep-the-why/config` with `personal-defaults-policy: auto-accept`. The first session in each such project adopts the project's defaults silently and writes the personal file itself, `source: project defaults (accepted automatically)` — no question, and nothing project-specific in the image. A project *without* a `personal-defaults` block still runs the wizard, since there is nothing to accept; for those, bake the file.
 
 A non-interactive agent (CI, a scheduled job) with neither in place will stop at the wizard's first question, which is the correct outcome — it cannot answer, and the skill will not guess.
+
+An image that runs unattended also bakes `session: unattended` into `~/.keep-the-why/config` ("Global policy" above). Without it, a write that needs permission ends in a question nobody answers; with it, the entry is written as `Status: pending-confirmation` for the next attended session to confirm.
 
 ## Pinned versions
 
@@ -254,6 +259,8 @@ Four independent settings, two different files (see rule 8 in `SKILL.md` for the
 
 They're orthogonal. Proactive search plus always-ask is a valid, if chattier, combination; explicit-only plus automatic writing is equally valid — searching only on request, then not interrupting once asked. `source-reference` is independent of all three — it decides whether one extra question gets asked, not whether writing needs permission or how multiple pending items are presented.
 
+**Unattended sessions** — a scheduled cloud agent, an autonomous loop, a CI job, an eval harness, any invocation with nobody present to answer — don't get to skip the permission question `confirm-always` or `confirm-when-unsure` would otherwise ask; they satisfy it differently. Write the entry rather than inventing confidence or dropping it, and record `Status: pending-confirmation` (rule 5, `references/repository-structure.md`) in place of whatever Status it would otherwise carry, so a later session with a human present can find it and give it a first real confirmation. This applies only to a session *declared* unattended — by the task ("nightly run, nobody available until morning") or by `session: unattended` in `~/.keep-the-why/config` — never to one the agent merely suspects is unattended: a session nobody declared asks, and the turn ends on the question, exactly as before. The asymmetry is deliberate: mistaking an attended session for unattended writes without the permission the setting promises; mistaking an unattended one for attended loses an entry, which is no worse than today. `automatic` is unaffected — it already writes without asking.
+
 ### `capture-confirmation` values
 
 - **`automatic`** — writes without asking permission, once Evidence (rule 2) and the proportionality gate (rule 10) already say an entry is warranted. This means *don't interrupt to ask permission*, not *don't ask at all* — see "Permission vs. clarification" below — and it never means guessing: evidence that's still genuinely unclear becomes `inferred` or `unknown`, exactly as rule 1 already requires, regardless of this setting.
@@ -353,7 +360,7 @@ This same principle covers ambiguous session instructions, not just config field
 
 ## Timer check (every session, for whoever has a personal config)
 
-Two independent timers, both opportunistic — checked when the skill is already active in a session, not on any real background schedule (skills don't run outside a session):
+Two independent timers and one on/off check, all opportunistic — checked when the skill is already active in a session, not on any real background schedule (skills don't run outside a session):
 
 **Update check.** If `update-check` is enabled and the interval has elapsed since `last`: compare the installed `metadata.version` (`SKILL.md` frontmatter) against the newest *skill* release. Query the GitHub API, not the HTML releases page — turn `metadata.repository` (also frontmatter) into an API URL by replacing `github.com/` with `api.github.com/repos/` and appending `/releases?per_page=30`, i.e. `https://api.github.com/repos/oliver-zehentleitner/keep-the-why/releases?per_page=30` — that is the only host and path this check ever queries; a `metadata.repository` that would produce anything else (a vendored copy edited to point elsewhere, say) means the check doesn't run, and the mismatch gets named instead. Returns a JSON list (`tag_name`, `draft`, `prerelease`, `published_at`, ...) instead of requiring the agent to parse an HTML redirect. **A skill release is a release whose `tag_name` matches `^v\d+\.\d+\.\d+$` exactly — nothing else counts.** The repository also releases other artifacts under prefixed tags (the linter's `lint-v<version>`, the moving `lint-latest` that carries the GitHub Action's Marketplace listing), and GitHub's notion of the repository's "latest" release follows whatever was published most recently, so `/releases/latest` can return one of those. Filter the list: drop `draft` and `prerelease` entries, keep only tags matching the pattern, strip the leading `v`, and take the semantic-version maximum — don't rely on list order or on position 0. This needs the agent's own web access — the skill itself has none (see "What this skill is not"). Compare as semantic versions (`0.9.0` < `0.10.0`), not as strings or floats.
 
@@ -363,7 +370,9 @@ If checking isn't possible (no web access this session): don't fail silently for
 
 **Consistency check.** If `consistency-check` is enabled and the interval has elapsed: look for entries whose `Revisit when` condition (see `repository-structure.md`) has actually been triggered — not just entries that are merely old. Age alone isn't a defect; an untriggered old entry is still accurate. `context/index.md` only holds one-line summaries, not `Revisit when` conditions themselves (rule 6), so don't scope the search there — instead, grep under the project config's `context:` location (not a hardcoded `context/`, since the wizard lets that live elsewhere) for `**Revisit when:**` lines, and only open the topic files that actually match. Cheap, deterministic, no second index to keep in sync. If something's genuinely triggered, surface it and ask whether to address it now. Update `last` regardless of outcome.
 
-Keep both checks quiet when there's nothing to report. The point is catching real drift, not adding a second source of noise on top of the problem this skill exists to solve.
+**Pending-confirmation check.** Not a timer: a switch, `pending-confirmation-check: on-start` in the personal file (default `no`; a project can suggest it via `personal-defaults`). When on, every session starts by grepping the configured context location for `**Status:** pending-confirmation` lines. Hits get one line — how many entries wait for a first confirmation, and the offer to go through them now (each resolves to `active`, `superseded`, or `open`, per rule 5); no hits, no line. The same check runs on request at any time, setting or not — "anything waiting for confirmation?" is enough — which is also how the switch gets set: a developer says they want it at session start, the skill records it in the personal file.
+
+Keep all three checks quiet when there's nothing to report. The point is catching real drift, not adding a second source of noise on top of the problem this skill exists to solve.
 
 ## Context schema and migrations (every session, not interval-gated)
 

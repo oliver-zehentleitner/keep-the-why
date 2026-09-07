@@ -4,6 +4,23 @@ What changed in each version that an existing project may need to know about or 
 
 Entries below assume 0.2.0 as the starting point — nothing before it tracked a `context-schema` at all, and 0.2.0 itself introduced no `context/` entry format change.
 
+## 0.13.0 — `Status` accepts a fifth value, `pending-confirmation`; two optional settings
+
+**What changed:** a new `Status` value, `pending-confirmation`, for an entry written during an unattended session — one declared so by the task or by `session: unattended` in `~/.keep-the-why/config`, never inferred — at a point where the project's `capture-confirmation` setting would normally require asking permission first. Rather than inventing confidence to skip the ask, or dropping the information because there was no one to ask, the entry gets written with `Status: pending-confirmation` standing in for whatever Status it would otherwise carry. See Core rule 5 and step 5 in `SKILL.md`, `references/repository-structure.md`, and "Unattended sessions" under the confirmation model in `references/setup.md`. Two settings come with it, both optional, both defaulting to the old behavior: `session: attended | unattended` in `~/.keep-the-why/config` (default `attended`), and `pending-confirmation-check: on-start | no` in the personal file (default `no`) — when on, a session starts by listing entries that still wait for a first confirmation, silently when there are none. The check also runs on request at any time.
+
+**New value (see `references/repository-structure.md`):**
+
+- **Status:** `pending-confirmation` — never got a first human confirmation because no one was present to give one during an unattended session. Distinct from `needs-review`: that flags a claim confirmed once whose trigger fired again; this flags a claim that never got a first confirmation at all. Resolving it replaces the flag with `active`, `superseded`, or `open`.
+
+**Migrating an existing project:** informational, not a backfill pass — this doesn't touch any existing entry's recorded Status, and neither setting has to be written anywhere. An existing project only sees the value going forward, the first time a declared-unattended session actually hits a would-need-to-ask point. `keep-the-why-lint` accepts the value from `context-schema` 0.13.0 on (`E113` below it) and knows `pending-confirmation-check` as a `personal-defaults` field.
+
+**Example:**
+
+```markdown
+**Status:** pending-confirmation
+**Evidence:** inferred
+```
+
 ## 0.12.1 — `id` is a file name; configured paths stay inside the project (one mechanical check)
 
 **What changed:** the three filesystem locations `.keep-the-why` can name are each confined to one directory, and the skill now says so instead of leaving it to the linter. `id` is letters, digits, `.`, `_`, `-` only — it names `~/.keep-the-why/<id>.md`, and anything else could make that file land elsewhere. The uuid form's `<folder-name>` is slugified like the repo name (`My Cool Project` → `My-Cool-Project`). `context` and `pinned-path` are relative and resolve inside the project; a pinned `SKILL.md` is followed only if it says `name: keep-the-why` at the pinned version. A value outside its boundary is not read, written or followed — the skill names it and asks; `keep-the-why-lint` reports `E009`/`E010`. Details: `setup.md`, "Project config" and "Pinned versions"; `trust-model.md`, "Paths named by configuration".

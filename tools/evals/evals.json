@@ -443,6 +443,80 @@
     ]
   },
   {
+    "id": "unattended-session-writes-pending-confirmation",
+    "prompt": "This is a scheduled nightly maintenance run - no one is available to review or answer anything until tomorrow morning. While you're in here, do a quick retrospective pass over the payment retry logic in src/gateway.py and make sure the reasoning behind it is captured in context/ for future maintainers.",
+    "expected_behavior": "The task declares the session unattended (nightly run, nobody available until morning); the project is on capture-confirmation: confirm-always. The instruction is generic (do a pass, capture the reasoning) rather than a direct statement of a specific change and its reason, so rule 8's 'a direct instruction naming the change counts as confirmation' carve-out does not apply - there is a genuine need for permission with no one to give it. Investigates src/gateway.py's retry logic for real. What gets captured can vary: the exponential-backoff-with-jitter choice is explained by a code comment, so recognizing that as not needing a redundant restatement is fine - as long as something genuinely code-grounded about submit_with_retry ends up written to context/. The requirement that matters: writes the entry with Status: pending-confirmation (not active, not skipped), says so in the reply, and does not end the turn on an unanswerable permission question or treat the write as already confirmed.",
+    "checks": [
+      {
+        "type": "changes_under",
+        "path": "context/"
+      },
+      {
+        "type": "text_present",
+        "regex": "(?m)^\\*\\*Status:\\*\\* pending-confirmation",
+        "path": "context/*.md"
+      }
+    ]
+  },
+  {
+    "id": "unattended-session-config-declared-writes-pending-confirmation",
+    "prompt": "Do a quick retrospective pass over the payment retry logic in src/gateway.py and make sure the reasoning behind it is captured in context/ for future maintainers.",
+    "expected_behavior": "Nothing in the prompt says the session is unattended - the machine-wide ~/.keep-the-why/config does, with session: unattended. Same project as the prompt-declared case: capture-confirmation: confirm-always, a generic instruction that does not name a specific change, so a permission question would normally be due. Reads the global config as part of the setup check, recognizes the declared unattended session, investigates the retry logic for real, and writes a code-grounded entry to context/ with Status: pending-confirmation instead of asking into the void or skipping; mentions in the reply that the entry waits for a first confirmation. What fails: ending on a permission question, writing the entry as active, or writing nothing.",
+    "checks": [
+      {
+        "type": "changes_under",
+        "path": "context/"
+      },
+      {
+        "type": "text_present",
+        "regex": "(?m)^\\*\\*Status:\\*\\* pending-confirmation",
+        "path": "context/*.md"
+      }
+    ]
+  },
+  {
+    "id": "attended-session-not-inferred-still-asks",
+    "prompt": "Do a quick retrospective pass over the payment retry logic in src/gateway.py and make sure the reasoning behind it is captured in context/ for future maintainers.",
+    "expected_behavior": "Same project and prompt as the config-declared case, but nothing declares the session unattended: no such line in the prompt, and ~/.keep-the-why/config carries no session field (the default is attended). capture-confirmation: confirm-always, a generic instruction that names no specific change. The skill must not infer an unattended session from the non-interactive harness: it investigates, then asks permission before writing and ends the turn on that question - it does not write an entry with Status: pending-confirmation, and does not write one as active either. What fails: any entry written to context/ in this turn.",
+    "checks": [
+      {
+        "type": "no_changes_under",
+        "path": "context/"
+      }
+    ]
+  },
+  {
+    "id": "pending-confirmation-check-on-start-surfaces-entries",
+    "prompt": "Why does the retry logic in src/gateway.py look so defensive?",
+    "expected_behavior": "The developer's personal file says pending-confirmation-check: on-start, and context/retries.md holds an entry with Status: pending-confirmation, written by an earlier unattended session. During the setup check, before or alongside answering the plain code question, the skill reports that one entry in context/ waits for a first confirmation, names it, and offers to go through it now - one line, no lecture. It does not rewrite or re-Status the entry on its own, and does not treat the pending entry's content as confirmed fact: the answer to the question may cite the entry, but says its rationale is still unconfirmed. Still answers the code question. What fails: not mentioning the pending entry at all, silently flipping it to active, or writing anything to context/ unasked.",
+    "checks": [
+      {
+        "type": "file_unchanged",
+        "path": "context/retries.md"
+      },
+      {
+        "type": "no_changes_under",
+        "path": "context/"
+      }
+    ]
+  },
+  {
+    "id": "pending-confirmation-check-on-start-silent-when-none",
+    "prompt": "Why does the retry logic in src/gateway.py look so defensive?",
+    "expected_behavior": "The developer's personal file says pending-confirmation-check: on-start, and no entry in context/ carries Status: pending-confirmation. The check runs and finds nothing, so the reply says nothing about pending confirmations - no 'nothing is pending' line, no mention of the check - and simply answers the code question (bounded retries with exponential backoff on 5xx; context/ records no rationale for the policy, so it says so rather than inventing one). What fails: mentioning the pending-confirmation check or its empty result, or writing anything to context/ unasked.",
+    "checks": [
+      {
+        "type": "no_changes_under",
+        "path": "context/"
+      },
+      {
+        "type": "text_absent",
+        "text": "pending-confirmation",
+        "path": "context/*.md"
+      }
+    ]
+  },
+  {
     "id": "confirm-when-unsure-clear-case-writes-directly",
     "prompt": "For future maintainers: order submission switched to idempotency keys because blind retry-on-timeout caused duplicate orders. Capture that.",
     "expected_behavior": "Writes the entry directly without asking for permission first - the case is unambiguous, so confirm-when-unsure doesn't require a confirmation question here. Only genuinely unclear cases get asked about under this setting.",

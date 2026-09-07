@@ -17,6 +17,9 @@ The linter reads your project's `context-schema` from `.keep-the-why` (or the le
 | 0.8.0 | `undefined — <reason>` Type value, exclusive |
 | 0.9.0 | Multiple `Type` lines per entry |
 | 0.10.0 | Dedicated `.keep-the-why` (`id` required), sorted `index.md`, guard files |
+| 0.13.0 | Fifth `Status` value `pending-confirmation` (an error below this schema); `pending-confirmation-check` as a `personal-defaults` field |
+
+A gate can be prepared ahead of the skill release that ships it — `0.13.0` was, as the release checklist publishes the linter before the skill tag. The linter enforces such a gate only once a project's `context-schema` reaches that version, which no real project's does before the release is out; until then a project writing the new value on an older schema gets an error naming the version it needs, rather than the value silently passing before it is part of any shipped schema.
 
 ## Version scheme
 
@@ -107,6 +110,7 @@ None of this is specific to Keep the Why; it is the same set of settings any tea
 | E110 | error | multiple `Type` lines below schema 0.9.0 |
 | E111 | error | `Verification: contradicted` without explanation |
 | E112 | error | more than one `Status`/`Evidence` line |
+| E113 | error | `Status: pending-confirmation` below `context-schema` 0.13.0 |
 | E201–E204 | error | `index.md` missing / broken link / unlisted topic file / not sorted |
 | E301 | error | invisible or directional Unicode character |
 | E302 | error | file is not valid UTF-8 |

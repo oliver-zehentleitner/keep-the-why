@@ -180,6 +180,34 @@ class LintProject(_ProjectFixture):
         self.assertNotIn("E101", codes)  # pre-0.3.0: Status/Evidence not required
         self.assertIn("W104", codes)  # but a Type line on 0.2.0 gets flagged
 
+    def test_pending_confirmation_gated_by_schema(self):
+        entry = GOOD_ENTRY.replace(
+            "**Status:** active", "**Status:** pending-confirmation"
+        )
+        # GOOD_CONFIG's schema (0.10.1) predates the 0.13.0 gate.
+        self.base_project(topic=entry)
+        codes = self.codes(self.run_lint()[0])
+        self.assertNotIn("E103", codes)  # a recognized word, not "not one of: ..."
+        self.assertIn("E113", codes)
+        self.base_project(config=GOOD_CONFIG.replace("0.10.1", "0.13.0"), topic=entry)
+        codes = self.codes(self.run_lint()[0])
+        self.assertNotIn("E103", codes)
+        self.assertNotIn("E113", codes)
+
+    def test_pending_confirmation_check_default_field(self):
+        config = GOOD_CONFIG + (
+            "\n<!-- keep-the-why:personal-defaults -->\n"
+            "- pending-confirmation-check: on-start\n"
+            "<!-- /keep-the-why:personal-defaults -->\n"
+        )
+        self.base_project(config=config)
+        findings, _ = self.run_lint()
+        self.assertEqual(
+            self.codes(findings), [], msg=[f.format_text() for f in findings]
+        )
+        self.base_project(config=config.replace("on-start", "sometimes"))
+        self.assertIn("E003", self.codes(self.run_lint()[0]))
+
     def test_schema_newer_than_linter_warns(self):
         self.base_project(config=GOOD_CONFIG.replace("0.10.1", "9.9.9"))
         findings, linter = self.run_lint()
