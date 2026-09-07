@@ -4,7 +4,7 @@
 No. The name is a deliberate homage to [keepachangelog.com](https://keepachangelog.com/) — same naming pattern, same spirit of "a lightweight open convention, not a platform" — but there's no official relationship and no shared code or governance.
 
 **Does this replace the README, docs, CONTRIBUTING.md, tests, or a changelog?**
-No — see the README's "Where this fits" table (on the [Overview](index.md) page). Keep the Why only covers the "why" layer. Each of the others answers a different question and none of them is optional just because you have the others.
+No — see the README's "Where this fits" table (on the [README](readme.md) page). Keep the Why only covers the "why" layer. Each of the others answers a different question and none of them is optional just because you have the others.
 
 **How is this different from an ADR (Architecture Decision Record)?**
 ADRs are typically human-authored, written at a discrete decision point, one file per decision, and treated as frozen once accepted. Their biggest weakness in practice was never the format — it's that writing one depends entirely on someone remembering to do it, under exactly the deadline pressure that makes people skip it first. Keep the Why is continuous and agent-authored from the conversation itself, so capturing the rationale isn't a separate disciplined act anymore — it's a byproduct of the conversation the agent is already having with you. Organized by topic rather than by decision, and entries are living — updated and marked superseded rather than replaced by a new file. See [Methodology](methodology.md) for the full reasoning.
@@ -19,7 +19,7 @@ No. Everything is plain Markdown files committed to the repository.
 No — by the time code is pushed and CI runs, the reasoning that mattered (what was tried, what was rejected, why a workaround exists) has usually already happened and isn't recoverable from the diff alone. CI can check that a `context/` entry exists or is well-formed, but it can't invent rationale that was never captured. That's why this runs live, in the conversation with the coder or agent actually making the decision — continuous capture as it happens, or a retrospective/interview session that reconstructs from git history and people — not as a pipeline step reacting to already-finished work. See [Philosophy](philosophy.md), "No daemon."
 
 **Does it guarantee nothing gets lost?**
-No — see "What this is not" in the [Overview](index.md) and in `SKILL.md`. Quality depends on what actually gets captured. This reduces the problem, it doesn't eliminate it.
+No — see "What this is not" in the [README](readme.md) and in `SKILL.md`. Quality depends on what actually gets captured. This reduces the problem, it doesn't eliminate it.
 
 **Does the skill always interrupt me to ask before writing anything?**
 Configurable, project-wide, via `capture-confirmation` in `AGENTS.md`: `automatic` (never asks permission, just writes once evidence and proportionality already support it), `confirm-always` (asks before every write), or `confirm-when-unsure` (the default, and what the skill already did before this setting existed — writes directly when things are clear, asks only when genuinely unclear). None of these change whether the skill asks a substantive question about the facts themselves, which stays independent of this setting even in `automatic` mode. See [Setup](setup.md), "The confirmation model."

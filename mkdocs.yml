@@ -52,7 +52,8 @@ extra:
       name: Keep the Why on Mastodon
 
 nav:
-  - Overview: index.md
+  - Home: index.md
+  - README: readme.md
   - Philosophy: philosophy.md
   - Installation: installation.md
   - Repository structure: repository-structure.md

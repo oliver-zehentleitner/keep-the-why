@@ -16,3 +16,113 @@
 .md-nav__title[for="__drawer"] {
   color: #845bed;
 }
+
+/* ---- Landing page (docs/index.md) --------------------------------------
+   Layout only: hero, one rendered entry, three cards, trust strip. Colors
+   come from Material's own variables so light and dark both work. */
+
+.ktw-home {
+  --ktw-accent: #845bed;
+  --ktw-border: var(--md-default-fg-color--lightest);
+}
+.ktw-home h2 {
+  margin-top: 0;
+  font-weight: 700;
+}
+.ktw-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 2.5rem;
+  align-items: center;
+  padding: 1rem 0 2rem;
+}
+.ktw-hero__tagline {
+  font-size: 1.7rem;
+  line-height: 1.25;
+  font-weight: 700;
+  margin: 0 0 1rem;
+  color: var(--md-default-fg-color);
+}
+.ktw-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+  margin: 1.2rem 0 0;
+}
+.ktw-hero__actions .md-button {
+  margin: 0;
+}
+.ktw-hero__demo img {
+  display: block;
+  width: 100%;
+  border-radius: .4rem;
+  border: 1px solid var(--ktw-border);
+}
+.ktw-section {
+  padding: 2rem 0;
+  border-top: 1px solid var(--ktw-border);
+}
+.ktw-entry {
+  background: var(--md-code-bg-color);
+  border: 1px solid var(--ktw-border);
+  border-left: .25rem solid var(--ktw-accent);
+  border-radius: .3rem;
+  padding: 1rem 1.4rem;
+  max-width: 48rem;
+}
+.ktw-entry h3 {
+  margin-top: .2rem;
+}
+.ktw-entry__path {
+  margin: 0;
+  font-size: .7rem;
+  opacity: .7;
+}
+.ktw-caption {
+  font-size: .75rem;
+  opacity: .85;
+  max-width: 48rem;
+}
+.ktw-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+.ktw-card {
+  border: 1px solid var(--ktw-border);
+  border-radius: .3rem;
+  padding: .2rem 1.2rem .8rem;
+}
+.ktw-card h3 {
+  color: var(--ktw-accent);
+  margin-bottom: .4rem;
+}
+.ktw-cards--not .ktw-card {
+  padding-top: .6rem;
+}
+.ktw-trust__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  align-items: center;
+}
+.ktw-trust__badges img {
+  height: 20px;
+}
+.ktw-footer {
+  padding: 1.5rem 0 .5rem;
+  border-top: 1px solid var(--ktw-border);
+  font-size: .8rem;
+}
+@media screen and (max-width: 60em) {
+  .ktw-hero {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .ktw-cards {
+    grid-template-columns: 1fr;
+  }
+  .ktw-hero__tagline {
+    font-size: 1.4rem;
+  }
+}

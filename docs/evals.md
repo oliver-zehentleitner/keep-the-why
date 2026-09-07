@@ -11,8 +11,10 @@ the expected behavior.
 
 ## Latest full-suite results
 
-**73, 74 and 74 of 77 passed** across three consecutive full runs on the
-`v0.12.0` tag — 2026-09-06, Claude Code CLI 2.1.261, agent and judge both
+<!-- The landing page (docs/index.md) includes the sentence between the two
+     ktw-latest markers. Keep them around the headline when updating. -->
+<!-- ktw-latest:start -->**73, 74 and 74 of 77 passed** across three consecutive full runs on the
+`v0.12.0` tag<!-- ktw-latest:end --> — 2026-09-06, Claude Code CLI 2.1.261, agent and judge both
 Claude Sonnet 5 (`claude-sonnet-5`), `--all --parallel 3 --judge-always
 --retry-until-complete`, the `_base` fixture's `SessionStart` hook active,
 `TMPDIR` outside the operator's home, on a host with no other keep-the-why
