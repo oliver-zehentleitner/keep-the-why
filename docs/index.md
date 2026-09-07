@@ -48,7 +48,7 @@ The payment gateway's rate limiter returns 429 with a per-request `Retry-After` 
 
 </div>
 
-A change that was started and then dropped — no commit, no diff, no pull request, and normally no trace. This is what Keep the Why keeps: one entry in a topic file, plain Markdown, reviewed in the same pull request as the code around it. Every entry says how well its claim is backed (`Evidence`) and whether it still holds (`Status`); "unknown" is a valid answer. [The full example →](examples/abandoned-change.md) · [Field reference →](repository-structure.md)
+Decisions that shipped, alternatives that lost, workarounds, constraints — Keep the Why keeps the reasoning behind all of them: one entry per topic, plain Markdown, reviewed in the same pull request as the code. This one is the case where it matters most: a change that was started and then dropped, so there is no commit, no diff, no pull request — and without the entry, no trace. Every entry says how well its claim is backed (`Evidence`) and whether it still holds (`Status`); "unknown" is a valid answer. [The full example →](examples/abandoned-change.md) · [Field reference →](repository-structure.md)
 { .ktw-caption }
 
 </div>
