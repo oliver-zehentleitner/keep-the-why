@@ -65,8 +65,6 @@ Where the why-knowledge lives, whether the project has been set up at all, and h
 
 A personal file can also carry a `source` field, when its values came from a project's `personal-defaults` block rather than a fresh wizard run — see the next section.
 
-`session` (default `attended`; nobody has to write it) declares whether this developer's sessions in this project have someone present to answer. `unattended` is for an environment that runs a scheduled agent, a CI job, or an autonomous loop: a write that would need a permission question then becomes a `Status: pending-confirmation` entry instead of a question nobody answers — see "Unattended sessions" under the confirmation model. It lives in the personal file because an environment is prepared per project anyway; a task can declare the same thing in its own words, and the skill never infers it from a session merely being quiet. Not a `personal-defaults` field — a project is not unattended, sessions are.
-
 ## Personal defaults, and the global ask-vs-accept policy
 
 A project can offer suggested personal settings to new developers instead of making every one of them answer the personal wizard from scratch — genuinely useful for a team that's already agreed on how it wants to work. Entirely optional; most projects won't have one.
@@ -89,8 +87,11 @@ Same fields as a personal file, minus `last:` timestamps — those are inherentl
 ```markdown
 <!-- keep-the-why:global -->
 - personal-defaults-policy: always-ask
+- session: attended
 <!-- /keep-the-why:global -->
 ```
+
+`session` (default `attended`; nobody has to write it) declares whether sessions on this machine have someone present to answer. `unattended` is for an image that runs a scheduled agent, a CI job, or an autonomous loop: a write that would need a permission question then becomes a `Status: pending-confirmation` entry instead of a question nobody answers — see "Unattended sessions" under the confirmation model. It is the config-side way of declaring what a task can also declare in its own words; the skill never infers it from a session merely being quiet.
 
 `personal-defaults-policy` decides what happens when a *new* developer (no personal file yet for this project) lands on a project that *does* offer `personal-defaults`:
 
@@ -120,7 +121,7 @@ The personal file is per developer and per machine, so a fresh container has non
 
 A non-interactive agent (CI, a scheduled job) with neither in place will stop at the wizard's first question, which is the correct outcome — it cannot answer, and the skill will not guess.
 
-An image that runs unattended adds one more line to that baked personal file — `- session: unattended` (a single `echo >> ~/.keep-the-why/<id>.md` at image build time is enough). Without it, a write that needs permission ends in a question nobody answers; with it, the entry is written as `Status: pending-confirmation` for the next attended session to confirm.
+An image that runs unattended also bakes `session: unattended` into `~/.keep-the-why/config` ("Global policy" above). Without it, a write that needs permission ends in a question nobody answers; with it, the entry is written as `Status: pending-confirmation` for the next attended session to confirm.
 
 ## Pinned versions
 
@@ -258,7 +259,7 @@ Four independent settings, two different files (see rule 8 in `SKILL.md` for the
 
 They're orthogonal. Proactive search plus always-ask is a valid, if chattier, combination; explicit-only plus automatic writing is equally valid — searching only on request, then not interrupting once asked. `source-reference` is independent of all three — it decides whether one extra question gets asked, not whether writing needs permission or how multiple pending items are presented.
 
-**Unattended sessions** — a scheduled cloud agent, an autonomous loop, a CI job, an eval harness, any invocation with nobody present to answer — don't get to skip the permission question `confirm-always` or `confirm-when-unsure` would otherwise ask; they satisfy it differently. Write the entry rather than inventing confidence or dropping it, and record `Status: pending-confirmation` (rule 5, `references/repository-structure.md`) in place of whatever Status it would otherwise carry, so a later session with a human present can find it and give it a first real confirmation. This applies only to a session *declared* unattended — by the task ("nightly run, nobody available until morning") or by `session: unattended` in the personal file (`~/.keep-the-why/<id>.md`, one appended line when an environment is prepared) — never to one the agent merely suspects is unattended: a session nobody declared asks, and the turn ends on the question, exactly as before. The asymmetry is deliberate: mistaking an attended session for unattended writes without the permission the setting promises; mistaking an unattended one for attended loses an entry, which is no worse than today. `automatic` is unaffected — it already writes without asking.
+**Unattended sessions** — a scheduled cloud agent, an autonomous loop, a CI job, an eval harness, any invocation with nobody present to answer — don't get to skip the permission question `confirm-always` or `confirm-when-unsure` would otherwise ask; they satisfy it differently. Write the entry rather than inventing confidence or dropping it, and record `Status: pending-confirmation` (rule 5, `references/repository-structure.md`) in place of whatever Status it would otherwise carry, so a later session with a human present can find it and give it a first real confirmation. This applies only to a session *declared* unattended — by the task ("nightly run, nobody available until morning") or by `session: unattended` in `~/.keep-the-why/config` — never to one the agent merely suspects is unattended: a session nobody declared asks, and the turn ends on the question, exactly as before. The asymmetry is deliberate: mistaking an attended session for unattended writes without the permission the setting promises; mistaking an unattended one for attended loses an entry, which is no worse than today. `automatic` is unaffected — it already writes without asking.
 
 ### `capture-confirmation` values
 
