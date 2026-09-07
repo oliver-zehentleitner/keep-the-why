@@ -1,6 +1,6 @@
 # Security
 
-Two separate questions, both answered here — with the actual detail living in its own place rather than duplicated.
+Four questions, answered here with the detail living in its own place rather than duplicated: whether an agent can be let loose on `context/`, what the skill adds to a project's attack surface, what the linter does with hostile input, and how this repository itself is protected — plus what the automated scanners say and why.
 
 ## Is it safe to let an agent read and write `context/`?
 
@@ -16,7 +16,32 @@ See [Trust model](trust-model.md) for the full reasoning, the read/write rules, 
 - No secrets, credentials, or personal data belong in `context/` (Core rule 7) — retrospective recovery and interviews synthesize rationale, they don't transcribe raw material verbatim.
 - Actions with real side effects still go through whatever the agent running the skill already requires — permission prompts, sandboxing, trust verification. Keep the Why doesn't add a separate permission layer, and doesn't assume those mechanisms are bulletproof either.
 - The three paths `.keep-the-why` can name are each confined to one directory: `context` and `pinned-path` to the project, the `id`-derived personal file to `~/.keep-the-why/`. A pinned `SKILL.md` is additionally checked for `name: keep-the-why` and the pinned version before it is followed — a pin is the one place repository content is meant to act as instructions, so it is scoped to a vendored copy of this skill and nothing else. Both the skill (Core rule 11, [trust model](trust-model.md), "Paths named by configuration") and the linter (`E009`, `E010`) enforce this.
+- A session with nobody present to answer cannot grant itself the permission `capture-confirmation` withholds. Only a session *declared* unattended — by the task or by `session: unattended` in the machine-wide config — writes at all at such a point, and then with `Status: pending-confirmation`, visible to the next person; an agent that merely finds itself in a quiet session asks, as always ([Specification](specification.md), §9; [Setup](setup.md), "Unattended sessions").
 - `context/` is committed alongside the code, reviewed the same way — a change to it is as visible in a diff or a pull request as any other change.
+
+## The linter runs on pull requests from strangers
+
+`keep-the-why-lint` is a CI tool that reads a configuration file and a directory of Markdown from whatever commit triggered it — in a public repository, that means from anyone. It is written for that, and every one of the following is a regression test, not a promise:
+
+- **It never reads outside the checkout.** `context` and `pinned-path` are resolved with symlinks followed and must land inside the project root; an absolute path, a `..` escape, a symlink leaving the tree — including the config file itself being one — is `E009` and not read. A symlinked file inside the context directory that resolves outside it is skipped with the same code.
+- **The `id` is a file name.** Letters, digits, `.`, `_`, `-`, nothing that could make `~/.keep-the-why/<id>.md` land elsewhere (`E010`).
+- **Malformed input is a finding, not a traceback.** A config block without its end marker (`E011`), a second start marker (`E012`), a control character or an embedded NUL in a path field (`E009`), a file that is not valid UTF-8 (`E302`) — each is reported with a line number and the run continues; nothing reaches the path layer or the decoder unguarded.
+- **What it prints is escaped.** Values from the file are quoted in findings; control characters are rendered as `\xNN`, so a value cannot paint a terminal or a GitHub annotation, and a finding message cannot become a workflow command.
+- **Hidden content is an error.** Invisible and directional Unicode (`E301`) is the one mechanically checkable slice of the trust model; base64-looking blobs are a warning (`W301`). This is not a secret scanner — pair it with one.
+- **No network, no dependencies.** Standard library only; the action installs it from PyPI and runs it, nothing else.
+
+The finding codes and what each checks: [Linting](linting.md). What the skill itself guarantees on the same inputs — the pin identity check, declared-not-inferred sessions, the trust model — is in the sections above; the linter is the part of it that a CI job can settle.
+
+## How this repository is protected
+
+The skill, the linter and this site are built and published from one repository. What stands between a commit and a release:
+
+- **Every workflow action is pinned to a commit SHA**, with Dependabot proposing the bumps weekly; workflows that write nothing run with a read-only token; the linter reaches PyPI through trusted publishing, no long-lived token anywhere.
+- **A skill release is refused unless the tag agrees with the commit.** `release.yml` compares the tag against `SKILL.md`, both plugin manifests, `llms.txt`, this repository's own `context-schema`, the linter's `SUPPORTED_SCHEMA` and the newest CHANGELOG section, and requires the matching linter to be on PyPI already — the release checklist's linter-first order as a gate, not a convention. The tag reaches the scripts as an environment variable, never interpolated into a shell.
+- **`main` takes squash-merged pull requests only**, with Validate Skill, the linter package tests, the dogfood lint of this repository's own `context/` in strict mode, and Black as required checks; force-pushes and deletion are blocked; `CODEOWNERS` routes review for `context/`, the config, the workflows, the linter, the skill and the eval fixtures.
+- **Reviewed from outside, more than once.** External reviews of 0.11.0 and 0.12.0 each found real things — the path confinement, the SHA pins, the `id` grammar, the release gate — and each is listed in the CHANGELOG with what changed. A full audit of the repository followed the 0.12.0 review (2026-09-07); its findings are in `main` or, where deliberately left, recorded as decisions in `context/`.
+
+What is deliberately *not* hardened, so nobody has to re-find it: `latest` and `lint-latest` are moving tags and the default way to consume the skill and the action, which means a compromised maintainer account reaches every consumer on the next session — the mitigation is account hygiene, not a code change. The eval runner executes agents with their permission bypass on the operator's machine, against fixtures that contain injection payloads on purpose; the evals README says where to run it. Build inputs (`setuptools`, `build`, the docs requirements) float; a lock file is the next step if the claim above ever needs to become "reproducible".
 
 ## What automated scanners report, and why
 

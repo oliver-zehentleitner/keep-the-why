@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Changed
+
+- `docs/security.md` says what is true now: two new sections — the linter as a CI tool on untrusted input (never reads outside the checkout, `id` is a file name, malformed input is a finding not a traceback, escaped findings, no network, no dependencies) and how this repository is protected (SHA-pinned actions with Dependabot, read-only tokens, trusted publishing, the release gate, required checks on `main`, CODEOWNERS, the external reviews and the audit) — and, in the same place, what is deliberately not hardened: the moving `latest` tags, the eval runner's permission bypass, floating build inputs. The attack-surface list gains the declared-unattended rule. The page had stopped at the 0.11.0 state.
+
 ## [0.13.1] - 2026-09-07
 
 ### Added
