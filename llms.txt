@@ -4,10 +4,11 @@
 > architecture decisions, rejected alternatives, workarounds, incident learnings, operational
 > constraints that the code alone can't explain — as project memory, kept in the repo. It
 > captures that reasoning as a byproduct of working with your agent, and every later session
-> has it — so your agent understands not just the code but everything around it: why it is the
-> way it is, what was tried and rejected, which constraints the source doesn't show. So does
-> the next person. Onboarding gets faster, legacy projects become tractable again. It works
-> continuously as you develop, or retrospectively on an existing repo.
+> has it — so your agent, and every other agent that works in the repository, understands not
+> just the code but everything around it: why it is the way it is, what was tried and
+> rejected, which constraints the source doesn't show. So does the next person. Onboarding
+> gets faster, legacy projects become tractable again. It works continuously as you develop,
+> or retrospectively on an existing repo.
 
 The payoff, made concrete: a new hire, or an agent that's never touched the codebase before,
 doesn't have to track down whoever wrote the original code — and doesn't just repeat what was
