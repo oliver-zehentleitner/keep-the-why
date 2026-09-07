@@ -62,6 +62,15 @@ CAPTURE_MODE_VALUES = ("proactive", "explicit-only")
 CONFIRMATION_FLOW_VALUES = ("sequential", "batch")
 _INTERVAL_RE = re.compile(r"^(every\s+\d+\s+days?|no)$")
 
+# `id` names a file: ~/.keep-the-why/<id>.md. Letters, digits, '.', '_', '-'
+# is everything the two documented forms (<owner>---<repo>, <uuid>---<folder>)
+# produce, and nothing in it can leave that directory — no separator of any
+# platform, no '..' segment, no control character. Generous on purpose about
+# the shape *within* that alphabet (no mandatory '---'): a hand-chosen id is
+# fine, an id that reaches outside its directory is not.
+_ID_RE = re.compile(r"^[A-Za-z0-9._-]+$")
+_CONTROL_RE = re.compile(r"[\x00-\x1f\x7f]")
+
 NON_TOPIC_FILES = ("README.md", "AGENTS.md", "CLAUDE.md", "index.md")
 
 # Values may carry an em/en dash or hyphen separated remainder ("undefined — reason").
@@ -135,9 +144,15 @@ class Linter:
         from strangers. Symlinks are followed for the comparison, so a link
         inside the tree that leaves it counts as outside.
         """
-        if os.path.isabs(relpath):
+        if _CONTROL_RE.search(relpath) or os.path.isabs(relpath):
             return False
-        resolved = os.path.realpath(os.path.join(self.root, relpath))
+        try:
+            resolved = os.path.realpath(os.path.join(self.root, relpath))
+        except (ValueError, OSError):
+            # An embedded NUL raises ValueError from the path layer; a
+            # path the OS refuses to stat is no better. Neither is a
+            # location inside the tree, and neither gets a traceback.
+            return False
         return resolved == self.root or resolved.startswith(self.root + os.sep)
 
     def _read(self, relpath):
@@ -157,6 +172,7 @@ class Linter:
         if block is None:
             self.add(ERROR, "E001", path, 0, "no keep-the-why:config block found")
             return
+        self._check_block_delimiters(block, "config")
 
         for key, occurrences in block.fields.items():
             if len(occurrences) > 1:
@@ -284,13 +300,18 @@ class Linter:
                     block.start_line,
                     "required config field 'id' is missing (dedicated .keep-the-why files carry one since 0.10.0)",
                 )
-            elif not id_field[1] or " " in id_field[1]:
+            elif not id_field[1]:
+                self.add(ERROR, "E003", path, id_field[0], "id is empty")
+            elif not _ID_RE.match(id_field[1]) or not id_field[1].strip("."):
                 self.add(
                     ERROR,
-                    "E003",
+                    "E010",
                     path,
                     id_field[0],
-                    f"id '{id_field[1]}' must be a non-empty token without spaces",
+                    f"id {id_field[1]!r} is not a safe file name — it names the personal "
+                    "file ~/.keep-the-why/<id>.md, so only letters, digits, '.', '_' and "
+                    "'-' are allowed: no path separators, no '..', no spaces or control "
+                    "characters",
                 )
 
         pinned_version = block.first("pinned-version")
@@ -320,8 +341,9 @@ class Linter:
                     "E009",
                     path,
                     pinned_path[0],
-                    f"pinned-path '{pinned_path[1]}' points outside the repository — "
-                    "absolute paths, '..' and symlinks leaving the tree are not followed",
+                    f"pinned-path {pinned_path[1]!r} points outside the repository — "
+                    "absolute paths, '..', control characters and symlinks leaving the "
+                    "tree are not followed",
                 )
             elif not self._exists(pinned_path[1]):
                 self.add(
@@ -341,9 +363,9 @@ class Linter:
                     "E009",
                     path,
                     ctx_field[0],
-                    f"configured context location '{self.context_dir}' points outside "
-                    "the repository — absolute paths, '..' and symlinks leaving the tree "
-                    "are not followed",
+                    f"configured context location {self.context_dir!r} points outside "
+                    "the repository — absolute paths, '..', control characters and "
+                    "symlinks leaving the tree are not followed",
                 )
                 self.context_rejected = True
             elif not self._exists(self.context_dir):
@@ -357,11 +379,34 @@ class Linter:
 
         self._check_personal_defaults(parsed)
 
+    def _check_block_delimiters(self, block, name: str):
+        """E011/E012: the block's own markers, before any field is judged."""
+        if not block.closed:
+            self.add(
+                ERROR,
+                "E011",
+                block.path,
+                block.start_line,
+                f"keep-the-why:{name} block opened here is never closed — "
+                f"'<!-- /keep-the-why:{name} -->' is missing, so where the block ends "
+                "is a guess (everything up to the end of the file was read as part of it)",
+            )
+        for line in block.extra_starts:
+            self.add(
+                ERROR,
+                "E012",
+                block.path,
+                line,
+                f"second '<!-- keep-the-why:{name} -->' marker — one block per file; "
+                f"only the first one (line {block.start_line}) is read",
+            )
+
     def _check_personal_defaults(self, parsed: ParsedConfig):
         block = parsed.personal_defaults
         if block is None:
             return
         path = parsed.path
+        self._check_block_delimiters(block, "personal-defaults")
         for key, occurrences in block.fields.items():
             if len(occurrences) > 1:
                 self.add(

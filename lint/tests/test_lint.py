@@ -483,3 +483,145 @@ class PathConfinement(_ProjectFixture):
         self.assertEqual(
             self.codes(findings), [], msg=[f.format_text() for f in findings]
         )
+
+
+class ConfigFileIntegrity(_ProjectFixture):
+    """The config file is data from whoever opened the pull request: an id
+    that names a file outside ~/.keep-the-why/, a block that never closes
+    or opens twice, a control character in a path — each is a finding,
+    never a traceback and never a guess."""
+
+    def config_with_id(self, value):
+        return GOOD_CONFIG.replace("- id: acme---widget-service", f"- id: {value}")
+
+    # -- E010: id is a file name --------------------------------------------
+
+    def test_documented_id_forms_pass(self):
+        for value in (
+            "acme---widget-service",
+            "oliver-zehentleitner---keep-the-why",
+            "123e4567-e89b-12d3-a456-426614174000---My.Project_v2",
+            "hand-chosen",  # no '---' required; the alphabet is the rule
+        ):
+            with self.subTest(id=value):
+                self.base_project(config=self.config_with_id(value))
+                findings, _ = self.run_lint()
+                self.assertNotIn("E010", self.codes(findings))
+                self.assertNotIn("E003", self.codes(findings))
+
+    def test_id_that_leaves_its_directory_is_rejected(self):
+        for value in (
+            "../AGENTS",
+            "../.claude/CLAUDE",
+            "..\\..\\foo",
+            "/foo",
+            "C:\\foo",
+            "foo/bar",
+            "..",
+            ".",
+            "foo\x00bar",
+            "foo\x01bar",
+            "my cool project",  # the pre-0.12.1 rule, now the same code
+        ):
+            with self.subTest(id=value):
+                self.base_project(config=self.config_with_id(value))
+                findings, _ = self.run_lint()
+                codes = self.codes(findings)
+                self.assertIn("E010", codes, msg=[f.format_text() for f in findings])
+                self.assertNotIn("E003", codes)
+
+    def test_empty_id_is_an_invalid_value_not_an_unsafe_one(self):
+        self.base_project(config=self.config_with_id(""))
+        findings, _ = self.run_lint()
+        self.assertIn("E003", self.codes(findings))
+        self.assertNotIn("E010", self.codes(findings))
+
+    def test_id_is_not_checked_below_schema_0_10_0(self):
+        config = self.config_with_id("../AGENTS").replace("0.10.1", "0.9.0")
+        self.base_project(config=config)
+        findings, _ = self.run_lint()
+        self.assertNotIn("E010", self.codes(findings))
+
+    # -- E011/E012: block delimiters ------------------------------------------
+
+    def test_unterminated_config_block(self):
+        config = GOOD_CONFIG.replace("<!-- /keep-the-why:config -->\n", "")
+        self.base_project(config=config)
+        findings, _ = self.run_lint()
+        e011 = [f for f in findings if f.code == "E011"]
+        self.assertEqual(len(e011), 1)
+        self.assertEqual(e011[0].line, 3)  # points at the start marker
+        # the fields before EOF were still read: nothing else is missing
+        self.assertNotIn("E002", self.codes(findings))
+
+    def test_unterminated_personal_defaults_block(self):
+        config = GOOD_CONFIG + (
+            "\n<!-- keep-the-why:personal-defaults -->\n"
+            "- capture-mode: proactive\n"
+        )
+        self.base_project(config=config)
+        findings, _ = self.run_lint()
+        self.assertIn("E011", self.codes(findings))
+
+    def test_second_start_marker_is_reported_and_the_first_block_is_read(self):
+        config = (
+            "<!-- keep-the-why:config -->\n"
+            "- id: first---one\n"
+            "- context: `context/`\n"
+            "- init: complete\n"
+            "- context-schema: 0.10.1\n"
+            "- capture-confirmation: confirm-when-unsure\n"
+            "- source-reference: never\n"
+            "<!-- /keep-the-why:config -->\n"
+            "\n"
+            "<!-- keep-the-why:config -->\n"
+            "- id: second---one\n"
+            "- context: `elsewhere/`\n"
+            "<!-- /keep-the-why:config -->\n"
+        )
+        self.base_project(config=config)
+        findings, linter = self.run_lint()
+        e012 = [f for f in findings if f.code == "E012"]
+        self.assertEqual([f.line for f in e012], [10])
+        self.assertEqual(linter.context_dir, "context")  # first block wins
+        self.assertNotIn("E007", self.codes(findings))  # `elsewhere/` never looked up
+
+    def test_start_marker_repeated_inside_the_block(self):
+        config = GOOD_CONFIG.replace(
+            "- init: complete\n",
+            "<!-- keep-the-why:config -->\n- init: complete\n",
+        )
+        self.base_project(config=config)
+        findings, _ = self.run_lint()
+        codes = self.codes(findings)
+        self.assertIn("E012", codes)
+        self.assertNotIn("E011", codes)  # the one end marker still closes it
+        self.assertNotIn("E002", codes)  # fields after the repeat still count
+
+    # -- control characters in path fields ------------------------------------
+
+    def test_nul_in_context_is_a_finding_not_a_traceback(self):
+        self.base_project(
+            config=GOOD_CONFIG.replace("- context: `context/`", "- context: `foo\x00bar`")
+        )
+        findings, linter = self.run_lint()
+        self.assertIn("E009", self.codes(findings))
+        self.assertTrue(linter.context_rejected)
+
+    def test_control_character_in_pinned_path_is_rejected(self):
+        config = GOOD_CONFIG.replace(
+            "- source-reference: never\n",
+            "- source-reference: never\n"
+            "- pinned-version: 0.10.1\n"
+            "- pinned-path: .claude/skills\x1b[0m/SKILL.md\n",
+        )
+        self.base_project(config=config)
+        findings, _ = self.run_lint()
+        self.assertIn("E009", self.codes(findings))
+        self.assertNotIn("E006", self.codes(findings))
+
+    def test_cli_survives_a_nul_in_the_config(self):
+        self.base_project(
+            config=GOOD_CONFIG.replace("- context: `context/`", "- context: `foo\x00bar`")
+        )
+        self.assertEqual(self.cli([self.root]), 1)

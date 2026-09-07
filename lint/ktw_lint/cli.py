@@ -70,9 +70,12 @@ def main(argv=None) -> int:
     errors = sum(1 for f in findings if f.severity == ERROR)
     warnings = sum(1 for f in findings if f.severity == WARNING)
     schema = ".".join(str(part) for part in linter.schema)
+    # A rejected location (E009) is not echoed raw: it came from the config
+    # file and may carry anything, control characters included.
+    context = "rejected" if linter.context_rejected else f"{linter.context_dir}/"
     print(
         f"ktw-lint {__version__}: {errors} error(s), {warnings} warning(s) "
-        f"(context-schema {schema}, context: {linter.context_dir}/)"
+        f"(context-schema {schema}, context: {context})"
     )
 
     if errors or (args.strict and warnings):

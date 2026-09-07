@@ -71,7 +71,7 @@ None of this is specific to Keep the Why; it is the same set of settings any tea
 
 ## What it checks
 
-**`.keep-the-why` / legacy config block** — block present and parseable; required fields (`context`, `init`, `context-schema`, `capture-confirmation`, `source-reference`, plus `id` for dedicated files since 0.10.0); values from the documented sets; `filtered` source-reference carries its criteria; no field recorded twice (conflicting duplicates are exactly the state the skill refuses to guess about); no unknown fields; `context-schema` is plain semver; `pinned-version`/`pinned-path` only as a pair, with the path existing; the configured context location exists; `personal-defaults` blocks carry no `last:` timestamps. Both configured paths are confined to the repository: an absolute path, a `..` escape, or a symlink that leaves the tree is an error and is not read — a CI job runs this on pull requests from strangers, and the config file is data, not a place to point the linter at the runner's filesystem.
+**`.keep-the-why` / legacy config block** — block present, closed by its end marker, and the only one of its kind in the file (a second start marker is an error; only the first block is read); required fields (`context`, `init`, `context-schema`, `capture-confirmation`, `source-reference`, plus `id` for dedicated files since 0.10.0); values from the documented sets; `filtered` source-reference carries its criteria; no field recorded twice (conflicting duplicates are exactly the state the skill refuses to guess about); no unknown fields; `context-schema` is plain semver; `id` is a safe file name — letters, digits, `.`, `_`, `-`, nothing that could make `~/.keep-the-why/<id>.md` resolve outside that directory; `pinned-version`/`pinned-path` only as a pair, with the path existing; the configured context location exists; `personal-defaults` blocks carry no `last:` timestamps. Both configured paths are confined to the repository: an absolute path, a `..` escape, a control character, or a symlink that leaves the tree is an error and is not read — a CI job runs this on pull requests from strangers, and the config file is data, not a place to point the linter at the runner's filesystem.
 
 **Entries** (level-2 headings in topic files; fenced code blocks are skipped, so example entries in documentation never get linted as real ones) — `Status` and `Evidence` present, single, and valid; `Type` values valid, `undefined` carries a reason and combines with nothing; no duplicate `Type` values; `Verification` starts with a valid value, and `contradicted` must say what contradicts it; a heading with no schema fields at all is a warning, not an error — it may be a legitimate prose section.
 
@@ -93,7 +93,10 @@ None of this is specific to Keep the Why; it is the same set of settings any tea
 | E006 | error | `pinned-version`/`pinned-path` pair violation, or pinned path missing |
 | E007 | error | configured context location doesn't exist |
 | E008 | error | `last:` timestamp inside `personal-defaults` |
-| E009 | error | configured `context` / `pinned-path`, or a symlink inside the context directory, points outside the repository |
+| E009 | error | configured `context` / `pinned-path`, or a symlink inside the context directory, points outside the repository (or contains a control character) |
+| E010 | error | `id` is not a safe file name (path separator, `..`, space, control character) |
+| E011 | error | config or `personal-defaults` block never closed |
+| E012 | error | second start marker for the same block |
 | E101/E102 | error | entry missing `Status` / `Evidence` |
 | E103/E104 | error | invalid `Status` / `Evidence` value |
 | E105 | error | invalid `Type` value |

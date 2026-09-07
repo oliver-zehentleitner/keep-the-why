@@ -68,3 +68,17 @@ An `##` heading in a topic file with no recognized field lines gets `W102`, not 
 
 **Rejected alternative:** silently falling back to `context/` when the configured location escapes. That would lint the wrong directory and report green on a project whose config is broken or hostile; an error that names the field is what the skill's own "fail loud" rule asks for. Also rejected: not following symlinks at all (`os.path.abspath` instead of `realpath`) — a link inside the tree that points outside is exactly the escape that check exists for.
 
+
+## `id` is validated as a file-name alphabet, not as a `<left>---<right>` shape
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** external review of 0.12.0, 2026-09-07 (finding: `id: ../.claude/CLAUDE` passed the old non-empty/no-spaces rule); maintainer call on the grammar the same day
+**Revisit when:** the personal file is ever keyed by something other than `<id>.md` under one fixed directory, or a second documented id form appears
+
+`E010` accepts an `id` of letters, digits, `.`, `_` and `-` only, and rejects a value that is all dots. Nothing about the shape inside that alphabet is enforced — the two documented forms (`<owner>---<repo>`, `<uuid>---<folder>`) both fit, and so does a hand-chosen `my-service`.
+
+**Reason:** the property that matters is that `~/.keep-the-why/<id>.md` names a file *in* that directory. The alphabet guarantees it on every platform (no separator, no `..` segment, no control character) and is exactly what the two generation rules in `references/setup.md` produce once the folder name is slugified like the repo name. The old rule was written for readability (no spaces), not for the boundary, which is how a traversal passed it.
+
+**Rejected alternative:** require the `---` shape as well (`^[…]+---[…]+$`), as the review proposed. Rejected because it adds no confinement — the alphabet already does all of it — while it would fail an id someone chose or edited by hand, and the skill treats an unrecognized config value as "name the options and ask", not as a hard error; the linter shouldn't be stricter than the skill on a point that has no safety weight.

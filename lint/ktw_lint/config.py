@@ -37,6 +37,8 @@ class ConfigBlock:
     path: str
     start_line: int = 0
     fields: dict = field(default_factory=dict)  # key -> list[(line, value)]
+    closed: bool = False  # the end marker was seen
+    extra_starts: list = field(default_factory=list)  # lines of further start markers
 
     def add(self, key: str, line: int, value: str) -> None:
         self.fields.setdefault(key, []).append((line, value))
@@ -56,21 +58,33 @@ class ParsedConfig:
 
 
 def _extract_block(lines, start_marker, end_marker, path):
+    """The first block between the markers; what the skill reads.
+
+    A start marker without an end marker leaves `closed` False; a second
+    start marker — inside the block or after it — is recorded in
+    `extra_starts` and otherwise ignored, so the first block stays the
+    one that is read. Both are reported by the checks (E011, E012)
+    rather than guessed around here: a truncated or doubled block is
+    exactly the state where "what did the author mean" is not the
+    parser's call.
+    """
     block = None
     for lineno, raw in enumerate(lines, start=1):
         stripped = raw.strip()
         if stripped == start_marker:
-            block = ConfigBlock(path=path, start_line=lineno)
+            if block is None:
+                block = ConfigBlock(path=path, start_line=lineno)
+            else:
+                block.extra_starts.append(lineno)
             continue
-        if block is None:
+        if block is None or block.closed:
             continue
         if stripped == end_marker:
-            return block
+            block.closed = True
+            continue
         match = _FIELD_RE.match(raw)
         if match:
             block.add(match.group(1), lineno, match.group(2))
-    # Start marker without end marker: return what was collected, flagged by
-    # start_line being set but the caller seeing no end (checks handle this).
     return block
 
 
