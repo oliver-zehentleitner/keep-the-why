@@ -4,6 +4,12 @@ What changed in each version that an existing project may need to know about or 
 
 Entries below assume 0.2.0 as the starting point — nothing before it tracked a `context-schema` at all, and 0.2.0 itself introduced no `context/` entry format change.
 
+## 0.12.1 — `id` is a file name; configured paths stay inside the project (one mechanical check)
+
+**What changed:** the three filesystem locations `.keep-the-why` can name are each confined to one directory, and the skill now says so instead of leaving it to the linter. `id` is letters, digits, `.`, `_`, `-` only — it names `~/.keep-the-why/<id>.md`, and anything else could make that file land elsewhere. The uuid form's `<folder-name>` is slugified like the repo name (`My Cool Project` → `My-Cool-Project`). `context` and `pinned-path` are relative and resolve inside the project; a pinned `SKILL.md` is followed only if it says `name: keep-the-why` at the pinned version. A value outside its boundary is not read, written or followed — the skill names it and asks; `keep-the-why-lint` reports `E009`/`E010`. Details: `setup.md`, "Project config" and "Pinned versions"; `trust-model.md`, "Paths named by configuration".
+
+**Existing projects:** check the `id` line once. Every id the skill generated from a git remote already fits; one generated from a folder name containing a space or another character outside the alphabet does not (`123e4567-…---My Cool Project`) — rewrite it in `.keep-the-why` and rename the matching `~/.keep-the-why/<id>.md` on every machine that has one, same content. Mechanical, do it now rather than next time touched — the linter fails on it. Nothing to do for `context` or `pinned-path` unless they leave the project, which a working setup never had.
+
 ## 0.12.0 — start paths, ephemeral environments, action refs (informational, no action required)
 
 **What changed:** three additions an existing project can adopt, none of which changes `.keep-the-why`, the personal file, or the `context/` entry format.

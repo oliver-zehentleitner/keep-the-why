@@ -13,8 +13,9 @@ See [Trust model](trust-model.md) for the full reasoning, the read/write rules, 
 ## What Keep the Why does and doesn't add to your attack surface
 
 - No external service, no telemetry, no daemon, no database — see [Philosophy](philosophy.md). There's nothing running that Keep the Why itself could leak through. This covers Keep the Why only: third-party installers referenced in [Installation](installation.md) (e.g. `npx skills`) have their own, separate policies.
-- No secrets, credentials, or personal data belong in `context/` (Core rule 9) — retrospective recovery and interviews synthesize rationale, they don't transcribe raw material verbatim.
+- No secrets, credentials, or personal data belong in `context/` (Core rule 7) — retrospective recovery and interviews synthesize rationale, they don't transcribe raw material verbatim.
 - Actions with real side effects still go through whatever the agent running the skill already requires — permission prompts, sandboxing, trust verification. Keep the Why doesn't add a separate permission layer, and doesn't assume those mechanisms are bulletproof either.
+- The three paths `.keep-the-why` can name are each confined to one directory: `context` and `pinned-path` to the project, the `id`-derived personal file to `~/.keep-the-why/`. A pinned `SKILL.md` is additionally checked for `name: keep-the-why` and the pinned version before it is followed — a pin is the one place repository content is meant to act as instructions, so it is scoped to a vendored copy of this skill and nothing else. Both the skill (Core rule 11, [trust model](trust-model.md), "Paths named by configuration") and the linter (`E009`, `E010`) enforce this.
 - `context/` is committed alongside the code, reviewed the same way — a change to it is as visible in a diff or a pull request as any other change.
 
 ## What automated scanners report, and why
