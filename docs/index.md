@@ -100,8 +100,6 @@ Everything lives in `context/`, one file per topic, versioned with the code. A l
 
 {% include-markdown "../README.md" start="<!-- ktw-tested-with:start -->" end="<!-- ktw-tested-with:end -->" %}
 
-**Latest release measurement:** {% include-markdown "evals.md" start="<!-- ktw-latest:start -->" end="<!-- ktw-latest:end -->" %}. The four numbers behind that count — skill loaded, task completed, deterministic checks, judge verdict — plus every case's verdicts and the caveats, stated plainly: [Evals →](evals.md)
-
 <p class="ktw-trust__badges">
 <a href="https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/validate-skill.yml"><img src="https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/validate-skill.yml/badge.svg" alt="Validate Skill"></a>
 <a href="https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/ktw-lint.yml"><img src="https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/ktw-lint.yml/badge.svg" alt="ktw-lint"></a>
