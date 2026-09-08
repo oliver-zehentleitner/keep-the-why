@@ -95,6 +95,16 @@ Everything lives in `context/`, one file per topic, versioned with the code. A l
 
 </div>
 
+<div class="ktw-card" markdown>
+
+### Use
+
+The next session — yours, a colleague's, an agent's — loads the index first and reads the why before touching the code. An agent that finds the reason explains it and builds on it instead of repeating the attempt; one that finds nothing says so and asks, instead of guessing. That is what the capture was for.
+
+[Autostart →](autostart.md) · [Agent matrix →](agent-matrix.md) · [Trust model →](trust-model.md)
+
+</div>
+
 </div>
 
 </div>

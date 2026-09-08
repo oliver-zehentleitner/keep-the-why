@@ -85,8 +85,11 @@
 }
 .ktw-cards {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
+}
+.ktw-cards--not {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 .ktw-card {
   border: 1px solid var(--ktw-border);
