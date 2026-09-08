@@ -7,6 +7,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 ### Changed
 
 - `docs/evals.md` carries the 0.13.3 release measurement: three consecutive full runs on the tag (82, 79 and 81 of 85), the four numbers per run, a note on every failed run, a new run-history row, and rewritten caveats — the two cases 0.13.3 was cut for went 3/3, one genuine activation miss in 255 sessions, and the six judge-versus-check disagreements split two ways (the check catches a described-but-undone write, the judge catches a correct tree with the wrong words around it).
+- `plugin.json` and `.claude-plugin/plugin.json`: one shared description, matching the repository's About text — project memory, kept in the repo as Markdown, versioned and shared by Git; the two files had drifted apart and neither named the Git layer.
 - `README.md` intro (and with it the landing page hero and `llms.txt`): names the Git layer in the first sentence — `context/` is plain Markdown committed with the code, so Git already provides the storage, the history and the distribution, and a pull request shows the reasoning diff beside the code diff.
 
 ## [0.13.3] - 2026-09-07
