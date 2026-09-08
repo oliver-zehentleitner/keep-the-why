@@ -141,9 +141,13 @@ This names the skill and its purpose directly — not a task that happens to mat
     >
     > **User:** defaults.
     >
-    > **Agent:** Run `keep-the-why-lint` locally on what you write, before it's committed? `auto` installs and updates it from PyPI without asking, `ask` asks first, `no` leaves it to CI. [no]
+    > **Agent:** Run `keep-the-why-lint` locally on what you write, before it's committed? `auto` installs and updates it from PyPI without asking, `ask` asks first, `no` leaves it to CI. [ask]
     >
-    > **User:** ask.
+    > **User:** defaults.
+    >
+    > **Agent:** There's no `ktw-lint` on this machine yet. Install `keep-the-why-lint` from PyPI now (`pipx`, or `pip --user`)? [yes]
+    >
+    > **User:** yes.
 
 8. `~/.keep-the-why/<id>.md` doesn't exist yet on this machine — creates `~/.keep-the-why/` if needed, then writes the personal config file, no `.gitignore` entry needed since it lives outside the project entirely:
 
@@ -157,7 +161,7 @@ This names the skill and its purpose directly — not a task that happens to mat
     <!-- /keep-the-why:personal -->
     ```
 
-    `local-lint: ask` is the go-ahead to install the linter now: no `ktw-lint` on this machine yet, so the agent installs it (`pipx`, else `pip --user`) in this same turn — that was the question — and runs `ktw-lint . --setup` once over the two files it just wrote.
+    Under `ask` the install was its own question — the yes above — so the agent installs the linter in this same turn and runs `ktw-lint . --setup` once over the two files it just wrote. Under `auto` the wizard answer alone would have been the go-ahead.
 
 9. Confirms setup is done and asks what to work on first — there's no pending question from this explicit-request turn to answer, unlike the earlier organic activation, which had already answered the retry-logic question directly without any of this running.
 
