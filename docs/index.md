@@ -122,7 +122,7 @@ The next session — yours, a colleague's, an agent's — loads the index first 
 <a href="https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/hol-scanner.yml"><img src="https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/hol-scanner.yml/badge.svg" alt="HOL scanner"></a>
 </p>
 
-The skill is validated against the Agent Skills spec on every push; this repository's own `context/` is linted by its own linter, in strict mode; the package is scanned by two independent registries — one of them, the [HOL AI Plugin Scanner](security.md#what-automated-scanners-report-and-why), on every push in this repository's own CI, gated at score 80 and no high finding.
+The skill is validated against the Agent Skills spec on every push; this repository's own `context/` is [linted by its own linter](linting.md), in strict mode; the package is scanned by two independent registries — one of them, the [HOL AI Plugin Scanner](security.md#what-automated-scanners-report-and-why), on every push in this repository's own CI, gated at score 80 and no high finding.
 { .ktw-caption }
 
 </div>
