@@ -1,6 +1,6 @@
 {
   "name": "keep-the-why",
-  "version": "0.13.3",
+  "version": "0.14.0",
   "description": "Preserves the reasoning behind a codebase as project memory — decisions, rejected alternatives, workarounds, incident learnings, constraints the code alone can't explain — kept in the repo as Markdown, versioned and shared by Git.",
   "author": {
     "name": "Oliver Zehentleitner",

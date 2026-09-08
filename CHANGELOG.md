@@ -4,6 +4,8 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-09-08
+
 ### Added
 
 - `keep-the-why-lint --setup`: the local counterpart to the CI run. The default run checks the one file of a developer's setup that is committed; `--setup` adds the two that live in the home directory — the personal file `~/.keep-the-why/<id>.md` and the machine-wide `~/.keep-the-why/config` — with the same block, field, value and hidden-content checks the project config gets (`E013` for a home file without its block, `W004` for a missing personal file, `W002` for a timer or `source` line off its documented shape; `migration-prompt` may repeat). The personal file is located by the project's `id` only once that passed `E010`. Opt-in on purpose: the default run never leaves the checkout, and a CI runner has no home files — this is a tool for the agent or a person to verify a setup after a settings change, before anything else depends on it. The GitHub Action never passes the flag. Twelve tests, `docs/linting.md` section, `docs/security.md` names the exception, the decision in `context/lint.md`. Maintainer idea, from the same discussion as the local-lint setting below.
@@ -12,7 +14,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Changed
 
-- `keep-the-why-lint` 0.13.3.1: `--setup`, `E013`, `W004`, `local-lint` — no new gate, nothing changes what `context/` or `.keep-the-why` must look like.
+- `keep-the-why-lint` 0.14.0.0: knows schema 0.14.0 — no new gate, nothing changes what `context/` or `.keep-the-why` must look like; carries `--setup`, `E013`, `W004` and `local-lint` as a known field (above). Published before the skill tag, per the checklist.
 
 - `docs/evals.md` carries the 0.13.3 release measurement: three consecutive full runs on the tag (82, 79 and 81 of 85), the four numbers per run, a note on every failed run, a new run-history row, and rewritten caveats — the two cases 0.13.3 was cut for went 3/3, one genuine activation miss in 255 sessions, and the six judge-versus-check disagreements split two ways (the check catches a described-but-undone write, the judge catches a correct tree with the wrong words around it).
 - `plugin.json` and `.claude-plugin/plugin.json`: one shared description, matching the repository's About text — project memory, kept in the repo as Markdown, versioned and shared by Git; the two files had drifted apart and neither named the Git layer.
@@ -594,7 +596,8 @@ Initial release.
 - Logo, wordmark, and favicon.
 - `context/repo-conventions.md`, dogfooding the skill on its own repository from day one.
 
-[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.13.3...HEAD
+[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.13.3...v0.14.0
 [0.13.3]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.13.2...v0.13.3
 [0.13.2]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.13.1...v0.13.2
 [0.13.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.13.0...v0.13.1
