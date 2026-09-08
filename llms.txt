@@ -215,7 +215,8 @@ against, and how: https://keepthewhy.com/agent-matrix/
 ## Linting
 
 keep-the-why-lint (PyPI: https://pypi.org/project/keep-the-why-lint/, source in this
-repository under lint/) is a CI linter for the structural half of the format: required entry
+repository under lint/) is a structural linter for the machine-checkable half of the format —
+run in CI after a push, and locally by the skill itself after it writes an entry: required entry
 fields, valid values, index consistency, and `.keep-the-why` integrity. It reads the target
 project's `context-schema` and only enforces what that skill version defines, so unmigrated
 projects don't fail on structure their version never had. Content-level truth is out of its
@@ -224,8 +225,12 @@ GitHub Actions: `uses: oliver-zehentleitner/keep-the-why@lint-latest` — publis
 Marketplace as keep-the-why-lint (https://github.com/marketplace/actions/keep-the-why-lint). On
 `@lint-latest` (the default, the tag moves with every linter publish) it installs the newest
 linter; `@lint-v<version>` or a commit SHA pins action and linter together, the `version:`
-input is only for mixing the two; anywhere else: `pip install keep-the-why-lint && ktw-lint .`. Usage, GitLab/pre-commit
-snippets, and every finding code: https://keepthewhy.com/linting/
+input is only for mixing the two; anywhere else: `pip install keep-the-why-lint && ktw-lint .`.
+`ktw-lint . --setup` (local only) also checks the developer's `~/.keep-the-why/<id>.md` and
+`~/.keep-the-why/config`. The personal setting `local-lint: auto | ask | no` (default `ask`) makes the
+skill run it after every write and install or update it from PyPI — `ask` never without a yes; the
+linter's version must be at least the skill's, `context-schema` is never lowered to fit an older
+linter. Usage, GitLab/pre-commit snippets, and every finding code: https://keepthewhy.com/linting/
 
 ## Related Work
 

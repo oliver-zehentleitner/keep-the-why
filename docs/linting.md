@@ -1,4 +1,4 @@
-# Linting (CI checks)
+# Linting (CI and local)
 
 Nothing in Keep the Why is enforced the way a compiler enforces correctness — that's stated plainly in "What this skill is not." Part of that gap *is* mechanically closable, though: whether every entry carries its required fields, whether the values are from the documented sets, whether `index.md` is complete and sorted, whether `.keep-the-why` is internally consistent. That part has a linter:
 

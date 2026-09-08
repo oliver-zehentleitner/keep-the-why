@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "keep-the-why-lint"
-description = "Structural CI linter for Keep the Why projects: validates .keep-the-why and context/ entry structure, schema-version-aware."
+description = "Structural linter for Keep the Why projects, in CI and locally: validates .keep-the-why and context/ entry structure, schema-version-aware."
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Oliver Zehentleitner" }]

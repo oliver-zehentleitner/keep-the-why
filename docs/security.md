@@ -1,6 +1,6 @@
 # Security
 
-Four questions, answered here with the detail living in its own place rather than duplicated: whether an agent can be let loose on `context/`, what the skill adds to a project's attack surface, what the linter does with hostile input, and how this repository itself is protected — plus what the automated scanners say and why.
+Five questions, answered here with the detail living in its own place rather than duplicated: whether an agent can be let loose on `context/`, what the skill adds to a project's attack surface, what the linter does with hostile input, what the skill may do when it installs and runs that linter itself, and how this repository itself is protected — plus what the automated scanners say and why.
 
 ## Is it safe to let an agent read and write `context/`?
 
