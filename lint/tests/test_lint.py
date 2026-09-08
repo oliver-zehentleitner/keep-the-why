@@ -807,3 +807,185 @@ class UntrustedInputRobustness(_ProjectFixture):
         with contextlib.redirect_stdout(out):
             main([self.root])
         self.assertNotIn("\x1b", out.getvalue())
+
+
+GOOD_PERSONAL = """\
+<!-- keep-the-why:personal -->
+- capture-mode: proactive
+- confirmation-flow: sequential
+- update-check: every 14 days — last: 2026-07-21
+- consistency-check: every 30 days — last: 2026-07-21
+- pending-confirmation-check: on-start
+- local-lint: ask
+- session: attended
+- migration-prompt: 0.12.0 declined
+- migration-prompt: 0.13.0 declined
+- source: project defaults (confirmed 2026-07-21)
+<!-- /keep-the-why:personal -->
+"""
+
+GOOD_GLOBAL = """\
+<!-- keep-the-why:global -->
+- personal-defaults-policy: always-ask
+- session: unattended
+<!-- /keep-the-why:global -->
+"""
+
+
+class LintSetup(_ProjectFixture):
+    """--setup: the two files under ~/.keep-the-why/, read only on request."""
+
+    def setUp(self):
+        super().setUp()
+        self._home = tempfile.TemporaryDirectory()
+        self._home_env = mock.patch.dict(
+            os.environ, {"HOME": self._home.name, "USERPROFILE": self._home.name}
+        )
+        self._home_env.start()
+        self.base_project()
+
+    def tearDown(self):
+        self._home_env.stop()
+        self._home.cleanup()
+        super().tearDown()
+
+    def write_home(self, name, content):
+        path = os.path.join(self._home.name, ".keep-the-why", name)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(content)
+
+    def run_setup(self):
+        linter = Linter(self.root)
+        return linter.run(_load_config(self.root, linter), setup=True), linter
+
+    def home_findings(self, findings):
+        return [f for f in findings if f.path.startswith("~/")]
+
+    def test_clean_setup(self):
+        self.write_home("acme---widget-service.md", GOOD_PERSONAL)
+        self.write_home("config", GOOD_GLOBAL)
+        findings, linter = self.run_setup()
+        self.assertEqual(
+            self.codes(findings), [], msg=[f.format_text() for f in findings]
+        )
+        self.assertTrue(linter.setup_checked)
+
+    def test_default_run_never_reads_home(self):
+        self.write_home(
+            "acme---widget-service.md", "<!-- keep-the-why:personal -->\n- bogus: x\n"
+        )
+        self.write_home("config", "​")
+        findings, linter = self.run_lint()
+        self.assertEqual(self.codes(findings), [])
+        self.assertFalse(linter.setup_checked)
+        self.assertEqual(self.cli([self.root]), 0)
+
+    def test_missing_personal_file_is_a_warning(self):
+        findings, _ = self.run_setup()
+        self.assertEqual(self.codes(findings), ["W004"])
+        self.assertEqual(findings[0].path, "~/.keep-the-why/acme---widget-service.md")
+        self.assertEqual(self.cli([self.root, "--setup"]), 0)
+        self.assertEqual(self.cli([self.root, "--setup", "--strict"]), 1)
+
+    def test_missing_global_config_is_silent(self):
+        self.write_home("acme---widget-service.md", GOOD_PERSONAL)
+        findings, _ = self.run_setup()
+        self.assertEqual(self.codes(findings), [])
+
+    def test_unusable_id_skips_personal_file(self):
+        self.write(
+            ".keep-the-why", GOOD_CONFIG.replace("acme---widget-service", "../AGENTS")
+        )
+        findings, _ = self.run_setup()
+        codes = self.codes(findings)
+        self.assertIn("E010", codes)
+        self.assertIn("W004", codes)
+        self.assertEqual(
+            [f.path for f in findings if f.code == "W004"], [".keep-the-why"]
+        )
+
+    def test_personal_file_without_block(self):
+        self.write_home("acme---widget-service.md", "# notes\n")
+        findings, _ = self.run_setup()
+        self.assertEqual(self.codes(findings), ["E013"])
+
+    def test_personal_values(self):
+        personal = (
+            "<!-- keep-the-why:personal -->\n"
+            "- capture-mode: sometimes\n"
+            "- confirmation-flow: batch\n"
+            "- update-check: every 14 days — last: 2026-07-21 — on-failure: retry-quietly\n"
+            "- consistency-check: monthly\n"
+            "- local-lint: always\n"
+            "- session: maybe\n"
+            "- migration-prompt: 0.12 declined\n"
+            "- source: my own\n"
+            "- capture-mode: proactive\n"
+            "- last: 2026-07-21\n"
+            "<!-- /keep-the-why:personal -->\n"
+        )
+        self.write_home("acme---widget-service.md", personal)
+        findings, _ = self.run_setup()
+        by_code = {}
+        for f in findings:
+            by_code.setdefault(f.code, []).append(f.message)
+        self.assertEqual(
+            len(by_code.get("E003", [])), 4
+        )  # capture-mode, local-lint, session, migration-prompt
+        self.assertEqual(len(by_code.get("W002", [])), 2)  # consistency-check, source
+        self.assertEqual(len(by_code.get("E004", [])), 1)  # capture-mode twice
+        self.assertEqual(len(by_code.get("E005", [])), 1)  # last
+        self.assertTrue(all(f.path.startswith("~/.keep-the-why/") for f in findings))
+
+    def test_personal_block_delimiters(self):
+        self.write_home(
+            "acme---widget-service.md",
+            "<!-- keep-the-why:personal -->\n- capture-mode: proactive\n"
+            "<!-- keep-the-why:personal -->\n",
+        )
+        findings, _ = self.run_setup()
+        self.assertEqual(self.codes(findings), ["E011", "E012"])
+
+    def test_global_values(self):
+        self.write_home("acme---widget-service.md", GOOD_PERSONAL)
+        self.write_home(
+            "config",
+            "<!-- keep-the-why:global -->\n- personal-defaults-policy: sometimes\n"
+            "- session: unattended\n- capture-mode: proactive\n<!-- /keep-the-why:global -->\n",
+        )
+        findings, _ = self.run_setup()
+        self.assertEqual(self.codes(findings), ["E003", "E005"])
+        self.assertTrue(all(f.path == "~/.keep-the-why/config" for f in findings))
+
+    def test_hidden_content_in_home_files(self):
+        self.write_home(
+            "acme---widget-service.md", GOOD_PERSONAL.replace("proactive", "pro​active")
+        )
+        self.write_home("config", GOOD_GLOBAL)
+        findings, _ = self.run_setup()
+        self.assertEqual(self.codes(findings), ["E003", "E301"])
+
+    def test_invalid_utf8_personal_file(self):
+        path = os.path.join(
+            self._home.name, ".keep-the-why", "acme---widget-service.md"
+        )
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "wb") as fh:
+            fh.write(
+                b"<!-- keep-the-why:personal -->\n- capture-mode: proactive\n\xff\n<!-- /keep-the-why:personal -->\n"
+            )
+        findings, _ = self.run_setup()
+        self.assertEqual(self.codes(findings), ["E302"])
+
+    def test_local_lint_in_personal_defaults(self):
+        for value, expected in (("auto", []), ("always", ["E003"])):
+            self.write(
+                ".keep-the-why",
+                GOOD_CONFIG
+                + "\n<!-- keep-the-why:personal-defaults -->\n"
+                + f"- local-lint: {value}\n"
+                + "<!-- /keep-the-why:personal-defaults -->\n",
+            )
+            findings, _ = self.run_lint()
+            self.assertEqual(self.codes(findings), expected, msg=value)

@@ -37,6 +37,7 @@ Documentation: [Linting](https://keepthewhy.com/linting/) · [CI linting setup](
 - **`index.md`** — exists, every link resolves, every topic file is listed, sorted alphabetically
 - **`.keep-the-why`** — required fields present, no field recorded twice, no unknown fields, pinned versions consistent, the configured `context/` location exists
 - **Hidden content** — invisible or directional Unicode is an error, base64-looking blobs a warning: the one mechanically checkable slice of the [trust model](https://keepthewhy.com/trust-model/)
+- **The developer's setup** — with `--setup` only: the personal file `~/.keep-the-why/<id>.md` and the machine-wide `~/.keep-the-why/config` get the same field and value checks. Local use, after a settings change; the default run never reads outside the project, and a CI runner has no home files
 
 Every check is gated by the project's `context-schema`, so a check only fires for a skill version that actually defined it. Fenced code blocks are skipped — example entries in documentation never get linted as real ones.
 
@@ -50,6 +51,7 @@ pip install keep-the-why-lint
 ktw-lint .                 # lint the project in the current directory
 ktw-lint /path/to/project  # or any other project root
 ktw-lint . --strict        # warnings fail too
+ktw-lint . --setup         # also check ~/.keep-the-why/<id>.md and ~/.keep-the-why/config
 ```
 
 ### CI setup

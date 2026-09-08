@@ -25,6 +25,7 @@ from . import SUPPORTED_SCHEMA
 from .config import (
     ParsedConfig,
     context_dir_from_value,
+    parse_home_block,
     parse_semver,
 )
 from .entries import parse_index_headings, parse_index_text, parse_topic_text
@@ -72,11 +73,38 @@ DEFAULTS_KNOWN = (
     "update-check",
     "consistency-check",
     "pending-confirmation-check",
+    "local-lint",
 )
 CAPTURE_MODE_VALUES = ("proactive", "explicit-only")
 CONFIRMATION_FLOW_VALUES = ("sequential", "batch")
 PENDING_CHECK_VALUES = ("on-start", "no")
+LOCAL_LINT_VALUES = ("auto", "ask", "no")
 _INTERVAL_RE = re.compile(r"^(every\s+\d+\s+days?|no)$")
+
+# The two files under ~/.keep-the-why/, read only on --setup: the personal
+# file <id>.md (one per project per developer per machine) and the
+# machine-wide config. Their fields per references/specification.md §4/§5.
+HOME_DIR_DISPLAY = "~/.keep-the-why"
+PERSONAL_KNOWN = DEFAULTS_KNOWN + ("session", "migration-prompt", "source")
+PERSONAL_REPEATABLE = ("migration-prompt",)  # one line per declined version
+GLOBAL_KNOWN = ("personal-defaults-policy", "session")
+SESSION_VALUES = ("attended", "unattended")
+DEFAULTS_POLICY_VALUES = ("always-ask", "auto-accept")
+_DASH = r"\s+[—–-]\s+"
+_DATE = r"\d{4}-\d{2}-\d{2}"
+# `every N days — last: YYYY-MM-DD[ — on-failure: retry-quietly | disabled]` | `no`
+_PERSONAL_UPDATE_RE = re.compile(
+    rf"^(every\s+\d+\s+days?({_DASH}last:\s*{_DATE})?"
+    rf"({_DASH}on-failure:\s*(retry-quietly|disabled))?|no)$"
+)
+# `every N days — last: YYYY-MM-DD` | `no`
+_PERSONAL_INTERVAL_RE = re.compile(
+    rf"^(every\s+\d+\s+days?({_DASH}last:\s*{_DATE})?|no)$"
+)
+_MIGRATION_PROMPT_RE = re.compile(r"^\d+\.\d+\.\d+\s+declined$")
+_SOURCE_RE = re.compile(
+    rf"^project defaults \((confirmed {_DATE}|accepted automatically)\)$"
+)
 
 # `id` names a file: ~/.keep-the-why/<id>.md. Letters, digits, '.', '_', '-'
 # is everything the two documented forms (<owner>---<repo>, <uuid>---<folder>)
@@ -145,6 +173,10 @@ class Linter:
         self.context_dir = "context"
         self.context_rejected = False  # E009: configured location left the tree
         self.config_rejected = False  # E009: the config file itself left the tree
+        self.safe_id = (
+            None  # the project id, once it passed E010 — names the personal file
+        )
+        self.setup_checked = False  # --setup ran (the summary line says so)
         self._undecodable = (
             set()
         )  # E302 reported once per file, however often it is read
@@ -179,18 +211,22 @@ class Linter:
         """Text of a file inside the tree. Invalid UTF-8 is a finding (E302),
         not a traceback — the undecodable bytes are replaced and the rest is
         still linted."""
-        with open(os.path.join(self.root, relpath), "rb") as fh:
+        return self._read_at(os.path.join(self.root, relpath), relpath)
+
+    def _read_at(self, abspath, display):
+        """`_read` for any absolute path; `display` is what findings show."""
+        with open(abspath, "rb") as fh:
             raw = fh.read()
         try:
             return raw.decode("utf-8")
         except UnicodeDecodeError as exc:
-            if relpath in self._undecodable:
+            if display in self._undecodable:
                 return raw.decode("utf-8", errors="replace")
-            self._undecodable.add(relpath)
+            self._undecodable.add(display)
             self.add(
                 ERROR,
                 "E302",
-                relpath,
+                display,
                 raw.count(b"\n", 0, exc.start) + 1,
                 f"not valid UTF-8 (byte {exc.start}: {exc.reason}) — knowledge files are "
                 "plain UTF-8 text; whatever this is, it isn't meant to be read as one",
@@ -340,7 +376,9 @@ class Linter:
                 )
             elif not id_field[1]:
                 self.add(ERROR, "E003", path, id_field[0], "id is empty")
-            elif not _ID_RE.match(id_field[1]) or not id_field[1].strip("."):
+            elif _ID_RE.match(id_field[1]) and id_field[1].strip("."):
+                self.safe_id = id_field[1]
+            else:
                 self.add(
                     ERROR,
                     "E010",
@@ -499,6 +537,7 @@ class Linter:
                 pc[0],
                 f"pending-confirmation-check '{pc[1]}' is not one of: {', '.join(PENDING_CHECK_VALUES)}",
             )
+        self._check_enum(block, path, "local-lint", LOCAL_LINT_VALUES)
         for key in ("update-check", "consistency-check"):
             fld = block.first(key)
             if fld and not _INTERVAL_RE.match(fld[1].strip()):
@@ -509,6 +548,150 @@ class Linter:
                     fld[0],
                     f"{key} '{fld[1]}' doesn't match the documented shape ('every N days' or 'no')",
                 )
+
+    def _check_enum(self, block, path, key, values):
+        fld = block.first(key)
+        if fld and fld[1] not in values:
+            self.add(
+                ERROR,
+                "E003",
+                path,
+                fld[0],
+                f"{key} '{fld[1]}' is not one of: {', '.join(values)}",
+            )
+
+    # -- setup (--setup only) --------------------------------------------
+
+    def check_setup(self, parsed: ParsedConfig):
+        """The two files under ~/.keep-the-why/ that complete a developer's
+        setup for this project. Opt-in: a CI runner has no home files worth
+        reading, and the default run must never leave the checkout — this is
+        the agent's local tool for verifying a setup after a settings change.
+        """
+        self.setup_checked = True
+        home = os.path.expanduser(HOME_DIR_DISPLAY)
+
+        self._check_home_file(
+            os.path.join(home, "config"),
+            f"{HOME_DIR_DISPLAY}/config",
+            "global",
+            GLOBAL_KNOWN,
+            (),
+            required=False,
+        )
+
+        if self.safe_id is None:
+            self.add(
+                WARNING,
+                "W004",
+                parsed.path,
+                0,
+                "personal file not checked — the config carries no usable 'id', so "
+                f"{HOME_DIR_DISPLAY}/<id>.md cannot be located",
+            )
+            return
+        display = f"{HOME_DIR_DISPLAY}/{self.safe_id}.md"
+        self._check_home_file(
+            os.path.join(home, f"{self.safe_id}.md"),
+            display,
+            "personal",
+            PERSONAL_KNOWN,
+            PERSONAL_REPEATABLE,
+            required=True,
+        )
+
+    def _check_home_file(self, abspath, display, kind, known, repeatable, required):
+        if not os.path.isfile(abspath):
+            if required:
+                self.add(
+                    WARNING,
+                    "W004",
+                    display,
+                    0,
+                    "no personal file for this project on this machine — the personal "
+                    "preferences wizard has not run here yet",
+                )
+            return  # no global config is the documented default, nothing to say
+        text = self._read_at(abspath, display)
+        block = parse_home_block(text, display, kind)
+        if block is None:
+            self.add(
+                ERROR,
+                "E013",
+                display,
+                0,
+                f"no keep-the-why:{kind} block found — the file exists but carries "
+                "none of the settings it is there for",
+            )
+            return
+        self._check_block_delimiters(block, kind)
+        for key, occurrences in block.fields.items():
+            if len(occurrences) > 1 and key not in repeatable:
+                self.add(
+                    ERROR,
+                    "E004",
+                    display,
+                    occurrences[1][0],
+                    f"{kind} field '{key}' recorded more than once",
+                )
+            if key not in known:
+                self.add(
+                    ERROR,
+                    "E005",
+                    display,
+                    occurrences[0][0],
+                    f"unknown {kind} field '{key}' (known: {', '.join(known)})",
+                )
+        self._check_enum(block, display, "session", SESSION_VALUES)
+        if kind == "global":
+            self._check_enum(
+                block, display, "personal-defaults-policy", DEFAULTS_POLICY_VALUES
+            )
+        else:
+            self._check_enum(block, display, "capture-mode", CAPTURE_MODE_VALUES)
+            self._check_enum(
+                block, display, "confirmation-flow", CONFIRMATION_FLOW_VALUES
+            )
+            self._check_enum(
+                block, display, "pending-confirmation-check", PENDING_CHECK_VALUES
+            )
+            self._check_enum(block, display, "local-lint", LOCAL_LINT_VALUES)
+            for key, pattern, shape in (
+                (
+                    "update-check",
+                    _PERSONAL_UPDATE_RE,
+                    "'every N days — last: YYYY-MM-DD[ — on-failure: retry-quietly | disabled]' or 'no'",
+                ),
+                (
+                    "consistency-check",
+                    _PERSONAL_INTERVAL_RE,
+                    "'every N days — last: YYYY-MM-DD' or 'no'",
+                ),
+                (
+                    "source",
+                    _SOURCE_RE,
+                    "'project defaults (confirmed YYYY-MM-DD)' or 'project defaults (accepted automatically)'",
+                ),
+            ):
+                fld = block.first(key)
+                if fld and not pattern.match(fld[1].strip()):
+                    self.add(
+                        WARNING,
+                        "W002",
+                        display,
+                        fld[0],
+                        f"{key} '{fld[1]}' doesn't match the documented shape ({shape})",
+                    )
+            for line, value in block.fields.get("migration-prompt", ()):
+                if not _MIGRATION_PROMPT_RE.match(value.strip()):
+                    self.add(
+                        ERROR,
+                        "E003",
+                        display,
+                        line,
+                        f"migration-prompt '{value}' is not of the shape 'X.Y.Z declined'",
+                    )
+        self._check_hidden_text(display, text)
 
     # -- entries ---------------------------------------------------------
 
@@ -811,7 +994,9 @@ class Linter:
     # -- hidden content --------------------------------------------------
 
     def check_hidden_content(self, relpath: str):
-        text = self._read(relpath)
+        self._check_hidden_text(relpath, self._read(relpath))
+
+    def _check_hidden_text(self, relpath: str, text: str):
         for lineno, line in enumerate(text.splitlines(), start=1):
             if lineno == 1 and line.startswith(chr(0xFEFF)):
                 line = line[1:]  # a leading BOM is legitimate encoding, not hiding
@@ -840,7 +1025,7 @@ class Linter:
 
     # -- driver ----------------------------------------------------------
 
-    def run(self, parsed: ParsedConfig | None):
+    def run(self, parsed: ParsedConfig | None, setup: bool = False):
         if parsed is None:
             if self.config_rejected:
                 return self.findings  # E009 already says why there is nothing to lint
@@ -855,6 +1040,8 @@ class Linter:
             return self.findings
 
         self.check_config(parsed)
+        if setup:
+            self.check_setup(parsed)
 
         if self.context_rejected:
             return self.findings

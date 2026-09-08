@@ -61,6 +61,13 @@ def main(argv=None) -> int:
         help="emit GitHub Actions annotations (auto-enabled when GITHUB_ACTIONS is set)",
     )
     parser.add_argument(
+        "--setup",
+        action="store_true",
+        help="also check this developer's setup for the project: the personal file "
+        "~/.keep-the-why/<id>.md and the machine-wide ~/.keep-the-why/config "
+        "(local use after a settings change; a CI runner has neither)",
+    )
+    parser.add_argument(
         "--version", action="version", version=f"ktw-lint {__version__}"
     )
     args = parser.parse_args(argv)
@@ -73,7 +80,7 @@ def main(argv=None) -> int:
     as_github = args.github or os.environ.get("GITHUB_ACTIONS") == "true"
 
     linter = Linter(root)
-    findings = linter.run(_load_config(root, linter))
+    findings = linter.run(_load_config(root, linter), setup=args.setup)
     findings.sort(key=lambda f: (f.path, f.line, f.code))
 
     for finding in findings:
@@ -85,9 +92,10 @@ def main(argv=None) -> int:
     # A rejected location (E009) is not echoed raw: it came from the config
     # file and may carry anything, control characters included.
     context = "rejected" if linter.context_rejected else f"{linter.context_dir}/"
+    setup = ", setup: ~/.keep-the-why" if linter.setup_checked else ""
     print(
         f"ktw-lint {__version__}: {errors} error(s), {warnings} warning(s) "
-        f"(context-schema {schema}, context: {context})"
+        f"(context-schema {schema}, context: {context}{setup})"
     )
 
     if errors or (args.strict and warnings):

@@ -82,3 +82,20 @@ An `##` heading in a topic file with no recognized field lines gets `W102`, not 
 **Reason:** the property that matters is that `~/.keep-the-why/<id>.md` names a file *in* that directory. The alphabet guarantees it on every platform (no separator, no `..` segment, no control character) and is exactly what the two generation rules in `references/setup.md` produce once the folder name is slugified like the repo name. The old rule was written for readability (no spaces), not for the boundary, which is how a traversal passed it.
 
 **Rejected alternative:** require the `---` shape as well (`^[…]+---[…]+$`), as the review proposed. Rejected because it adds no confinement — the alphabet already does all of it — while it would fail an id someone chose or edited by hand, and the skill treats an unrecognized config value as "name the options and ask", not as a hard error; the linter shouldn't be stricter than the skill on a point that has no safety weight.
+
+## The home files are checked only behind `--setup`, never by default
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer design discussion, 2026-09-08 (two runs — one for CI, one local — was the maintainer's framing; the explicit flag their call)
+**Revisit when:** the linter gains a second consumer that runs it locally by default (an editor integration, a pre-commit hook that wants the setup checked), or the personal file moves out of `~/.keep-the-why/`
+
+`ktw-lint .` reads the checkout and nothing else. `ktw-lint . --setup` additionally reads `~/.keep-the-why/config` and `~/.keep-the-why/<id>.md`, the personal file named by the project's `id` — and only once that `id` passed `E010`, so the name cannot point anywhere but into that directory. A missing personal file is `W004`, a missing global config is nothing.
+
+**Reason:** the two runs have different audiences. CI lints a pull request from anyone and must never leave the checkout — that guarantee is a regression test and a line in `docs/security.md`, and a default that reads the runner's home would break it for no gain, since a runner has no personal file. The local run is a tool for the agent to verify a setup right after it changed one — a wizard answer, an edited preference, an appended policy line — and that is exactly when the home files matter and nothing else does. An explicit flag keeps the one guarantee intact and makes the other use deliberate; the skill decides when to pass it (after a settings change, not after every `context/` write).
+
+**Rejected alternative:** read the home files whenever they exist, no flag. Rejected because "exists" is not a signal of intent — a developer's home on a self-hosted runner, or a container that bakes a personal file, would silently widen what a CI run reads, and the security page could no longer say "never outside the checkout" without a footnote.
+
+**Rejected alternative:** a separate command (`ktw-lint-setup`, or a subcommand). Rejected because the checks are the same block-field-value-hidden-content sequence the project config already gets, on two more files; a second entry point would duplicate the driver for a flag's worth of difference.
+

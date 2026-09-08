@@ -53,6 +53,18 @@ Latest is the default on purpose: a skill release that adds a structural gate is
 
 The `version:` input is for the odd case of mixing — a pinned action with a different linter, or `version: "latest"` on a pinned ref to keep the linter rolling anyway. Anywhere else (GitLab CI, pre-commit, a plain shell), `pip install keep-the-why-lint==<version>` is the pin.
 
+## Checking the setup locally
+
+A developer's setup for a project is three files, and CI only ever sees one of them: `.keep-the-why` is committed, while the personal file `~/.keep-the-why/<id>.md` and the machine-wide `~/.keep-the-why/config` live in the developer's home. `--setup` adds those two to the run:
+
+```sh
+ktw-lint . --setup
+```
+
+It is the local counterpart to the CI run, for the agent or a person to verify a setup after a settings change — a wizard answer written, a personal preference edited by hand, a global policy line appended to an image. Both home files get the same treatment as the project config: block present and closed (`E013`, `E011`, `E012`), no unknown or duplicated fields (`E005`, `E004`; `migration-prompt` may repeat, one line per version), values from the documented sets (`E003`), timer and `source` lines in their documented shape (`W002`), and the hidden-content checks (`E301`, `E302`, `W301`). A missing personal file is a warning (`W004`) — the personal wizard has not run on this machine for this project; a missing global config is nothing, that is the documented default. The personal file is located by the project's `id`, so an `id` that fails `E010` also means the personal file is not looked for.
+
+Opt-in on purpose. The default run never leaves the checkout — that is what makes it safe on pull requests from strangers — and a CI runner has no home files worth reading. The GitHub Action never passes the flag.
+
 ## Hardening for shared repositories
 
 The linter checks structure. In a repository with many contributors, a few conventional GitHub settings turn it from a hint into a gate, and cover what it deliberately doesn't check:
@@ -76,6 +88,8 @@ None of this is specific to Keep the Why; it is the same set of settings any tea
 
 **`.keep-the-why` / legacy config block** — block present, closed by its end marker, and the only one of its kind in the file (a second start marker is an error; only the first block is read); required fields (`context`, `init`, `context-schema`, `capture-confirmation`, `source-reference`, plus `id` for dedicated files since 0.10.0); values from the documented sets; `filtered` source-reference carries its criteria; no field recorded twice (conflicting duplicates are exactly the state the skill refuses to guess about); no unknown fields; `context-schema` is plain semver; `id` is a safe file name — letters, digits, `.`, `_`, `-`, nothing that could make `~/.keep-the-why/<id>.md` resolve outside that directory; `pinned-version`/`pinned-path` only as a pair, with the path existing; the configured context location exists; `personal-defaults` blocks carry no `last:` timestamps. Both configured paths are confined to the repository: an absolute path, a `..` escape, a control character, or a symlink that leaves the tree is an error and is not read — a CI job runs this on pull requests from strangers, and the config file is data, not a place to point the linter at the runner's filesystem.
 
+**`~/.keep-the-why/<id>.md` and `~/.keep-the-why/config`** — only with `--setup`, see above.
+
 **Entries** (level-2 headings in topic files; fenced code blocks are skipped, so example entries in documentation never get linted as real ones) — `Status` and `Evidence` present, single, and valid; `Type` values valid, `undefined` carries a reason and combines with nothing; no duplicate `Type` values; `Verification` starts with a valid value, and `contradicted` must say what contradicts it; a heading with no schema fields at all is a warning, not an error — it may be a legitimate prose section.
 
 **`index.md`** — exists; every link resolves; every topic file is listed; sorted alphabetically by filename (an error since 0.10.0 — the convention's merge-conflict benefit only exists when the whole list is sorted); since 0.13.0, the fixed `## 0`–`## 9`, `## A`–`## Z` heading skeleton is present and in order and every topic sits under its letter.
@@ -98,8 +112,9 @@ None of this is specific to Keep the Why; it is the same set of settings any tea
 | E008 | error | `last:` timestamp inside `personal-defaults` |
 | E009 | error | configured `context` / `pinned-path`, the config file itself, or a symlink inside the context directory, points outside the repository (or contains a control character) |
 | E010 | error | `id` is not a safe file name (path separator, `..`, space, control character) |
-| E011 | error | config or `personal-defaults` block never closed |
+| E011 | error | config, `personal-defaults`, `personal` or `global` block never closed |
 | E012 | error | second start marker for the same block |
+| E013 | error | a file under `~/.keep-the-why/` exists but carries no `personal` / `global` block (`--setup`) |
 | E101/E102 | error | entry missing `Status` / `Evidence` |
 | E103/E104 | error | invalid `Status` / `Evidence` value |
 | E105 | error | invalid `Type` value |
@@ -116,8 +131,9 @@ None of this is specific to Keep the Why; it is the same set of settings any tea
 | E301 | error | invisible or directional Unicode character |
 | E302 | error | file is not valid UTF-8 |
 | W001 | warning | `context-schema` missing (assumed 0.2.0) |
-| W002 | warning | unrecognized check-interval shape in `personal-defaults` |
+| W002 | warning | unrecognized check-interval shape in `personal-defaults`; with `--setup`, also a timer or `source` line in the personal file |
 | W003 | warning | project `context-schema` newer than the newest schema this linter knows |
+| W004 | warning | no personal file for this project on this machine, or none locatable because the `id` is unusable (`--setup`) |
 | W101 | warning | entry has no `Type` field |
 | W102 | warning | level-2 heading without any schema fields |
 | W103 | warning | `Type` placed after `Status` |

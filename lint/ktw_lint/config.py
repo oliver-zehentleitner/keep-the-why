@@ -25,6 +25,10 @@ CONFIG_START = "<!-- keep-the-why:config -->"
 CONFIG_END = "<!-- /keep-the-why:config -->"
 DEFAULTS_START = "<!-- keep-the-why:personal-defaults -->"
 DEFAULTS_END = "<!-- /keep-the-why:personal-defaults -->"
+PERSONAL_START = "<!-- keep-the-why:personal -->"
+PERSONAL_END = "<!-- /keep-the-why:personal -->"
+GLOBAL_START = "<!-- keep-the-why:global -->"
+GLOBAL_END = "<!-- /keep-the-why:global -->"
 
 _FIELD_RE = re.compile(r"^\s*-\s+([A-Za-z0-9_-]+)\s*:\s*(.*?)\s*$")
 _SEMVER_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
@@ -96,6 +100,18 @@ def parse_config_text(text: str, path: str, legacy: bool) -> ParsedConfig:
         config=_extract_block(lines, CONFIG_START, CONFIG_END, path),
         personal_defaults=_extract_block(lines, DEFAULTS_START, DEFAULTS_END, path),
     )
+
+
+def parse_home_block(text: str, path: str, kind: str):
+    """The one block a file under ~/.keep-the-why/ carries: `personal` for
+    `<id>.md`, `global` for `config`. Same extraction as the project blocks,
+    so a truncated or doubled block is reported the same way (E011, E012).
+    Returns None when the file has no such block at all."""
+    markers = {
+        "personal": (PERSONAL_START, PERSONAL_END),
+        "global": (GLOBAL_START, GLOBAL_END),
+    }[kind]
+    return _extract_block(text.splitlines(), markers[0], markers[1], path)
 
 
 def parse_semver(value: str):
