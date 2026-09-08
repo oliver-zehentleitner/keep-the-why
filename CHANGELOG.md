@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Fixed
+
+- The local-linting rule says three things it only implied, each caught by one eval case in the 0.14.0 release measurement (#321): `ask` gates the install and the update, never the run — an agent had asked permission to run a linter that was already at version; a value the linter rejects is resolved toward the weaker `Evidence` level or asked, never upgraded to make the line valid — an agent had collapsed `confirmed (…); unknown (…)` to `confirmed` after `E103`; and a finding the setup check owns is the setup check's job whichever file it names — `E002` for a field with a documented default is step 0's silent backfill, not "pre-existing", after an agent had left a missing `capture-confirmation` in place because `.keep-the-why` was "not written this session". "Local linting" in `setup.md`, step 5 in `SKILL.md`.
+
 ## [0.14.0] - 2026-09-08
 
 ### Added
