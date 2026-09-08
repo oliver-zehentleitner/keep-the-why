@@ -1,0 +1,33 @@
+# HOL AI Plugin Scanner (hol-guard) — the scan the HOL plugin registry and the
+# awesome-ai-plugins list run on listed projects, run here on every push and
+# pull request so the result is ours to see first. Scan mode only: a weighted
+# score (0-100) over manifest metadata, secrets, hooks, workflow hardening,
+# dependency hygiene and code patterns; no network probing, no SARIF upload,
+# read-only token, checkout credentials not persisted. The action installs a
+# fixed scanner release from PyPI and verifies the wheel's SHA-256 and PyPI
+# provenance before running it (see the action source at the pinned commit).
+# Baseline on 2026-09-08: 92/100, one medium finding — this repository's own
+# ktw-lint.yml consuming the linter action on the moving lint-latest tag,
+# which is deliberate (docs/security.md, "What is deliberately not hardened").
+name: HOL scanner
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: hashgraph-online/ai-plugin-scanner-action@55616c962cf86368423f7673b2ecdfdbe613d1af # v1.2.515
+        with:
+          plugin_dir: "."
+          min_score: 80
+          fail_on_severity: high
