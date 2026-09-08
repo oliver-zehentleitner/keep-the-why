@@ -119,9 +119,10 @@ The next session — yours, a colleague's, an agent's — loads the index first 
 <a href="https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/validate-skill.yml"><img src="https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/validate-skill.yml/badge.svg" alt="Validate Skill"></a>
 <a href="https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/ktw-lint.yml"><img src="https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/ktw-lint.yml/badge.svg" alt="ktw-lint"></a>
 <a href="https://skillsllm.com/security-check/IPmNycVdbOyq"><img src="https://skillsllm.com/security-check/badge.svg?owner=oliver-zehentleitner&repo=keep-the-why" alt="Security: SkillsLLM"></a>
+<a href="https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/hol-scanner.yml"><img src="https://github.com/oliver-zehentleitner/keep-the-why/actions/workflows/hol-scanner.yml/badge.svg" alt="HOL scanner"></a>
 </p>
 
-The skill is validated against the Agent Skills spec on every push; this repository's own `context/` is linted by its own linter, in strict mode; the package is scanned by an independent registry.
+The skill is validated against the Agent Skills spec on every push; this repository's own `context/` is linted by its own linter, in strict mode; the package is scanned by two independent registries — one of them, the [HOL AI Plugin Scanner](security.md#what-automated-scanners-report-and-why), on every push in this repository's own CI, gated at score 80 and no high finding.
 { .ktw-caption }
 
 </div>
