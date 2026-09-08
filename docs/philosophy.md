@@ -31,6 +31,8 @@ Every one of those absences is a deliberate choice, not a missing feature:
 
 This isn't minimalism for its own sake. Each thing not built is one less thing that can be down, one less account to manage, one less format only one tool understands, and one less reason the "why" ends up trusted less than the code sitting right next to it.
 
+One tool does exist, and it is the exception that shows where the line is: `keep-the-why-lint` checks the *structure* of what was written — required fields, valid values, a consistent index — in CI after a push, or locally right after the agent wrote an entry. It runs and exits. It holds no state, needs no service, captures nothing, and nothing in the format depends on it; a project that never runs it is a complete Keep the Why project. It exists because the one part of this that *can* be deterministic should be: an agent will get a field name wrong now and then, and "the reasoning is preserved" should not rest on nobody noticing. The why itself still comes from the conversation; the linter only guarantees that what came out of it has the shape a later reader — human or agent — can rely on.
+
 ## What this means for scope
 
 A project's why-knowledge is a narrow enough problem that it doesn't need a platform. Keep the Why is not, and isn't trying to become:
