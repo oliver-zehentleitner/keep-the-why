@@ -10,6 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from ktw_evals.common import fake_home_env  # noqa: E402
 from ktw_evals.workdir import commit_date  # noqa: E402
 
 
@@ -35,3 +36,24 @@ class CommitDate(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class FakeHomeEnv(unittest.TestCase):
+    def test_every_install_location_points_into_the_fake_home(self):
+        env = fake_home_env({"PATH": "/usr/bin", "HOME": "/real/home"}, Path("/fake"))
+        self.assertEqual(env["HOME"], "/fake")
+        for key in (
+            "PIPX_HOME",
+            "PIPX_BIN_DIR",
+            "UV_TOOL_DIR",
+            "UV_TOOL_BIN_DIR",
+            "PYTHONUSERBASE",
+        ):
+            self.assertTrue(env[key].startswith("/fake/"), key)
+        self.assertTrue(env["PATH"].startswith("/fake/.local/bin:"))
+        self.assertIn("/usr/bin", env["PATH"])
+
+    def test_bin_dirs_agree_with_path(self):
+        env = fake_home_env({}, Path("/fake"))
+        self.assertEqual(env["PIPX_BIN_DIR"], env["UV_TOOL_BIN_DIR"])
+        self.assertEqual(env["PATH"], env["PIPX_BIN_DIR"] + ":")

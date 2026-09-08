@@ -9,6 +9,7 @@ import tempfile
 from pathlib import Path
 
 from ..common import MAX_TOOL_RESULT_CHARS, MAX_TRANSCRIPT_CHARS, _cap
+from ..common import fake_home_env
 
 
 def run_agent_cline(prompt, cwd, model, timeout, disallowed_tools=None, home=None):
@@ -64,7 +65,7 @@ def run_agent_cline(prompt, cwd, model, timeout, disallowed_tools=None, home=Non
         )
     env = dict(os.environ)
     if home is not None:
-        env["HOME"] = str(home)
+        fake_home_env(env, home)
     try:
         proc = subprocess.run(
             cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout

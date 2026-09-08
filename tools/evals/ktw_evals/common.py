@@ -59,3 +59,23 @@ def skill_version():
     return re.search(r'version: "([^"]+)"', (SKILL_DIR / "SKILL.md").read_text()).group(
         1
     )
+
+
+def fake_home_env(env, home):
+    """Point everything that would write to the operator's home at the fake
+    one — not only $HOME. pipx, uv and pip's --user mode each locate their
+    install and bin directories through their own variables (or through
+    platformdirs, which ignores an overridden HOME on some platforms), so a
+    session that installs a tool would otherwise leak it into the real
+    ~/.local and every later session would find it there. The fake home's
+    bin directory goes first on PATH so a tool the agent installs during the
+    run is found by the same session, the way a user's ~/.local/bin is."""
+    home = str(home)
+    env["HOME"] = home
+    env["PIPX_HOME"] = f"{home}/.local/share/pipx"
+    env["PIPX_BIN_DIR"] = f"{home}/.local/bin"
+    env["UV_TOOL_DIR"] = f"{home}/.local/share/uv/tools"
+    env["UV_TOOL_BIN_DIR"] = f"{home}/.local/bin"
+    env["PYTHONUSERBASE"] = f"{home}/.local"
+    env["PATH"] = f"{home}/.local/bin:" + env.get("PATH", "")
+    return env

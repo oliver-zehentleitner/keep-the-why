@@ -255,6 +255,18 @@ def collect_diff(workdir, home=None):
                     f"# ~/.keep-the-why/{rel} (personal config, outside the project; "
                     f"seeded by the fixture, DELETED by the agent during the run)"
                 )
+        # Tools the agent installed during the run land under the fake
+        # home's .local/bin (pipx, uv and pip --user are all pointed there,
+        # see common.fake_home_env) — the judge should see that an install
+        # happened, and which, without reading the transcript for it.
+        bin_dir = home / ".local" / "bin"
+        if bin_dir.is_dir():
+            installed = sorted(p.name for p in bin_dir.iterdir())
+            if installed:
+                parts.append(
+                    "# ~/.local/bin — executables installed by the agent during the run "
+                    "(the fake home starts without any): " + ", ".join(installed)
+                )
     text = "\n\n".join(parts)
     if len(text) > MAX_DIFF_CHARS:
         text = text[:MAX_DIFF_CHARS] + "\n…(diff truncated)"

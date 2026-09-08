@@ -299,6 +299,18 @@ its contents the same way it sees new project files: `collect_diff` appends a
 snapshot of everything under the fake `$HOME`'s `.keep-the-why/` alongside the
 project's own `git status`/`git diff` output.
 
+The fake `$HOME` also fences tool installs. Since 0.14.0 the skill installs
+`keep-the-why-lint` itself when a developer's `local-lint` setting says so,
+and `pipx`, `uv tool` and `pip --user` each pick their install and bin
+directories through their own variables rather than `$HOME` alone — so every
+driver is launched with `PIPX_HOME`, `PIPX_BIN_DIR`, `UV_TOOL_DIR`,
+`UV_TOOL_BIN_DIR` and `PYTHONUSERBASE` under the fake home, and the fake
+home's `.local/bin` first on `PATH` (`common.fake_home_env`). What a session
+installs stays in its own throwaway home and is listed for the judge; the
+next session starts without it. Before this, the `auto` case's install went
+to the operator's real `~/.local` and every later session found the linter
+already present.
+
 Six cases intentionally have no fixture directory and run on `_base` as-is;
 their prompts carry the whole scenario.
 
