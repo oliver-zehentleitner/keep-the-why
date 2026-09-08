@@ -4,10 +4,16 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.14.1] - 2026-09-08
+
 ### Fixed
 
 - The local-linting rule says three things it only implied, each caught by one eval case in the 0.14.0 release measurement (#321): `ask` gates the install and the update, never the run — an agent had asked permission to run a linter that was already at version; a value the linter rejects is resolved toward the weaker `Evidence` level or asked, never upgraded to make the line valid — an agent had collapsed `confirmed (…); unknown (…)` to `confirmed` after `E103`; and a finding the setup check owns is the setup check's job whichever file it names — `E002` for a field with a documented default is step 0's silent backfill, not "pre-existing", after an agent had left a missing `capture-confirmation` in place because `.keep-the-why` was "not written this session". "Local linting" in `setup.md`, step 5 in `SKILL.md`.
 - Evals: the fake `$HOME` fences tool installs (#322). `pipx`, `uv tool` and `pip --user` locate their install and bin directories through their own variables, not `$HOME` alone, so the `local-lint: auto` case's session installed `keep-the-why-lint` into the operator's real `~/.local` and every later session in the 0.14.0 measurement found the linter already present. Every driver now launches with `PIPX_HOME`, `PIPX_BIN_DIR`, `UV_TOOL_DIR`, `UV_TOOL_BIN_DIR` and `PYTHONUSERBASE` under the fake home and its `.local/bin` first on `PATH` (`common.fake_home_env`); `collect_diff` lists what a session installed, so the judge sees it without reading the transcript. Two tests; the evals README says so.
+
+### Changed
+
+- `keep-the-why-lint` 0.14.1.0: knows schema 0.14.1 — no new gate, nothing changes what `context/` or `.keep-the-why` must look like. Published before the skill tag, per the checklist.
 
 ## [0.14.0] - 2026-09-08
 
@@ -601,7 +607,8 @@ Initial release.
 - Logo, wordmark, and favicon.
 - `context/repo-conventions.md`, dogfooding the skill on its own repository from day one.
 
-[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.14.0...HEAD
+[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.14.1...HEAD
+[0.14.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.14.0...v0.14.1
 [0.14.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.13.3...v0.14.0
 [0.13.3]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.13.2...v0.13.3
 [0.13.2]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.13.1...v0.13.2
