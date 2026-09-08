@@ -4,9 +4,12 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-09-08
+
 ### Changed
 
 - The wizard defaults are the fully integrated setup, and a wizard is one list. Three defaults change, for new setups only: `confirmation-flow` proposes `batch` — each wizard is one message with every question and its default filled in, closed by "set it up like this, or change anything?", so a first setup is two answers, not a dozen, and `sequential` is chosen rather than assumed; `local-lint` proposes `auto` — the question names the install, so the answer, "defaults" included, is the go-ahead and a default setup installs the linter in the same turn; and the activation question defaults to *the project asks* — the "Keep the Why" section in the entry-point file, plus the project-scoped hook where `autostart.md` has a verified example for the current platform. The maintainer's line: the skill should work as automatically as it can, that is when it works best, and whoever wants less takes care of that. Deliberately unchanged: `capture-confirmation` stays `confirm-when-unsure`, `pending-confirmation-check` stays `no`, no `personal-defaults` block unless asked for. Existing files keep their values, and the absent-field rules stand — `confirmation-flow` absent is asked once, `local-lint` absent is `ask`, never `auto` (a skill update never installs a package on an existing machine on its own); the spec's Default column now says both. Both wizards and the "Both wizards" paragraph in `setup.md`, step 0 in `SKILL.md`, the field table in `specification.md`, a 0.15.0 `migrations.md` entry (informational), `docs/security.md` ("the wizard's answer is the yes"), README and `llms.txt`, the first-time-setup example rewritten as two lists with the section and hook written in step 7, the decision in `context/config-format.md`. Evals: `wizard-bundling-is-not-the-silent-default` replaced by `wizard-defaults-one-list-per-wizard` (two lists, project first, nothing written before the answer, never one merged list); `init-wizard-first-activation` and `negative-existing-good-structure-untouched` expect one list per wizard; `confirmation-flow-missing-field-asks-once` names `batch` as the default it must not backfill.
+- `keep-the-why-lint` 0.15.0.0: knows schema 0.15.0 — no new gate, nothing changes what `context/` or `.keep-the-why` must look like. Published before the skill tag, per the checklist.
 
 ## [0.14.1] - 2026-09-08
 
@@ -611,7 +614,8 @@ Initial release.
 - Logo, wordmark, and favicon.
 - `context/repo-conventions.md`, dogfooding the skill on its own repository from day one.
 
-[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.14.1...HEAD
+[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.15.0...HEAD
+[0.15.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.14.1...v0.15.0
 [0.14.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.14.0...v0.14.1
 [0.14.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.13.3...v0.14.0
 [0.13.3]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.13.2...v0.13.3
