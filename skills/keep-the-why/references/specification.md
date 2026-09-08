@@ -84,6 +84,7 @@ The values a project offers to a developer who has no personal file for it yet. 
 | `update-check` | `every <N> days` \| `no` |
 | `consistency-check` | `every <N> days` \| `no` |
 | `pending-confirmation-check` | `on-start` \| `no` |
+| `local-lint` | `auto` \| `ask` \| `no` |
 
 ## 4. `~/.keep-the-why/<id>.md` — `keep-the-why:personal`
 
@@ -96,6 +97,7 @@ One file per project per developer per machine, `<id>` being the project's `id`.
 | `update-check` | `every <N> days — last: <YYYY-MM-DD>[ — on-failure: retry-quietly \| disabled]` \| `no` | asked by the wizard | the release check and when it last completed |
 | `consistency-check` | `every <N> days — last: <YYYY-MM-DD>` \| `no` | asked by the wizard | the `Revisit when` sweep and when it last ran |
 | `pending-confirmation-check` | `on-start` \| `no` | `no` | list entries with `Status: pending-confirmation` at session start; silent when there are none |
+| `local-lint` | `auto` \| `ask` \| `no` | `no` | run `keep-the-why-lint` after every write to the context location and after a settings change (`--setup`); the linter's version must be at least the skill's — `auto` installs or updates it from PyPI unasked, `ask` asks first |
 | `session` | `attended` \| `unattended` | inherits §5, else `attended` | for this project, whether someone is present to answer; overrides the machine-wide value |
 | `migration-prompt` | `<X.Y.Z> declined` | absent | this developer declined the migration prompt for exactly that target version; one line per version |
 | `source` | `project defaults (confirmed <YYYY-MM-DD>)` \| `project defaults (accepted automatically)` | absent | the values came from the project's `personal-defaults` block |

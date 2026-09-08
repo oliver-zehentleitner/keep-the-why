@@ -153,7 +153,8 @@ First activation in a project runs a one-time setup: a project wizard (where `co
 starting mode, README badge, `capture-confirmation`, `source-reference`, and whether to wire
 the structural linter into CI — GitHub Actions or GitLab CI, detected from the repository) and a separate
 personal wizard (proactive vs. explicit-only capture, `confirmation-flow`,
-update-check/consistency-check intervals) — see https://keepthewhy.com/setup/. When a later
+update-check/consistency-check intervals, and `local-lint` — whether the agent runs the linter
+locally on what it writes, installing it from PyPI unasked or asked first) — see https://keepthewhy.com/setup/. When a later
 skill update requires action from an existing project — a `context/` entry-format change, a
 structural convention (like `context/index.md`'s sort order), a new config default, or a
 storage-location change (like config moving into a dedicated `.keep-the-why` file) — a

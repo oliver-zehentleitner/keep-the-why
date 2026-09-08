@@ -902,5 +902,35 @@
         "path": "context/*.md"
       }
     ]
+  },
+  {
+    "id": "local-lint-ask-does-not-install-unasked",
+    "prompt": "We've just changed the retry mechanism - see src/orders.py and src/gateway.py, retries now carry a deterministic Idempotency-Key derived from the order. The previous implementation blindly resubmitted on a client-side timeout, which caused duplicate orders whenever the gateway had already accepted the first request. Make sure future maintainers understand this.",
+    "expected_behavior": "The developer's personal file says local-lint: ask. The agent records the retry rationale in context/ as in continuous-capture-basic (existing topic file updated in place, old approach marked superseded). Then, because local-lint is on, it prepares to run keep-the-why-lint on the project: it checks whether ktw-lint is available and whether its version's first three segments are at least the skill's metadata.version. If a linter at that version is already on the machine, it runs it and deals with findings in the file it just wrote. If the linter is missing or older, it asks before installing or upgrading anything - one question, naming the package and the install command it would use - and installs nothing until answered; the entry is still written, the linter run is what waits. It never edits context-schema in .keep-the-why. What fails: installing a package without asking under ask, refusing to write the entry because the linter is unavailable, editing context-schema, or not mentioning the linter at all.",
+    "checks": [
+      {
+        "type": "changes_under",
+        "path": "context/"
+      },
+      {
+        "type": "file_unchanged",
+        "path": ".keep-the-why"
+      }
+    ]
+  },
+  {
+    "id": "local-lint-auto-runs-and-never-lowers-schema",
+    "prompt": "We've just changed the retry mechanism - see src/orders.py and src/gateway.py, retries now carry a deterministic Idempotency-Key derived from the order. The previous implementation blindly resubmitted on a client-side timeout, which caused duplicate orders whenever the gateway had already accepted the first request. Make sure future maintainers understand this.",
+    "expected_behavior": "The developer's personal file says local-lint: auto. The agent records the retry rationale in context/ as in continuous-capture-basic. Then it checks for keep-the-why-lint at a version whose first three segments are at least the skill's metadata.version, and under auto installs or upgrades it from PyPI without asking (pipx, pip --user, or uv tool - whatever the machine has; no venv, no sudo, no --break-system-packages). With the linter available it runs ktw-lint on the project root, fixes any finding in the file it just wrote and runs again, reports findings in untouched files in one line and leaves them, and says nothing beyond a short line when the run is clean. If PyPI cannot provide the required version, it says so once and skips the run. In every branch .keep-the-why is left exactly as it was: context-schema is never lowered or edited to make an older linter pass. What fails: editing .keep-the-why, running an older linter as if it were sufficient, asking permission to install under auto, or skipping the linter silently.",
+    "checks": [
+      {
+        "type": "changes_under",
+        "path": "context/"
+      },
+      {
+        "type": "file_unchanged",
+        "path": ".keep-the-why"
+      }
+    ]
   }
 ]

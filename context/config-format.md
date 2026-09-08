@@ -182,3 +182,22 @@ New project setting `source-reference` (`always` / `never` / `filtered: <criteri
 **Rejected alternative (the `filtered` mechanism specifically):** a fixed taxonomy of filter categories (by topic file, by Status, by severity) defined by the skill. Rejected in favor of free text the project defines itself — a fixed taxonomy would be guessing at categories before there's real usage to learn from, the same reasoning already applied to keeping `capture-confirmation` project-wide-only for now (see above).
 
 **Consequence:** `always` (or a matching `filtered` criterion) means asking is mandatory, but a reference existing is not — "no, nothing tracks this" is a complete, valid answer. Inventing a plausible-sounding ticket reference to avoid an empty field would violate rule 1 exactly like inventing rationale would. No personal override in this release, same "test one setting before adding a second axis" precedent as `capture-confirmation`.
+
+## `local-lint` is a personal setting with default `no`, and the linter is brought up to the skill, never the reverse
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer design discussion, 2026-09-08 (two runs with two audiences, the version floor, "lowering the schema is out of the question" and "the wizard installs it, with an OK" were all maintainer calls)
+**Revisit when:** the linter is bundled with the skill or runs without an install step, or a project-level "everyone here lints locally" requirement turns out to be wanted
+
+The setting that makes the skill run `keep-the-why-lint` after its own writes lives in `~/.keep-the-why/<id>.md` (`local-lint: auto | ask | no`), is asked by the personal wizard, defaults to `no`, and can be suggested by a project through `personal-defaults`. The linter's first three version segments must be at least the skill's `metadata.version`; the skill installs or updates the linter to get there (unasked under `auto`, asked under `ask`), and never edits `context-schema` or its own version to meet an older linter.
+
+**Reason:** the CI run and the local run answer different questions. CI checks everyone's entries after the push, so `context/` never receives a malformed entry from anyone; the local run checks what this developer wrote before it is committed, and can see the two home files CI cannot. Whether a tool gets installed and run on a machine is that developer's call, which puts the setting in the personal file rather than `.keep-the-why`. `no` is the default because the wizard's one-word "defaults" fast path must not install a package. The floor points the one direction because the schema records which format the project *is* on — moving it to satisfy a tool would falsify that record, while upgrading the tool costs nothing.
+
+**Rejected alternative:** run the linter whenever it happens to be on the path, no setting. Rejected because "installed" is not consent to run after every write, and the update step — the part that needs an install — would then have no policy at all.
+
+**Rejected alternative:** a project-level `local-lint` in `.keep-the-why`, so a team can require it. Rejected for now: a committed file cannot install anything on a developer's machine, so the requirement would be a request in disguise; `personal-defaults` carries the suggestion, which is what a committed file can honestly do.
+
+**Rejected alternative:** run the older linter anyway when the required version is not on PyPI, with a note. Rejected because a linter below the skill's version doesn't know the gates the skill just wrote to, so its "clean" would be no information — saying once that the check is unavailable is more honest than a green line that checks less than it looks.
+

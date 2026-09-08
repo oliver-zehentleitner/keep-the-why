@@ -65,6 +65,8 @@ It is the local counterpart to the CI run, for the agent or a person to verify a
 
 Opt-in on purpose. The default run never leaves the checkout — that is what makes it safe on pull requests from strangers — and a CI runner has no home files worth reading. The GitHub Action never passes the flag.
 
+The skill runs both forms itself when a developer's personal `local-lint` setting says so — after every write to `context/`, and with `--setup` after a settings change — installing or updating the linter first, since its version must be at least the skill's. That is the personal wizard's fifth question; the rule is "Local linting" in [setup](setup.md).
+
 ## Hardening for shared repositories
 
 The linter checks structure. In a repository with many contributors, a few conventional GitHub settings turn it from a hint into a gate, and cover what it deliberately doesn't check:

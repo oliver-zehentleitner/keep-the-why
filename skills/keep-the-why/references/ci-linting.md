@@ -79,8 +79,13 @@ repos:
 pip install keep-the-why-lint
 ktw-lint .            # exit 0 clean, 1 findings, 2 usage error
 ktw-lint . --strict   # warnings fail too
+ktw-lint . --setup    # locally only: also ~/.keep-the-why/<id>.md and ~/.keep-the-why/config
 ```
 <!-- snippets:end -->
+
+## The local run is a different setting
+
+CI checks everyone's entries after the push, on a runner with no home files. The same linter run locally, after each write and — with `--setup` — over the developer's own two home files, is the personal `local-lint` setting: asked by the personal wizard, not the project one, because installing and running a tool is a per-developer, per-machine choice. Everything about it — when it runs, the version floor, how it gets installed, what to do with findings — is "Local linting" in `setup.md`.
 
 ## Adding it to an existing project later
 
