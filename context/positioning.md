@@ -30,6 +30,17 @@ README's and `llms.txt`'s "Related work" don't compare Keep the Why against spec
 
 **Rejected alternative:** a raw `index.html` in `docs/`. Full layout freedom, but it would have to rebuild the header, search, palette toggle and footer itself, and the include mechanism wouldn't reach into it — the facts would be typed in by hand. Also rejected: a custom Jinja page template (`template:` front matter) — real HTML inside the site chrome, but a second place where layout lives, for a gain (a wider column) the page doesn't need.
 
+## The project's own `context/` is published on the site through one-line include stubs
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** how the "Why this project is built this way" nav section has been built since the site exists; the gap noted by Oliver on 2026-09-08 ("are all context files under 'Why this project is built this way'?" — they weren't)
+
+Every topic file in `context/` gets a stub at `docs/context/<name>.md` holding a single `include-markdown` line, and a line in the nav section "Why this project is built this way" in `mkdocs.yml`. The stub is the only way a `context/` file reaches the site — MkDocs only builds what lives under `docs/`, and copying the file would create a second place to edit.
+
+**Consequence:** a new topic file is not on the site until someone adds its stub and nav line; nothing checks this. `lint.md` (2026-09-02) and `evals.md` (2026-09-05) were both missed for days and added on 2026-09-08. When adding a topic file, add the stub and the nav line in the same change.
+
 ## The format has a normative specification file, separate from the guidance that shows it in use
 
 **Type:** decision

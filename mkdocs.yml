@@ -87,3 +87,5 @@ nav:
       - Entry and layout format: context/entry-format.md
       - Positioning: context/positioning.md
       - Compatibility: context/compatibility.md
+      - Linter: context/lint.md
+      - Eval runner and suite: context/evals.md
