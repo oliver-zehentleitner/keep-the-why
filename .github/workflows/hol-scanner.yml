@@ -6,9 +6,12 @@
 # read-only token, checkout credentials not persisted. The action installs a
 # fixed scanner release from PyPI and verifies the wheel's SHA-256 and PyPI
 # provenance before running it (see the action source at the pinned commit).
-# Baseline on 2026-09-08: 92/100, one medium finding — this repository's own
-# ktw-lint.yml consuming the linter action on the moving lint-latest tag,
-# which is deliberate (docs/security.md, "What is deliberately not hardened").
+# Baseline on 2026-09-08 (plugin-scanner 3.0.133): 92/100, one medium finding —
+# this repository's own ktw-lint.yml consuming the linter action on the moving
+# lint-latest tag, which is deliberate (docs/security.md, "What is deliberately
+# not hardened"). The action release the SCANNER_GUIDE shows (v1.2.515) bundles
+# scanner 2.0.1116, whose secret heuristic flags the eval case id
+# `local-lint-ask-does-not-install-unasked` as a token — pin a current release.
 name: HOL scanner
 
 on:
@@ -26,7 +29,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: hashgraph-online/ai-plugin-scanner-action@55616c962cf86368423f7673b2ecdfdbe613d1af # v1.2.515
+      - uses: hashgraph-online/ai-plugin-scanner-action@2e7c7f30e146faff923812fadcc6d957d3a62c42 # v1.2.643 (plugin-scanner 3.0.133)
         with:
           plugin_dir: "."
           min_score: 80
