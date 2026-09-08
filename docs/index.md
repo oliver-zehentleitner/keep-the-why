@@ -67,7 +67,7 @@ Decisions that shipped, alternatives that lost, workarounds, constraints — Kee
 
 ### Capture
 
-The agent notices rationale as it surfaces — a decision, an alternative that lost, a workaround, a change that was started and abandoned — and writes it down. No separate documentation step. An existing repository can start late too, within limits — history, issues and code give back only part of the why.
+The agent notices rationale as it surfaces — a decision, an alternative that lost, a workaround, a change that was started and abandoned — and writes it down. No separate documentation step. An existing repository can start late too. History, issues and code give back only part of the past why — but from that point on every reason is written down once, never again, and the gaps that matter close over time.
 
 [Continuous capture →](continuous-capture.md) · [Retrospective →](retrospective-analysis.md)
 
@@ -75,21 +75,21 @@ The agent notices rationale as it surfaces — a decision, an alternative that l
 
 <div class="ktw-card" markdown>
 
-### Keep
+### Check
 
-Everything lives in `context/`, one file per topic, versioned with the code. A lean index tells an agent what to load. No daemon, no database, no service — anything that can read a repository can read it.
+`keep-the-why-lint` validates the structure — locally and in CI — required fields, valid values, index consistency, plus security checks such as hidden Unicode and others. It says plainly what it cannot check: whether a recorded reason is true. That part stays with review, in the same pull request as the code.
 
-[Repository structure →](repository-structure.md) · [Philosophy →](philosophy.md)
+[Linting →](linting.md) · [GitHub Marketplace](https://github.com/marketplace/actions/keep-the-why-lint) · [PyPI](https://pypi.org/project/keep-the-why-lint/) · [Security →](security.md)
 
 </div>
 
 <div class="ktw-card" markdown>
 
-### Check
+### Keep & Share
 
-`keep-the-why-lint` validates the structure in CI — required fields, valid values, index consistency — plus security checks such as hidden Unicode and others. It says plainly what it cannot check: whether a recorded reason is true. That part stays with review.
+Everything lives in `context/`, one file per topic, versioned with the code. A lean index tells an agent what to load. No daemon, no database, no service — anything that can read a repository can read it. Once merged, the why sits in the history under the same review, permissions and CI as the code. That layer — GitHub — is what turns a local file into shared knowledge.
 
-[Linting →](linting.md) · [GitHub Marketplace](https://github.com/marketplace/actions/keep-the-why-lint) · [PyPI](https://pypi.org/project/keep-the-why-lint/) · [Security →](security.md)
+[Repository structure →](repository-structure.md) · [Philosophy →](philosophy.md)
 
 </div>
 
