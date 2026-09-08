@@ -203,3 +203,21 @@ The setting that makes the skill run `keep-the-why-lint` after its own writes li
 
 **Rejected alternative:** run the older linter anyway when the required version is not on PyPI, with a note. Rejected because a linter below the skill's version doesn't know the gates the skill just wrote to, so its "clean" would be no information — saying once that the check is unavailable is more honest than a green line that checks less than it looks.
 
+## Wizard defaults are the fully integrated values; a default is what a new setup gets, not what an absent field means
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer design discussion, 2026-09-08 — "the skill should work as automatically as it can, that is when it works best; whoever wants otherwise takes care of it"; the list of what stays was the maintainer's correction of a broader first draft
+**Revisit when:** a default setup turns out to surprise people in the measurement (a wizard answered "defaults" and then complained about), or a fourth setting joins the three
+
+Three wizard defaults are the values on which the skill is fully integrated: `confirmation-flow: batch` (each wizard is one list with the defaults filled in, one answer), `local-lint: auto` (the question names the install; "defaults" is the go-ahead), and activation by *the project asks* (entry-point section always, hook where verified). Three that could have followed deliberately do not: `capture-confirmation` stays `confirm-when-unsure`, `pending-confirmation-check` stays `no`, and no `personal-defaults` block is written unless asked for. A wizard default applies to a new setup only; an existing file keeps its values, and a line that is absent follows its own rule — `confirmation-flow` absent is asked once, `local-lint` absent means `ask`.
+
+**Reason:** the one-word "defaults" answer should produce a setup that works without anyone opting into anything — that is the setup on which the skill does its job best, and the maintainer's call is that people who want less should be the ones who act. `batch` follows from the same idea: a first setup as one list is two answers, and a developer who prefers one question at a time still gets that by saying so. The line between wizard default and absent-field rule is what keeps the change from reaching machines that never answered the question: a skill update that turned an absent `local-lint` into `auto` would install a package on every existing developer's machine, which is not a default, it is an action nobody consented to.
+
+**Rejected alternative:** a second preset next to "defaults" — "full integration" as a third answer at the wizard's start, with the conservative values staying the defaults. Rejected by the maintainer: two named bundles are a choice most people would not want to make, and a default that is not the recommended setup is a default in name only.
+
+**Rejected alternative:** `capture-confirmation: automatic` as the default, for the same automation argument. Rejected by the maintainer on second look: `confirm-when-unsure` is the right bar — writing without asking is not more integration, it is less judgment, and the setting is project-wide, so one developer's "defaults" would set it for the team.
+
+**Rejected alternative:** `pending-confirmation-check: on-start` and a `personal-defaults` block by default. Rejected because both add output or committed content that a project may not want: a check line at session start where nothing is pending is noise, and a defaults block in `.keep-the-why` is a statement to future developers a first-time setup should not make on its own.
+

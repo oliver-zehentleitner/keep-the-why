@@ -154,7 +154,10 @@ starting mode, README badge, `capture-confirmation`, `source-reference`, and whe
 the structural linter into CI — GitHub Actions or GitLab CI, detected from the repository) and a separate
 personal wizard (proactive vs. explicit-only capture, `confirmation-flow`,
 update-check/consistency-check intervals, and `local-lint` — whether the agent runs the linter
-locally on what it writes, installing it from PyPI unasked or asked first) — see https://keepthewhy.com/setup/. When a later
+locally on what it writes, installing it from PyPI unasked or asked first). Each wizard is one
+list with the defaults filled in (`confirmation-flow: batch` is the default), and the defaults
+are the fully integrated setup: proactive capture, `local-lint: auto`, the project asks for the
+skill at session start — see https://keepthewhy.com/setup/. When a later
 skill update requires action from an existing project — a `context/` entry-format change, a
 structural convention (like `context/index.md`'s sort order), a new config default, or a
 storage-location change (like config moving into a dedicated `.keep-the-why` file) — a
@@ -227,7 +230,7 @@ Marketplace as keep-the-why-lint (https://github.com/marketplace/actions/keep-th
 linter; `@lint-v<version>` or a commit SHA pins action and linter together, the `version:`
 input is only for mixing the two; anywhere else: `pip install keep-the-why-lint && ktw-lint .`.
 `ktw-lint . --setup` (local only) also checks the developer's `~/.keep-the-why/<id>.md` and
-`~/.keep-the-why/config`. The personal setting `local-lint: auto | ask | no` (default `ask`) makes the
+`~/.keep-the-why/config`. The personal setting `local-lint: auto | ask | no` (the wizard proposes `auto`; `ask` when the line is absent) makes the
 skill run it after every write and install or update it from PyPI — `ask` never without a yes; the
 linter's version must be at least the skill's, `context-schema` is never lowered to fit an older
 linter. Usage, GitLab/pre-commit snippets, and every finding code: https://keepthewhy.com/linting/

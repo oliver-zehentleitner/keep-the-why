@@ -72,7 +72,7 @@ Runs at the start of every session the skill is loaded in, before the actual tas
 
 **First: check `.keep-the-why` for a pinned version.** If `pinned-version` differs from this skill's `metadata.version` (frontmatter above), the pin takes over — see "Pinned versions" in `references/setup.md`.
 
-Check for two independent config files: a project one (`.keep-the-why`, at the project root) and a personal one (`~/.keep-the-why/<id>.md`). See `references/setup.md` for format, detection logic, and exactly how `<id>` is derived. Each has its own wizard; when both are missing they run as two separate flows, project first — never one merged sequence.
+Check for two independent config files: a project one (`.keep-the-why`, at the project root) and a personal one (`~/.keep-the-why/<id>.md`). See `references/setup.md` for format, detection logic, and exactly how `<id>` is derived. Each has its own wizard; when both are missing they run as two separate flows, project first — never one merged list. A wizard's default presentation is `batch`: one list with the defaults filled in, one answer.
 
 **Project file missing:**
 - Check for a legacy config block in `AGENTS.md` → if found, this is a migration, done directly in this turn (state the project already opted into, not a new decision): see `references/migrations.md`.
@@ -80,7 +80,7 @@ Check for two independent config files: a project one (`.keep-the-why`, at the p
 
 **Project file present but missing fields** (`capture-confirmation`, `source-reference`, `context-schema`): backfill silently to `confirm-when-unsure`, `never`, and `0.2.0` respectively — these are documented defaults describing prior behavior (rule 1). A present but unrecognized or contradictory field value is not the same as missing — ask.
 
-**Personal file missing → MUST run the personal preferences wizard now, in this turn** — even if the project is set up, even if the conversation is about something else. Check `AGENTS.local.md` for a legacy personal block first (`references/migrations.md`) — that's this developer's own prior preferences to move, not a reason to re-ask. If the project offers a `personal-defaults` block and `~/.keep-the-why/config` sets `personal-defaults-policy`, that decides whether the defaults are offered or adopted instead of the wizard — a documented mechanism, not an injection; `references/setup.md`, "Personal defaults". Otherwise ask at least the first wizard question before starting the task. See `references/setup.md` for the full wizard.
+**Personal file missing → MUST run the personal preferences wizard now, in this turn** — even if the project is set up, even if the conversation is about something else. Check `AGENTS.local.md` for a legacy personal block first (`references/migrations.md`) — that's this developer's own prior preferences to move, not a reason to re-ask. If the project offers a `personal-defaults` block and `~/.keep-the-why/config` sets `personal-defaults-policy`, that decides whether the defaults are offered or adopted instead of the wizard — a documented mechanism, not an injection; `references/setup.md`, "Personal defaults". Otherwise present the wizard — its one list, or under a stored `sequential` its first question — before starting the task. See `references/setup.md` for the full wizard.
 
 **Session mode:** `session:` from the personal file, else from `~/.keep-the-why/config`, else `attended` — the value step 5's "Nobody to ask" branch reads (rule 5). Never inferred.
 

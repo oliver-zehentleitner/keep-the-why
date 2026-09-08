@@ -99,7 +99,7 @@
   {
     "id": "negative-existing-good-structure-untouched",
     "prompt": "This project already has a well-organized docs/decisions/ folder with clear, current entries. Set up Keep the Why here and apply it to what's already there. For my personal preferences, just use the defaults - proactive capture, questions one at a time, the usual check intervals.",
-    "expected_behavior": "An explicit setup request on a project that has never opted in, so the project init wizard runs; the personal preferences wizard is already answered by 'just use the defaults' (the documented fast path), so it isn't asked question by question. Before or while asking the project wizard's first question (where should the why-knowledge live?), the agent looks at what is already there and, per 'Retrofitting an existing project' in references/repository-structure.md, treats the existing docs/decisions/ folder as the natural home rather than assuming a new context/: it proposes keeping or building on docs/decisions/ (e.g. as the context location) instead of creating a parallel context/ folder or moving/rewriting the existing decision records. Does not replace, restructure, rename, or reformat anything under docs/decisions/ to match this skill's template. 'Just use the defaults' for the personal preferences implies confirmation-flow: sequential, so the project wizard's questions come one at a time. The correct stopping point in a non-interactive session is a single wizard question: either the location question with docs/decisions/ named as the proposed answer, or - if the agent reads 'apply it to what's already there' as already settling the location on docs/decisions/ and says so - the wizard's next question. Asking several project-wizard questions in one message fails; offering the documented defaults fast path for the remaining questions ('say defaults and I'll proceed') alongside the one question actually asked is fine - setup.md asks for exactly that offer. Presenting a retro-tagging of the existing records with this skill's Type/Status/Evidence fields as the plan fails; offering it as an explicit opt-in choice next to 'keep them exactly as they are' (named first, as the recommended option) is acceptable - the person decides, nothing is touched. Silently creating context/ next to docs/decisions/, or running the whole project wizard with default answers without asking, fails.",
+    "expected_behavior": "An explicit setup request on a project that has never opted in, so the project init wizard runs; the personal preferences wizard is already answered by 'just use the defaults' (the documented fast path), so it isn't asked question by question. Before or while presenting the project wizard, the agent looks at what is already there and, per 'Retrofitting an existing project' in references/repository-structure.md, treats the existing docs/decisions/ folder as the natural home rather than assuming a new context/: the wizard's location item proposes keeping or building on docs/decisions/ (e.g. as the context location) instead of creating a parallel context/ folder or moving/rewriting the existing decision records. Does not replace, restructure, rename, or reformat anything under docs/decisions/ to match this skill's template. 'Just use the defaults' for the personal preferences implies confirmation-flow: batch, so the project wizard is one list with every item and its default filled in, docs/decisions/ named as the proposed location, closed by 'set it up like this, or change anything?' - and the correct stopping point in a non-interactive session is that list: nothing written, nothing created, the turn ends on the question. Presenting a retro-tagging of the existing records with this skill's Type/Status/Evidence fields as the plan fails; offering it as an explicit opt-in choice next to 'keep them exactly as they are' (named first, as the recommended option) is acceptable - the person decides, nothing is touched. Silently creating context/ next to docs/decisions/, running the whole project wizard with default answers without asking, or writing any file before the answer, fails.",
     "checks": [
       {
         "type": "file_absent",
@@ -138,7 +138,7 @@
   {
     "id": "init-wizard-first-activation",
     "prompt": "Set up Keep the Why in this project, please.",
-    "expected_behavior": "Does not silently create context/ or start capturing without asking. Detects the absence of both the project config block and the personal config block, and runs both wizards separately: project wizard asks where why-knowledge should live, how to start (fresh / retrospective / interview), whether to add the README badge, and how much confirmation is needed before writing to context/ (capture-confirmation); personal wizard asks capture-mode preference, how multiple pending confirmations and wizard questions should be presented (confirmation-flow: sequential or batch), update-check/consistency-check intervals, and local-lint (auto / ask / no, default ask - whether the agent runs keep-the-why-lint locally on what it writes; under ask, installing the linter is its own yes/no question, under auto the answer itself is the go-ahead). Since this developer has no stored confirmation-flow yet, both wizards present their own questions one at a time (sequential, confirmation-flow's own default) rather than bundling them into one message - it waits for an answer before asking the next question. Offers defaults as a fast path (a single word can cover one question or everything remaining) rather than demanding a fully custom answer to each. Writes the project block (including capture-confirmation) to .keep-the-why and the personal block (including confirmation-flow) to ~/.keep-the-why/<id>.md, not mixed into one block. Since context/ is being created fresh (not adopted), also adds a short README.md inside it explaining what the folder is.",
+    "expected_behavior": "Does not silently create context/ or start capturing without asking. Detects the absence of both the project config block and the personal config block, and runs both wizards separately: project wizard covers where why-knowledge should live, how to start (fresh / retrospective / interview), whether to add the README badge, how much confirmation is needed before writing to context/ (capture-confirmation), source-reference, personal-defaults, CI linting, and how the skill gets loaded in future sessions (default: the project asks); personal wizard covers capture-mode, confirmation-flow, update-check/consistency-check intervals, and local-lint (auto / ask / no, default auto - whether the agent runs keep-the-why-lint locally on what it writes; under auto the answer is itself the go-ahead to install, under ask installing is its own yes/no question). Since this developer has no stored confirmation-flow yet, each wizard is presented as ONE list with every question and its default filled in, closed by one question ('set it up like this, or change anything?') - batch, confirmation-flow's own default - and the turn ends on that question: the project list first, the personal list only after the project answer, never one merged list mixing project and personal settings, and not one question per message unless the developer asks for that. 'Defaults' as a one-word answer covers the whole list. Writes the project block (including capture-confirmation) to .keep-the-why and the personal block (including confirmation-flow) to ~/.keep-the-why/<id>.md, not mixed into one block. Since context/ is being created fresh (not adopted), also adds a short README.md inside it explaining what the folder is. What fails: writing anything before the answer, one question per message, or a single list that mixes the two wizards.",
     "checks": [
       {
         "type": "file_absent",
@@ -664,7 +664,7 @@
   {
     "id": "confirmation-flow-missing-field-asks-once",
     "prompt": "Quick Keep the Why maintenance check on this repo, please.",
-    "expected_behavior": "Does not silently backfill confirmation-flow to sequential just because it's the documented default value - there's no prior behavior for this axis to preserve, unlike capture-confirmation's missing-field case. Asks the one-line question ('one at a time, or as a list?') once, records the answer in ~/.keep-the-why/<id>.md, and doesn't ask again in later sessions."
+    "expected_behavior": "Does not silently backfill confirmation-flow to batch just because it's the wizard's default value - there's no prior behavior for this axis to preserve, unlike capture-confirmation's missing-field case. Asks the one-line question ('as a list, or one at a time?') once, records the answer in ~/.keep-the-why/<id>.md, and doesn't ask again in later sessions."
   },
   {
     "id": "confirmation-flow-invalid-value-asks-not-defaults",
@@ -712,21 +712,6 @@
         "type": "text_present",
         "regex": "capture-confirmation:\\s*confirm-when-unsure\\b",
         "path": ".keep-the-why"
-      }
-    ]
-  },
-  {
-    "id": "wizard-bundling-is-not-the-silent-default",
-    "prompt": "Set up Keep the Why in this project, please.",
-    "expected_behavior": "Presents the wizard's questions one at a time, waiting for an answer before the next, rather than bundling all of them into one message. Bundling (batch-style presentation) is only appropriate once a developer's confirmation-flow is actually known to prefer it - it is not the default behavior for someone with no stored preference, even though earlier versions of the skill always bundled wizard questions unconditionally.",
-    "checks": [
-      {
-        "type": "file_absent",
-        "path": ".keep-the-why"
-      },
-      {
-        "type": "file_absent",
-        "path": "context"
       }
     ]
   },
@@ -930,6 +915,21 @@
       {
         "type": "file_unchanged",
         "path": ".keep-the-why"
+      }
+    ]
+  },
+  {
+    "id": "wizard-defaults-one-list-per-wizard",
+    "prompt": "Set up Keep the Why in this project, please.",
+    "expected_behavior": "First setup on a project that never opted in, from a developer with no stored preference of any kind. Each wizard is presented as one list - every question with its default filled in, closed by one question ('set it up like this, or change anything?') - because batch is confirmation-flow's own default; the turn ends on the project wizard's question, with nothing written. The personal wizard's list comes only after the project answer, as a separate message: the two are never merged into one list, and project settings and personal settings never appear in the same list. Not one question per message either - that is the sequential presentation, which a developer chooses, not what a first setup assumes. The list's defaults are the integrated ones: the project asks for the skill at session start, local-lint auto with the install named. What fails: anything written before the answer, a single list mixing project and personal items, or the questions one at a time.",
+    "checks": [
+      {
+        "type": "file_absent",
+        "path": ".keep-the-why"
+      },
+      {
+        "type": "file_absent",
+        "path": "context"
       }
     ]
   }
