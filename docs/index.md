@@ -87,7 +87,7 @@ The agent notices rationale as it surfaces — a decision, an alternative that l
 
 ### Keep & Share
 
-Everything lives in `context/`, one file per topic, versioned with the code. A lean index tells an agent what to load. No daemon, no database, no service — anything that can read a repository can read it. Once merged, the why sits in the history under the same review, permissions and CI as the code. That layer — GitHub — is what turns a local file into shared knowledge.
+Everything lives in `context/`, one file per topic, versioned with the code. A lean index tells an agent what to load. No daemon, no database, no service — anything that can read a repository can read it. Once merged, the why sits in the history under the same review, permissions and CI as the code. That layer — Git, and a host like GitHub or GitLab — is what turns a local file into shared knowledge.
 
 [Repository structure →](repository-structure.md) · [Philosophy →](philosophy.md)
 
