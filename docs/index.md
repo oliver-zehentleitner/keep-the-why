@@ -33,14 +33,6 @@ Open source under the [MIT license](https://github.com/oliver-zehentleitner/keep
 
 <div class="ktw-section" markdown>
 
-## Description
-
-{% include-markdown "../README.md" start="<!-- ktw-intro:start -->" end="<!-- ktw-intro:end -->" %}
-
-</div>
-
-<div class="ktw-section" markdown>
-
 ## What it leaves behind
 
 <div class="ktw-entry" markdown>
