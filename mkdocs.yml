@@ -1,5 +1,5 @@
 site_name: Keep the Why
-site_description: "Keep the Why is a repo-native convention and agent skill that preserves the reasoning behind a codebase as project memory, kept in the repo — a byproduct of working with your agent, so your agent, and every other agent that works in the repository, understands not just the code but everything around it: why it is the way it is, what was tried and rejected, which constraints the source doesn't show."
+site_description: "Keep the Why: a repo-native convention and agent skill that preserves the reasoning behind a codebase as project memory — Markdown in the repo, versioned and shared by Git, a byproduct of working with your agent — so it stops re-suggesting rejected approaches, gives better answers, speeds up onboarding, and makes legacy projects tractable again."
 site_url: https://keepthewhy.com
 repo_url: https://github.com/oliver-zehentleitner/keep-the-why
 repo_name: oliver-zehentleitner/keep-the-why
