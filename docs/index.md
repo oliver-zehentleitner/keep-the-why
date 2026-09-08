@@ -12,7 +12,7 @@ hide:
 
 <h1 class="ktw-hero__tagline">Keep a Changelog records what changed.<br>Keep the Why preserves why it changed.</h1>
 
-Explaining the same thing to your agent for the seventeenth time, because it's a new session, another harness, another account? Your agent doesn't understand the reasoning behind your code, and can't explain it to you either? It's missing `context/`.
+Explaining the same decision to your agent again. New session, same codebase, no memory of why. The code doesn't carry the reasoning. Neither does the changelog.
 
 Repo-native project memory for humans and coding agents. The reasoning behind a codebase — decisions, rejected alternatives, workarounds, constraints the code alone can't explain — captured as a byproduct of working with your agent and kept as plain Markdown in `context/`, versioned and shared by Git. No database, no daemon, no account.
 
