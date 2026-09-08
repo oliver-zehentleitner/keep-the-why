@@ -139,7 +139,11 @@ This names the skill and its purpose directly — not a task that happens to mat
     >
     > **Agent:** Check `context/` for staleness? [yes, every 30 days]
     >
-    > **User:** defaults on the rest.
+    > **User:** defaults.
+    >
+    > **Agent:** Run `keep-the-why-lint` locally on what you write, before it's committed? `auto` installs and updates it from PyPI without asking, `ask` asks first, `no` leaves it to CI. [no]
+    >
+    > **User:** ask.
 
 8. `~/.keep-the-why/<id>.md` doesn't exist yet on this machine — creates `~/.keep-the-why/` if needed, then writes the personal config file, no `.gitignore` entry needed since it lives outside the project entirely:
 
@@ -149,14 +153,17 @@ This names the skill and its purpose directly — not a task that happens to mat
     - confirmation-flow: sequential
     - update-check: every 14 days — last: 2026-07-21
     - consistency-check: every 30 days — last: 2026-07-21
+    - local-lint: ask
     <!-- /keep-the-why:personal -->
     ```
+
+    `local-lint: ask` is the go-ahead to install the linter now: no `ktw-lint` on this machine yet, so the agent installs it (`pipx`, else `pip --user`) in this same turn — that was the question — and runs `ktw-lint . --setup` once over the two files it just wrote.
 
 9. Confirms setup is done and asks what to work on first — there's no pending question from this explicit-request turn to answer, unlike the earlier organic activation, which had already answered the retry-logic question directly without any of this running.
 
 ## A second developer opens the same project later
 
-The project config already says `init: complete` — that part isn't re-asked, it's a project fact, not a per-developer one. `capture-confirmation` is part of that same project fact: it stays `confirm-when-unsure` for everyone, this developer included, regardless of their own personal preferences. But this developer has no `~/.keep-the-why/<id>.md` yet on their machine, and no legacy `AGENTS.local.md` block to carry over either (this project was set up fresh, under the current scheme), so the personal preferences wizard (step 7 above) runs for them individually, one question at a time again since they have no stored `confirmation-flow` either. Their answers might differ from the first developer's, and that's fine — capture mode, `confirmation-flow`, and check intervals are exactly the kind of thing that should vary per person. Note that `confirmation-flow` is stored per project, in `~/.keep-the-why/<id>.md`, so even if this developer chose `batch` on some other project, that preference isn't visible here — the personal wizard asks its one-line question again and records the answer for this project's own file.
+The project config already says `init: complete` — that part isn't re-asked, it's a project fact, not a per-developer one. `capture-confirmation` is part of that same project fact: it stays `confirm-when-unsure` for everyone, this developer included, regardless of their own personal preferences. But this developer has no `~/.keep-the-why/<id>.md` yet on their machine, and no legacy `AGENTS.local.md` block to carry over either (this project was set up fresh, under the current scheme), so the personal preferences wizard (step 7 above) runs for them individually, one question at a time again since they have no stored `confirmation-flow` either. Their answers might differ from the first developer's, and that's fine — capture mode, `confirmation-flow`, check intervals and `local-lint` are exactly the kind of thing that should vary per person. Note that `confirmation-flow` is stored per project, in `~/.keep-the-why/<id>.md`, so even if this developer chose `batch` on some other project, that preference isn't visible here — the personal wizard asks its one-line question again and records the answer for this project's own file.
 
 ## A later session, after a few weeks of no web access
 
