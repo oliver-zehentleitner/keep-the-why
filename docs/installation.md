@@ -73,6 +73,17 @@ asm install github:oliver-zehentleitner/keep-the-why#latest:skills/keep-the-why 
 
 Replace `<tool>` with your agent (`claude`, `codex`, `opencode`, `cline`, `gemini`, and more — run `asm install --help` for the full list). Replace `#latest` with an exact [tag](https://github.com/oliver-zehentleitner/keep-the-why/releases) to pin to a specific version instead of always the newest, or drop it to track `main` directly.
 
+## Also installable: Codex plugin
+
+Codex CLI installs plugins from a *marketplace* — a repository carrying `.agents/plugins/marketplace.json` — and this repository is its own one-plugin marketplace (`.codex-plugin/plugin.json` at the root, the skill under `skills/`). Two commands:
+
+```bash
+codex plugin marketplace add oliver-zehentleitner/keep-the-why
+codex plugin add keep-the-why@keep-the-why
+```
+
+Add `--ref v0.15.0` (any [release tag](https://github.com/oliver-zehentleitner/keep-the-why/releases)) to the first command to pin a version; without it Codex snapshots the default branch, and `codex plugin marketplace upgrade` refreshes it. The plugin lands under `~/.codex/plugins/cache/keep-the-why/`, and a new session lists the skill as `keep-the-why:keep-the-why`. Verified 2026-09-08 with Codex CLI 0.149.0, from a local path and from GitHub. `codex plugin remove keep-the-why@keep-the-why` uninstalls it; the skill-directory route below works for Codex too, and does not copy the whole repository.
+
 ## Fallback: manual clone
 
 If neither CLI is available. The skill lives under `skills/keep-the-why/`, not at the repo root — clone to a scratch location and copy just that folder, rather than cloning the whole repo straight into your agent's skills directory (which would nest an embedded git repository inside yours and pull in docs/, mkdocs config, and CI files you don't need). Pinned to a release:

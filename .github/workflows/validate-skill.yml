@@ -42,6 +42,7 @@ jobs:
           }
           check plugin.json '(?<="version": ")[0-9]+\.[0-9]+\.[0-9]+'
           check .claude-plugin/plugin.json '(?<="version": ")[0-9]+\.[0-9]+\.[0-9]+'
+          check .codex-plugin/plugin.json '(?<="version": ")[0-9]+\.[0-9]+\.[0-9]+'
           check llms.txt '(?<=^Version: )[0-9]+\.[0-9]+\.[0-9]+'
           check .keep-the-why '(?<=context-schema: )[0-9]+\.[0-9]+\.[0-9]+'
           check skills/keep-the-why/references/setup.md '(?<=context-schema: )[0-9]+\.[0-9]+\.[0-9]+'

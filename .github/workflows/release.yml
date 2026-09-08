@@ -61,6 +61,8 @@ jobs:
             "$(grep -oP '(?<="version": ")[0-9]+\.[0-9]+\.[0-9]+' plugin.json | head -1)"
           check ".claude-plugin/plugin.json version" \
             "$(grep -oP '(?<="version": ")[0-9]+\.[0-9]+\.[0-9]+' .claude-plugin/plugin.json | head -1)"
+          check ".codex-plugin/plugin.json version" \
+            "$(grep -oP '(?<="version": ")[0-9]+\.[0-9]+\.[0-9]+' .codex-plugin/plugin.json | head -1)"
           check "llms.txt Version" \
             "$(grep -oP '(?<=^Version: )[0-9]+\.[0-9]+\.[0-9]+' llms.txt | head -1)"
           check ".keep-the-why context-schema" \

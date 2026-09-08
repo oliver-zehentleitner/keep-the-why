@@ -124,6 +124,22 @@ Added `.claude-plugin/plugin.json` (the official Claude Code plugin manifest, ve
 
 **Related:** the "Composition with other skills" section in `SKILL.md` was written generically (no specific framework named) rather than tailored to any one methodology-style skill framework we might integrate with — the positioning (cross-cutting persistence, not a workflow orchestrator) is true regardless of which specific framework it's composed alongside, and naming one by name in the skill's own evergreen content would date quickly and read as an unearned endorsement or dependency.
 
+## `.codex-plugin/plugin.json` plus a one-plugin marketplace make the repository installable as a Codex plugin
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer decision after the HOL listing surfaced the gap, 2026-09-08; the install flow tested end to end the same day (Codex CLI 0.149.0, local path and GitHub, the session listing `keep-the-why:keep-the-why`)
+**Revisit when:** Codex changes the manifest or marketplace format, or the install copies something a user should not get (the plugin root is the repository root)
+
+A third manifest, `.codex-plugin/plugin.json` (the official Codex format: `name`, `version`, `description`, `skills: "./skills/"`, plus the optional author/homepage/repository/license/keywords the other two carry), and `.agents/plugins/marketplace.json` listing this repository as a marketplace with one plugin whose `source.path` is `./`. `codex plugin marketplace add oliver-zehentleitner/keep-the-why` then `codex plugin add keep-the-why@keep-the-why` installs it. The release gate checks the third manifest's version like the other two.
+
+**Reason:** Codex has no way to install a plugin from a bare repository — only from a marketplace — so the manifest alone would be a file nobody can use; the marketplace entry is what turns the repository into something `codex plugin add` accepts, and pointing it at `./` keeps everything in one repository. The maintainer's condition was that the flow be tested before the manifest ships, so the installation page carries the two commands with the date and CLI version they were verified against. What prompted it: the HOL catalog derives an `install_url` from this path for every entry in its section, and its scanner's `verify` mode expects it; both were dead ends for a repository that only shipped the Claude Code and Copilot manifests.
+
+**Rejected alternative:** the manifest without the marketplace file, as a catalog fix only. Rejected because it would claim "Codex plugin" for something Codex cannot install — cosmetics for a scanner.
+
+**Rejected alternative:** a separate marketplace repository listing this one. Rejected because it adds a repository to keep in sync for a single entry; `./` as the plugin root does the same job in place. The cost is that the install copies the whole repository (about 13 MB); the skill-directory route on the installation page stays the lean alternative.
+
 ## The `[x.y.z]` CHANGELOG compare link always 404s on the release PR's own merge-to-main push
 
 **Type:** constraint

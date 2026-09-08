@@ -74,6 +74,9 @@ asm install github:oliver-zehentleitner/keep-the-why#latest:skills/keep-the-why 
 
 Replace <tool> with your agent (claude, codex, opencode, cline, gemini, and more — run
 `asm install --help` for the full list).
+Codex plugin: the repository is its own one-plugin marketplace (`.codex-plugin/plugin.json` +
+`.agents/plugins/marketplace.json`) — `codex plugin marketplace add oliver-zehentleitner/keep-the-why`
+then `codex plugin add keep-the-why@keep-the-why`; tested on Codex CLI 0.149.0 (2026-09-08).
 
 Fallback (manual clone) — the skill lives under `skills/keep-the-why/` in this repo, not at the
 root, so clone to a scratch location and copy just that folder rather than cloning the whole repo
