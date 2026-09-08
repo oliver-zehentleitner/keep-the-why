@@ -1,0 +1,10 @@
+{
+ "arm": "control",
+ "i": 9,
+ "model": "sonnet",
+ "seconds": 46,
+ "error": null,
+ "gateway_changed": true,
+ "retry_after_kept": true,
+ "mentions_context_retries": false
+}

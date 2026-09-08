@@ -1,0 +1,81 @@
+[tool call] Skill: {"skill": "keep-the-why"}
+
+[tool result] Launching skill: keep-the-why
+
+[tool call] Bash: {"command": "cat /var/tmp/ktw-exp-treatment-5-50bc9hx4/project/.keep-the-why 2>/dev/null; echo \"---\"; ls -la ~/.keep-the-why/ 2>/dev/null; echo \"---\"; cat ~/.keep-the-why/config 2>/dev/null"}
+
+[tool result] Exit code 1
+This is machine-readable project state for the Keep the Why skill
+(https://keepthewhy.com). See context/index.md, or this project's own
+README, for what Keep the Why actually is.
+
+<!-- keep-the-why:config -->
+- id: ktw-eval-fixture---order-service
+- context: `context/`
+- init: complete
+- context-schema: 0.14.1
+- capture-confirmation: confirm-when-unsure
+- source-reference: never
+<!-- /…(truncated)
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-treatment-5-50bc9hx4/project/src/gateway.py"}
+
+[tool result] 1	"""Payment gateway client."""
+2	
+3	import random
+4	import time
+5	
+6	import requests
+7	
+8	GATEWAY_URL = "https://gateway.example.com/v2/orders"
+9	
+10	
+11	def retry_with_jitter(request_fn, max_attempts=6):
+12	    """Retry wrapper for gateway calls. Looks heavier than a plain loop."""
+13	    delay = 0.5
+14	    for attempt in range(max_attempts):
+15	        response = request_fn()
+16	        if resp…(truncated)
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-treatment-5-50bc9hx4/home/.keep-the-why/ktw-eval-fixture---order-service.md"}
+
+[tool result] 1	<!-- keep-the-why:personal -->
+2	- capture-mode: proactive
+3	- confirmation-flow: sequential
+4	- update-check: no
+5	- consistency-check: no
+6	<!-- /keep-the-why:personal -->
+7	
+
+[tool call] Bash: {"command": "find /var/tmp/ktw-exp-treatment-5-50bc9hx4/project/context -type f | xargs -I{} echo {}"}
+
+[tool result] /var/tmp/ktw-exp-treatment-5-50bc9hx4/project/context/retries.md
+/var/tmp/ktw-exp-treatment-5-50bc9hx4/project/context/architecture.md
+/var/tmp/ktw-exp-treatment-5-50bc9hx4/project/context/CLAUDE.md
+/var/tmp/ktw-exp-treatment-5-50bc9hx4/project/context/index.md
+/var/tmp/ktw-exp-treatment-5-50bc9hx4/project/context/README.md
+/var/tmp/ktw-exp-treatment-5-50bc9hx4/project/context/AGENTS.md
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-treatment-5-50bc9hx4/project/context/retries.md"}
+
+[tool result] 1	# Retries
+2	
+3	## Why retry_with_jitter isn't a plain retry loop
+4	
+5	**Type:** constraint
+6	**Status:** active
+7	**Evidence:** confirmed
+8	**Source:** discovered while considering simplifying it, 2026-07-22
+9	
+10	The payment gateway's rate limiter returns 429 with a per-request
+11	Retry-After header. A fixed-delay retry loop would frequently retry
+12	before the limiter resets, causing repeated …(truncated)
+
+[assistant]
+There's already a documented reason this isn't a plain retry loop — worth flagging before touching the code.
+
+`context/retries.md` records that this exact simplification was considered before (2026-07-22) and rejected: the gateway's rate limiter returns `429` with a per-request `Retry-After` header, and a fixed-delay retry loop would frequently retry before the limiter resets, causing repeated 429s under load. The extra logic in `retry_with_jitter` (branching on `429` vs. `5xx`, honoring `Retry-After`) is handling that, not accidental complexity.
+
+So I'd hold off on simplifying it — a plain retry loop would reintroduce the exact problem this was written to avoid. If you still want to simplify it, we'd need to preserve the `Retry-After`-aware behavior for `429`s specifically; happy to do that if you tell me to proceed, or if you know something's changed on the gateway side since July.
+
+[session ended] subtype=success turns=8

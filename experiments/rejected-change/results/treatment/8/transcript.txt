@@ -1,0 +1,152 @@
+[tool call] Skill: {"skill": "keep-the-why"}
+
+[tool result] Launching skill: keep-the-why
+
+[tool call] Bash: {"command": "cat /var/tmp/ktw-exp-treatment-8-l2u5e6xz/project/.keep-the-why 2>/dev/null; echo \"---\"; ls ~/.keep-the-why/ 2>/dev/null; echo \"---\"; cat ~/.keep-the-why/config 2>/dev/null", "description": "Check keep-the-why config files"}
+
+[tool result] Exit code 1
+This is machine-readable project state for the Keep the Why skill
+(https://keepthewhy.com). See context/index.md, or this project's own
+README, for what Keep the Why actually is.
+
+<!-- keep-the-why:config -->
+- id: ktw-eval-fixture---order-service
+- context: `context/`
+- init: complete
+- context-schema: 0.14.1
+- capture-confirmation: confirm-when-unsure
+- source-reference: never
+<!-- /…(truncated)
+
+[tool call] Bash: {"command": "cat /var/tmp/ktw-exp-treatment-8-l2u5e6xz/project/context/index.md 2>/dev/null", "description": "Check context index"}
+
+[tool result] # Context index
+
+## 0
+
+## 1
+
+## 2
+
+## 3
+
+## 4
+
+## 5
+
+## 6
+
+## 7
+
+## 8
+
+## 9
+
+## A
+
+- [architecture.md](architecture.md) — why the service is shaped this way
+
+## B
+
+## C
+
+## D
+
+## E
+
+## F
+
+## G
+
+## H
+
+## I
+
+## J
+
+## K
+
+## L
+
+## M
+
+## N
+
+## O
+
+## P
+
+## Q
+
+## R
+
+- [retries.md](retries.md) — why retry_with_jitter is not a plain retry loop
+
+## S
+
+## T
+
+## U
+
+## V
+
+## W
+
+## X
+
+## Y
+
+## Z
+
+[assistant]
+There's already a context entry about this exact topic. Let me check it and the personal config before touching the code.
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-treatment-8-l2u5e6xz/project/context/retries.md"}
+
+[tool result] 1	# Retries
+2	
+3	## Why retry_with_jitter isn't a plain retry loop
+4	
+5	**Type:** constraint
+6	**Status:** active
+7	**Evidence:** confirmed
+8	**Source:** discovered while considering simplifying it, 2026-07-22
+9	
+10	The payment gateway's rate limiter returns 429 with a per-request
+11	Retry-After header. A fixed-delay retry loop would frequently retry
+12	before the limiter resets, causing repeated …(truncated)
+
+[tool call] Bash: {"command": "cat ~/.keep-the-why/*.md 2>/dev/null", "description": "Check personal keep-the-why config"}
+
+[tool result] <!-- keep-the-why:personal -->
+- capture-mode: proactive
+- confirmation-flow: sequential
+- update-check: no
+- consistency-check: no
+<!-- /keep-the-why:personal -->
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-treatment-8-l2u5e6xz/project/src/gateway.py"}
+
+[tool result] 1	"""Payment gateway client."""
+2	
+3	import random
+4	import time
+5	
+6	import requests
+7	
+8	GATEWAY_URL = "https://gateway.example.com/v2/orders"
+9	
+10	
+11	def retry_with_jitter(request_fn, max_attempts=6):
+12	    """Retry wrapper for gateway calls. Looks heavier than a plain loop."""
+13	    delay = 0.5
+14	    for attempt in range(max_attempts):
+15	        response = request_fn()
+16	        if resp…(truncated)
+
+[assistant]
+Hold on — this exact simplification is already documented as considered and rejected: `context/retries.md` records that this wrapper was previously flagged as "looks over-engineered," and simplifying it to a plain retry loop was rejected because the payment gateway's rate limiter returns a per-request `Retry-After` header. A fixed-delay loop would frequently retry before the limiter resets, causing repeated 429s under load. The code (`gateway.py:16-19`) reads `Retry-After` and honors it — that's the part a plain loop would lose.
+
+Given that, I don't think I should simplify it as requested. Do you want me to proceed anyway (and if so, how should the `Retry-After` handling be preserved), or would you rather leave the wrapper as-is?
+
+[session ended] subtype=success turns=8

@@ -1,0 +1,153 @@
+[tool call] Skill: {"skill": "keep-the-why", "args": "src/gateway.py retry wrapper simplification"}
+
+[tool result] Launching skill: keep-the-why
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-control-6-cp9e42sg/project/.keep-the-why"}
+
+[tool result] 1	This is machine-readable project state for the Keep the Why skill
+2	(https://keepthewhy.com). See context/index.md, or this project's own
+3	README, for what Keep the Why actually is.
+4	
+5	<!-- keep-the-why:config -->
+6	- id: ktw-eval-fixture---order-service
+7	- context: `context/`
+8	- init: complete
+9	- context-schema: 0.14.0
+10	- capture-confirmation: confirm-when-unsure
+11	- source-reference: …(truncated)
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-control-6-cp9e42sg/project/context/index.md"}
+
+[tool result] 1	# Context index
+2	
+3	## 0
+4	
+5	## 1
+6	
+7	## 2
+8	
+9	## 3
+10	
+11	## 4
+12	
+13	## 5
+14	
+15	## 6
+16	
+17	## 7
+18	
+19	## 8
+20	
+21	## 9
+22	
+23	## A
+24	
+25	- [architecture.md](architecture.md) — why the service is shaped this way
+26	
+27	## B
+28	
+29	## C
+30	
+31	## D
+32	
+33	## E
+34	
+35	## F
+36	
+37	## G
+38	
+39	## H
+40	
+41	## I
+42	
+43	## J
+44	
+45	## K
+46	
+47	## L
+48	
+49	## M
+50	
+51	## N
+52	
+53	## O
+54	
+55	##…(truncated)
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-control-6-cp9e42sg/project/src/gateway.py"}
+
+[tool result] 1	"""Payment gateway client."""
+2	
+3	import random
+4	import time
+5	
+6	import requests
+7	
+8	GATEWAY_URL = "https://gateway.example.com/v2/orders"
+9	
+10	
+11	def retry_with_jitter(request_fn, max_attempts=6):
+12	    """Retry wrapper for gateway calls. Looks heavier than a plain loop."""
+13	    delay = 0.5
+14	    for attempt in range(max_attempts):
+15	        response = request_fn()
+16	        if resp…(truncated)
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-control-6-cp9e42sg/project/context/architecture.md"}
+
+[tool result] 1	# Architecture
+2	
+3	## Single service, no queue between intake and gateway submission
+4	
+5	**Status:** active
+6	**Evidence:** confirmed
+7	**Source:** design discussion, 2026-05
+8	
+9	Orders are submitted to the payment gateway synchronously from the intake
+10	handler instead of going through a message queue.
+11	
+12	**Reason:** volume is low (hundreds per day), and a queue would add
+13	operational…(truncated)
+
+[tool call] Bash: {"command": "git log --all --oneline -- src/gateway.py && echo --- && git log -p -- src/gateway.py | head -200", "description": "Check git history for gateway.py"}
+
+[tool result] 63c4e15 Initial commit
+---
+commit 63c4e15af744c29c7499429dcb7bfce84c604152
+Author: Eval Fixture <fixture@example.com>
+Date:   Tue Sep 8 13:29:16 2026 +0200
+
+    Initial commit
+
+diff --git a/src/gateway.py b/src/gateway.py
+new file mode 100644
+index 0000000..bedc830
+--- /dev/null
++++ b/src/gateway.py
+@@ -0,0 +1,35 @@
++"""Payment gateway client."""
++
++import random
++import time
++
++import requests
++
+…(truncated)
+
+[tool call] Bash: {"command": "find . -iname \"*test*gateway*\" -o -iname \"*gateway*test*\" | grep -v node_modules", "description": "Find gateway tests"}
+
+[tool result] (Bash completed with no output)
+
+[assistant]
+Before touching this, worth flagging: `retry_with_jitter` isn't just padding around a plain loop — several pieces carry real behavior that a naive `for i in range(n): try/except` would lose:
+
+- **429 vs 5xx branching**: 429 honors the server's `Retry-After` header instead of the local backoff schedule; 5xx uses exponential backoff. Collapsing these into one path means either ignoring `Retry-After` (risks getting rate-limited harder) or retrying 5xx on the server's clock (which it never sent).
+- **`< 500` early return**: client errors (4xx other than 429) return immediately rather than retrying — a plain "retry on any failure" loop would burn attempts retrying a request that will never succeed (e.g. a validation error).
+- **Jitter** (`random.random() * 0.3`) on every sleep — avoids a thundering-herd retry spike if the gateway is degraded and many orders are in flight at once.
+- **Idempotency-Key** header on the actual POST — makes retries of a payment submission safe to repeat.
+
+The docstring's own "looks heavier than a plain loop" line reads like a plant. There's no git history or test suite here to confirm intent one way or the other, so I don't want to assume it's safe to flatten this and lose the `Retry-After`/status-code/jitter distinctions.
+
+Can you confirm: do you want to keep those three behaviors (Retry-After compliance, no-retry-on-4xx, jitter) and just tighten the code around them, or is dropping some of them actually intended (e.g. gateway never sends `Retry-After` in practice)? Once I know that, I can simplify safely.
+
+[session ended] subtype=success turns=9

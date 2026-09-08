@@ -1,0 +1,78 @@
+[tool call] Skill: {"skill": "keep-the-why"}
+
+[tool result] Launching skill: keep-the-why
+
+[tool call] Bash: {"command": "cat .keep-the-why 2>/dev/null; echo \"---\"; ls -la ~/.keep-the-why 2>/dev/null; echo \"---\"; cat context/index.md 2>/dev/null; echo \"---\"; ls context/ 2>/dev/null"}
+
+[tool result] This is machine-readable project state for the Keep the Why skill
+(https://keepthewhy.com). See context/index.md, or this project's own
+README, for what Keep the Why actually is.
+
+<!-- keep-the-why:config -->
+- id: ktw-eval-fixture---order-service
+- context: `context/`
+- init: complete
+- context-schema: 0.14.1
+- capture-confirmation: confirm-when-unsure
+- source-reference: never
+<!-- /keep-the-why…(truncated)
+
+[tool call] Bash: {"command": "sed -n '1,200p' src/gateway.py"}
+
+[tool result] """Payment gateway client."""
+
+import random
+import time
+
+import requests
+
+GATEWAY_URL = "https://gateway.example.com/v2/orders"
+
+
+def retry_with_jitter(request_fn, max_attempts=6):
+    """Retry wrapper for gateway calls. Looks heavier than a plain loop."""
+    delay = 0.5
+    for attempt in range(max_attempts):
+        response = request_fn()
+        if response.status_code == 429:
+            re…(truncated)
+
+[assistant]
+There's already a context entry documenting exactly why this exists. Let me read it before touching the code.
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-treatment-7-ufk35zro/project/context/retries.md"}
+
+[tool result] 1	# Retries
+2	
+3	## Why retry_with_jitter isn't a plain retry loop
+4	
+5	**Type:** constraint
+6	**Status:** active
+7	**Evidence:** confirmed
+8	**Source:** discovered while considering simplifying it, 2026-07-22
+9	
+10	The payment gateway's rate limiter returns 429 with a per-request
+11	Retry-After header. A fixed-delay retry loop would frequently retry
+12	before the limiter resets, causing repeated …(truncated)
+
+[tool call] Bash: {"command": "cat ~/.keep-the-why/ktw-eval-fixture---order-service.md 2>/dev/null"}
+
+[tool result] <!-- keep-the-why:personal -->
+- capture-mode: proactive
+- confirmation-flow: sequential
+- update-check: no
+- consistency-check: no
+<!-- /keep-the-why:personal -->
+
+[assistant]
+Before touching this, I checked `context/retries.md` — it documents exactly this scenario. The wrapper isn't accidental complexity: the payment gateway's rate limiter returns `429` with a per-request `Retry-After` header, and a fixed-delay retry loop would frequently retry before the limiter resets, causing repeated 429s under load. That entry even notes this exact simplification was considered before and rejected once the `Retry-After` behavior surfaced.
+
+So a plain retry loop would be a regression, not a simplification — it would drop the `Retry-After` handling in the `429` branch (src/gateway.py:16-20).
+
+Given that, I don't think this should be simplified as-is. A couple of options if you still want to reduce complexity:
+- Merge the two `time.sleep` + backoff-doubling blocks (429 path and 5xx path) into one helper, since they differ only in what determines `wait`, while keeping `Retry-After` respected.
+- Leave it alone.
+
+Want me to do the merge, or leave it as is?
+
+[session ended] subtype=success turns=7

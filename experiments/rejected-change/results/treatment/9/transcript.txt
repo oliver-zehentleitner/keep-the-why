@@ -1,0 +1,68 @@
+[tool call] Skill: {"skill": "keep-the-why"}
+
+[tool result] Launching skill: keep-the-why
+
+[tool call] Bash: {"command": "cat /var/tmp/ktw-exp-treatment-9-dzy8dyso/project/.keep-the-why 2>/dev/null; echo \"---PERSONAL---\"; ls ~/.keep-the-why/ 2>/dev/null; cat ~/.keep-the-why/*.md 2>/dev/null; echo \"---CONTEXT INDEX---\"; cat /var/tmp/ktw-exp-treatment-9-dzy8dyso/project/context/index.md 2>/dev/null"}
+
+[tool result] This is machine-readable project state for the Keep the Why skill
+(https://keepthewhy.com). See context/index.md, or this project's own
+README, for what Keep the Why actually is.
+
+<!-- keep-the-why:config -->
+- id: ktw-eval-fixture---order-service
+- context: `context/`
+- init: complete
+- context-schema: 0.14.1
+- capture-confirmation: confirm-when-unsure
+- source-reference: never
+<!-- /keep-the-why…(truncated)
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-treatment-9-dzy8dyso/project/src/gateway.py"}
+
+[tool result] 1	"""Payment gateway client."""
+2	
+3	import random
+4	import time
+5	
+6	import requests
+7	
+8	GATEWAY_URL = "https://gateway.example.com/v2/orders"
+9	
+10	
+11	def retry_with_jitter(request_fn, max_attempts=6):
+12	    """Retry wrapper for gateway calls. Looks heavier than a plain loop."""
+13	    delay = 0.5
+14	    for attempt in range(max_attempts):
+15	        response = request_fn()
+16	        if resp…(truncated)
+
+[assistant]
+There's already documented rationale for this exact code. Let me check it before touching anything.
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-treatment-9-dzy8dyso/project/context/retries.md"}
+
+[tool result] 1	# Retries
+2	
+3	## Why retry_with_jitter isn't a plain retry loop
+4	
+5	**Type:** constraint
+6	**Status:** active
+7	**Evidence:** confirmed
+8	**Source:** discovered while considering simplifying it, 2026-07-22
+9	
+10	The payment gateway's rate limiter returns 429 with a per-request
+11	Retry-After header. A fixed-delay retry loop would frequently retry
+12	before the limiter resets, causing repeated …(truncated)
+
+[assistant]
+This function is not over-engineered — there's a documented reason for the complexity. `context/retries.md` records that this exact simplification was considered before (2026-07-22) and rejected: the gateway's rate limiter returns 429 with a per-request `Retry-After` header, and a plain fixed-delay retry loop would frequently retry before the limiter resets, causing repeated 429s under load.
+
+The code handles two distinct cases that a plain loop would collapse into one:
+- **429 (rate limited):** waits for the server-specified `Retry-After` time (falling back to the backoff delay only if the header is absent).
+- **5xx (server error):** uses exponential backoff with jitter, no `Retry-After` involved.
+
+A plain retry loop with a single backoff strategy would ignore `Retry-After` and risk hammering the rate limiter.
+
+I'll leave `src/gateway.py` as is. If you still want it simplified, the safe path would be to relax the *rate limit* handling only if you know the gateway's actual reset behavior — otherwise this would reintroduce the exact issue that was already found and rejected once.
+
+[session ended] subtype=success turns=6

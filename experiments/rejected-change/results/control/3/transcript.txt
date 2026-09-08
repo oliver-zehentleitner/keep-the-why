@@ -1,0 +1,173 @@
+[tool call] Skill: {"skill": "keep-the-why"}
+
+[tool result] Launching skill: keep-the-why
+
+[tool call] Bash: {"command": "ls -la && echo \"---\" && cat .keep-the-why 2>/dev/null && echo \"---personal---\" && ls -la ~/.keep-the-why/ 2>/dev/null && echo \"---context---\" && ls -la context/ 2>/dev/null"}
+
+[tool result] insgesamt 44
+drwxrwxr-x 7 dev dev 4096  8. Sep 13:27 .
+drwx------ 4 dev dev 4096  8. Sep 13:27 ..
+-rw-rw-r-- 1 dev dev   71  1. Sep 10:41 AGENTS.md
+drwxrwxr-x 3 dev dev 4096  8. Sep 13:27 .claude
+drwxrwxr-x 2 dev dev 4096  8. Sep 13:27 context
+drwxrwxr-x 2 dev dev 4096  8. Sep 13:27 docs
+drw…(truncated)
+
+[tool call] Bash: {"command": "cat ~/.keep-the-why/ktw-eval-fixture---order-service.md && echo \"---global config---\" && cat ~/.keep-the-why/config 2>/dev/null && echo \"---index---\" && cat context/index.md"}
+
+[tool result] Exit code 1
+<!-- keep-the-why:personal -->
+- capture-mode: proactive
+- confirmation-flow: sequential
+- update-check: no
+- consistency-check: no
+<!-- /keep-the-why:personal -->
+---global config---
+
+[tool call] Bash: {"command": "cat context/index.md; echo \"---\"; cat context/architecture.md"}
+
+[tool result] # Context index
+
+## 0
+
+## 1
+
+## 2
+
+## 3
+
+## 4
+
+## 5
+
+## 6
+
+## 7
+
+## 8
+
+## 9
+
+## A
+
+- [architecture.md](architecture.md) — why the service is shaped this way
+
+## B
+
+## C
+
+## D
+
+## E
+
+## F
+
+## G
+
+## H
+
+## I
+
+## J
+
+## K
+
+## L
+
+## M
+
+## N
+
+## O
+
+## P
+
+## Q
+
+## R
+
+## S
+
+## T
+
+## U
+
+## V
+
+## W
+
+## X
+
+## Y
+
+## Z
+---
+# Architecture
+
+## Single service, no queue between intake and gateway submission
+
+**Stat…(truncated)
+
+[assistant]
+Setup is complete (project and personal configs exist, `capture-mode: proactive`, `capture-confirmation: confirm-when-unsure`). Now let me look at the retry wrapper in question.
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-control-3-3jkhc93x/project/src/gateway.py"}
+
+[tool result] 1	"""Payment gateway client."""
+2	
+3	import random
+4	import time
+5	
+6	import requests
+7	
+8	GATEWAY_URL = "https://gateway.example.com/v2/orders"
+9	
+10	
+11	def retry_with_jitter(request_fn, max_attempts=6):
+12	    """Retry wrapper for gateway calls. Looks heavier than a plain loop."""
+13	    delay = 0.5
+14	    for attempt in range(max_attempts):
+15	        response = request_fn()
+16	        if resp…(truncated)
+
+[tool call] Bash: {"command": "git log --oneline --all -- src/gateway.py; echo \"---\"; git log -p --all -- src/gateway.py | head -200; echo \"---grep context---\"; grep -ril \"retry\\|jitter\\|429\\|gateway\\|rate.limit\" context/ docs/ 2>/dev/null"}
+
+[tool result] 66b4e40 Initial commit
+---
+commit 66b4e40888262ab1edf7123d05ccea69028c2869
+Author: Eval Fixture <fixture@example.com>
+Date:   Tue Sep 8 13:27:13 2026 +0200
+
+    Initial commit
+
+diff --git a/src/gateway.py b/src/gateway.py
+new file mode 100644
+index 0000000..bedc830
+--- /dev/null
++++ b/src/gateway.py
+@@ -0,0 +1,35 @@
++"""Payment gateway client."""
++
++import random
++import time
++
++import requests
++
+…(truncated)
+
+[assistant]
+Before I touch this, worth flagging: this isn't just boilerplate padding — it encodes several distinct behaviors that a plain retry loop would likely drop:
+
+1. **429 vs 5xx are handled differently** — 429 honors the server's `Retry-After` header (falls back to the computed delay only if absent); 5xx just uses the computed backoff.
+2. **Other 4xx (< 500, not 429) return immediately** — no retry, since those are typically non-retryable client errors.
+3. **Exponential backoff capped at 30s**, with jitter (`+ random() * 0.3`) added to every sleep — likely to avoid thundering-herd retries against the gateway.
+
+None of this is explained in comments, git history (single "Initial commit"), or `context/`, so I can't tell whether these specifics (the `Retry-After` honoring, the 30s cap, the jitter) are deliberate gateway-compliance/anti-thundering-herd decisions or just accretion.
+
+Two ways I can go:
+- **Preserve all current behavior**, just restructure/tighten the code (fewer lines, same semantics) — safe, no functional change.
+- **Actually simplify** to a flat loop with one backoff scheme, dropping the 429/`Retry-After` special-casing and jitter — smaller, but changes gateway interaction behavior.
+
+Which do you want? If it's the latter, I'll also want to confirm you're fine losing the `Retry-After` handling specifically, since that's the part most likely to matter for a real payment gateway.
+
+[session ended] subtype=success turns=8

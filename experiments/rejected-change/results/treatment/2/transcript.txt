@@ -1,0 +1,125 @@
+[tool call] Skill: {"skill": "keep-the-why", "args": "src/gateway.py retry wrapper simplification"}
+
+[tool result] Launching skill: keep-the-why
+
+[tool call] Bash: {"command": "ls -la .keep-the-why 2>&1; echo \"---personal---\"; ls -la ~/.keep-the-why/ 2>&1; echo \"---context---\"; cat context/index.md 2>&1", "description": "Check keep-the-why config files"}
+
+[tool result] -rw-rw-r-- 1 dev dev 412  8. Sep 13:33 .keep-the-why
+---personal---
+insgesamt 12
+drwxrwxr-x 2 dev dev 4096  8. Sep 13:33 .
+drwxrwxr-x 5 dev dev 4096  8. Sep 13:33 ..
+-rw-rw-r-- 1 dev dev  164  8. Sep 13:33 ktw-eval-fixture---order-service.md
+---context---
+# Context index
+
+## 0
+
+## 1
+
+## 2
+
+## 3
+
+## 4
+
+## 5
+
+## 6
+
+## 7
+
+## 8
+
+#…(truncated)
+
+[assistant]
+There's already a context entry about this exact code. Let me check it before making any changes.
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-treatment-2-5xxfis76/project/context/retries.md"}
+
+[tool result] 1	# Retries
+2	
+3	## Why retry_with_jitter isn't a plain retry loop
+4	
+5	**Type:** constraint
+6	**Status:** active
+7	**Evidence:** confirmed
+8	**Source:** discovered while considering simplifying it, 2026-07-22
+9	
+10	The payment gateway's rate limiter returns 429 with a per-request
+11	Retry-After header. A fixed-delay retry loop would frequently retry
+12	before the limiter resets, causing repeated …(truncated)
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-treatment-2-5xxfis76/project/.keep-the-why"}
+
+[tool result] 1	This is machine-readable project state for the Keep the Why skill
+2	(https://keepthewhy.com). See context/index.md, or this project's own
+3	README, for what Keep the Why actually is.
+4	
+5	<!-- keep-the-why:config -->
+6	- id: ktw-eval-fixture---order-service
+7	- context: `context/`
+8	- init: complete
+9	- context-schema: 0.14.1
+10	- capture-confirmation: confirm-when-unsure
+11	- source-reference: …(truncated)
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-treatment-2-5xxfis76/home/.keep-the-why/ktw-eval-fixture---order-service.md"}
+
+[tool result] 1	<!-- keep-the-why:personal -->
+2	- capture-mode: proactive
+3	- confirmation-flow: sequential
+4	- update-check: no
+5	- consistency-check: no
+6	<!-- /keep-the-why:personal -->
+7	
+
+[tool call] Bash: {"command": "grep -n \"retry_with_jitter\\|def retry\\|class Retry\\|retry\" -i /var/tmp/ktw-exp-treatment-2-5xxfis76/project/src/gateway.py | head -50", "description": "Search for retry wrapper in gateway.py"}
+
+[tool result] 11:def retry_with_jitter(request_fn, max_attempts=6):
+12:    """Retry wrapper for gateway calls. Looks heavier than a plain loop."""
+17:            retry_after = response.headers.get("Retry-After")
+18:            wait = float(retry_after) if retry_after else delay
+29:def submit_with_retry(order, idempotency_key):
+30:    return retry_with_jitter(lambda: requests.post(
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-treatment-2-5xxfis76/project/src/gateway.py"}
+
+[tool result] 1	"""Payment gateway client."""
+2	
+3	import random
+4	import time
+5	
+6	import requests
+7	
+8	GATEWAY_URL = "https://gateway.example.com/v2/orders"
+9	
+10	
+11	def retry_with_jitter(request_fn, max_attempts=6):
+12	    """Retry wrapper for gateway calls. Looks heavier than a plain loop."""
+13	    delay = 0.5
+14	    for attempt in range(max_attempts):
+15	        response = request_fn()
+16	        if resp…(truncated)
+
+[assistant]
+I found something important before making any changes: this exact simplification was already considered and rejected. There's a documented record in `context/retries.md`:
+
+> The payment gateway's rate limiter returns 429 with a per-request Retry-After header. A fixed-delay retry loop would frequently retry before the limiter resets, causing repeated 429s under load.
+>
+> **Considered:** replacing it with a plain retry loop, since the wrapper looked like unnecessary complexity with nothing documenting why. Not adopted once the Retry-After behavior surfaced during review.
+
+Looking at the code, `retry_with_jitter` does two genuinely different things that a plain retry loop wouldn't:
+1. On **429**, it honors the server's `Retry-After` header (falls back to backoff delay only if the header is absent).
+2. On other **5xx**, it uses exponential backoff with jitter.
+
+A "plain retry loop" would collapse these and ignore `Retry-After`, which — per the recorded rationale — causes repeated 429s under load against this gateway's rate limiter.
+
+Given that:
+- This isn't over-engineering — it's handling a real constraint from the payment gateway's rate limiter.
+- The exact same simplification was already proposed and explicitly rejected after review.
+
+I'd recommend not simplifying this. If you still want to change it, we'd need to either drop `Retry-After` handling (which reintroduces the 429 problem this was built to avoid) or find some other simplification that preserves it — let me know how you'd like to proceed.
+
+[session ended] subtype=success turns=9

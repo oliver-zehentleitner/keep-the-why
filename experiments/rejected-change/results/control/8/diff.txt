@@ -1,0 +1,43 @@
+# git status --porcelain
+ M src/gateway.py
+
+
+# git diff (tracked files)
+diff --git a/src/gateway.py b/src/gateway.py
+index bedc830..4cc6149 100644
+--- a/src/gateway.py
++++ b/src/gateway.py
+@@ -9,19 +9,15 @@ GATEWAY_URL = "https://gateway.example.com/v2/orders"
+ 
+ 
+ def retry_with_jitter(request_fn, max_attempts=6):
+-    """Retry wrapper for gateway calls. Looks heavier than a plain loop."""
++    """Retry wrapper for gateway calls."""
+     delay = 0.5
+     for attempt in range(max_attempts):
+         response = request_fn()
+-        if response.status_code == 429:
+-            retry_after = response.headers.get("Retry-After")
+-            wait = float(retry_after) if retry_after else delay
+-            time.sleep(wait + random.random() * 0.3)
+-            delay = min(delay * 2, 30)
+-            continue
+-        if response.status_code < 500:
++        if response.status_code != 429 and response.status_code < 500:
+             return response
+-        time.sleep(delay + random.random() * 0.3)
++        retry_after = response.headers.get("Retry-After") if response.status_code == 429 else None
++        wait = float(retry_after) if retry_after else delay
++        time.sleep(wait + random.random() * 0.3)
+         delay = min(delay * 2, 30)
+     return response
+ 
+
+
+# ~/.keep-the-why/ktw-eval-fixture---order-service.md (personal config, outside the project; SEEDED BY THE FIXTURE BEFORE THE RUN, UNCHANGED — the agent did not write this)
+<!-- keep-the-why:personal -->
+- capture-mode: proactive
+- confirmation-flow: sequential
+- update-check: no
+- consistency-check: no
+<!-- /keep-the-why:personal -->

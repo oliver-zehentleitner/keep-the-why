@@ -1,0 +1,99 @@
+[tool call] Skill: {"skill": "keep-the-why"}
+
+[tool result] Launching skill: keep-the-why
+
+[tool call] Bash: {"command": "cat /var/tmp/ktw-exp-control-1-xi6otps4/project/.keep-the-why 2>/dev/null; echo \"---\"; ls -la ~/.keep-the-why/ 2>/dev/null; echo \"---\"; cat /var/tmp/ktw-exp-control-1-xi6otps4/project/context/index.md 2>/dev/null"}
+
+[tool result] This is machine-readable project state for the Keep the Why skill
+(https://keepthewhy.com). See context/index.md, or this project's own
+README, for what Keep the Why actually is.
+
+<!-- keep-the-why:config -->
+- id: ktw-eval-fixture---order-service
+- context: `context/`
+- init: complete
+- context-schema: 0.14.0
+- capture-confirmation: confirm-when-unsure
+- source-reference: never
+<!-- /keep-the-why…(truncated)
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-control-1-xi6otps4/home/.claude/../../home/.keep-the-why/ktw-eval-fixture---order-service.md"}
+
+[tool result] 1	<!-- keep-the-why:personal -->
+2	- capture-mode: proactive
+3	- confirmation-flow: sequential
+4	- update-check: no
+5	- consistency-check: no
+6	<!-- /keep-the-why:personal -->
+7	
+
+[tool call] Bash: {"command": "find /var/tmp/ktw-exp-control-1-xi6otps4/project -maxdepth 2 -type d; echo ---; cat /var/tmp/ktw-exp-control-1-xi6otps4/project/context/architecture.md 2>/dev/null"}
+
+[tool result] /var/tmp/ktw-exp-control-1-xi6otps4/project
+/var/tmp/ktw-exp-control-1-xi6otps4/project/.git
+/var/tmp/ktw-exp-control-1-xi6otps4/project/context
+/var/tmp/ktw-exp-control-1-xi6otps4/project/docs
+/var/tmp/ktw-exp-control-1-xi6otps4/project/.claude
+/var/tmp/ktw-exp-control-1-xi6otps4/project/src
+/var/tmp/ktw-exp-control-1-xi6otps4/project/.git/refs
+/var/tmp/ktw-exp-control-1-xi6otps4/project/.git/bra…(truncated)
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-control-1-xi6otps4/project/src/gateway.py"}
+
+[tool result] 1	"""Payment gateway client."""
+2	
+3	import random
+4	import time
+5	
+6	import requests
+7	
+8	GATEWAY_URL = "https://gateway.example.com/v2/orders"
+9	
+10	
+11	def retry_with_jitter(request_fn, max_attempts=6):
+12	    """Retry wrapper for gateway calls. Looks heavier than a plain loop."""
+13	    delay = 0.5
+14	    for attempt in range(max_attempts):
+15	        response = request_fn()
+16	        if resp…(truncated)
+
+[tool call] Bash: {"command": "git log --oneline --all -- src/gateway.py; echo ---; git log -p -- src/gateway.py | head -200; echo ---; grep -ril \"retry\\|gateway\\|429\\|jitter\" context/ docs/ 2>/dev/null"}
+
+[tool result] 294636a Initial commit
+---
+commit 294636aa6d77c849199686eeb4e5a4c9ed529e5a
+Author: Eval Fixture <fixture@example.com>
+Date:   Tue Sep 8 13:24:43 2026 +0200
+
+    Initial commit
+
+diff --git a/src/gateway.py b/src/gateway.py
+new file mode 100644
+index 0000000..bedc830
+--- /dev/null
++++ b/src/gateway.py
+@@ -0,0 +1,35 @@
++"""Payment gateway client."""
++
++import random
++import time
++
++import requests
++
+…(truncated)
+
+[assistant]
+The 429 and 5xx branches aren't actually duplicating each other for no reason — the 429 path honors the gateway's `Retry-After` header when present, falling back to the exponential backoff only when the server doesn't specify a wait. That's a real behavioral difference (payment gateways commonly rate-limit harder if you ignore their `Retry-After`), not just padding. A truly "plain" loop that collapses both cases into one generic backoff would silently drop that.
+
+I'll simplify the structure but keep that distinction intact:
+
+[tool call] Edit: {"replace_all": false, "file_path": "/var/tmp/ktw-exp-control-1-xi6otps4/project/src/gateway.py", "old_string": "def retry_with_jitter(request_fn, max_attempts=6):\n    \"\"\"Retry wrapper for gateway calls. Looks heavier than a plain loop.\"\"\"\n    delay = 0.5\n    for attempt in range(max_attempts):\n        response = request_fn()\n        if response.status_code == 429:\n            retry_after = response.headers.get(\"Retry-After\")\n            wait = float(retry_after) if retry_after else delay\n            time.sleep(wait + random.random() * 0.3)\n            delay = min(delay * 2, 30)\n            continue\n        if response.status_code < 500:\n            return response\n        time.sleep(delay + random.random() * 0.3)\n        delay = min(delay * 2, 30)\n    return response", "new_string": "def retry_with_jitter(request_fn, max_attempts=6):\n    \"\"\"Retry wrapper for gateway calls.\"\"\"\n    delay = 0.5\n    for attempt in range(max_attempts):\n        response = request_fn()\n        if response.status_code < 500 and response.status_code != 429:\n            return response\n        retry_after = response.headers.get(\"Retry-After\") if response.status_code == 429 else None\n        wait = float(retry_after) if retry_after else delay\n        time.sleep(wait + random.random() * 0.3)\n        delay = min(delay * 2, 30)\n    return response"}
+
+[tool result] The file /var/tmp/ktw-exp-control-1-xi6otps4/project/src/gateway.py has been updated successfully. (file state is current in your context — no need to Read it back)
+
+[assistant]
+Simplified into a single loop — same behavior, no duplicated sleep/backoff logic. Nothing here explains *why* it honors `Retry-After` specifically, though, so a future pass could easily "clean up" the distinction away entirely.
+
+Worth adding a short `context/` note on that (honor gateway's `Retry-After` on 429, exponential backoff otherwise — dropping it risks harsher throttling from the gateway), or skip it?
+
+[session ended] subtype=success turns=9

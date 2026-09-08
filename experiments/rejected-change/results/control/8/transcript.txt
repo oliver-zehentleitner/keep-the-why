@@ -1,0 +1,91 @@
+[tool call] Skill: {"skill": "keep-the-why"}
+
+[tool result] Launching skill: keep-the-why
+
+[tool call] Bash: {"command": "cat /var/tmp/ktw-exp-control-8-k5_82xtm/project/.keep-the-why 2>/dev/null; echo \"---PERSONAL---\"; ls ~/.keep-the-why/ 2>/dev/null; echo \"---context index---\"; cat /var/tmp/ktw-exp-control-8-k5_82xtm/project/context/index.md 2>/dev/null"}
+
+[tool result] This is machine-readable project state for the Keep the Why skill
+(https://keepthewhy.com). See context/index.md, or this project's own
+README, for what Keep the Why actually is.
+
+<!-- keep-the-why:config -->
+- id: ktw-eval-fixture---order-service
+- context: `context/`
+- init: complete
+- context-schema: 0.14.0
+- capture-confirmation: confirm-when-unsure
+- source-reference: never
+<!-- /keep-the-why…(truncated)
+
+[tool call] Bash: {"command": "cat ~/.keep-the-why/ktw-eval-fixture---order-service.md 2>/dev/null; echo \"---GLOBAL CONFIG---\"; cat ~/.keep-the-why/config 2>/dev/null; echo \"---SKILL FRONTMATTER---\"; sed -n '1,20p' /var/tmp/ktw-exp-control-8-k5_82xtm/project/.claude/skills/keep-the-why/SKILL.md 2>/dev/null"}
+
+[tool result] <!-- keep-the-why:personal -->
+- capture-mode: proactive
+- confirmation-flow: sequential
+- update-check: no
+- consistency-check: no
+<!-- /keep-the-why:personal -->
+---GLOBAL CONFIG---
+---SKILL FRONTMATTER---
+---
+name: keep-the-why
+description: Extract and preserve the reasoning code cannot explain - decisions, rejected alternatives, workarounds, incidents, constraints - plus project setup and main…(truncated)
+
+[tool call] Bash: {"command": "grep -n \"retry\" -i -r /var/tmp/ktw-exp-control-8-k5_82xtm/project/src/gateway.py | head -50"}
+
+[tool result] /var/tmp/ktw-exp-control-8-k5_82xtm/project/src/gateway.py:11:def retry_with_jitter(request_fn, max_attempts=6):
+/var/tmp/ktw-exp-control-8-k5_82xtm/project/src/gateway.py:12:    """Retry wrapper for gateway calls. Looks heavier than a plain loop."""
+/var/tmp/ktw-exp-control-8-k5_82xtm/project/src/gateway.py:17:            retry_after = response.headers.get("Retry-After")
+/var/tmp/ktw-exp-control-…(truncated)
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-control-8-k5_82xtm/project/src/gateway.py"}
+
+[tool result] 1	"""Payment gateway client."""
+2	
+3	import random
+4	import time
+5	
+6	import requests
+7	
+8	GATEWAY_URL = "https://gateway.example.com/v2/orders"
+9	
+10	
+11	def retry_with_jitter(request_fn, max_attempts=6):
+12	    """Retry wrapper for gateway calls. Looks heavier than a plain loop."""
+13	    delay = 0.5
+14	    for attempt in range(max_attempts):
+15	        response = request_fn()
+16	        if resp…(truncated)
+
+[tool call] Bash: {"command": "cat context/architecture.md 2>/dev/null; echo \"---LOG---\"; git log --oneline --all -- src/gateway.py; echo \"---FULL LOG---\"; git log -p -- src/gateway.py | head -200"}
+
+[tool result] # Architecture
+
+## Single service, no queue between intake and gateway submission
+
+**Status:** active
+**Evidence:** confirmed
+**Source:** design discussion, 2026-05
+
+Orders are submitted to the payment gateway synchronously from the intake
+handler instead of going through a message queue.
+
+**Reason:** volume is low (hundreds per day), and a queue would add
+operational surface for no measurable ben…(truncated)
+
+[tool call] Edit: {"replace_all": false, "file_path": "/var/tmp/ktw-exp-control-8-k5_82xtm/project/src/gateway.py", "old_string": "def retry_with_jitter(request_fn, max_attempts=6):\n    \"\"\"Retry wrapper for gateway calls. Looks heavier than a plain loop.\"\"\"\n    delay = 0.5\n    for attempt in range(max_attempts):\n        response = request_fn()\n        if response.status_code == 429:\n            retry_after = response.headers.get(\"Retry-After\")\n            wait = float(retry_after) if retry_after else delay\n            time.sleep(wait + random.random() * 0.3)\n            delay = min(delay * 2, 30)\n            continue\n        if response.status_code < 500:\n            return response\n        time.sleep(delay + random.random() * 0.3)\n        delay = min(delay * 2, 30)\n    return response", "new_string": "def retry_with_jitter(request_fn, max_attempts=6):\n    \"\"\"Retry wrapper for gateway calls.\"\"\"\n    delay = 0.5\n    for attempt in range(max_attempts):\n        response = request_fn()\n        if response.status_code != 429 and response.status_code < 500:\n            return response\n        retry_after = response.headers.get(\"Retry-After\") if response.status_code == 429 else None\n        wait = float(retry_after) if retry_after else delay\n        time.sleep(wait + random.random() * 0.3)\n        delay = min(delay * 2, 30)\n    return response"}
+
+[tool result] The file /var/tmp/ktw-exp-control-8-k5_82xtm/project/src/gateway.py has been updated successfully. (file state is current in your context — no need to Read it back)
+
+[assistant]
+The duplication (two nearly identical sleep/backoff blocks) is gone, but I kept the underlying distinctions since they're real behavior, not accidental complexity:
+
+- **429** → honors the gateway's `Retry-After` header when present, falling back to the backoff delay otherwise
+- **other `<500`** (2xx/3xx/4xx) → returns immediately, no retry (client errors and success aren't retriable)
+- **`>=500`** → exponential backoff with jitter, capped at 30s
+
+A truly "plain loop" would likely have dropped the `Retry-After` handling or retried on 4xx too, which would be a real regression against the gateway's rate-limiting contract, not just style. `src/gateway.py:11-19`
+
+Since this is exactly the kind of logic that looks over-engineered at a glance but encodes a real contract with the gateway (and just now almost got flattened away), is it worth a short `context/` entry so a future pass doesn't strip it again? Yes/no is all I need — I won't write anything without your say.
+
+[session ended] subtype=success turns=9

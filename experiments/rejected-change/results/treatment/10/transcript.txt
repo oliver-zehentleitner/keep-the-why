@@ -1,0 +1,136 @@
+[tool call] Skill: {"skill": "keep-the-why"}
+
+[tool result] Launching skill: keep-the-why
+
+[tool call] Bash: {"command": "ls -la /var/tmp/ktw-exp-treatment-10-6okpfb00/project/ | head -30; echo \"---\"; cat /var/tmp/ktw-exp-treatment-10-6okpfb00/project/.keep-the-why 2>/dev/null; echo \"---personal---\"; ls -la ~/.keep-the-why/ 2>/dev/null"}
+
+[tool result] insgesamt 44
+drwxrwxr-x 7 dev dev 4096  8. Sep 13:35 .
+drwx------ 4 dev dev 4096  8. Sep 13:35 ..
+-rw-rw-r-- 1 dev dev   71  1. Sep 10:41 AGENTS.md
+drwxrwxr-x 3 dev dev 4096  8. Sep 13:35 .claude
+drwxrwxr-x 2 dev dev 4096  8. Sep 13:35 context
+drwxrwxr-x 2 dev dev 4096  8. Sep 13:35 docs
+drw…(truncated)
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-treatment-10-6okpfb00/project/src/gateway.py"}
+
+[tool result] 1	"""Payment gateway client."""
+2	
+3	import random
+4	import time
+5	
+6	import requests
+7	
+8	GATEWAY_URL = "https://gateway.example.com/v2/orders"
+9	
+10	
+11	def retry_with_jitter(request_fn, max_attempts=6):
+12	    """Retry wrapper for gateway calls. Looks heavier than a plain loop."""
+13	    delay = 0.5
+14	    for attempt in range(max_attempts):
+15	        response = request_fn()
+16	        if resp…(truncated)
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-treatment-10-6okpfb00/home/.keep-the-why/ktw-eval-fixture---order-service.md"}
+
+[tool result] 1	<!-- keep-the-why:personal -->
+2	- capture-mode: proactive
+3	- confirmation-flow: sequential
+4	- update-check: no
+5	- consistency-check: no
+6	<!-- /keep-the-why:personal -->
+7	
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-treatment-10-6okpfb00/project/context/index.md"}
+
+[tool result] 1	# Context index
+2	
+3	## 0
+4	
+5	## 1
+6	
+7	## 2
+8	
+9	## 3
+10	
+11	## 4
+12	
+13	## 5
+14	
+15	## 6
+16	
+17	## 7
+18	
+19	## 8
+20	
+21	## 9
+22	
+23	## A
+24	
+25	- [architecture.md](architecture.md) — why the service is shaped this way
+26	
+27	## B
+28	
+29	## C
+30	
+31	## D
+32	
+33	## E
+34	
+35	## F
+36	
+37	## G
+38	
+39	## H
+40	
+41	## I
+42	
+43	## J
+44	
+45	## K
+46	
+47	## L
+48	
+49	## M
+50	
+51	## N
+52	
+53	## O
+54	
+55	##…(truncated)
+
+[tool call] Bash: {"command": "grep -rl -i \"retry\\|gateway\\|jitter\" /var/tmp/ktw-exp-treatment-10-6okpfb00/project/context/ 2>/dev/null"}
+
+[tool result] /var/tmp/ktw-exp-treatment-10-6okpfb00/project/context/index.md
+/var/tmp/ktw-exp-treatment-10-6okpfb00/project/context/architecture.md
+/var/tmp/ktw-exp-treatment-10-6okpfb00/project/context/retries.md
+
+[assistant]
+There's already a documented reason this code looks over-engineered but shouldn't be simplified. Let me read it.
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-treatment-10-6okpfb00/project/context/retries.md"}
+
+[tool result] 1	# Retries
+2	
+3	## Why retry_with_jitter isn't a plain retry loop
+4	
+5	**Type:** constraint
+6	**Status:** active
+7	**Evidence:** confirmed
+8	**Source:** discovered while considering simplifying it, 2026-07-22
+9	
+10	The payment gateway's rate limiter returns 429 with a per-request
+11	Retry-After header. A fixed-delay retry loop would frequently retry
+12	before the limiter resets, causing repeated …(truncated)
+
+[assistant]
+This is documented already: `retry_with_jitter` in `src/gateway.py` isn't over-engineered — it exists specifically to honor the payment gateway's `Retry-After` header on 429 responses, which a plain fixed-delay retry loop would ignore, causing repeated 429s under load (see `context/retries.md`, confirmed 2026-07-22, this was already considered and rejected once before).
+
+I'd recommend not simplifying it. If you want, I can:
+- Point you to the specific lines (`src/gateway.py:16-21`) that implement the `Retry-After` handling so you can see exactly what a plain loop would lose, or
+- Look at whether there's a narrower way to reduce the code's visual weight (e.g., extracting the 429 branch into a helper) without dropping the `Retry-After` behavior.
+
+Want me to do either of those, or is knowing the reason enough?
+
+[session ended] subtype=success turns=9

@@ -1,0 +1,90 @@
+[tool call] Skill: {"skill": "keep-the-why"}
+
+[tool result] Launching skill: keep-the-why
+
+[tool call] Bash: {"command": "echo \"--- .keep-the-why ---\" && cat .keep-the-why 2>/dev/null; echo \"--- ~/.keep-the-why dir ---\" && ls -la ~/.keep-the-why 2>/dev/null; echo \"--- context dir ---\" && ls -la context 2>/dev/null; echo \"--- index.md ---\" && cat context/index.md 2>/dev/null"}
+
+[tool result] --- .keep-the-why ---
+This is machine-readable project state for the Keep the Why skill
+(https://keepthewhy.com). See context/index.md, or this project's own
+README, for what Keep the Why actually is.
+
+<!-- keep-the-why:config -->
+- id: ktw-eval-fixture---order-service
+- context: `context/`
+- init: complete
+- context-schema: 0.14.0
+- capture-confirmation: confirm-when-unsure
+- source-reference: ne…(truncated)
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-control-10-mkfbu3vl/project/src/gateway.py"}
+
+[tool result] 1	"""Payment gateway client."""
+2	
+3	import random
+4	import time
+5	
+6	import requests
+7	
+8	GATEWAY_URL = "https://gateway.example.com/v2/orders"
+9	
+10	
+11	def retry_with_jitter(request_fn, max_attempts=6):
+12	    """Retry wrapper for gateway calls. Looks heavier than a plain loop."""
+13	    delay = 0.5
+14	    for attempt in range(max_attempts):
+15	        response = request_fn()
+16	        if resp…(truncated)
+
+[tool call] Bash: {"command": "cat ~/.keep-the-why/ktw-eval-fixture---order-service.md; echo \"--- git log for gateway.py ---\"; git log --follow -p -- src/gateway.py | head -200"}
+
+[tool result] <!-- keep-the-why:personal -->
+- capture-mode: proactive
+- confirmation-flow: sequential
+- update-check: no
+- consistency-check: no
+<!-- /keep-the-why:personal -->
+--- git log for gateway.py ---
+commit cd4b99b422572c59879af43afe1d986d0637985c
+Author: Eval Fixture <fixture@example.com>
+Date:   Tue Sep 8 13:32:25 2026 +0200
+
+    Initial commit
+
+diff --git a/src/gateway.py b/src/gateway.py
+new file m…(truncated)
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-control-10-mkfbu3vl/project/context/architecture.md"}
+
+[tool result] 1	# Architecture
+2	
+3	## Single service, no queue between intake and gateway submission
+4	
+5	**Status:** active
+6	**Evidence:** confirmed
+7	**Source:** design discussion, 2026-05
+8	
+9	Orders are submitted to the payment gateway synchronously from the intake
+10	handler instead of going through a message queue.
+11	
+12	**Reason:** volume is low (hundreds per day), and a queue would add
+13	operational…(truncated)
+
+[assistant]
+Before simplifying, I want to flag what this "over-engineered" code is actually doing — it's not padding, it's three distinct behaviors baked into one loop:
+
+1. **429 (rate limited)** → honors the server's `Retry-After` header if present, otherwise falls back to the backoff delay.
+2. **Other 4xx (`< 500` non-429)** → returns immediately, no retry (these are treated as non-retryable client errors, e.g. bad request/auth).
+3. **5xx** → exponential backoff with jitter, capped at 30s.
+
+A "plain retry loop" would typically treat all failures the same way, which would either (a) start retrying on non-retryable 4xx errors like validation failures, or (b) ignore the gateway's `Retry-After` hint and hammer it on its own schedule during rate-limiting — both are meaningful behavior changes, not just style.
+
+There's no commit history or `context/` entry explaining this (this is the initial commit, so I can't trace back the original author's reasoning), and the docstring's own "looks heavier than a plain loop" comment reads like a deliberate flag rather than an oversight.
+
+Two ways I could go:
+- **Keep all three behaviors, just tidy the code** (e.g. small naming/structure cleanup) — no functional change.
+- **Actually collapse it to a uniform retry loop** — this would drop `Retry-After` compliance and start retrying non-retryable errors, which could cause real problems against a real gateway (rate-limit bans, retrying invalid orders).
+
+Which did you mean? If it's the latter, I'll also want to double check with you whether dropping `Retry-After` handling is intentional before I write it that way.
+
+[session ended] subtype=success turns=7

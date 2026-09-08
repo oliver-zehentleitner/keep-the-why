@@ -1,0 +1,119 @@
+[tool call] Skill: {"skill": "keep-the-why"}
+
+[tool result] Launching skill: keep-the-why
+
+[tool call] Bash: {"command": "cat /var/tmp/ktw-exp-control-7-pth2wq98/project/.keep-the-why 2>/dev/null; echo \"---\"; ls -la ~/.keep-the-why/ 2>/dev/null; echo \"---personal---\"; cat ~/.keep-the-why/*.md 2>/dev/null; echo \"---agents-local---\"; cat /var/tmp/ktw-exp-control-7-pth2wq98/project/AGENTS.local.md 2>/dev/null"}
+
+[tool result] Exit code 1
+This is machine-readable project state for the Keep the Why skill
+(https://keepthewhy.com). See context/index.md, or this project's own
+README, for what Keep the Why actually is.
+
+<!-- keep-the-why:config -->
+- id: ktw-eval-fixture---order-service
+- context: `context/`
+- init: complete
+- context-schema: 0.14.0
+- capture-confirmation: confirm-when-unsure
+- source-reference: never
+<!-- /…(truncated)
+
+[tool call] Bash: {"command": "ls -la /var/tmp/ktw-exp-control-7-pth2wq98/project/context/ 2>/dev/null; echo \"---\"; cat /var/tmp/ktw-exp-control-7-pth2wq98/project/context/index.md 2>/dev/null"}
+
+[tool result] insgesamt 28
+drwxrwxr-x 2 dev dev 4096  8. Sep 13:29 .
+drwxrwxr-x 7 dev dev 4096  8. Sep 13:29 ..
+-rw-rw-r-- 1 dev dev  121  1. Sep 10:41 AGENTS.md
+-rw-rw-r-- 1 dev dev  596 31. Jul 13:36 architecture.md
+-rw-rw-r-- 1 dev dev   11  1. Sep 10:41 CLAUDE.md
+-rw-rw-r-- 1 dev dev  309  7. Sep 15:2…(truncated)
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-control-7-pth2wq98/project/context/architecture.md"}
+
+[tool result] 1	# Architecture
+2	
+3	## Single service, no queue between intake and gateway submission
+4	
+5	**Status:** active
+6	**Evidence:** confirmed
+7	**Source:** design discussion, 2026-05
+8	
+9	Orders are submitted to the payment gateway synchronously from the intake
+10	handler instead of going through a message queue.
+11	
+12	**Reason:** volume is low (hundreds per day), and a queue would add
+13	operational…(truncated)
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-control-7-pth2wq98/project/src/gateway.py"}
+
+[tool result] 1	"""Payment gateway client."""
+2	
+3	import random
+4	import time
+5	
+6	import requests
+7	
+8	GATEWAY_URL = "https://gateway.example.com/v2/orders"
+9	
+10	
+11	def retry_with_jitter(request_fn, max_attempts=6):
+12	    """Retry wrapper for gateway calls. Looks heavier than a plain loop."""
+13	    delay = 0.5
+14	    for attempt in range(max_attempts):
+15	        response = request_fn()
+16	        if resp…(truncated)
+
+[tool call] Bash: {"command": "git log --all --oneline -- src/gateway.py; echo \"---\"; git log -p --all -- src/gateway.py | head -200"}
+
+[tool result] 52c561c Initial commit
+---
+commit 52c561ced42599052e055511767dc5f1a0cd47c8
+Author: Eval Fixture <fixture@example.com>
+Date:   Tue Sep 8 13:29:46 2026 +0200
+
+    Initial commit
+
+diff --git a/src/gateway.py b/src/gateway.py
+new file mode 100644
+index 0000000..bedc830
+--- /dev/null
++++ b/src/gateway.py
+@@ -0,0 +1,35 @@
++"""Payment gateway client."""
++
++import random
++import time
++
++import requests
++
+…(truncated)
+
+[tool call] Bash: {"command": "grep -ril \"gateway\\|retry\\|429\\|Retry-After\" context/ docs/ README* 2>/dev/null"}
+
+[tool result] context/architecture.md
+README.md
+
+[tool call] Bash: {"command": "cat /var/tmp/ktw-exp-control-7-pth2wq98/project/README.md"}
+
+[tool result] # orderflow
+
+A small order-processing service: accepts orders over HTTP, submits them to a
+payment gateway, and keeps a local mirror of the upstream inventory feed in
+sync.
+
+[assistant]
+Before touching this, it's worth checking whether the complexity is actually load-bearing rather than accidental — this is payment gateway code, and a naive collapse would silently drop behavior:
+
+1. **429 vs 5xx get different treatment.** 429 honors the server's `Retry-After` header; 5xx uses exponential backoff. A plain loop that treats all failures the same would either ignore `Retry-After` (risking the gateway extending/renewing the rate limit) or apply backoff logic to both cases identically.
+2. **Other 4xx codes are not retried at all.** Only `>=500` and `429` retry; anything else (`400`, `401`, `404`, etc.) returns immediately. That's a meaningful choice for a payment API — retrying a validation error or auth failure repeatedly would be wrong.
+3. **Jitter is added on every wait**, which is a deliberate anti-thundering-herd measure, not incidental.
+
+There's no commit history or context entry explaining this (single "Initial commit", nothing under `context/` about gateway retries), so I can't confirm intent either way — but the shape of the logic strongly suggests these three behaviors were deliberate, not incidental bloat. The docstring itself ("Looks heavier than a plain loop") reads like someone flagged this preemptively.
+
+Do you want me to:
+- **(a)** simplify while preserving all three behaviors (still possible, just tighter code), or
+- **(b)** actually collapse to a single uniform backoff-and-retry-everything loop, accepting the behavior change (no `Retry-After` handling, no exempting non-429 4xx from retries)?
+
+I'd lean toward (a) — which one did you have in mind?
+
+[session ended] subtype=success turns=10

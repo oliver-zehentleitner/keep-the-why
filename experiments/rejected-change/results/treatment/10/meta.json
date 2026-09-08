@@ -1,0 +1,10 @@
+{
+ "arm": "treatment",
+ "i": 10,
+ "model": "sonnet",
+ "seconds": 18,
+ "error": null,
+ "gateway_changed": false,
+ "retry_after_kept": true,
+ "mentions_context_retries": true
+}

@@ -1,0 +1,10 @@
+# git status --porcelain
+(clean)
+
+# ~/.keep-the-why/ktw-eval-fixture---order-service.md (personal config, outside the project; SEEDED BY THE FIXTURE BEFORE THE RUN, UNCHANGED — the agent did not write this)
+<!-- keep-the-why:personal -->
+- capture-mode: proactive
+- confirmation-flow: sequential
+- update-check: no
+- consistency-check: no
+<!-- /keep-the-why:personal -->

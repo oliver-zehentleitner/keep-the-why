@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- `experiments/rejected-change/`: the experiment behind the article *What happens when a coding agent forgets why a change was rejected?* — 10 control and 10 treatment sessions on the `abandoned-change-still-captured` fixture, identical except for `context/retries.md`, same prompt ("simplify this retry wrapper"), Claude Code 2.1.263 with Sonnet 5, built and isolated like the published evals. Runner (`run.py`, reuses `tools/evals`), design note (`README.md`, written before the run), and every session's transcript, disk diff, hand grade and metadata under `results/`, with the numbers and their reading in `results/SUMMARY.md`: no control session broke the wrapper, seven of ten offered the rejected simplification as an option, all ten treatment sessions cited the entry and declined. Published so the article's numbers can be checked instead of taken on faith; the link in the article points here.
+
 ## [0.15.0] - 2026-09-08
 
 ### Changed

@@ -1,0 +1,100 @@
+[tool call] Skill: {"skill": "keep-the-why"}
+
+[tool result] Launching skill: keep-the-why
+
+[tool call] Bash: {"command": "ls -la && echo \"---\" && cat .keep-the-why 2>/dev/null && echo \"---personal---\" && ls -la ~/.keep-the-why 2>/dev/null && echo \"---context index---\" && cat context/index.md 2>/dev/null"}
+
+[tool result] insgesamt 44
+drwxrwxr-x 7 dev dev 4096  8. Sep 13:28 .
+drwx------ 4 dev dev 4096  8. Sep 13:28 ..
+-rw-rw-r-- 1 dev dev   71  1. Sep 10:41 AGENTS.md
+drwxrwxr-x 3 dev dev 4096  8. Sep 13:28 .claude
+drwxrwxr-x 2 dev dev 4096  8. Sep 13:28 context
+drwxrwxr-x 2 dev dev 4096  8. Sep 13:28 docs
+drw…(truncated)
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-control-5-7ijtsmqq/project/src/gateway.py"}
+
+[tool result] 1	"""Payment gateway client."""
+2	
+3	import random
+4	import time
+5	
+6	import requests
+7	
+8	GATEWAY_URL = "https://gateway.example.com/v2/orders"
+9	
+10	
+11	def retry_with_jitter(request_fn, max_attempts=6):
+12	    """Retry wrapper for gateway calls. Looks heavier than a plain loop."""
+13	    delay = 0.5
+14	    for attempt in range(max_attempts):
+15	        response = request_fn()
+16	        if resp…(truncated)
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-control-5-7ijtsmqq/project/context/architecture.md"}
+
+[tool result] 1	# Architecture
+2	
+3	## Single service, no queue between intake and gateway submission
+4	
+5	**Status:** active
+6	**Evidence:** confirmed
+7	**Source:** design discussion, 2026-05
+8	
+9	Orders are submitted to the payment gateway synchronously from the intake
+10	handler instead of going through a message queue.
+11	
+12	**Reason:** volume is low (hundreds per day), and a queue would add
+13	operational…(truncated)
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-control-5-7ijtsmqq/home/.claude/projects/-var-tmp-ktw-exp-control-5-7ijtsmqq-project/memory/../../../../.keep-the-why/ktw-eval-fixture---order-service.md"}
+
+[tool result] 1	<!-- keep-the-why:personal -->
+2	- capture-mode: proactive
+3	- confirmation-flow: sequential
+4	- update-check: no
+5	- consistency-check: no
+6	<!-- /keep-the-why:personal -->
+7	
+
+[tool call] Bash: {"command": "git log --follow -p -- src/gateway.py | head -200"}
+
+[tool result] commit 125777ca326f21f3865c6d91ff7c23665bf5db23
+Author: Eval Fixture <fixture@example.com>
+Date:   Tue Sep 8 13:28:41 2026 +0200
+
+    Initial commit
+
+diff --git a/src/gateway.py b/src/gateway.py
+new file mode 100644
+index 0000000..bedc830
+--- /dev/null
++++ b/src/gateway.py
+@@ -0,0 +1,35 @@
++"""Payment gateway client."""
++
++import random
++import time
++
++import requests
++
++GATEWAY_URL = "https://gat…(truncated)
+
+[assistant]
+I looked at `src/gateway.py:11-26` before touching anything, and this isn't actually a plain retry loop wearing a costume — it's doing several distinct things a naive loop would drop:
+
+1. **429 gets special treatment**: it honors the server's `Retry-After` header instead of using the backoff schedule, which matters for a payment gateway that rate-limits.
+2. **4xx (other than 429) fails fast**: `status_code < 500` returns immediately — client errors aren't retried, only 429 and 5xx are.
+3. **Jitter** (`random.random() * 0.3`) on every sleep, to avoid synchronized retry storms across concurrent order submissions.
+4. **Backoff cap at 30s** so `delay` doesn't grow unbounded across the 6 attempts.
+
+There's no `context/` entry or commit history explaining *why* these specific choices were made (single initial commit, no prior discussion captured), so I can't confirm intent — but the code itself makes clear this is doing more than "retry N times." A truly plain retry loop would likely lose the Retry-After handling and/or the fail-fast-on-4xx behavior, which could be a real regression for a gateway client, not just cosmetic.
+
+Before I simplify: do you want me to
+- (a) keep all four behaviors above but tidy the structure/naming, or
+- (b) actually drop some of them (e.g., no jitter, no Retry-After handling) for a genuinely plainer loop?
+
+If (b), that's worth a quick note on why once we land on it — I'll only write that after you confirm.
+
+[session ended] subtype=success turns=8

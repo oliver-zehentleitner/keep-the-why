@@ -1,0 +1,176 @@
+[tool call] Skill: {"skill": "keep-the-why"}
+
+[tool result] Launching skill: keep-the-why
+
+[tool call] Bash: {"command": "ls -la .keep-the-why 2>/dev/null && echo \"---\" && cat .keep-the-why 2>/dev/null; echo \"---personal---\"; ls -la ~/.keep-the-why/ 2>/dev/null; cat ~/.keep-the-why/*.md 2>/dev/null"}
+
+[tool result] -rw-rw-r-- 1 dev dev 412  8. Sep 13:26 .keep-the-why
+---
+This is machine-readable project state for the Keep the Why skill
+(https://keepthewhy.com). See context/index.md, or this project's own
+README, for what Keep the Why actually is.
+
+<!-- keep-the-why:config -->
+- id: ktw-eval-fixture---order-service
+- context: `context/`
+- init: complete
+- context-schema: 0.14.0
+- capture-con…(truncated)
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-control-2-6offjz7h/project/src/gateway.py"}
+
+[tool result] 1	"""Payment gateway client."""
+2	
+3	import random
+4	import time
+5	
+6	import requests
+7	
+8	GATEWAY_URL = "https://gateway.example.com/v2/orders"
+9	
+10	
+11	def retry_with_jitter(request_fn, max_attempts=6):
+12	    """Retry wrapper for gateway calls. Looks heavier than a plain loop."""
+13	    delay = 0.5
+14	    for attempt in range(max_attempts):
+15	        response = request_fn()
+16	        if resp…(truncated)
+
+[tool call] Bash: {"command": "cat /var/tmp/ktw-exp-control-2-6offjz7h/project/context/index.md 2>/dev/null; echo \"---files---\"; ls /var/tmp/ktw-exp-control-2-6offjz7h/project/context/ 2>/dev/null; echo \"---grep gateway---\"; grep -rli \"gateway\\|retry\" /var/tmp/ktw-exp-control-2-6offjz7h/project/context/ 2>/dev/null"}
+
+[tool result] # Context index
+
+## 0
+
+## 1
+
+## 2
+
+## 3
+
+## 4
+
+## 5
+
+## 6
+
+## 7
+
+## 8
+
+## 9
+
+## A
+
+- [architecture.md](architecture.md) — why the service is shaped this way
+
+## B
+
+## C
+
+## D
+
+## E
+
+## F
+
+## G
+
+## H
+
+## I
+
+## J
+
+## K
+
+## L
+
+## M
+
+## N
+
+## O
+
+## P
+
+## Q
+
+## R
+
+## S
+
+## T
+
+## U
+
+## V
+
+## W
+
+## X
+
+## Y
+
+## Z
+---files---
+AGENTS.md
+architecture.md
+CLAUDE.md
+index.md
+README.md
+---grep gateway---
+/var/tm…(truncated)
+
+[tool call] Bash: {"command": "cat /var/tmp/ktw-exp-control-2-6offjz7h/project/context/architecture.md"}
+
+[tool result] # Architecture
+
+## Single service, no queue between intake and gateway submission
+
+**Status:** active
+**Evidence:** confirmed
+**Source:** design discussion, 2026-05
+
+Orders are submitted to the payment gateway synchronously from the intake
+handler instead of going through a message queue.
+
+**Reason:** volume is low (hundreds per day), and a queue would add
+operational surface for no measurable ben…(truncated)
+
+[tool call] Bash: {"command": "git log --oneline -- src/gateway.py; echo \"---\"; git log -p -- src/gateway.py | head -200"}
+
+[tool result] d1c58aa Initial commit
+---
+commit d1c58aa28d936e1b9e2125f80e7ab5e1f6253b24
+Author: Eval Fixture <fixture@example.com>
+Date:   Tue Sep 8 13:26:31 2026 +0200
+
+    Initial commit
+
+diff --git a/src/gateway.py b/src/gateway.py
+new file mode 100644
+index 0000000..bedc830
+--- /dev/null
++++ b/src/gateway.py
+@@ -0,0 +1,35 @@
++"""Payment gateway client."""
++
++import random
++import time
++
++import requests
++
+…(truncated)
+
+[assistant]
+The `retry_with_jitter` function isn't purely boilerplate — it has one behavior a plain retry loop would likely drop: on `429`, it waits for the server's `Retry-After` value (falling back to the backoff delay) instead of always using its own backoff timer. That's a distinct rate-limit-respecting path from the generic 5xx retry, and dropping it could mean retrying faster than the gateway wants, risking further throttling. There's no commit history or `context/` entry explaining this choice (this is the repo's initial commit), so I can't confirm whether that's deliberate design or accidental complexity.
+
+Two ways I could simplify it:
+
+1. **Keep the `Retry-After` handling, just tighten the code** — merge the two nearly-identical branches (both compute a wait time, sleep with jitter, and grow `delay`), so there's one loop body instead of two.
+2. **Drop `Retry-After` entirely** — true plain loop, always uses our own exponential backoff regardless of status code.
+
+Which do you want? If it's (1) I'll simplify now; if it's (2) I'll also flag it as a behavior change, not just a refactor.
+
+[session ended] subtype=success turns=8

@@ -1,0 +1,177 @@
+[tool call] Skill: {"skill": "keep-the-why"}
+
+[tool result] Launching skill: keep-the-why
+
+[tool call] Bash: {"command": "ls -la .keep-the-why 2>&1; echo \"---personal---\"; ls -la ~/.keep-the-why/ 2>&1; echo \"---context---\"; ls context/ 2>&1"}
+
+[tool result] -rw-rw-r-- 1 dev dev 412  8. Sep 13:31 .keep-the-why
+---personal---
+insgesamt 12
+drwxrwxr-x 2 dev dev 4096  8. Sep 13:31 .
+drwxrwxr-x 5 dev dev 4096  8. Sep 13:31 ..
+-rw-rw-r-- 1 dev dev  164  8. Sep 13:31 ktw-eval-fixture---order-service.md
+---context---
+AGENTS.md
+architecture.md
+CLAUDE.md
+index.md
+README.md
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-control-9-rv1n71kt/project/.keep-the-why"}
+
+[tool result] 1	This is machine-readable project state for the Keep the Why skill
+2	(https://keepthewhy.com). See context/index.md, or this project's own
+3	README, for what Keep the Why actually is.
+4	
+5	<!-- keep-the-why:config -->
+6	- id: ktw-eval-fixture---order-service
+7	- context: `context/`
+8	- init: complete
+9	- context-schema: 0.14.0
+10	- capture-confirmation: confirm-when-unsure
+11	- source-reference: …(truncated)
+
+[tool call] Bash: {"command": "cat ~/.keep-the-why/ktw-eval-fixture---order-service.md"}
+
+[tool result] <!-- keep-the-why:personal -->
+- capture-mode: proactive
+- confirmation-flow: sequential
+- update-check: no
+- consistency-check: no
+<!-- /keep-the-why:personal -->
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-control-9-rv1n71kt/project/src/gateway.py"}
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-control-9-rv1n71kt/project/context/index.md"}
+
+[tool result] 1	"""Payment gateway client."""
+2	
+3	import random
+4	import time
+5	
+6	import requests
+7	
+8	GATEWAY_URL = "https://gateway.example.com/v2/orders"
+9	
+10	
+11	def retry_with_jitter(request_fn, max_attempts=6):
+12	    """Retry wrapper for gateway calls. Looks heavier than a plain loop."""
+13	    delay = 0.5
+14	    for attempt in range(max_attempts):
+15	        response = request_fn()
+16	        if resp…(truncated)
+
+[tool result] 1	# Context index
+2	
+3	## 0
+4	
+5	## 1
+6	
+7	## 2
+8	
+9	## 3
+10	
+11	## 4
+12	
+13	## 5
+14	
+15	## 6
+16	
+17	## 7
+18	
+19	## 8
+20	
+21	## 9
+22	
+23	## A
+24	
+25	- [architecture.md](architecture.md) — why the service is shaped this way
+26	
+27	## B
+28	
+29	## C
+30	
+31	## D
+32	
+33	## E
+34	
+35	## F
+36	
+37	## G
+38	
+39	## H
+40	
+41	## I
+42	
+43	## J
+44	
+45	## K
+46	
+47	## L
+48	
+49	## M
+50	
+51	## N
+52	
+53	## O
+54	
+55	##…(truncated)
+
+[tool call] Bash: {"command": "git log --follow -p -- src/gateway.py | head -200"}
+
+[tool result] commit b54e95e89f3723d77c664a6bacd353c718a18766
+Author: Eval Fixture <fixture@example.com>
+Date:   Tue Sep 8 13:31:40 2026 +0200
+
+    Initial commit
+
+diff --git a/src/gateway.py b/src/gateway.py
+new file mode 100644
+index 0000000..bedc830
+--- /dev/null
++++ b/src/gateway.py
+@@ -0,0 +1,35 @@
++"""Payment gateway client."""
++
++import random
++import time
++
++import requests
++
++GATEWAY_URL = "https://gat…(truncated)
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-control-9-rv1n71kt/project/context/architecture.md"}
+
+[tool result] 1	# Architecture
+2	
+3	## Single service, no queue between intake and gateway submission
+4	
+5	**Status:** active
+6	**Evidence:** confirmed
+7	**Source:** design discussion, 2026-05
+8	
+9	Orders are submitted to the payment gateway synchronously from the intake
+10	handler instead of going through a message queue.
+11	
+12	**Reason:** volume is low (hundreds per day), and a queue would add
+13	operational…(truncated)
+
+[assistant]
+Before simplifying, I checked what this actually does — it's not just a generic retry loop wearing a costume. It handles three genuinely distinct cases:
+
+- **429** → honor the server's `Retry-After` header (falls back to the backoff delay if absent)
+- **4xx (non-429)** → return immediately, no retry (these aren't transient)
+- **5xx** → backoff and retry
+
+Plus jitter to avoid thundering-herd, and a capped exponential backoff. For a payment gateway call with an idempotency key, dropping any of that (e.g., ignoring `Retry-After`, or retrying non-retryable 4xx errors) would be a real regression, not a simplification.
+
+What I *can* clean up without losing behavior: the two branches duplicate the "sleep + double the delay" logic. I'll unify that.
+
+[tool call] Edit: {"replace_all": false, "file_path": "/var/tmp/ktw-exp-control-9-rv1n71kt/project/src/gateway.py", "old_string": "def retry_with_jitter(request_fn, max_attempts=6):\n    \"\"\"Retry wrapper for gateway calls. Looks heavier than a plain loop.\"\"\"\n    delay = 0.5\n    for attempt in range(max_attempts):\n        response = request_fn()\n        if response.status_code == 429:\n            retry_after = response.headers.get(\"Retry-After\")\n            wait = float(retry_after) if retry_after else delay\n            time.sleep(wait + random.random() * 0.3)\n            delay = min(delay * 2, 30)\n            continue\n        if response.status_code < 500:\n            return response\n        time.sleep(delay + random.random() * 0.3)\n        delay = min(delay * 2, 30)\n    return response", "new_string": "def retry_with_jitter(request_fn, max_attempts=6):\n    \"\"\"Retry wrapper for gateway calls.\n\n    429 waits for the server-specified Retry-After if present; other 4xx\n    responses are not retried; 5xx responses back off and retry.\n    \"\"\"\n    delay = 0.5\n    for _ in range(max_attempts):\n        response = request_fn()\n        if response.status_code < 500 and response.status_code != 429:\n            return response\n        retry_after = response.headers.get(\"Retry-After\") if response.status_code == 429 else None\n        wait = float(retry_after) if retry_after else delay\n        time.sleep(wait + random.random() * 0.3)\n        delay = min(delay * 2, 3…(truncated)
+
+[tool result] The file /var/tmp/ktw-exp-control-9-rv1n71kt/project/src/gateway.py has been updated successfully. (file state is current in your context — no need to Read it back)
+
+[assistant]
+Now, is this worth a `context/` entry so a future pass doesn't try to "simplify" away the `Retry-After`/4xx/5xx distinction again — or skip it?
+
+[session ended] subtype=success turns=11

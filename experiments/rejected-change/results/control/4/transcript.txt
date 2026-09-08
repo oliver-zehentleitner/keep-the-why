@@ -1,0 +1,113 @@
+[tool call] Skill: {"skill": "keep-the-why"}
+
+[tool result] Launching skill: keep-the-why
+
+[tool call] Bash: {"command": "cat .keep-the-why 2>/dev/null; echo \"---\"; ls context/ 2>/dev/null; echo \"---\"; cat context/index.md 2>/dev/null; echo \"---personal---\"; ls ~/.keep-the-why/ 2>/dev/null; cat ~/.keep-the-why/config 2>/dev/null"}
+
+[tool result] Exit code 1
+This is machine-readable project state for the Keep the Why skill
+(https://keepthewhy.com). See context/index.md, or this project's own
+README, for what Keep the Why actually is.
+
+<!-- keep-the-why:config -->
+- id: ktw-eval-fixture---order-service
+- context: `context/`
+- init: complete
+- context-schema: 0.14.0
+- capture-confirmation: confirm-when-unsure
+- source-reference: never
+<!-- /…(truncated)
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-control-4-g0mxr437/project/src/gateway.py"}
+
+[tool result] 1	"""Payment gateway client."""
+2	
+3	import random
+4	import time
+5	
+6	import requests
+7	
+8	GATEWAY_URL = "https://gateway.example.com/v2/orders"
+9	
+10	
+11	def retry_with_jitter(request_fn, max_attempts=6):
+12	    """Retry wrapper for gateway calls. Looks heavier than a plain loop."""
+13	    delay = 0.5
+14	    for attempt in range(max_attempts):
+15	        response = request_fn()
+16	        if resp…(truncated)
+
+[tool call] Bash: {"command": "cat ~/.keep-the-why/ktw-eval-fixture---order-service.md 2>/dev/null"}
+
+[tool result] <!-- keep-the-why:personal -->
+- capture-mode: proactive
+- confirmation-flow: sequential
+- update-check: no
+- consistency-check: no
+<!-- /keep-the-why:personal -->
+
+[tool call] Read: {"file_path": "/var/tmp/ktw-exp-control-4-g0mxr437/project/context/architecture.md"}
+
+[tool result] 1	# Architecture
+2	
+3	## Single service, no queue between intake and gateway submission
+4	
+5	**Status:** active
+6	**Evidence:** confirmed
+7	**Source:** design discussion, 2026-05
+8	
+9	Orders are submitted to the payment gateway synchronously from the intake
+10	handler instead of going through a message queue.
+11	
+12	**Reason:** volume is low (hundreds per day), and a queue would add
+13	operational…(truncated)
+
+[tool call] Bash: {"command": "git log --follow -p --all -- src/gateway.py | head -200; echo \"---full log---\"; git log --oneline --all -- src/gateway.py"}
+
+[tool result] commit f4dcba5f406b92fb9497e3156691f7c2655f0f36
+Author: Eval Fixture <fixture@example.com>
+Date:   Tue Sep 8 13:27:55 2026 +0200
+
+    Initial commit
+
+diff --git a/src/gateway.py b/src/gateway.py
+new file mode 100644
+index 0000000..bedc830
+--- /dev/null
++++ b/src/gateway.py
+@@ -0,0 +1,35 @@
++"""Payment gateway client."""
++
++import random
++import time
++
++import requests
++
++GATEWAY_URL = "https://gat…(truncated)
+
+[tool call] Bash: {"command": "grep -ril \"retry\\|gateway\\|429\\|jitter\\|backoff\" /var/tmp/ktw-exp-control-4-g0mxr437/project/context/ 2>/dev/null; echo \"---\"; ls /var/tmp/ktw-exp-control-4-g0mxr437/project/"}
+
+[tool result] /var/tmp/ktw-exp-control-4-g0mxr437/project/context/architecture.md
+---
+AGENTS.md
+context
+docs
+README.md
+src
+
+[assistant]
+Before I touch it — this isn't really boilerplate-heavy over-engineering, it's encoding a few specific behaviors that a plain retry loop would likely drop:
+
+1. **Honors `Retry-After`** on 429 responses (falls back to the backoff delay only if the header's absent)
+2. **Distinguishes retryable from non-retryable failures** — client errors other than 429 (`< 500`, non-429) return immediately instead of being retried
+3. **Exponential backoff with jitter**, capped at 30s, to avoid retry storms against the gateway
+
+There's no existing rationale recorded for this in `context/` (checked `architecture.md` and the index — no entry covers `gateway.py`), so I can't tell whether these were deliberate gateway-contract requirements or just defensive coding nobody's revisited.
+
+Do you want me to:
+- **(a)** keep all three behaviors but tighten the code structure (e.g. dedupe the two backoff branches), or
+- **(b)** actually drop down to a plain uniform retry loop, accepting that it'll stop honoring `Retry-After` and will retry things it currently wouldn't?
+
+If it's (a), that's a straightforward cleanup with no functional change — I don't think it needs a context entry, it's not a real fork. If it's (b), that's a real behavior change I'd want to note in `context/` as intentional (superseding whatever the original reasoning was), and I'd want to confirm you're okay with the tradeoff first.
+
+[session ended] subtype=success turns=9
