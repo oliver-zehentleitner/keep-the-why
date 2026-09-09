@@ -16,7 +16,7 @@
 [![Mastodon](https://img.shields.io/badge/mastodon-%40keep__the__why-6364FF?logo=mastodon&logoColor=white)](https://mastodon.social/@keep_the_why)
 [![Keep the Why](https://keepthewhy.com/assets/badge.svg)](https://keepthewhy.com)
 
-<a href="https://keepthewhy.com"><img src="docs/assets/logo.png" alt="Keep the Why — because &quot;ask Bob&quot; is not documentation."></a>
+<a href="https://keepthewhy.com"><img src="https://keepthewhy.com/assets/logo.png" alt="Keep the Why — because &quot;ask Bob&quot; is not documentation."></a>
 
 # Keep the Why
 
@@ -50,7 +50,7 @@ Important project knowledge gets created in conversation — with a teammate, or
 ## How it works
 
 <p align="center">
-  <img src="docs/assets/keep-the-why-readme.gif"
+  <img src="https://keepthewhy.com/assets/keep-the-why-readme.gif"
        alt="Keep the Why captures the reason an attempted retry-wrapper simplification was abandoned, stores it as versioned Markdown in context/retries.md, and lets a later agent session retrieve that reasoning instead of repeating the mistake."
        width="900">
 </p>
