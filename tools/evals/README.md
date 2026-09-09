@@ -3,7 +3,7 @@
 Runs the skill's eval cases (`tools/evals/evals.json`) against a
 real agent and grades the results. This is a development tool for this
 repository — deliberately **not** part of the installable skill package, which
-ships instructions only, no executable code.
+ships instructions only, no scripts of its own.
 
 ## How it works
 

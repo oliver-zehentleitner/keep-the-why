@@ -6,8 +6,8 @@ Keep the Why is a repo-native convention and agent skill; this page installs the
 
 Before installing anything that runs inside an agent, know what you're actually getting:
 
-- **No executable code.** The skill package (`skills/keep-the-why/`) is instructions only — `SKILL.md`, `references/*.md`, `examples/*.md`. No scripts, no binaries.
-- **No network access of its own.** There's nothing to run, so there's nothing that calls out anywhere. Whatever network access exists is your agent's own, not something this skill adds.
+- **The skill package is instructions only.** `skills/keep-the-why/` is `SKILL.md`, `references/*.md`, `examples/*.md` — no scripts, no binaries. What the instructions can trigger is one thing: the linter, `keep-the-why-lint`, installed by its fixed name from PyPI and run after writes when you say yes in the setup wizard (the wizard's default is yes; `no` turns it off). Autostart, if you enable it, writes a session hook into the project's agent settings — a file you see and commit. The exact bounds are on [Security](security.md).
+- **No network access of its own.** The package has nothing that calls out. The one install the skill may ask for is that PyPI package; everything else is your agent's own network access, not something this skill adds.
 - **No external services.** No database, no MCP server, no account, no API key.
 - **Install a tagged release, not `main`.** `main` is where active development happens and isn't guaranteed release-ready at any given moment — installing without pinning tracks it directly. A `latest` tag always points to the newest release, moved automatically by CI whenever one ships. Every install method below shows how to pin to it (or to an exact version, for full reproducibility).
 - **Updating is explicit**, never automatic — see "Updating" below.
@@ -49,7 +49,7 @@ With [`gh`](https://cli.github.com/) v2.90.0 or later — `gh skill` is [in publ
 gh skill preview oliver-zehentleitner/keep-the-why keep-the-why
 ```
 
-GitHub's own guidance: skills aren't verified by GitHub and may contain prompt injections, hidden instructions, or malicious scripts — inspect before installing. Keep the Why ships instructions only, no executable scripts; see [Security](security.md) for what that means in practice, including an independent SkillsLLM scan. Then, pinned to a release:
+GitHub's own guidance: skills aren't verified by GitHub and may contain prompt injections, hidden instructions, or malicious scripts — inspect before installing. The Keep the Why package ships no scripts; the linter it can install is covered on [Security](security.md), along with an independent SkillsLLM scan. Then, pinned to a release:
 
 ```bash
 gh skill install oliver-zehentleitner/keep-the-why keep-the-why@latest
