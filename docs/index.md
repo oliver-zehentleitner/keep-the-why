@@ -1,5 +1,5 @@
 ---
-description: "Keep the Why: a repo-native convention and agent skill that preserves the reasoning behind a codebase as project memory — Markdown in the repo, versioned and shared by Git, a byproduct of working with your agent — so it stops re-suggesting rejected approaches, gives better answers, speeds up onboarding, and makes legacy projects tractable again."
+description: "Project memory for coding agents and humans: the reasoning behind a codebase as Markdown in the repo, versioned by Git, so nothing rejected is proposed twice."
 hide:
   - toc
 ---
