@@ -22,11 +22,12 @@ Nothing in flight.
   to `-r3`.
 - [ ] **HOL / awesome-ai-plugins listing**
   ([hashgraph-online/awesome-ai-plugins#257](https://github.com/hashgraph-online/awesome-ai-plugins/pull/257)).
-  Contribution check passes; the maintainers' centralized scan still runs an
-  older scanner release whose secret heuristic flags an eval case id, which
-  is explained in the PR. Waits on their rerun or merge. Afterwards: claim
-  the listing on hol.org (repository owner), and add the HOL registry to
-  `llms.txt` under "Also Listed On".
+  Rebased on their request; all five catalog checks pass, including the
+  source-repository scan. Waits on their merge. Afterwards, two steps: the
+  repository owner claims the listing on hol.org ("Claim this listing" —
+  ownership proof, unlocks managing the registry page: media, first comment,
+  launch day); then add the HOL registry to `llms.txt` under "Also Listed
+  On".
 - [ ] **awesome-copilot**
   ([github/awesome-copilot#2998](https://github.com/github/awesome-copilot/pull/2998)),
   bump to 0.16.0, waits on their review; #2984 (0.15.0) is merged. Every
