@@ -1,20 +1,23 @@
 # Keep the Why
 
-> A repo-native convention and agent skill for preserving the reasoning behind a codebase —
-> architecture decisions, rejected alternatives, workarounds, incident learnings, operational
-> constraints that the code alone can't explain — as project memory, kept in the repo: plain
-> Markdown in `context/`, committed with the code, so Git already provides the storage, the
-> history and the distribution — it travels with every clone, branch and fork, and a pull
-> request shows the reasoning diff beside the code diff. It captures that reasoning as a
-> byproduct of working with your agent, so every later session can use it — your agent, and
-> every other agent that works in the repository, understands not just the code but everything
-> around it: why it is the way it is, what was tried and rejected, which constraints the source
-> doesn't show. So does the next person. Onboarding gets faster, legacy projects become
-> tractable again. It works continuously as you develop, where the reasoning comes for free.
->
-> Starting on an existing repository works too, within limits — history, issues and code give
-> back only part of the why, a maintainer has to fill in the rest, and that takes real effort.
-> It is never too late to begin, though.
+> Project memory for coding agents and humans: the reasoning behind a codebase as Markdown in the
+> repo, versioned by Git, so nothing rejected is proposed twice.
+
+Keep the Why is a repo-native convention and agent skill for preserving the reasoning behind a
+codebase — architecture decisions, rejected alternatives, workarounds, incident learnings,
+operational constraints that the code alone can't explain — as project memory, kept in the repo.
+That memory is plain Markdown in `context/`, committed with the code, so Git already provides the
+storage, the history and the distribution: it travels with every clone, branch and fork, and a pull
+request shows the reasoning diff beside the code diff. It captures that reasoning as a byproduct of
+working with your agent, so every later session can use it. Your agent, and every other agent that
+works in the repository, understands not just the code but everything around it: why it is the way
+it is, what was tried and rejected, which constraints the source doesn't show. So does the next
+person. Onboarding gets faster, legacy projects become tractable again. It works continuously as you
+develop, where the reasoning comes for free.
+
+Starting on an existing repository works too, within limits — history, issues and code give back
+only part of the why, a maintainer has to fill in the rest, and that takes real effort. It is never
+too late to begin, though.
 
 The payoff, made concrete: a new hire, or an agent that's never touched the codebase before,
 doesn't have to track down whoever wrote the original code — and doesn't just repeat what was
