@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Changed
+
+- `docs/evals.md` carries the 0.16.0 release measurement: three consecutive full runs on the tag (86, 84 and 81 of 87), the four numbers per run, a note on every failed run, a new run-history row. The two-messages rule from #343 held in all nine wizard sessions; two cases flipped twice, the same way each time — the request's "questions one at a time" answered with one list (#354) and the frustration case naming the agent tool's issue tracker instead of this project's (#355, once with the skill never loaded) — and `Evidence: confirmed` on a lost original reason recurred once per series (#356). Run 3 had the series' three genuine activation misses.
+
 ## [0.16.0] - 2026-09-09
 
 ### Changed
