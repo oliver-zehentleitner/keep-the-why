@@ -304,4 +304,4 @@ The two shell snippets in `references/autostart.md` and `references/ci-linting.m
 
 **Rejected alternative:** strip every URL from the package to reach *Safe*. Not possible without dropping the license attribution, the badge markup in `references/setup.md`, and the OWASP link the trust model cites.
 
-**Consequence:** new shell fences under `skills/keep-the-why/` use ` ```sh `. The other scanners' medium findings (Snyk W011, Gen Agent Trust Hub) describe the skill reading issue and pull-request threads during retrospective recovery and interviews — that is the feature, the mitigation is Core rule 11 and `references/trust-model.md`, and those findings are expected to stay; `docs/security.md` says so in public.
+**Consequence:** new shell fences under `skills/keep-the-why/` use ` ```sh `. The other scanners on skills.sh (Socket, Snyk, Gen Agent Trust Hub) pass; where they look at the skill reading issue and pull-request threads during retrospective recovery and interviews, that is the feature and the mitigation is Core rule 11 and `references/trust-model.md`; `docs/security.md` says so in public.
