@@ -1,11 +1,14 @@
 blank_issues_enabled: true
 contact_links:
-  - name: Keep The Why Discussions
+  - name: Questions and ideas — Discussions
     url: https://github.com/oliver-zehentleitner/keep-the-why/discussions
-    about: Ask general questions.
-  - name: Keep The Why docs
+    about: Not sure it's a bug, or want to talk a design question through first? Start a discussion.
+  - name: Documentation — keepthewhy.com
     url: https://keepthewhy.com/
-    about: The complete UNICORN Binance WebSocket API documentation.
-  - name: UNICORN Devs Chat
+    about: Installation, the specification, linting, evals, the agent and model matrix.
+  - name: Security
+    url: https://github.com/oliver-zehentleitner/keep-the-why/blob/main/SECURITY.md
+    about: How to report a security issue privately instead of in a public issue.
+  - name: Community chat — Telegram
     url: https://t.me/unicorndevs
-    about: Chat with the community about Keep The Why and ask general questions.
+    about: Chat with the maintainer and other users.

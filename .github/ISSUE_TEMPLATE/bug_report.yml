@@ -1,154 +1,96 @@
 name: Bug report
-description: Report a bug with this library.
+description: The linter, the GitHub Action, the docs, or the evals tooling does something wrong.
 labels: bug
 assignees:
   - oliver-zehentleitner
 body:
   - type: markdown
     attributes:
-      value: | 
-        Please post here only issues concerning this repository and follow the [Issue-Guidelines](https://github.com/oliver-zehentleitner/unicorn-binance-suite/wiki/Issue-Guidelines). 
-        
-        Most of these fields are not mandatory, but please provide as much information as possible.
+      value: |
+        Use this for anything in this repository that runs as code or is published as text: `ktw-lint`, the `keep-the-why-lint` GitHub Action, the documentation at keepthewhy.com, the evals runner in `tools/evals/`. If the agent behaved differently than the skill describes, use the *Skill behavior report* template instead.
 
   - type: checkboxes
-    id: Confirmation
+    id: confirmation
     attributes:
-      label: Solution to Issue cannot be found in the documentation or other Issues and also occurs in the latest version of this library.
-      description: |
-        I have searched for other Issues with the same problem or similar feature requests and have looked in the documentation. This issue also affects the latest version of this library.
+      label: Before you file
       options:
-        - label: I checked the documentation and other Issues. I am using the latest version of this library.
+        - label: I searched the existing issues and the documentation. The problem still occurs on the latest release.
           required: true
 
-  - type: textarea
-    id: Version
-    attributes:
-      label: Version of this library.
-      description: |
-        Please control what version you are using with [this script](https://github.com/oliver-zehentleitner/unicorn-binance-suite/blob/master/tools/get_versions_of_unicorn_packages.py) and post the output:
-    validations:
-      required: true
-
   - type: dropdown
-    id: Hardware
+    id: component
     attributes:
-      label: Hardware?
-      description: |
-        In which hardware environment is the code executed?
+      label: Component
       options:
-        - Local server/workstation
-        - Raspberry Pi
-        - VPS or other cloud hosting
+        - ktw-lint (local run)
+        - GitHub Action (oliver-zehentleitner/keep-the-why@lint-...)
+        - Documentation (keepthewhy.com or the Markdown in the repository)
+        - Evals tooling (tools/evals/)
+        - Repository structure / specification
+        - Other (please explain below)
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: |
+        `ktw-lint --version` for the linter; the `@lint-...` ref for the Action; the skill version (`metadata.version` in `SKILL.md`) or the page URL for the docs.
+      placeholder: "ktw-lint 0.16.0.0"
     validations:
       required: true
 
   - type: dropdown
-    id: OS
+    id: os
     attributes:
-      label: Operating System?
-      description: |
-        In which operating system is the code executed?
+      label: Operating system
       options:
         - Linux
         - macOS
         - Windows
-        - Other (please explain)
+        - GitHub-hosted runner
+        - Other (please explain below)
     validations:
-      required: true
+      required: false
 
   - type: dropdown
-    id: Python
+    id: python
     attributes:
-      label: Python version?
-      description: |
-        In which Python version is the code executed?
+      label: Python version
+      description: Only for the linter and the evals tooling.
       options:
-        - Python3.9
-        - Python3.10
-        - Python3.11
-        - Python3.12
-        - Python3.13
-        - Python3.14
+        - Python 3.10
+        - Python 3.11
+        - Python 3.12
+        - Python 3.13
+        - Python 3.14
     validations:
-      required: true
+      required: false
 
   - type: textarea
-    id: WheelInfo
+    id: command
     attributes:
-      label: Installed wheel files
+      label: Command and output
       description: |
-        Please share your installed wheel files of this library. Run `pip show unicorn-binance-rest-api --files | 
-        grep '  '` or `conda list -f unicorn-binance-rest-api | grep '  '` and post the result:
+        The exact command or workflow step, and its full output. For the Action, the job log of the failing step. Remove anything confidential.
       render: shell
     validations:
       required: false
 
   - type: textarea
-    id: Packages
+    id: input_files
     attributes:
-      label: Installed packages
+      label: Input that triggers it
       description: |
-        Please share your installed packages by running `pip list` or `conda list` and entering the output below:
-      render: shell
+        For linter findings you consider wrong: the `context/` entry or `.keep-the-why` line the finding points at, and the finding code (`E104`, `W003`, ...). Project and personal `.keep-the-why` settings if they matter.
+      render: markdown
     validations:
       required: false
 
   - type: textarea
-    id: Log
+    id: issue
     attributes:
-      label: Logging output
-      description: |
-        Please share the logging output here (REMOVE API_KEY, API_SECRET, LISTEN_KEY!!):
-        _Note:_ This will be automatically formatted as code.
-      placeholder: "logfile"
-      render: shell
-    validations:
-      required: false
-
-  - type: dropdown
-    id: Processing
-    attributes:
-      label: Processing method?
-      description: |
-        Are you using the `stream_buffer` or the `process_stream_data`-callback function?
-      options:
-        - process_asyncio_queue
-        - process_stream_data
-        - process_stream_data_async
-        - stream_buffer
-    validations:
-      required: true
-
-  - type: dropdown
-    id: Endpoint
-    attributes:
-      label: Used endpoint?
-      description: |
-        To which endpoint do you connect?
-      options:
-        - concerns all
-        - binance.com
-        - binance.com-testnet
-        - binance.com-margin
-        - binance.com-margin-testnet
-        - binance.com-isolated_margin
-        - binance.com-isolated_margin-testnet
-        - binance.com-futures
-        - binance.com-futures-testnet
-        - binance.com-coin_futures
-        - binance.com-vanilla-options
-        - binance.com-vanilla-options-testnet
-        - binance.us
-        - trbinance.com
-    validations:
-      required: true
-
-  - type: textarea
-    id: Issue
-    attributes:
-      label: Issue
-      description: |
-        Please describe the issue you are experiencing:
+      label: What happens, and what you expected instead
     validations:
       required: true

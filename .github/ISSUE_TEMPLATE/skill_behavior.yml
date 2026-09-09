@@ -1,0 +1,133 @@
+name: Skill behavior report
+description: The agent did something the skill says it should not, or skipped something it should have done.
+labels: skill-wording
+assignees:
+  - oliver-zehentleitner
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this when the skill was loaded and the agent still deviated from what `SKILL.md` or the references describe — it wrote an entry without asking when it should have asked, invented a reason, skipped the setup wizard, ignored a setting, and so on. For the linter, the GitHub Action or the docs use the *Bug report* template instead.
+
+        Most fields are optional, but the more of them you fill in, the better the chance the behavior can be reproduced. The single most useful thing is the transcript excerpt.
+
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Before you file
+      options:
+        - label: I searched the existing issues and the documentation for this behavior.
+          required: true
+        - label: The skill was actually loaded in the session (the agent read `SKILL.md`, not just the `.keep-the-why` file or a "Keep the Why" section in `AGENTS.md`). If you are not sure, say so below — an activation miss is a different problem and worth knowing too.
+          required: false
+
+  - type: input
+    id: skill_version
+    attributes:
+      label: Skill version
+      description: |
+        The `version` line in the installed `SKILL.md` frontmatter (`metadata.version`). Not the `context-schema` of your project — that is what the project was last migrated to, not what the agent ran.
+      placeholder: "0.16.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install_route
+    attributes:
+      label: Install route
+      options:
+        - skills CLI (npx skills add ...)
+        - GitHub CLI (gh ...)
+        - asm
+        - Codex plugin (codex plugin add ...)
+        - GitHub Copilot plugin marketplace
+        - Manual clone / vendored copy in the repository
+        - Other (please explain below)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: agent
+    attributes:
+      label: Agent tool
+      options:
+        - Claude Code
+        - Codex CLI
+        - Gemini CLI
+        - GitHub Copilot
+        - Cline
+        - opencode
+        - Hermes
+        - Kimi Code
+        - Pi / oh-my-pi
+        - Other (please explain below)
+    validations:
+      required: true
+
+  - type: input
+    id: agent_version
+    attributes:
+      label: Agent tool version and model
+      description: |
+        For example `Claude Code 2.1.266, Claude Sonnet 5` or `Codex CLI 0.48, GPT-5.2 via OpenRouter`. Local models: name and quantization.
+      placeholder: "Claude Code 2.1.266, Claude Sonnet 5"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: How often does it happen?
+      options:
+        - Every time I try
+        - Sometimes (please say roughly how often below)
+        - Once so far
+    validations:
+      required: true
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Project and personal settings
+      description: |
+        The content of the project's `.keep-the-why` file, and the relevant lines of your personal file (`~/.keep-the-why/<id>.md`) — `capture-mode`, `capture-confirmation`, `confirmation-flow`, `local-lint`, and anything else you changed from the default. Leave out what you consider private.
+      render: yaml
+    validations:
+      required: false
+
+  - type: textarea
+    id: what_you_asked
+    attributes:
+      label: What you asked the agent
+      description: |
+        The request or the situation that triggered the skill — as close to verbatim as you can.
+    validations:
+      required: true
+
+  - type: textarea
+    id: what_happened
+    attributes:
+      label: What the agent did
+      description: |
+        What happened, including what it wrote to disk (file names are enough; the entry itself is welcome if it is not confidential).
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What the skill says should have happened
+      description: |
+        The rule you expected to apply, with the section of `SKILL.md` or the reference file if you know it. If you are not sure what the skill says, describe what you expected and why.
+    validations:
+      required: true
+
+  - type: textarea
+    id: transcript
+    attributes:
+      label: Transcript excerpt
+      description: |
+        The relevant part of the session, ideally including the agent's own explanation of why it acted as it did. Remove API keys, tokens, and anything confidential from your project. Paths and file names are fine and help.
+      render: text
+    validations:
+      required: false

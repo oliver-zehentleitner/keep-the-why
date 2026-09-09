@@ -1,52 +1,63 @@
 name: Feature request
-description: Suggest an idea for this library.
-labels: enhancement 
+description: Suggest a change to the skill, the specification, the linter, or the docs.
+labels: enhancement
 assignees:
   - oliver-zehentleitner
 body:
   - type: markdown
     attributes:
       value: |
-        Please post here only issues concerning this repository and follow the [Issue-Guidelines](https://github.com/oliver-zehentleitner/unicorn-binance-suite/wiki/Issue-Guidelines). 
-        
-        Most of these fields are not mandatory, but please provide as much information as possible.
-  - type: textarea
-    id: Problem
+        Before proposing, have a look at this repository's own [`context/`](https://github.com/oliver-zehentleitner/keep-the-why/tree/main/context) — it records the decisions behind the skill, including alternatives that were considered and rejected, and why. If your idea is one of them, say what has changed since.
+
+        For anything beyond a small fix, an issue first is appreciated so the direction can be discussed before code or wording is written (see [CONTRIBUTING.md](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/CONTRIBUTING.md)).
+
+  - type: dropdown
+    id: area
     attributes:
-      label: Is your feature request related to a problem? Please describe.
-      description: |
-        A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
-      placeholder: 
+      label: Which part
+      options:
+        - Skill behavior (SKILL.md, references)
+        - Specification / entry format / repository structure
+        - Linter (ktw-lint) or GitHub Action
+        - Setup wizards and settings
+        - Documentation
+        - Evals
+        - Other
     validations:
-      required: false
-      
+      required: true
+
   - type: textarea
-    id: Solution
+    id: problem
     attributes:
-      label: Describe the solution you'd like.
+      label: What problem does this solve?
       description: |
-        A clear and concise description of what you want to happen.
-      placeholder: 
+        The situation where the current behavior gets in the way, as concretely as you can. "When the agent ... I have to ..." beats a general wish.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: What should happen instead?
+      description: |
+        The behavior or change you would like. For skill behavior, the sentence you would expect to find in `SKILL.md` is a fine way to put it.
     validations:
       required: false
 
   - type: textarea
-    id: Alternatives
+    id: alternatives
     attributes:
-      label: Describe alternatives you've considered
+      label: Alternatives you considered
       description: |
-        A clear and concise description of any alternative solutions or features you've considered.
-      placeholder: 
+        Other ways to get there, and why you prefer the one above. Rejected alternatives are part of the record here — they end up in `context/` if the change lands.
     validations:
       required: false
 
   - type: textarea
-    id: Additional
+    id: additional
     attributes:
       label: Additional context
       description: |
-        Add any other context or screenshots about the feature request here.
-      placeholder: 
+        Agent tool, model, install route, links, transcript excerpts — whatever helps.
     validations:
       required: false
-
