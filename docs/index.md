@@ -12,7 +12,7 @@ hide:
 
 <h1 class="ktw-hero__tagline">Keep a Changelog records what changed.<br>Keep the Why preserves why it changed.</h1>
 
-Same question. Same wrong turn. Same explanation, again. Your agent forgets between sessions, and nothing in the repo remembers for it: not the code, not the changelog, not the docs.
+Same question. Same wrong turn. Same explanation, again. Your agent forgets between sessions. Nothing in the repo remembers: not the code, not the changelog, not the docs.
 
 Keep the Why is the part that remembers. Repo-native project memory for humans and coding agents. The reasoning behind a codebase — decisions, rejected alternatives, workarounds, constraints the code alone can't explain — captured as a byproduct of working with your agent and kept as plain Markdown in `context/`, versioned and shared by Git. No database, no daemon, no account.
 
