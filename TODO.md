@@ -12,14 +12,15 @@ Nothing in flight.
 
 ### Pending
 
-- [ ] **0.16.0 release measurement.** The skill is tagged (`v0.16.0`,
-  2026-09-09; linter 0.16.0.0 on PyPI first, per the checklist). What is
-  still open is the measurement: three consecutive full eval runs on the tag
-  (`--all --parallel 2 --judge-always --retry-until-complete`, TMPDIR outside
-  the home directory, Claude Code CLI 2.1.266) into `docs/evals.md` — the
-  four numbers per run, a note on every failed run, a run-history row. The
-  series is running; results land in `tools/evals/results/full-v0.16.0-r1`
-  to `-r3`.
+- [ ] **0.16.0 release measurement** — done, in pull request #357:
+  three full runs on the tag, 86, 84 and 81 of 87. Two cases flipped twice,
+  the same way each time, and are issues rather than caveats: #354 (the
+  request's "questions one at a time" answered with one list — the half of
+  #343 that did not hold), #355 (the frustration case naming the agent
+  tool's issue tracker; once with the skill never loaded). #356 is the
+  `Evidence: confirmed` flip that now recurs once per series, with the
+  linter's E104 in the path. Each of the three wants a wording decision
+  before a patch release; none changes what the skill writes to disk.
 - [ ] **HOL / awesome-ai-plugins listing**
   ([hashgraph-online/awesome-ai-plugins#257](https://github.com/hashgraph-online/awesome-ai-plugins/pull/257)).
   Rebased on their request; all five catalog checks pass, including the
