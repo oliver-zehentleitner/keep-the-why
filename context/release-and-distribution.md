@@ -224,7 +224,24 @@ The consumer snippet references the root composite action as `uses: oliver-zehen
 
 **Rejected alternative:** leaving the package floating on every ref and documenting the trap instead. Drafted, then dropped: "read the docs to learn that pinning doesn't pin" is not a convention anyone expects. Also rejected: a version-derived default only on tagged refs, with `latest` on everything else — two behaviors for one input, and `lint-latest` makes the simple rule produce the right answer anyway.
 
+**Consequence (2026-09-09):** the HOL AI Plugin Scanner reports `ktw-lint.yml`'s `@lint-latest` as an unpinned third-party action, one medium finding per ecosystem it scores, five points each. Accepted, not fixed: pinning this repository's own dogfood run to a SHA would freeze the linter this `context/` is checked against, and the rolling tag is the documented consumer default — the repository should run what it tells consumers to run. `docs/security.md` names the finding and this reason.
+
 **Consequence:** this repository's own `action-smoke` job (`uses: ./` on a PR) passes `version: "latest"` explicitly, because a PR that bumps `__init__.py` names a version PyPI doesn't have yet. A pinned install retries three times with a short pause before failing loud, for the minutes right after a publish when not every mirror has the release.
+
+## `.codexignore` exists for the scanner; whether Codex reads it is unverified
+
+**Type:** decision
+**Status:** active
+**Evidence:** inferred
+**Verification:** uncorroborated
+**Source:** HOL scanner run on PR #350, 2026-09-09 (info finding `CODEXIGNORE_MISSING`); local reproduction on a clean export with scanner 3.0.133
+**Revisit when:** Codex documents an ignore file for plugin packaging or agent reads — then the file's content matters and the "Lean Codex plugin" idea in `TODO.md` becomes actionable
+
+A `.codexignore` at the repository root lists local state and build output, the same patterns as `.gitignore`. The scanner's check is existence only (`check_codexignore` in hol-guard's `best_practices.py`): three points in the Codex ecosystem's Best Practices row, the score moves from 92 to 94.
+
+**Reason:** the file costs nothing and states the right thing — what is not part of the plugin — so the three points are taken. What it does not do is claimed nowhere: openai/codex tracks `.codexignore` as a feature request and a "never respected" bug (issues #205, #6530, #24993), so no behavior of Codex itself, neither agent reads nor `codex plugin add` packaging, is attributed to the file. The header comment in the file says so.
+
+**Rejected alternative:** leaving the info finding open on principle, since no tool is known to read the file. Dropped: the file is honest about its purpose, and a listed project with the finding open would invite the same question from every registry that runs the scanner.
 
 ## Bare `v<major>.<minor>.<patch>` tags are reserved for the skill; every other artifact is prefixed
 

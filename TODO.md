@@ -8,20 +8,15 @@ Last reviewed: 2026-09-09.
 
 ### Active
 
-- [ ] **Two wizards are two messages** — the three wizard-presentation flips
-  from the 0.15.0 measurement, fixed in `SKILL.md` step 0,
-  `references/setup.md` and the retrofitting rule in
-  `references/repository-structure.md`, re-measured 9/9 on the three cases
-  (`init-wizard-first-activation`, `wizard-defaults-one-list-per-wizard`,
-  `negative-existing-good-structure-untouched`). Pull request #343, awaiting
-  merge; ships with the next release.
+Nothing in flight.
 
 ### Pending
 
 - [ ] **Next skill release (0.16.0).** Unreleased on `main`: the Codex plugin
   manifest and one-plugin marketplace (#340), the HOL scanner workflow (#336,
-  #337), `experiments/rejected-change/` (#334), and #343 once merged. The
-  Codex manifest is a new install surface, so a minor, not a patch. Checklist
+  #337), `experiments/rejected-change/` (#334), the two-wizards fix (#343), the
+  copy pass on landing page, README and `llms.txt` (#345–#350) and
+  `.codexignore`. The Codex manifest is a new install surface, so a minor, not a patch. Checklist
   in `CONTRIBUTING.md`: linter first, then the tag, then three full eval runs
   into `docs/evals.md`. Waits on the maintainer's call.
 - [ ] **HOL / awesome-ai-plugins listing**

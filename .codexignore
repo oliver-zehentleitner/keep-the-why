@@ -1,0 +1,15 @@
+# Local state and build output that is not part of the plugin. Same shape as
+# .gitignore; the HOL AI Plugin Scanner checks that this file exists. Whether
+# Codex itself reads it is not verified (see context/release-and-distribution.md).
+.venv/
+venv/
+__pycache__/
+*.py[codz]
+*.egg-info/
+site/
+lint/dist/
+lint/build/
+tools/evals/results/
+.env
+.env.*
+AGENTS.local.md
