@@ -23,7 +23,7 @@
 Keep a Changelog records what changed. Keep the Why preserves why it changed.
 
 <!-- ktw-intro:start -->
-**Keep the Why** is a repo-native convention and agent skill for preserving the reasoning behind a codebase — architecture decisions, rejected alternatives, workarounds, incident learnings, operational constraints that the code alone can't explain — as project memory, kept in the repo: plain Markdown in `context/`, committed with the code, so Git already provides the storage, the history and the distribution — it travels with every clone, branch and fork, and a pull request shows the reasoning diff beside the code diff. It captures that reasoning as a byproduct of working with your agent, so every later session can use it — your agent, and every other agent that works in the repository, understands not just the code but everything around it: why it is the way it is, what was tried and rejected, which constraints the source doesn't show. So does the next person. Onboarding gets faster, legacy projects become tractable again. It works continuously as you develop, where the reasoning comes for free.
+**Keep the Why** is a repo-native convention and agent skill for preserving the reasoning behind a codebase — architecture decisions, rejected alternatives, workarounds, incident learnings, operational constraints that the code alone can't explain — as project memory, kept in the repo. That memory is plain Markdown in `context/`, committed with the code, so Git already provides the storage, the history and the distribution: it travels with every clone, branch and fork, and a pull request shows the reasoning diff beside the code diff. It captures that reasoning as a byproduct of working with your agent, so every later session can use it. Your agent, and every other agent that works in the repository, understands not just the code but everything around it: why it is the way it is, what was tried and rejected, which constraints the source doesn't show. So does the next person. Onboarding gets faster, legacy projects become tractable again. It works continuously as you develop, where the reasoning comes for free.
 
 Starting on an existing repository works too, within limits — history, issues and code give back only part of the why, a maintainer has to fill in the rest, and that takes real effort. It is never too late to begin, though.
 <!-- ktw-intro:end -->
@@ -37,6 +37,15 @@ Documentation is normally extra work that happens after the code is done — rel
 <!-- ktw-tested-with:end -->
 
 Website: [https://keepthewhy.com](https://keepthewhy.com/) · [llms.txt](https://keepthewhy.com/llms.txt) for AI agents/assistants looking up this project
+
+## The problem
+
+Important project knowledge gets created in conversation — with a teammate, or with an AI coding agent — and then evaporates once the conversation ends. The code shows *what* was built. It rarely shows *why*. Tests preserve expected behavior; they don't preserve the reasoning behind it — a project can be fully tested and still hard to maintain because nobody can explain why any of it works the way it does. Missing reasoning costs you in four concrete ways:
+
+- **Re-debate** — the same architecture question gets re-litigated because nobody remembers it was already settled.
+- **Silent regression** — someone "cleans up" a workaround that looks unnecessary, not knowing it's the fix for a bug that then comes back.
+- **Onboarding stall** — new contributors (human or AI) don't touch code they don't understand, so progress slows out of caution.
+- **Repeated agent mistakes** — a fresh AI session, with no memory of the last one, proposes or re-implements something already tried and rejected, because nothing on disk records that it was.
 
 ## How it works
 
@@ -161,15 +170,6 @@ You: This retry wrapper looks over-engineered — a plain retry loop
 Working through *why* it could be simplified surfaces a real constraint (the gateway's rate limiter needs that backoff behavior) — the change gets abandoned before it happens. No commit, no diff, no PR ever results, so normally nothing would capture that reasoning at all. Keep the Why records it anyway, so the next person with the same instinct doesn't rediscover it the hard way — see [`examples/abandoned-change.md`](https://github.com/oliver-zehentleitner/keep-the-why/blob/latest/skills/keep-the-why/examples/abandoned-change.md) for the full walkthrough.
 
 See [`examples/`](https://github.com/oliver-zehentleitner/keep-the-why/tree/latest/skills/keep-the-why/examples) for continuous, retrospective, and interview-mode walkthroughs.
-
-## The problem
-
-Important project knowledge gets created in conversation — with a teammate, or with an AI coding agent — and then evaporates once the conversation ends. The code shows *what* was built. It rarely shows *why*. Tests preserve expected behavior; they don't preserve the reasoning behind it — a project can be fully tested and still hard to maintain because nobody can explain why any of it works the way it does. Missing reasoning costs you in four concrete ways:
-
-- **Re-debate** — the same architecture question gets re-litigated because nobody remembers it was already settled.
-- **Silent regression** — someone "cleans up" a workaround that looks unnecessary, not knowing it's the fix for a bug that then comes back.
-- **Onboarding stall** — new contributors (human or AI) don't touch code they don't understand, so progress slows out of caution.
-- **Repeated agent mistakes** — a fresh AI session, with no memory of the last one, proposes or re-implements something already tried and rejected, because nothing on disk records that it was.
 
 ## Where this fits
 
