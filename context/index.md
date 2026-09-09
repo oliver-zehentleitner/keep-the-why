@@ -46,6 +46,8 @@ Why this project is built the way it is.
 
 ## I
 
+- [issue-triage.md](issue-triage.md) — how reports are sorted: three issue forms, `skill-wording` vs. `bug`, the `evals` origin label
+
 ## J
 
 ## K
