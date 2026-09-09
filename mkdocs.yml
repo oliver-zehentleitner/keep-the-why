@@ -59,8 +59,8 @@ nav:
   - Installation: installation.md
   - Repository structure: repository-structure.md
   - Specification: specification.md
-  - Security: security.md
   - Linting: linting.md
+  - Security: security.md
   - Evals: evals.md
   - Badge: badge.md
   - FAQ: faq.md
