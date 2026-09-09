@@ -12,13 +12,14 @@ Nothing in flight.
 
 ### Pending
 
-- [ ] **Next skill release (0.16.0).** Unreleased on `main`: the Codex plugin
-  manifest and one-plugin marketplace (#340), the HOL scanner workflow (#336,
-  #337), `experiments/rejected-change/` (#334), the two-wizards fix (#343), the
-  copy pass on landing page, README and `llms.txt` (#345–#350) and
-  `.codexignore`. The Codex manifest is a new install surface, so a minor, not a patch. Checklist
-  in `CONTRIBUTING.md`: linter first, then the tag, then three full eval runs
-  into `docs/evals.md`. Waits on the maintainer's call.
+- [ ] **0.16.0 release measurement.** The skill is tagged (`v0.16.0`,
+  2026-09-09; linter 0.16.0.0 on PyPI first, per the checklist). What is
+  still open is the measurement: three consecutive full eval runs on the tag
+  (`--all --parallel 2 --judge-always --retry-until-complete`, TMPDIR outside
+  the home directory, Claude Code CLI 2.1.266) into `docs/evals.md` — the
+  four numbers per run, a note on every failed run, a run-history row. The
+  series is running; results land in `tools/evals/results/full-v0.16.0-r1`
+  to `-r3`.
 - [ ] **HOL / awesome-ai-plugins listing**
   ([hashgraph-online/awesome-ai-plugins#257](https://github.com/hashgraph-online/awesome-ai-plugins/pull/257)).
   Contribution check passes; the maintainers' centralized scan still runs an
@@ -27,9 +28,9 @@ Nothing in flight.
   the listing on hol.org (repository owner), and add the HOL registry to
   `llms.txt` under "Also Listed On".
 - [ ] **awesome-copilot**
-  ([github/awesome-copilot#2984](https://github.com/github/awesome-copilot/pull/2984)),
-  bump to 0.15.0, waits on their review. Bump again in place when the next
-  release exists.
+  ([github/awesome-copilot#2998](https://github.com/github/awesome-copilot/pull/2998)),
+  bump to 0.16.0, waits on their review; #2984 (0.15.0) is merged. Every
+  release gets its own bump PR there.
 - [ ] **Agent & model matrix rebuild** (`docs/agent-matrix.md`). The tooling
   (`tools/evals/run.py --matrix`) is ready; the matrix was last built against
   0.9.x. Waits on two decisions: whether `chestertons-fence-guard` is still
@@ -51,4 +52,7 @@ Nothing in flight.
 - **Lean Codex plugin.** The plugin root is the repository root, so
   `codex plugin add` copies about 13 MB. If Codex honors an ignore file for
   plugin packaging, the docs, linter, evals and experiments could stay out of
-  the install.
+  the install. A `.codexignore` exists since #351, for the HOL scanner's
+  best-practice check; whether Codex reads it is unverified (see
+  `context/release-and-distribution.md`), so it lists local state only, not
+  the docs or the evals.
