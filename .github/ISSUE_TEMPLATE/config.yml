@@ -6,9 +6,6 @@ contact_links:
   - name: Documentation — keepthewhy.com
     url: https://keepthewhy.com/
     about: Installation, the specification, linting, evals, the agent and model matrix.
-  - name: Security
-    url: https://github.com/oliver-zehentleitner/keep-the-why/blob/main/SECURITY.md
-    about: How to report a security issue privately instead of in a public issue.
   - name: Community chat — Telegram
     url: https://t.me/unicorndevs
     about: Chat with the maintainer and other users.
