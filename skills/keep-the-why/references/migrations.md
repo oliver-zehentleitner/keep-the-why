@@ -4,6 +4,12 @@ What changed in each version that an existing project may need to know about or 
 
 Entries below assume 0.2.0 as the starting point — nothing before it tracked a `context-schema` at all, and 0.2.0 itself introduced no `context/` entry format change.
 
+## 0.16.0 — a Codex plugin install route, and the two wizards as two messages (informational, no action required)
+
+**What changed:** the repository is installable as a Codex plugin (`.codex-plugin/plugin.json` plus a one-plugin marketplace), a third install route beside the skill directory and the Claude Code plugin. And the first-setup wizards are stated as two messages: the project list ends the turn, the personal list is the next message after the project answer, under `batch` as under `sequential`.
+
+**Existing projects and developers:** nothing changes. A project set up by any route keeps its `.keep-the-why` and `context/` untouched; the wizards don't run again. A Codex user who installed by path may switch to the plugin route at any time — same skill, same files — but nothing requires it.
+
 ## 0.15.0 — wizard defaults are the fully integrated values (informational, no action required)
 
 **What changed:** three wizard defaults, for new setups only. `confirmation-flow` proposes `batch` instead of `sequential`, so a first setup is one list per wizard with the defaults filled in and one answer, not one question per message. `local-lint` proposes `auto` instead of `ask`: the personal wizard names the install in its question, and the answer — "defaults" included — is the go-ahead, so a default setup installs `keep-the-why-lint` from PyPI in the same turn. The project wizard's activation question defaults to *the project asks* instead of *only when a developer asks*: the "Keep the Why" section goes into the entry-point file, plus the project-scoped hook where `autostart.md` has a verified example for the current platform. Everything else keeps its default — `capture-confirmation` stays `confirm-when-unsure`, `pending-confirmation-check` stays `no`, no `personal-defaults` block unless asked for. The reasoning: the one-word "defaults" answer should be a complete, fully integrated setup, and whoever wants less picks less. "Project init wizard" and "Personal preferences wizard" in `setup.md`.

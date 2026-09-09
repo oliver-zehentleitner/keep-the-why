@@ -4,11 +4,14 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-09-09
+
 ### Changed
 
 - Landing page, README, `llms.txt` and the site description, one copy pass (#345–#350): the hero's pain line is three staccato fragments plus the agent's wrong turn, with `docs/` named beside code and changelog and one bridge sentence into the summary; the site description is under 160 characters so search results and share cards no longer cut it mid-sentence; the README's "The problem" section sits before "How it works" and its two raw `<img>` tags use absolute URLs (on `/readme/` the relative paths 404ed since #274); `llms.txt` opens with the one-line summary and keeps the full intro as body text. Reasoning in `context/positioning.md`.
 - `plugin.json`, `.claude-plugin/plugin.json` and `.codex-plugin/plugin.json`: the shared description follows the repository's About text again, which is now the one-line site description.
 - Two wizards are two messages, said outright. The 0.15.0 measurement showed the one-list default's failure mode: twice in six first-setup sessions the agent appended the personal wizard's list below the project list in the same message instead of ending the turn on the project list. Step 0 in `SKILL.md`, the project wizard's intro, the personal wizard's intro and the "Both wizards" paragraph in `setup.md` now say it in so many words — the project list ends the turn, the personal list is the next message after the project answer, under `batch` as much as under `sequential`, after "defaults" as much as after a changed value — and that a developer who states in the request how they want to be asked has chosen, over the default. `repository-structure.md`'s retrofitting rule no longer reads as if a `context/` layer were added beside an existing decision folder: when the project keeps decision records already, that folder is the location and no parallel `context/` is created. Eval text: `negative-existing-good-structure-untouched` had been rewritten for the batch default although its prompt says "questions one at a time" — restored to the stated preference (one question, `docs/decisions/` proposed as the location), the 0.15.0 series' run-3 "failure" on it was the agent being right.
+- `keep-the-why-lint` 0.16.0.0: knows schema 0.16.0 — no new gate, nothing changes what `context/` or `.keep-the-why` must look like. Published before the skill tag, per the checklist.
 
 ### Added
 
@@ -627,7 +630,8 @@ Initial release.
 - Logo, wordmark, and favicon.
 - `context/repo-conventions.md`, dogfooding the skill on its own repository from day one.
 
-[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.15.0...HEAD
+[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.16.0...HEAD
+[0.16.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.14.1...v0.15.0
 [0.14.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.14.0...v0.14.1
 [0.14.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.13.3...v0.14.0
