@@ -2,7 +2,8 @@
 
 Open work that is not a bug and not a design question — those go to
 [issues](https://github.com/oliver-zehentleitner/keep-the-why/issues).
-Last reviewed: 2026-09-09.
+Last reviewed: 2026-09-09 (evening: measurement merged, issue forms and
+`context/issue-triage.md` in, labels `skill-wording` and `evals` created).
 
 ## In progress
 
@@ -12,15 +13,17 @@ Nothing in flight.
 
 ### Pending
 
-- [ ] **0.16.0 release measurement** — done, in pull request #357:
-  three full runs on the tag, 86, 84 and 81 of 87. Two cases flipped twice,
-  the same way each time, and are issues rather than caveats: #354 (the
-  request's "questions one at a time" answered with one list — the half of
-  #343 that did not hold), #355 (the frustration case naming the agent
-  tool's issue tracker; once with the skill never loaded). #356 is the
-  `Evidence: confirmed` flip that now recurs once per series, with the
-  linter's E104 in the path. Each of the three wants a wording decision
-  before a patch release; none changes what the skill writes to disk.
+- [ ] **Patch release after the 0.16.0 series.** The measurement is in
+  `docs/evals.md` (#357, 86, 84 and 81 of 87). Three findings are issues,
+  each waiting on a wording decision by the maintainer before anything is
+  patched: #354 (the request's "questions one at a time" answered with one
+  list), #355 (the frustration case naming the agent tool's issue tracker;
+  before deciding, one run of that case on Claude Code CLI 2.1.263 to
+  confirm or drop the CLI-version hypothesis), #356 (`Evidence: confirmed`
+  on a lost original reason — a `question`, the two readings are in the
+  issue). None of them changes what the skill writes to disk. Release
+  order as in `CONTRIBUTING.md`: linter first if a gate changes, then the
+  skill tag, then three runs into `docs/evals.md`.
 - [ ] **HOL / awesome-ai-plugins listing**
   ([hashgraph-online/awesome-ai-plugins#257](https://github.com/hashgraph-online/awesome-ai-plugins/pull/257)).
   Rebased on their request; all five catalog checks pass, including the
