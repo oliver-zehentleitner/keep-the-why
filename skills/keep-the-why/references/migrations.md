@@ -4,6 +4,12 @@ What changed in each version that an existing project may need to know about or 
 
 Entries below assume 0.2.0 as the starting point — nothing before it tracked a `context-schema` at all, and 0.2.0 itself introduced no `context/` entry format change.
 
+## 0.16.1 — one `Evidence` word, `Source` without persons, a Cursor plugin (informational, no action required)
+
+**What changed:** the specification says what was implicit: `Evidence` is one word per entry, and when an entry's parts stand differently (a confirmed new reason beside a lost original one) the weakest grade wins and the body says which part is which; `Source` names a kind of source, never a person's name, handle or e-mail address. The repository is also installable as a Cursor plugin (`.cursor-plugin/plugin.json` plus one rule that loads the skill in a workspace carrying `.keep-the-why`), and the skill's description names complaints and settings changes about the skill itself so a session about those loads it.
+
+**Existing projects:** nothing to migrate mechanically. An existing entry whose `Evidence` overstates a mixed standing, or whose `Source` names a person, is corrected when next touched — the linter has no gate for either, since both are judgement, not format. Advance `context-schema` to 0.16.1 as usual.
+
 ## 0.16.0 — a Codex plugin install route, and the two wizards as two messages (informational, no action required)
 
 **What changed:** the repository is installable as a Codex plugin (`.codex-plugin/plugin.json` plus a one-plugin marketplace), a third install route beside the skill directory and the Claude Code plugin. And the first-setup wizards are stated as two messages: the project list ends the turn, the personal list is the next message after the project answer, under `batch` as under `sequential`.

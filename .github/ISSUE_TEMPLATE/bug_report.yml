@@ -37,7 +37,7 @@ body:
       label: Version
       description: |
         `ktw-lint --version` for the linter; the `@lint-...` ref for the Action; the skill version (`metadata.version` in `SKILL.md`) or the page URL for the docs.
-      placeholder: "ktw-lint 0.16.0.0"
+      placeholder: "ktw-lint 0.16.1.0"
     validations:
       required: true
 

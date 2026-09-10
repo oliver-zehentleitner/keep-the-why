@@ -27,7 +27,7 @@ body:
       label: Skill version
       description: |
         The `version` line in the installed `SKILL.md` frontmatter (`metadata.version`). Not the `context-schema` of your project — that is what the project was last migrated to, not what the agent ran.
-      placeholder: "0.16.0"
+      placeholder: "0.16.1"
     validations:
       required: true
 

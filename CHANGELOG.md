@@ -4,8 +4,11 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.16.1] - 2026-09-10
+
 ### Changed
 
+- `keep-the-why-lint` 0.16.1.0: knows schema 0.16.1 — no new gate, nothing changes what `context/` or `.keep-the-why` must look like. Published before the skill tag, per the checklist.
 - A presentation preference stated in the request ("questions one at a time", "just give me the list") governs both wizards, the project list included: `SKILL.md` step 0 says so where the wizards are described, `setup.md`'s "Both wizards" paragraph spells out that "one at a time" opens the project wizard with its first question (#354). Measured on `negative-existing-good-structure-untouched`: 2 of 3 before, 3 of 3 after.
 - The feedback sentence in `SKILL.md` says the tracker is this skill's own, not the agent tool's; and the skill's frontmatter description names complaints, feedback and settings changes about the skill itself, so a harness matching on the description loads it for exactly that request (#355). Measured on `user-frustration-surfaces-feedback-link`: the failures were all sessions with the skill never loaded; 5 of 5 with the description extended. Reasoning in `context/`.
 - One `Evidence` word per entry: when parts stand differently, the weakest grade wins and the body says which part is which — `specification.md` beside the field definition, `SKILL.md` rule 2 in one sentence (#356). Measured on `capture-confirmation-automatic-unclear-evidence`: 2 of 3 before, 3 of 3 after. Reasoning in `context/entry-format.md`.
@@ -645,7 +648,8 @@ Initial release.
 - Logo, wordmark, and favicon.
 - `context/repo-conventions.md`, dogfooding the skill on its own repository from day one.
 
-[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.16.0...HEAD
+[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.16.1...HEAD
+[0.16.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.16.0...v0.16.1
 [0.16.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.14.1...v0.15.0
 [0.14.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.14.0...v0.14.1

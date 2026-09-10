@@ -12,17 +12,6 @@ Nothing in flight.
 
 ### Pending
 
-- [ ] **Patch release after the 0.16.0 series.** The measurement is in
-  `docs/evals.md` (#357, 86, 84 and 81 of 87). Three findings are issues,
-  each waiting on a wording decision by the maintainer before anything is
-  patched: #354 (the request's "questions one at a time" answered with one
-  list), #355 (the frustration case naming the agent tool's issue tracker;
-  before deciding, one run of that case on Claude Code CLI 2.1.263 to
-  confirm or drop the CLI-version hypothesis), #356 (`Evidence: confirmed`
-  on a lost original reason — a `question`, the two readings are in the
-  issue). None of them changes what the skill writes to disk. Release
-  order as in `CONTRIBUTING.md`: linter first if a gate changes, then the
-  skill tag, then three runs into `docs/evals.md`.
 - [ ] **awesome-copilot**
   ([github/awesome-copilot#2998](https://github.com/github/awesome-copilot/pull/2998)),
   bump to 0.16.0, waits on their review; #2984 (0.15.0) is merged. Every
