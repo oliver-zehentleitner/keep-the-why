@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- keepthewhy.com has an imprint page (`/imprint/`, § 25 Austrian Media Act) linked from the footer of every page; it stays out of the navigation.
+
 ### Changed
 
 - The site's "Why this project is built this way" section holds one page, "Read this project's context/", which is `context/index.md`; the index links every topic file, so the navigation follows it instead of listing files by hand — the hand-kept list was seven of eight, `issue-triage.md` never added (#375, #377, #379).

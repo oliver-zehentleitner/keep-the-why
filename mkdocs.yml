@@ -40,6 +40,11 @@ markdown_extensions:
 hooks:
   - tools/mkdocs/context_pages.py
 
+copyright: '<a href="/imprint/">Imprint</a>'
+
+not_in_nav: |
+  imprint.md
+
 extra_css:
   - assets/extra.css
 
