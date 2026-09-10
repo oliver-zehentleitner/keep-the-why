@@ -138,6 +138,7 @@ Full install detail for every method, including tools without a skill runtime at
 - [ASM](https://luongnv.com/asm/#/skills/oliver-zehentleitner%2Fkeep-the-why%3A%3Askills%2Fkeep-the-why%3A%3Akeep-the-why)
 - [awesome-agent-skills](https://github.com/VoltAgent/awesome-agent-skills#context-engineering)
 - [GitHub Copilot plugin marketplace](https://awesome-copilot.github.com/plugin/keep-the-why/)
+- [HOL AI plugin registry](https://hol.org/registry/plugins/oliver-zehentleitner%2Fkeep-the-why)
 - [MCP Market](https://mcpmarket.com/tools/skills/keep-the-why)
 - [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why)
 - [SkillsLLM](https://skillsllm.com/skill/keep-the-why)

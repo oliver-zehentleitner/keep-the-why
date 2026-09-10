@@ -37,6 +37,7 @@ Either form prompts for which of its 70+ supported agents (Claude Code, Codex, O
 | [ASM](https://luongnv.com/asm/#/skills/oliver-zehentleitner%2Fkeep-the-why%3A%3Askills%2Fkeep-the-why%3A%3Akeep-the-why) | Curated skill index for the `asm` CLI; installable via `asm install keep-the-why` |
 | [awesome-agent-skills](https://github.com/VoltAgent/awesome-agent-skills#context-engineering) | Listed under "Context Engineering" |
 | [GitHub Copilot plugin marketplace](https://awesome-copilot.github.com/plugin/keep-the-why/) | Installable via `copilot plugin install keep-the-why@awesome-copilot` |
+| [HOL AI plugin registry](https://hol.org/registry/plugins/oliver-zehentleitner%2Fkeep-the-why) | Owner-verified listing; the registry's scanner is the one this repository runs itself, see [Security](security.md) |
 | [MCP Market](https://mcpmarket.com/tools/skills/keep-the-why) | Skill marketplace listing |
 | [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why) | Backs the `npx skills add` install method above |
 | [SkillsLLM](https://skillsllm.com/skill/keep-the-why) | Verified, passed [SkillsLLM's security scan](https://skillsllm.com/security-check/IPmNycVdbOyq) |

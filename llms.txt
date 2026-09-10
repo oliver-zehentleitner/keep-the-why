@@ -117,6 +117,7 @@ the project back up without needing to be told again.
   https://github.com/VoltAgent/awesome-agent-skills#context-engineering
 - GitHub Copilot plugin marketplace: installable via `copilot plugin install
   keep-the-why@awesome-copilot` — https://awesome-copilot.github.com/plugin/keep-the-why/
+- HOL AI plugin registry: owner-verified listing — https://hol.org/registry/plugins/oliver-zehentleitner%2Fkeep-the-why
 - MCP Market: skill marketplace listing — https://mcpmarket.com/tools/skills/keep-the-why
 - skills.sh: https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why — backs
   the `npx skills add` method above
