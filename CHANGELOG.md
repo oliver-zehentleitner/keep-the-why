@@ -13,6 +13,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Added
 
+- Cursor plugin: `.cursor-plugin/plugin.json` (fourth manifest, release-gated like the others) and `rules/keep-the-why.mdc`, an always-on rule that loads the skill in a workspace carrying `.keep-the-why` and does nothing elsewhere. Installation page, README and `llms.txt` say so; marketplace submission pending. Reasoning in `context/release-and-distribution.md`.
 - Eval case `record-source-names-no-person-or-address` (#367): a decision prompt in a session that carries the developer's account identity; checks that no e-mail address lands under `context/` and the judge reads the `Source` line. 88 cases.
 
 ## [0.16.0] - 2026-09-09

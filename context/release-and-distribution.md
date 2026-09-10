@@ -140,6 +140,23 @@ A third manifest, `.codex-plugin/plugin.json` (the official Codex format: `name`
 
 **Rejected alternative:** a separate marketplace repository listing this one. Rejected because it adds a repository to keep in sync for a single entry; `./` as the plugin root does the same job in place. The cost is that the install copies the whole repository (about 13 MB); the skill-directory route on the installation page stays the lean alternative.
 
+## `.cursor-plugin/plugin.json` plus one conditional rule make the repository a Cursor Plugin
+
+**Type:** decision
+**Status:** pending-confirmation
+**Evidence:** confirmed
+**Verification:** uncorroborated — the manifest and rule follow Cursor's plugin documentation (manifest location, `skills/` and `rules/` at the plugin root, `.mdc` rule with `alwaysApply`), but neither the local install nor the rule has been exercised in Cursor yet; the maintainer's test before the marketplace submission settles it
+**Source:** maintainer decision, 2026-09-10, after looking at how another skill-shipping project packages for Cursor
+**Revisit when:** Cursor's review objects to the rule, the manifest format changes, or the rule turns out to fire where it should not
+
+A fourth manifest, `.cursor-plugin/plugin.json` (Cursor's own format, the same fields as the Claude Code one; skills are discovered from `skills/` by layout, no field needed), and one rule, `rules/keep-the-why.mdc`, `alwaysApply: true`, whose whole content is: if the workspace root has a `.keep-the-why` file, load the skill before anything else; otherwise do nothing and never set up unasked. The release gate checks the fourth manifest's version like the other three. The Cursor marketplace (`cursor.com/marketplace`) lists official plugins after a manual review of each version; submission goes through the maintainer's account.
+
+**Reason:** Cursor is the one supported agent without an autostart mechanism of ours — no session hook is verified there — so a plugin-shipped rule is the only way a Cursor session learns on its own that a project uses Keep the Why. The manifest alone would be discovery only, like the Codex one; the rule is what makes the plugin worth more than the skill-directory install.
+
+**Rejected alternative:** a rule carrying the skill's instructions or a summary of them, the way some plugins ship their whole procedure as an always-on rule. Rejected because an always-on rule is injected into every chat in every workspace where the plugin is installed; anything beyond the one conditional sentence is context tax on unrelated projects, and the skill already holds the procedure.
+
+**Rejected alternative:** adding `$schema` to the root `plugin.json` so Cursor reads it as an Agent Plugin (the open format Cursor also accepts). Rejected because that file is the Copilot CLI manifest and the per-vendor-manifest decision above stands; whether Copilot tolerates the extra field is unknown and not worth finding out for one field.
+
 ## The `[x.y.z]` CHANGELOG compare link always 404s on the release PR's own merge-to-main push
 
 **Type:** constraint

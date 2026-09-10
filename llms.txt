@@ -97,6 +97,8 @@ Junie, Warp, and other tools supporting the open Agent Skills format. Full paths
 Installation below.
 Also installable as a Claude Code plugin (`.claude-plugin/plugin.json` at the repo root, separate
 from the root `plugin.json` used by GitHub's Copilot CLI plugin marketplace format).
+Also a Cursor plugin (`.cursor-plugin/plugin.json` + `rules/keep-the-why.mdc`, a rule that loads
+the skill only in a workspace carrying `.keep-the-why`); Cursor marketplace submission pending.
 
 A Skill activates when something in the conversation matches its description, not
 automatically on session start. After installing, start a new session and tell the agent
