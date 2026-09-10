@@ -10,6 +10,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Changed
 
+- `docs/evals.md` carries the 0.16.1 release measurement: three consecutive full runs on the tag (84, 86 and 84 of 88), the four numbers per run, a note on every failed run, a row for the case added since 0.16.0, a new run-history row. The three cases behind #354–#356 went 3/3 each, the skill loaded in 263 of 264 sessions with no genuine miss, no safety refusal occurred, and the one two-time flip is the one-line `Type` the judge keeps passing and the check keeps failing (#384).
 - The site's "Why this project is built this way" section holds one page, "Read this project's context/", which is `context/index.md`; the index links every topic file, so the navigation follows it instead of listing files by hand — the hand-kept list was seven of eight, `issue-triage.md` never added (#375, #377, #379).
 - The `context/` pages are generated at build time by a MkDocs hook, `tools/mkdocs/context_pages.py`, from the topic files themselves; the nine include stubs under `docs/context/` are gone, and a file there fails the build (#380). Recorded in `context/positioning.md`, the stub entry superseded.
 - This repository's `.keep-the-why` sets `capture-confirmation: automatic` (#378).
