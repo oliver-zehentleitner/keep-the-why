@@ -2,8 +2,7 @@
 
 Open work that is not a bug and not a design question — those go to
 [issues](https://github.com/oliver-zehentleitner/keep-the-why/issues).
-Last reviewed: 2026-09-09 (evening: measurement merged, issue forms and
-`context/issue-triage.md` in, labels `skill-wording` and `evals` created).
+Last reviewed: 2026-09-10 (HOL listing merged, ai-memory#700 filed).
 
 ## In progress
 
@@ -25,13 +24,30 @@ Nothing in flight.
   order as in `CONTRIBUTING.md`: linter first if a gate changes, then the
   skill tag, then three runs into `docs/evals.md`.
 - [ ] **HOL / awesome-ai-plugins listing**
-  ([hashgraph-online/awesome-ai-plugins#257](https://github.com/hashgraph-online/awesome-ai-plugins/pull/257)).
-  Rebased on their request; all five catalog checks pass, including the
-  source-repository scan. Waits on their merge. Afterwards, two steps: the
-  repository owner claims the listing on hol.org ("Claim this listing" —
-  ownership proof, unlocks managing the registry page: media, first comment,
-  launch day); then add the HOL registry to `llms.txt` under "Also Listed
-  On".
+  ([hashgraph-online/awesome-ai-plugins#257](https://github.com/hashgraph-online/awesome-ai-plugins/pull/257)),
+  merged 2026-09-09; the catalog sync lists keep-the-why under Development
+  & Workflow. Two steps left: the repository owner claims the listing on
+  hol.org (link in the merge comment on the PR, GitHub OAuth, no repository
+  access); then add the HOL registry to `llms.txt` under "Also Listed On"
+  once the listing is visible.
+- [ ] **ai-memory coexistence**
+  ([akitaonrails/ai-memory#700](https://github.com/akitaonrails/ai-memory/issues/700)).
+  Filed 2026-09-10 after a side-by-side test of ai-memory 2.1.1 and this
+  skill: the write path is clean (nine sessions, every decision went to
+  `context/`, no wiki write), the read path is not — a `Read` of
+  `context/architecture.md` is captured with the file body, LLM
+  consolidation compiles it into a `decisions/` wiki page marked active,
+  and `memory_query` ranks that copy first after the repo record moves on.
+  Their `[capture] ignore_paths = ["context/**"]` marker setting stops the
+  capture (verified) but nothing documents it for repo-side records. The
+  issue proposes three doc changes plus a routing-snippet paragraph naming
+  repo-native decision records (ADR directories, Keep the Why) beside the
+  ADR tool they already link. Waits on the maintainer's reaction; then
+  send the docs PR for the accepted parts. Two eval candidates fell out of
+  the test, both in the local test log: a `Source:` line carrying the
+  developer's e-mail although the project says `source-reference: never`,
+  and a `../../root/.keep-the-why/` path tried while looking for the
+  personal file.
 - [ ] **awesome-copilot**
   ([github/awesome-copilot#2998](https://github.com/github/awesome-copilot/pull/2998)),
   bump to 0.16.0, waits on their review; #2984 (0.15.0) is merged. Every
