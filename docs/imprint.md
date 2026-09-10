@@ -22,7 +22,7 @@ Vienna, Austria
 
 keepthewhy.com documents the open-source project
 [Keep the Why](https://github.com/oliver-zehentleitner/keep-the-why),
-published under the MIT License. The site is non-commercial. It is hosted on
+published under the [MIT License](license.md). The site is non-commercial. It is hosted on
 GitHub Pages, sets no cookies of its own and runs no analytics.
 
 **Liability for links**

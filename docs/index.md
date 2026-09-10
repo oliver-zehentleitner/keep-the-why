@@ -22,7 +22,7 @@ Keep the Why is the part that remembers. Repo-native project memory for humans a
 [GitHub](https://github.com/oliver-zehentleitner/keep-the-why){ .md-button }
 { .ktw-hero__actions }
 
-Open source under the [MIT license](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/LICENSE) — the skill, the linter, and this site. Nothing to sign up for, nothing that phones home.
+Open source under the [MIT license](https://keepthewhy.com/license/) — the skill, the linter, and this site. Nothing to sign up for, nothing that phones home.
 { .ktw-caption }
 
 </div>
@@ -160,7 +160,7 @@ The full list, and where Keep the Why fits next to ADRs, `AGENTS.md` and Keep a 
 
 <div class="ktw-footer" markdown>
 
-[README](readme.md) · [Installation](installation.md) · [Philosophy](philosophy.md) · [Security](security.md) · [FAQ](faq.md) · [Why I built this](why.md) · [llms.txt](https://keepthewhy.com/llms.txt) for AI agents · [MIT license](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/LICENSE)
+[README](readme.md) · [Installation](installation.md) · [Philosophy](philosophy.md) · [Security](security.md) · [FAQ](faq.md) · [Why I built this](why.md) · [llms.txt](https://keepthewhy.com/llms.txt) for AI agents · [MIT license](https://keepthewhy.com/license/)
 
 </div>
 
