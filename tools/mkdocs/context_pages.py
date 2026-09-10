@@ -23,8 +23,10 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 CONTEXT_DIR = REPO_ROOT / "context"
 
 # Directory scaffolding, not topic files: the on-disk README, the agent
-# guard and its import. The site's landing page for this section is
-# context/index.md.
+# guard and its import. Mirrors NON_TOPIC_FILES in lint/ktw_lint/checks.py
+# (minus index.md, which is this section's landing page) - not imported
+# from there, so the docs build does not depend on the linter package.
+# Change both together.
 NOT_PAGES = {"README.md", "AGENTS.md", "CLAUDE.md"}
 
 
