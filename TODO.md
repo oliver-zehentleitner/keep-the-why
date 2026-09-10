@@ -2,7 +2,7 @@
 
 Open work that is not a bug and not a design question — those go to
 [issues](https://github.com/oliver-zehentleitner/keep-the-why/issues).
-Last reviewed: 2026-09-10 (evening: ai-memory#700 closed via their #704, Cursor plugin #369/#370 merged, #367/#368 closed).
+Last reviewed: 2026-09-10 (evening).
 
 ## In progress
 
@@ -23,20 +23,6 @@ Nothing in flight.
   issue). None of them changes what the skill writes to disk. Release
   order as in `CONTRIBUTING.md`: linter first if a gate changes, then the
   skill tag, then three runs into `docs/evals.md`.
-- [ ] **ai-memory coexistence**
-  ([akitaonrails/ai-memory#700](https://github.com/akitaonrails/ai-memory/issues/700),
-  closed 2026-09-10 by [#704](https://github.com/akitaonrails/ai-memory/pull/704)).
-  Their routing snippet now distinguishes a reviewed repo-side decision record
-  (an ADR directory, a Keep the Why `context/` tree) from a harness-local
-  store, and `docs/usage.md` ("Repo-native decision records") and
-  `docs/marker-file.md` name Keep the Why beside the ADR tool they link,
-  with `[capture] ignore_paths = ["context/**"]` as the recommended
-  setting. Left open on purpose: part 4 of the issue (consolidation
-  carrying a file read's source path and refusing `kind: decision` for
-  pages whose only evidence is a read under a declared record directory)
-  — the maintainer wants it as its own issue; file it only if we want to
-  pursue it. Side finding from the same test, the `Source:` line with the
-  developer's e-mail, is closed (#367, #368).
 - [ ] **awesome-copilot**
   ([github/awesome-copilot#2998](https://github.com/github/awesome-copilot/pull/2998)),
   bump to 0.16.0, waits on their review; #2984 (0.15.0) is merged. Every
@@ -52,6 +38,12 @@ Nothing in flight.
 
 ## Ideas
 
+- **ai-memory, consolidation with source path.** Part 4 of
+  [akitaonrails/ai-memory#700](https://github.com/akitaonrails/ai-memory/issues/700):
+  consolidation carrying a file read's source path and refusing
+  `kind: decision` for pages whose only evidence is a read under a declared
+  record directory. The maintainer wants it as its own issue; only if we
+  want to pursue it — `[capture] ignore_paths` already covers Keep the Why.
 - **Codex plugin install as an eval condition.** The Codex driver hands the
   skill to the agent by path; with the plugin manifest in place, a variant
   that installs through `codex plugin add` would measure the documented
