@@ -235,6 +235,34 @@ or second tool call. Control without the section: 0 of 3.
 
 Path 1 not checked. Path 3: the eval suite's own mode.
 
+## Cursor
+
+**Path 1 — every session, machine-wide.** The Cursor plugin
+(`.cursor-plugin/plugin.json` at the repository root) ships
+`rules/keep-the-why.mdc`, an always-on rule with the same gate as the Claude
+Code hook: a `.keep-the-why` at the workspace root, or the pre-0.10.0 config
+block in `AGENTS.md`; with neither it does not load the skill, does not
+mention it and does not offer setup. Install from the Cursor marketplace once
+listed; until then a real clone under `~/.cursor/plugins/local/keep-the-why`
+(a symlink there is not loaded, cursor/plugins#35), restart Cursor, then
+Customize → Install.
+
+**Evidence:** live, 2026-09-10, Cursor 3.19.19, Grok 4.6 Medium. Project
+with `.keep-the-why`, first request "look at the repo": the skill loaded
+before anything else (the personal wizard opened, since that machine had no
+personal file for the project). Workspace with neither marker, first request
+"which directory are you in", then "look around": nothing about Keep the Why;
+switching the same session's workspace to the project brought the skill in at
+once. One session each, one model, not an eval series.
+
+**Path 2, entry-point section:** one observation the same day says it does
+not carry on its own: in a project whose `AGENTS.md` had the section, the
+agent read the file and loaded the skill only when asked. Not counted either
+way until run properly.
+
+**Path 3:** as anywhere — name the skill, with the plugin installed or the
+skill directory under `.cursor/skills/`.
+
 ## Other agents
 
 - **Path 2, entry-point section:** should work on any agent that reads
