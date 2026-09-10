@@ -19,6 +19,7 @@ Thumbs.db
 # Editors
 .idea/
 .vscode/
+.obsidian/
 *.swp
 
 # Local/personal, not shared (per this project's own AGENTS.local.md convention)

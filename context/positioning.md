@@ -14,6 +14,8 @@ README's and `llms.txt`'s "Related work" don't compare Keep the Why against spec
 
 **Consequence, caught late:** `docs/faq.md`'s "How is this different from git-why, AgDR, or similar projects?" entry was missed when this changed elsewhere (README, `llms.txt`) — it named both tools and pointed at a README section ("Not a green field") that no longer exists under that name (now "Related work"). Fixed once noticed; recorded here so the next place this wording lives doesn't get missed the same way.
 
+**Consequence (2026-09-10, boundary of the rule):** the rule covers competitors — tools that also capture rationale. Tools that only consume or display what `context/` contains are not a comparison and may be named: the FAQ has entries for DeepWiki and, since 2026-09-10, Obsidian. The Obsidian entry exists because an LLM answer that positioned the two together (correctly: interface versus convention) also claimed the skill runs in the background and that Obsidian's graph shows how decisions relate; neither is true, and without a primary source the next answer inherits the same claims. The entry states the limits (no background process, graph nodes are files not decisions, wikilinks off) rather than the pitch.
+
 ## The site's front page is a landing page in Markdown, not a template and not a raw HTML file
 
 **Type:** decision
