@@ -37,6 +37,9 @@ markdown_extensions:
   - md_in_html
   - pymdownx.superfences
 
+hooks:
+  - tools/mkdocs/context_pages.py
+
 extra_css:
   - assets/extra.css
 

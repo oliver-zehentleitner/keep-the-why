@@ -40,9 +40,11 @@ README's and `llms.txt`'s "Related work" don't compare Keep the Why against spec
 ## The project's own `context/` is published on the site through one-line include stubs
 
 **Type:** decision
-**Status:** active
+**Status:** superseded
 **Evidence:** confirmed
 **Source:** how the "Why this project is built this way" nav section has been built since the site exists; the gap noted by Oliver on 2026-09-08 ("are all context files under 'Why this project is built this way'?" — they weren't); the nav change requested on 2026-09-10 (#375, #377)
+
+Superseded on 2026-09-10 by the build-time hook (next entry); kept for how the section got here.
 
 Every topic file in `context/` gets a stub at `docs/context/<name>.md` holding a single `include-markdown` line. The stub is the only way a `context/` file reaches the site — MkDocs only builds what lives under `docs/`, and copying the file would create a second place to edit. The nav section "Why this project is built this way" in `mkdocs.yml` holds one page, titled `context/`, which is the stub for `context/index.md`; the index links every topic file, so the site navigation follows the index instead of duplicating it. That stub includes the index with `rewrite-relative-urls=false`, so the index's relative links (`lint.md` etc.) resolve to the sibling stubs under `docs/context/` rather than to a path outside `docs/`.
 
@@ -51,6 +53,21 @@ Every topic file in `context/` gets a stub at `docs/context/<name>.md` holding a
 **Rejected alternative:** one nav line per topic file, as before. Rejected because nothing kept the list in sync with `context/`. Also rejected: making the section heading itself the link to the index (#375) — a top-level page link renders differently from the "Reference" and "Examples" section headings; a section with a single child page (#377) looks like its neighbours.
 
 **Consequence:** a new topic file is still not on the site until someone adds its stub; nothing checks this. `lint.md` (2026-09-02) and `evals.md` (2026-09-05) were both missed for days and added on 2026-09-08. The nav line is no longer a second thing to forget. When adding a topic file, add the stub in the same change.
+
+## The project's own `context/` is published on the site by a build-time hook, not by stubs
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer request, 2026-09-10 ("mach den mkdocs hook für die stubs"), after the stub gap kept recurring
+
+`tools/mkdocs/context_pages.py`, wired in through `hooks:` in `mkdocs.yml`, turns every `context/*.md` except `README.md`, `AGENTS.md` and `CLAUDE.md` into the page `/context/<name>/` at build time — the file's content, read as-is, as a generated MkDocs page. Nothing exists under `docs/context/`; a file there fails the build with a message naming the hook, so the stub mechanism cannot quietly come back. The nav section "Why this project is built this way" holds one page, the generated `context/index.md`; the index links every topic file, so the navigation follows the index instead of duplicating it. Relative links between topic files (`lint.md`) resolve to sibling pages because the content is not run through the include plugin's URL rewriting — which is also why the index no longer needs a `rewrite-relative-urls=false` include.
+
+**Reason:** the stub-per-file mechanism (previous entry) had one manual step that nothing checked, and it was missed three times in a week (`lint.md`, `evals.md`, `issue-triage.md`). A hook has no per-file step: a topic file is on the site the moment it exists. Plain `hooks:` rather than a plugin because it is a few dozen lines of project-specific glue with nothing to install.
+
+**Rejected alternative:** keep the stubs and add a CI check that every `context/*.md` has one. Catches the gap, still asks for the stub. Also rejected: `mkdocs-gen-files` — a dependency for what `hooks:` already does in MkDocs 1.6.
+
+**Consequence:** the docs workflow triggers on `tools/mkdocs/**` too. `context/README.md` is deliberately not a page; the index is the section's landing page.
 
 ## The format has a normative specification file, separate from the guidance that shows it in use
 
