@@ -1,9 +1,9 @@
 ---
-description: In a project that uses Keep the Why (a .keep-the-why file at the workspace root), load the keep-the-why skill first. Anywhere else, leave the skill alone.
+description: In a project that uses Keep the Why (a .keep-the-why file at the workspace root, or a legacy keep-the-why:config block in AGENTS.md), load the keep-the-why skill first. Anywhere else, leave the skill alone.
 alwaysApply: true
 ---
 
-First check whether the workspace root contains a `.keep-the-why` file.
+First check whether the workspace root contains a `.keep-the-why` file, or an `AGENTS.md` carrying a `<!-- keep-the-why:config -->` block (a project set up before skill 0.10.0 and not migrated yet).
 
-- It does not: do not load the `keep-the-why` skill, do not mention Keep the Why, do not offer to set it up. This rule is finished.
-- It does: this project keeps its reasoning with Keep the Why. Load the `keep-the-why` skill before doing anything else in the session, whatever the first request is about.
+- Neither: do not load the `keep-the-why` skill, do not mention Keep the Why, do not offer to set it up. This rule is finished.
+- Either: this project keeps its reasoning with Keep the Why. Load the `keep-the-why` skill before doing anything else in the session, whatever the first request is about.
