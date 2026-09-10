@@ -145,7 +145,7 @@ A third manifest, `.codex-plugin/plugin.json` (the official Codex format: `name`
 **Type:** decision
 **Status:** pending-confirmation
 **Evidence:** confirmed
-**Verification:** uncorroborated — the manifest and rule follow Cursor's plugin documentation (manifest location, `skills/` and `rules/` at the plugin root, `.mdc` rule with `alwaysApply`), but neither the local install nor the rule has been exercised in Cursor yet; the maintainer's test before the marketplace submission settles it
+**Verification:** uncorroborated — first test in Cursor 3.19.19 (2026-09-10, local install via symlink under `~/.cursor/plugins/local/`): in the project with `.keep-the-why` the skill loaded first and the personal wizard ran, as it should; in a workspace without the file and with a neutral first request the agent still loaded the skill and announced it, no setup offered. The rule's negative case had been implicit ("does nothing") and was read as "load the skill, then do nothing"; reworded to check the file first and, without it, neither load nor mention the skill. Retest pending
 **Source:** maintainer decision, 2026-09-10, after looking at how another skill-shipping project packages for Cursor
 **Revisit when:** Cursor's review objects to the rule, the manifest format changes, or the rule turns out to fire where it should not
 

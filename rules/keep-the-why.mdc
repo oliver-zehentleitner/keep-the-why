@@ -1,6 +1,9 @@
 ---
-description: Load the keep-the-why skill first in a project that uses Keep the Why (a .keep-the-why file at the workspace root).
+description: In a project that uses Keep the Why (a .keep-the-why file at the workspace root), load the keep-the-why skill first. Anywhere else, leave the skill alone.
 alwaysApply: true
 ---
 
-If the workspace root contains a `.keep-the-why` file, this project keeps its reasoning with Keep the Why: load the `keep-the-why` skill before doing anything else in the session, whatever the first request is about. Without that file this rule does nothing — never set Keep the Why up unasked.
+First check whether the workspace root contains a `.keep-the-why` file.
+
+- It does not: do not load the `keep-the-why` skill, do not mention Keep the Why, do not offer to set it up. This rule is finished.
+- It does: this project keeps its reasoning with Keep the Why. Load the `keep-the-why` skill before doing anything else in the session, whatever the first request is about.
