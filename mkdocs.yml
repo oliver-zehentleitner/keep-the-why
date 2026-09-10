@@ -81,4 +81,5 @@ nav:
       - Abandoned change: examples/abandoned-change.md
       - Legacy project: examples/legacy-project.md
       - Developer handover: examples/developer-handover.md
-  - "Why this project is built this way": context/index.md
+  - "Why this project is built this way":
+      - "context/": context/index.md
