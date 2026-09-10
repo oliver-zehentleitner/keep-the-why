@@ -126,7 +126,7 @@ For decisions that clear those checks, write concise, topic-oriented documentati
 - **alternative(s) considered, and why each was rejected** — even a one-liner beats silence
 - **reason the chosen path won**
 
-Include when relevant: context, constraints, consequences, current status, evidence. Tag with **Type** (`decision` | `workaround` | `incident` | `constraint` — one line per value that applies; `undefined — <reason>` when none fit). See `references/specification.md` for the full field reference.
+Include when relevant: context, constraints, consequences, current status, evidence. A `Source` names a kind of source — interview, issue, commit, post-mortem, a dated conversation — never a person's name, handle or e-mail address (rule 7), however the session identifies who is speaking. Tag with **Type** (`decision` | `workaround` | `incident` | `constraint` — one line per value that applies; `undefined — <reason>` when none fit). See `references/specification.md` for the full field reference.
 
 Before the actual write, decide ask-versus-write from two facts — was recording *requested*, and is the entry *writable* (Evidence classifiable, proportionality clear)? Then apply `capture-confirmation` (rule 8) on top:
 

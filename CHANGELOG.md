@@ -6,9 +6,14 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Changed
 
+- `Source` is defined as a kind of source, never a person's name, handle or e-mail address, in `specification.md`'s field table and in `SKILL.md` step 5 (#367). Rule 7 already said so from the privacy side; the field definition now says it where the field is defined, after one session wrote the developer's account e-mail into a `Source` line.
 - README, `docs/installation.md` and `llms.txt` list the HOL AI plugin registry under "Also listed on" (owner-verified since 2026-09-10, via hashgraph-online/awesome-ai-plugins#257).
 - `docs/installation.md`, "Trust and scope": the two bullets that read as "nothing runs on your machine" say what the instructions can trigger since the 0.15.0 wizard defaults — the linter, installed by name from PyPI and run after writes when the wizard's yes stands, and the session hook that autostart writes into the project's agent settings. The package itself is still Markdown only; the bounds stay on the Security page, which already described both.
 - `docs/evals.md` carries the 0.16.0 release measurement: three consecutive full runs on the tag (86, 84 and 81 of 87), the four numbers per run, a note on every failed run, a new run-history row. The two-messages rule from #343 held in all nine wizard sessions; two cases flipped twice, the same way each time — the request's "questions one at a time" answered with one list (#354) and the frustration case naming the agent tool's issue tracker instead of this project's (#355, once with the skill never loaded) — and `Evidence: confirmed` on a lost original reason recurred once per series (#356). Run 3 had the series' three genuine activation misses.
+
+### Added
+
+- Eval case `record-source-names-no-person-or-address` (#367): a decision prompt in a session that carries the developer's account identity; checks that no e-mail address lands under `context/` and the judge reads the `Source` line. 88 cases.
 
 ## [0.16.0] - 2026-09-09
 

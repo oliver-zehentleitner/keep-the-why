@@ -246,7 +246,7 @@ Header fields are lines of the form `**<Field>:** <value>` directly after the he
 | `Type` | no — fill in when a value fits, at the latest when the entry is next touched (`W101`) | `decision` \| `workaround` \| `incident` \| `constraint` — one line per value that applies (since 0.9.0), no value twice (`E109`); or a single `undefined — <short reason>` line (since 0.8.0), which combines with nothing (`E107`, `E108`) |
 | `Status` | yes, exactly one line (`E101`, `E112`) | `active` \| `superseded` \| `open` \| `needs-review` \| `pending-confirmation` (since 0.13.0, `E113` below it) |
 | `Evidence` | yes, exactly one line (`E102`, `E112`) | `confirmed` \| `inferred` \| `unknown` |
-| `Source` | no | free text: where the rationale came from (interview, issue, commit, post-mortem, "none — no tracked issue") |
+| `Source` | no | free text: where the rationale came from (interview, issue, commit, post-mortem, "none — no tracked issue") — a kind of source, never a person's name, handle or e-mail address (rule 7) |
 | `Verification` | no | `corroborated` \| `uncorroborated` \| `contradicted`, optionally followed by an explanation after any separator; `contradicted` must carry one (`E111`) |
 | `Revisit when` | no | free text, non-empty (`W105`): a concrete trigger that makes the entry worth re-checking |
 

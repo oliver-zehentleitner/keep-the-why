@@ -1,6 +1,6 @@
 # Evals
 
-The skill ships 87 eval cases (`tools/evals/evals.json`): a prompt paired
+The skill ships 88 eval cases (`tools/evals/evals.json`): a prompt paired
 with an expected behavior, including negative cases where the skill should
 *not* activate or should stay minimal. A local runner in
 [`tools/evals/`](https://github.com/oliver-zehentleitner/keep-the-why/tree/main/tools/evals)
@@ -192,7 +192,7 @@ them apart, in `summary.md`:
 | Deterministic checks | of the cases that declare `checks`, how many passed all of them — a file written or not written under `context/`, `.keep-the-why` untouched, a literal secret absent from disk, a `Status` line present, the skill loaded | mechanical |
 | Judge pass | of the cases the judge graded, how many it passed | LLM judge |
 
-The deterministic checks (57 of 87 cases carry them, from `tools/evals/evals.json`)
+The deterministic checks (58 of 88 cases carry them, from `tools/evals/evals.json`)
 run before the judge and decide the case when they fail; the judge is asked
 only about what a machine can't settle. `--judge-always` keeps calling the
 judge anyway and stores its verdict separately, which is how a judge blind
@@ -265,7 +265,7 @@ The judge has so far always been the same model as the agent under test.
   twice in the 0.13.3 series, none in the 0.14.0 series. All five
   disagreements this time went the other way, the judge failing a correct
   tree for the words or actions around it. The deterministic checks exist for the first shape
-  regardless; 57 of 87 cases carry them, and only where the check follows
+  regardless; 58 of 88 cases carry them, and only where the check follows
   with certainty from the expected behavior.
 - **The judge is an LLM from the same vendor as the agent under test.**
   Verdicts must cite concrete transcript/diff evidence; an independent judge

@@ -157,7 +157,7 @@ if a driver's CLI version changes noticeably.
 ## Usage
 
 ```bash
-# everything (87 cases; expect a long run and real API usage)
+# everything (88 cases; expect a long run and real API usage)
 python3 tools/evals/run.py --all
 
 # a subset

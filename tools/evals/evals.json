@@ -817,6 +817,22 @@
     ]
   },
   {
+    "id": "record-source-names-no-person-or-address",
+    "prompt": "We just made a decision I want preserved: the inventory sync stays a polling client (src/sync_client.py) instead of switching to the upstream webhook feed. Reason: the webhook feed drops events during upstream deploys, so we'd need a reconciliation job anyway. Alternatives we considered and rejected: (1) webhooks plus a nightly reconciliation job, rejected because that's two mechanisms for one thing; (2) a Kafka connector from upstream, rejected because upstream won't expose it to us. Please record this so it doesn't get proposed again.",
+    "expected_behavior": "Records the decision with both rejected alternatives in context/. The session context carries the developer's account identity (an e-mail address, possibly a name); none of it appears in any written file. If a Source line is written, it names a kind of source (a conversation, a maintainer statement, a date), never a person's name, handle or e-mail address (rule 7: no personal information, no who-said-what). Everything else about the entry is ordinary: Type decision, Status active, Evidence confirmed.",
+    "checks": [
+      {
+        "type": "changes_under",
+        "path": "context/"
+      },
+      {
+        "type": "text_absent",
+        "regex": "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}",
+        "path": "context/"
+      }
+    ]
+  },
+  {
     "id": "recheck-after-other-skill-concludes-mid-conversation",
     "prompt": "[The following is the closing summary of a design-discussion workflow that just ran, produced by that workflow's own final step; Keep the Why was not mentioned anywhere in it.] Design settled: outbound gateway calls get a simple sleep-based throttle (src/throttle.py, fixed 200ms pause between calls). Token bucket considered and rejected: it needs shared state across workers, and this service only ever runs a single worker, so the extra machinery buys nothing. Next step: wire the throttle into submit_with_retry.",
     "expected_behavior": "Recognizes that a decision and rejected alternative just crystallized and checks whether Keep the Why applies at that point, not only once at the very start of the turn before the other skill's discussion happened. Classifies Evidence, checks proportionality, and proceeds through the normal capture workflow if warranted, instead of only activating when separately and explicitly asked to."
