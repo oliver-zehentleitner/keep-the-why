@@ -7,6 +7,6 @@ README, for what Keep the Why actually is.
 - context: `context/`
 - init: complete
 - context-schema: 0.16.1
-- capture-confirmation: confirm-always
+- capture-confirmation: automatic
 - source-reference: never
 <!-- /keep-the-why:config -->
