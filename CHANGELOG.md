@@ -4,6 +4,12 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Changed
+
+- The site's "Why this project is built this way" section holds one page, "Read this project's context/", which is `context/index.md`; the index links every topic file, so the navigation follows it instead of listing files by hand — the hand-kept list was seven of eight, `issue-triage.md` never added (#375, #377, #379).
+- The `context/` pages are generated at build time by a MkDocs hook, `tools/mkdocs/context_pages.py`, from the topic files themselves; the nine include stubs under `docs/context/` are gone, and a file there fails the build (#380). Recorded in `context/positioning.md`, the stub entry superseded.
+- This repository's `.keep-the-why` sets `capture-confirmation: automatic` (#378).
+
 ## [0.16.1] - 2026-09-10
 
 ### Changed
