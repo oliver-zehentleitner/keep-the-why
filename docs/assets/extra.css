@@ -5,6 +5,16 @@
   color: #845bed;
 }
 
+/* "Why this project is built this way" (context/index.md) is a page link,
+   not a section, but sits at the same level as "Reference" and "Examples"
+   and gets the same look. Its href is relative and varies per page ("./",
+   "../", "../context/"), so the rule matches by position: it is the LAST
+   top-level nav entry in mkdocs.yml. Keep it last, or update this rule. */
+.md-nav--primary > .md-nav__list > .md-nav__item:last-child > .md-nav__link,
+.md-nav--primary > .md-nav__list > .md-nav__item:last-child > .md-nav__link .md-ellipsis {
+  color: #845bed;
+}
+
 /* Same heading repeated at the top of the expanded section panel. */
 .md-nav--secondary .md-nav__title,
 .md-nav:not(.md-nav--primary) > .md-nav__title {
