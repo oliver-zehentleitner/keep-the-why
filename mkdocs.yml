@@ -82,4 +82,4 @@ nav:
       - Legacy project: examples/legacy-project.md
       - Developer handover: examples/developer-handover.md
   - "Why this project is built this way":
-      - "context/": context/index.md
+      - "Read this project's context/": context/index.md
