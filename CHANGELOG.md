@@ -6,7 +6,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Added
 
-- keepthewhy.com has an imprint page (`/imprint/`, § 25 Austrian Media Act) linked from the footer of every page; it stays out of the navigation.
+- keepthewhy.com has an imprint page (`/imprint/`, § 25 Austrian Media Act) linked from the footer of every page; it stays out of the navigation (#381). A license page (`/license/`) with the MIT text sits next to it in the footer.
 
 ### Changed
 
