@@ -145,7 +145,7 @@ A third manifest, `.codex-plugin/plugin.json` (the official Codex format: `name`
 **Type:** decision
 **Status:** pending-confirmation
 **Evidence:** confirmed
-**Verification:** uncorroborated — first test in Cursor 3.19.19 (2026-09-10, local install via symlink under `~/.cursor/plugins/local/`): in the project with `.keep-the-why` the skill loaded first and the personal wizard ran, as it should; in a workspace without the file and with a neutral first request the agent still loaded the skill and announced it, no setup offered. The rule's negative case had been implicit ("does nothing") and was read as "load the skill, then do nothing"; reworded to check the file first and, without it, neither load nor mention the skill. Retest pending
+**Verification:** uncorroborated — first test in Cursor 3.19.19 (2026-09-10, local install via symlink under `~/.cursor/plugins/local/`): in the project with `.keep-the-why` the skill loaded first and the personal wizard ran, as it should; the second session, in a workspace without the file, opened with an explicit "load the keep-the-why skill", so it says nothing about the rule — the agent loaded on request and then behaved as the skill prescribes (no setup, no wizard, no timer check without a project id). The rule was reworded anyway to state the negative case first and explicitly, since "does nothing" left room to read it as "load, then do nothing". A session without the file and with a neutral first request is still to be run
 **Source:** maintainer decision, 2026-09-10, after looking at how another skill-shipping project packages for Cursor
 **Revisit when:** Cursor's review objects to the rule, the manifest format changes, or the rule turns out to fire where it should not
 
