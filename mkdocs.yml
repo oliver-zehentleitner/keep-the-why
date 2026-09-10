@@ -81,11 +81,4 @@ nav:
       - Abandoned change: examples/abandoned-change.md
       - Legacy project: examples/legacy-project.md
       - Developer handover: examples/developer-handover.md
-  - "Why this project is built this way":
-      - Release and distribution: context/release-and-distribution.md
-      - Skill configuration format: context/config-format.md
-      - Entry and layout format: context/entry-format.md
-      - Positioning: context/positioning.md
-      - Compatibility: context/compatibility.md
-      - Linter: context/lint.md
-      - Eval runner and suite: context/evals.md
+  - "Why this project is built this way": context/index.md
