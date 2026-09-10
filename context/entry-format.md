@@ -129,3 +129,22 @@ When a maintenance pass finds an `active`, `confirmed` entry whose concrete clai
 **Rejected alternative:** leaving the rule to the specification alone and treating the two fails as model variance. Rejected — the isolated rerun passed 3/3, but both fails were the same shape and both cited the Maintain paragraph; a rule the agent follows literally into a fail is a wording problem, not noise.
 
 **Consequence:** no format change, no migration, no linter gate — the lifecycle table was already normative. The eval case encodes the behavior; this entry records why the skill body had to say it too.
+
+## One `Evidence` word per entry; mixed standing takes the weakest grade
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** issue #356 (eval flips in the 0.15.0 and 0.16.0 series), maintainer decision delegated 2026-09-10
+**Revisit when:** a real project shows entries where the weakest grade hides a confirmed part that readers actually need at a glance
+
+When an entry covers parts of different standing — a new value whose reason is confirmed beside an original value whose reason is lost — the single `Evidence` line carries the weakest grade among them, and the body says which part is which. The specification says so beside the field's definition, `SKILL.md` rule 2 in one sentence.
+
+**Reason:** the flip that prompted it had the agent write the honest split first (`confirmed (new value); original value — unknown`), get it rejected by the linter as an invalid value, and reduce it to `confirmed` — the stronger word won. `Evidence` exists to warn a reader how far to trust the origin of what the entry claims; an entry whose central claim ("nobody knows why it was 47") is untraceable must not read as confirmed. The weakest grade is the honest summary of a mixed entry, and the body keeps the detail.
+
+**Rejected alternative:** a mixed or compound `Evidence` value (`confirmed/unknown`, one line per part). Rejected because every consumer of the field — the linter's enum, `grep '^\*\*Evidence:\*\* unknown'`, the index and the specification's guarantees — assumes one word, and a second syntax for a rare case costs more than the one-sentence rule.
+
+**Rejected alternative:** redefining `Evidence` as grading only the new value's reason. Rejected because the entry's subject in these cases is the lost original, which is exactly what a reader needs flagged; grading the part that is easy to know would hide the part that is not.
+
+Measured: case `capture-confirmation-automatic-unclear-evidence` 2 of 3 before the wording, 3 of 3 after (sonnet, Claude Code 2.1.267, 2026-09-10).
+

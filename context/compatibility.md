@@ -105,3 +105,18 @@ When an explicit setup request is declined at the first question or retracted in
 **Rejected alternative:** sharpen the skill's `description` so retracted requests still trigger it. Rejected for the same reason, plus the description is the most expensive real estate in the skill and the effect would be unmeasurable at the eval's sample size.
 
 **Consequence:** no compatibility path for existing files carrying the value — deliberately. Such a file is a leftover of a setup that never happened; the skill treats it as an unrecognized `init` value and asks, the linter reports it, and the fix is deleting the file. Silently accepting it would have kept a retired concept alive in two places for the sake of a handful of files. The personal wizard doesn't run on a called-off setup either — its file is keyed by the project `id`, which only exists once the project is set up.
+
+## The skill description names complaints, feedback and settings about the skill itself
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** issue #355, measured 2026-09-10
+**Revisit when:** a harness matches skills on something other than the description, or the description hits a length limit
+
+`SKILL.md`'s frontmatter description ends with "Also the place for complaints, feedback and settings changes about this skill itself."
+
+**Reason:** the frustration eval case ("this keep-the-why skill is really starting to bug me") failed only in sessions where the skill was never loaded: the agent answered in one turn from the hook's hint and the config files, and pointed the user at the agent tool's own issue tracker, the nearest URL it knew. The skill holds the right tracker and the settings that cause the nagging, so a complaint about the skill is the one request where loading it is least optional — and the one where a model is most inclined to skip the thing being complained about. The description is what harnesses with description-based matching read to decide; naming complaints there gives the match a reason. Measured on the case: 2 of 3 and then 1 of 3 with the feedback sentence sharpened alone (every failure unloaded), 5 of 5 with the description extended (skill loaded first every time).
+
+**Rejected alternative:** sharpening the session hook's text ("whatever the first request is about — a complaint about this skill included"). Rejected because the hook text is committed in every project that uses path 2 and copied in the eval fixture; a change there is a rollout, and it would fix only harnesses that have the hook, while the description reaches every harness that reads it.
+
