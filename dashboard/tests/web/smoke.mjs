@@ -52,6 +52,11 @@ if (report.entryMiniGraph !== 1 || report.topicMiniGraph !== 1 || report.default
 if (window.document.body.textContent.includes("[object ")) errors.push("[object ...] leaked into the page text");
 if (/\bnull\b/.test(window.document.getElementById("project-title").textContent + window.document.getElementById("statusbar").textContent)) errors.push("null leaked into the top bar or status bar");
 report.details = window.document.getElementById("details").textContent.trim().length;
+window.__ktwApplyUpdates({ enabled: true, packages: { "keep-the-why-dashboard": { installed: S.dashboard, latest: "99.0.0", outdated: true }, "keep-the-why-lint": { installed: S.linter, latest: S.linter, outdated: false } } });
+const pd = window.document.getElementById("pkg-dashboard"), pl = window.document.getElementById("pkg-lint");
+report.updates = { dashboardShimmer: pd?.classList.contains("outdated"), dashboardTitle: pd?.querySelector("a")?.title, lintShimmer: pl?.classList.contains("outdated") };
+if (!report.updates.dashboardShimmer || report.updates.lintShimmer || !/99\.0\.0/.test(report.updates.dashboardTitle || "") || !/pip install -U keep-the-why-dashboard/.test(report.updates.dashboardTitle || "")) errors.push("update marking wrong: " + JSON.stringify(report.updates));
+if (!/→ 99\.0\.0/.test(pd?.textContent || "")) errors.push("outdated entry does not show the newer version");
 report.topbarLinks = { schema: window.document.querySelectorAll('#project-title a[href*="/releases/tag/v"]').length, commit: window.document.querySelectorAll('#project-title a[href*="/commit/"]').length };
 if (S.project.git?.available && /^github\.com\//.test(S.project.git.remote || "") && (report.topbarLinks.schema !== 1 || report.topbarLinks.commit !== 1)) errors.push("top bar links missing: " + JSON.stringify(report.topbarLinks));
 const input = window.document.getElementById("search"); input.value = "retry"; input.dispatchEvent(new window.Event("input"));

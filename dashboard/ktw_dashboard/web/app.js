@@ -614,6 +614,7 @@ function markUpdates() {
     else if (a) a.title = `${name} on PyPI${info.latest ? ` — ${info.latest} is the newest, you are current` : ""}`;
   }
 }
+window.__ktwApplyUpdates = (u) => { UPDATES = u; markUpdates(); }; // test hook (jsdom smoke), not used by the page
 async function pollUpdates() {
   if (window.__KTW_STATE__) return;
   try { UPDATES = await (await fetch("/api/updates", { cache: "no-store" })).json(); markUpdates(); } catch { /* server gone; the live dot says so */ }
