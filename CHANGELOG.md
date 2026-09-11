@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Changed
+
+- `docs/evals.md` carries the 0.16.2 release measurement: three consecutive full runs on the tag (86, 86 and 86 of 88), the four numbers per run, a note on every failed run, a new run-history row. All eight cases that flipped once on 0.16.1 went 3/3; deterministic checks 58/58 in every run; judge and checks agreed on all 264 gradings; no safety refusal. One two-time flip, every candidate listed before the first question under `sequential` (#414), four one-time flips.
+
 ## [0.16.2] - 2026-09-11
 
 ### Added
