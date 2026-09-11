@@ -16,3 +16,14 @@
   <meta name="twitter:description" content="{{ og_description }}">
   <meta name="twitter:image" content="{{ config.site_url }}assets/logo-crop-safe.png">
 {% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  {#- The "See it in the dashboard" nav entry leaves the docs for the live export; open it in a new tab so the reader keeps their place. Material has no per-entry option for this. -#}
+  <script>
+    document.querySelectorAll('.md-nav__link[href^="https://keepthewhy.com/dashboard/live/"]').forEach(function (a) {
+      a.target = "_blank";
+      a.rel = "noopener";
+    });
+  </script>
+{% endblock %}
