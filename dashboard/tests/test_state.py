@@ -210,3 +210,104 @@ class StateTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ProjectsTest(unittest.TestCase):
+    """Project discovery and the dashboard history, with HOME in a temp directory."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory(prefix="ktw-dash-projects-")
+        self.home = os.path.join(self.tmp.name, "home")
+        self.work = os.path.join(self.tmp.name, "work")
+        os.makedirs(os.path.join(self.home, ".keep-the-why"))
+        for pid in ("acme---alpha", "acme---beta", "acme---gone"):
+            with open(os.path.join(self.home, ".keep-the-why", f"{pid}.md"), "w") as fh:
+                fh.write(
+                    "<!-- keep-the-why:personal -->\n- capture-mode: proactive\n<!-- /keep-the-why:personal -->\n"
+                )
+        with open(os.path.join(self.home, ".keep-the-why", "config"), "w") as fh:
+            fh.write(
+                "<!-- keep-the-why:global -->\n- personal-defaults-policy: always-ask\n<!-- /keep-the-why:global -->\n"
+            )
+        for pid, sub in (
+            ("acme---alpha", "alpha"),
+            ("acme---beta", "group/beta"),
+            ("acme---orphan", "orphan"),
+        ):
+            self._project(pid, os.path.join(self.work, sub))
+        self._old_home = os.environ.get("HOME")
+        os.environ["HOME"] = self.home
+
+    def _project(self, pid, path):
+        os.makedirs(path, exist_ok=True)
+        with open(os.path.join(path, ".keep-the-why"), "w") as fh:
+            fh.write(CONFIG.replace("acme---widget", pid))
+        return path
+
+    def tearDown(self):
+        if self._old_home is not None:
+            os.environ["HOME"] = self._old_home
+        self.tmp.cleanup()
+
+    def test_resolve_from_inside_a_project(self):
+        from ktw_dashboard.projects import resolve
+
+        projects, selected = resolve(os.path.join(self.work, "alpha"))
+        self.assertEqual(selected, os.path.join(self.work, "alpha"))
+        self.assertEqual(projects[0].source, "cwd")
+        by_id = {p.id: p for p in projects}
+        self.assertEqual(
+            by_id["acme---beta"].source, "scan"
+        )  # two levels below the parent
+        self.assertEqual(
+            by_id["acme---orphan"].source, "scan"
+        )  # no personal file, still showable
+        self.assertIsNone(by_id["acme---gone"].path)
+        self.assertEqual(by_id["acme---gone"].source, "unresolved")
+
+    def test_history_orders_by_last_opened_and_allows_one_id_at_two_paths(self):
+        from ktw_dashboard.projects import history_path, record_open, resolve
+
+        clone_a = self._project(
+            "acme---twin", os.path.join(self.tmp.name, "far", "deep", "er", "twin-a")
+        )
+        clone_b = self._project(
+            "acme---twin", os.path.join(self.tmp.name, "far", "deep", "er", "twin-b")
+        )
+        record_open("acme---twin", clone_a)
+        record_open("acme---twin", clone_b)
+        record_open("acme---twin", clone_a)  # opened again: back to the top
+        elsewhere = os.path.join(self.tmp.name, "elsewhere")
+        os.makedirs(elsewhere)
+        projects, selected = resolve(elsewhere)
+        recent = [p for p in projects if p.source == "history"]
+        self.assertEqual([p.path for p in recent], [clone_a, clone_b])
+        self.assertEqual(selected, clone_a)
+        self.assertTrue(os.path.exists(history_path()))
+        self.assertEqual(len({p.key for p in projects}), len(projects))
+
+    def test_history_drops_paths_that_are_gone_and_caps_the_list(self):
+        from ktw_dashboard.projects import HISTORY_LIMIT, record_open, resolve
+
+        record_open("acme---ghost", os.path.join(self.tmp.name, "nowhere"))
+        for i in range(HISTORY_LIMIT + 3):
+            record_open(
+                f"acme---p{i}",
+                self._project(
+                    f"acme---p{i}",
+                    os.path.join(self.tmp.name, "many", "x", "y", f"p{i}"),
+                ),
+            )
+        elsewhere = os.path.join(self.tmp.name, "elsewhere")
+        os.makedirs(elsewhere)
+        projects, _ = resolve(elsewhere)
+        recent = [p for p in projects if p.source == "history"]
+        self.assertEqual(len(recent), HISTORY_LIMIT)
+        self.assertEqual(recent[0].id, f"acme---p{HISTORY_LIMIT + 2}")
+        self.assertNotIn("acme---ghost", {p.id for p in projects})
+
+    def test_no_history_writes_nothing(self):
+        from ktw_dashboard.projects import history_path, resolve
+
+        resolve(os.path.join(self.work, "alpha"), use_history=False)
+        self.assertFalse(os.path.exists(history_path()))

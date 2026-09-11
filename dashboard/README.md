@@ -5,7 +5,7 @@
 
 A read-only viewer over what a [Keep the Why](https://keepthewhy.com) project already has: the entries in `context/`, the config in `.keep-the-why`, the linter's findings, and the Git history of all of it — who created each entry, who last touched it, when its `Status` changed and by whom.
 
-It connects data that is already lying around. It stores nothing, runs no daemon beyond the terminal you start it in, and is never a source of truth: delete it and nothing is lost. That is what keeps it inside Keep the Why's own rule of *no new platform, database, daemon, dashboard, or workflow* — it is a lens on Markdown and Git, not a place where anything lives.
+It connects data that is already lying around. It writes nothing into any project, runs no daemon beyond the terminal you start it in, and is never a source of truth: delete it and nothing is lost. The one file it keeps is `~/.keep-the-why/dashboard-history.json` — the projects you opened, with their paths, so the project menu can offer them again. That is what keeps it inside Keep the Why's own rule of *no new platform, database, daemon, dashboard, or workflow* — it is a lens on Markdown and Git, not a place where anything lives.
 
 Think Obsidian's graph and reader, for the reasoning behind a codebase.
 
@@ -27,6 +27,10 @@ ktw-dashboard [PATH] [--host 127.0.0.1] [--port 8765] [--no-browser] [--interval
 - `--json` prints the state and exits, for scripts.
 - `--anonymize` replaces Git author names with `author-1`, `author-2`, … — for exports of repositories whose contributors did not ask to be listed on a web page. E-mail addresses are never part of the state, anonymized or not.
 - `--host 0.0.0.0` exposes the page to the network; the CLI says so when you do. Everything the page shows is the project's `context/`, so treat the port like you treat the repository.
+
+## Several projects
+
+Started inside a project, the dashboard shows that one. The project menu in the top bar lists the ten most recently opened projects (from the history file — one project id can appear at several paths, clones and worktrees included), projects found two levels under the parent directory or under `--scan DIR`, and ids that have a personal file in `~/.keep-the-why/` but no known location yet. Opening a project moves it to the top. `--no-history` leaves the file alone.
 
 ## What it shows
 

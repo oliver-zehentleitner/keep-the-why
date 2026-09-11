@@ -1,10 +1,11 @@
-"""Local HTTP server: the page, its assets, the state, and a Server-Sent
-Events stream that pushes a fresh state whenever the project changes.
+"""Local HTTP server: the page, its assets, the state of each project, and a
+Server-Sent Events stream per project that pushes a fresh state whenever
+that project changes.
 
-stdlib only. One background thread polls the project's fingerprint every
-`interval` seconds; when it changes, the state is rebuilt (Git parts come
-from the builder's per-file cache) and every connected browser gets it.
-Nothing is written anywhere.
+stdlib only. Each opened project gets one background thread that polls its
+fingerprint every `interval` seconds; on a change the state is rebuilt (Git
+parts come from the builder's per-file cache) and every page watching that
+project gets it. Nothing is written anywhere.
 """
 
 from __future__ import annotations
@@ -14,8 +15,10 @@ import json
 import mimetypes
 import os
 import threading
-import time
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
+
+from .projects import record_open
+from .state import StateBuilder
 
 WEB_DIR = os.path.join(os.path.dirname(__file__), "web")
 
@@ -74,7 +77,60 @@ class LiveState:
             return self.version, self.payload
 
 
-def make_handler(live: LiveState):
+class Projects:
+    """The projects on offer and one LiveState per opened project (keyed by path)."""
+
+    def __init__(
+        self,
+        projects,
+        selected,
+        interval: float,
+        anonymize: bool,
+        use_history: bool = True,
+    ):
+        self.projects = projects
+        self.selected = selected
+        self.interval = interval
+        self.anonymize = anonymize
+        self.use_history = use_history
+        self._live: dict[str, LiveState] = {}
+        self._lock = threading.Lock()
+
+    def by_key(self, key):
+        return next((p for p in self.projects if p.key == key), None)
+
+    def live(self, key: str | None) -> LiveState | None:
+        key = key or self.selected
+        p = self.by_key(key) if key else None
+        if p is None or not p.path:
+            return None
+        with self._lock:
+            if key not in self._live:
+                ls = LiveState(
+                    StateBuilder(p.path, anonymize=self.anonymize), self.interval
+                )
+                ls.start()
+                self._live[key] = ls
+                if self.use_history:
+                    record_open(p.id, p.path)
+                    p.last_opened = "now"
+            return self._live[key]
+
+    def listing(self) -> bytes:
+        return json.dumps(
+            {
+                "selected": self.selected,
+                "projects": [p.to_dict() for p in self.projects],
+            },
+            ensure_ascii=False,
+        ).encode("utf-8")
+
+    def stop(self):
+        for ls in self._live.values():
+            ls.stop()
+
+
+def make_handler(projects: Projects):
     class Handler(http.server.SimpleHTTPRequestHandler):
         server_version = "ktw-dashboard"
 
@@ -94,14 +150,32 @@ def make_handler(live: LiveState):
             self.wfile.write(body)
 
         def do_GET(self):
-            path = urlparse(self.path).path
+            url = urlparse(self.path)
+            path = url.path
+            pid = parse_qs(url.query).get("project", [None])[0]
             if path in ("/", "/index.html"):
                 with open(os.path.join(WEB_DIR, "index.html"), "rb") as fh:
                     return self._send(200, fh.read(), "text/html; charset=utf-8")
+            if path == "/api/projects":
+                return self._send(
+                    200, projects.listing(), "application/json; charset=utf-8"
+                )
             if path == "/api/state.json":
+                live = projects.live(pid)
+                if live is None:
+                    return self._send(
+                        404,
+                        b'{"error": "no such project, or its path is unknown"}',
+                        "application/json; charset=utf-8",
+                    )
                 return self._send(200, live.payload, "application/json; charset=utf-8")
             if path == "/api/events":
-                return self._events()
+                live = projects.live(pid)
+                if live is None:
+                    return self._send(
+                        404, b"no such project", "text/plain; charset=utf-8"
+                    )
+                return self._events(live)
             if path.startswith("/static/"):
                 name = os.path.basename(path)
                 full = os.path.join(WEB_DIR, name)
@@ -113,7 +187,7 @@ def make_handler(live: LiveState):
                         return self._send(200, fh.read(), ctype)
             return self._send(404, b"not found", "text/plain; charset=utf-8")
 
-        def _events(self):
+        def _events(self, live: LiveState):
             self.send_response(200)
             self.send_header("Content-Type", "text/event-stream")
             self.send_header("Cache-Control", "no-store")
@@ -140,12 +214,12 @@ class Server(http.server.ThreadingHTTPServer):
     allow_reuse_address = True
 
 
-def serve(builder, host: str, port: int, interval: float = 2.0):
-    live = LiveState(builder, interval=interval)
-    live.start()
-    httpd = Server((host, port), make_handler(live))
+def serve(projects: Projects, host: str, port: int):
+    if projects.selected:
+        projects.live(projects.selected)  # build the first state before the page asks
+    httpd = Server((host, port), make_handler(projects))
     try:
         httpd.serve_forever(poll_interval=0.5)
     finally:
-        live.stop()
+        projects.stop()
         httpd.server_close()

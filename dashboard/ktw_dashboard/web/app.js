@@ -22,6 +22,8 @@ const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
 
 // ---------------------------------------------------------------- state
 let S = null; // current state
+const PROJECT = new URLSearchParams(location.search).get("project"); // null: the server's selected one
+const api = (path) => PROJECT ? `${path}?project=${encodeURIComponent(PROJECT)}` : path;
 let filter = { status: "", evidence: "", author: "" };
 let selected = null; // entry id shown in the details pane
 const byId = () => Object.fromEntries(S.entries.map((e) => [e.id, e]));
@@ -518,7 +520,7 @@ function connectLive() {
   if (window.__KTW_STATE__) { dot.className = "live export"; dot.title = "static export — no live updates"; return; }
   let es;
   const open = () => {
-    es = new EventSource("/api/events");
+    es = new EventSource(api("/api/events"));
     es.addEventListener("state", (ev) => { try { applyState(JSON.parse(ev.data)); dot.className = "live on"; dot.title = `live — last update ${new Date().toLocaleTimeString()}`; } catch (err) { console.error(err); } });
     es.onopen = () => { dot.className = "live on"; dot.title = "live — watching the project for changes"; };
     es.onerror = () => { dot.className = "live off"; dot.title = "connection lost — the server is gone; retrying"; };
@@ -531,13 +533,28 @@ function setupTheme() {
   if (saved === "light" || (!saved && prefersLight)) document.documentElement.dataset.theme = "light";
   $("#theme").onclick = () => { const light = document.documentElement.dataset.theme === "light"; if (light) delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = "light"; localStorage.setItem("ktw-theme", light ? "dark" : "light"); if (graph) graph.alpha = Math.max(graph.alpha, 0.05); };
 }
+async function setupProjects() {
+  if (window.__KTW_STATE__) return;
+  let data;
+  try { data = await (await fetch("/api/projects", { cache: "no-store" })).json(); } catch { return; }
+  const sel = $("#project-select");
+  const list = data.projects || [];
+  if (list.filter((p) => p.path).length < 2 && !list.some((p) => !p.path)) return;
+  const current = PROJECT || data.selected;
+  const opt = (p) => el("option", { value: p.key, selected: p.key === current, disabled: !p.path, title: p.path || "location unknown — start the dashboard in that project once, or pass --scan" },
+    p.path ? `${p.name}  ·  ${p.id}${p.source === "cwd" ? "  (here)" : ""}` : `${p.id}  (location unknown)`);
+  const groups = [["Recent", list.filter((p) => p.source === "cwd" || p.source === "history")], ["Found nearby", list.filter((p) => p.source === "scan")], ["Known, location unknown", list.filter((p) => !p.path)]];
+  sel.replaceChildren(...groups.filter(([, items]) => items.length).map(([label, items]) => el("optgroup", { label }, items.map(opt))));
+  sel.hidden = false;
+  sel.onchange = () => { location.href = `${location.pathname}?project=${encodeURIComponent(sel.value)}${location.hash || "#overview"}`; };
+}
 async function boot() {
-  setupTheme(); setupSearch();
+  setupTheme(); setupSearch(); setupProjects();
   window.addEventListener("hashchange", render);
   if (window.__KTW_STATE__) applyState(window.__KTW_STATE__);
   else {
-    try { applyState(await (await fetch("/api/state.json", { cache: "no-store" })).json()); }
-    catch (err) { $("#main").append(el("p", { class: "center" }, "Could not load the state — is the server running?")); }
+    try { applyState(await (await fetch(api("/api/state.json"), { cache: "no-store" })).json()); }
+    catch (err) { $("#main").append(el("p", { class: "center" }, PROJECT ? `No state for project "${PROJECT}" — unknown id or unknown location.` : "Could not load the state — is the server running?")); }
   }
   connectLive();
 }

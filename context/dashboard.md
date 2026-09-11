@@ -8,13 +8,13 @@
 **Source:** maintainer conversation, 2026-09-11
 **Revisit when:** the dashboard is asked to write anything, hold state across restarts, or become the primary way anyone reads `context/`
 
-`docs/philosophy.md` says the project introduces "no new platform, database, daemon, dashboard, or workflow". `keep-the-why-dashboard` exists anyway — as a viewer over data the project already has: the entries in `context/`, `.keep-the-why`, the linter's findings, and the Git history of all of it. It writes nothing, holds its state only in the memory of the terminal it runs in, and rebuilds that state from Markdown and Git whenever the project changes. Deleting it loses nothing.
+`docs/philosophy.md` says the project introduces "no new platform, database, daemon, dashboard, or workflow". `keep-the-why-dashboard` exists anyway — as a viewer over data the project already has: the entries in `context/`, `.keep-the-why`, the linter's findings, and the Git history of all of it. It writes nothing into any project, holds its state only in the memory of the terminal it runs in, and rebuilds that state from Markdown and Git whenever the project changes. Deleting it loses nothing. The one file it keeps — `~/.keep-the-why/dashboard-history.json`, the projects opened so far with their paths — is convenience for the project menu, next to the skill's own personal files and equally outside every repository.
 
 **Reason:** the philosophy line is about where knowledge *lives* — a dashboard that is the place where reasoning is entered or stored would contradict it. A lens does not. What the dashboard shows is what `git blame`, `git log -L` and a Markdown parser return; connecting those for a person who will not run them by hand is the whole product. The line stays in `philosophy.md`; the dashboard's own README repeats it and says why it does not apply.
 
 **Rejected alternative:** no dashboard, on the strength of the line. Rejected — visibility is what adoption turns on, and a project with sixty entries and a two-month Git history has a story no folder listing tells. Also rejected: a dashboard with an edit or approval flow ("confirm this pending entry here"). That would make it a second write path beside the skill and a place where state lives; the queues view lists what needs a person and stops there.
 
-**Consequence:** every feature request that involves writing, persisting, or replacing the Markdown as the source of truth is out of scope by construction, not by roadmap.
+**Consequence:** every feature request that involves writing into a project, persisting project content, or replacing the Markdown as the source of truth is out of scope by construction, not by roadmap. The history file is the test case for the line: it holds ids and paths, never content, and it lives where the skill already keeps per-developer state (`~/.keep-the-why/`) because one project id can sit at several paths and the personal file, keyed by id, cannot say which.
 
 ## The dashboard lives in this repository under `dashboard/`, on its own version counter, with the linter as its parser
 

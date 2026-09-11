@@ -7,7 +7,7 @@ description: keep-the-why-dashboard — a read-only live view over a project's c
 
 `keep-the-why-dashboard` is a read-only viewer over what a Keep the Why project already has: the entries in `context/`, the config in `.keep-the-why`, the linter's findings, and the Git history of all of it — who created each entry, who last touched it, when its `Status` changed and by whom.
 
-It connects data that is already lying around. It stores nothing, runs no daemon beyond the terminal you start it in, and is never a source of truth: delete it and nothing is lost. That is what keeps it inside this project's own rule of [no new platform, database, daemon, dashboard, or workflow](philosophy.md) — a lens on Markdown and Git, not a place where anything lives.
+It connects data that is already lying around. It writes nothing into any project, runs no daemon beyond the terminal you start it in, and is never a source of truth: delete it and nothing is lost. The one file it keeps is `~/.keep-the-why/dashboard-history.json` — the projects you opened, with their paths, so the project menu can offer them again. That is what keeps it inside this project's own rule of [no new platform, database, daemon, dashboard, or workflow](philosophy.md) — a lens on Markdown and Git, not a place where anything lives.
 
 **Live example:** [this repository's own `context/`](https://keepthewhy.com/dashboard/live/), exported on every docs build.
 
@@ -30,7 +30,13 @@ ktw-dashboard [PATH] [--host 127.0.0.1] [--port 8765] [--no-browser] [--interval
 | `--export DIR` | writes `DIR/index.html`, one self-contained page with the state embedded (no server, no external requests), plus `DIR/state.json`; then exits. For GitHub Pages, a release asset, or the link behind the [badge](badge.md) |
 | `--json` | prints the state and exits |
 | `--anonymize` | Git author names become `author-1`, `author-2`, … — for exports of repositories whose contributors did not ask to be listed on a web page. E-mail addresses are never part of the state |
+| `--scan DIR` | also look for projects under `DIR` (two levels deep) for the project menu; the parent of the start directory is always scanned |
+| `--no-history` | neither read nor update `~/.keep-the-why/dashboard-history.json` |
 | `--host 0.0.0.0` | exposes the page on the network; the CLI warns. Everything shown is the project's `context/` — treat the port like the repository |
+
+## Several projects
+
+Started inside a project, the dashboard shows that one. The project menu in the top bar lists the ten most recently opened projects (one project id can appear at several paths — clones, worktrees), projects found near the start directory, and ids that have a personal file in `~/.keep-the-why/` but no known location yet; opening a project moves it to the top of the history.
 
 ## What it shows
 
