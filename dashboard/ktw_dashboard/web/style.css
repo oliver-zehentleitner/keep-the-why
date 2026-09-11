@@ -251,7 +251,7 @@ kbd { font-family: var(--mono); font-size: 11px; background: var(--bg3); border:
   .strip { height: auto; flex-wrap: wrap; padding: 6px 10px; gap: 6px; white-space: normal; overflow: visible; }
   .strip .sep { display: none; }
   .strip .lbl { flex-basis: 100%; margin-top: 2px; }
-  .sidebar { padding: 0; max-height: none; border-right: 0; border-bottom: 1px solid var(--line); overflow: visible; }
+  .sidebar { padding: 0; max-height: none; border-right: 0; border-bottom: 1px solid var(--line); overflow: visible; position: sticky; top: 0; z-index: 5; }
   .nav { display: flex; align-items: center; overflow-x: auto; gap: 2px; padding: 6px 8px; scrollbar-width: none; }
   .nav::-webkit-scrollbar { display: none; }
   .nav a { padding: 6px 10px; white-space: nowrap; border-radius: 999px; gap: 6px; }

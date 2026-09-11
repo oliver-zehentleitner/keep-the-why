@@ -3,6 +3,7 @@
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
 const $ = (sel, root = document) => root.querySelector(sel);
+const narrow = () => !!window.matchMedia?.("(max-width: 900px)").matches;
 const el = (tag, attrs = {}, ...kids) => {
   const n = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
@@ -312,6 +313,7 @@ function renderDetailsTopic(t) {
   d.append(el("h3", {}, "Topic"), el("div", { class: "kv" }, el("span", { class: "k" }, "file"), el("span", { class: "v mono" }, t.file), el("span", { class: "k" }, "entries"), el("span", { class: "v" }, t.entries)));
   d.append(el("h3", {}, `References out (${t.refs_out.length})`), ...(t.refs_out.length ? t.refs_out.map((f) => el("a", { class: "backlink", href: `#topic/${f}` }, topicOf(f)?.title || f)) : [el("p", { class: "empty" }, "none")]));
   d.append(el("h3", {}, `Referenced by (${t.refs_in.length})`), ...(t.refs_in.length ? t.refs_in.map((f) => el("a", { class: "backlink", href: `#topic/${f}` }, topicOf(f)?.title || f)) : [el("p", { class: "empty" }, "none")]));
+  if (narrow()) { d.append(el("h3", {}, "Graph"), el("a", { class: "backlink", href: "#graph" }, "Open the project graph →")); return; }
   const box = el("div", { class: "mini tall" }, el("span", { class: "mini-title" }, "neighbourhood"), el("span", { class: "mini-hint" }, "click to open"));
   const canvas = el("canvas"); box.prepend(canvas);
   d.append(el("h3", {}, "Graph"), box);
@@ -357,6 +359,7 @@ function renderDetailsDefault() {
       el("h3", {}, "Keys"), el("p", { class: "note" }, el("kbd", {}, "/"), " search · ", el("kbd", {}, "g"), " graph · ", el("kbd", {}, "o"), " overview · ", el("kbd", {}, "q"), " queues · ", el("kbd", {}, "t"), " timeline · ", el("kbd", {}, "a"), " authors"));
     return;
   }
+  if (narrow()) { d.append(el("h3", {}, "Graph"), el("a", { class: "backlink", href: "#graph" }, "Open the project graph →")); return; }
   const box = el("div", { class: "mini fill" }, el("span", { class: "mini-title" }, "graph"), el("span", { class: "mini-hint" }, "hover · click · g for the full view"));
   const canvas = el("canvas"); box.prepend(canvas);
   d.append(box);
@@ -364,6 +367,7 @@ function renderDetailsDefault() {
 }
 function renderDetailsNeighbourhood(e) {
   const d = $("#details");
+  if (narrow()) { d.append(el("h3", {}, "Graph"), el("a", { class: "backlink", href: "#graph" }, "Open the project graph →")); return; }
   const box = el("div", { class: "mini tall" }, el("span", { class: "mini-title" }, "neighbourhood"), el("span", { class: "mini-hint" }, "click to open"));
   const canvas = el("canvas"); box.prepend(canvas);
   d.append(el("h3", {}, "Graph"), box);
@@ -419,9 +423,9 @@ function viewGraph(main) {
   const wrap = el("div", { class: "graph-wrap" });
   const canvas = el("canvas");
   const ui = el("div", { class: "graph-ui" },
-    el("label", {}, el("input", { type: "checkbox", checked: g.showEntries, onchange: (ev) => { g.showEntries = ev.target.checked; g.alpha = 0.5; } }), "entries"),
-    el("label", {}, el("input", { type: "checkbox", checked: g.showLabels, onchange: (ev) => { g.showLabels = ev.target.checked; } }), "labels"),
-    el("button", { class: "link-btn", onclick: () => { g.scale = 1; g.ox = 0; g.oy = 0; for (const n of g.nodes) { n.fixed = false; } g.alpha = 1; } }, "reset"),
+    el("label", {}, el("input", { type: "checkbox", checked: g.showEntries, onchange: (ev) => { g.showEntries = ev.target.checked; g.alpha = 0.5; g.wake?.(); } }), "entries"),
+    el("label", {}, el("input", { type: "checkbox", checked: g.showLabels, onchange: (ev) => { g.showLabels = ev.target.checked; g.wake?.(); } }), "labels"),
+    el("button", { class: "link-btn", onclick: () => { g.scale = 1; g.ox = 0; g.oy = 0; for (const n of g.nodes) { n.fixed = false; } g.alpha = 1; g.wake?.(); } }, "reset"),
   );
   const legend = el("div", { class: "graph-legend" },
     el("span", {}, el("i", { class: "dot", style: "background:var(--accent);width:12px;height:12px" }), "topic (size = entries)"),
@@ -531,8 +535,16 @@ function runGraph(canvas, g, opts = {}) {
       }
     }
     ctx.restore();
-    if (canvas.isConnected) g.raf = requestAnimationFrame(step); else ro.disconnect();
+    if (!canvas.isConnected) { ro.disconnect(); g.raf = null; return; }
+    const busy = g.alpha > 0.003 || drag || pan || pinch || hover;
+    g.raf = busy ? requestAnimationFrame(step) : null; // idle: no frames until something happens
   }
+  const wake = () => { if (!g.raf && canvas.isConnected) g.raf = requestAnimationFrame(step); };
+  for (const evn of ["mousemove", "mousedown", "wheel", "dblclick", "touchstart", "touchmove", "mouseleave"]) canvas.addEventListener(evn, wake, { passive: true });
+  window.addEventListener("mouseup", wake);
+  g.wake = wake;
+  ro.observe(canvas); // re-observe after the resize handler above; a resize wakes the loop
+  const ro2 = new ResizeObserver(() => { resize(); if (g.alpha < 0.05) g.alpha = 0.05; wake(); }); ro2.observe(canvas);
   if (g.raf) cancelAnimationFrame(g.raf);
   g.raf = requestAnimationFrame(step);
 }
@@ -605,7 +617,7 @@ function render() {
   else if (route.startsWith("entry/")) viewEntry(main, decodeURIComponent(route.slice(6)));
   else { viewOverview(main); renderDetailsDefault(); }
   markActive();
-  if (!route.startsWith("graph")) main.scrollTop = 0;
+  if (!route.startsWith("graph")) { main.scrollTop = 0; if (narrow()) window.scrollTo(0, Math.max(0, main.getBoundingClientRect().top + window.scrollY - 4)); }
 }
 function rerender() { renderSidebar(); renderStrip(); render(); }
 function applyState(state) {
@@ -652,7 +664,6 @@ function connectLive() {
   };
   open();
 }
-const narrow = () => window.matchMedia?.("(max-width: 900px)").matches;
 function setupSideToggle() {
   const btn = $("#side-toggle"); const app = $("#app");
   btn.onclick = () => { const open = app.classList.toggle("side-open"); btn.setAttribute("aria-expanded", String(open)); btn.textContent = open ? "Topics ▴" : "Topics ▾"; };
@@ -662,7 +673,7 @@ function setupTheme() {
   const saved = localStorage.getItem("ktw-theme");
   const prefersLight = window.matchMedia?.("(prefers-color-scheme: light)").matches;
   if (saved === "light" || (!saved && prefersLight)) document.documentElement.dataset.theme = "light";
-  $("#theme").onclick = () => { const light = document.documentElement.dataset.theme === "light"; if (light) delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = "light"; localStorage.setItem("ktw-theme", light ? "dark" : "light"); if (graph) graph.alpha = Math.max(graph.alpha, 0.05); };
+  $("#theme").onclick = () => { const light = document.documentElement.dataset.theme === "light"; if (light) delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = "light"; localStorage.setItem("ktw-theme", light ? "dark" : "light"); if (graph) { graph.alpha = Math.max(graph.alpha, 0.05); graph.wake?.(); } };
 }
 function fitSelect(sel) {
   // size the select to its current option's text, not the browser's default width
