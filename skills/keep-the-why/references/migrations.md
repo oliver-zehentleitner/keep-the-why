@@ -4,6 +4,12 @@ What changed in each version that an existing project may need to know about or 
 
 Entries below assume 0.2.0 as the starting point — nothing before it tracked a `context-schema` at all, and 0.2.0 itself introduced no `context/` entry format change.
 
+## 0.16.2 — a silent setup check, the source question before the write, the dashboard named (informational, no action required)
+
+**What changed:** the setup check says nothing when every check comes back clean and goes on to the request in the same turn — a setup summary is not a response; a wizard question ends the turn, a flagged value does not. The `source-reference` question is asked before the entry is written, never after it, and a direct request to record does not skip it. A step-by-step procedure is not repeated inside a `context/` entry, not even as a `Workaround:` field. `Type` lines are one per value, never a comma-separated list. And the skill now names `keep-the-why-dashboard` — a separate, read-only viewer over `context/` and its Git history — once at the end of project setup and when someone asks how to look at what was recorded; it never installs or starts it. The `context/README.md` the wizard writes ends with a pointer to it.
+
+**Existing projects:** nothing to migrate mechanically. A `context/README.md` written by an earlier version may gain the dashboard pointer in its last line when next touched — optional, it is a convenience for whoever opens the folder cold. Advance `context-schema` to 0.16.2 as usual.
+
 ## 0.16.1 — one `Evidence` word, `Source` without persons, a Cursor plugin (informational, no action required)
 
 **What changed:** the specification says what was implicit: `Evidence` is one word per entry, and when an entry's parts stand differently (a confirmed new reason beside a lost original one) the weakest grade wins and the body says which part is which; `Source` names a kind of source, never a person's name, handle or e-mail address. The repository is also installable as a Cursor plugin (`.cursor-plugin/plugin.json` plus one rule that loads the skill in a workspace carrying `.keep-the-why`), and the skill's description names complaints and settings changes about the skill itself so a session about those loads it.

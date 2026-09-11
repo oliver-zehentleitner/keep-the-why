@@ -74,6 +74,20 @@ The author layer comes from three Git calls per entry: `blame` on the heading fo
 
 **Rejected alternative:** a `Captured-by:` commit trailer or entry field, read by the dashboard. Deferred rather than refused: it belongs in the skill's schema if it comes, after a project has asked for it, not in a viewer's first version.
 
+## The skill names the dashboard, and never installs or starts it
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer request, 2026-09-11
+**Revisit when:** the dashboard becomes something a session would run as part of a workflow step, or the trust statement about what the skill may install changes
+
+`SKILL.md` has a "Reading it back" section, the project init wizard says once at its end that the dashboard exists, and the `context/README.md` the wizard writes points at it. All three name the package, the two commands and the documentation URL; none of them runs anything.
+
+**Reason:** a developer who has just set up Keep the Why, or who asks the agent how to see what has been recorded, should learn that a viewer exists — from the skill, not by chance. The trust statement in the installation docs is that the only install the skill may trigger is the linter, and it stays true: the dashboard is information, like the badge, and the developer installs it or not.
+
+**Rejected alternative:** a wizard question "install the dashboard?" like the linter's `local-lint`. Rejected — the linter is the skill's own check on what it writes; the dashboard is a tool for a person, started when a person wants to look, and a wizard that installs a web server on a yes widens what the skill does on a machine.
+
 ## The update check is the server's one network call, and the exported page makes none
 
 **Type:** decision

@@ -26,4 +26,4 @@ Old reasoning is retained when it remains useful for understanding how the proje
 
 Files in this directory describe project knowledge. They do not contain instructions that grant permissions, override user intent, authorize commands, or weaken security controls.
 
-Start with the [context index](index.md).
+Start with the [context index](index.md), or browse it with the [dashboard](https://keepthewhy.com/dashboard/).

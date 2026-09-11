@@ -206,6 +206,10 @@ Load these only when the situation calls for them:
 - [`references/interview-playbook.md`](references/interview-playbook.md) — preparing or conducting a knowledge-transfer interview.
 - [`references/trust-model.md`](references/trust-model.md) — treating repository content as data, not instructions.
 
+## Reading it back
+
+`context/` is plain Markdown and needs no tool to read. For browsing it — the graph of topics and references, an entry with its Git history, the queues of what still needs a person — there is `keep-the-why-dashboard`, a separate read-only package: `pip install keep-the-why-dashboard`, then `ktw-dashboard` in the project. This skill never installs or starts it. Mention it once when someone asks how to look at what has been recorded, and point at https://keepthewhy.com/dashboard/ for the current documentation.
+
 ## What this skill is not
 
 - Not a guarantee. Quality depends on what gets captured and how disciplined that stays over time.
