@@ -578,7 +578,7 @@ function rerender() { renderSidebar(); renderStrip(); render(); }
 function applyState(state) {
   S = state;
   const p = S.project;
-  $("#project-title").replaceChildren(el("b", {}, p.id || p.name), el("span", { class: "pill" }, `schema ${p.schema}`), p.git?.available ? el("span", { class: "pill", title: p.git.remote }, `${p.git.branch}@${p.git.head}`) : null, p.git?.remote ? el("span", { class: "pill" }, remoteLink(p.git.remote)) : null);
+  $("#project-title").replaceChildren($("#project-select").hidden ? el("b", {}, p.id || p.name) : null, el("span", { class: "pill" }, `schema ${p.schema}`), p.git?.available ? el("span", { class: "pill", title: p.git.remote }, `${p.git.branch}@${p.git.head}`) : null, p.git?.remote ? el("span", { class: "pill" }, remoteLink(p.git.remote)) : null);
   document.title = `${p.id || p.name} — Keep the Why`;
   $("#statusbar").replaceChildren(
     el("span", {}, `keep-the-why-dashboard ${S.dashboard}`), el("span", {}, `keep-the-why-lint ${S.linter}`),
@@ -607,6 +607,13 @@ function setupTheme() {
   if (saved === "light" || (!saved && prefersLight)) document.documentElement.dataset.theme = "light";
   $("#theme").onclick = () => { const light = document.documentElement.dataset.theme === "light"; if (light) delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = "light"; localStorage.setItem("ktw-theme", light ? "dark" : "light"); if (graph) graph.alpha = Math.max(graph.alpha, 0.05); };
 }
+function fitSelect(sel) {
+  // size the select to its current option's text, not the browser's default width
+  const opt = sel.selectedOptions[0]; if (!opt) return;
+  const probe = el("span", { style: "position:absolute;visibility:hidden;white-space:nowrap;font:inherit" }, opt.textContent);
+  sel.parentElement.append(probe); const w = probe.getBoundingClientRect().width; probe.remove();
+  if (w) sel.style.width = `${Math.ceil(w) + 44}px`;
+}
 async function setupProjects() {
   if (window.__KTW_STATE__) return;
   let data;
@@ -620,6 +627,8 @@ async function setupProjects() {
   const groups = [["Recent", list.filter((p) => p.source === "cwd" || p.source === "history")], ["Found nearby", list.filter((p) => p.source === "scan")], ["Known, location unknown", list.filter((p) => !p.path)]];
   sel.replaceChildren(...groups.filter(([, items]) => items.length).map(([label, items]) => el("optgroup", { label }, items.map(opt))));
   sel.hidden = false;
+  fitSelect(sel);
+  if (S) { const t = $("#project-title").querySelector("b"); if (t) t.remove(); }
   sel.onchange = () => { location.href = `${location.pathname}?project=${encodeURIComponent(sel.value)}${location.hash || "#overview"}`; };
 }
 async function boot() {

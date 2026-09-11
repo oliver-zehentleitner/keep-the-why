@@ -53,7 +53,7 @@ button { font: inherit; color: inherit; }
 .queue-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 8px 0 8px; }
 .queue-tiles a.tile { color: var(--fg); }
 .queue-tiles a.tile:hover { border-color: var(--accent); text-decoration: none; }
-.project-select { max-width: 340px; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; font: inherit; font-size: 14px; }
+.project-select { max-width: 60vw; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; font: inherit; font-size: 14px; }
 .project-select:focus { border-color: var(--accent); outline: none; }
 .project { color: var(--fg2); font-size: 15px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1; }
 .project b { color: var(--fg); font-weight: 600; }
