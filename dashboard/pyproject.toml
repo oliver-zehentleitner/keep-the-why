@@ -15,19 +15,27 @@ keywords = [
     "keep-the-why",
     "dashboard",
     "visualization",
+    "graph",
+    "documentation",
     "decision-records",
     "adr",
+    "architecture-decision-records",
     "rationale",
     "context-engineering",
+    "project-memory",
     "agent-skills",
     "ai-agents",
     "markdown",
     "git",
+    "git-blame",
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
+    "Environment :: Console",
     "Environment :: Web Environment",
     "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Natural Language :: English",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
@@ -36,13 +44,29 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: JavaScript",
     "Topic :: Software Development :: Documentation",
+    "Topic :: Software Development :: Version Control :: Git",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Topic :: Text Processing :: Markup :: Markdown",
 ]
 
 [project.urls]
-Homepage = "https://keepthewhy.com/dashboard/"
+Homepage = "https://keepthewhy.com"
+Documentation = "https://keepthewhy.com/dashboard/"
+"Live example" = "https://keepthewhy.com/dashboard/live/"
 Repository = "https://github.com/oliver-zehentleitner/keep-the-why"
+Source = "https://github.com/oliver-zehentleitner/keep-the-why/tree/main/dashboard"
+Changelog = "https://github.com/oliver-zehentleitner/keep-the-why/blob/main/CHANGELOG.md"
 Issues = "https://github.com/oliver-zehentleitner/keep-the-why/issues"
+Security = "https://github.com/oliver-zehentleitner/keep-the-why/blob/main/SECURITY.md"
+"Skill (Keep the Why)" = "https://keepthewhy.com/installation/"
+"Linter (keep-the-why-lint)" = "https://keepthewhy.com/linting/"
+"llms.txt" = "https://keepthewhy.com/llms.txt"
+Telegram = "https://t.me/unicorndevs"
+X = "https://x.com/keep_the_why"
+Bluesky = "https://bsky.app/profile/keep-the-why.bsky.social"
+Mastodon = "https://mastodon.social/@keep_the_why"
 
 [project.scripts]
 ktw-dashboard = "ktw_dashboard.cli:main"
