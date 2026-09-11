@@ -215,6 +215,14 @@ The structural half of this format is mechanically checkable — in CI, and loca
 
 Reading it back has a tool too: [keep-the-why-dashboard](https://pypi.org/project/keep-the-why-dashboard/) (developed in this repository under `dashboard/`) is a read-only viewer over `context/`, the config, the linter's findings and the Git history of all of it — who created each entry, who last touched it, when its status changed — with a graph of topics and references, queues of what still needs a person, a timeline and an author view. `ktw-dashboard` serves it locally and keeps it current while you work; `--export` writes one static page. It writes nothing into any project and holds nothing the repository doesn't; see [Dashboard](https://keepthewhy.com/dashboard/).
 
+<p align="center">
+  <a href="https://keepthewhy.com/dashboard/live/"><img src="https://keepthewhy.com/assets/dashboard-screenschot.png"
+       alt="keep-the-why-dashboard on this repository's own context/: the graph of topics and references, an entry with its Git history in the side pane, and the strip of what still needs a person"
+       width="900"></a>
+</p>
+
+<p align="center"><sub>The dashboard on this repository's own <code>context/</code> — <a href="https://keepthewhy.com/dashboard/live/">the live example</a>, a static export rebuilt with every docs deploy. Run locally, it updates as the project changes.</sub></p>
+
 ## Related work
 
 The idea of capturing AI-agent rationale isn't new, and this project doesn't claim otherwise. Related standards and conventions:
