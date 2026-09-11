@@ -66,7 +66,7 @@ Decisions that shipped, alternatives that lost, workarounds, constraints — Kee
 
 <div class="ktw-shot" markdown>
 
-[![keep-the-why-dashboard: the graph of a project's context/, an entry with its Git history, and the queues of what still needs a person](assets/dashboard-screenschot.png)](https://keepthewhy.com/dashboard/live/)
+[![keep-the-why-dashboard: the graph of a project's context/, an entry with its Git history, and the queues of what still needs a person](assets/dashboard-screenschot.png)](https://keepthewhy.com/dashboard/live/){ target=_blank rel=noopener }
 
 </div>
 

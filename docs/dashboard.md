@@ -11,7 +11,7 @@ It connects data that is already lying around. It writes nothing into any projec
 
 <div class="ktw-shot" markdown>
 
-[![The dashboard on this repository's own context/: graph, entry reader with Git history, queues](assets/dashboard-screenschot.png)](https://keepthewhy.com/dashboard/live/)
+[![The dashboard on this repository's own context/: graph, entry reader with Git history, queues](assets/dashboard-screenschot.png)](https://keepthewhy.com/dashboard/live/){ target=_blank rel=noopener }
 
 </div>
 
