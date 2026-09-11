@@ -5,7 +5,7 @@
 
 A read-only viewer over what a [Keep the Why](https://keepthewhy.com) project already has: the entries in `context/`, the config in `.keep-the-why`, the linter's findings, and the Git history of all of it — who created each entry, who last touched it, when its `Status` changed and by whom.
 
-It connects data that is already lying around. It writes nothing into any project, runs no daemon beyond the terminal you start it in, and is never a source of truth: delete it and nothing is lost. The one file it keeps is `~/.keep-the-why/dashboard-history.json` — the projects you opened, with their paths, so the project menu can offer them again. That is what keeps it inside Keep the Why's own rule of *no new platform, database, daemon, dashboard, or workflow* — it is a lens on Markdown and Git, not a place where anything lives.
+It connects data that is already lying around. It writes nothing into any project, runs no daemon beyond the terminal you start it in, and is never a source of truth: delete it and nothing is lost. The one file it keeps is `~/.keep-the-why/dashboard-history.json` — the projects you opened, with their paths, so the project menu can offer them again. That is what keeps it inside Keep the Why's own rule — *no new platform, database, daemon, account, or workflow* — a lens on Markdown and Git, not a place where anything lives; see [Philosophy](https://keepthewhy.com/philosophy/).
 
 Think Obsidian's graph and reader, for the reasoning behind a codebase.
 

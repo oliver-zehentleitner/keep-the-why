@@ -7,7 +7,7 @@ description: keep-the-why-dashboard — a read-only live view over a project's c
 
 `keep-the-why-dashboard` is a read-only viewer over what a Keep the Why project already has: the entries in `context/`, the config in `.keep-the-why`, the linter's findings, and the Git history of all of it — who created each entry, who last touched it, when its `Status` changed and by whom.
 
-It connects data that is already lying around. It writes nothing into any project, runs no daemon beyond the terminal you start it in, and is never a source of truth: delete it and nothing is lost. The one file it keeps is `~/.keep-the-why/dashboard-history.json` — the projects you opened, with their paths, so the project menu can offer them again. That is what keeps it inside this project's own rule of [no new platform, database, daemon, dashboard, or workflow](philosophy.md) — a lens on Markdown and Git, not a place where anything lives.
+It connects data that is already lying around. It writes nothing into any project, runs no daemon beyond the terminal you start it in, and is never a source of truth: delete it and nothing is lost. The one file it keeps is `~/.keep-the-why/dashboard-history.json` — the projects you opened, with their paths, so the project menu can offer them again. That is what keeps it inside this project's own rule — [no new platform, database, daemon, account, or workflow](philosophy.md) — a lens on Markdown and Git, not a place where anything lives.
 
 **Live example:** [this repository's own `context/`](https://keepthewhy.com/dashboard/live/), exported on every docs build.
 

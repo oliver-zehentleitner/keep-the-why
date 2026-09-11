@@ -8,7 +8,7 @@ Before installing anything that runs inside an agent, know what you're actually 
 
 - **The skill package is instructions only.** `skills/keep-the-why/` is `SKILL.md`, `references/*.md`, `examples/*.md` — no scripts, no binaries. What the instructions can trigger is one thing: the linter, `keep-the-why-lint`, installed by its fixed name from PyPI and run after writes when you say yes in the setup wizard (the wizard's default is yes; `no` turns it off). Autostart, if you enable it, writes a session hook into the project's agent settings — a file you see and commit. The exact bounds are on [Security](security.md).
 - **No network access of its own.** The package has nothing that calls out. The one install the skill may ask for is that PyPI package; everything else is your agent's own network access, not something this skill adds.
-- **No external services.** No database, no MCP server, no account, no API key.
+- **No external services.** No database, no MCP server, no account, no API key. The [dashboard](dashboard.md) is a second, separate PyPI package you install yourself if you want it; the skill never installs or starts it.
 - **Install a tagged release, not `main`.** `main` is where active development happens and isn't guaranteed release-ready at any given moment — installing without pinning tracks it directly. A `latest` tag always points to the newest release, moved automatically by CI whenever one ships. Every install method below shows how to pin to it (or to an exact version, for full reproducibility).
 - **Updating is explicit**, never automatic — see "Updating" below.
 

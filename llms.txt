@@ -244,6 +244,24 @@ skill run it after every write and install or update it from PyPI — `ask` neve
 linter's version must be at least the skill's, `context-schema` is never lowered to fit an older
 linter. Usage, GitLab/pre-commit snippets, and every finding code: https://keepthewhy.com/linting/
 
+## Dashboard
+
+keep-the-why-dashboard (PyPI: https://pypi.org/project/keep-the-why-dashboard/, source in this
+repository under dashboard/) is a read-only viewer over a project's `context/`, `.keep-the-why`,
+the linter's findings and the Git history of all of it: who created each entry, who last touched
+it, when its Status changed and by whom. `pip install keep-the-why-dashboard && ktw-dashboard` in
+a project serves it on localhost and keeps it current over Server-Sent Events (a `git pull` or an
+entry an agent just wrote shows up within seconds; uncommitted entries carry the author
+`working tree`). Views: overview, force-directed graph (topics as hubs, entries colored by
+Evidence, references as edges), topics and an entry reader with backlinks, queues of what needs
+a person (open, needs-review, pending-confirmation, unknown evidence, Revisit-when triggers),
+timeline by month and author, authors. `ktw-dashboard --export DIR` writes one self-contained
+HTML page (state embedded, no server, no CDN). It writes nothing into any project; the one file
+it keeps is `~/.keep-the-why/dashboard-history.json` (recently opened projects with their
+paths, for the project menu). Standard library plus keep-the-why-lint as the parser; the page is
+one plain JavaScript module. Versioned independently of the skill (`dashboard-v<version>`
+tags). Docs: https://keepthewhy.com/dashboard/
+
 ## Related Work
 
 Related standards and conventions: Architecture Decision Records, the AGENTS.md standard.
@@ -309,7 +327,8 @@ HTML equivalent and details: https://keepthewhy.com/badge/
 - Security (overview, what automated scanners report and why, links to trust model and vulnerability reporting): https://keepthewhy.com/security/
 - Trust model (context/ as data, not instructions): https://keepthewhy.com/trust-model/
 - Badge: https://keepthewhy.com/badge/
-- Philosophy (why no database/daemon/dashboard, deliberately): https://keepthewhy.com/philosophy/
+- Philosophy (why no database/daemon/account, deliberately — and why the dashboard is a viewer, not a place): https://keepthewhy.com/philosophy/
+- Dashboard (keep-the-why-dashboard: read-only live view over context/ and its Git history, or a static export): https://keepthewhy.com/dashboard/
 - Why this project is built this way (release/distribution, config format, positioning, compatibility): https://keepthewhy.com/context/release-and-distribution/, https://keepthewhy.com/context/config-format/, https://keepthewhy.com/context/positioning/, https://keepthewhy.com/context/compatibility/
 - Article — origin story and full comparison to prior art: https://blog.technopathy.club/keep-the-why-code-becomes-legacy-when-nobody-remembers-why
 - Article — controlled experiment on the core claim: 10 fresh Claude Code sessions with a rejected alternative recorded in context/ and 10 without, same "simplify this retry wrapper" prompt; without the entry 7/10 re-offered the rejected change, with it 10/10 cited the entry and declined. Transcripts, diffs and grades in the repository under experiments/rejected-change/: https://blog.technopathy.club/what-happens-when-a-coding-agent-forgets-why-a-change-was-rejected

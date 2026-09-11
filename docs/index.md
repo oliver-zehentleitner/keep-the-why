@@ -22,7 +22,7 @@ Keep the Why is the part that remembers. Repo-native project memory for humans a
 [GitHub](https://github.com/oliver-zehentleitner/keep-the-why){ .md-button }
 { .ktw-hero__actions }
 
-Open source under the [MIT license](https://keepthewhy.com/license/) — the skill, the linter, and this site. Nothing to sign up for, nothing that phones home.
+Open source under the [MIT license](https://keepthewhy.com/license/) — the skill, the linter, the dashboard, and this site. Nothing to sign up for, nothing that phones home.
 { .ktw-caption }
 
 </div>
@@ -147,7 +147,7 @@ The skill is validated against the Agent Skills spec on every push; this reposit
 
 <div class="ktw-card" markdown>
 
-**Not a platform.** No daemon, no database, no dashboard, no account. Just Markdown, Git, and the why your project would otherwise lose.
+**Not a platform.** No daemon, no database, no account. Just Markdown, Git, and the why your project would otherwise lose — and a [read-only dashboard](dashboard.md) over both, for when you want to look.
 
 </div>
 
