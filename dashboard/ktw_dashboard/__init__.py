@@ -4,4 +4,4 @@ Own version counter, like the linter's: the dashboard releases on its own
 cadence and reads whatever context-schema the installed linter understands.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
