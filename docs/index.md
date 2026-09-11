@@ -112,11 +112,11 @@ The next session — yours, a colleague's, an agent's — loads the index first 
 
 <div class="ktw-section" markdown>
 
-## See it
+## Live Dashboard
 
 <div class="ktw-shot" markdown>
 
-[![keep-the-why-dashboard: the graph of a project's context/, an entry with its Git history, and the queues of what still needs a person](assets/dashboard-screenschot.png)](dashboard.md)
+[![keep-the-why-dashboard: the graph of a project's context/, an entry with its Git history, and the queues of what still needs a person](assets/dashboard-screenschot.png)](https://keepthewhy.com/dashboard/live/)
 
 </div>
 
