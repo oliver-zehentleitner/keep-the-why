@@ -1,6 +1,6 @@
 {
   "name": "keep-the-why",
-  "version": "0.16.1",
+  "version": "0.16.2",
   "description": "Project memory for coding agents and humans: the reasoning behind a codebase as Markdown in the repo, versioned by Git, so nothing rejected is proposed twice.",
   "author": {
     "name": "Oliver Zehentleitner",

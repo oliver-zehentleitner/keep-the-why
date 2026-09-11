@@ -83,7 +83,7 @@ codex plugin marketplace add oliver-zehentleitner/keep-the-why
 codex plugin add keep-the-why@keep-the-why
 ```
 
-Add `--ref v0.16.1` (any [release tag](https://github.com/oliver-zehentleitner/keep-the-why/releases)) to the first command to pin a version; without it Codex snapshots the default branch, and `codex plugin marketplace upgrade` refreshes it. The plugin lands under `~/.codex/plugins/cache/keep-the-why/`, and a new session lists the skill as `keep-the-why:keep-the-why`. Verified 2026-09-08 with Codex CLI 0.149.0, from a local path and from GitHub. `codex plugin remove keep-the-why@keep-the-why` uninstalls it; the skill-directory route below works for Codex too, and does not copy the whole repository.
+Add `--ref v0.16.2` (any [release tag](https://github.com/oliver-zehentleitner/keep-the-why/releases)) to the first command to pin a version; without it Codex snapshots the default branch, and `codex plugin marketplace upgrade` refreshes it. The plugin lands under `~/.codex/plugins/cache/keep-the-why/`, and a new session lists the skill as `keep-the-why:keep-the-why`. Verified 2026-09-08 with Codex CLI 0.149.0, from a local path and from GitHub. `codex plugin remove keep-the-why@keep-the-why` uninstalls it; the skill-directory route below works for Codex too, and does not copy the whole repository.
 
 ## Also installable: Cursor plugin
 

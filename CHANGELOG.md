@@ -4,6 +4,8 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.16.2] - 2026-09-11
+
 ### Added
 
 - The skill names the dashboard: a "Reading it back" section in `SKILL.md` (`pip install keep-the-why-dashboard`, `ktw-dashboard`, https://keepthewhy.com/dashboard/ — never installed or started by the skill), one sentence at the end of the project init wizard in `references/setup.md`, and a *Tools* section in the `context/README.md` the wizard writes — linter and dashboard, what each does, both optional, neither installed by the skill (template, example, this repository's own). The same file's opening paragraphs now carry the project's current positioning — project memory for the people and the coding agents working here, "Keep a Changelog records what changed. Keep the Why preserves why it changed.", one sentence on the schema — instead of "a repo-native convention and agent skill". `references/migrations.md` 0.16.2 (informational).
@@ -13,6 +15,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Changed
 
+- `keep-the-why-lint` 0.16.2.0: knows schema 0.16.2 — no new gate, nothing changes what `context/` or `.keep-the-why` must look like. Published before the skill tag, per the checklist.
 - `SKILL.md` wording, measured before and after in isolation (6 runs per case, 48/48) and in a full run (86/88, up from 84/86/84 on 0.16.1): the setup check is silent when clean and goes on to the request in the same turn — not as a progress note either — a setup question ends the turn, a flagged value does not, an update check is mentioned only when it fails for the first time (step 0); the `source-reference` question comes before the write and a direct request to record does not skip it (step 4); a procedure is not restated inside a `context/` entry, and `Type` is one line per value, never comma-separated (step 5). Two eval prompts (`source-reference-always-no-ticket-exists`, `source-reference-filtered-matching-criterion`) describe a concrete decision instead of an abstract scenario — the abstract form hid the write-then-ask failure the concrete one exposed. Closes #384.
 - `docs/evals.md` carries the 0.16.1 release measurement: three consecutive full runs on the tag (84, 86 and 84 of 88), the four numbers per run, a note on every failed run, a row for the case added since 0.16.0, a new run-history row. The three cases behind #354–#356 went 3/3 each, the skill loaded in 263 of 264 sessions with no genuine miss, no safety refusal occurred, and the one two-time flip is the one-line `Type` the judge keeps passing and the check keeps failing (#384).
 - The site's "Why this project is built this way" section holds one page, "Read this project's context/", which is `context/index.md`; the index links every topic file, so the navigation follows it instead of listing files by hand — the hand-kept list was seven of eight, `issue-triage.md` never added (#375, #377, #379).
@@ -663,7 +666,8 @@ Initial release.
 - Logo, wordmark, and favicon.
 - `context/repo-conventions.md`, dogfooding the skill on its own repository from day one.
 
-[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.16.1...HEAD
+[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.16.2...HEAD
+[0.16.2]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.16.1...v0.16.2
 [0.16.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.16.0...v0.16.1
 [0.16.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.14.1...v0.15.0
