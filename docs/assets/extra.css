@@ -62,6 +62,19 @@
   padding: 2rem 0;
   border-top: 1px solid var(--ktw-border);
 }
+.ktw-shot {
+  margin: 1rem 0 .8rem;
+}
+.ktw-shot img {
+  display: block;
+  width: 100%;
+  border-radius: .5rem;
+  border: 1px solid var(--ktw-border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .18);
+}
+.ktw-shot a:hover img {
+  border-color: var(--md-accent-fg-color);
+}
 .ktw-entry {
   background: var(--md-code-bg-color);
   border: 1px solid var(--ktw-border);

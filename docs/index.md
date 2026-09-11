@@ -110,6 +110,20 @@ The next session — yours, a colleague's, an agent's — loads the index first 
 
 </div>
 
+<div class="ktw-section" markdown>
+
+## See it
+
+<div class="ktw-shot" markdown>
+
+[![keep-the-why-dashboard: the graph of a project's context/, an entry with its Git history, and the queues of what still needs a person](assets/dashboard-screenschot.png)](dashboard.md)
+
+</div>
+
+The dashboard — a read-only view over `context/` and its Git history: who recorded what, when a status changed, what still needs a person. [Dashboard →](dashboard.md) · [Live example →](https://keepthewhy.com/dashboard/live/)
+
+</div>
+
 <div class="ktw-section ktw-trust" markdown>
 
 ## Tested, measured, stated plainly
