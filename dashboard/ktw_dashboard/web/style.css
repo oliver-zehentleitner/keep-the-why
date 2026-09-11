@@ -28,11 +28,11 @@ button { font: inherit; color: inherit; }
   grid-template-areas: "top top top" "strip strip strip" "side main details" "status status status"; }
 .strip { grid-area: strip; display: flex; align-items: center; gap: 6px; padding: 0 14px; background: var(--bg2); border-bottom: 1px solid var(--line); overflow-x: auto; white-space: nowrap; font-size: 12px; }
 .strip .sep { width: 1px; height: 18px; background: var(--line); margin: 0 6px; flex: none; }
-.strip .lbl { color: var(--fg3); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; margin-right: 2px; }
-.strip a.stat { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--fg2); background: var(--bg); }
+.strip .lbl { color: var(--fg2); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-right: 2px; }
+.strip a.stat { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--fg); background: var(--bg); }
 .strip a.stat b { color: var(--fg); font-weight: 650; }
 .strip a.stat:hover { text-decoration: none; border-color: var(--fg3); }
-.strip a.stat.zero { opacity: .5; }
+.strip a.stat.zero { color: var(--fg2); } .strip a.stat.zero b { color: var(--fg2); font-weight: 500; }
 .strip a.stat.q-open b { color: var(--open); } .strip a.stat.q-needs-review b { color: var(--needs-review); } .strip a.stat.q-pending-confirmation b { color: var(--pending-confirmation); } .strip a.stat.q-unknown b { color: var(--unknown); }
 .strip a.stat.lint-bad b { color: var(--bad); } .strip a.stat.lint-warn b { color: var(--warn); } .strip a.stat.lint-ok b { color: var(--ok); }
 .strip a.stat.hot { border-color: color-mix(in srgb, var(--warn) 60%, transparent); }
