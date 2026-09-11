@@ -238,7 +238,7 @@ Also listed among the tools and further reading in the [Architecture Decision Re
 
 ## Why I built this
 
-See [Why I built this](https://keepthewhy.com/why/) — Oliver Zehentleitner on noticing this pattern while working with agents day to day, [blog](https://blog.technopathy.club), [GitHub](https://github.com/oliver-zehentleitner). For why it's built the way it is — no database, no daemon, no dashboard, deliberately — see [Philosophy](https://keepthewhy.com/philosophy/).
+See [Why I built this](https://keepthewhy.com/why/) — Oliver Zehentleitner on noticing this pattern while working with agents day to day, [blog](https://blog.technopathy.club), [GitHub](https://github.com/oliver-zehentleitner). For why it's built the way it is — no database, no daemon, no account, deliberately, and a dashboard that only reads — see [Philosophy](https://keepthewhy.com/philosophy/).
 
 ## Feedback
 
