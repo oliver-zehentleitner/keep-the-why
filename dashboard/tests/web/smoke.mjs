@@ -52,6 +52,8 @@ if (report.entryMiniGraph !== 1 || report.topicMiniGraph !== 1 || report.default
 if (window.document.body.textContent.includes("[object ")) errors.push("[object ...] leaked into the page text");
 if (/\bnull\b/.test(window.document.getElementById("project-title").textContent + window.document.getElementById("statusbar").textContent)) errors.push("null leaked into the top bar or status bar");
 report.details = window.document.getElementById("details").textContent.trim().length;
+report.topbarLinks = { schema: window.document.querySelectorAll('#project-title a[href*="/releases/tag/v"]').length, commit: window.document.querySelectorAll('#project-title a[href*="/commit/"]').length };
+if (S.project.git?.available && /^github\.com\//.test(S.project.git.remote || "") && (report.topbarLinks.schema !== 1 || report.topbarLinks.commit !== 1)) errors.push("top bar links missing: " + JSON.stringify(report.topbarLinks));
 const input = window.document.getElementById("search"); input.value = "retry"; input.dispatchEvent(new window.Event("input"));
 await tick(50);
 report.search = window.document.querySelectorAll("#search-results a").length;

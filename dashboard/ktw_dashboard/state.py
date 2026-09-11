@@ -204,6 +204,7 @@ class StateBuilder:
         return {
             "available": True,
             "head": repo.head,
+            "head_full": repo.head_full,
             "branch": repo.branch,
             "remote": repo.remote,
             "project_subdir": (

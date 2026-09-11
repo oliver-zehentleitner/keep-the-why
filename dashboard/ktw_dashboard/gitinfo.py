@@ -50,6 +50,7 @@ class Repo:
     head: str
     branch: str
     remote: str  # host/path, credentials and scheme stripped; "" when none
+    head_full: str = ""
 
     def rel(self, path: str) -> str:
         return os.path.relpath(path, self.root)
@@ -61,13 +62,14 @@ def open_repo(project_root: str) -> Repo | None:
         return None
     top = top.strip()
     head = (_run(["rev-parse", "--short", "HEAD"], top) or "").strip()
+    head_full = (_run(["rev-parse", "HEAD"], top) or "").strip()
     branch = (_run(["rev-parse", "--abbrev-ref", "HEAD"], top) or "").strip()
     remote = (_run(["remote", "get-url", "origin"], top) or "").strip()
     remote = _CRED_RE.sub("//", remote)
     remote = re.sub(r"^[a-z+]+://", "", remote)
     remote = re.sub(r"^git@([^:]+):", r"\1/", remote)
     remote = re.sub(r"\.git$", "", remote)
-    return Repo(root=top, head=head, branch=branch, remote=remote)
+    return Repo(root=top, head=head, branch=branch, remote=remote, head_full=head_full)
 
 
 def fingerprint(project_root: str, context_dir: str, repo: Repo | None) -> str:
