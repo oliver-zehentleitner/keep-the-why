@@ -39,7 +39,7 @@ button { font: inherit; color: inherit; }
 /* The top bar stays dark in both themes, like the site's header: the wordmark is made for a dark ground. */
 .topbar { grid-area: top; display: flex; align-items: center; gap: 16px; padding: 0 14px; background: #141418; border-bottom: 1px solid #2a2a31; color: #e6e6ec; color-scheme: dark; }
 .topbar .project { color: #b4b4be; } .topbar .project b { color: #ffffff; }
-.topbar .pill { background: #23232a; color: #c4c4cc; border-color: #3a3a43; }
+.topbar .pill { background: #23232a; color: #c4c4cc; border-color: #3a3a43; font-size: 12px; line-height: 20px; }
 .topbar .pill a, .topbar a.gh { color: #c9b8ff; }
 .topbar #search, .topbar .project-select { background: #1e1e24; color: #e6e6ec; border-color: #3a3a43; }
 .topbar #search::placeholder { color: #7a7a86; }
@@ -48,18 +48,18 @@ button { font: inherit; color: inherit; }
 .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--fg); letter-spacing: .2px; }
 .brand:hover { text-decoration: none; }
 .brand img { display: block; }
-.brand .wordmark { height: 22px; width: auto; }
+.brand .wordmark { height: 24px; width: auto; }
 .gh { color: var(--fg2); }
 .queue-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 8px 0 8px; }
 .queue-tiles a.tile { color: var(--fg); }
 .queue-tiles a.tile:hover { border-color: var(--accent); text-decoration: none; }
-.project-select { max-width: 320px; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; font: inherit; font-size: 13px; }
+.project-select { max-width: 340px; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; font: inherit; font-size: 14px; }
 .project-select:focus { border-color: var(--accent); outline: none; }
-.project { color: var(--fg2); font-size: 13px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1; }
+.project { color: var(--fg2); font-size: 15px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1; }
 .project b { color: var(--fg); font-weight: 600; }
 .project .pill { margin-left: 8px; }
 .topbar-right { display: flex; align-items: center; gap: 10px; position: relative; }
-#search { width: 300px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); outline: none; }
+#search { width: 300px; padding: 6px 10px; font-size: 14px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); outline: none; }
 #search:focus { border-color: var(--accent); }
 .search-results { position: absolute; top: 40px; right: 70px; width: 480px; max-height: 60vh; overflow: auto; background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 10px 30px rgba(0,0,0,.35); z-index: 20; }
 .search-results a { display: block; padding: 8px 12px; color: var(--fg); border-bottom: 1px solid var(--line); }
