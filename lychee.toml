@@ -6,7 +6,9 @@
 # fixture at runtime, so checking them as repo files produces false positives.
 # experiments/*/results are per-session transcripts and diffs — data behind an
 # article, not documentation; URLs in them are whatever the agent printed.
-exclude_path = ["tools/evals/fixtures", "experiments/rejected-change/results"]
+# dashboard/ktw_dashboard/web/ is the dashboard's page, served by its own
+# server (root-relative /static/... links resolve there, not in the repo).
+exclude_path = ["tools/evals/fixtures", "experiments/rejected-change/results", "dashboard/ktw_dashboard/web"]
 
 # mcpmarket.com rate-limits lychee's request bursts with 429s (seen repeatedly
 # on the "Also listed on" link across README.md/llms.txt/docs/installation.md,
@@ -15,7 +17,13 @@ exclude_path = ["tools/evals/fixtures", "experiments/rejected-change/results"]
 # x.com answers lychee with 403 Forbidden for the profile link behind the X badge
 # (README.md, lint/README.md) — bot-blocking on their side, not a dead link;
 # opening it in a browser works. Same treatment as mcpmarket.com.
-# keepthewhy.com/dashboard/live/ is written into site/ by the docs workflow at
-# deploy time (ktw-dashboard --export), so it exists on the live site but not
-# in the repository and not before the first deploy that carries it.
-exclude = ["^https://mcpmarket\\.com/", "^https://x\\.com/", "^https://keepthewhy\\.com/dashboard/live/"]
+# keepthewhy.com/dashboard/ (the docs page) and /dashboard/live/ (written into
+# site/ at deploy time by ktw-dashboard --export) exist on the live site only
+# after the deploy that carries them; the tree/main/dashboard link on GitHub
+# only after the merge. Same shape as the CHANGELOG compare-link case.
+exclude = [
+  "^https://mcpmarket\\.com/",
+  "^https://x\\.com/",
+  "^https://keepthewhy\\.com/dashboard/",
+  "^https://github\\.com/oliver-zehentleitner/keep-the-why/tree/main/dashboard",
+]
