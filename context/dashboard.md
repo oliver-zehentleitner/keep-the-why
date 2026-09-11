@@ -73,3 +73,19 @@ The author layer comes from three Git calls per entry: `blame` on the heading fo
 **Reason:** the question the maintainer wanted answered is *who* created what — the user layer — not *what kind of author* did. Git answers the first exactly and the second not at all; inventing a convention (a commit trailer, an entry field) to answer the second would be a schema change decided by the viewer, and it is not clear anyone wants the distinction. It could also read as a value judgement on agent-written entries, which the project does not make.
 
 **Rejected alternative:** a `Captured-by:` commit trailer or entry field, read by the dashboard. Deferred rather than refused: it belongs in the skill's schema if it comes, after a project has asked for it, not in a viewer's first version.
+
+## The update check is the server's one network call, and the exported page makes none
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer request, 2026-09-11
+**Revisit when:** a second network call is proposed, or the check is asked to do anything but compare two version strings
+
+At start and once every 24 hours the server asks `pypi.org/pypi/<name>/json` for the newest `keep-the-why-dashboard` and `keep-the-why-lint`; a newer release makes the package's entry in the status bar shimmer, with the version and the `pip install -U` line in its tooltip. `--no-update-check` turns it off. The exported page never checks.
+
+**Reason:** the dashboard is where a developer looks at the project between sessions, so it is the place a stale linter or dashboard gets noticed — the skill's own update check covers the skill, not these two packages. Doing it server-side keeps it to one request per day per running dashboard, sent by a program the developer started on their own machine.
+
+**Rejected alternative:** the check from the page (PyPI's JSON API allows cross-origin reads). Rejected because the same page is what `--export` publishes, and a static page must not call out on behalf of everyone who opens it — the export makes no requests, and the live page makes them only to its own server.
+
+**Consequence:** the README's "no network calls" sentence became "one network call, named, with an off switch"; the check compares version strings and nothing else, sends nothing but the request, and a failed lookup shows nothing rather than a warning.

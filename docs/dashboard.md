@@ -38,6 +38,7 @@ ktw-dashboard [PATH] [--host 127.0.0.1] [--port 8765] [--no-browser] [--interval
 | `--anonymize` | Git author names become `author-1`, `author-2`, … — for exports of repositories whose contributors did not ask to be listed on a web page. E-mail addresses are never part of the state |
 | `--scan DIR` | also look for projects under `DIR` (two levels deep) for the project menu; the parent of the start directory is always scanned |
 | `--no-history` | neither read nor update `~/.keep-the-why/dashboard-history.json` |
+| `--no-update-check` | don't ask pypi.org for newer versions of the dashboard and the linter — the check runs at start and once every 24 hours and is the server's only network call; a found update makes the package's entry in the status bar shimmer, with the version and the `pip install -U` line in its tooltip. The exported page never checks |
 | `--host 0.0.0.0` | exposes the page on the network; the CLI warns. Everything shown is the project's `context/` — treat the port like the repository |
 
 ## Several projects

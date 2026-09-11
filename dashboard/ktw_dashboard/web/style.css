@@ -106,6 +106,9 @@ button { font: inherit; color: inherit; }
 .details { grid-area: details; overflow: auto; display: flex; flex-direction: column; background: var(--bg2); border-left: 1px solid var(--line); padding: 16px; font-size: 13px; }
 .statusbar { grid-area: status; display: flex; gap: 18px; align-items: center; padding: 0 14px; font-size: 11px; color: var(--fg3); background: var(--bg2); border-top: 1px solid var(--line); }
 .statusbar a { color: var(--fg2); } .statusbar a:hover { color: var(--fg); }
+.statusbar .outdated a { color: var(--accent2); background: linear-gradient(90deg, var(--accent2) 0%, #fff 45%, var(--accent2) 55%, var(--accent2) 100%); background-size: 240% 100%; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: shimmer 2.8s linear infinite; cursor: help; }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -40% 0; } }
+@media (prefers-reduced-motion: reduce) { .statusbar .outdated a { animation: none; -webkit-text-fill-color: currentColor; background: none; color: var(--accent2); text-decoration: underline dotted; } }
 
 h1 { font-size: 22px; margin: 0 0 4px; font-weight: 650; }
 h2 { font-size: 17px; margin: 24px 0 10px; font-weight: 600; }

@@ -311,3 +311,38 @@ class ProjectsTest(unittest.TestCase):
 
         resolve(os.path.join(self.work, "alpha"), use_history=False)
         self.assertFalse(os.path.exists(history_path()))
+
+
+class UpdatesTest(unittest.TestCase):
+    def test_version_compare(self):
+        from ktw_dashboard.updates import is_newer
+
+        self.assertTrue(is_newer("0.1.1", "0.1.0"))
+        self.assertTrue(is_newer("0.16.2.0", "0.16.1.3"))
+        self.assertFalse(is_newer("0.16.1.0", "0.16.1.0"))
+        self.assertFalse(is_newer("0.9.9", "0.16.1.0"))
+
+    def test_check_with_fake_index(self):
+        from ktw_dashboard.updates import check
+
+        seen = {}
+
+        def fake(name):
+            seen[name] = True
+            return {"keep-the-why-dashboard": "99.0.0", "keep-the-why-lint": None}[name]
+
+        r = check(fetch=fake)
+        self.assertEqual(sorted(seen), ["keep-the-why-dashboard", "keep-the-why-lint"])
+        self.assertTrue(r["keep-the-why-dashboard"]["outdated"])
+        self.assertEqual(r["keep-the-why-dashboard"]["latest"], "99.0.0")
+        self.assertFalse(
+            r["keep-the-why-lint"]["outdated"]
+        )  # lookup failed: no claim either way
+        self.assertIsNone(r["keep-the-why-lint"]["latest"])
+
+    def test_disabled_checker_never_starts(self):
+        from ktw_dashboard.updates import UpdateChecker
+
+        c = UpdateChecker(enabled=False)
+        self.assertIsNone(c.start())
+        self.assertIn(b'"enabled": false', c.payload())

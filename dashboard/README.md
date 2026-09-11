@@ -21,7 +21,7 @@ Keep the Why preserves the reasoning behind your code. keep-the-why-dashboard sh
 
 **A viewer, not a store.** It writes nothing into any project, runs no daemon beyond the terminal you start it in, and is never a source of truth: delete it and nothing is lost. That is what keeps it inside Keep the Why's own rule — *no new platform, database, daemon, account, or workflow* — a lens on Markdown and Git, not a place where anything lives; see [Philosophy](https://keepthewhy.com/philosophy/). The one file it keeps is `~/.keep-the-why/dashboard-history.json`: the projects you opened, with their paths, so the project menu can offer them again.
 
-**Runs on:** Python 3.10–3.14, the standard library plus [`keep-the-why-lint`](https://pypi.org/project/keep-the-why-lint/) as the parser. The page is one plain JavaScript module — no framework, no build step, no CDN — so the exported file works offline.
+**Runs on:** Python 3.10–3.14, the standard library plus [`keep-the-why-lint`](https://pypi.org/project/keep-the-why-lint/) as the parser. The page is one plain JavaScript module — no framework, no build step, no CDN — so the exported file works offline. The server's only network call is an update check against pypi.org for the two packages, at start and once a day (`--no-update-check` turns it off); the exported page makes none.
 
 Website: [https://keepthewhy.com](https://keepthewhy.com/) · [llms.txt](https://keepthewhy.com/llms.txt) for AI agents/assistants looking up this project
 
@@ -55,7 +55,7 @@ ktw-dashboard --host 0.0.0.0         # expose on the network (the CLI warns; the
 
 ```
 ktw-dashboard [PATH] [--host 127.0.0.1] [--port 8765] [--no-browser] [--interval 2]
-              [--scan DIR] [--no-history] [--export DIR] [--anonymize] [--json] [--version]
+              [--scan DIR] [--no-history] [--no-update-check] [--export DIR] [--anonymize] [--json] [--version]
 ```
 
 ### Several projects
@@ -75,6 +75,7 @@ Started inside a project, the dashboard shows that one. The project menu in the 
 | **Timeline** | entries by the month their heading first appeared in Git, stacked by author; superseded events marked |
 | **Authors** | per Git author: created, touched, superseded, first / last activity, Evidence mix of what they created; click to filter every view |
 | **Findings** | the linter's findings with links to the entries they sit in |
+| **Status bar** | the two package versions, linking PyPI; when a newer release exists the entry shimmers and its tooltip names the version and the `pip install -U` line |
 
 Search (`/`) over titles and bodies; filters by status, evidence and author apply everywhere. Keys: `g` graph, `o` overview, `q` queues, `t` timeline, `a` authors, `l` findings.
 

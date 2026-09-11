@@ -46,6 +46,12 @@ def main(argv=None) -> int:
         "repeatable. The parent of PATH is always scanned",
     )
     parser.add_argument(
+        "--no-update-check",
+        action="store_true",
+        help="don't ask pypi.org for newer versions of keep-the-why-dashboard and keep-the-why-lint "
+        "(the check runs at start and once every 24 hours; it is the only network call the server makes)",
+    )
+    parser.add_argument(
         "--no-history",
         action="store_true",
         help="don't read or update ~/.keep-the-why/dashboard-history.json (recently opened "
