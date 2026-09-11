@@ -12,7 +12,7 @@ hide:
 
 <h1 class="ktw-hero__tagline">Keep a Changelog records what changed.<br>Keep the Why preserves why it changed.</h1>
 
-Same question. Same wrong turn. Same explanation, again. Your agent forgets between sessions. Nothing in the repo remembers: not the code, not the changelog, not the docs.
+Same question. Same wrong turn. Same explanation, again. Your agent forgets between sessions. Nothing in the usual project structure is dedicated to remembering it.
 
 Keep the Why is the part that remembers. Repo-native project memory for humans and coding agents. The reasoning behind a codebase — decisions, rejected alternatives, workarounds, constraints the code alone can't explain — captured as a byproduct of working with your agent and kept as plain Markdown in `context/`, versioned and shared by Git. No database, no daemon, no account.
 
@@ -23,7 +23,7 @@ Keep the Why is the part that remembers. Repo-native project memory for humans a
 [GitHub](https://github.com/oliver-zehentleitner/keep-the-why){ .md-button }
 { .ktw-hero__actions }
 
-Open source under the [MIT license](https://keepthewhy.com/license/) — the skill, the linter, the dashboard, and this site. Nothing to sign up for, nothing that phones home.
+Open source under the [MIT license](https://keepthewhy.com/license/) — the skill, the linter, the dashboard, and this site. No account, no telemetry, no cloud backend.
 { .ktw-caption }
 
 </div>
@@ -84,7 +84,7 @@ The dashboard — a read-only view over `context/` and its Git history: who reco
 
 ### Capture
 
-The agent notices rationale as it surfaces — a decision, an alternative that lost, a workaround, a change that was started and abandoned — and writes it down. No separate documentation step. An existing repository can start late too. History, issues and code give back only part of the past why — but from that point on every reason is written down once, never again, and the gaps that matter close over time.
+The agent notices rationale as it surfaces — a decision, an alternative that lost, a workaround, a change that was started and abandoned — and writes it down. No separate documentation step. An existing repository can start late too. History, issues and code give back only part of the past why — but from that point on the reasons that matter are written down once, never again, and the gaps close over time.
 
 [Continuous capture →](continuous-capture.md) · [Retrospective →](retrospective-analysis.md)
 
