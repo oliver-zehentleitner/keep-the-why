@@ -62,6 +62,20 @@ Decisions that shipped, alternatives that lost, workarounds, constraints — Kee
 
 <div class="ktw-section" markdown>
 
+## Live Dashboard
+
+<div class="ktw-shot" markdown>
+
+[![keep-the-why-dashboard: the graph of a project's context/, an entry with its Git history, and the queues of what still needs a person](assets/dashboard-screenschot.png)](https://keepthewhy.com/dashboard/live/)
+
+</div>
+
+The dashboard — a read-only view over `context/` and its Git history: who recorded what, when a status changed, what still needs a person. Run locally, it updates as the project changes; the example behind the screenshot is a static export of this repository's own `context/`, rebuilt with every docs deploy. [Dashboard →](dashboard.md) · [Example →](https://keepthewhy.com/dashboard/live/)
+
+</div>
+
+<div class="ktw-section" markdown>
+
 ## How it works
 
 <div class="ktw-cards" markdown>
@@ -107,20 +121,6 @@ The next session — yours, a colleague's, an agent's — loads the index first 
 </div>
 
 </div>
-
-</div>
-
-<div class="ktw-section" markdown>
-
-## Live Dashboard
-
-<div class="ktw-shot" markdown>
-
-[![keep-the-why-dashboard: the graph of a project's context/, an entry with its Git history, and the queues of what still needs a person](assets/dashboard-screenschot.png)](https://keepthewhy.com/dashboard/live/)
-
-</div>
-
-The dashboard — a read-only view over `context/` and its Git history: who recorded what, when a status changed, what still needs a person. Run locally, it updates as the project changes; the example behind the screenshot is a static export of this repository's own `context/`, rebuilt with every docs deploy. [Dashboard →](dashboard.md) · [Example →](https://keepthewhy.com/dashboard/live/)
 
 </div>
 
