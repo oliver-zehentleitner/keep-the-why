@@ -11,7 +11,7 @@ Last reviewed: 2026-09-10 (evening).
 Nothing in flight.
 
 ### Pending
-
+- cursor, openclaw, claude marketplace
 - [ ] **awesome-copilot**
   ([github/awesome-copilot#2998](https://github.com/github/awesome-copilot/pull/2998)),
   bump to 0.16.0, waits on their review; #2984 (0.15.0) is merged. Every
@@ -37,6 +37,7 @@ Nothing in flight.
   skill to the agent by path; with the plugin manifest in place, a variant
   that installs through `codex plugin add` would measure the documented
   install route rather than the by-hand one.
+- openclaw
 - **Topic-file size threshold** — tracked as
   [#256](https://github.com/oliver-zehentleitner/keep-the-why/issues/256):
   learn it from real repositories, don't invent one.
