@@ -593,7 +593,8 @@ function applyState(state) {
   setKids($("#project-title"), $("#project-select").hidden ? el("b", {}, p.id || p.name) : null, schemaPill(p), headPill(p.git), p.git?.remote ? el("span", { class: "pill" }, remoteLink(p.git.remote)) : null);
   document.title = `${p.id || p.name} — Keep the Why`;
   setKids($("#statusbar"),
-    el("span", {}, `keep-the-why-dashboard ${S.dashboard}`), el("span", {}, `keep-the-why-lint ${S.linter}`),
+    el("span", {}, el("a", { href: "https://pypi.org/project/keep-the-why-dashboard/", target: "_blank", rel: "noopener", title: "keep-the-why-dashboard on PyPI" }, `keep-the-why-dashboard ${S.dashboard}`)),
+    el("span", {}, el("a", { href: "https://pypi.org/project/keep-the-why-lint/", target: "_blank", rel: "noopener", title: "keep-the-why-lint on PyPI" }, `keep-the-why-lint ${S.linter}`)),
     el("span", {}, S.exported ? `exported ${S.generated}` : `state ${S.generated}`),
     el("span", {}, `${S.entries.length} entries · ${S.topics.length} topics · ${S.authors.length} authors`),
     el("span", { style: "margin-left:auto" }, el("a", { href: "https://keepthewhy.com", target: "_blank", rel: "noopener" }, "keepthewhy.com")));

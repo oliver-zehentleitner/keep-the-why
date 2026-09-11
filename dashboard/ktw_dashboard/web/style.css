@@ -105,6 +105,7 @@ button { font: inherit; color: inherit; }
 .main { grid-area: main; overflow: auto; padding: 24px 32px 60px; }
 .details { grid-area: details; overflow: auto; display: flex; flex-direction: column; background: var(--bg2); border-left: 1px solid var(--line); padding: 16px; font-size: 13px; }
 .statusbar { grid-area: status; display: flex; gap: 18px; align-items: center; padding: 0 14px; font-size: 11px; color: var(--fg3); background: var(--bg2); border-top: 1px solid var(--line); }
+.statusbar a { color: var(--fg2); } .statusbar a:hover { color: var(--fg); }
 
 h1 { font-size: 22px; margin: 0 0 4px; font-weight: 650; }
 h2 { font-size: 17px; margin: 24px 0 10px; font-weight: 600; }
