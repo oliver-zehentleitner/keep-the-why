@@ -20,7 +20,7 @@ window.eval(`window.__KTW_STATE__ = ${stateM[1]};`);
 try { window.eval(m[1]); } catch (e) { errors.push("boot: " + e.stack); }
 await new Promise((r) => setTimeout(r, 200));
 const S = window.__KTW_STATE__;
-const routes = ["#overview", "#graph", "#timeline", "#authors", "#queues", `#topic/${S.topics[0].file}`, `#entry/${encodeURIComponent(S.entries[0].id)}`, `#entry/${encodeURIComponent(S.entries[S.entries.length-1].id)}`];
+const routes = ["#overview", "#graph", "#timeline", "#authors", "#queues", "#findings", `#topic/${S.topics[0].file}`, `#entry/${encodeURIComponent(S.entries[0].id)}`, `#entry/${encodeURIComponent(S.entries[S.entries.length-1].id)}`];
 const report = {};
 for (const r of routes) {
   window.location.hash = r;
@@ -31,6 +31,13 @@ for (const r of routes) {
 }
 // details pane + sidebar + search
 report.sidebarLeaves = window.document.querySelectorAll(".tree .leaf").length;
+report.strip = window.document.querySelectorAll("#strip a.stat").length;
+report.entryMiniGraph = window.document.querySelectorAll("#details .mini canvas").length;
+window.location.hash = "#overview"; window.dispatchEvent(new window.Event("hashchange")); await new Promise((res) => setTimeout(res, 120));
+report.defaultMiniGraph = window.document.querySelectorAll("#details .mini canvas").length;
+if (report.strip < 10) errors.push("strip: expected at least 10 stats, got " + report.strip);
+if (report.entryMiniGraph !== 1 || report.defaultMiniGraph !== 1) errors.push("mini graph missing: entry=" + report.entryMiniGraph + " default=" + report.defaultMiniGraph);
+if (window.document.body.textContent.includes("[object ")) errors.push("[object ...] leaked into the page text");
 report.details = window.document.getElementById("details").textContent.trim().length;
 const input = window.document.getElementById("search"); input.value = "retry"; input.dispatchEvent(new window.Event("input"));
 await new Promise((res) => setTimeout(res, 50));

@@ -134,6 +134,35 @@ function entryRow(e) {
     el("div", { class: "rm" }, [topicOf(e.file)?.title || e.file, g?.created?.author ? `${g.created.author} · ${g.created.date}` : null, g?.last_touched?.date && g.last_touched.date !== g?.created?.date ? `touched ${g.last_touched.date}` : null].filter(Boolean).join("  ·  ")));
 }
 
+
+// ---------------------------------------------------------------- global strip (numbers on every view)
+function renderStrip() {
+  const q = queues(); const s = $("#strip"); s.replaceChildren();
+  const stat = (label, n, href, cls = "", title = "") => el("a", { class: `stat ${cls} ${n ? "" : "zero"}`, href, title }, el("b", {}, n), label);
+  const f = S.findings;
+  s.append(
+    stat("entries", S.entries.length, "#overview"), stat("topics", S.topics.length, "#overview"), stat("authors", S.authors.length, "#authors"),
+    el("span", { class: "sep" }), el("span", { class: "lbl" }, "needs a person"),
+    stat("open", q.open.length, "#queues", "q-open"), stat("needs review", q["needs-review"].length, "#queues", "q-needs-review"),
+    stat("pending", q["pending-confirmation"].length, "#queues", "q-pending-confirmation"), stat("unknown evidence", q.unknown.length, "#queues", "q-unknown"),
+    stat("revisit-when", q.revisit.length, "#queues", "", "Revisit-when triggers on record"),
+    el("span", { class: "sep" }), el("span", { class: "lbl" }, "lint"),
+    stat("errors", f.errors, "#findings", f.errors ? "lint-bad hot" : "lint-ok", `keep-the-why-lint ${S.linter}`),
+    stat("warnings", f.warnings, "#findings", f.warnings ? "lint-warn" : "lint-ok", `keep-the-why-lint ${S.linter}`),
+  );
+}
+function viewFindings(main) {
+  const f = S.findings;
+  main.append(el("h1", {}, "Linter findings"), el("p", { class: "sub" }, `keep-the-why-lint ${S.linter} · ${f.errors} error(s), ${f.warnings} warning(s) · structure only, never content`));
+  if (!f.items.length) return main.append(el("p", { class: "center" }, "Clean — nothing to show."));
+  main.append(el("table", { class: "t findings" }, el("thead", {}, el("tr", {}, ["Severity", "Code", "Where", "Message"].map((h) => el("th", {}, h)))),
+    el("tbody", {}, f.items.map((x) => {
+      const entry = S.entries.find((e) => `${S.project.context}${e.file}` === x.path && e.line <= x.line && x.line <= e.end_line + 1);
+      return el("tr", {}, el("td", {}, pill(x.severity, `sev-${x.severity}`)), el("td", { class: "mono" }, x.code),
+        el("td", { class: "mono" }, entry ? el("a", { href: `#entry/${encodeURIComponent(entry.id)}` }, `${x.path}:${x.line}`) : `${x.path}${x.line ? ":" + x.line : ""}`), el("td", {}, x.message));
+    }))));
+}
+
 // ---------------------------------------------------------------- sidebar
 function renderSidebar() {
   const tree = $("#tree");
@@ -177,23 +206,12 @@ function markActive() {
 
 // ---------------------------------------------------------------- views
 function viewOverview(main) {
-  const q = queues(); const list = S.entries;
+  const list = S.entries;
   const p = S.project; const g = p.git;
   main.append(
     el("h1", {}, p.id || p.name),
     el("p", { class: "sub" }, `${p.context} · schema ${p.schema} · ${p.config["capture-confirmation"] || "?"} · source-reference ${p.config["source-reference"] || "?"}`,
       g?.available ? [` · ${g.branch}@${g.head}`, g.remote ? [" · ", remoteLink(g.remote)] : null] : " · no Git"),
-    el("div", { class: "tiles" },
-      el("div", { class: "tile" }, el("div", { class: "n" }, list.length), el("div", { class: "l" }, "entries")),
-      el("div", { class: "tile" }, el("div", { class: "n" }, S.topics.length), el("div", { class: "l" }, "topics")),
-      el("div", { class: `tile ${queueTotal() ? "warn" : "ok"}` }, el("div", { class: "n" }, queueTotal()), el("div", { class: "l" }, "need a person")),
-      el("div", { class: "tile" }, el("div", { class: "n" }, S.authors.length), el("div", { class: "l" }, "authors")),
-      el("div", { class: `tile ${S.findings.errors ? "bad" : S.findings.warnings ? "warn" : "ok"}` }, el("div", { class: "n" }, `${S.findings.errors}/${S.findings.warnings}`), el("div", { class: "l" }, "lint errors / warnings")),
-    ),
-    el("h2", {}, "Needs a person"),
-    el("div", { class: "queue-tiles" },
-      [["open", "open questions", q.open], ["needs-review", "needs review", q["needs-review"]], ["pending-confirmation", "pending confirmation", q["pending-confirmation"]], ["unknown", "unknown evidence, active", q.unknown], ["revisit", "revisit-when triggers", q.revisit]]
-        .map(([key, label, items]) => el("a", { class: `tile ${items.length && key !== "revisit" ? "warn" : ""}`, href: "#queues" }, el("div", { class: "n" }, items.length), el("div", { class: "l" }, label)))),
     el("div", { class: "grid2" },
       el("div", { class: "card" }, el("h3", {}, "Type"), bars(typeCounts(list), ["decision", "constraint", "workaround", "incident"])),
       el("div", { class: "card" }, el("h3", {}, "Status"), bars(count(list, "status"), STATUS_ORDER)),
@@ -308,32 +326,69 @@ function renderDetailsEntry(e) {
   d.append(el("h3", {}, `Backlinks (${back.length})`), ...(back.length ? back.map((x) => el("a", { class: "backlink", href: `#entry/${encodeURIComponent(x.id)}` }, x.title, el("div", { class: "note" }, topicOf(x.file)?.title || x.file))) : [el("p", { class: "empty" }, `nothing references ${e.file}`)]));
   if (e.refs.length) d.append(el("h3", {}, "References"), ...e.refs.map((f) => el("a", { class: "backlink", href: `#topic/${f}` }, topicOf(f)?.title || f)));
   if (e.findings.length) d.append(el("h3", {}, "Linter"), ...e.findings.map((f) => el("div", { class: "finding" }, pill(f.code, `sev-${f.severity}`), ` line ${f.line}: ${f.message}`)));
+  renderDetailsNeighbourhood(e);
 }
 function renderDetailsDefault() {
   const d = $("#details"); d.replaceChildren();
-  d.append(el("h3", {}, "About"), el("p", {}, "A read-only view over this project's ", el("code", {}, S.project.context), " and its Git history. Nothing here is stored anywhere; it is recomputed from Markdown and Git whenever the project changes."),
-    el("h3", {}, "Linter"), el("p", {}, `${S.findings.errors} error(s), ${S.findings.warnings} warning(s) — keep-the-why-lint ${S.linter}`),
-    ...(S.findings.items.slice(0, 20).map((f) => el("div", { class: "finding" }, pill(f.code, `sev-${f.severity}`), ` ${f.path}${f.line ? ":" + f.line : ""} — ${f.message}`))),
-    el("h3", {}, "Keys"), el("p", { class: "note" }, el("kbd", {}, "/"), " search · ", el("kbd", {}, "g"), " graph · ", el("kbd", {}, "o"), " overview · ", el("kbd", {}, "q"), " queues"));
+  const route = location.hash.slice(1) || "overview";
+  if (route === "graph") {
+    d.append(el("h3", {}, "Legend"), el("div", { class: "legend-list" },
+      el("span", {}, el("i", { class: "dot", style: "background:var(--accent);width:12px;height:12px" }), "topic — size follows its entry count"),
+      el("span", {}, el("i", { class: "dot confirmed" }), "entry, Evidence confirmed"), el("span", {}, el("i", { class: "dot inferred" }), "entry, Evidence inferred"), el("span", {}, el("i", { class: "dot unknown" }), "entry, Evidence unknown"),
+      el("span", {}, el("i", { class: "dot", style: "background:transparent;border:1.5px solid var(--fg3)" }), "superseded — hollow"),
+      el("span", {}, el("i", { class: "dot", style: "background:var(--bg);border:1.5px solid var(--open)" }), "ring — open, needs review, pending"),
+      el("span", {}, "solid line — a reference between topics; dotted — membership")),
+      el("h3", {}, "Keys"), el("p", { class: "note" }, el("kbd", {}, "/"), " search · ", el("kbd", {}, "g"), " graph · ", el("kbd", {}, "o"), " overview · ", el("kbd", {}, "q"), " queues · ", el("kbd", {}, "t"), " timeline · ", el("kbd", {}, "a"), " authors"));
+    return;
+  }
+  const box = el("div", { class: "mini fill" }, el("span", { class: "mini-title" }, "graph"), el("span", { class: "mini-hint" }, "hover · click · g for the full view"));
+  const canvas = el("canvas"); box.prepend(canvas);
+  d.append(box);
+  requestAnimationFrame(() => runGraph(canvas, buildGraph(), { mini: true }));
 }
-
+function renderDetailsNeighbourhood(e) {
+  const d = $("#details");
+  const box = el("div", { class: "mini tall" }, el("span", { class: "mini-title" }, "neighbourhood"), el("span", { class: "mini-hint" }, "click to open"));
+  const canvas = el("canvas"); box.prepend(canvas);
+  d.append(el("h3", {}, "Graph"), box);
+  requestAnimationFrame(() => runGraph(canvas, buildSubgraph(e), { mini: true, focusId: `e:${e.id}` }));
+}
 // ---------------------------------------------------------------- graph (canvas force layout, no library)
-let graph = null; // persists across re-renders so positions survive live updates
-function buildGraph() {
-  const prev = graph ? Object.fromEntries(graph.nodes.map((n) => [n.id, n])) : {};
+let graph = null; // the full graph persists across re-renders so positions survive live updates
+function seedNode(n, prev) {
+  const p = prev[n.id];
+  if (p) Object.assign(n, { x: p.x, y: p.y, vx: 0, vy: 0, fixed: p.fixed });
+  else { n.x = (Math.random() - 0.5) * 600; n.y = (Math.random() - 0.5) * 400; n.vx = n.vy = 0; }
+  return n;
+}
+function assemble(topics, entries, prev = {}) {
   const nodes = []; const links = []; const index = {};
-  const add = (n) => { const p = prev[n.id]; if (p) Object.assign(n, { x: p.x, y: p.y, vx: 0, vy: 0, fixed: p.fixed }); else { n.x = (Math.random() - 0.5) * 600; n.y = (Math.random() - 0.5) * 400; n.vx = n.vy = 0; } index[n.id] = nodes.length; nodes.push(n); };
-  for (const t of S.topics) add({ id: `t:${t.file}`, kind: "topic", label: t.title, file: t.file, r: 10 + Math.sqrt(t.entries) * 3.2, href: `#topic/${t.file}` });
-  for (const e of S.entries) add({ id: `e:${e.id}`, kind: "entry", label: e.title, file: e.file, entry: e, r: 4.2, href: `#entry/${encodeURIComponent(e.id)}` });
-  for (const e of S.entries) {
-    links.push({ s: index[`e:${e.id}`], t: index[`t:${e.file}`], kind: "member", len: 46 });
+  const add = (n) => { index[n.id] = nodes.length; nodes.push(seedNode(n, prev)); };
+  for (const t of topics) add({ id: `t:${t.file}`, kind: "topic", label: t.title, file: t.file, r: 10 + Math.sqrt(t.entries) * 3.2, href: `#topic/${t.file}` });
+  for (const e of entries) add({ id: `e:${e.id}`, kind: "entry", label: e.title, file: e.file, entry: e, r: 4.2, href: `#entry/${encodeURIComponent(e.id)}` });
+  for (const e of entries) {
+    if (index[`t:${e.file}`] != null) links.push({ s: index[`e:${e.id}`], t: index[`t:${e.file}`], kind: "member", len: 46 });
     for (const f of e.refs) if (index[`t:${f}`] != null) links.push({ s: index[`e:${e.id}`], t: index[`t:${f}`], kind: "ref", len: 120 });
   }
   const seen = new Set();
-  for (const t of S.topics) for (const f of t.refs_out) { const k = [t.file, f].sort().join("|"); if (seen.has(k)) continue; seen.add(k); links.push({ s: index[`t:${t.file}`], t: index[`t:${f}`], kind: "topic", len: 170 }); }
-  graph = Object.assign(graph || { scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true, alpha: 1 }, { nodes, links, index });
+  for (const t of topics) for (const f of t.refs_out) { if (index[`t:${f}`] == null) continue; const k = [t.file, f].sort().join("|"); if (seen.has(k)) continue; seen.add(k); links.push({ s: index[`t:${t.file}`], t: index[`t:${f}`], kind: "topic", len: 170 }); }
+  return { nodes, links, index };
+}
+function buildGraph() {
+  const prev = graph ? Object.fromEntries(graph.nodes.map((n) => [n.id, n])) : {};
+  graph = Object.assign(graph || { scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true, alpha: 1 }, assemble(S.topics, S.entries, prev));
   graph.alpha = Math.max(graph.alpha, 0.6);
   return graph;
+}
+function buildSubgraph(e) {
+  // the entry, its topic and siblings, the topics it references, and the entries elsewhere that reference its topic
+  const files = new Set([e.file, ...e.refs]);
+  const back = S.entries.filter((x) => x.refs.includes(e.file));
+  for (const b of back) files.add(b.file);
+  const topics = S.topics.filter((t) => files.has(t.file));
+  const entries = S.entries.filter((x) => x.file === e.file || x.id === e.id || back.includes(x));
+  const prev = graph ? Object.fromEntries(graph.nodes.map((n) => [n.id, n])) : {};
+  return Object.assign({ scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true, alpha: 1 }, assemble(topics, entries, prev));
 }
 function viewGraph(main) {
   const g = buildGraph();
@@ -351,9 +406,10 @@ function viewGraph(main) {
     el("span", {}, "— reference · ··· membership"));
   wrap.append(canvas, ui, legend, el("div", { class: "graph-hint" }, "drag nodes · wheel zoom · drag background to pan · click to open"));
   main.append(wrap);
-  runGraph(canvas, g);
+  runGraph(canvas, g, {});
 }
-function runGraph(canvas, g) {
+function runGraph(canvas, g, opts = {}) {
+  const mini = !!opts.mini;
   const ctx = canvas.getContext("2d");
   const css = getComputedStyle(document.documentElement);
   const color = (v) => css.getPropertyValue(v).trim();
@@ -396,10 +452,15 @@ function runGraph(canvas, g) {
       for (const n of ns) { if (n.fixed) continue; n.vx -= n.x * 0.004 * k; n.vy -= n.y * 0.004 * k; n.vx *= 0.82; n.vy *= 0.82; n.x += n.vx; n.y += n.vy; }
       g.alpha *= 0.985;
     }
+    if (mini && g.alpha > 0.01) { // keep the small canvas framed on the nodes while they settle
+      let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
+      for (const n of ns) { minX = Math.min(minX, n.x); maxX = Math.max(maxX, n.x); minY = Math.min(minY, n.y); maxY = Math.max(maxY, n.y); }
+      if (ns.length) { const sw = Math.max(80, maxX - minX + 60), sh = Math.max(80, maxY - minY + 60); g.scale = Math.min(2.2, Math.min(W / sw, H / sh)); g.ox = -((minX + maxX) / 2) * g.scale; g.oy = -((minY + maxY) / 2) * g.scale; }
+    }
     // draw
     ctx.clearRect(0, 0, W, H);
     ctx.save(); ctx.translate(W / 2 + g.ox, H / 2 + g.oy); ctx.scale(g.scale, g.scale);
-    const focus = hover || (selected ? g.nodes[g.index[`e:${selected}`]] : null);
+    const focus = hover || (opts.focusId && g.index[opts.focusId] != null ? g.nodes[g.index[opts.focusId]] : null) || (!mini && selected ? g.nodes[g.index[`e:${selected}`]] : null);
     const neigh = new Set(); if (focus) { neigh.add(focus); for (const l of g.links) { if (g.nodes[l.s] === focus) neigh.add(g.nodes[l.t]); if (g.nodes[l.t] === focus) neigh.add(g.nodes[l.s]); } }
     for (const l of g.links) { const a = g.nodes[l.s], b = g.nodes[l.t]; if (!visible(a) || !visible(b)) continue; const hi = focus && (a === focus || b === focus); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineWidth = (l.kind === "topic" ? 1.6 : l.kind === "ref" ? 1 : 0.6) / g.scale; ctx.setLineDash(l.kind === "member" ? [2 / g.scale, 3 / g.scale] : []); ctx.strokeStyle = hi ? color("--accent2") : color("--line"); ctx.globalAlpha = focus && !hi ? 0.25 : 1; ctx.stroke(); }
     ctx.setLineDash([]);
@@ -413,9 +474,9 @@ function runGraph(canvas, g) {
     }
     ctx.globalAlpha = 1;
     if (g.showLabels || focus) {
-      ctx.font = `${12 / g.scale}px ${color("--font") || "sans-serif"}`; ctx.textAlign = "center"; ctx.textBaseline = "top";
+      ctx.font = `${(mini ? 11 : 12) / g.scale}px ${color("--font") || "sans-serif"}`; ctx.textAlign = "center"; ctx.textBaseline = "top";
       for (const n of ns) {
-        const show = n.kind === "topic" ? g.showLabels || neigh.has(n) : (focus && neigh.has(n)) || (g.showLabels && g.scale > 1.6);
+        const show = n.kind === "topic" ? (mini ? neigh.has(n) || n === focus || g.nodes.filter((x) => x.kind === "topic").length <= 12 : g.showLabels || neigh.has(n)) : (focus && (neigh.has(n) || n === focus)) || (!mini && g.showLabels && g.scale > 1.6);
         if (!show) continue;
         const faded = focus && !neigh.has(n) && n !== focus; if (faded) continue;
         const lbl = n.label.replace(/`/g, ""); const txt = lbl.length > 48 ? lbl.slice(0, 46) + "…" : lbl;
@@ -479,7 +540,7 @@ function setupSearch() {
   document.addEventListener("keydown", (ev) => {
     if (ev.target.matches("input,select,textarea") || ev.metaKey || ev.ctrlKey || ev.altKey) return;
     if (ev.key === "/") { ev.preventDefault(); input.focus(); input.select(); }
-    else if (ev.key === "g") location.hash = "#graph"; else if (ev.key === "o") location.hash = "#overview"; else if (ev.key === "q") location.hash = "#queues"; else if (ev.key === "t") location.hash = "#timeline"; else if (ev.key === "a") location.hash = "#authors";
+    else if (ev.key === "g") location.hash = "#graph"; else if (ev.key === "l") location.hash = "#findings"; else if (ev.key === "o") location.hash = "#overview"; else if (ev.key === "q") location.hash = "#queues"; else if (ev.key === "t") location.hash = "#timeline"; else if (ev.key === "a") location.hash = "#authors";
   });
 }
 
@@ -494,20 +555,21 @@ function render() {
   else if (route === "timeline") { viewTimeline(main); renderDetailsDefault(); }
   else if (route === "authors") { viewAuthors(main); renderDetailsDefault(); }
   else if (route === "queues") { viewQueues(main); renderDetailsDefault(); }
+  else if (route === "findings") { viewFindings(main); renderDetailsDefault(); }
   else if (route.startsWith("topic/")) viewTopic(main, route.slice(6));
   else if (route.startsWith("entry/")) viewEntry(main, decodeURIComponent(route.slice(6)));
   else { viewOverview(main); renderDetailsDefault(); }
   markActive();
   if (!route.startsWith("graph")) main.scrollTop = 0;
 }
-function rerender() { renderSidebar(); render(); }
+function rerender() { renderSidebar(); renderStrip(); render(); }
 function applyState(state) {
   S = state;
   const p = S.project;
   $("#project-title").replaceChildren(el("b", {}, p.id || p.name), el("span", { class: "pill" }, `schema ${p.schema}`), p.git?.available ? el("span", { class: "pill", title: p.git.remote }, `${p.git.branch}@${p.git.head}`) : null, p.git?.remote ? el("span", { class: "pill" }, remoteLink(p.git.remote)) : null);
   document.title = `${p.id || p.name} — Keep the Why`;
   $("#statusbar").replaceChildren(
-    el("span", {}, `keep-the-why-dashboard ${S.dashboard}`), el("span", {}, `lint ${S.linter}`),
+    el("span", {}, `keep-the-why-dashboard ${S.dashboard}`), el("span", {}, `keep-the-why-lint ${S.linter}`),
     el("span", {}, S.exported ? `exported ${S.generated}` : `state ${S.generated}`),
     el("span", {}, `${S.entries.length} entries · ${S.topics.length} topics · ${S.authors.length} authors`),
     el("span", { style: "margin-left:auto" }, el("a", { href: "https://keepthewhy.com", target: "_blank", rel: "noopener" }, "keepthewhy.com")));
