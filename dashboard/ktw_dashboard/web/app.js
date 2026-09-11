@@ -3,6 +3,7 @@
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
 const $ = (sel, root = document) => root.querySelector(sel);
+const narrow = () => !!window.matchMedia?.("(max-width: 900px)").matches;
 const el = (tag, attrs = {}, ...kids) => {
   const n = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
@@ -167,12 +168,12 @@ function viewFindings(main) {
   const f = S.findings;
   main.append(el("h1", {}, "Linter findings"), el("p", { class: "sub" }, `keep-the-why-lint ${S.linter} · ${f.errors} error(s), ${f.warnings} warning(s) · structure only, never content`));
   if (!f.items.length) return main.append(el("p", { class: "center" }, "Clean — nothing to show."));
-  main.append(el("table", { class: "t findings" }, el("thead", {}, el("tr", {}, ["Severity", "Code", "Where", "Message"].map((h) => el("th", {}, h)))),
+  main.append(el("div", { class: "table-wrap" }, el("table", { class: "t findings" }, el("thead", {}, el("tr", {}, ["Severity", "Code", "Where", "Message"].map((h) => el("th", {}, h)))),
     el("tbody", {}, f.items.map((x) => {
       const entry = S.entries.find((e) => `${S.project.context}${e.file}` === x.path && e.line <= x.line && x.line <= e.end_line + 1);
       return el("tr", {}, el("td", {}, pill(x.severity, `sev-${x.severity}`)), el("td", { class: "mono" }, x.code),
         el("td", { class: "mono" }, entry ? el("a", { href: `#entry/${encodeURIComponent(entry.id)}` }, `${x.path}:${x.line}`) : `${x.path}${x.line ? ":" + x.line : ""}`), el("td", {}, x.message));
-    }))));
+    })))));
 }
 
 // ---------------------------------------------------------------- sidebar
@@ -302,7 +303,7 @@ function viewAuthors(main) {
     el("tbody", {}, rows.map((a) => el("tr", { class: `clickable ${filter.author === a.name ? "sel" : ""}`, onclick: () => { filter.author = filter.author === a.name ? "" : a.name; rerender(); } },
       el("td", {}, el("b", {}, a.name)), el("td", {}, a.created), el("td", {}, a.touched), el("td", {}, a.superseded),
       el("td", {}, el("div", { style: "min-width:160px" }, stack(a.evidence, EV_ORDER))), el("td", { class: "mono" }, fmtDate(a.first)), el("td", { class: "mono" }, fmtDate(a.last))))));
-  main.append(tbl, el("p", { class: "note", style: "margin-top:10px" }, "Click a row to filter every view to that author; click again to clear."));
+  main.append(el("div", { class: "table-wrap" }, tbl), el("p", { class: "note", style: "margin-top:10px" }, "Click a row to filter every view to that author; click again to clear."));
   if (filter.author) main.append(el("h2", {}, `Entries created by ${filter.author}`), el("div", { class: "entry-list" }, S.entries.filter((e) => authorOf(e) === filter.author).map(entryRow)));
 }
 
@@ -312,6 +313,7 @@ function renderDetailsTopic(t) {
   d.append(el("h3", {}, "Topic"), el("div", { class: "kv" }, el("span", { class: "k" }, "file"), el("span", { class: "v mono" }, t.file), el("span", { class: "k" }, "entries"), el("span", { class: "v" }, t.entries)));
   d.append(el("h3", {}, `References out (${t.refs_out.length})`), ...(t.refs_out.length ? t.refs_out.map((f) => el("a", { class: "backlink", href: `#topic/${f}` }, topicOf(f)?.title || f)) : [el("p", { class: "empty" }, "none")]));
   d.append(el("h3", {}, `Referenced by (${t.refs_in.length})`), ...(t.refs_in.length ? t.refs_in.map((f) => el("a", { class: "backlink", href: `#topic/${f}` }, topicOf(f)?.title || f)) : [el("p", { class: "empty" }, "none")]));
+  if (narrow()) { d.append(el("h3", {}, "Graph"), el("a", { class: "backlink", href: "#graph" }, "Open the project graph →")); return; }
   const box = el("div", { class: "mini tall" }, el("span", { class: "mini-title" }, "neighbourhood"), el("span", { class: "mini-hint" }, "click to open"));
   const canvas = el("canvas"); box.prepend(canvas);
   d.append(el("h3", {}, "Graph"), box);
@@ -357,6 +359,7 @@ function renderDetailsDefault() {
       el("h3", {}, "Keys"), el("p", { class: "note" }, el("kbd", {}, "/"), " search · ", el("kbd", {}, "g"), " graph · ", el("kbd", {}, "o"), " overview · ", el("kbd", {}, "q"), " queues · ", el("kbd", {}, "t"), " timeline · ", el("kbd", {}, "a"), " authors"));
     return;
   }
+  if (narrow()) { d.append(el("h3", {}, "Graph"), el("a", { class: "backlink", href: "#graph" }, "Open the project graph →")); return; }
   const box = el("div", { class: "mini fill" }, el("span", { class: "mini-title" }, "graph"), el("span", { class: "mini-hint" }, "hover · click · g for the full view"));
   const canvas = el("canvas"); box.prepend(canvas);
   d.append(box);
@@ -364,6 +367,7 @@ function renderDetailsDefault() {
 }
 function renderDetailsNeighbourhood(e) {
   const d = $("#details");
+  if (narrow()) { d.append(el("h3", {}, "Graph"), el("a", { class: "backlink", href: "#graph" }, "Open the project graph →")); return; }
   const box = el("div", { class: "mini tall" }, el("span", { class: "mini-title" }, "neighbourhood"), el("span", { class: "mini-hint" }, "click to open"));
   const canvas = el("canvas"); box.prepend(canvas);
   d.append(el("h3", {}, "Graph"), box);
@@ -419,9 +423,9 @@ function viewGraph(main) {
   const wrap = el("div", { class: "graph-wrap" });
   const canvas = el("canvas");
   const ui = el("div", { class: "graph-ui" },
-    el("label", {}, el("input", { type: "checkbox", checked: g.showEntries, onchange: (ev) => { g.showEntries = ev.target.checked; g.alpha = 0.5; } }), "entries"),
-    el("label", {}, el("input", { type: "checkbox", checked: g.showLabels, onchange: (ev) => { g.showLabels = ev.target.checked; } }), "labels"),
-    el("button", { class: "link-btn", onclick: () => { g.scale = 1; g.ox = 0; g.oy = 0; for (const n of g.nodes) { n.fixed = false; } g.alpha = 1; } }, "reset"),
+    el("label", {}, el("input", { type: "checkbox", checked: g.showEntries, onchange: (ev) => { g.showEntries = ev.target.checked; g.alpha = 0.5; g.wake?.(); } }), "entries"),
+    el("label", {}, el("input", { type: "checkbox", checked: g.showLabels, onchange: (ev) => { g.showLabels = ev.target.checked; g.wake?.(); } }), "labels"),
+    el("button", { class: "link-btn", onclick: () => { g.scale = 1; g.ox = 0; g.oy = 0; for (const n of g.nodes) { n.fixed = false; } g.alpha = 1; g.wake?.(); } }, "reset"),
   );
   const legend = el("div", { class: "graph-legend" },
     el("span", {}, el("i", { class: "dot", style: "background:var(--accent);width:12px;height:12px" }), "topic (size = entries)"),
@@ -457,6 +461,27 @@ function runGraph(canvas, g, opts = {}) {
   canvas.onmouseleave = () => { hover = null; };
   canvas.onwheel = (ev) => { ev.preventDefault(); const r = canvas.getBoundingClientRect(); const px = ev.clientX - r.left - W / 2, py = ev.clientY - r.top - H / 2; const f = Math.exp(-ev.deltaY * 0.0012); const ns = Math.min(6, Math.max(0.15, g.scale * f)); const k = ns / g.scale; g.ox = px - (px - g.ox) * k; g.oy = py - (py - g.oy) * k; g.scale = ns; };
   canvas.ondblclick = (ev) => { const r = canvas.getBoundingClientRect(); const n = pick(ev.clientX - r.left, ev.clientY - r.top); if (n) { n.fixed = false; g.alpha = 0.4; } };
+  // touch: one finger drags a node or pans (full view only), two fingers pinch-zoom, a tap opens
+  let pinch = null;
+  const tpos = (t) => { const r = canvas.getBoundingClientRect(); return [t.clientX - r.left, t.clientY - r.top]; };
+  const tdist = (ts) => Math.hypot(ts[0].clientX - ts[1].clientX, ts[0].clientY - ts[1].clientY);
+  canvas.addEventListener("touchstart", (ev) => {
+    if (ev.touches.length === 2) { pinch = { d: tdist(ev.touches), scale: g.scale, ox: g.ox, oy: g.oy }; drag = null; pan = null; return; }
+    const [px, py] = tpos(ev.touches[0]); moved = false; const n = pick(px, py);
+    if (n) drag = n; else if (!mini) pan = { px, py, ox: g.ox, oy: g.oy };
+  }, { passive: true });
+  canvas.addEventListener("touchmove", (ev) => {
+    if (pinch && ev.touches.length === 2) { const k = tdist(ev.touches) / pinch.d; g.scale = Math.min(6, Math.max(0.15, pinch.scale * k)); ev.preventDefault(); return; }
+    if (!ev.touches.length) return;
+    const [px, py] = tpos(ev.touches[0]);
+    if (drag) { const [x, y] = toWorld(px, py); drag.x = x; drag.y = y; drag.vx = drag.vy = 0; drag.fixed = true; g.alpha = Math.max(g.alpha, 0.3); moved = true; ev.preventDefault(); }
+    else if (pan) { g.ox = pan.ox + (px - pan.px); g.oy = pan.oy + (py - pan.py); moved = true; ev.preventDefault(); }
+  }, { passive: false });
+  canvas.addEventListener("touchend", (ev) => {
+    if (pinch) { if (!ev.touches.length) pinch = null; return; }
+    if (drag && !moved) location.hash = drag.href;
+    drag = null; pan = null;
+  });
   const ev = (n) => n.entry.evidence;
   const evColor = { confirmed: color("--confirmed"), inferred: color("--inferred"), unknown: color("--unknown") };
   function step() {
@@ -510,8 +535,16 @@ function runGraph(canvas, g, opts = {}) {
       }
     }
     ctx.restore();
-    if (canvas.isConnected) g.raf = requestAnimationFrame(step); else ro.disconnect();
+    if (!canvas.isConnected) { ro.disconnect(); g.raf = null; return; }
+    const busy = g.alpha > 0.003 || drag || pan || pinch || hover;
+    g.raf = busy ? requestAnimationFrame(step) : null; // idle: no frames until something happens
   }
+  const wake = () => { if (!g.raf && canvas.isConnected) g.raf = requestAnimationFrame(step); };
+  for (const evn of ["mousemove", "mousedown", "wheel", "dblclick", "touchstart", "touchmove", "mouseleave"]) canvas.addEventListener(evn, wake, { passive: true });
+  window.addEventListener("mouseup", wake);
+  g.wake = wake;
+  ro.observe(canvas); // re-observe after the resize handler above; a resize wakes the loop
+  const ro2 = new ResizeObserver(() => { resize(); if (g.alpha < 0.05) g.alpha = 0.05; wake(); }); ro2.observe(canvas);
   if (g.raf) cancelAnimationFrame(g.raf);
   g.raf = requestAnimationFrame(step);
 }
@@ -584,7 +617,7 @@ function render() {
   else if (route.startsWith("entry/")) viewEntry(main, decodeURIComponent(route.slice(6)));
   else { viewOverview(main); renderDetailsDefault(); }
   markActive();
-  if (!route.startsWith("graph")) main.scrollTop = 0;
+  if (!route.startsWith("graph")) { main.scrollTop = 0; if (narrow()) { const stuck = $("#sidebar").getBoundingClientRect().height; window.scrollTo(0, Math.max(0, main.getBoundingClientRect().top + window.scrollY - stuck - 8)); } }
 }
 function rerender() { renderSidebar(); renderStrip(); render(); }
 function applyState(state) {
@@ -597,7 +630,7 @@ function applyState(state) {
     el("span", { id: "pkg-lint" }, el("a", { href: "https://pypi.org/project/keep-the-why-lint/", target: "_blank", rel: "noopener", title: "keep-the-why-lint on PyPI" }, `keep-the-why-lint ${S.linter}`)),
     el("span", {}, S.exported ? `exported ${S.generated}` : `state ${S.generated}`),
     el("span", {}, `${S.entries.length} entries · ${S.topics.length} topics · ${S.authors.length} authors`),
-    el("span", { style: "margin-left:auto" }, el("a", { href: "https://keepthewhy.com", target: "_blank", rel: "noopener" }, "keepthewhy.com")));
+    el("span", { class: "grow" }, el("a", { href: "https://keepthewhy.com", target: "_blank", rel: "noopener" }, "keepthewhy.com")));
   const main = $("#main"); const scroll = main.scrollTop;
   rerender();
   main.scrollTop = scroll;
@@ -631,11 +664,16 @@ function connectLive() {
   };
   open();
 }
+function setupSideToggle() {
+  const btn = $("#side-toggle"); const app = $("#app");
+  btn.onclick = () => { const open = app.classList.toggle("side-open"); btn.setAttribute("aria-expanded", String(open)); btn.textContent = open ? "Topics ▴" : "Topics ▾"; };
+  window.addEventListener("hashchange", () => { if (narrow() && app.classList.contains("side-open")) btn.click(); });
+}
 function setupTheme() {
   const saved = localStorage.getItem("ktw-theme");
   const prefersLight = window.matchMedia?.("(prefers-color-scheme: light)").matches;
   if (saved === "light" || (!saved && prefersLight)) document.documentElement.dataset.theme = "light";
-  $("#theme").onclick = () => { const light = document.documentElement.dataset.theme === "light"; if (light) delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = "light"; localStorage.setItem("ktw-theme", light ? "dark" : "light"); if (graph) graph.alpha = Math.max(graph.alpha, 0.05); };
+  $("#theme").onclick = () => { const light = document.documentElement.dataset.theme === "light"; if (light) delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = "light"; localStorage.setItem("ktw-theme", light ? "dark" : "light"); if (graph) { graph.alpha = Math.max(graph.alpha, 0.05); graph.wake?.(); } };
 }
 function fitSelect(sel) {
   // size the select to its current option's text, not the browser's default width
@@ -662,7 +700,7 @@ async function setupProjects() {
   sel.onchange = () => { location.href = `${location.pathname}?project=${encodeURIComponent(sel.value)}${location.hash || "#overview"}`; };
 }
 async function boot() {
-  setupTheme(); setupSearch(); setupProjects();
+  setupTheme(); setupSearch(); setupProjects(); setupSideToggle();
   window.addEventListener("hashchange", render);
   if (window.__KTW_STATE__) applyState(window.__KTW_STATE__);
   else {
