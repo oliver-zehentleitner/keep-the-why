@@ -12,11 +12,12 @@ const el = (tag, attrs = {}, ...kids) => {
     else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
     else n.setAttribute(k, v === true ? "" : v);
   }
-  for (const k of kids.flat()) if (k != null) n.append(k.nodeType ? k : document.createTextNode(String(k)));
+  for (const k of kids.flat(Infinity)) if (k != null && k !== false) n.append(k.nodeType ? k : document.createTextNode(String(k)));
   return n;
 };
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const fmtDate = (d) => d || "—";
+const remoteLink = (remote) => el("a", { class: "gh", href: `https://${remote}`, target: "_blank", rel: "noopener" }, remote);
 const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
 
 // ---------------------------------------------------------------- state
@@ -179,7 +180,7 @@ function viewOverview(main) {
   main.append(
     el("h1", {}, p.id || p.name),
     el("p", { class: "sub" }, `${p.context} · schema ${p.schema} · ${p.config["capture-confirmation"] || "?"} · source-reference ${p.config["source-reference"] || "?"}`,
-      g?.available ? ` · ${g.branch}@${g.head}${g.remote ? " · " + g.remote : ""}` : " · no Git"),
+      g?.available ? [` · ${g.branch}@${g.head}`, g.remote ? [" · ", remoteLink(g.remote)] : null] : " · no Git"),
     el("div", { class: "tiles" },
       el("div", { class: "tile" }, el("div", { class: "n" }, list.length), el("div", { class: "l" }, "entries")),
       el("div", { class: "tile" }, el("div", { class: "n" }, S.topics.length), el("div", { class: "l" }, "topics")),
@@ -187,6 +188,10 @@ function viewOverview(main) {
       el("div", { class: "tile" }, el("div", { class: "n" }, S.authors.length), el("div", { class: "l" }, "authors")),
       el("div", { class: `tile ${S.findings.errors ? "bad" : S.findings.warnings ? "warn" : "ok"}` }, el("div", { class: "n" }, `${S.findings.errors}/${S.findings.warnings}`), el("div", { class: "l" }, "lint errors / warnings")),
     ),
+    el("h2", {}, "Needs a person"),
+    el("div", { class: "queue-tiles" },
+      [["open", "open questions", q.open], ["needs-review", "needs review", q["needs-review"]], ["pending-confirmation", "pending confirmation", q["pending-confirmation"]], ["unknown", "unknown evidence, active", q.unknown], ["revisit", "revisit-when triggers", q.revisit]]
+        .map(([key, label, items]) => el("a", { class: `tile ${items.length && key !== "revisit" ? "warn" : ""}`, href: "#queues" }, el("div", { class: "n" }, items.length), el("div", { class: "l" }, label)))),
     el("div", { class: "grid2" },
       el("div", { class: "card" }, el("h3", {}, "Type"), bars(typeCounts(list), ["decision", "constraint", "workaround", "incident"])),
       el("div", { class: "card" }, el("h3", {}, "Status"), bars(count(list, "status"), STATUS_ORDER)),
@@ -425,7 +430,7 @@ function runGraph(canvas, g) {
 }
 
 // ---------------------------------------------------------------- timeline (SVG)
-const PALETTE = ["#7c5cff", "#4aa3df", "#4fbf7a", "#e0a83a", "#e0574f", "#d66fd6", "#3fbfbf", "#b0b04a", "#ff8c5a", "#8b8b98"];
+const PALETTE = ["#835bec", "#4aa3df", "#4fbf7a", "#e0a83a", "#e0574f", "#d66fd6", "#3fbfbf", "#b0b04a", "#ff8c5a", "#8b8b98"];
 const authorColor = (name) => PALETTE[Math.max(0, S.authors.findIndex((a) => a.name === name)) % PALETTE.length];
 function viewTimeline(main) {
   main.append(el("h1", {}, "Timeline"), el("p", { class: "sub" }, "Entries by the month their heading first appeared in Git, stacked by author. Grey ticks below: entries superseded in that month."));
@@ -497,7 +502,7 @@ function rerender() { renderSidebar(); render(); }
 function applyState(state) {
   S = state;
   const p = S.project;
-  $("#project-title").replaceChildren(el("b", {}, p.id || p.name), el("span", { class: "pill" }, `schema ${p.schema}`), p.git?.available ? el("span", { class: "pill", title: p.git.remote }, `${p.git.branch}@${p.git.head}`) : null);
+  $("#project-title").replaceChildren(el("b", {}, p.id || p.name), el("span", { class: "pill" }, `schema ${p.schema}`), p.git?.available ? el("span", { class: "pill", title: p.git.remote }, `${p.git.branch}@${p.git.head}`) : null, p.git?.remote ? el("span", { class: "pill" }, remoteLink(p.git.remote)) : null);
   document.title = `${p.id || p.name} — Keep the Why`;
   $("#statusbar").replaceChildren(
     el("span", {}, `keep-the-why-dashboard ${S.dashboard}`), el("span", {}, `lint ${S.linter}`),

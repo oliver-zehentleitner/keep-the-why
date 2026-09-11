@@ -3,6 +3,7 @@ plus state.json next to it. No server, no external requests."""
 
 from __future__ import annotations
 
+import base64
 import json
 import os
 
@@ -17,6 +18,12 @@ def render_page(state: dict) -> str:
     with open(os.path.join(WEB_DIR, "app.js"), encoding="utf-8") as fh:
         js = fh.read()
     data = json.dumps(state, ensure_ascii=False).replace("</", "<\\/")
+    for name in ("icon.png", "wordmark.png"):
+        with open(os.path.join(WEB_DIR, name), "rb") as fh:
+            data_uri = "data:image/png;base64," + base64.b64encode(fh.read()).decode(
+                "ascii"
+            )
+        html = html.replace(f"/static/{name}", data_uri)
     html = html.replace(
         '<link rel="stylesheet" href="/static/style.css">', f"<style>\n{css}\n</style>"
     )
