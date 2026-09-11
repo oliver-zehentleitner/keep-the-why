@@ -15,6 +15,7 @@ const el = (tag, attrs = {}, ...kids) => {
   for (const k of kids.flat(Infinity)) if (k != null && k !== false) n.append(k.nodeType ? k : document.createTextNode(String(k)));
   return n;
 };
+const setKids = (node, ...kids) => node.replaceChildren(...kids.flat(Infinity).filter((k) => k != null && k !== false));
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const fmtDate = (d) => d || "—";
 const remoteLink = (remote) => el("a", { class: "gh", href: `https://${remote}`, target: "_blank", rel: "noopener" }, remote);
@@ -578,9 +579,9 @@ function rerender() { renderSidebar(); renderStrip(); render(); }
 function applyState(state) {
   S = state;
   const p = S.project;
-  $("#project-title").replaceChildren($("#project-select").hidden ? el("b", {}, p.id || p.name) : null, el("span", { class: "pill" }, `schema ${p.schema}`), p.git?.available ? el("span", { class: "pill", title: p.git.remote }, `${p.git.branch}@${p.git.head}`) : null, p.git?.remote ? el("span", { class: "pill" }, remoteLink(p.git.remote)) : null);
+  setKids($("#project-title"), $("#project-select").hidden ? el("b", {}, p.id || p.name) : null, el("span", { class: "pill" }, `schema ${p.schema}`), p.git?.available ? el("span", { class: "pill", title: p.git.remote }, `${p.git.branch}@${p.git.head}`) : null, p.git?.remote ? el("span", { class: "pill" }, remoteLink(p.git.remote)) : null);
   document.title = `${p.id || p.name} — Keep the Why`;
-  $("#statusbar").replaceChildren(
+  setKids($("#statusbar"),
     el("span", {}, `keep-the-why-dashboard ${S.dashboard}`), el("span", {}, `keep-the-why-lint ${S.linter}`),
     el("span", {}, S.exported ? `exported ${S.generated}` : `state ${S.generated}`),
     el("span", {}, `${S.entries.length} entries · ${S.topics.length} topics · ${S.authors.length} authors`),

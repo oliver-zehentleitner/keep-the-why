@@ -41,6 +41,7 @@ report.defaultMiniGraph = window.document.querySelectorAll("#details .mini canva
 if (report.strip < 10) errors.push("strip: expected at least 10 stats, got " + report.strip);
 if (report.entryMiniGraph !== 1 || report.defaultMiniGraph !== 1) errors.push("mini graph missing: entry=" + report.entryMiniGraph + " default=" + report.defaultMiniGraph);
 if (window.document.body.textContent.includes("[object ")) errors.push("[object ...] leaked into the page text");
+if (/\bnull\b/.test(window.document.getElementById("project-title").textContent + window.document.getElementById("statusbar").textContent)) errors.push("null leaked into the top bar or status bar");
 report.details = window.document.getElementById("details").textContent.trim().length;
 const input = window.document.getElementById("search"); input.value = "retry"; input.dispatchEvent(new window.Event("input"));
 await new Promise((res) => setTimeout(res, 50));
