@@ -88,7 +88,9 @@ class Projects:
         interval: float,
         anonymize: bool,
         use_history: bool = True,
+        update_check: bool = True,
     ):
+        self.updates = UpdateChecker(enabled=update_check)
         self.projects = projects
         self.selected = selected
         self.interval = interval
@@ -161,6 +163,10 @@ def make_handler(projects: Projects):
             if path == "/api/projects":
                 return self._send(
                     200, projects.listing(), "application/json; charset=utf-8"
+                )
+            if path == "/api/updates":
+                return self._send(
+                    200, projects.updates.payload(), "application/json; charset=utf-8"
                 )
             if path == "/api/state.json":
                 live = projects.live(pid)

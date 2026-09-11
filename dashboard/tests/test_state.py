@@ -346,3 +346,20 @@ class UpdatesTest(unittest.TestCase):
         c = UpdateChecker(enabled=False)
         self.assertIsNone(c.start())
         self.assertIn(b'"enabled": false', c.payload())
+
+
+class ServerWiringTest(unittest.TestCase):
+    def test_projects_manager_carries_an_update_checker(self):
+        from ktw_dashboard.server import Projects
+
+        m = Projects(
+            [],
+            None,
+            interval=2.0,
+            anonymize=False,
+            use_history=False,
+            update_check=False,
+        )
+        self.assertFalse(m.updates.enabled)
+        self.assertIsNone(m.updates.start())
+        m.stop()

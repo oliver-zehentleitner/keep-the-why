@@ -126,7 +126,12 @@ def main(argv=None) -> int:
             + ", ".join(unresolved)
         )
     manager = Projects(
-        projects, selected, interval=args.interval, anonymize=args.anonymize
+        projects,
+        selected,
+        interval=args.interval,
+        anonymize=args.anonymize,
+        use_history=not args.no_history,
+        update_check=not args.no_update_check,
     )
 
     url = f"http://{args.host}:{args.port}/"
