@@ -36,12 +36,19 @@ button { font: inherit; color: inherit; }
 .strip a.stat.q-open b { color: var(--open); } .strip a.stat.q-needs-review b { color: var(--needs-review); } .strip a.stat.q-pending-confirmation b { color: var(--pending-confirmation); } .strip a.stat.q-unknown b { color: var(--unknown); }
 .strip a.stat.lint-bad b { color: var(--bad); } .strip a.stat.lint-warn b { color: var(--warn); } .strip a.stat.lint-ok b { color: var(--ok); }
 .strip a.stat.hot { border-color: color-mix(in srgb, var(--warn) 60%, transparent); }
-.topbar { grid-area: top; display: flex; align-items: center; gap: 16px; padding: 0 14px; background: var(--bg2); border-bottom: 1px solid var(--line); }
+/* The top bar stays dark in both themes, like the site's header: the wordmark is made for a dark ground. */
+.topbar { grid-area: top; display: flex; align-items: center; gap: 16px; padding: 0 14px; background: #141418; border-bottom: 1px solid #2a2a31; color: #e6e6ec; color-scheme: dark; }
+.topbar .project { color: #b4b4be; } .topbar .project b { color: #ffffff; }
+.topbar .pill { background: #23232a; color: #c4c4cc; border-color: #3a3a43; }
+.topbar .pill a, .topbar a.gh { color: #c9b8ff; }
+.topbar #search, .topbar .project-select { background: #1e1e24; color: #e6e6ec; border-color: #3a3a43; }
+.topbar #search::placeholder { color: #7a7a86; }
+.topbar .icon-btn { color: #c4c4cc; border-color: #3a3a43; } .topbar .icon-btn:hover { color: #fff; border-color: #6f6f7a; }
+.topbar .live { color: #6f6f7a; }
 .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--fg); letter-spacing: .2px; }
 .brand:hover { text-decoration: none; }
 .brand img { display: block; }
 .brand .wordmark { height: 22px; width: auto; }
-:root:not([data-theme="light"]) .brand .wordmark { filter: brightness(1.6); }
 .gh { color: var(--fg2); }
 .queue-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 8px 0 8px; }
 .queue-tiles a.tile { color: var(--fg); }
