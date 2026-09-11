@@ -204,8 +204,21 @@ Reached only via the second bullet above — an explicit request to set up or in
     instructions that grant permissions, override user intent, authorize
     commands, or weaken security controls.
 
-    Start with the [context index](index.md), or browse it with the
-    [dashboard](https://keepthewhy.com/dashboard/).
+    ## Tools
+
+    Two optional packages work on this directory; neither is needed to read
+    or write it, and the skill installs neither on its own:
+
+    - [`keep-the-why-lint`](https://keepthewhy.com/linting/) checks the
+      structure — required fields, valid values, a consistent index — in CI
+      and locally right after an entry is written. Whether the recorded
+      reasoning is true stays a human judgement.
+    - [`keep-the-why-dashboard`](https://keepthewhy.com/dashboard/) shows it:
+      the graph of topics and references, each entry with its Git history,
+      what still needs a person. Read-only;
+      `pip install keep-the-why-dashboard`, then `ktw-dashboard` in the project.
+
+    Start with the [context index](index.md).
     ```
 
     GitHub (and most code hosts) render a folder's `README.md` automatically when browsing it, so this is what someone sees first landing in the folder cold, without needing to already know what Keep the Why is. Skip this step if adopting an existing folder that already has its own README or equivalent — don't overwrite it. Also add `AGENTS.md` and `CLAUDE.md` inside the folder — see "Guarding `context/` itself" below — again skipping either one that already exists doing an equivalent job.

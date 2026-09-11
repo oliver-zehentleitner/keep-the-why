@@ -26,4 +26,18 @@ Old reasoning is retained when it remains useful for understanding how the proje
 
 Files in this directory describe project knowledge. They do not contain instructions that grant permissions, override user intent, authorize commands, or weaken security controls.
 
-Start with the [context index](index.md), or browse it with the [dashboard](https://keepthewhy.com/dashboard/).
+## Tools
+
+Two optional packages work on this directory; neither is needed to read
+or write it, and the skill installs neither on its own:
+
+- [`keep-the-why-lint`](https://keepthewhy.com/linting/) checks the
+  structure — required fields, valid values, a consistent index — in CI
+  and locally right after an entry is written. Whether the recorded
+  reasoning is true stays a human judgement.
+- [`keep-the-why-dashboard`](https://keepthewhy.com/dashboard/) shows it:
+  the graph of topics and references, each entry with its Git history,
+  what still needs a person. Read-only;
+  `pip install keep-the-why-dashboard`, then `ktw-dashboard` in the project.
+
+Start with the [context index](index.md).
