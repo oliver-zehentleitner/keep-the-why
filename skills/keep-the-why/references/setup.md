@@ -169,17 +169,18 @@ Reached only via the second bullet above — an explicit request to set up or in
 
     # Project context
 
-    This directory preserves the reasoning behind this project: architectural
-    decisions, constraints, rejected alternatives, incident learnings,
-    deliberate workarounds, and other knowledge that the code alone cannot
-    explain.
+    This directory is the project's memory: the reasoning behind the code,
+    kept next to it. Decisions, rejected alternatives, workarounds,
+    constraints and incident learnings that the code alone cannot explain,
+    as plain Markdown, versioned with the code, written for the people and
+    the coding agents working here, so nothing rejected is proposed twice.
 
-    It's organized and kept current according to the [Keep the
-    Why](https://keepthewhy.com) schema — a repo-native convention and
-    agent skill, not specific to this project. Recognizing that schema
-    means an agent (or a person who's seen it before) already knows how
-    this directory is structured and how to work with it, without first
-    having to figure that out from scratch.
+    Keep a Changelog records what changed. Keep the Why preserves why it
+    changed.
+
+    It follows the [Keep the Why](https://keepthewhy.com) schema, so an
+    agent or a person who has seen it before already knows how this
+    directory is structured and how to work with it.
 
     It answers:
 
