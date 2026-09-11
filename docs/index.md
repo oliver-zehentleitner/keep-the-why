@@ -120,7 +120,7 @@ The next session — yours, a colleague's, an agent's — loads the index first 
 
 </div>
 
-The dashboard — a read-only view over `context/` and its Git history: who recorded what, when a status changed, what still needs a person. [Dashboard →](dashboard.md) · [Live example →](https://keepthewhy.com/dashboard/live/)
+The dashboard — a read-only view over `context/` and its Git history: who recorded what, when a status changed, what still needs a person. Run locally, it updates as the project changes; the example behind the screenshot is a static export of this repository's own `context/`, rebuilt with every docs deploy. [Dashboard →](dashboard.md) · [Example →](https://keepthewhy.com/dashboard/live/)
 
 </div>
 
