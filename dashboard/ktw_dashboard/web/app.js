@@ -300,6 +300,10 @@ function renderDetailsTopic(t) {
   d.append(el("h3", {}, "Topic"), el("div", { class: "kv" }, el("span", { class: "k" }, "file"), el("span", { class: "v mono" }, t.file), el("span", { class: "k" }, "entries"), el("span", { class: "v" }, t.entries)));
   d.append(el("h3", {}, `References out (${t.refs_out.length})`), ...(t.refs_out.length ? t.refs_out.map((f) => el("a", { class: "backlink", href: `#topic/${f}` }, topicOf(f)?.title || f)) : [el("p", { class: "empty" }, "none")]));
   d.append(el("h3", {}, `Referenced by (${t.refs_in.length})`), ...(t.refs_in.length ? t.refs_in.map((f) => el("a", { class: "backlink", href: `#topic/${f}` }, topicOf(f)?.title || f)) : [el("p", { class: "empty" }, "none")]));
+  const box = el("div", { class: "mini tall" }, el("span", { class: "mini-title" }, "neighbourhood"), el("span", { class: "mini-hint" }, "click to open"));
+  const canvas = el("canvas"); box.prepend(canvas);
+  d.append(el("h3", {}, "Graph"), box);
+  requestAnimationFrame(() => runGraph(canvas, buildTopicSubgraph(t), { mini: true, focusId: `t:${t.file}` }));
 }
 function renderDetailsEntry(e) {
   const d = $("#details"); d.replaceChildren();
@@ -379,6 +383,14 @@ function buildGraph() {
   graph = Object.assign(graph || { scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true, alpha: 1 }, assemble(S.topics, S.entries, prev));
   graph.alpha = Math.max(graph.alpha, 0.6);
   return graph;
+}
+function buildTopicSubgraph(t) {
+  // the topic with its entries, plus the topics it references and the ones referencing it (with the entries that do)
+  const files = new Set([t.file, ...t.refs_out, ...t.refs_in]);
+  const topics = S.topics.filter((x) => files.has(x.file));
+  const entries = S.entries.filter((x) => x.file === t.file || x.refs.includes(t.file));
+  const prev = graph ? Object.fromEntries(graph.nodes.map((n) => [n.id, n])) : {};
+  return Object.assign({ scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true, alpha: 1 }, assemble(topics, entries, prev));
 }
 function buildSubgraph(e) {
   // the entry, its topic and siblings, the topics it references, and the entries elsewhere that reference its topic

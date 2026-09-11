@@ -33,6 +33,9 @@ for (const r of routes) {
 report.sidebarLeaves = window.document.querySelectorAll(".tree .leaf").length;
 report.strip = window.document.querySelectorAll("#strip a.stat").length;
 report.entryMiniGraph = window.document.querySelectorAll("#details .mini canvas").length;
+window.location.hash = `#topic/${S.topics[0].file}`; window.dispatchEvent(new window.Event("hashchange")); await new Promise((res) => setTimeout(res, 120));
+report.topicMiniGraph = window.document.querySelectorAll("#details .mini canvas").length;
+if (report.topicMiniGraph !== 1) errors.push("topic mini graph missing");
 window.location.hash = "#overview"; window.dispatchEvent(new window.Event("hashchange")); await new Promise((res) => setTimeout(res, 120));
 report.defaultMiniGraph = window.document.querySelectorAll("#details .mini canvas").length;
 if (report.strip < 10) errors.push("strip: expected at least 10 stats, got " + report.strip);
