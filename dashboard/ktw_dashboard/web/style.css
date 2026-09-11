@@ -48,7 +48,7 @@ button { font: inherit; color: inherit; }
 .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--fg); letter-spacing: .2px; }
 .brand:hover { text-decoration: none; }
 .brand img { display: block; }
-.brand .wordmark { height: 24px; width: auto; }
+.brand .wordmark { height: 29px; width: auto; }
 .gh { color: var(--fg2); }
 .queue-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 8px 0 8px; }
 .queue-tiles a.tile { color: var(--fg); }
