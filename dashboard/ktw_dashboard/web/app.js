@@ -617,7 +617,7 @@ function render() {
   else if (route.startsWith("entry/")) viewEntry(main, decodeURIComponent(route.slice(6)));
   else { viewOverview(main); renderDetailsDefault(); }
   markActive();
-  if (!route.startsWith("graph")) { main.scrollTop = 0; if (narrow()) window.scrollTo(0, Math.max(0, main.getBoundingClientRect().top + window.scrollY - 4)); }
+  if (!route.startsWith("graph")) { main.scrollTop = 0; if (narrow()) { const stuck = $("#sidebar").getBoundingClientRect().height; window.scrollTo(0, Math.max(0, main.getBoundingClientRect().top + window.scrollY - stuck - 8)); } }
 }
 function rerender() { renderSidebar(); renderStrip(); render(); }
 function applyState(state) {
