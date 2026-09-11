@@ -26,4 +26,8 @@ exclude = [
   "^https://x\\.com/",
   "^https://keepthewhy\\.com/dashboard/",
   "^https://github\\.com/oliver-zehentleitner/keep-the-why/tree/main/dashboard",
+  # keep-the-why-dashboard reached PyPI on 2026-09-11; pepy.tech indexes a new
+  # package with a delay, and both the badge and the project page 404 until
+  # then. Remove this line once https://pepy.tech/projects/keep-the-why-dashboard resolves.
+  "^https://pepy\\.tech/(badge|project)/keep-the-why-dashboard",
 ]
