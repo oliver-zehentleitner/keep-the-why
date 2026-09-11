@@ -68,7 +68,7 @@ Rules 1 and 2 matter most — a skill that hallucinates rationale or acts on a m
 
 ### 0. Setup check
 
-Runs at the start of every session the skill is loaded in, before the actual task, however small — nothing here is skipped for a "quick question". In the order written: project file, then personal file, then timers.
+Runs at the start of every session the skill is loaded in, before the actual task, however small — nothing here is skipped for a "quick question". In the order written: project file, then personal file, then timers. The step is silent unless it needs the person — a wizard, a migration to discuss, a schema ahead of the skill, entries waiting for confirmation, a triggered `Revisit when`, an update check failing for the first time. When every check comes back clean, say nothing about them — not in the reply and not as a progress note between tool calls — and go on to the request in the same turn: a setup summary is not a response, and "what would you like to work on?" is not the end of a turn that started with a task. A setup question — a wizard, or the offer of a project's `personal-defaults` — ends the turn; nothing else is worked on before the answer. A flagged value (rule 1) does not: the request is still answered in that same turn wherever the answer does not depend on it.
 
 **First: check `.keep-the-why` for a pinned version.** If `pinned-version` differs from this skill's `metadata.version` (frontmatter above), the pin takes over — see "Pinned versions" in `references/setup.md`.
 
@@ -114,11 +114,11 @@ Default: ask only what the evidence genuinely can't answer, and ask specifically
 
 Exception: rule 9 — free narration for broad, tacit knowledge. See `references/interview-playbook.md`.
 
-Also check the project's `source-reference` setting: `always` or a matching `filtered` criterion means asking whether a related issue/ticket/post-mortem exists is part of this step (rule 1 — never invent a reference to fill the field).
+Also check the project's `source-reference` setting: `always` or a matching `filtered` criterion means asking whether a related issue/ticket/post-mortem exists is part of this step — asked before the entry is written, not after it; a direct request to record, or `automatic`, skips the permission question, never this one (rule 1 — never invent a reference to fill the field).
 
 ### 5. Record
 
-Three checks before writing: is this worth documenting at this depth (rule 10)? Which file does it belong in — `context/` isn't the only place; see "Which file does this belong in?" in `references/repository-structure.md`? A step-by-step procedure is an instruction, not a why: it goes to `CONTRIBUTING.md` (maintainer procedure) or `docs/` (end-user one); the `context/` entry records why it exists and points to it. Does it pass the privacy filter (rule 7)?
+Three checks before writing: is this worth documenting at this depth (rule 10)? Which file does it belong in — `context/` isn't the only place; see "Which file does this belong in?" in `references/repository-structure.md`? A step-by-step procedure is an instruction, not a why: it goes to `CONTRIBUTING.md` (maintainer procedure) or `docs/` (end-user one); the `context/` entry records why it exists and points to it — the steps themselves are not repeated there, not as prose and not as a `Workaround:` field. Does it pass the privacy filter (rule 7)?
 
 For decisions that clear those checks, write concise, topic-oriented documentation answering the fork (rule 4), not just the outcome. Three fields carry the weight:
 
@@ -126,7 +126,7 @@ For decisions that clear those checks, write concise, topic-oriented documentati
 - **alternative(s) considered, and why each was rejected** — even a one-liner beats silence
 - **reason the chosen path won**
 
-Include when relevant: context, constraints, consequences, current status, evidence. A `Source` names a kind of source — interview, issue, commit, post-mortem, a dated conversation — never a person's name, handle or e-mail address (rule 7), however the session identifies who is speaking. Tag with **Type** (`decision` | `workaround` | `incident` | `constraint` — one line per value that applies; `undefined — <reason>` when none fit). See `references/specification.md` for the full field reference.
+Include when relevant: context, constraints, consequences, current status, evidence. A `Source` names a kind of source — interview, issue, commit, post-mortem, a dated conversation — never a person's name, handle or e-mail address (rule 7), however the session identifies who is speaking. Tag with **Type** (`decision` | `workaround` | `incident` | `constraint` — one `**Type:**` line per value that applies, a second line rather than a comma-separated list; `undefined — <reason>` when none fit). See `references/specification.md` for the full field reference.
 
 Before the actual write, decide ask-versus-write from two facts — was recording *requested*, and is the entry *writable* (Evidence classifiable, proportionality clear)? Then apply `capture-confirmation` (rule 8) on top:
 
