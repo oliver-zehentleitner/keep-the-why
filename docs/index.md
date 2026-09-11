@@ -19,6 +19,7 @@ Keep the Why is the part that remembers. Repo-native project memory for humans a
 [Install](installation.md){ .md-button .md-button--primary }
 [Read the README](readme.md){ .md-button }
 [Linter](linting.md){ .md-button }
+[Dashboard](dashboard.md){ .md-button }
 [GitHub](https://github.com/oliver-zehentleitner/keep-the-why){ .md-button }
 { .ktw-hero__actions }
 
