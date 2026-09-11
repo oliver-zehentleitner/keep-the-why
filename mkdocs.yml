@@ -93,4 +93,4 @@ nav:
       - Developer handover: examples/developer-handover.md
   - "Why this project is built this way":
       - "Read this project's context/": context/index.md
-      - "See it in the dashboard": https://keepthewhy.com/dashboard/live/
+      - "See it in the dashboard ↗": https://keepthewhy.com/dashboard/live/
