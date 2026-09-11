@@ -3,9 +3,10 @@
 > Project memory for coding agents and humans: the reasoning behind a codebase as Markdown in the
 > repo, versioned by Git, so nothing rejected is proposed twice.
 
-Keep the Why is a repo-native convention and agent skill for preserving the reasoning behind a
-codebase — architecture decisions, rejected alternatives, workarounds, incident learnings,
-operational constraints that the code alone can't explain — as project memory, kept in the repo.
+Keep the Why is repo-native project memory for coding agents and humans: an agent skill, and
+the file convention it maintains, that preserve the reasoning behind a codebase — architecture
+decisions, rejected alternatives, workarounds, incident learnings, operational constraints that
+the code alone can't explain — in the repo.
 That memory is plain Markdown in `context/`, committed with the code, so Git already provides the
 storage, the history and the distribution: it travels with every clone, branch and fork, and a pull
 request shows the reasoning diff beside the code diff. It captures that reasoning as a byproduct of
