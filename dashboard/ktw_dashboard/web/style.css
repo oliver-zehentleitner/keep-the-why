@@ -280,9 +280,18 @@ kbd { font-family: var(--mono); font-size: 11px; background: var(--bg3); border:
   h1 { font-size: 20px; }
 }
 @media (max-width: 600px) {
+  body { font-size: 15px; }
+  .nav a, .nav-toggle { padding: 9px 12px; font-size: 14px; }
+  .strip a.stat { font-size: 12px; padding: 3px 9px; line-height: 20px; }
+  .strip .lbl { font-size: 11px; }
+  .entry-list .row .rt { font-size: 15px; } .entry-list .row .rs { font-size: 13.5px; }
+  .tree .leaf { padding: 7px 16px 7px 28px; font-size: 14px; }
+  .tree summary { padding: 8px 16px; }
+  .details { font-size: 14px; }
+  .statusbar { font-size: 12px; }
+  .filters select { font-size: 14px; padding: 7px 8px; }
   .topbar-right { flex: 1 1 100%; margin-left: 0; }
   #search { flex: 1; width: auto; min-width: 0; }
   .search-results { left: 0; right: 0; width: auto; }
   .project-select { max-width: calc(100vw - 150px); }
-  .strip a.stat { font-size: 11px; padding: 1px 7px; }
 }
