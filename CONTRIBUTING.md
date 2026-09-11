@@ -36,7 +36,7 @@ For any change to the skill's rules, workflow, or reference docs, check whether 
 7. `llms.txt` — if the change affects the Core Concept or payoff, not just implementation detail
 8. `CHANGELOG.md` — add a line under `[Unreleased]`. Reuse the existing `### Added` / `### Changed` / `### Fixed` heading for that category if one's already there in this `[Unreleased]` block — don't open a second one. Within a category, keep entries alphabetically ordered by their first word, not insertion order.
 9. `context/` — if the change itself was a non-obvious decision worth dogfooding (pick the topic file it actually belongs in, or start a new one — see `references/repository-structure.md`)
-10. The four local checks CI runs, before pushing: `black --check --extend-exclude tools/evals/fixtures .`, `cd lint && python3 -m unittest discover -s tests`, `python3 -m unittest discover -s tools/evals/tests`, and `PYTHONPATH=lint python3 -m ktw_lint --strict .` (this repository's own `context/` must stay clean)
+10. The five local checks CI runs, before pushing: `black --check --extend-exclude tools/evals/fixtures .`, `cd lint && python3 -m unittest discover -s tests`, `cd dashboard && python3 -m unittest discover -s tests` (needs the linter importable, e.g. `pip install -e lint`), `python3 -m unittest discover -s tools/evals/tests`, and `PYTHONPATH=lint python3 -m ktw_lint --strict .` (this repository's own `context/` must stay clean)
 11. `mkdocs build --strict` before committing — catches broken links and nav mistakes
 
 ## Release checklist (maintainer)
@@ -72,3 +72,7 @@ Steps 1–3 and 6–8 are also checked automatically by the "Check version consi
 14. Run the full eval suite on the tagged version — three full runs, `TMPDIR` outside your home (`tools/evals/README.md`), `--judge-always` — and record the result in `docs/evals.md`: the "Latest full-suite results" block with the four numbers (skill loaded, completed, deterministic checks, judge pass), the per-case column, and a new row in the run history. The release's numbers are part of the release, not a follow-up.
 
 Oliver runs this personally, or asks the assisting agent to run it on his explicit request for a specific version — never triggered on its own initiative just because a PR merged. This includes steps 9, 11 and 13; steps 12 and 14 are the assisting agent's once the tag is there.
+
+### Releasing the dashboard (independent of the skill)
+
+`keep-the-why-dashboard` under `dashboard/` has its own version counter and is not part of the skill release order above — it depends on the linter's parser, not on the skill version. To release: bump `dashboard/ktw_dashboard/__init__.py`, note it in the CHANGELOG (a `keep-the-why-dashboard <version>` line), merge, then run `publish-dashboard.yml` (manual trigger). It publishes to PyPI and tags `dashboard-v<version>`. If a linter release changed what the parser returns, release the linter first and raise the dashboard's `keep-the-why-lint>=` floor in `dashboard/pyproject.toml`.

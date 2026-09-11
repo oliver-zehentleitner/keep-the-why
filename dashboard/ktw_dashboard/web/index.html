@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Keep the Why — dashboard</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%237c5cff'/%3E%3Ctext x='16' y='22' font-size='18' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700'%3E?%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div id="app" class="app">
+  <header class="topbar">
+    <a class="brand" href="#overview" title="Overview">
+      <svg viewBox="0 0 32 32" width="22" height="22" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="var(--accent)"/><text x="16" y="22" font-size="18" text-anchor="middle" fill="#fff" font-family="sans-serif" font-weight="700">?</text></svg>
+      <span>Keep the Why</span>
+    </a>
+    <div class="project" id="project-title"></div>
+    <div class="topbar-right">
+      <input id="search" type="search" placeholder="Search entries…  ( / )" autocomplete="off" spellcheck="false">
+      <div id="search-results" class="search-results" hidden></div>
+      <span id="live" class="live" title="">●</span>
+      <button id="theme" class="icon-btn" title="Toggle theme">◐</button>
+    </div>
+  </header>
+  <nav class="sidebar" id="sidebar">
+    <div class="nav">
+      <a href="#overview" data-route="overview">Overview</a>
+      <a href="#graph" data-route="graph">Graph</a>
+      <a href="#timeline" data-route="timeline">Timeline</a>
+      <a href="#authors" data-route="authors">Authors</a>
+      <a href="#queues" data-route="queues">Queues <span id="queue-count" class="count"></span></a>
+    </div>
+    <div class="filters" id="filters">
+      <select id="f-status"><option value="">status: all</option></select>
+      <select id="f-evidence"><option value="">evidence: all</option></select>
+      <select id="f-author"><option value="">author: all</option></select>
+      <button id="f-clear" class="link-btn" hidden>clear</button>
+    </div>
+    <div class="tree-head">Topics <span id="tree-count" class="count"></span></div>
+    <div class="tree" id="tree"></div>
+  </nav>
+  <main class="main" id="main"></main>
+  <aside class="details" id="details"></aside>
+  <footer class="statusbar" id="statusbar"></footer>
+</div>
+<script type="module" src="/static/app.js"></script>
+</body>
+</html>

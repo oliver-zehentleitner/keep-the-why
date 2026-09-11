@@ -33,6 +33,8 @@ Why this project is built the way it is.
 
 ## D
 
+- [dashboard.md](dashboard.md) — design of the read-only dashboard (`dashboard/`): why it exists beside the "no dashboard" line, why in this repo, the plain-JS page, the fingerprint/SSE live mode, Git authors as-is
+
 ## E
 
 - [entry-format.md](entry-format.md) — design of `context/` entries and layout themselves: flat directory (no subdirectories), the `Type` field, a found contradiction surfaced rather than superseded

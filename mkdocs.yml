@@ -69,6 +69,7 @@ nav:
   - Repository structure: repository-structure.md
   - Specification: specification.md
   - Linting: linting.md
+  - Dashboard: dashboard.md
   - Security: security.md
   - Evals: evals.md
   - Badge: badge.md

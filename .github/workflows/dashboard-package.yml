@@ -1,0 +1,78 @@
+name: keep-the-why-dashboard (package)
+
+# CI for the dashboard package developed under dashboard/. The linter it
+# parses with is taken from lint/ in the same checkout, so a schema change
+# is tested against the dashboard in the same PR.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Read-only token: nothing here writes to the repository.
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: tests (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install the linter from this checkout
+        run: python -m pip install --quiet ./lint
+
+      - name: Run test suite
+        working-directory: dashboard
+        run: python -m unittest discover -s tests -v
+
+      - name: Build and install the package
+        working-directory: dashboard
+        run: |
+          python -m pip install --quiet build
+          python -m build
+          python -m pip install --quiet dist/*.whl
+          ktw-dashboard --version
+
+      - name: Export this repository's own context/
+        run: |
+          ktw-dashboard --export /tmp/ktw-dashboard-export .
+          test -s /tmp/ktw-dashboard-export/index.html
+          python - <<'PY'
+          import json; s = json.load(open("/tmp/ktw-dashboard-export/state.json"))
+          assert s["entries"], "no entries in the export"
+          assert s["project"]["git"]["available"], "git attribution missing"
+          print(len(s["entries"]), "entries,", len(s["topics"]), "topics,", len(s["authors"]), "authors")
+          PY
+
+  frontend:
+    name: page renders headless (jsdom)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+
+      - name: Syntax-check the page module
+        run: node --check dashboard/ktw_dashboard/web/app.js
+
+      - name: Export and drive every route in jsdom
+        run: |
+          python -m pip install --quiet ./lint ./dashboard
+          ktw-dashboard --export /tmp/ktw-dashboard-export .
+          cd dashboard/tests/web && npm install --silent --no-audit --no-fund jsdom@24 && node smoke.mjs /tmp/ktw-dashboard-export/index.html

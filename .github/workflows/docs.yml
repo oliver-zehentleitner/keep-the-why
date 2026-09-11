@@ -8,6 +8,8 @@ on:
       - "skills/keep-the-why/**"
       - "context/**"
       - "docs/**"
+      - "dashboard/**"
+      - "lint/**"
       - "llms.txt"
       - "mkdocs.yml"
       - "tools/mkdocs/**"
@@ -35,6 +37,12 @@ jobs:
       - run: pip install -r requirements-docs.txt
       - run: cp llms.txt docs/llms.txt
       - run: mkdocs build --strict
+      # The live example on /dashboard/live/: this repository's own context/,
+      # exported by the dashboard in this checkout (the reason lint/ and
+      # dashboard/ are in the paths above). Not a docs page; copied into site/.
+      - run: |
+          pip install --quiet ./lint ./dashboard
+          ktw-dashboard --export site/dashboard/live .
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: site

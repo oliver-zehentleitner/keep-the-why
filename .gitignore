@@ -31,3 +31,9 @@ tools/evals/results/
 # keep-the-why-lint build output (lint/)
 lint/dist/
 lint/build/
+
+# keep-the-why-dashboard build output (dashboard/)
+dashboard/dist/
+dashboard/build/
+dashboard/tests/web/node_modules/
+dashboard/tests/web/package-lock.json

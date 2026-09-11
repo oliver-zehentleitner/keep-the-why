@@ -1,0 +1,6 @@
+{
+  "name": "ktw-dashboard-web-smoke",
+  "private": true,
+  "type": "module",
+  "description": "Headless render check for the dashboard page: loads an export in jsdom and drives every route. Run by dashboard-package.yml; not shipped."
+}
