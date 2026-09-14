@@ -150,7 +150,7 @@ The skill is validated against the Agent Skills spec on every push; this reposit
 
 <div class="ktw-card" markdown>
 
-**Not session memory.** Project memory is the reasoning behind the project, not a transcript or activity log of how an agent or a developer got there.
+**Not session memory.** Session memory remembers what happened; project state remembers where the project is; the why layer preserves why it became what it is. This is the third — not a transcript or activity log.
 
 </div>
 
