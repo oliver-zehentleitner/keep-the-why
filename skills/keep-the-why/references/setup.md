@@ -169,7 +169,7 @@ Reached only via the second bullet above — an explicit request to set up or in
 
     # Project context
 
-    This directory is the project's memory: the reasoning behind the code,
+    This directory is the why layer of the project's memory: the reasoning behind the code,
     kept next to it. Decisions, rejected alternatives, workarounds,
     constraints and incident learnings that the code alone cannot explain,
     as plain Markdown, versioned with the code, written for the people and

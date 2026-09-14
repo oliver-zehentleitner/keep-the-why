@@ -1,5 +1,5 @@
 ---
-description: "Project memory for coding agents and humans: the reasoning behind a codebase as Markdown in the repo, versioned by Git, so nothing rejected is proposed twice."
+description: "The why layer of repo-native project memory: the reasoning behind a codebase as Markdown in the repo, versioned by Git, for coding agents and humans, so nothing rejected is proposed twice."
 hide:
   - toc
 ---
@@ -14,7 +14,7 @@ hide:
 
 Same question. Same wrong turn. Same explanation, again. Your agent forgets between sessions. Nothing in the usual project structure is dedicated to remembering it.
 
-Keep the Why is the part that remembers. Repo-native project memory for humans and coding agents. The reasoning behind a codebase — decisions, rejected alternatives, workarounds, constraints the code alone can't explain — captured as a byproduct of working with your agent and kept as plain Markdown in `context/`, versioned and shared by Git. No database, no daemon, no account.
+Keep the Why is the part that remembers *why*. Your repository already is your project's memory — README, docs, tests, changelog, history; [one layer was missing](https://oliver-zehentleitner.github.io/repo-native-project-memory/). The reasoning behind a codebase — decisions, rejected alternatives, workarounds, constraints the code alone can't explain — captured as a byproduct of working with your agent and kept as plain Markdown in `context/`, versioned and shared by Git. No database, no daemon, no account.
 
 [Install](installation.md){ .md-button .md-button--primary }
 [Read the README](readme.md){ .md-button }
@@ -175,7 +175,7 @@ The full list, and where Keep the Why fits next to ADRs, `AGENTS.md` and Keep a 
 
 <div class="ktw-footer" markdown>
 
-[README](readme.md) · [Installation](installation.md) · [Philosophy](philosophy.md) · [Security](security.md) · [FAQ](faq.md) · [Why I built this](why.md) · [llms.txt](https://keepthewhy.com/llms.txt) for AI agents · [MIT license](https://keepthewhy.com/license/)
+[README](readme.md) · [Installation](installation.md) · [Philosophy](philosophy.md) · [Security](security.md) · [FAQ](faq.md) · [Why I built this](why.md) · [llms.txt](https://keepthewhy.com/llms.txt) for AI agents · [MIT license](https://keepthewhy.com/license/) · [Why the repository is the memory](https://oliver-zehentleitner.github.io/repo-native-project-memory/)
 
 </div>
 

@@ -2,7 +2,7 @@
 
 ## One job, done with what's already there
 
-Keep the Why solves one narrowly scoped problem: preserve the reasoning behind technical decisions — what was tried, what was rejected, what constraints came from outside the code — so it survives past the conversation that produced it.
+Keep the Why solves one narrowly scoped problem: preserve the reasoning behind technical decisions — what was tried, what was rejected, what constraints came from outside the code — so it survives past the conversation that produced it. It is one layer of something a repository mostly already is; the broader argument, and its limits, are on [repo-native project memory](https://oliver-zehentleitner.github.io/repo-native-project-memory/).
 
 It doesn't build new infrastructure to do this. It connects things a project already has:
 
@@ -49,4 +49,4 @@ Staying a small, composable piece — one skill, one job — is what keeps it us
 
 The current shape of `context/` — Evidence and Status as separate axes, topic files over one-file-per-decision, continuous capture alongside retrospective recovery and interviews — is a well-reasoned starting point, not a claim that it's the final, optimal structure. It gets refined by real use and real feedback, not by adding features on a schedule. The goal is a stable, trustworthy methodology, not a growing feature list.
 
-> Keep the Why is repo-native project memory: an agent skill, and the file convention it maintains, that preserve the reasoning behind software decisions for humans and AI agents alike. It introduces no new platform, database, daemon, account, or workflow — it uses Markdown and Git, so versioning, synchronization, review, collaboration, and long-term ownership come from infrastructure the project already has; its linter and its dashboard read that Markdown and Git and hold nothing of their own. Its scope is deliberately narrow: preserve the why, structure it reliably, and improve that structure through real-world use and feedback.
+> Keep the Why is the why layer of repo-native project memory: an agent skill, and the file convention it maintains, that preserve the reasoning behind software decisions for humans and AI agents alike. It introduces no new platform, database, daemon, account, or workflow — it uses Markdown and Git, so versioning, synchronization, review, collaboration, and long-term ownership come from infrastructure the project already has; its linter and its dashboard read that Markdown and Git and hold nothing of their own. Its scope is deliberately narrow: preserve the why, structure it reliably, and improve that structure through real-world use and feedback.

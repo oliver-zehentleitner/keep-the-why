@@ -1,6 +1,6 @@
 # Installation
 
-Keep the Why is project memory for coding agents and humans: the reasoning behind a codebase, kept as Markdown in the repository and versioned by Git. What you install is the **agent skill** that captures and maintains it — a `SKILL.md` with its reference files, in the open, cross-agent skill format, not tied to one vendor. No build step, no service, no database, no account. The [linter](linting.md) and the [dashboard](dashboard.md) are separate, optional packages; the skill installs neither.
+Keep the Why is the why layer of [repo-native project memory](https://oliver-zehentleitner.github.io/repo-native-project-memory/): the reasoning behind a codebase, kept as Markdown in the repository and versioned by Git, for coding agents and humans. What you install is the **agent skill** that captures and maintains it — a `SKILL.md` with its reference files, in the open, cross-agent skill format, not tied to one vendor. No build step, no service, no database, no account. The [linter](linting.md) and the [dashboard](dashboard.md) are separate, optional packages; the skill installs neither.
 
 The short version, for any of 70+ agents (Claude Code, Codex, OpenCode, …), pinned to the newest release:
 

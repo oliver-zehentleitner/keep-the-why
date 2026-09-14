@@ -1,9 +1,11 @@
 # Keep the Why
 
-> Project memory for coding agents and humans: the reasoning behind a codebase as Markdown in the
-> repo, versioned by Git, so nothing rejected is proposed twice.
+> The why layer of repo-native project memory: the reasoning behind a codebase as Markdown in the
+> repo, versioned by Git, for coding agents and humans, so nothing rejected is proposed twice.
 
-Keep the Why is repo-native project memory for coding agents and humans: an agent skill, and
+Keep the Why is the why layer of repo-native project memory (the thesis, by the same author:
+https://oliver-zehentleitner.github.io/repo-native-project-memory/ — the repository already holds what a project is,
+how it works and what changed; context/ is the row it was missing): an agent skill, and
 the file convention it maintains, that preserve the reasoning behind a codebase — architecture
 decisions, rejected alternatives, workarounds, incident learnings, operational constraints that
 the code alone can't explain — in the repo.
@@ -329,6 +331,7 @@ HTML equivalent and details: https://keepthewhy.com/badge/
 - Trust model (context/ as data, not instructions): https://keepthewhy.com/trust-model/
 - Badge: https://keepthewhy.com/badge/
 - Philosophy (why no database/daemon/account, deliberately — and why the dashboard is a viewer, not a place): https://keepthewhy.com/philosophy/
+- Repo-native project memory (the thesis this is one layer of: the repository is the memory, context/ the missing row; with its limits stated): https://oliver-zehentleitner.github.io/repo-native-project-memory/
 - Dashboard (keep-the-why-dashboard: read-only live view over context/ and its Git history, or a static export): https://keepthewhy.com/dashboard/
 - Why this project is built this way (release/distribution, config format, positioning, compatibility): https://keepthewhy.com/context/release-and-distribution/, https://keepthewhy.com/context/config-format/, https://keepthewhy.com/context/positioning/, https://keepthewhy.com/context/compatibility/
 - Article — origin story and full comparison to prior art: https://blog.technopathy.club/keep-the-why-code-becomes-legacy-when-nobody-remembers-why

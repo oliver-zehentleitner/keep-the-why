@@ -82,3 +82,17 @@ Every topic file in `context/` gets a stub at `docs/context/<name>.md` holding a
 
 **Rejected alternative:** a docs-only page stitched from include markers over the existing references. No duplication, but the references would have kept normative and narrative text mixed, and the page would have read as excerpts rather than as a specification.
 
+
+## Keep the Why is the why layer of repo-native project memory, not the memory itself
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer decision, 2026-09-14, with the publication of the thesis page
+**Revisit when:** the thesis page changes its architecture, or Keep the Why grows a layer beyond the why
+
+Every self-description — landing hero, README intro, Philosophy, Installation, `llms.txt`, the `context/README.md` the wizard writes — says that the repository already is the project's memory (README, docs, tests, changelog, history) and that Keep the Why is the layer it was missing: the why. The thesis itself lives on its own page, https://oliver-zehentleitner.github.io/repo-native-project-memory/, by the same author, and Keep the Why links it rather than restating it.
+
+**Reason:** "Keep the Why is project memory" claimed the whole for a part and put the project in a line of tools that sell a new store; "the why layer of a memory the repository already is" is the smaller and truer claim, and the one the tool can actually back. It also gives the tool a clean role next to everything else in a repository instead of beside it. Keeping the thesis on a separate page keeps this site the practice — releases, measurements, docs — and lets the argument be read, and disagreed with, without adopting any of it.
+
+**Rejected alternative:** a "Philosophy" section here carrying the thesis. Rejected — the argument holds for other implementations too and should not read as this project's marketing; and a thesis page with its own `context/` is a better demonstration than a chapter.

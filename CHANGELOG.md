@@ -6,6 +6,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Added
 
+- Positioning follows the thesis page at https://oliver-zehentleitner.github.io/repo-native-project-memory/: Keep the Why is the why layer of repo-native project memory, not the memory itself — landing hero, README intro and *Where this fits*, Philosophy (opening and closing quote), Installation, `llms.txt`, and the first sentence of the `context/README.md` the wizard writes (template, example, this repository's own) say so and link the page.
 - `keep-the-why-dashboard` 0.1.2: a phone layout — below 900px the top bar and the strip wrap, the sidebar becomes a horizontal nav row with a *Topics* drawer that closes on navigation and sticks to the top, content is one column with scrollable tables and larger type and touch targets under 600px, navigation scrolls the content to its top below the sticky row; the graph takes touch (drag, pan, pinch-zoom, tap to open) and its loop idles when nothing moves, on every screen size; on phones the side pane links the graph instead of running small ones.
 
 ### Changed
