@@ -10,4 +10,6 @@ And the "why" itself is basically exhaust from that process, not separate work. 
 
 Keep the Why is that idea, built out. Nothing more complicated than: this seemed worth doing, so I did it.
 
+The thesis this grew into, in 800 words: [Your repository already is your project's memory. One layer was missing.](https://blog.technopathy.club/your-repository-already-is-your-project-s-memory-one-layer-was-missing) — and the page it belongs to, [repo-native project memory](https://oliver-zehentleitner.github.io/repo-native-project-memory/).
+
 More on how I work with AI agents day to day: [blog.technopathy.club](https://blog.technopathy.club/series/ai-assisted-development) · [GitHub](https://github.com/oliver-zehentleitner)
