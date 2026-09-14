@@ -138,3 +138,6 @@
     font-size: 1.4rem;
   }
 }
+
+/* the experiment line in the trust section: same caption style, set off by a hairline */
+.ktw-experiment { margin-top: 1rem; padding-top: .9rem; border-top: 1px solid var(--ktw-border); }

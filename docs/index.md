@@ -140,6 +140,9 @@ The next session — yours, a colleague's, an agent's — loads the index first 
 The skill is validated against the Agent Skills spec on every push; this repository's own `context/` is [linted by its own linter](linting.md), in strict mode; the package is scanned by two independent registries — one of them, the [HOL AI Plugin Scanner](security.md#what-automated-scanners-report-and-why), on every push in this repository's own CI — currently 94/100 with no high finding; the workflow fails below 80 or on any high finding.
 { .ktw-caption }
 
+And one controlled experiment on the core claim: twenty fresh agent sessions, the same codebase, the same request to simplify a retry wrapper. Without a recorded reason, **seven of ten** offered the already-rejected simplification again. With one `context/` entry, all ten found it and **none** did. [The experiment →](https://blog.technopathy.club/what-happens-when-a-coding-agent-forgets-why-a-change-was-rejected) · [transcripts and grades](https://github.com/oliver-zehentleitner/keep-the-why/tree/main/experiments/rejected-change)
+{ .ktw-caption .ktw-experiment }
+
 </div>
 
 <div class="ktw-section" markdown>
