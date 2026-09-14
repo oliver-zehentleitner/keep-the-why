@@ -4,13 +4,17 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.16.3] - 2026-09-14
+
 ### Added
 
+- `keep-the-why-dashboard` 0.1.3: on phones nothing is wider than the screen — grid items may shrink below their content, long tokens wrap, the document never scrolls sideways; the page no longer opens zoomed out.
 - Positioning follows the thesis page at https://oliver-zehentleitner.github.io/repo-native-project-memory/: Keep the Why is the why layer of repo-native project memory, not the memory itself — landing hero, README intro and *Where this fits*, Philosophy (opening and closing quote), Installation, `llms.txt`, and the first sentence of the `context/README.md` the wizard writes (template, example, this repository's own) say so and link the page.
 - `keep-the-why-dashboard` 0.1.2: a phone layout — below 900px the top bar and the strip wrap, the sidebar becomes a horizontal nav row with a *Topics* drawer that closes on navigation and sticks to the top, content is one column with scrollable tables and larger type and touch targets under 600px, navigation scrolls the content to its top below the sticky row; the graph takes touch (drag, pan, pinch-zoom, tap to open) and its loop idles when nothing moves, on every screen size; on phones the side pane links the graph instead of running small ones.
 
 ### Changed
 
+- `keep-the-why-lint` 0.16.3.0: knows schema 0.16.3 — no new gate, nothing changes what `context/` or `.keep-the-why` must look like. Published before the skill tag, per the checklist.
 - `docs/evals.md` carries the 0.16.2 release measurement: three consecutive full runs on the tag (86, 86 and 86 of 88), the four numbers per run, a note on every failed run, a new run-history row. All eight cases that flipped once on 0.16.1 went 3/3; deterministic checks 58/58 in every run; judge and checks agreed on all 264 gradings; no safety refusal. One two-time flip, every candidate listed before the first question under `sequential` (#414), four one-time flips.
 
 ## [0.16.2] - 2026-09-11
@@ -675,7 +679,8 @@ Initial release.
 - Logo, wordmark, and favicon.
 - `context/repo-conventions.md`, dogfooding the skill on its own repository from day one.
 
-[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.16.2...HEAD
+[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.16.3...HEAD
+[0.16.3]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.16.2...v0.16.3
 [0.16.2]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.16.1...v0.16.2
 [0.16.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.16.0...v0.16.1
 [0.16.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.15.0...v0.16.0
