@@ -246,7 +246,7 @@ Also listed among the tools and further reading in the [Architecture Decision Re
 
 ## Why I built this
 
-See [Why I built this](https://keepthewhy.com/why/) — Oliver Zehentleitner on noticing this pattern while working with agents day to day, [blog](https://blog.technopathy.club), [GitHub](https://github.com/oliver-zehentleitner). For why it's built the way it is — no database, no daemon, no account, deliberately, and a dashboard that only reads — see [Philosophy](https://keepthewhy.com/philosophy/).
+See [Why I built this](https://keepthewhy.com/why/) — Oliver Zehentleitner on noticing this pattern while working with agents day to day, [blog](https://blog.technopathy.club), [GitHub](https://github.com/oliver-zehentleitner). For why it's built the way it is — no database, no daemon, no account, deliberately, and a dashboard that only reads — see [Philosophy](https://keepthewhy.com/philosophy/). The thesis behind the positioning, in 800 words: [Your repository already is your project's memory. One layer was missing.](https://blog.technopathy.club/your-repository-already-is-your-project-s-memory-one-layer-was-missing)
 
 ## Feedback
 

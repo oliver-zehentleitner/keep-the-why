@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- The article *Your repository already is your project's memory. One layer was missing.* (https://blog.technopathy.club/your-repository-already-is-your-project-s-memory-one-layer-was-missing) is linked from the README ("Why I built this"), `docs/why.md` and `llms.txt`.
+
 ### Changed
 
 - `docs/evals.md` carries the 0.16.3 release measurement: three consecutive full runs on the tag (87, 86 and 86 of 88), the four numbers per run, a note on every failed run, a new run-history row. 84 cases passed all three runs; deterministic checks 58/58 in every run; judge and checks agreed on all 264 gradings; no safety refusal; the 0.16.2 two-time flip (#414) did not recur. One two-time flip, a missing `context-schema` backfilled with the installed version copied from the example block (#424), three one-time flips.
