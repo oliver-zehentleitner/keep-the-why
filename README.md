@@ -21,6 +21,8 @@
 
 # Keep the Why
 
+[![HOL Guard](https://img.shields.io/endpoint?url=https%3A%2F%2Fhol.org%2Fapi%2Fregistry%2Fbadges%2Fplugin%3Fslug%3Doliver-zehentleitner%252Fkeep-the-why%26metric%3Dtrust)](https://hol.org/registry/plugins/oliver-zehentleitner%2Fkeep-the-why)
+
 Keep a Changelog records what changed. Keep the Why preserves why it changed.
 
 <!-- ktw-intro:start -->
