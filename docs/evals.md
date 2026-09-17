@@ -222,6 +222,36 @@ and `deductions`, one entry per point below 10. `summary.md` shows one row
 per case, passes included, with the deductions in the last column: a 9 says
 where the point went without anyone re-reading the transcript.
 
+## How a series is judged
+
+A full run is 88 samples of a sampled agent graded by a sampled judge —
+neither Claude Code nor the judge call can be pinned to a seed — so the same
+case takes a different path every time: a different first search hit, one
+progress note more or less, a question phrased the other way round. Measured
+over 19 consecutive full runs on 2026-09-16/17, while the wording of the
+next release was being worked out (Claude Sonnet 5, 1,672 gradings): 98.6 % of case runs passed, 1.2 cases failed per run, and two of
+the 19 runs were a clean 88/88. The cases that flipped had passed 20 to 29
+times before and were a different one almost every run. At that per-case
+rate a clean run is the exception and three clean runs in a row are dice,
+not a property of the skill — and chasing them makes the skill worse: of the
+sentences added to `SKILL.md` for a case that had failed once, three tipped
+a neighbouring case that had never failed before.
+
+So a release series — three consecutive full runs — is judged as a whole,
+by `tools/evals/series.py`:
+
+| | Rule | What a failure means |
+|---|---|---|
+| Per case | every case passes at least 2 of the 3 runs | the same case failing twice is a wording problem: read both transcripts, fix the sentence or the expectation, measure the case 6× before and after |
+| Per run | no run has more than 1 failed case | a run with several failures is a regression or an environment problem, not variance: find out which before measuring again |
+
+A case that fails once in a series is reported, with the judge's reason, in
+the per-case table above — it is variance until it comes back. The pass
+counts stay the headline because they are what the run history compares.
+The rule is tied to today's models: as per-case reliability rises the same
+two lines get harder to miss, not easier, and the numbers in the run history
+will say when they can be tightened.
+
 ## Run history
 
 The judge has so far always been the same model as the agent under test.

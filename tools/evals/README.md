@@ -36,7 +36,7 @@ the final one — a judge `pass` on a case the checks failed is a judge blind
 spot, and worth reading). The check types are documented at the top of
 `ktw_evals/checks.py`; the rule for adding one to a case is that it must be
 *certain* from the expected behavior, not merely likely — a check that needs
-interpretation belongs in `expected_behavior` for the judge. 55 of the 85
+interpretation belongs in `expected_behavior` for the judge. 58 of the 88
 cases carry checks.
 
 Results land in `results/<timestamp>-<driver>/` (gitignored): one JSON per
@@ -60,7 +60,8 @@ next to it, one module per responsibility:
 | `results.py` | stored verdicts, the rate-limit sentinel, `summary.json` / `summary.md` |
 | `runner.py` | `run_case()`, `execute_pass()`, and the retry loop |
 | `matrix.py` | `--matrix` orchestration and its table |
-| `tests/` | offline tests for `checks.py` — `python3 -m unittest discover -s tools/evals/tests` |
+| `series.py` | the verdict over a series of full runs — every case passes 2 of 3, no run with more than one failure; `tools/evals/series.py` is its command line |
+| `tests/` | offline tests for `checks.py`, `workdir.py` and `series.py` — `python3 -m unittest discover -s tools/evals/tests` |
 
 Adding a driver means one new module under `drivers/` plus its rows in the
 `__init__.py` tables; nothing else needs to know.
@@ -184,6 +185,19 @@ config: for `pi`, a local Ollama or OpenRouter model needs a matching entry in
 `omp`, an `OPENROUTER_API_KEY` env var (no per-model registration needed —
 any `provider/model` string is passed straight through to `--model`).
 Exit code is non-zero if any case fails or errors.
+
+A single run's pass count is a sample, not a verdict — see "How a series is
+judged" in [`docs/evals.md`](../../docs/evals.md). Three full runs are judged
+together:
+
+```bash
+python3 tools/evals/series.py results/full-r1 results/full-r2 results/full-r3
+```
+
+It prints the pass count per run, every case that did not pass all runs with
+its verdicts, and two lines: the per-case gate (every case passes at least 2
+of 3) and the per-run limit (no run with more than one failed case). Exit
+code 0 when both hold.
 
 ### Permissions: the agent runs unrestricted, on your machine
 

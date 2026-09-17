@@ -69,7 +69,7 @@ Steps 1–3 and 6–8 are also checked automatically by the "Check version consi
 
 **Measure the release:**
 
-14. Run the full eval suite on the tagged version — three full runs, `TMPDIR` outside your home (`tools/evals/README.md`), `--judge-always` — and record the result in `docs/evals.md`: the "Latest full-suite results" block with the four numbers (skill loaded, completed, deterministic checks, judge pass), the per-case column, and a new row in the run history. The release's numbers are part of the release, not a follow-up.
+14. Run the full eval suite on the tagged version — three full runs, `TMPDIR` outside your home (`tools/evals/README.md`), `--judge-always` — judge the series with `python3 tools/evals/series.py <run1> <run2> <run3>` (every case passes at least 2 of 3 runs, no run has more than one failed case — "How a series is judged" in `docs/evals.md`; a clean 88/88 three times over is not the bar), and record the result in `docs/evals.md`: the "Latest full-suite results" block with the four numbers (skill loaded, completed, deterministic checks, judge pass), the per-case column, and a new row in the run history. The release's numbers are part of the release, not a follow-up.
 
 Oliver runs this personally, or asks the assisting agent to run it on his explicit request for a specific version — never triggered on its own initiative just because a PR merged. This includes steps 9, 11 and 13; steps 12 and 14 are the assisting agent's once the tag is there.
 
