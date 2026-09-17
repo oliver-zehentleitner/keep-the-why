@@ -2,7 +2,7 @@
 
 Open work that is not a bug and not a design question — those go to
 [issues](https://github.com/oliver-zehentleitner/keep-the-why/issues).
-Last reviewed: 2026-09-16.
+Last reviewed: 2026-09-17.
 
 ## In progress
 
@@ -21,15 +21,6 @@ are released and measured (87/86/86 of 88, `docs/evals.md`).
   ([github/awesome-copilot#2998](https://github.com/github/awesome-copilot/pull/2998)),
   bumped to 0.16.3 on 2026-09-14, waits on their review; #2984 (0.15.0) is
   merged. Every release gets its own bump PR there.
-- [ ] **Next skill wording, measured:**
-  [#414](https://github.com/oliver-zehentleitner/keep-the-why/issues/414)
-  (every candidate listed before the first question under `sequential`,
-  2 of 3 in the 0.16.2 series) and
-  [#424](https://github.com/oliver-zehentleitner/keep-the-why/issues/424)
-  (missing `context-schema` backfilled with the installed version, copied
-  from the example block in `setup.md`; 2 of 3 in 0.16.3, 1 of 3 in 0.16.2).
-  Same procedure as #384: 6 runs before and after on the case, guards, then
-  a full run; both go out with the next release.
 - [ ] **Agent & model matrix rebuild** (`docs/agent-matrix.md`). The tooling
   (`tools/evals/run.py --matrix`) is ready; the matrix was last built against
   0.9.x. Waits on two decisions: whether `chestertons-fence-guard` is still

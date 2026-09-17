@@ -128,7 +128,7 @@ When a maintenance pass finds an `active`, `confirmed` entry whose concrete clai
 
 **Rejected alternative:** leaving the rule to the specification alone and treating the two fails as model variance. Rejected — the isolated rerun passed 3/3, but both fails were the same shape and both cited the Maintain paragraph; a rule the agent follows literally into a fail is a wording problem, not noise.
 
-**Consequence:** no format change, no migration, no linter gate — the lifecycle table was already normative. The eval case encodes the behavior; this entry records why the skill body had to say it too.
+**Consequence:** no format change, no migration, no linter gate — the lifecycle table was already normative. The eval case encodes the behavior; this entry records why the skill body had to say it too. Since 2026-09-17 the sentence says where the replacement decision has to be recorded — in `context/`, by a person or on their instruction: an agent had taken `docs/` describing the new state for that record and superseded the entry on the strength of it, when that description is the contradiction to surface.
 
 ## One `Evidence` word per entry; mixed standing takes the weakest grade
 

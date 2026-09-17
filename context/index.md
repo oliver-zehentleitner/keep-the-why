@@ -38,7 +38,7 @@ Why this project is built the way it is.
 ## E
 
 - [entry-format.md](entry-format.md) — design of `context/` entries and layout themselves: flat directory (no subdirectories), the `Type` field, a found contradiction surfaced rather than superseded
-- [evals.md](evals.md) — design of the eval runner and suite (`tools/evals/`): package layout, what the judge and the mechanical checks each decide
+- [evals.md](evals.md) — design of the eval runner and suite (`tools/evals/`): package layout, what the judge and the mechanical checks each decide, how a release series is judged (2 of 3 per case), when an eval flip earns a sentence in the skill
 
 ## F
 

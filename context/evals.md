@@ -63,3 +63,34 @@ The eval runner's per-case fake `$HOME` isolates the agent from the operator's r
 
 **Rejected alternative:** scrubbing the real home path from what the agent sees (a symlinked workdir, a chroot-ish rename). Fragile — `pwd`, tool results and error messages all carry the path — and a guard that refuses the unsafe layout costs nothing.
 
+## A release series passes when every case passes two of three runs and no run has more than one failed case
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** 19 consecutive full runs on 2026-09-16/17 (`docs/evals.md`, "How a series is judged"); maintainer decision, 2026-09-17
+**Revisit when:** a newer agent model moves the per-case pass rate far enough that a series misses neither line for several releases — then the lines can be tightened
+
+Three consecutive full runs are judged together by `tools/evals/series.py`: per case, at least 2 of 3 passes; per run, at most one failed case. A case that fails once is reported with the judge's reason and treated as variance until it comes back.
+
+**Reason:** the goal had been three clean 88/88 runs in a row, and 19 full runs showed what that asks for. 98.6 % of 1,672 case runs passed, 1.2 cases failed per run, two runs were clean; the failing case was a different one almost every run and had passed 20 to 29 times before. Agent and judge are both sampled and neither can be seeded, so at that rate a clean run is the exception — two of the 19 — and three in a row are dice. What a series can actually show is that no case is reliably broken (the per-case line — the same threshold this project already used informally: one flip is variance, the same form twice is wording) and that no run is broadly off (the per-run line, which a regression or a broken environment trips at once: the one wording change that did regress gave 84/88).
+
+**Rejected alternative:** keep 3 × 100 % as the bar and fix every flip. Tried for 18 attempts at such a series: each single-flip sentence cost a full measurement, three of them tipped a neighbouring case that had never failed, and `SKILL.md` grew by 17 % without the rate moving. Also rejected: a per-case gate alone, without the per-run line — it would pass a series of 84/88 runs as long as the failures were spread over different cases, which is exactly the regression picture.
+
+**Consequence:** `series.py` exits non-zero when either line is missed, and the release checklist names it. The per-run line fails by chance more often than the per-case one at today's rate; when it does, the run's failures are read before anything is re-measured, which is the point of having it.
+
+## A sentence goes into the skill for a failure form seen twice, not for a single flip; the ask-versus-write logic is a table
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** the 2026-09-16/17 measurement: three variants of the same state, three full runs each; maintainer decision, 2026-09-17
+**Revisit when:** a single flip turns out to have been the first sighting of a form that then recurs — the threshold is about evidence, not about ignoring the first report
+
+Wording changes that come out of an eval series are limited to forms that failed at least twice (in one series, or across series with the same shape in the transcript). `SKILL.md` step 5 decides ask-versus-write from a table — six situations, first match wins, one column per `capture-confirmation` value — with four modifiers under it, instead of six prose bullets.
+
+**Reason:** measured, not assumed. A variant carrying nine sentences for single flips and a lean variant without them scored the same over three full runs each (87 · 88 · 87 both, 86 cases 3/3 both), so the sentences bought nothing; they did cost length (+17 % against +6.5 % over the 0.16.3 text) and three regressions on the way in, each time a neighbouring case that reads the same paragraph. The ask-versus-write bullets were where those collisions happened: every clause added to one bullet ("write now") shifted the reading of the next ("nothing written until answered"). A table has no neighbouring sentence to lean on — a situation matches a row or it does not — and it is 21 % shorter than the bullets it replaces. On the 28 cases that exercise it, the prose stood at 98.3 % over 19 full runs; the table had no flip in 84 isolated runs and none in two full series.
+
+**Rejected alternative:** keeping the prose and adding one sentence per observed failure — see above, it is how the 17 % came about. Also rejected: moving the table out to `references/setup.md` to keep `SKILL.md` short — during capture the skill body is what the agent has in context, a reference is loaded on demand, and the first table draft already showed how little slack there is: a modifier that lost four words ("not instead") made the agent hold a write back for an answer under `automatic`.
+
+**Consequence:** a one-time flip gets an issue with the transcript's reason, labelled `evals`, not a sentence. Expectation texts are part of the same discipline — four of the flips in that measurement were the judge reading more into an expectation than it meant ("may" read as "must", a fixture detail read as a requirement), fixed in `evals.json`, not in the skill.
