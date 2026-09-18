@@ -53,8 +53,8 @@ What a single pass count hides — four numbers, per run:
 "Skill loaded" is short only by the never-opted-in fixtures —
 `organic-activation-no-config-proposes-nothing` in all three runs,
 `init-retracted-writes-nothing` in run 3 — where nothing is supposed to load
-it; all four of those sessions passed. No genuine activation miss in the
-series, the second series in a row.
+it; all four of those sessions passed. Every session that was supposed to
+load the skill did, the second series in a row.
 
 Judge and deterministic checks agreed on all 264 gradings, as in the 0.16.2
 series. The 58 checks passed 58/58 in every run; all five failures were the
@@ -174,7 +174,8 @@ stays one case wide and this page stays one agent deep.
 
 A single "73/73" runs four different things together, and the run history
 below shows why that matters: the 2026-08-25 row's 56/70 was mostly the skill
-never being loaded, not the skill misbehaving. Every run since 2026-09-05 reports
+never being loaded — the fixture had no start path yet — not the skill
+misbehaving. Every run since 2026-09-05 reports
 them apart, in `summary.md`:
 
 | Number | What it measures | Decided by |
@@ -274,7 +275,7 @@ The judge has so far always been the same model as the agent under test.
 | 2026-09-03 | 0.11.0 | Claude Code 2.1.258 / 2.1.259 | Claude Sonnet 5 | **73/73 · 72/74 · 71/74 · 73/74** | first run before case 74 existed; then three consecutive full runs on a clean host — the table above. Suite changed afterwards: `init: declined` retired (its two cases replaced/removed), `autostart-project-instruction-loads-skill` added |
 | 2026-09-02 | 0.10.1 + compressed `SKILL.md` | Claude Code 2.1.258 | Claude Sonnet 5 | 62/73, 61/73 | the compression moved nothing — 64/72 before it |
 | 2026-08-31 | 0.9.2 + config relocation | Claude Code 2.1.251 | Claude Sonnet 5 | 64/72 | regression check for `.keep-the-why` |
-| 2026-08-25 | 0.9.0 | Claude Code 2.1.241 | Claude Sonnet 5 | 56/70 | no activation aid; 11 of 14 failures were the skill never being loaded — re-run with a project-scoped `SessionStart` hook ([`references/autostart.md`](https://keepthewhy.com/autostart/)): 10/10 of those loaded, 9/10 passed. Every run since carries that hook in the `_base` fixture |
+| 2026-08-25 | 0.9.0 | Claude Code 2.1.241 | Claude Sonnet 5 | 56/70 | no start path in the fixture yet; 11 of 14 failures were the skill never being loaded — re-run with a project-scoped `SessionStart` hook ([`references/autostart.md`](https://keepthewhy.com/autostart/)): 10/10 of those loaded, 9/10 passed. Every run since carries that hook in the `_base` fixture |
 | 2026-07-31 | 0.6.2 | Claude Code | Claude Sonnet 5 | 59/67 | first full run |
 
 ## Caveats, stated plainly

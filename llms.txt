@@ -103,8 +103,8 @@ from the root `plugin.json` used by GitHub's Copilot CLI plugin marketplace form
 Also a Cursor plugin (`.cursor-plugin/plugin.json` + `rules/keep-the-why.mdc`, a rule that loads
 the skill only in a workspace carrying `.keep-the-why`); Cursor marketplace submission pending.
 
-A Skill activates when something in the conversation matches its description, not
-automatically on session start. After installing, start a new session and tell the agent
+Until a start path is configured (autostart, below), a Skill is loaded when something in
+the conversation matches its description, not on session start. After installing, start a new session and tell the agent
 something like "initialize Keep the Why in this project" to run the one-time setup wizard -
 setup on a brand-new project only ever runs from a request like this, never from an unrelated
 question the skill's description happens to match; that's a deliberate gate, not a speed

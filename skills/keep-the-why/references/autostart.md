@@ -8,6 +8,15 @@ start path decides is only whether the skill is in the session at all before
 the first request, instead of hoping the agent's own skill discovery matches
 the conversation against `SKILL.md`'s description.
 
+A skill package is instructions. No agent tool gives a skill a way to load
+itself, and the open Agent Skills spec has no cross-tool start mechanism —
+this is true of every skill, not of this one. Loading is therefore the
+agent's job, configured once by a person with the agent's own means, and the
+skill hands that job over explicitly: the wizard asks which start path the
+project wants and has the agent set up what its platform offers. With one
+in place the skill is in the session before the first request; the per-tool
+sections below say what was measured, and how.
+
 Referenced by `setup.md`'s wizard (the start-path question and step 2), not a
 mandate. Each entry states what was actually verified and how, so "listed
 here" never gets mistaken for "guaranteed to work for you". Growing and
