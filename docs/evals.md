@@ -252,7 +252,7 @@ The rule is tied to today's models: as per-case reliability rises the same
 two lines get harder to miss, not easier, and the numbers in the run history
 will say when they can be tightened. And if you find a way to phrase this
 skill so that the suite passes 100 % three times in a row without making
-the cases easier, the maintainer would be glad to see that pull request.
+the cases easier, I would be glad to see that pull request.
 
 ## Run history
 
