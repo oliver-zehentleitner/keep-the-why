@@ -8,7 +8,9 @@ start path decides is only whether the skill is in the session at all before
 the first request, instead of hoping the agent's own skill discovery matches
 the conversation against `SKILL.md`'s description.
 
-A skill package is instructions. No agent tool gives a skill a way to load
+With a start path in place the skill is loaded in every session — this
+works completely, not sometimes. What no skill can do is load itself: a
+skill package is instructions, no agent tool gives a skill a way to load
 itself, and the open Agent Skills spec has no cross-tool start mechanism —
 this is true of every skill, not of this one. Loading is therefore the
 agent's job, configured once by a person with the agent's own means, and the

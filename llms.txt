@@ -154,8 +154,9 @@ only the rationale it produces. Live-tested against a real methodology-style fra
 worked correctly once explicitly invoked, but didn't reliably self-trigger the moment a design
 decision settled mid-conversation on its own. Asking directly afterward ("check whether
 keep-the-why applies here") is a reasonable fallback, not a workaround for something broken.
-Getting the skill loaded at session start is the agent's job, and the skill documents three
-start paths for it (every session machine-wide via a hook, the project asks via a hook or a
+With a start path in place the skill is loaded in every session (measured on Claude Code,
+and the maintainer's daily experience). Getting it loaded is the agent's job — no skill can
+load itself — and the skill documents three start paths for it (every session machine-wide via a hook, the project asks via a hook or a
 "Keep the Why" section in its entry-point file, or only when a developer asks), with per-agent
 sections stating what is verified how: Claude Code, Codex CLI, opencode and Cline by eval
 (the section loads the skill unprompted 3 of 3 times each, against 0 or 1 of 3 without it),
