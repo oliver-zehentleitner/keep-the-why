@@ -114,8 +114,9 @@ is complete), checked directly by this skill at the start of every later session
 of whichever entry-point file a given agent tool reads on its own. Every later session picks
 the project back up without needing to be told again.
 
-What a developer has to do, in full: install the skill, say "set up Keep the Why here" once
-per project, answer the setup ("defaults" is a complete answer), then work as usual. Nobody
+What a developer has to do, in full: install the skill (one command, `npx skills add …` above,
+for any of 70+ agents; other routes: https://keepthewhy.com/installation/), say "set up Keep
+the Why here" once per project, answer the setup ("defaults" is a complete answer), then work as usual. Nobody
 has to tell the agent what to record. With the defaults — `capture-mode: proactive`,
 `capture-confirmation: confirm-when-unsure`, and the project carrying its own start path —
 the skill is loaded at the start of every session in that project, the agent records the why

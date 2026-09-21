@@ -78,7 +78,13 @@ The dashboard — a read-only view over `context/` and its Git history: who reco
 
 ## How it works
 
-**Install it. Say "set up Keep the Why here" once in a project and answer the setup — "defaults" is a complete answer. Then work as usual.** The defaults include the start path, so from then on every session in that project loads the skill by itself. The agent records the why as it surfaces and asks only when it is genuinely unsure. You never have to tell it what to write down.
+**Install it with one command. Say "set up Keep the Why here" once in a project and answer the setup — "defaults" is a complete answer. Then work as usual.**
+
+```sh
+npx skills add https://github.com/oliver-zehentleitner/keep-the-why/tree/latest/skills/keep-the-why
+```
+
+That line covers any of 70+ agents (Claude Code, Codex, OpenCode, Cursor, …); plugin marketplaces, a manual copy and a vendored, pinned install are on the [installation page](installation.md). The defaults include the start path, so from then on every session in that project loads the skill by itself. The agent records the why as it surfaces and asks only when it is genuinely unsure. You never have to tell it what to write down.
 
 <div class="ktw-cards" markdown>
 
