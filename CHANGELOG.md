@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- The article *Keep the Why is not another workflow* (https://blog.technopathy.club/keep-the-why-is-not-another-workflow) is linked from the README ("How it works"), the FAQ entry on whether the agent has to be told what to record, and `llms.txt`.
+
 ## [0.17.1] - 2026-09-21
 
 ### Added
