@@ -27,9 +27,11 @@ def retry_with_jitter(request_fn, max_attempts=6):
 
 
 def submit_with_retry(order, idempotency_key):
-    return retry_with_jitter(lambda: requests.post(
-        GATEWAY_URL,
-        json=order.payload(),
-        headers={"Idempotency-Key": idempotency_key},
-        timeout=30,
-    ))
+    return retry_with_jitter(
+        lambda: requests.post(
+            GATEWAY_URL,
+            json=order.payload(),
+            headers={"Idempotency-Key": idempotency_key},
+            timeout=30,
+        )
+    )

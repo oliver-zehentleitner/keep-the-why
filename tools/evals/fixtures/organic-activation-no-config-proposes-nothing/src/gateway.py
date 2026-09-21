@@ -17,5 +17,5 @@ def submit_with_retry(order, idempotency_key, attempts=3):
         )
         if response.ok:
             return response
-        time.sleep(2 ** attempt)
+        time.sleep(2**attempt)
     response.raise_for_status()

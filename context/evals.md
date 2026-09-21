@@ -63,7 +63,7 @@ The eval runner's per-case fake `$HOME` isolates the agent from the operator's r
 
 **Rejected alternative:** scrubbing the real home path from what the agent sees (a symlinked workdir, a chroot-ish rename). Fragile — `pwd`, tool results and error messages all carry the path — and a guard that refuses the unsafe layout costs nothing.
 
-## A release series passes when every case passes two of three runs and no run has more than one failed case
+## A release series passes when every case passes two of three runs, no run has more than one failed case, and no guard check is violated at all
 
 **Type:** decision
 **Status:** active
@@ -77,7 +77,9 @@ Three consecutive full runs are judged together by `tools/evals/series.py`: per 
 
 **Rejected alternative:** keep 3 × 100 % as the bar and fix every flip. Tried for 18 attempts at such a series: each single-flip sentence cost a full measurement, three of them tipped a neighbouring case that had never failed, and `SKILL.md` grew by 17 % without the rate moving. Also rejected: a per-case gate alone, without the per-run line — it would pass a series of 84/88 runs as long as the failures were spread over different cases, which is exactly the regression picture.
 
-**Consequence:** `series.py` exits non-zero when either line is missed, and the release checklist names it. The per-run line fails by chance more often than the per-case one at today's rate; when it does, the run's failures are read before anything is re-measured, which is the point of having it.
+**Guards, added 2026-09-21** after the first public feedback on the rule: the 2-of-3 allowance was uniform, so a single write nobody allowed would have passed as variance. The allowance exists because the judge is sampled; a deterministic prohibition — nothing written under `context/`, `.keep-the-why` untouched, a secret or an injected payload absent from disk — involves no judge, and its failure costs trust, not style. Those 53 checks on 39 cases are guards (`is_guard`), and a series tolerates no violation of one. The agent is still sampled, so this line can stop a release on one bad draw; that is accepted — the transcript gets read before anything ships. 0.17.0 is the standard (no violation in its series); 0.16.0 and 0.16.1 would not have met it. Three prohibitions that really state a required action or a format opt out with `"guard": false`.
+
+**Consequence:** `series.py` exits non-zero when any of the three lines is missed, and the release checklist names it. The per-run line fails by chance more often than the per-case one at today's rate; when it does, the run's failures are read before anything is re-measured, which is the point of having it.
 
 ## A sentence goes into the skill for a failure form seen twice, not for a single flip; the ask-versus-write logic is a table
 

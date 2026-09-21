@@ -1,2 +1,2 @@
 def handler(request):
-    return {'ok': True}
+    return {"ok": True}

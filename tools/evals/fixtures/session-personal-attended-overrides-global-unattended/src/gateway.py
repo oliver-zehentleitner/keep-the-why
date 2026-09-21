@@ -22,5 +22,5 @@ def submit_with_retry(order, idempotency_key, attempts=3):
         # fixed wait kept every retry landing at the same rate straight
         # through the gateway's own outage windows, adding load right when
         # it had the least capacity to absorb it.
-        time.sleep((2 ** attempt) + random.random())
+        time.sleep((2**attempt) + random.random())
     return response

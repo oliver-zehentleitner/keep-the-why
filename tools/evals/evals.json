@@ -322,7 +322,8 @@
       {
         "type": "text_absent",
         "text": "keep-the-why:config",
-        "path": "AGENTS.md"
+        "path": "AGENTS.md",
+        "guard": false
       }
     ]
   },
@@ -338,7 +339,8 @@
       {
         "type": "text_absent",
         "text": "keep-the-why:local",
-        "path": "AGENTS.local.md"
+        "path": "AGENTS.local.md",
+        "guard": false
       }
     ]
   },
@@ -900,7 +902,8 @@
       {
         "type": "text_absent",
         "regex": "(?m)^\\*\\*Status:\\*\\*\\s*unknown\\b",
-        "path": "context/*.md"
+        "path": "context/*.md",
+        "guard": false
       }
     ]
   },

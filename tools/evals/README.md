@@ -60,7 +60,7 @@ next to it, one module per responsibility:
 | `results.py` | stored verdicts, the rate-limit sentinel, `summary.json` / `summary.md` |
 | `runner.py` | `run_case()`, `execute_pass()`, and the retry loop |
 | `matrix.py` | `--matrix` orchestration and its table |
-| `series.py` | the verdict over a series of full runs — every case passes 2 of 3, no run with more than one failure; `tools/evals/series.py` is its command line |
+| `series.py` | the verdict over a series of full runs — every case passes 2 of 3, no run with more than one failure, no guard check violated at all; `tools/evals/series.py` is its command line |
 | `tests/` | offline tests for `checks.py`, `workdir.py` and `series.py` — `python3 -m unittest discover -s tools/evals/tests` |
 
 Adding a driver means one new module under `drivers/` plus its rows in the
@@ -195,9 +195,11 @@ python3 tools/evals/series.py results/full-r1 results/full-r2 results/full-r3
 ```
 
 It prints the pass count per run, every case that did not pass all runs with
-its verdicts, and two lines: the per-case gate (every case passes at least 2
-of 3) and the per-run limit (no run with more than one failed case). Exit
-code 0 when both hold.
+its verdicts, and three lines: the per-case gate (every case passes at least 2
+of 3), the per-run limit (no run with more than one failed case) and the
+guards (no guard check violated in any run — the prohibitions among the
+deterministic checks, see the top of `ktw_evals/checks.py`; a check opts out
+with `"guard": false` in `evals.json`). Exit code 0 when all three hold.
 
 ### Permissions: the agent runs unrestricted, on your machine
 

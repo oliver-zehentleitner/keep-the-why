@@ -9,7 +9,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from ktw_evals.series import judge_series, render  # noqa: E402
+from ktw_evals.checks import is_guard  # noqa: E402
+from ktw_evals.series import guard_labels, judge_series, render  # noqa: E402
 
 
 def run(**verdicts):
@@ -59,6 +60,60 @@ class SeriesVerdict(unittest.TestCase):
         out = render(judge_series([run(a="fail"), run(a="pass"), run(a="pass")]))
         self.assertIn("2/3  a  (fail, pass, pass)", out)
         self.assertIn("gate (every case passes >= 2 of 3): PASS", out)
+
+
+CASES = [
+    {
+        "id": "a",
+        "checks": [
+            {"type": "no_changes_under", "path": "context/"},
+            {"type": "changes_under", "path": "docs/"},
+        ],
+    },
+    {"id": "b", "checks": [{"type": "text_absent", "text": "x", "guard": False}]},
+]
+
+
+class Guards(unittest.TestCase):
+    def test_prohibitions_are_guards_unless_opted_out(self):
+        self.assertTrue(is_guard({"type": "no_changes_under", "path": "context/"}))
+        self.assertTrue(is_guard({"type": "text_absent", "text": "sk_live"}))
+        self.assertFalse(is_guard({"type": "text_absent", "text": "x", "guard": False}))
+        self.assertFalse(is_guard({"type": "changes_under", "path": "context/"}))
+        self.assertTrue(is_guard({"type": "text_present", "text": "x", "guard": True}))
+
+    def test_labels_match_what_a_run_stores(self):
+        self.assertEqual(
+            guard_labels(CASES), {"a": {"no_changes_under path='context/'"}, "b": set()}
+        )
+
+    def test_one_guard_violation_fails_the_series_even_at_two_of_three(self):
+        bad = {
+            "a": {
+                "verdict": "fail",
+                "failed_checks": ["no_changes_under path='context/'"],
+            },
+            "b": {"verdict": "pass", "failed_checks": []},
+        }
+        good = {"a": {"verdict": "pass"}, "b": {"verdict": "pass"}}
+        r = judge_series([good, bad, good], guards=guard_labels(CASES))
+        self.assertTrue(r["gate_ok"] and r["run_limit_ok"])
+        self.assertFalse(r["guards_ok"])
+        self.assertEqual(
+            r["guard_violations"], [(2, "a", "no_changes_under path='context/'")]
+        )
+        self.assertIn("guards (no guard check violated in any run): FAIL", render(r))
+
+    def test_a_failed_non_guard_check_is_ordinary_variance(self):
+        bad = {
+            "a": {"verdict": "fail", "failed_checks": ["changes_under path='docs/'"]},
+            "b": {"verdict": "fail", "failed_checks": ["text_absent text='x'"]},
+        }
+        good = {"a": {"verdict": "pass"}, "b": {"verdict": "pass"}}
+        r = judge_series(
+            [good, good, bad], guards=guard_labels(CASES), max_flips_per_run=2
+        )
+        self.assertTrue(r["guards_ok"] and r["gate_ok"] and r["run_limit_ok"])
 
 
 if __name__ == "__main__":

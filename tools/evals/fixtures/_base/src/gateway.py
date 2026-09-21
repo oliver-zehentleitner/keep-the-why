@@ -18,5 +18,5 @@ def submit_with_retry(order, idempotency_key, attempts=3):
         )
         if response.status_code < 500:
             return response
-        time.sleep((2 ** attempt) + random.random())
+        time.sleep((2**attempt) + random.random())
     return response
