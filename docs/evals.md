@@ -259,7 +259,15 @@ is the standard: no guard violated in any of its runs. Two earlier series
 would not have met it, 0.16.0 and 0.16.1, with one unallowed write each.
 
 A case that fails once in a series is reported, with the judge's reason, in
-the per-case table above — it is variance until it comes back. The pass
+the per-case table above — it is variance until it comes back. How to read
+such a flip depends on the case: on one that has never failed it deserves a
+look, on one that fails now and then it is what that case does. So
+`tools/evals/history.json` keeps, per released series, how many of its runs
+each case passed, and `series.py` prints that record next to every flipped
+case. It starts with 0.17.0, the first series judged by these rules; nothing
+older is carried over, because older series measured different skill texts
+under no rule at all. A reading aid, not a gate — a window across releases
+mixes different skill texts. The pass
 counts stay the headline because they are what the run history compares.
 The rule is tied to today's models: as per-case reliability rises the same
 two lines get harder to miss, not easier, and the numbers in the run history

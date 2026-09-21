@@ -201,6 +201,12 @@ guards (no guard check violated in any run — the prohibitions among the
 deterministic checks, see the top of `ktw_evals/checks.py`; a check opts out
 with `"guard": false` in `evals.json`). Exit code 0 when all three hold.
 
+Next to every flipped case it prints the case's record over the released
+series before this one, from `history.json` — a flip on a case that has never
+failed reads differently from one on a case that fails now and then. A
+release measurement adds itself with `--version X.Y.Z --record`; the file is
+committed. It starts with 0.17.0 and is a reading aid, not a gate.
+
 ### Permissions: the agent runs unrestricted, on your machine
 
 Every driver is invoked with its permission bypass (`--dangerously-skip-permissions`,

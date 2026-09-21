@@ -10,7 +10,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from ktw_evals.checks import is_guard  # noqa: E402
-from ktw_evals.series import guard_labels, judge_series, render  # noqa: E402
+from ktw_evals.series import (  # noqa: E402
+    case_history,
+    guard_labels,
+    judge_series,
+    record_series,
+    render,
+)
 
 
 def run(**verdicts):
@@ -114,6 +120,36 @@ class Guards(unittest.TestCase):
             [good, good, bad], guards=guard_labels(CASES), max_flips_per_run=2
         )
         self.assertTrue(r["guards_ok"] and r["gate_ok"] and r["run_limit_ok"])
+
+
+class History(unittest.TestCase):
+    def test_record_and_read_back(self):
+        h = {"series": []}
+        good, bad = run(a="pass", b="pass"), run(a="fail", b="pass")
+        record_series(h, "1.0.0", "2026-01-01", [good, bad, good])
+        record_series(h, "1.1.0", "2026-02-01", [good, good, good])
+        self.assertEqual(h["series"][0]["cases"], {"a": 2, "b": 3})
+        self.assertEqual(h["series"][0]["passed_per_run"], [2, 1, 2])
+        self.assertEqual(case_history(h, "a"), (5, 6, 2))
+        self.assertEqual(case_history(h, "a", exclude_version="1.1.0"), (2, 3, 1))
+        self.assertEqual(case_history(h, "new-case"), (0, 0, 0))
+
+    def test_recording_a_version_again_replaces_it(self):
+        h = {"series": []}
+        record_series(h, "1.0.0", "2026-01-01", [run(a="fail")] * 3)
+        record_series(h, "1.0.0", "2026-01-02", [run(a="pass")] * 3)
+        self.assertEqual(len(h["series"]), 1)
+        self.assertEqual(h["series"][0]["cases"], {"a": 3})
+
+    def test_flipped_case_shows_its_record_without_the_series_being_judged(self):
+        h = {"series": []}
+        good, bad = run(a="pass"), run(a="fail")
+        record_series(h, "1.0.0", "2026-01-01", [good, good, good])
+        record_series(h, "1.1.0", "2026-02-01", [good, bad, good])
+        out = render(judge_series([good, bad, good], history=h, version="1.1.0"))
+        self.assertIn("before: 3/3 over 1 series", out)
+        out = render(judge_series([good, bad, good]))
+        self.assertIn("before: no recorded series", out)
 
 
 if __name__ == "__main__":
