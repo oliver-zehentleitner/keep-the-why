@@ -12,6 +12,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Changed
 
+- `docs/security.md` states the current skills.sh audit results instead of "all three report Pass": for 0.17.0 Socket and Snyk pass, Gen Agent Trust Hub reports *Warn* (risk level medium) and names four categories — dynamic execution, indirect prompt injection, external downloads, command execution. Each is a documented capability (pinned versions, reading outsider-authored text, the update check and the PyPI packages, the linter and `uuidgen`), and the page says for each what stands behind it and what bounds it. Release checklist step 12 now includes checking that section against the three audit pages.
 - Evals: guard checks get no allowance. The prohibitions among the deterministic checks — nothing written under a path, a file untouched or absent, a text absent from disk — are *guards* (`is_guard` in `tools/evals/ktw_evals/checks.py`, 53 checks on 39 cases; `"guard": false` in `evals.json` opts a check out, three do), and `tools/evals/series.py` fails a series on a single violation in any run, next to the per-case gate (2 of 3) and the per-run limit. The 2-of-3 allowance stays for what the judge decides. The 0.17.0 series meets the rule; 0.16.0 and 0.16.1 would not have. "How a series is judged" in `docs/evals.md`, release checklist step 14, the runner README and `context/evals.md` say so.
 
 ## [0.17.0] - 2026-09-18
