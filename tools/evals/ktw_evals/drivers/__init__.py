@@ -3,6 +3,7 @@ per-driver tables the rest of the runner consults. One module per driver
 (run_agent_* and render_transcript_*); the module docstring of
 tools/evals/run.py explains what each driver does differently and why."""
 
+import json
 import shutil
 from pathlib import Path
 
@@ -55,6 +56,18 @@ HOME_PRESERVE = {
 }
 
 
+# The copy above is for the CLI's login, not for the operator's habits: a
+# user-scoped SessionStart hook that loads keep-the-why (autostart path 1,
+# references/autostart.md) would come along in .claude/settings.json and load
+# the skill in exactly the cases that measure what happens without a hook -
+# `autostart-project-instruction-loads-skill` and its control. Hooks a case
+# wants are the fixture's own, project-scoped ones; the operator's are dropped
+# from the copy, whatever they do. The real file is never touched.
+HOME_STRIP_HOOKS = {
+    "claude": [".claude/settings.json"],
+}
+
+
 def seed_fake_home(real_home: Path, fake_home: Path, driver: str):
     for rel in HOME_PRESERVE.get(driver, []):
         src = real_home / rel
@@ -66,6 +79,19 @@ def seed_fake_home(real_home: Path, fake_home: Path, driver: str):
             shutil.copytree(src, dst, symlinks=True)
         else:
             shutil.copy2(src, dst)
+    for rel in HOME_STRIP_HOOKS.get(driver, []):
+        strip_hooks(fake_home / rel)
+
+
+def strip_hooks(settings: Path):
+    """Drop the operator's own session hooks from a copied settings file. A
+    file that isn't valid JSON raises on purpose: a run that can't tell
+    whether a hook came along is not a measurement."""
+    if not settings.is_file():
+        return
+    data = json.loads(settings.read_text())
+    if data.pop("hooks", None) is not None:
+        settings.write_text(json.dumps(data, indent=2) + "\n")
 
 
 # Whether the case prompt gets prefixed with an explicit "read SKILL.md and

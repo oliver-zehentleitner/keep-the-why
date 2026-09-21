@@ -4,13 +4,16 @@ python3 -m unittest discover -s tools/evals/tests -v
 """
 
 import datetime
+import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from ktw_evals.common import fake_home_env  # noqa: E402
+from ktw_evals.drivers import seed_fake_home  # noqa: E402
 from ktw_evals.workdir import commit_date  # noqa: E402
 
 
@@ -57,3 +60,35 @@ class FakeHomeEnv(unittest.TestCase):
         env = fake_home_env({}, Path("/fake"))
         self.assertEqual(env["PIPX_BIN_DIR"], env["UV_TOOL_BIN_DIR"])
         self.assertEqual(env["PATH"], env["PIPX_BIN_DIR"] + ":")
+
+
+class SeedFakeHome(unittest.TestCase):
+    def seed(self, settings_text):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        real, fake = Path(tmp.name) / "real", Path(tmp.name) / "fake"
+        (real / ".claude").mkdir(parents=True)
+        fake.mkdir()
+        if settings_text is not None:
+            (real / ".claude" / "settings.json").write_text(settings_text)
+        seed_fake_home(real, fake, "claude")
+        return real / ".claude" / "settings.json", fake / ".claude" / "settings.json"
+
+    def test_operator_hooks_are_dropped_from_the_copy_only(self):
+        original = json.dumps({"model": "sonnet", "hooks": {"SessionStart": []}})
+        real, fake = self.seed(original)
+        self.assertEqual(json.loads(fake.read_text()), {"model": "sonnet"})
+        self.assertEqual(real.read_text(), original)
+
+    def test_settings_without_hooks_are_copied_unchanged(self):
+        original = '{"model":"sonnet"}'
+        _, fake = self.seed(original)
+        self.assertEqual(fake.read_text(), original)
+
+    def test_no_settings_file_is_fine(self):
+        _, fake = self.seed(None)
+        self.assertFalse(fake.exists())
+
+    def test_unreadable_settings_stop_the_run(self):
+        with self.assertRaises(json.JSONDecodeError):
+            self.seed("{not json")

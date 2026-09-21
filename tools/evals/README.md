@@ -245,6 +245,19 @@ file wrote it to the operator's actual `~/.keep-the-why/` instead of the
 fake one. The runner now refuses to start when the temp directory resolves
 to somewhere under `Path.home()`.
 
+### Your own session hooks stay out of the cases
+
+The claude driver's fake `$HOME` starts as a copy of your `~/.claude`, because
+that is where the CLI's login lives. Your `settings.json` comes along — minus
+its `hooks` block, which the runner drops from the copy (`HOME_STRIP_HOOKS` in
+`ktw_evals/drivers/__init__.py`; your real file is never touched). A
+user-scoped `SessionStart` hook that loads keep-the-why in every project —
+autostart path 1 in `references/autostart.md`, the setup a developer who uses
+the skill daily is likely to have — would otherwise load the skill in exactly
+the cases that measure what happens without a hook. The hooks a case needs are
+the fixture's own, project-scoped ones. A `settings.json` that isn't valid JSON
+stops the run instead of being copied as it is.
+
 ## Matrix runs
 
 `--matrix` runs every driver × model combination in
