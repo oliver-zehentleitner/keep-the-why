@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- The article *Keep the Why is not another workflow* (https://blog.technopathy.club/keep-the-why-is-not-another-workflow) is linked from the README ("How it works"), the FAQ entry on whether the agent has to be told what to record, and `llms.txt`.
+
 ### Fixed
 
 - Evals: the operator's own Claude Code session hooks no longer reach the cases. The claude driver's fake `$HOME` starts as a copy of `~/.claude` (the CLI's login lives there), and a user-scoped `SessionStart` hook that loads keep-the-why machine-wide — autostart path 1 — came along in `settings.json`, loading the skill in cases that measure what happens without a hook (`autostart-project-instruction-loads-skill` and its control). The runner now drops the `hooks` block from the copied `settings.json`; the real file is never touched, and a `settings.json` that isn't valid JSON stops the run.
