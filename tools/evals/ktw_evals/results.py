@@ -6,6 +6,7 @@ import json
 import re
 
 from .common import skill_version
+from .judge import JUDGE_PROMPT_SHA
 from .analysis import RESTRAINT_CODES, RESTRAINT_LEGEND
 from .drivers import DRIVER_LABELS, PERMISSION_BYPASS
 
@@ -128,6 +129,24 @@ def write_summary(records, results_dir, args):
         "driver": args.driver,
         "agent_model": args.model,
         "judge_model": args.judge_model,
+        # What the aliases resolved to, and which judge prompt graded: a run
+        # is only comparable with one measured by the same instrument. More
+        # than one value in a list means the instrument changed mid-run.
+        "agent_models_resolved": sorted(
+            {
+                r["agent_model_resolved"]
+                for r in records
+                if r.get("agent_model_resolved")
+            }
+        ),
+        "judge_models_resolved": sorted(
+            {
+                r["judge_model_resolved"]
+                for r in records
+                if r.get("judge_model_resolved")
+            }
+        ),
+        "judge_prompt_sha": JUDGE_PROMPT_SHA,
         "permission_bypass": PERMISSION_BYPASS[args.driver],
         "date": datetime.date.today().isoformat(),
         "total": len(records),
@@ -160,6 +179,12 @@ def write_summary(records, results_dir, args):
         "",
         f"Skill {version} · agent: {DRIVER_LABELS[args.driver]} (model `{args.model}`) · "
         f"judge: `{args.judge_model}` · permission bypass: `{PERMISSION_BYPASS[args.driver]}`",
+        "",
+        "Instrument: agent resolved to "
+        f"{', '.join(f'`{m}`' for m in summary['agent_models_resolved']) or 'unknown'}"
+        " · judge resolved to "
+        f"{', '.join(f'`{m}`' for m in summary['judge_models_resolved']) or 'unknown'}"
+        f" · judge prompt `{JUDGE_PROMPT_SHA}`",
         "",
         f"**{len(passed)}/{len(records)} passed** ({len(failed)} failed, {len(errored)} errors)",
         "",

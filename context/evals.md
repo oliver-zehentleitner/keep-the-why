@@ -81,6 +81,8 @@ Three consecutive full runs are judged together by `tools/evals/series.py`: per 
 
 **Per-case history, added 2026-09-21** from the same round of feedback: `tools/evals/history.json` records each released series (passes per case) and `series.py` prints a flipped case's record next to it. Deliberately a reading aid and not a fourth line — a sliding window across releases would mix different skill texts — and deliberately starting at 0.17.0: earlier series measured other wording under no rule, and the project tests forward from here.
 
+**The instrument is named, added 2026-09-21**, same round of feedback: agent and judge run through the `sonnet` alias, which the vendor can move to a newer model without a trace here, and nothing in a result said which judge prompt had graded it. Every record now carries the resolved model ids and a hash of the judge prompt. Pinning an exact model id in the runner was the alternative; rejected because the suite should follow the model its users get, and recording makes the moment it changes visible instead of preventing it.
+
 **Consequence:** `series.py` exits non-zero when any of the three lines is missed, and the release checklist names it. The per-run line fails by chance more often than the per-case one at today's rate; when it does, the run's failures are read before anything is re-measured, which is the point of having it.
 
 ## A sentence goes into the skill for a failure form seen twice, not for a single flip; the ask-versus-write logic is a table

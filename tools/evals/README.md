@@ -40,7 +40,11 @@ interpretation belongs in `expected_behavior` for the judge. 58 of the 88
 cases carry checks.
 
 Results land in `results/<timestamp>-<driver>/` (gitignored): one JSON per
-case plus `summary.json` and `summary.md`.
+case plus `summary.json` and `summary.md`. Each record and the summary name
+the instrument that produced them — the model ids the `--model` and
+`--judge-model` aliases resolved to (from the CLI's init event; `null` for a
+driver that doesn't report one) and a hash of the judge prompt — so a later
+run can tell a change in the skill from a change in what measured it.
 
 ## Layout
 

@@ -19,7 +19,7 @@ from .drivers import (
     build_prompt,
     seed_fake_home,
 )
-from .judge import judge
+from .judge import JUDGE_PROMPT_SHA, judge, resolved_model
 from .results import RATE_LIMIT_RE, load_resolved, rate_limit_sentinel, write_summary
 from .workdir import build_workdir, collect_diff
 
@@ -115,6 +115,7 @@ def run_case(case, args, results_dir):
         # of how the run ended; what they *mean* is decided below.
         checks = run_checks(case.get("checks") or [], workdir, fake_home, transcript)
     judge_verdict = None
+    judge_model_resolved = None
     checks_passed = all(c["ok"] for c in checks) if checks else None
     skill_loaded = None
     skill_loaded_at = None
@@ -166,6 +167,7 @@ def run_case(case, args, results_dir):
         else:
             verdict = judge(case, transcript, diff, args.judge_model, args.timeout)
             judge_verdict = verdict.get("verdict")
+            judge_model_resolved = verdict.pop("judge_model_resolved", None)
             if failed and verdict.get("verdict") in ("pass", "fail"):
                 # --judge-always: the judge's view is kept in judge_verdict
                 # (a pass here is a judge blind spot worth reading), but the
@@ -188,6 +190,9 @@ def run_case(case, args, results_dir):
         "deductions": verdict.get("deductions", []),
         "agent_model": args.model,
         "judge_model": args.judge_model,
+        "agent_model_resolved": resolved_model(agent.get("events")),
+        "judge_model_resolved": judge_model_resolved,
+        "judge_prompt_sha": JUDGE_PROMPT_SHA,
         "driver": args.driver,
         "permission_bypass": PERMISSION_BYPASS[args.driver],
         "started": started.isoformat(),

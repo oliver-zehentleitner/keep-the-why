@@ -8,6 +8,8 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 - Evals: a per-case history. `tools/evals/history.json` records every released series — how many of its runs each case passed — and `tools/evals/series.py` prints that record next to every flipped case (`--version X.Y.Z --record` adds a series; release checklist step 14). A flip on a case that has never failed reads differently from one on a case that fails now and then. A reading aid, not a gate; it starts with the 0.17.0 series and carries nothing older over.
 
+- Evals: every run names its instrument. Records carry `agent_model_resolved` and `judge_model_resolved` — what the `sonnet` alias actually ran, from the CLI's init event — and `judge_prompt_sha`, a hash of the judge prompt; `summary.json` and `summary.md` list them per run. An alias can move to a newer model without anything in the repository changing; two series are comparable when these match.
+
 ### Changed
 
 - Evals: guard checks get no allowance. The prohibitions among the deterministic checks — nothing written under a path, a file untouched or absent, a text absent from disk — are *guards* (`is_guard` in `tools/evals/ktw_evals/checks.py`, 53 checks on 39 cases; `"guard": false` in `evals.json` opts a check out, three do), and `tools/evals/series.py` fails a series on a single violation in any run, next to the per-case gate (2 of 3) and the per-run limit. The 2-of-3 allowance stays for what the judge decides. The 0.17.0 series meets the rule; 0.16.0 and 0.16.1 would not have. "How a series is judged" in `docs/evals.md`, release checklist step 14, the runner README and `context/evals.md` say so.

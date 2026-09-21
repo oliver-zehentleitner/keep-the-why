@@ -1,6 +1,7 @@
 """The LLM judge: always Claude, regardless of --driver, so grading criteria
 stay constant across drivers."""
 
+import hashlib
 import json
 import os
 import re
@@ -64,6 +65,28 @@ JSON object, no markdown fences, with exactly these keys:
 {DIFF}
 """
 
+# The instrument, named. A run records this next to the resolved judge model:
+# a verdict is only comparable with another one graded by the same prompt and
+# the same model, and an alias like "sonnet" says nothing about either.
+JUDGE_PROMPT_SHA = hashlib.sha256(JUDGE_PROMPT.encode()).hexdigest()[:12]
+
+
+def resolved_model(events):
+    """The model id the CLI actually ran, from its `system`/`init` event.
+
+    `--model sonnet` is an alias the vendor may point somewhere else; the init
+    event carries what it resolved to. None when there is no such event (a
+    driver that doesn't emit one, an older CLI, a crashed run)."""
+    for ev in events or []:
+        if (
+            isinstance(ev, dict)
+            and ev.get("type") == "system"
+            and ev.get("subtype") == "init"
+            and ev.get("model")
+        ):
+            return ev["model"]
+    return None
+
 
 def judge(case, transcript, diff, model, timeout):
     prompt = (
@@ -100,6 +123,7 @@ def judge(case, transcript, diff, model, timeout):
             continue
         try:
             data = json.loads(proc.stdout)
+            model_resolved = resolved_model(data) if isinstance(data, list) else None
             if isinstance(data, list):  # newer CLIs emit the event list here
                 result = next(
                     (
@@ -122,6 +146,7 @@ def judge(case, transcript, diff, model, timeout):
             verdict.setdefault("violations", [])
             if not isinstance(verdict["expectations"], list):
                 verdict["expectations"] = []
+            verdict["judge_model_resolved"] = model_resolved
             return verdict
         except (json.JSONDecodeError, AttributeError, ValueError) as e:
             last_error = f"unparseable judge output ({e}): {proc.stdout[:1000]}"

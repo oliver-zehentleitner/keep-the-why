@@ -226,6 +226,17 @@ and `deductions`, one entry per point below 10. `summary.md` shows one row
 per case, passes included, with the deductions in the last column: a 9 says
 where the point went without anyone re-reading the transcript.
 
+Every run also names its instrument. Agent and judge are called through a
+model alias (`sonnet`), and an alias can be pointed at a newer model without
+anything in this repository changing — so each record carries
+`agent_model_resolved` and `judge_model_resolved`, the model id the CLI
+reports it actually ran, and `judge_prompt_sha`, a hash of the judge prompt
+that graded it; `summary.json` and the first lines of `summary.md` list them
+for the run. Two series are comparable when these match. When they don't, a
+moved number may be the instrument and not the skill. Naming the instrument
+removes drift, not noise: a fixed judge still samples, which is what
+re-grading a stored transcript measures.
+
 ## How a series is judged
 
 A full run is 88 samples of a sampled agent graded by a sampled judge —
