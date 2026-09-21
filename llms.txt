@@ -114,6 +114,15 @@ is complete), checked directly by this skill at the start of every later session
 of whichever entry-point file a given agent tool reads on its own. Every later session picks
 the project back up without needing to be told again.
 
+What a developer has to do, in full: install the skill, say "set up Keep the Why here" once
+per project, answer the setup ("defaults" is a complete answer), then work as usual. Nobody
+has to tell the agent what to record. With the defaults — `capture-mode: proactive`,
+`capture-confirmation: confirm-when-unsure`, and the project carrying its own start path —
+the skill is loaded at the start of every session in that project, the agent records the why
+on its own as it surfaces in normal work, and it asks a short question only when it is
+genuinely unsure whether or how something should be captured. Asking for a capture explicitly
+also works; `explicit-only` is an option for whoever wants only that, not the normal mode.
+
 ## Also Listed On
 
 - ASM: curated skill index for the `asm` CLI, installable via `asm install

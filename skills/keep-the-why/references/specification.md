@@ -19,6 +19,8 @@ The specification is versioned with the skill: its version is the `metadata.vers
 | `~/.keep-the-why/<id>.md` | the developer's home | never | personal settings for one project on one machine |
 | `~/.keep-the-why/config` | the developer's home | never | machine-wide policy, all projects |
 
+All of these are written and kept current by the skill — the config files by the two wizards and the setup check, `<context>/` by capture and maintenance. A person answers the setup once per project and the occasional question; editing a file by hand is for changing a setting, not part of using it.
+
 Two boundaries hold for every path a config file names. `context` and `pinned-path` are relative to the project root and resolve inside it: no absolute path, no `..` out of the tree, no symlink that leaves it (`E009`). `id` is a plain file name, because it becomes `~/.keep-the-why/<id>.md` (`E010`). A value outside its boundary is not read, written or followed.
 
 ## 2. Config blocks
@@ -92,7 +94,7 @@ One file per project per developer per machine, `<id>` being the project's `id`.
 
 | Key | Values | Default | Meaning |
 |---|---|---|---|
-| `capture-mode` | `proactive` \| `explicit-only` | asked by the wizard | whether the skill looks for capture opportunities on its own |
+| `capture-mode` | `proactive` \| `explicit-only` | asked by the wizard, which proposes `proactive` | whether the skill looks for capture opportunities on its own. `proactive`: it records rationale as it surfaces in normal work, nobody has to ask; `explicit-only`: it waits for a request |
 | `confirmation-flow` | `sequential` \| `batch` | asked once; the wizard proposes `batch` | how several pending questions or confirmations are presented |
 | `update-check` | `every <N> days — last: <YYYY-MM-DD>[ — on-failure: retry-quietly \| disabled]` \| `no` | asked by the wizard | the release check and when it last completed |
 | `consistency-check` | `every <N> days — last: <YYYY-MM-DD>` \| `no` | asked by the wizard | the `Revisit when` sweep and when it last ran |

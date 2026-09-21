@@ -78,13 +78,15 @@ The dashboard — a read-only view over `context/` and its Git history: who reco
 
 ## How it works
 
+**Install it. Say "set up Keep the Why here" once in a project and answer the setup — "defaults" is a complete answer. Then work as usual.** The defaults include the start path, so from then on every session in that project loads the skill by itself. The agent records the why as it surfaces and asks only when it is genuinely unsure. You never have to tell it what to write down.
+
 <div class="ktw-cards" markdown>
 
 <div class="ktw-card" markdown>
 
 ### Capture
 
-The agent notices rationale as it surfaces — a decision, an alternative that lost, a workaround, a change that was started and abandoned — and writes it down. No separate documentation step. An existing repository can start late too. History, issues and code give back only part of the past why — but from that point on the reasons that matter are written down once, never again, and the gaps close over time.
+The agent notices rationale as it surfaces — a decision, an alternative that lost, a workaround, a change that was started and abandoned — and writes it down, without being asked. No separate documentation step. An existing repository can start late too. History, issues and code give back only part of the past why — but from that point on the reasons that matter are written down once, never again, and the gaps close over time.
 
 [Continuous capture →](continuous-capture.md) · [Retrospective →](retrospective-analysis.md)
 
