@@ -1,0 +1,17 @@
+{
+  "name": "keep-the-why",
+  "owner": {
+    "name": "Oliver Zehentleitner",
+    "url": "https://github.com/oliver-zehentleitner"
+  },
+  "metadata": {
+    "description": "Keep the Why as its own one-plugin marketplace for Claude Code."
+  },
+  "plugins": [
+    {
+      "name": "keep-the-why",
+      "source": "./",
+      "description": "The why layer of repo-native project memory: the reasoning behind a codebase, kept as Markdown in the repository."
+    }
+  ]
+}

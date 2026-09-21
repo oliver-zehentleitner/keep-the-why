@@ -6,6 +6,8 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Added
 
+- A Claude Code plugin install route: `.claude-plugin/marketplace.json` makes the repository its own one-plugin marketplace — `claude plugin marketplace add oliver-zehentleitner/keep-the-why --sparse .claude-plugin skills`, then `claude plugin install keep-the-why@keep-the-why` (or `/plugin …` in a session). The sparse checkout installs about 0.6 MB instead of the whole repository. Tested on Claude Code 2.1.273 against a local path and against GitHub with a ref; `claude plugin validate .` passes.
+- `docs/installation.md` has its own sections for the Claude Code plugin and for the GitHub Copilot CLI plugin (`copilot plugin install keep-the-why@awesome-copilot`, until now only a row under "Also listed on"); README and `llms.txt` name both commands.
 - Evals: a per-case history. `tools/evals/history.json` records every released series — how many of its runs each case passed — and `tools/evals/series.py` prints that record next to every flipped case (`--version X.Y.Z --record` adds a series; release checklist step 14). A flip on a case that has never failed reads differently from one on a case that fails now and then. A reading aid, not a gate; it starts with the 0.17.0 series and carries nothing older over.
 
 - Evals: every run names its instrument. Records carry `agent_model_resolved` and `judge_model_resolved` — what the `sonnet` alias actually ran, from the CLI's init event — and `judge_prompt_sha`, a hash of the judge prompt; `summary.json` and `summary.md` list them per run. An alias can move to a newer model without anything in the repository changing; two series are comparable when these match.

@@ -322,3 +322,18 @@ The two shell snippets in `references/autostart.md` and `references/ci-linting.m
 **Rejected alternative:** strip every URL from the package to reach *Safe*. Not possible without dropping the license attribution, the badge markup in `references/setup.md`, and the OWASP link the trust model cites.
 
 **Consequence:** new shell fences under `skills/keep-the-why/` use ` ```sh `. Of the other scanners on skills.sh, Socket and Snyk pass; Gen Agent Trust Hub reported *Warn* / medium in its 2026-09-18 audit of 0.17.0, naming four documented capabilities — pinned versions, reading outsider-authored text, the update check and the PyPI packages, the linter and `uuidgen`. Where a scanner looks at the skill reading issue and pull-request threads during retrospective recovery and interviews, that is the feature and the mitigation is Core rule 11 and `references/trust-model.md`. The label is not chased: it would only move by removing a capability. What is kept right is the public account of it — `docs/security.md` states each auditor's current result and is checked against the three audit pages with every release, after it once still said "all three pass" when one no longer did.
+
+## The repository is its own one-plugin marketplace for Claude Code too, installed with a sparse checkout
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** tested 2026-09-21 on Claude Code 2.1.273, in a throwaway `$HOME`: `claude plugin validate .`, then `marketplace add` and `plugin install` against a local path and against GitHub with a branch ref
+
+`.claude-plugin/marketplace.json` sits next to `.claude-plugin/plugin.json` and lists one plugin with `source: "./"`. `claude plugin marketplace add oliver-zehentleitner/keep-the-why --sparse .claude-plugin skills` followed by `claude plugin install keep-the-why@keep-the-why` installs the skill; `claude plugin details` reports one skill, no hooks, no agents, no MCP servers.
+
+**Reason:** the plugin manifest had been in the repository since the first Claude Code plugin work, but a manifest alone is not installable — Claude Code, like Codex, installs from a marketplace. Waiting for the community marketplace's review left Claude Code, the agent the suite is measured on, as the one major tool without a plugin route. The same one-repository pattern as `.agents/plugins/marketplace.json` for Codex closes that without a second repository to keep in sync.
+
+**Rejected alternative:** a separate marketplace repository — one more place for a version to go stale, for a single plugin. Also rejected: documenting the route without the `--sparse` flag. The plugin root is the repository root, so a plain add copies docs, linter, evals and dashboard (about 13 MB); the sparse checkout brings `.claude-plugin/` and `skills/` plus the root files, about 0.6 MB. Codex has no equivalent flag, which is why that install stays large (`TODO.md`, "Lean Codex plugin").
+
+**Consequence:** the marketplace file carries no version, so the release checklist has nothing to bump there; `plugin.json` next to it is already covered. A `#<tag>` pin works from the first release that contains the file. The plugin ships the skill only — no hook — so the start path is still the setup's job, written into the project where collaborators get it too.

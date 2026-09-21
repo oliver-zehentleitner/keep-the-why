@@ -98,8 +98,12 @@ Compatible with Claude Code, Codex CLI, Gemini CLI, GitHub Copilot, Cursor, Wind
 Antigravity, Amp, Cline, Kimi Code, Pi, Goose, Roo Code, OpenCode, Trae, Factory, JetBrains
 Junie, Warp, and other tools supporting the open Agent Skills format. Full paths per agent: see
 Installation below.
-Also installable as a Claude Code plugin (`.claude-plugin/plugin.json` at the repo root, separate
-from the root `plugin.json` used by GitHub's Copilot CLI plugin marketplace format).
+Also installable as a Claude Code plugin — the repository is its own one-plugin marketplace
+(`.claude-plugin/plugin.json` + `marketplace.json`): `claude plugin marketplace add
+oliver-zehentleitner/keep-the-why --sparse .claude-plugin skills`, then `claude plugin install
+keep-the-why@keep-the-why` (or `/plugin …` inside a session). As a GitHub Copilot CLI plugin:
+`copilot plugin install keep-the-why@awesome-copilot` (the root `plugin.json` serves that
+marketplace's format; the listing pins a release tag).
 Also a Cursor plugin (`.cursor-plugin/plugin.json` + `rules/keep-the-why.mdc`, a rule that loads
 the skill only in a workspace carrying `.keep-the-why`); Cursor marketplace submission pending.
 

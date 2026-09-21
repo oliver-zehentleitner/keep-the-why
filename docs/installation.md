@@ -58,6 +58,27 @@ asm install github:oliver-zehentleitner/keep-the-why#latest:skills/keep-the-why 
 
 Replace `<tool>` with your agent (`claude`, `codex`, `opencode`, `cline`, `gemini`, and more — run `asm install --help` for the full list). Replace `#latest` with an exact [tag](https://github.com/oliver-zehentleitner/keep-the-why/releases) to pin to a specific version instead of always the newest, or drop it to track `main` directly.
 
+## Also installable: Claude Code plugin
+
+Claude Code installs plugins from a *marketplace* — a repository carrying `.claude-plugin/marketplace.json` — and this repository is its own one-plugin marketplace (`.claude-plugin/plugin.json` and `marketplace.json` at the root, the skill under `skills/`). Two commands, in a shell:
+
+```bash
+claude plugin marketplace add oliver-zehentleitner/keep-the-why --sparse .claude-plugin skills
+claude plugin install keep-the-why@keep-the-why
+```
+
+or the same inside a session: `/plugin marketplace add oliver-zehentleitner/keep-the-why`, then `/plugin install keep-the-why@keep-the-why`. `--sparse .claude-plugin skills` limits the checkout to what the plugin needs — about 0.6 MB instead of the whole repository with its docs, linter, evals and dashboard. Append `#<release tag>` to the repository to pin it, from the first release after 0.17.0 on — that is the first tag that carries the marketplace file; without a ref Claude Code follows the default branch, and `claude plugin marketplace update keep-the-why` followed by `claude plugin update keep-the-why@keep-the-why` refreshes it. `claude plugin details keep-the-why@keep-the-why` shows what was installed: one skill, no hooks, no agents, no MCP servers, under a hundred always-on tokens per session. Verified on Claude Code 2.1.273 with the shell commands, against a local path and against GitHub with a branch ref; the slash commands are the documented equivalent and were not run separately. The plugin ships the skill only — the [start path](autostart.md) is still written by the setup, into the project.
+
+## Also installable: GitHub Copilot CLI plugin
+
+Keep the Why is listed in the [Awesome Copilot marketplace](https://awesome-copilot.github.com/plugin/keep-the-why/), which Copilot CLI and VS Code have registered by default:
+
+```bash
+copilot plugin install keep-the-why@awesome-copilot
+```
+
+On an older Copilot CLI that reports the marketplace as unknown, register it once first: `copilot plugin marketplace add github/awesome-copilot`. The listing pins an exact release tag — immutable by the marketplace's own rule — and is bumped by a pull request there with every release of the skill, so it can trail a new release by the time their review takes. The commands are the marketplace's own ([its README](https://github.com/github/awesome-copilot#install-a-plugin)); the listing is checked with every release, the install itself was not run by this project. For Copilot without the plugin route, the skill directory in the table under "Fallback: manual clone" works as for any other agent.
+
 ## Also installable: Codex plugin
 
 Codex CLI installs plugins from a *marketplace* — a repository carrying `.agents/plugins/marketplace.json` — and this repository is its own one-plugin marketplace (`.codex-plugin/plugin.json` at the root, the skill under `skills/`). Two commands:
