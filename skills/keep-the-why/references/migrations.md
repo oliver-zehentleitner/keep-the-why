@@ -4,6 +4,12 @@ What changed in each version that an existing project may need to know about or 
 
 Entries below assume 0.2.0 as the starting point — nothing before it tracked a `context-schema` at all, and 0.2.0 itself introduced no `context/` entry format change.
 
+## 0.17.1 — a Claude Code plugin route, and the docs say what using the skill takes (informational, no action required)
+
+**What changed:** the repository is its own one-plugin marketplace for Claude Code (`.claude-plugin/marketplace.json`), so the skill installs with `claude plugin marketplace add` and `claude plugin install`; this is the first release tag that carries the file. In the skill's references, `specification.md` says who writes the files it defines — the skill; by hand only to change a setting — and what `capture-mode: proactive` means, and `setup.md` no longer explains `capture-mode` by way of a missing autostart hook. No behaviour, format or default changed; the linter knows the version and gates nothing new.
+
+**Existing projects:** nothing to migrate. A skill installed by any other route stays as it is. Advance `context-schema` to 0.17.1 as usual.
+
 ## 0.17.0 — ask-versus-write as a table, wording for twice-seen eval forms (informational, no action required)
 
 **What changed:** `SKILL.md` step 5 decides ask-versus-write from a table — six situations, first match wins, one column per `capture-confirmation` value — with four modifiers under it, in place of six prose bullets. Two rows say something the prose did not: a reason the person stated or agreed to in the conversation is written under `automatic` and `confirm-when-unsure` without a permission question, and a reason the agent read out of the code alone is never turned into an entry on the back of a plain question. A missing `context-schema` is backfilled to `0.2.0` as its own edit, never to the installed version. Under `confirmation-flow: sequential` the first candidate is the first thing the person sees. The pending-confirmation check names the entries it finds and still answers the request. `superseded` is reached by a person or by a replacement decision recorded in `context/` on their instruction. A workaround's procedure is not repeated in the entry under a `**Workaround:**` label; the `**Type:** workaround` line stays. Nothing in the `context/` format, the config files or the index changed; the linter knows the version and gates nothing new.

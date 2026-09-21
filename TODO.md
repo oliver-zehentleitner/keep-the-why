@@ -8,8 +8,9 @@ Last reviewed: 2026-09-18.
 
 ### Active
 
-0.17.0 (skill + linter 0.17.0.0) is prepared and measured (87/88/87 of 88,
-`docs/evals.md`); the release itself follows the checklist in `CONTRIBUTING.md`.
+0.17.1 (skill + linter 0.17.1.0) is prepared: the Claude Code plugin route and the
+"what using it takes" docs; 0.17.0 is released and measured (87/88/87 of 88,
+`docs/evals.md`). The 0.17.1 measurement follows the tag.
 The skill is considered complete: no wording or eval work is planned, changes
 follow user feedback.
 

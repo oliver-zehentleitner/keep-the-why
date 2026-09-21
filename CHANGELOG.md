@@ -4,6 +4,8 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.17.1] - 2026-09-21
+
 ### Added
 
 - A Claude Code plugin install route: `.claude-plugin/marketplace.json` makes the repository its own one-plugin marketplace — `claude plugin marketplace add oliver-zehentleitner/keep-the-why --sparse .claude-plugin skills`, then `claude plugin install keep-the-why@keep-the-why` (or `/plugin …` in a session). The sparse checkout installs about 0.6 MB instead of the whole repository. Tested on Claude Code 2.1.273 against a local path and against GitHub with a ref; `claude plugin validate .` passes.
@@ -14,6 +16,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Changed
 
+- `keep-the-why-lint 0.17.1.0`: knows schema 0.17.1 — no new gate, nothing changes what `context/` or `.keep-the-why` must look like. Published before the skill tag, per the checklist.
 - The docs say in so many words what using the skill takes: install it with one command (the landing page shows it), say "set up Keep the Why here" once per project, answer the setup ("defaults" is a complete answer), work as usual — capture runs by itself from then on, the agent asks only when it is genuinely unsure, and the start path the defaults write loads the skill in every later session in that directory. Landing page ("How it works"), README, a new FAQ entry ("Do I have to tell the agent to write things down?"), `docs/installation.md`, `llms.txt`; `references/specification.md` says who writes the files and what `capture-mode: proactive` means, `references/setup.md` no longer describes `capture-mode` by way of a missing autostart hook. Two FAQ answers still named `AGENTS.md` as the home of `capture-confirmation` and `source-reference`; both have lived in `.keep-the-why` since 0.10.0.
 - `docs/security.md` states the current skills.sh audit results instead of "all three report Pass": for 0.17.0 Socket and Snyk pass, Gen Agent Trust Hub reports *Warn* (risk level medium) and names four categories — dynamic execution, indirect prompt injection, external downloads, command execution. Each is a documented capability (pinned versions, reading outsider-authored text, the update check and the PyPI packages, the linter and `uuidgen`), and the page says for each what stands behind it and what bounds it. Release checklist step 12 now includes checking that section against the three audit pages.
 - Evals: guard checks get no allowance. The prohibitions among the deterministic checks — nothing written under a path, a file untouched or absent, a text absent from disk — are *guards* (`is_guard` in `tools/evals/ktw_evals/checks.py`, 53 checks on 39 cases; `"guard": false` in `evals.json` opts a check out, three do), and `tools/evals/series.py` fails a series on a single violation in any run, next to the per-case gate (2 of 3) and the per-run limit. The 2-of-3 allowance stays for what the judge decides. The 0.17.0 series meets the rule; 0.16.0 and 0.16.1 would not have. "How a series is judged" in `docs/evals.md`, release checklist step 14, the runner README and `context/evals.md` say so.
@@ -710,7 +713,8 @@ Initial release.
 - Logo, wordmark, and favicon.
 - `context/repo-conventions.md`, dogfooding the skill on its own repository from day one.
 
-[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.17.0...HEAD
+[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.17.1...HEAD
+[0.17.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.17.0...v0.17.1
 [0.17.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.16.3...v0.17.0
 [0.16.3]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.16.2...v0.16.3
 [0.16.2]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.16.1...v0.16.2
