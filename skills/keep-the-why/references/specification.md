@@ -205,6 +205,7 @@ Every convention below that says "since <version>" is enforced by the linter onl
 ```
 
 - One `#` title, optionally one intro paragraph, then exactly the thirty-six level-2 headings `## 0` … `## 9`, `## A` … `## Z`, in that order, all present, empty ones included (`E205`). Since 0.13.0.
+- Those thirty-six headings together are the *index skeleton* — the name this specification uses for them; "deterministic write areas" names what they do for concurrent branches (two topics added on two branches land under their own headings, not in one conflicting hunk), not the skeleton itself.
 - One entry per topic file (`E203`), of the form `- [<file>](<file>) — <one line>`; the link target is the bare filename (`E202` if it does not exist). The one line describes what the file covers, not what was last added to it.
 - An entry sits under the heading of its filename's first character, uppercased; a name starting with neither a digit nor a letter goes under `## 0` (`E206`). Within a heading, entries are sorted by filename, so the whole list reads in ascending order (`E204`, since 0.10.0).
 - Nothing else: the index is for deciding what to load, not for holding content.

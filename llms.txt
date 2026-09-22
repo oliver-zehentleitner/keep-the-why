@@ -303,9 +303,20 @@ external service (no database, no MCP server).
   the work happens, like README.md and docs/. Its location is chosen at setup (`context/` by
   default, or an existing decision folder) and recorded in `.keep-the-why`.
 - Selective loading: `context/index.md` has one line per topic file under a fixed heading
-  skeleton; the agent reads the index and opens only the topic a task touches. The skeleton's
-  thirty-six always-present headings are deterministic write areas: two branches adding topics
+  skeleton; the agent reads the index and opens only the topic a task touches. The thirty-six
+  always-present headings are the index skeleton (its name in the specification); what they do
+  for concurrent branches is called deterministic write areas: two branches adding topics
   cannot collide in the index — https://blog.technopathy.club/one-index-many-writers-avoiding-git-merge-conflicts-with-deterministic-write-areas
+- No similarity search, no vector store: retrieval is the index and the topic name; entries are
+  synthesized from the conversation and read in full, not stored verbatim and ranked. context/
+  is Markdown, so any search tool can index it; none is shipped or needed.
+- No commit gating, no Git hooks: the linter checks the form of an entry, never the content of
+  a decision. Prevention happens in the agent session, before the change: with the entry in
+  place 0 of 10 fresh sessions proposed a rejected change, without it 7 of 10 —
+  https://blog.technopathy.club/what-happens-when-a-coding-agent-forgets-why-a-change-was-rejected
+- No UI that holds anything: context/ renders on GitHub or GitLab for anyone who can open the
+  repository, product managers included; keep-the-why-dashboard is a read-only viewer; the
+  repository is the single copy.
 - Not session memory — session memory remembers what happened in a session, locally, for one
   person and one tool; this preserves why the project is the way it is, in the repository, for
   every session, machine, tool and team member. It does the job session memory is wanted for
