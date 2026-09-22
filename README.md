@@ -201,7 +201,7 @@ This isn't a new pattern, either. Docs and changelogs are already commonly kept 
 
 ## Format
 
-`context/` entries follow the same shape whether written by hand, by this skill, or by any other tool speaking the convention — a small set of fields, not a fixed template. They live one file per topic, found through `context/index.md` — one line per topic under a fixed heading skeleton — so an agent reads the index and opens only the topic a task touches, never all of `context/` at once:
+`context/` entries follow the same shape whether written by hand, by this skill, or by any other tool speaking the convention — a small set of fields, not a fixed template. They live one file per topic, found through `context/index.md` — one line per topic under a fixed heading skeleton — so an agent reads the index and opens only the topic a task touches, never all of `context/` at once. The skeleton's thirty-six headings are always present, so two branches adding topics cannot collide in the index ([One Index, Many Writers](https://blog.technopathy.club/one-index-many-writers-avoiding-git-merge-conflicts-with-deterministic-write-areas)):
 
 | Field | Meaning |
 |---|---|
