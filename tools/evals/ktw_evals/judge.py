@@ -71,6 +71,70 @@ JSON object, no markdown fences, with exactly these keys:
 JUDGE_PROMPT_SHA = hashlib.sha256(JUDGE_PROMPT.encode()).hexdigest()[:12]
 
 
+USAGE_FIELDS = (
+    "input_tokens",
+    "cache_read_input_tokens",
+    "cache_creation_input_tokens",
+    "output_tokens",
+    "thinking_tokens",
+    "ttft_ms",
+    "duration_api_ms",
+    "total_cost_usd",
+    "service_tier",
+)
+
+
+def session_usage(events):
+    """What the session cost and how long the model took, from the CLI's
+    `result` event: token counts (thinking tokens separately — the number
+    that says whether the model reasoned less, not only whether it did
+    less), time to first token and API time (a load signal), the service
+    tier, and the model the vendor calls canonical. Every value None when
+    there is no result event — a driver that doesn't emit one, a crashed run.
+
+    Why: on 2026-09-21 the same model id did half the work per case for one
+    evening. Turns and tool calls showed *that* the instrument had changed;
+    thinking tokens would have shown *how* — a lowered reasoning budget
+    reads as fewer thinking tokens per turn, a different model build does
+    not — and ttft would have said whether the servers were under load."""
+    out = {k: None for k in USAGE_FIELDS}
+    out["canonical_model"] = None
+    for ev in events or []:
+        if not (isinstance(ev, dict) and ev.get("type") == "result"):
+            continue
+        usage = ev.get("usage") or {}
+        for k in (
+            "input_tokens",
+            "cache_read_input_tokens",
+            "cache_creation_input_tokens",
+            "output_tokens",
+            "service_tier",
+        ):
+            out[k] = usage.get(k)
+        out["thinking_tokens"] = (usage.get("output_tokens_details") or {}).get(
+            "thinking_tokens"
+        )
+        for k in ("ttft_ms", "duration_api_ms", "total_cost_usd"):
+            out[k] = ev.get(k)
+        models = ev.get("modelUsage") or {}
+        if out["thinking_tokens"] is None and models:
+            out["thinking_tokens"] = sum(
+                (m.get("thinkingTokens") or 0)
+                for m in models.values()
+                if isinstance(m, dict)
+            )
+        canon = sorted(
+            {
+                m.get("canonicalModel")
+                for m in models.values()
+                if isinstance(m, dict) and m.get("canonicalModel")
+            }
+        )
+        out["canonical_model"] = ", ".join(canon) if canon else None
+        break
+    return out
+
+
 def resolved_model(events):
     """The model id the CLI actually ran, from its `system`/`init` event.
 

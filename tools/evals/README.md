@@ -44,10 +44,14 @@ case plus `summary.json` and `summary.md`. Each record and the summary name
 the instrument that produced them — the model ids the `--model` and
 `--judge-model` aliases resolved to (from the CLI's init event; `null` for a
 driver that doesn't report one), a hash of the judge prompt, the CLI version,
-and the median turns and tool calls per case — so a later run can tell a
-change in the skill from a change in what measured it. The medians are the
-drift alarm: a run whose agent takes half the turns of the last one is a
-different instrument, whatever its verdicts say.
+the median turns and tool calls per case, and what the CLI's result event
+reports per session: token counts with thinking tokens separately, time to
+first token, API time, service tier and the vendor's canonical model name —
+so a later run can tell a change in the skill from a change in what
+measured it. The medians are the drift alarm: a run whose agent takes half
+the turns of the last one is a different instrument, whatever its verdicts
+say; whether it *reasoned* less shows in the thinking tokens, and whether
+the servers were slow in the time to first token.
 
 ## Layout
 

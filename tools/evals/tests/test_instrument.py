@@ -9,7 +9,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from ktw_evals.analysis import session_shape  # noqa: E402
 from ktw_evals.common import cli_version  # noqa: E402
-from ktw_evals.judge import JUDGE_PROMPT, JUDGE_PROMPT_SHA, resolved_model  # noqa: E402
+from ktw_evals.judge import (  # noqa: E402
+    JUDGE_PROMPT,
+    JUDGE_PROMPT_SHA,
+    resolved_model,
+    session_usage,
+)
 
 
 class Instrument(unittest.TestCase):
@@ -44,6 +49,44 @@ class Instrument(unittest.TestCase):
         self.assertEqual(session_shape(t), {"turns": 7, "tool_calls": 2})
         self.assertEqual(session_shape(""), {"turns": None, "tool_calls": 0})
         self.assertEqual(session_shape(None), {"turns": None, "tool_calls": 0})
+
+    def test_session_usage_from_the_result_event(self):
+        events = [
+            {"type": "system", "subtype": "init", "model": "claude-sonnet-5"},
+            {
+                "type": "result",
+                "usage": {
+                    "input_tokens": 6,
+                    "cache_read_input_tokens": 95203,
+                    "cache_creation_input_tokens": 19224,
+                    "output_tokens": 1702,
+                    "output_tokens_details": {"thinking_tokens": 1563},
+                    "service_tier": "standard",
+                },
+                "modelUsage": {
+                    "claude-sonnet-5": {
+                        "thinkingTokens": 1563,
+                        "canonicalModel": "claude-sonnet-5",
+                    }
+                },
+                "ttft_ms": 1516,
+                "duration_api_ms": 20682,
+                "total_cost_usd": 0.113,
+            },
+        ]
+        u = session_usage(events)
+        self.assertEqual(u["thinking_tokens"], 1563)
+        self.assertEqual(u["output_tokens"], 1702)
+        self.assertEqual(u["cache_read_input_tokens"], 95203)
+        self.assertEqual(u["ttft_ms"], 1516)
+        self.assertEqual(u["service_tier"], "standard")
+        self.assertEqual(u["canonical_model"], "claude-sonnet-5")
+
+    def test_session_usage_without_a_result_event_is_all_none(self):
+        u = session_usage([{"type": "system", "subtype": "init"}])
+        self.assertTrue(all(v is None for v in u.values()))
+        self.assertIn("thinking_tokens", u)
+        self.assertTrue(all(v is None for v in session_usage(None).values()))
 
     def test_cli_version_of_a_missing_binary_is_none(self):
         self.assertIsNone(cli_version("no-such-binary-ktw-evals"))

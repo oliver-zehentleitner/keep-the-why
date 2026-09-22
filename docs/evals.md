@@ -231,9 +231,15 @@ reports it actually ran, and `judge_prompt_sha`, a hash of the judge prompt
 that graded it; `summary.json` and the first lines of `summary.md` list them
 for the run. Two series are comparable when these match. When they don't, a
 moved number may be the instrument and not the skill. Since 2026-09-22 a run also
-records the CLI version and the median turns and tool calls per case
-(`median_turns`, `median_tool_calls`), which is the cheapest drift alarm
-there is: on 2026-09-21 the same model id behind the same CLI binary ran
+records the CLI version, the median turns and tool calls per case
+(`median_turns`, `median_tool_calls`), and per session what the CLI reports
+at the end: thinking tokens separately from output tokens, time to first
+token, API time, service tier, the vendor's canonical model name. Turns say
+*that* the instrument changed; thinking tokens say whether the model
+reasoned less (a lowered reasoning budget reads as fewer thinking tokens per
+turn, a different model build does not); time to first token says whether
+the servers were slow. The turn medians are the cheapest drift alarm there
+is: on 2026-09-21 the same model id behind the same CLI binary ran
 half the turns it had four days earlier, acted before it asked, and the
 pass count went from 87 to 81 without a rule in the skill having changed —
 see the 0.17.1 block above. Naming the instrument removes drift, not

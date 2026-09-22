@@ -26,7 +26,7 @@ from .drivers import (
     build_prompt,
     seed_fake_home,
 )
-from .judge import JUDGE_PROMPT_SHA, judge, resolved_model
+from .judge import JUDGE_PROMPT_SHA, judge, resolved_model, session_usage
 from .results import RATE_LIMIT_RE, load_resolved, rate_limit_sentinel, write_summary
 from .workdir import build_workdir, collect_diff
 
@@ -202,6 +202,7 @@ def run_case(case, args, results_dir):
         "judge_prompt_sha": JUDGE_PROMPT_SHA,
         "cli_version": cli_version(CLI_BINARY.get(args.driver, args.driver)),
         **session_shape(transcript),
+        **session_usage(agent.get("events")),
         "driver": args.driver,
         "permission_bypass": PERMISSION_BYPASS[args.driver],
         "started": started.isoformat(),

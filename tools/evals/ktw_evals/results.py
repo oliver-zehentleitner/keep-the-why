@@ -163,6 +163,17 @@ def write_summary(records, results_dir, args):
         # it. A jump here means the instrument changed, whatever the verdicts.
         "median_turns": _median([r.get("turns") for r in records]),
         "median_tool_calls": _median([r.get("tool_calls") for r in records]),
+        # Token and latency medians, same purpose: thinking tokens say
+        # whether the model reasoned less, ttft whether the servers were slow.
+        "median_thinking_tokens": _median([r.get("thinking_tokens") for r in records]),
+        "median_output_tokens": _median([r.get("output_tokens") for r in records]),
+        "median_ttft_ms": _median([r.get("ttft_ms") for r in records]),
+        "canonical_models": sorted(
+            {r["canonical_model"] for r in records if r.get("canonical_model")}
+        ),
+        "service_tiers": sorted(
+            {r["service_tier"] for r in records if r.get("service_tier")}
+        ),
         "permission_bypass": PERMISSION_BYPASS[args.driver],
         "date": datetime.date.today().isoformat(),
         "total": len(records),
@@ -202,7 +213,10 @@ def write_summary(records, results_dir, args):
         f"{', '.join(f'`{m}`' for m in summary['judge_models_resolved']) or 'unknown'}"
         f" · judge prompt `{JUDGE_PROMPT_SHA}`"
         f" · CLI `{summary['cli_version'] or 'unknown'}`"
-        f" · median {summary['median_turns']} turns / {summary['median_tool_calls']} tool calls per case",
+        f" · median {summary['median_turns']} turns / {summary['median_tool_calls']} tool calls per case"
+        f" · median {summary['median_thinking_tokens']} thinking / {summary['median_output_tokens']} output tokens"
+        f" · median ttft {summary['median_ttft_ms']} ms"
+        f" · tier {', '.join(summary['service_tiers']) or 'unknown'}",
         "",
         f"**{len(passed)}/{len(records)} passed** ({len(failed)} failed, {len(errored)} errors)",
         "",
