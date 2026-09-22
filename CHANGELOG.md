@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Changed
+
+- The docs state plainly what outside descriptions keep getting wrong: there is no Keep the Why CLI and no init command (three new FAQ entries: the CLI question, why `context/` is visible and where it may live, how the agent finds the right entry through `context/index.md`); the "Not session memory" boundary on the landing page and in the README now adds that it does the job session memory is wanted for; the index and selective loading are named on the landing page and in the README's Format section; `llms.txt` has a "Plain Facts" block for the same points.
+
 ### Added
 
 - The article *Keep the Why is not another workflow* (https://blog.technopathy.club/keep-the-why-is-not-another-workflow) is linked from the README ("How it works"), the FAQ entry on whether the agent has to be told what to record, and `llms.txt`.

@@ -291,6 +291,26 @@ knowledge-transfer interviews, plus ongoing maintenance of what's already there,
 topic-indexed living docs rather than a shadow tree or one-file-per-decision, with no required
 external service (no database, no MCP server).
 
+## Plain Facts (what it is and is not)
+
+- There is no Keep the Why CLI and no init command. The skill is text (SKILL.md + references)
+  read by the coding agent. Installing is one command (`npx skills add …`); "initialize Keep
+  the Why in this project" is a sentence said to the agent once per project.
+- The only executables are optional and separate: `keep-the-why-lint` (structural checks for
+  context/, locally and in CI) and `keep-the-why-dashboard` (read-only viewer). Nothing runs in
+  the background; nothing phones home; the update check is a GitHub API call the agent makes.
+- The context/ folder is visible and committed on purpose: repo-native means available where
+  the work happens, like README.md and docs/. Its location is chosen at setup (`context/` by
+  default, or an existing decision folder) and recorded in `.keep-the-why`.
+- Selective loading: `context/index.md` has one line per topic file under a fixed heading
+  skeleton; the agent reads the index and opens only the topic a task touches.
+- Not session memory — session memory remembers what happened in a session, locally, for one
+  person and one tool; this preserves why the project is the way it is, in the repository, for
+  every session, machine, tool and team member. It does the job session memory is wanted for
+  (the agent forgetting between sessions) at the source.
+- No vendor lock-in: plain Markdown and Git; switch agents and the memory stays.
+- Team sharing is Git: clone, branch, pull request — no sync service, no project id.
+
 ## Common Mistakes
 
 - Don't treat this as a replacement for README, docs, CONTRIBUTING.md, tests, or a changelog —

@@ -55,7 +55,7 @@ The payment gateway's rate limiter returns 429 with a per-request `Retry-After` 
 
 </div>
 
-Decisions that shipped, alternatives that lost, workarounds, constraints — Keep the Why keeps the reasoning behind all of them: one entry per topic, plain Markdown, reviewed in the same pull request as the code. This one is the case where it matters most: a change that was started and then dropped, so there is no commit, no diff, no pull request — and without the entry, no trace. Every entry says how well its claim is backed (`Evidence`) and whether it still holds (`Status`); "unknown" is a valid answer. [The full example →](examples/abandoned-change.md) · [Field reference →](repository-structure.md)
+Decisions that shipped, alternatives that lost, workarounds, constraints — Keep the Why keeps the reasoning behind all of them: one entry per topic, plain Markdown, reviewed in the same pull request as the code, and found through a one-line-per-topic index, so an agent loads only the topic a task touches. This one is the case where it matters most: a change that was started and then dropped, so there is no commit, no diff, no pull request — and without the entry, no trace. Every entry says how well its claim is backed (`Evidence`) and whether it still holds (`Status`); "unknown" is a valid answer. [The full example →](examples/abandoned-change.md) · [Field reference →](repository-structure.md)
 { .ktw-caption }
 
 </div>
@@ -161,7 +161,7 @@ And one controlled experiment on the core claim: twenty fresh agent sessions, th
 
 <div class="ktw-card" markdown>
 
-**Not session memory.** Session memory remembers what happened; project state remembers where the project is; the why layer preserves why it became what it is. This is the third — not a transcript or activity log.
+**Not session memory — and it does the job session memory is wanted for.** Session memory remembers what happened; project state remembers where the project is; the why layer preserves why it became what it is. This is the third — not a transcript or activity log. But what people reach for session memory to fix — the agent forgetting between sessions — this fixes at the source: the reasoning is in the repository, so every session starts with it, on every machine and in every tool, for the whole team.
 
 </div>
 
