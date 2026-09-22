@@ -6,6 +6,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Changed
 
+- `docs/evals.md` carries the 0.17.1 release measurement re-taken the morning after the instrument drift: 87, 87 and 88 of 88, the series rule passed, 86 cases 3/3, guards held, median 11.5–12 turns per case as in every series before; the previous evening's 83 · 80 · 81 stays in the run history as the documented drift. `tools/evals/history.json` records the re-measured series. `context/evals.md` records the resolution.
+
+### Changed
+
 - The docs state plainly what outside descriptions keep getting wrong: there is no Keep the Why CLI and no init command (three new FAQ entries: the CLI question, why `context/` is visible and where it may live, how the agent finds the right entry through `context/index.md`, linking the article on deterministic write areas); the "Not session memory" boundary on the landing page and in the README now adds that it does the job session memory is wanted for; the index and selective loading are named on the landing page and in the README's Format section, the README linking the deterministic-write-areas article as well; `llms.txt` has a "Plain Facts" block for the same points.
 
 ### Added
