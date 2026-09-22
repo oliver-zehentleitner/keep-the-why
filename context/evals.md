@@ -100,3 +100,22 @@ Wording changes that come out of an eval series are limited to forms that failed
 **Rejected alternative:** keeping the prose and adding one sentence per observed failure — see above, it is how the 17 % came about. Also rejected: moving the table out to `references/setup.md` to keep `SKILL.md` short — during capture the skill body is what the agent has in context, a reference is loaded on demand, and the first table draft already showed how little slack there is: a modifier that lost four words ("not instead") made the agent hold a write back for an answer under `automatic`.
 
 **Consequence:** a one-time flip gets an issue with the transcript's reason, labelled `evals`, not a sentence. Expectation texts are part of the same discipline — four of the flips in that measurement were the judge reading more into an expectation than it meant ("may" read as "must", a fixture detail read as a requirement), fixed in `evals.json`, not in the skill.
+
+## The instrument moved under the same model id; a run now records CLI version and session shape, and stored runs can be re-graded
+
+**Type:** incident
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** the 0.17.1 release measurement, 2026-09-21 (`docs/evals.md`, "Latest full-suite results"); a counter-run on the previous CLI the same evening; the first re-grading measurement the same evening
+**Revisit when:** a vendor exposes a way to pin the exact model build behind an id — then the recorded fields can become a pin instead of a record
+
+Four days after the 0.17.0 series (87/88/87), the same skill text (three explanatory sentences apart) measured 83/80/81 — with `claude-sonnet-5` as the resolved id, the same judge prompt, and, per a counter-run pinned to the old binary, the same result on the previous CLI. What differed was the agent's behaviour: median 6 turns and 4 tool calls per case instead of 13 and 11, no reference file opened, action before question. The next morning two cases ran at 14 and 12 again. Nothing in the repository, the CLI or the environment explains it; a change on the vendor's side is the only remaining place.
+
+**Reason:** a pass count is only comparable with another one measured by the same instrument, and "same model id" turned out not to mean "same instrument". The cheapest thing that would have shown the change before anyone read a verdict is the session shape — how much the agent did — so every run now records `median_turns` and `median_tool_calls` next to the model ids, the judge prompt hash and, new, the CLI version. The 0.17.1 numbers stay in the run history as measured, with the explanation, rather than being dropped: a series that fails because the ruler changed is worth more on the page than a gap.
+
+**Rejected alternative:** re-measuring until a series passes, and publishing that one. Rejected — it would publish the instrument's good day, not the skill. Also rejected: changing the skill to satisfy the new behaviour on the spot — the forms that failed (act before ask, overwrite one source with the other) had passed 3/3 on the same wording four days earlier, and two of the sentences that would address them had just been removed as single-flip patches for that reason. If the behaviour persists, that becomes a decision about the skill; if it does not, a sentence written for one bad evening would have been noise in the skill text.
+
+**Re-grading** (`tools/evals/regrade.py`) came out of the same evening, prompted by the first public feedback on the series rule: the judge is asked again about a stored transcript and diff, without an agent session. First measurement: the judge agrees with itself on 139 of 148 records five times over, so its sampling noise on a fixed transcript is small; against the stored verdicts it differs in both directions (10 of 41 judge-decided failures would pass today, 8 of 88 stored passes fail), and a hand-read case shows the re-grade right and the stored pass wrong — the same drift, seen from the grading side. A wording change made in answer to a failure should therefore be preceded by a re-grade of that failure.
+
+**Consequence:** `summary.json` carries `cli_version`, `median_turns`, `median_tool_calls`; release checklist step 14 compares instruments before it compares pass counts; the operator's `~/.local/bin` is shadowed without the linter launchers in every session (a reinstalled host linter cost two cases that evening); `docs/evals.md` names the 0.17.0 series' CLI as 2.1.274, not 2.1.273 as it had said.

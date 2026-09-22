@@ -1,5 +1,6 @@
 """Paths, size limits, and the two helpers every other module shares."""
 
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -69,7 +70,17 @@ def fake_home_env(env, home):
     session that installs a tool would otherwise leak it into the real
     ~/.local and every later session would find it there. The fake home's
     bin directory goes first on PATH so a tool the agent installs during the
-    run is found by the same session, the way a user's ~/.local/bin is."""
+    run is found by the same session, the way a user's ~/.local/bin is.
+
+    The operator's own ~/.local/bin is replaced on PATH by a shadow of
+    itself without the linter launchers: a `ktw-lint` installed there would
+    otherwise be what the agent finds, and its state on the host — present,
+    absent, half-reinstalled, pointing at a module the redirected
+    PYTHONUSERBASE can no longer see — would become part of the measurement.
+    The documented condition for a series is "no linter on the host"; the
+    shadow makes it true regardless of the host. Everything else in that
+    directory (the agent CLI itself lives there on many machines) stays
+    reachable."""
     home = str(home)
     env["HOME"] = home
     env["PIPX_HOME"] = f"{home}/.local/share/pipx"
@@ -77,5 +88,58 @@ def fake_home_env(env, home):
     env["UV_TOOL_DIR"] = f"{home}/.local/share/uv/tools"
     env["UV_TOOL_BIN_DIR"] = f"{home}/.local/bin"
     env["PYTHONUSERBASE"] = f"{home}/.local"
-    env["PATH"] = f"{home}/.local/bin:" + env.get("PATH", "")
+    real_local_bin = Path.home() / ".local" / "bin"
+    shadow = shadow_local_bin(real_local_bin, Path(home) / ".local" / "host-bin")
+    parts = []
+    for p in env.get("PATH", "").split(os.pathsep):
+        if not p:
+            continue
+        if os.path.normpath(p) == str(real_local_bin):
+            if shadow and str(shadow) not in parts:
+                parts.append(str(shadow))
+            continue
+        parts.append(p)
+    env["PATH"] = os.pathsep.join([f"{home}/.local/bin"] + parts)
     return env
+
+
+LINTER_LAUNCHERS = frozenset({"ktw-lint", "keep-the-why-lint"})
+
+
+def shadow_local_bin(real_bin, shadow):
+    """A directory of symlinks to everything in `real_bin` except the linter
+    launchers. None when `real_bin` does not exist, or when the shadow cannot
+    be created — then `real_bin` simply stays off the PATH."""
+    if not real_bin.is_dir():
+        return None
+    try:
+        shadow.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        return None
+    for entry in real_bin.iterdir():
+        if entry.name in LINTER_LAUNCHERS:
+            continue
+        target = shadow / entry.name
+        if not target.exists() and not target.is_symlink():
+            target.symlink_to(entry)
+    return shadow
+
+
+_CLI_VERSION = {}
+
+
+def cli_version(binary="claude"):
+    """`<binary> --version`, once per process. None when it cannot be run.
+
+    Part of the instrument a run records next to the resolved model ids: the
+    same model behind the same CLI binary can still behave differently on
+    another day, and the version is the cheapest thing to write down."""
+    if binary not in _CLI_VERSION:
+        try:
+            out = subprocess.run(
+                [binary, "--version"], capture_output=True, text=True, timeout=60
+            ).stdout.strip()
+            _CLI_VERSION[binary] = out.split("\n")[0] if out else None
+        except (OSError, subprocess.TimeoutExpired):
+            _CLI_VERSION[binary] = None
+    return _CLI_VERSION[binary]

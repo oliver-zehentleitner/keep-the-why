@@ -11,8 +11,42 @@ the expected behavior.
 
 ## Latest full-suite results
 
-**87, 88 and 87 of 88 passed** across three consecutive full runs of the
-0.17.0 wording — 2026-09-17, Claude Code CLI 2.1.273, agent and judge both
+**0.17.1 — 83, 80 and 81 of 88, and the series does not pass the rule.**
+Three consecutive full runs on the `v0.17.1` tag, 2026-09-21 20:29–21:08,
+Claude Code CLI 2.1.278, agent and judge `claude-sonnet-5`, the usual
+switches. Five cases below 2 of 3 (two of them 0 of 3), every run above one
+failed case; the guards held in all three runs — nothing written where it
+was not allowed, no secret on disk. The skill text differs from 0.17.0 by
+three explanatory sentences in two reference files, none of them in
+`SKILL.md`, none a rule. What changed is the instrument, and this page now
+records it — see "What the numbers separate": between the 0.17.0 series
+(2026-09-17) and this one the same model id ran a median of 6 turns and 4
+tool calls per case instead of 13 and 11, 29 seconds instead of 69. The
+agent bundled its reading into one or two shell commands, opened no
+reference file, and acted before it asked: with the doc saying five retries
+and the code three, it rewrote the doc (0 of 3, 3 of 3 four days earlier);
+with an unrecognized `confirmation-flow`, it asked and wrote anyway (0 of
+3); under `automatic`, the factual question came after the write (1 of 3).
+A counter-run of the same tag on the CLI the 0.17.0 series had used
+(2.1.274) gave 83/88 with the same shape, so the CLI is not the cause; two
+cases run the next morning were back at 14 turns and 12 tool calls. Two
+more failures were the host, not the skill: the operator's `ktw-lint`
+launcher had been reinstalled in a way the fenced `$HOME` could not run, and
+the agent hit `ModuleNotFoundError` — the runner now keeps the host's
+linter out of the session. These numbers stay in the run history as
+measured, and 0.17.1 is re-measured when the instrument reads like the
+0.17.0 series again.
+
+| Run | Passed | Skill loaded | Completed | Deterministic checks | Judge pass |
+|---|---|---|---|---|---|
+| 1 | 83/88 | 86/88 | 88/88 | 58/58 | 83/88 |
+| 2 | 80/88 | 86/88 | 88/88 | 58/58 | 80/88 |
+| 3 | 81/88 | 87/88 | 88/88 | 58/58 | 81/88 |
+
+**The last series that passed the rule: 0.17.0 — 87, 88 and 87 of 88**
+across three consecutive full runs of the 0.17.0 wording — 2026-09-17,
+Claude Code CLI 2.1.274 (the run history said 2.1.273 until 2026-09-22; the
+CLI had updated itself the night before the series), agent and judge both
 Claude Sonnet 5 (`claude-sonnet-5`), `--all --parallel 4 --judge-always
 --retry-until-complete`, the `_base` fixture's `SessionStart` hook active,
 `TMPDIR` outside the operator's home, no other keep-the-why skill install on
@@ -233,9 +267,34 @@ anything in this repository changing — so each record carries
 reports it actually ran, and `judge_prompt_sha`, a hash of the judge prompt
 that graded it; `summary.json` and the first lines of `summary.md` list them
 for the run. Two series are comparable when these match. When they don't, a
-moved number may be the instrument and not the skill. Naming the instrument
-removes drift, not noise: a fixed judge still samples, which is what
-re-grading a stored transcript measures.
+moved number may be the instrument and not the skill. Since 2026-09-22 a run also
+records the CLI version and the median turns and tool calls per case
+(`median_turns`, `median_tool_calls`), which is the cheapest drift alarm
+there is: on 2026-09-21 the same model id behind the same CLI binary ran
+half the turns it had four days earlier, acted before it asked, and the
+pass count went from 87 to 81 without a rule in the skill having changed —
+see the 0.17.1 block above. Naming the instrument removes drift, not
+noise: a fixed judge still samples, which is what re-grading a stored
+transcript measures.
+
+**Re-grading: the judge again, the agent not.** `tools/evals/regrade.py`
+takes stored runs and asks the judge again about the same transcript and
+diff, several times, without an agent session — a failed case is two
+samples deep, and a verdict alone does not say which of the two drew badly.
+First measurement, 2026-09-21, five re-grades each, judge `claude-sonnet-5`
+on CLI 2.1.278: the 60 stored failures of 38 full runs (0.16.0 to 0.17.1)
+and the 88 stored passes of the clean 0.17.0 run. The judge agreed with
+itself on 139 of the 148 records — five identical verdicts, mostly with
+identical scores — so the pure sampling noise of a fixed judge on a fixed
+transcript is small. Against the stored verdicts it differed in both
+directions: 10 of the 41 failures the judge alone had decided would pass by
+a majority today, and 8 of the 88 stored passes fail five times over. One
+of those was read by hand and the re-grade is right: the transcript says,
+in so many words, the sentence the case forbids, and the stored verdict
+had scored it 10. The difference between the two judges is the same drift
+as above, seen from the grading side — the same model id on another day —
+not dice. Cases the judge splits on are the first candidates for a
+deterministic check.
 
 ## How a series is judged
 
@@ -292,7 +351,8 @@ The judge has so far always been the same model as the agent under test.
 
 | Date | Skill | Agent | Model | Result | Note |
 |---|---|---|---|---|---|
-| 2026-09-17 | 0.17.0 | Claude Code 2.1.273 | Claude Sonnet 5 | **87/88 · 88/88 · 87/88** | three consecutive full runs of the 0.17.0 wording as merged in #430, before the version bump (the tag differs in version strings only), `--judge-always`, pipx fence in place — the table above; skill loaded 88/88/85 (never-opted-in fixtures and one refusal-retried session, no genuine miss), completed 88 each, deterministic checks 58/58/57, judge pass 87/88/87; first series judged by the series rule (every case 2 of 3, at most one failed case per run): passed; 86 cases 3/3; step 5 of the skill is a decision table since this release and its 28 cases went 3/3 |
+| 2026-09-21 | 0.17.1 | Claude Code 2.1.278 | Claude Sonnet 5 | **83/88 · 80/88 · 81/88** | three consecutive full runs on the `v0.17.1` tag, `--judge-always`, pipx fence in place — the block above; skill loaded 86/86/87 (never-opted-in fixtures, no genuine miss), completed 88 each, deterministic checks 58/58/58, judge pass 83/80/81; series rule: per-case gate failed (five cases below 2 of 3), run limit failed, guards passed; the instrument had changed — median 6 turns / 4 tool calls per case against 13 / 11 four days earlier on the same model id, a counter-run on CLI 2.1.274 gave 83/88 the same way; two failures were a broken host linter, fenced out since. Not a measurement of the three sentences that changed; re-measured when the instrument reads as before |
+| 2026-09-17 | 0.17.0 | Claude Code 2.1.274 | Claude Sonnet 5 | **87/88 · 88/88 · 87/88** | three consecutive full runs of the 0.17.0 wording as merged in #430, before the version bump (the tag differs in version strings only), `--judge-always`, pipx fence in place — the table above; skill loaded 88/88/85 (never-opted-in fixtures and one refusal-retried session, no genuine miss), completed 88 each, deterministic checks 58/58/57, judge pass 87/88/87; first series judged by the series rule (every case 2 of 3, at most one failed case per run): passed; 86 cases 3/3; step 5 of the skill is a decision table since this release and its 28 cases went 3/3 |
 | 2026-09-14 | 0.16.3 | Claude Code 2.1.268 | Claude Sonnet 5 | **87/88 · 86/88 · 86/88** | three consecutive full runs on the `v0.16.3` tag, `--judge-always`, pipx fence in place, no linter on the host — the table above; skill loaded 87/87/86 (never-opted-in fixtures only, no genuine miss), completed 88 each, deterministic checks 58/58 in every run, judge pass 87/86/86; 84 cases passed all three runs; judge and checks agreed on all 264 gradings; no safety refusal; one two-time flip (missing `context-schema` backfilled with the installed version, copied from the example block, #424), three one-time flips |
 | 2026-09-11 | 0.16.2 | Claude Code 2.1.268 | Claude Sonnet 5 | **86/88 · 86/88 · 86/88** | three consecutive full runs on the `v0.16.2` tag, `--judge-always`, pipx fence in place, no linter on the host — the table above; skill loaded 87/88/86 (the gaps are never-opted-in fixtures, no genuine miss), completed 88 each, deterministic checks 58/58 in every run, judge pass 86/86/86; all eight 0.16.1 one-time flips went 3/3, no safety refusal, judge and checks agreed on all 264 gradings; one two-time flip (every candidate listed before the first question under `sequential`, #414), four one-time flips |
 | 2026-09-10 | 0.16.1 | Claude Code 2.1.268 | Claude Sonnet 5 | **84/88 · 86/88 · 84/88** | three consecutive full runs on the `v0.16.1` tag, `--judge-always`, pipx fence in place, no linter on the host — the table above; skill loaded 88/87/88, completed 88 each, deterministic checks 55/58/57 of 58, judge pass 86/86/85; the three 0.16.0 issues (#354–#356) went 3/3 each, no safety refusal in the series, no genuine activation miss, one two-time flip (the one-line `Type`, caught by the check, passed by the judge), eight one-time flips |
@@ -326,6 +386,13 @@ The judge has so far always been the same model as the agent under test.
   none in 0.16.0, once in 0.15.0, twice in 0.13.3. The deterministic checks
   exist for that shape regardless; 58 of 88 cases carry them, and only where
   the check follows with certainty from the expected behavior.
+- **The instrument moves under the same model id.** A model alias, and the
+  model behind an exact id, can behave differently from one week to the
+  next without anything in this repository changing; the 0.17.1 series
+  above is the measured example. Every run now records what it can — model
+  ids, CLI version, judge prompt hash, median turns and tool calls — and two
+  series are compared only when those agree. A pass count without them is a
+  number without a ruler.
 - **The judge is an LLM from the same vendor as the agent under test.**
   Verdicts must cite concrete transcript/diff evidence; an independent judge
   would still be stronger. The deterministic checks above take the

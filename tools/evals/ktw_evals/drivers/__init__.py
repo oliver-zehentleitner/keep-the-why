@@ -109,6 +109,18 @@ EXPLICIT_LOAD = {
 }
 
 
+# The executable each driver runs — what `cli_version()` asks for `--version`.
+CLI_BINARY = {
+    "claude": "claude",
+    "pi": "pi",
+    "opencode": "opencode",
+    "kimi": "kimi",
+    "cline": "cline",
+    "codex": "codex",
+    "hermes": "hermes",
+    "omp": "omp",
+}
+
 DRIVER_LABELS = {
     "claude": "Claude Code",
     "pi": "Pi",

@@ -43,8 +43,11 @@ Results land in `results/<timestamp>-<driver>/` (gitignored): one JSON per
 case plus `summary.json` and `summary.md`. Each record and the summary name
 the instrument that produced them — the model ids the `--model` and
 `--judge-model` aliases resolved to (from the CLI's init event; `null` for a
-driver that doesn't report one) and a hash of the judge prompt — so a later
-run can tell a change in the skill from a change in what measured it.
+driver that doesn't report one), a hash of the judge prompt, the CLI version,
+and the median turns and tool calls per case — so a later run can tell a
+change in the skill from a change in what measured it. The medians are the
+drift alarm: a run whose agent takes half the turns of the last one is a
+different instrument, whatever its verdicts say.
 
 ## Layout
 
@@ -64,6 +67,7 @@ next to it, one module per responsibility:
 | `results.py` | stored verdicts, the rate-limit sentinel, `summary.json` / `summary.md` |
 | `runner.py` | `run_case()`, `execute_pass()`, and the retry loop |
 | `matrix.py` | `--matrix` orchestration and its table |
+| `regrade.py` | re-grade stored records with the judge only, `times` verdicts per record; agreement with itself and with the stored verdict; `tools/evals/regrade.py` is its command line |
 | `series.py` | the verdict over a series of full runs — every case passes 2 of 3, no run with more than one failure, no guard check violated at all; `tools/evals/series.py` is its command line |
 | `tests/` | offline tests for `checks.py`, `workdir.py` and `series.py` — `python3 -m unittest discover -s tools/evals/tests` |
 
@@ -198,6 +202,19 @@ together:
 python3 tools/evals/series.py results/full-r1 results/full-r2 results/full-r3
 ```
 
+Re-grading — the judge again, the agent not — separates the judge changing
+its mind from the agent doing something different:
+
+```bash
+python3 tools/evals/regrade.py results/full-r1 results/full-r2 --select fails --times 5 --out results/regrade-<date>
+```
+
+Every stored record keeps the transcript and the diff, so this is judge
+calls only; `--select passes|all` widens it, `--summary-only` re-reads an
+`--out` directory. It reports the judge's agreement with itself and with the
+stored verdicts, the stored failures a majority would now pass, and the cases
+it is split on — see "What the numbers separate" in `docs/evals.md`.
+
 It prints the pass count per run, every case that did not pass all runs with
 its verdicts, and three lines: the per-case gate (every case passes at least 2
 of 3), the per-run limit (no run with more than one failed case) and the
@@ -257,6 +274,18 @@ the skill daily is likely to have — would otherwise load the skill in exactly
 the cases that measure what happens without a hook. The hooks a case needs are
 the fixture's own, project-scoped ones. A `settings.json` that isn't valid JSON
 stops the run instead of being copied as it is.
+
+### Your own linter stays out too
+
+The operator's `~/.local/bin` is replaced on the session's `PATH` by a shadow
+of itself without the `ktw-lint` / `keep-the-why-lint` launchers (everything
+else in it, the agent CLI included, stays reachable). A linter installed on
+the host would otherwise be what the agent finds, and its state — present,
+absent, half-reinstalled — would become part of the measurement: on
+2026-09-21 a reinstalled launcher that the fenced `$HOME` could not run cost
+two cases a `ModuleNotFoundError`. The documented condition for a series,
+"no linter on the host", is now true regardless of the host; a case that
+installs one does so into the fake `$HOME`.
 
 ## Matrix runs
 

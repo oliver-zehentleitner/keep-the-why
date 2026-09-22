@@ -5,10 +5,10 @@ import datetime
 import json
 import re
 
-from .common import skill_version
+from .common import cli_version, skill_version
 from .judge import JUDGE_PROMPT_SHA
 from .analysis import RESTRAINT_CODES, RESTRAINT_LEGEND
-from .drivers import DRIVER_LABELS, PERMISSION_BYPASS
+from .drivers import CLI_BINARY, DRIVER_LABELS, PERMISSION_BYPASS
 
 # Matches the CLI's own plain-text account-limit messages (observed so far:
 # "You've hit your session limit · resets ..." and "You've hit your monthly
@@ -92,6 +92,15 @@ def _case_row(r):
     )
 
 
+def _median(values):
+    values = sorted(v for v in values if isinstance(v, (int, float)))
+    if not values:
+        return None
+    n = len(values)
+    mid = n // 2
+    return values[mid] if n % 2 else (values[mid - 1] + values[mid]) / 2
+
+
 def write_summary(records, results_dir, args):
     version = skill_version()
     passed = [r for r in records if r["verdict"] == "pass"]
@@ -147,6 +156,13 @@ def write_summary(records, results_dir, args):
             }
         ),
         "judge_prompt_sha": JUDGE_PROMPT_SHA,
+        "cli_version": cli_version(CLI_BINARY.get(args.driver, args.driver)),
+        # Session shape, medians over the completed cases: a drift indicator.
+        # The same model id was measured at 13 turns / 11 tool calls per case
+        # on one day and 6 / 4 four days later, and the pass count moved with
+        # it. A jump here means the instrument changed, whatever the verdicts.
+        "median_turns": _median([r.get("turns") for r in records]),
+        "median_tool_calls": _median([r.get("tool_calls") for r in records]),
         "permission_bypass": PERMISSION_BYPASS[args.driver],
         "date": datetime.date.today().isoformat(),
         "total": len(records),
@@ -184,7 +200,9 @@ def write_summary(records, results_dir, args):
         f"{', '.join(f'`{m}`' for m in summary['agent_models_resolved']) or 'unknown'}"
         " · judge resolved to "
         f"{', '.join(f'`{m}`' for m in summary['judge_models_resolved']) or 'unknown'}"
-        f" · judge prompt `{JUDGE_PROMPT_SHA}`",
+        f" · judge prompt `{JUDGE_PROMPT_SHA}`"
+        f" · CLI `{summary['cli_version'] or 'unknown'}`"
+        f" · median {summary['median_turns']} turns / {summary['median_tool_calls']} tool calls per case",
         "",
         f"**{len(passed)}/{len(records)} passed** ({len(failed)} failed, {len(errored)} errors)",
         "",

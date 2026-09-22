@@ -9,11 +9,18 @@ import tempfile
 import time
 from pathlib import Path
 
-from .analysis import restraint_analysis, skill_load_found, skill_load_position
+from .analysis import (
+    restraint_analysis,
+    session_shape,
+    skill_load_found,
+    skill_load_position,
+)
 from .checks import run_checks
 from .cases import read_case_config
+from .common import cli_version
 from .drivers import (
     AGENT_RUNNERS,
+    CLI_BINARY,
     PERMISSION_BYPASS,
     TRANSCRIPT_RENDERERS,
     build_prompt,
@@ -193,6 +200,8 @@ def run_case(case, args, results_dir):
         "agent_model_resolved": resolved_model(agent.get("events")),
         "judge_model_resolved": judge_model_resolved,
         "judge_prompt_sha": JUDGE_PROMPT_SHA,
+        "cli_version": cli_version(CLI_BINARY.get(args.driver, args.driver)),
+        **session_shape(transcript),
         "driver": args.driver,
         "permission_bypass": PERMISSION_BYPASS[args.driver],
         "started": started.isoformat(),

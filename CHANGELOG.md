@@ -6,6 +6,16 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Added
 
+- Evals: `tools/evals/regrade.py` (`ktw_evals/regrade.py`, tests) — re-grade stored records with the judge only, several verdicts per record, and report the judge's agreement with itself and with the stored verdict. First measurement in `docs/evals.md`, "What the numbers separate": 139 of 148 records five identical verdicts; 10 of 41 judge-decided failures would pass today, 8 of 88 stored passes fail — drift, not dice.
+- Evals: every run records its CLI version and the median turns and tool calls per case (`cli_version`, `median_turns`, `median_tool_calls`; `turns` and `tool_calls` per record) next to the resolved model ids and the judge prompt hash. The medians are the drift alarm: on 2026-09-21 the same model id ran half the turns it had four days earlier and the pass count moved with it.
+
+### Changed
+
+- Evals: the operator's `~/.local/bin` is shadowed in every session without the `ktw-lint` / `keep-the-why-lint` launchers (everything else in it stays reachable), so a linter's state on the host is no longer part of a measurement; a reinstalled host launcher had cost two cases a `ModuleNotFoundError`.
+- `docs/evals.md` carries the 0.17.1 measurement as it came out — 83, 80 and 81 of 88, the series rule not met, the guards held — with the instrument change that explains it, a counter-run on the previous CLI, and the re-measurement to come; the 0.17.0 series' CLI is named as 2.1.274 (it said 2.1.273); a caveat on the instrument moving under the same model id; `tools/evals/history.json` carries the 0.17.1 series. Release checklist step 14 compares instruments before pass counts.
+
+### Added
+
 - The article *Keep the Why is not another workflow* (https://blog.technopathy.club/keep-the-why-is-not-another-workflow) is linked from the README ("How it works"), the FAQ entry on whether the agent has to be told what to record, and `llms.txt`.
 
 ### Fixed

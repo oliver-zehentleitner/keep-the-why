@@ -7,6 +7,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from ktw_evals.analysis import session_shape  # noqa: E402
+from ktw_evals.common import cli_version  # noqa: E402
 from ktw_evals.judge import JUDGE_PROMPT, JUDGE_PROMPT_SHA, resolved_model  # noqa: E402
 
 
@@ -33,6 +35,18 @@ class Instrument(unittest.TestCase):
             JUDGE_PROMPT_SHA, hashlib.sha256(JUDGE_PROMPT.encode()).hexdigest()[:12]
         )
         self.assertTrue(re.search(r"\{EXPECTED\}", JUDGE_PROMPT))
+
+    def test_session_shape_counts_turns_and_tool_calls(self):
+        t = (
+            "[tool call] Bash: {}\n[tool result] x\n[assistant]\nhi\n"
+            "[tool call] Read: {}\n[session ended] subtype=success turns=7"
+        )
+        self.assertEqual(session_shape(t), {"turns": 7, "tool_calls": 2})
+        self.assertEqual(session_shape(""), {"turns": None, "tool_calls": 0})
+        self.assertEqual(session_shape(None), {"turns": None, "tool_calls": 0})
+
+    def test_cli_version_of_a_missing_binary_is_none(self):
+        self.assertIsNone(cli_version("no-such-binary-ktw-evals"))
 
 
 if __name__ == "__main__":
