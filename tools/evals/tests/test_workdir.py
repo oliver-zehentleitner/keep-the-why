@@ -92,6 +92,27 @@ class FakeHomeEnv(unittest.TestCase):
         self.assertEqual(env["PATH"], "/fake/.local/bin:/usr/bin")
 
 
+class TolerantCopy(unittest.TestCase):
+    def test_transient_files_are_skipped_and_vanished_sources_tolerated(self):
+        import shutil
+        from ktw_evals.drivers import _copytree_tolerant
+
+        with tempfile.TemporaryDirectory() as tmp:
+            src = Path(tmp) / "src"
+            (src / "sub").mkdir(parents=True)
+            (src / "keep.json").write_text("{}")
+            (src / ".oauth_refresh.lock").write_text("")
+            (src / "sub" / "state.tmp").write_text("")
+            _copytree_tolerant(src, Path(tmp) / "dst")
+            names = {p.name for p in (Path(tmp) / "dst").rglob("*")}
+            self.assertIn("keep.json", names)
+            self.assertNotIn(".oauth_refresh.lock", names)
+            self.assertNotIn("state.tmp", names)
+            # a real error is still raised
+            with self.assertRaises(shutil.Error):
+                raise shutil.Error([("a", "b", "Permission denied")])
+
+
 class SeedFakeHome(unittest.TestCase):
     def seed(self, settings_text):
         tmp = tempfile.TemporaryDirectory()

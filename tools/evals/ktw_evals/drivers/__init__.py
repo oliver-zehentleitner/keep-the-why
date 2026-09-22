@@ -68,6 +68,26 @@ HOME_STRIP_HOOKS = {
 }
 
 
+# Files the CLI creates and removes on its own while a copy may be running —
+# a token refresh's lock, a session's transient state. A copy that trips over
+# one of them vanishing mid-way would abort the case (seen 2026-09-22:
+# `.oauth_refresh.lock` gone between listing and copying, 50 cases into a
+# run). They carry nothing a session needs.
+TRANSIENT_HOME_FILES = shutil.ignore_patterns("*.lock", "*.tmp")
+
+
+def _copytree_tolerant(src, dst):
+    """copytree that skips transient files and tolerates a source vanishing
+    between listing and copying — the remaining files are copied, the
+    missing ones were not worth having."""
+    try:
+        shutil.copytree(src, dst, symlinks=True, ignore=TRANSIENT_HOME_FILES)
+    except shutil.Error as e:
+        real = [err for err in e.args[0] if "No such file or directory" not in str(err)]
+        if real:
+            raise shutil.Error(real)
+
+
 def seed_fake_home(real_home: Path, fake_home: Path, driver: str):
     for rel in HOME_PRESERVE.get(driver, []):
         src = real_home / rel
@@ -76,7 +96,7 @@ def seed_fake_home(real_home: Path, fake_home: Path, driver: str):
         dst = fake_home / rel
         dst.parent.mkdir(parents=True, exist_ok=True)
         if src.is_dir():
-            shutil.copytree(src, dst, symlinks=True)
+            _copytree_tolerant(src, dst)
         else:
             shutil.copy2(src, dst)
     for rel in HOME_STRIP_HOOKS.get(driver, []):
