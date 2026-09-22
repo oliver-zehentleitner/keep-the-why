@@ -303,7 +303,9 @@ external service (no database, no MCP server).
   the work happens, like README.md and docs/. Its location is chosen at setup (`context/` by
   default, or an existing decision folder) and recorded in `.keep-the-why`.
 - Selective loading: `context/index.md` has one line per topic file under a fixed heading
-  skeleton; the agent reads the index and opens only the topic a task touches.
+  skeleton; the agent reads the index and opens only the topic a task touches. The skeleton's
+  thirty-six always-present headings are deterministic write areas: two branches adding topics
+  cannot collide in the index — https://blog.technopathy.club/one-index-many-writers-avoiding-git-merge-conflicts-with-deterministic-write-areas
 - Not session memory — session memory remembers what happened in a session, locally, for one
   person and one tool; this preserves why the project is the way it is, in the repository, for
   every session, machine, tool and team member. It does the job session memory is wanted for
