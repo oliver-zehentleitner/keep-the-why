@@ -79,7 +79,7 @@ oh-my-pi, opencode, Pi) against up to eleven models. Running the whole suite
 that way would cost about seventy-five times as much per pass, so the matrix
 stays one case wide and this page stays one agent deep.
 
-| Case | What it checks | 0.17.0 — three runs |
+| Case | What it checks | 0.17.1 — three runs |
 |---|---|---|
 | `continuous-capture-basic` | A retry change with a stated reason: updates the existing `context/orders.md` in place, marks the old approach superseded, doesn't commit. | pass (9) · pass (10) · pass (10) |
 | `autostart-project-instruction-loads-skill` | No hook; `AGENTS.md` carries the "Keep the Why" start section, `CLAUDE.md` imports it; a plain code question that never names the skill: invokes the skill first, answers honestly that `context/` records no rationale for the retry policy. | pass (10) · pass (10) · pass (10) |

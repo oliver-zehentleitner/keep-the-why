@@ -282,7 +282,7 @@ The skill's update check (`references/setup.md`) queries `/releases`, keeps only
 ## The skill's `description` stays under 250 characters, negative-trigger clause last
 
 **Type:** constraint
-**Status:** active
+**Status:** superseded
 **Evidence:** confirmed
 **Source:** the asm registry's evaluator (`src/evaluator-core.ts` in luongnv89/asm: "Description fits the runtime context budget", target ≤ 250 chars); #205 (877 → 188 chars, score 71 → 90); PR #223 (188 → 318 → 239)
 **Revisit when:** the Agent Skills spec or a registry this skill is listed on publishes a different budget, or the `/skills` listing stops truncating tail-first
@@ -294,6 +294,8 @@ The skill's update check (`references/setup.md`) queries `/releases`, keeps only
 **Rejected alternative:** keep the longer description and accept the registry warning, on the grounds that activation matters more than a score. Rejected because the warning describes a real loss, not a cosmetic one — a truncated listing drops the negative trigger, so the longer text buys activation on one side and pays for it with mis-activation on the other. Narrowing the description to fewer situations is a different question and was rejected separately (see "Project setup only ever runs from an explicit request" in `compatibility.md`).
 
 **Consequence:** before changing `description`, measure it (`grep -m1 '^description:' skills/keep-the-why/SKILL.md | sed 's/^description: //' | wc -c`, keep ≤ 250) and run `asm eval skills/keep-the-why`; new trigger words go into the existing noun list, not into a new sentence; the "Not for … - only why" clause stays last.
+
+**Superseded (2026-09-23):** the description has been 316 characters since the feedback sentence was appended to it — "The skill description names complaints, feedback and settings about the skill itself" in `compatibility.md`, measured on the frustration case (1–2 of 3 loaded without it, 5 of 5 with it). That is the alternative this entry rejected, chosen later with a measurement the rejection did not have: the sentence buys activation on the one request where a model is most inclined to skip the skill, and the two costs named above are now carried knowingly — the asm evaluator warns above 250 (a score, not a function), and the `/skills` listing truncates the feedback sentence, not the negative trigger, which now sits mid-text where the listing keeps it while matching reads the full text anyway. An external audit (2026-09-22) found the entry still marked active against the 316-character file; the maintainer confirmed the length stays. The measuring habit in the Consequence stands; the 250 ceiling does not.
 
 ## `LICENSE` is duplicated into `skills/keep-the-why/`, because registries check the skill root
 

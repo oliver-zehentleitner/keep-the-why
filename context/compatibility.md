@@ -120,3 +120,5 @@ When an explicit setup request is declined at the first question or retracted in
 
 **Rejected alternative:** sharpening the session hook's text ("whatever the first request is about — a complaint about this skill included"). Rejected because the hook text is committed in every project that uses path 2 and copied in the eval fixture; a change there is a rollout, and it would fix only harnesses that have the hook, while the description reaches every harness that reads it.
 
+**Consequence (2026-09-23):** the description is 316 characters, over the 250 the asm evaluator targets, and the "Not for what changed … only why" clause is no longer last — the feedback sentence is, and it is what a tail-truncating listing cuts. Both were the reasons for the 250-character ceiling in `release-and-distribution.md`; that entry is superseded by this one, with the trade-off stated there. Measured before any future change to the sentence: the frustration case, 5 of 5, is the number to keep.
+

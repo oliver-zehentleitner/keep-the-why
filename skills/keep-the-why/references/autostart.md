@@ -57,10 +57,14 @@ either way.
 ## The entry-point section (path 2, tool-neutral)
 
 Paste into the project's `AGENTS.md` (or whatever entry-point file the
-project already uses). If the agent tool reads `CLAUDE.md` instead — Claude
-Code does, and does not read `AGENTS.md` on its own — a root `CLAUDE.md`
-containing just `@AGENTS.md` imports it; most projects already have that
-line. Adjust the `SKILL.md` path to where the project keeps the skill
+project already uses). If the agent tool reads `CLAUDE.md` instead, a root
+`CLAUDE.md` containing just `@AGENTS.md` imports it; most projects already
+have that line. Claude Code reads `AGENTS.md` directly since 2.1.277, but
+only when no `CLAUDE.md` or `CLAUDE.local.md` exists in the working
+directory or above it, and not in every session (its docs name Bedrock and
+telemetry-off sessions as exceptions) — with a `CLAUDE.md` present it reads
+that file alone, so the import line stays the reliable way there. Adjust
+the `SKILL.md` path to where the project keeps the skill
 (`pinned-path` in `.keep-the-why` when pinned, otherwise the install location
 the project's agents use).
 

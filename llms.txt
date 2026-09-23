@@ -30,8 +30,7 @@ understood.
 
 Because "ask Bob" is not documentation. Keep a Changelog records what changed; Keep the Why
 preserves why it changed. Complements README, AGENTS.md, docs, CONTRIBUTING.md, tests, Keep a
-Changelog, and AGENTS.local.md rather than replacing any of them — see "Where this fits" in
-the README.
+Changelog rather than replacing any of them — see "Where this fits" in the README.
 
 Because it's just Markdown in the repo, a `context/` update ships in the same commit or PR as
 the code change it explains — reviewed the same way, versioned the same way, no separate
@@ -226,7 +225,6 @@ Produces, inside the project using the skill:
 - `docs/` — how to use, operate, test, deploy
 - `context/` — why the project is the way it is, organized by topic, with its own `README.md`,
   `AGENTS.md`, and `CLAUDE.md`
-- `AGENTS.local.md` — personal notes unrelated to this skill, not committed
 
 Outside the project entirely, on the developer's own machine: `~/.keep-the-why/<id>.md`
 (personal preferences for this specific project) and `~/.keep-the-why/config` (a machine-wide
