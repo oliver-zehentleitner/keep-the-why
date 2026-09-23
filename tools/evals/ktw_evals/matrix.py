@@ -107,7 +107,10 @@ def run_matrix(cases, args):
         cli = found.group(0) if found else (raw or "?")
         canon = summary.get("canonical_models") or []
         model = ", ".join(canon) if canon else model_id.split("/", 1)[-1]
-        return f"{driver} {cli} · {model} · ktw {version} · {date}"
+        # One item per line inside the table cell (`<br>`, which MkDocs and
+        # GitHub both render): the cell reads top to bottom instead of as
+        # one long dotted line — verdict, agent, model, skill · date.
+        return f"{driver} {cli}<br>{model}<br>ktw {version} · {date}"
 
     protected = {
         c["id"]: [
@@ -158,7 +161,7 @@ def run_matrix(cases, args):
             code_part = (
                 f" [{RESTRAINT_CODES[category]}]" if category in RESTRAINT_CODES else ""
             )
-            return f"{mark} {score_part}{code_part} · {instrument(driver, model_id, summary)}"
+            return f"{mark} {score_part}{code_part}<br>{instrument(driver, model_id, summary)}"
         mark = (
             "✅"
             if all_resolved and summary["failed"] == 0
@@ -181,14 +184,14 @@ def run_matrix(cases, args):
                 )
                 + "]"
             )
-        return f"{mark} {summary['passed']}/{summary['total']}{breakdown} · {instrument(driver, model_id, summary)}"
+        return f"{mark} {summary['passed']}/{summary['total']}{breakdown}<br>{instrument(driver, model_id, summary)}"
 
     lines = [
         f"# Matrix run — {date}",
         "",
         f"Skill {version} · judge: `{args.judge_model}` · "
         f"{len(drivers)} driver(s) × {len(models)} model(s) · "
-        "cell: verdict score [restraint] · agent version · model · skill · date",
+        "cell, one line each: verdict score [restraint] / agent version / model / skill · date",
         "",
         f"Restraint codes (mechanical, not judge-scored): {RESTRAINT_LEGEND}",
         "",

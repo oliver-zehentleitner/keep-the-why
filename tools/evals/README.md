@@ -348,9 +348,10 @@ are hand-curated and this doesn't touch them, so pasting rows in is still a
 manual step. A cell names its instruments: verdict and judge score, the
 mechanical restraint code, then the agent CLI and its version, the model as
 resolved (the vendor's canonical id where the CLI reports one, else the id
-asked for), the skill version and the date — `✅ 9/10 [R] · codex 0.156.1 ·
-z-ai/glm-5.3 · ktw 0.17.1 · 2026-09-23`. The judge and its prompt hash are
-named once under the table. Rows and columns carry only the names; the
+asked for), the skill version and the date — one item per line inside the
+cell (`<br>`), so it reads top to bottom: `✅ 9/10 [R]` / `codex 0.156.1` /
+`z-ai/glm-5.3` / `ktw 0.17.1 · 2026-09-23`. The judge and its prompt hash
+are named once under the table. Rows and columns carry only the names; the
 versions live in the cells, so two tables made months apart compare line by
 line. Exit code is non-zero if anything failed or didn't resolve,
 which is what makes this safe to run unattended (e.g. a scheduled GitHub
