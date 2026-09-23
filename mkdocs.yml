@@ -72,12 +72,12 @@ nav:
   - Linting: linting.md
   - Dashboard: dashboard.md
   - Security: security.md
-  - Evals:
-      - evals.md
-      - Agent & model matrix: agent-matrix.md
   - Badge: badge.md
   - FAQ: faq.md
   - Why I built this: why.md
+  - Evals:
+      - evals.md
+      - Agent & model matrix: agent-matrix.md
   - Reference:
       - Setup: setup.md
       - Autostart examples: autostart.md
