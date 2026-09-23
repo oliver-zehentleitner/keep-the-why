@@ -11,6 +11,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 ### Fixed
 
 - `keep-the-why-dashboard` 0.1.4: the dashboard reads only what the linter would — a configured `context` location the linter rejects (`E009`: absolute, `..`, control characters, a symlink leaving the tree) is not read at all, and inside `context/` a topic file, the index or the directory itself that resolves outside the project is skipped; before, the page and the export took the linter's finding and read the files anyway, so a symlink named `x.md` could put any readable file into a shared export. Four regression tests. Git also reports whether the checkout is a shallow clone, and the Overview and Timeline say so instead of presenting the clone's edge as the day every entry was written.
+- The site build checks out the full Git history (`fetch-depth: 0` in `docs.yml`): the live dashboard on `/dashboard/live/` dates entries by the commit their heading first appeared in, and a depth-1 checkout dated all 81 entries on the day of the build — one bar in the Timeline instead of the 21 days over July to September they were written on.
 
 ### Changed
 
