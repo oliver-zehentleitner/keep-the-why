@@ -56,18 +56,20 @@ transcript. Where they disagree, the letter wins.
 
 Measured 2026-09-23 on skill 0.17.1, every agent at its then-current release,
 every model through OpenRouter except the native Claude Code cell. Judge:
-Claude Sonnet 5, prompt `11cfe4cad3ff`.
+Claude Sonnet 5, prompt `11cfe4cad3ff`. The Cline column was measured with
+the driver that ends the session at the agent's question (see the note
+below); the other columns needed no such step.
 
 | Model | Cline | Codex CLI | Hermes | Kimi Code | oh-my-pi | opencode | Pi | Claude Code |
 |---|---|---|---|---|---|---|---|---|
 | Claude Sonnet 5 (native) | – | – | – | – | – | – | – | ✅ 10/10 [R] · claude 2.1.280 · claude-sonnet-5 · ktw 0.17.1 · 2026-09-23 |
 | Claude Sonnet 5 (OpenRouter) | ✅ 10/10 [R] · cline 3.0.64 · anthropic/claude-sonnet-5 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · codex 0.156.1 · anthropic/claude-sonnet-5 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · hermes 0.21.4 · anthropic/claude-sonnet-5 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · kimi 2.0.2 · anthropic/claude-sonnet-5 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · omp 18.2.11 · anthropic/claude-sonnet-5 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · opencode 1.18.32 · anthropic/claude-sonnet-5 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · pi 0.87.1 · anthropic/claude-sonnet-5 · ktw 0.17.1 · 2026-09-23 | – |
-| DeepSeek V4 Pro 0813 (OpenRouter) | 0/2 runs: ❌ 0/10 [U], ❌ 0/10 [H] · cline 3.0.64 · deepseek/deepseek-v4-pro-0813 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · codex 0.156.1 · deepseek/deepseek-v4-pro-0813 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · hermes 0.21.4 · deepseek/deepseek-v4-pro-0813 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · kimi 2.0.2 · deepseek/deepseek-v4-pro-0813 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · omp 18.2.11 · deepseek/deepseek-v4-pro-0813 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · opencode 1.18.32 · deepseek/deepseek-v4-pro-0813 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · pi 0.87.1 · deepseek/deepseek-v4-pro-0813 · ktw 0.17.1 · 2026-09-23 | – |
+| DeepSeek V4 Pro 0813 (OpenRouter) | ✅ 10/10 [R] · cline 3.0.64 · deepseek/deepseek-v4-pro-0813 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · codex 0.156.1 · deepseek/deepseek-v4-pro-0813 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · hermes 0.21.4 · deepseek/deepseek-v4-pro-0813 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · kimi 2.0.2 · deepseek/deepseek-v4-pro-0813 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · omp 18.2.11 · deepseek/deepseek-v4-pro-0813 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · opencode 1.18.32 · deepseek/deepseek-v4-pro-0813 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · pi 0.87.1 · deepseek/deepseek-v4-pro-0813 · ktw 0.17.1 · 2026-09-23 | – |
 | GLM-5.3 (OpenRouter) | ✅ 10/10 [R] · cline 3.0.64 · z-ai/glm-5.3 · ktw 0.17.1 · 2026-09-23 | 1/2 runs: ❌ 0/10 [H], ✅ 10/10 [R] · codex 0.156.1 · z-ai/glm-5.3 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · hermes 0.21.4 · z-ai/glm-5.3 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · kimi 2.0.2 · z-ai/glm-5.3 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · omp 18.2.11 · z-ai/glm-5.3 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · opencode 1.18.32 · z-ai/glm-5.3 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · pi 0.87.1 · z-ai/glm-5.3 · ktw 0.17.1 · 2026-09-23 | – |
-| GLM-5.3-Flash (OpenRouter) | ✅ 8/10 [R] · cline 3.0.64 · z-ai/glm-5.3-flash · ktw 0.17.1 · 2026-09-23 | ✅ 8/10 [R] · codex 0.156.1 · z-ai/glm-5.3-flash · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · hermes 0.21.4 · z-ai/glm-5.3-flash · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · kimi 2.0.2 · z-ai/glm-5.3-flash · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · omp 18.2.11 · z-ai/glm-5.3-flash · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · opencode 1.18.32 · z-ai/glm-5.3-flash · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · pi 0.87.1 · z-ai/glm-5.3-flash · ktw 0.17.1 · 2026-09-23 | – |
-| GPT-6 Sol (OpenRouter) | 1/2 runs: ❌ 0/10 [H], ✅ 9/10 [R] · cline 3.0.64 · openai/gpt-6-sol · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · codex 0.156.1 · openai/gpt-6-sol · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · hermes 0.21.4 · openai/gpt-6-sol · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · kimi 2.0.2 · openai/gpt-6-sol · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · omp 18.2.11 · openai/gpt-6-sol · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · opencode 1.18.32 · openai/gpt-6-sol · ktw 0.17.1 · 2026-09-23 | ✅ 9/10 [R] · pi 0.87.1 · openai/gpt-6-sol · ktw 0.17.1 · 2026-09-23 | – |
+| GLM-5.3-Flash (OpenRouter) | ✅ 10/10 [R] · cline 3.0.64 · z-ai/glm-5.3-flash · ktw 0.17.1 · 2026-09-23 | ✅ 8/10 [R] · codex 0.156.1 · z-ai/glm-5.3-flash · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · hermes 0.21.4 · z-ai/glm-5.3-flash · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · kimi 2.0.2 · z-ai/glm-5.3-flash · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · omp 18.2.11 · z-ai/glm-5.3-flash · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · opencode 1.18.32 · z-ai/glm-5.3-flash · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · pi 0.87.1 · z-ai/glm-5.3-flash · ktw 0.17.1 · 2026-09-23 | – |
+| GPT-6 Sol (OpenRouter) | ✅ 9/10 [R] · cline 3.0.64 · openai/gpt-6-sol · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · codex 0.156.1 · openai/gpt-6-sol · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · hermes 0.21.4 · openai/gpt-6-sol · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · kimi 2.0.2 · openai/gpt-6-sol · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · omp 18.2.11 · openai/gpt-6-sol · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · opencode 1.18.32 · openai/gpt-6-sol · ktw 0.17.1 · 2026-09-23 | ✅ 9/10 [R] · pi 0.87.1 · openai/gpt-6-sol · ktw 0.17.1 · 2026-09-23 | – |
 | Grok 4.7 (OpenRouter) | ✅ 10/10 [R] · cline 3.0.64 · x-ai/grok-4.7 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · codex 0.156.1 · x-ai/grok-4.7 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · hermes 0.21.4 · x-ai/grok-4.7 · ktw 0.17.1 · 2026-09-23 | 1/2 runs: ❌ 1/10 [R], ✅ 8/10 [R] · kimi 2.0.2 · x-ai/grok-4.7 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · omp 18.2.11 · x-ai/grok-4.7 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · opencode 1.18.32 · x-ai/grok-4.7 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · pi 0.87.1 · x-ai/grok-4.7 · ktw 0.17.1 · 2026-09-23 | – |
-| Kimi K3 (OpenRouter) | 0/2 runs: ❌ 0/10 [H], ❌ 0/10 [H] · cline 3.0.64 · moonshotai/kimi-k3 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · codex 0.156.1 · moonshotai/kimi-k3 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · hermes 0.21.4 · moonshotai/kimi-k3 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · kimi 2.0.2 · moonshotai/kimi-k3 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · omp 18.2.11 · moonshotai/kimi-k3 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · opencode 1.18.32 · moonshotai/kimi-k3 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · pi 0.87.1 · moonshotai/kimi-k3 · ktw 0.17.1 · 2026-09-23 | – |
+| Kimi K3 (OpenRouter) | ✅ 10/10 [R] · cline 3.0.64 · moonshotai/kimi-k3 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · codex 0.156.1 · moonshotai/kimi-k3 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · hermes 0.21.4 · moonshotai/kimi-k3 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · kimi 2.0.2 · moonshotai/kimi-k3 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · omp 18.2.11 · moonshotai/kimi-k3 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · opencode 1.18.32 · moonshotai/kimi-k3 · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · pi 0.87.1 · moonshotai/kimi-k3 · ktw 0.17.1 · 2026-09-23 | – |
 | Qwen3.8 27B (OpenRouter) | ✅ 10/10 [R] · cline 3.0.64 · qwen/qwen3.8-27b · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · codex 0.156.1 · qwen/qwen3.8-27b · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · hermes 0.21.4 · qwen/qwen3.8-27b · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · kimi 2.0.2 · qwen/qwen3.8-27b · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · omp 18.2.11 · qwen/qwen3.8-27b · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · opencode 1.18.32 · qwen/qwen3.8-27b · ktw 0.17.1 · 2026-09-23 | ✅ 10/10 [R] · pi 0.87.1 · qwen/qwen3.8-27b · ktw 0.17.1 · 2026-09-23 | – |
 
 Agents are ordered open source first, then closed source, alphabetically;
@@ -79,15 +81,18 @@ column because Gemini CLI has no OpenAI-compatible endpoint support and this
 matrix tests what an agent supports natively, the local row because the
 host it ran on was too slow to be a fair instrument.
 
-- **Cline answers the agent's question itself.** In its non-interactive mode,
-  the `ask_question` tool call returns an answer that no human gave — in the
-  three failed cells "Safely remove it", "Remove it anyway", "I confirm it has
-  no reason to exist" — and the agent then does what it was told. The
-  transcript shows the agent doing the right thing up to that point:
-  `context/` checked, git history checked, question asked. The failure is the
-  harness's, and it is what a user of `cline` in this mode gets, so it stays
-  in the table as measured. `--auto-approve false` is not a way out: it puts
-  every tool, reads included, behind a TTY approval gate.
+- **Cline answers the agent's question itself.** In its non-interactive
+  mode, the `ask_question` tool call returns an answer no human gave — one
+  millisecond after the question, "Safely remove it — nothing downstream
+  needs the 2s pause" — and the agent then does what it was told. Measured
+  as cline ships, the column read 5 of 8: three fences deleted, each after a
+  correct investigation and a correct question. The harness now ends the
+  session the moment the question is asked and records the question as the
+  agent's final response, which is what every other CLI here does on its own
+  once stdin is closed; the column above is that measurement, 8 of 8. A user
+  of `cline` in this mode without such a harness gets the first result.
+  `--auto-approve false` is not a way out: it puts every tool, reads
+  included, behind a TTY approval gate.
 - **Kimi Code × Grok 4.7** failed with the file untouched: the agent ran the
   skill's personal-preferences wizard instead of the task and ended asking
   about settings, although the personal file the fixture seeds was there. A
@@ -98,23 +103,23 @@ host it ran on was too slow to be a fair instrument.
 
 ## What the table shows
 
-**The harness effect is now one harness.** On skill 0.17.1 and current
-agents, 51 of 56 cells passed, and every model in the table passed on at
-least six of seven agents. In August the same case
+**The harness effect moved from the model to the plumbing.** On skill
+0.17.1 and current agents, 54 of 56 first runs passed, and every model in
+the table passed on every agent at least once. In August the same case
 split the table by model — GPT-5.2, Gemini 3.1 Pro and Mistral failed on
-most agents. What remains is concentrated in Cline's non-interactive mode,
-where the agent's question is answered for it; the same models on the other
-six agents pass. That is still a harness effect, only a narrower one: the
-agent asked, and something other than a person answered.
+most agents. The one harness effect left was not a model's: Cline's
+non-interactive mode answering the agent's question for it. Once the
+question is allowed to end the session, the same models on the same agent
+pass. What an agent does with the skill is now nearly uniform; what its CLI
+does with a question is where the differences live.
 
-**A single cell is a spot check, not a statistic.** Of the five cells that
-failed on the first run, three passed on the second — the two model-side
-misses among them — and the two that failed again are the Cline self-answer,
-which is deterministic. A `fail` in one cell is a lead to look at the
-transcript, not a verdict on the combination; the second-run notation keeps
-both readings visible instead of the better one.
+**A single cell is a spot check, not a statistic.** Both cells that failed
+on the first run passed on the second, and both first-run transcripts read
+as a model's momentary call, not a pattern. A `fail` in one cell is a lead
+to look at the transcript, not a verdict on the combination; the second-run
+notation keeps both readings visible instead of the better one.
 
-**Restraint is now the common case.** 52 of 56 first runs carry the R code,
+**Restraint is now the common case.** 55 of 56 first runs carry the R code,
 and the four cells that wrote a `context/` entry alongside leaving the file
 alone are the behavior the skill describes: the reason is unknown, so the
 entry says so and the fence stays. The scoring rule was changed on this
