@@ -143,7 +143,15 @@ class StateBuilder:
         repo = gitinfo.open_repo(self.root)
         errors = sum(1 for f in findings if f.severity == ERROR)
 
-        topics, entries = self._read_context(context_dir, repo)
+        # The linter is the parser, and its verdict on *where* to read is
+        # part of that: a configured location it rejected (E009 — absolute,
+        # `..`, control characters, a symlink leaving the tree) is not read
+        # by the dashboard either. The page then shows the finding and no
+        # entries, the same as `ktw-lint` prints.
+        if linter.context_rejected or linter.config_rejected:
+            topics, entries = [], []
+        else:
+            topics, entries = self._read_context(context_dir, repo)
         self._attach_findings(entries, findings, context_dir)
         names = self._anonymizer(entries)
         authors = self._authors(entries, names)
@@ -194,6 +202,8 @@ class StateBuilder:
             context_dir = context_dir_from_value(ctx[1]) if ctx else "context"
         else:
             context_dir = "context"
+        if not self._confined(context_dir):
+            context_dir = "context"  # a rejected location is not even stat'ed
         return gitinfo.fingerprint(self.root, context_dir, gitinfo.open_repo(self.root))
 
     # -- internals ----------------------------------------------------------
@@ -210,21 +220,43 @@ class StateBuilder:
             "project_subdir": (
                 os.path.relpath(self.root, repo.root) if self.root != repo.root else ""
             ),
+            "shallow": repo.shallow,
         }
 
+    def _confined(self, relpath: str) -> bool:
+        """True when `relpath` resolves to somewhere inside the project root —
+        the same rule `ktw_lint` applies before it reads a file (E009), kept
+        here so the dashboard cannot read what the linter refuses to. A
+        symlink is followed for the comparison, so a link inside `context/`
+        that points out of the tree counts as outside."""
+        if os.path.isabs(relpath) or "\x00" in relpath:
+            return False
+        root = os.path.realpath(self.root)
+        try:
+            resolved = os.path.realpath(os.path.join(root, relpath))
+        except (ValueError, OSError):
+            return False
+        return resolved == root or resolved.startswith(root + os.sep)
+
     def _read_context(self, context_dir: str, repo):
+        if not self._confined(context_dir):
+            return [], []
         ctx_abs = os.path.join(self.root, context_dir)
         try:
             names = sorted(
                 n
                 for n in os.listdir(ctx_abs)
-                if n.endswith(".md") and n not in GUARD_FILES
+                if n.endswith(".md")
+                and n not in GUARD_FILES
+                and self._confined(os.path.join(context_dir, n))
             )
         except OSError:
             return [], []
         index_lines = {}
         index_path = os.path.join(ctx_abs, "index.md")
-        if os.path.isfile(index_path):
+        if os.path.isfile(index_path) and self._confined(
+            os.path.join(context_dir, "index.md")
+        ):
             with open(index_path, encoding="utf-8", errors="replace") as fh:
                 index_lines = _index_lines(fh.read())
 

@@ -201,6 +201,80 @@ class StateTest(unittest.TestCase):
         self.assertNotIn("</script>", payload)
         self.assertIn("<\\/script>", payload)
 
+    # -- the tree is the boundary (the linter's E009, applied to reads) ----
+
+    def _outside(self):
+        out = tempfile.TemporaryDirectory(prefix="ktw-dash-outside-")
+        self.addCleanup(out.cleanup)
+        with open(os.path.join(out.name, "leak.md"), "w") as fh:
+            fh.write(
+                "# Outside\n\n## Leaked\n\n**Type:** decision\n**Status:** active\n"
+                "**Evidence:** confirmed\n\nSYNTHETIC_OUTSIDE_MARKER\n"
+            )
+        with open(os.path.join(out.name, "index.md"), "w") as fh:
+            fh.write("# Context index\n\n## L\n\n- [leak.md](leak.md) — leak\n")
+        return out.name
+
+    def test_rejected_context_location_is_not_read(self):
+        outside = self._outside()
+        rel = os.path.relpath(outside, self.root)
+        with open(os.path.join(self.root, ".keep-the-why"), "w") as fh:
+            fh.write(CONFIG.replace("`context/`", f"`{rel}/`"))
+        s = StateBuilder(self.root).build()
+        self.assertIn("E009", [f["code"] for f in s["findings"]["items"]])
+        self.assertEqual(s["entries"], [])
+        self.assertEqual(s["topics"], [])
+        self.assertNotIn("SYNTHETIC_OUTSIDE_MARKER", json.dumps(s))
+        self.assertNotIn("SYNTHETIC_OUTSIDE_MARKER", render_page(s))
+
+    def test_topic_symlink_leaving_the_tree_is_skipped(self):
+        outside = self._outside()
+        os.symlink(
+            os.path.join(outside, "leak.md"),
+            os.path.join(self.root, "context", "leak.md"),
+        )
+        s = StateBuilder(self.root).build()
+        self.assertNotIn("leak.md", [t["file"] for t in s["topics"]])
+        self.assertNotIn("SYNTHETIC_OUTSIDE_MARKER", json.dumps(s))
+        self.assertEqual(len(s["topics"]), 2)  # sync.md and incidents.md still read
+
+    def test_index_symlink_leaving_the_tree_is_ignored(self):
+        outside = self._outside()
+        os.remove(os.path.join(self.root, "context", "index.md"))
+        os.symlink(
+            os.path.join(outside, "index.md"),
+            os.path.join(self.root, "context", "index.md"),
+        )
+        s = StateBuilder(self.root).build()
+        self.assertEqual([t["index_line"] for t in s["topics"]], ["", ""])
+        self.assertNotIn("leak", json.dumps(s["topics"]))
+
+    def test_context_directory_symlink_leaving_the_tree_is_not_read(self):
+        outside = self._outside()
+        ctx = os.path.join(self.root, "context")
+        for n in os.listdir(ctx):
+            os.remove(os.path.join(ctx, n))
+        os.rmdir(ctx)
+        os.symlink(outside, ctx)
+        b = StateBuilder(self.root)
+        s = b.build()
+        self.assertEqual(s["entries"], [])
+        self.assertNotIn("SYNTHETIC_OUTSIDE_MARKER", json.dumps(s))
+        self.assertIsInstance(b.fingerprint(), str)
+
+    def test_shallow_flag_is_reported(self):
+        s = StateBuilder(self.root).build()
+        self.assertFalse(s["project"]["git"]["shallow"])
+        clone = tempfile.TemporaryDirectory(prefix="ktw-dash-shallow-")
+        self.addCleanup(clone.cleanup)
+        dest = os.path.join(clone.name, "c")
+        subprocess.run(
+            ["git", "clone", "-q", "--depth", "1", f"file://{self.root}", dest],
+            check=True,
+            capture_output=True,
+        )
+        self.assertTrue(StateBuilder(dest).build()["project"]["git"]["shallow"])
+
     def test_slugify(self):
         self.assertEqual(
             slugify("`WSUpgradeRequest` / `WSUpgradeResponse` keep a shape"),

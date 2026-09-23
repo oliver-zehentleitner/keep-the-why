@@ -224,7 +224,7 @@ function viewOverview(main) {
   main.append(
     el("h1", {}, p.id || p.name),
     el("p", { class: "sub" }, `${p.context} · schema ${p.schema} · ${p.config["capture-confirmation"] || "?"} · source-reference ${p.config["source-reference"] || "?"}`,
-      g?.available ? [" · ", headPill(g), g.remote ? [" · ", remoteLink(g.remote)] : null] : " · no Git"),
+      g?.available ? [" · ", headPill(g), g.remote ? [" · ", remoteLink(g.remote)] : null, g.shallow ? " · shallow clone (dates are the clone's edge)" : null] : " · no Git"),
     el("div", { class: "grid2" },
       el("div", { class: "card" }, el("h3", {}, "Type"), bars(typeCounts(list), ["decision", "constraint", "workaround", "incident"])),
       el("div", { class: "card" }, el("h3", {}, "Status"), bars(count(list, "status"), STATUS_ORDER)),
@@ -555,6 +555,7 @@ const authorColor = (name) => PALETTE[Math.max(0, S.authors.findIndex((a) => a.n
 function viewTimeline(main) {
   main.append(el("h1", {}, "Timeline"), el("p", { class: "sub" }, "Entries by the month their heading first appeared in Git, stacked by author. Grey ticks below: entries superseded in that month."));
   if (!S.project.git?.available) return main.append(el("p", { class: "center" }, "No Git repository — no dates to draw."));
+  if (S.project.git.shallow) main.append(el("p", { class: "sub warn" }, "Shallow clone: the history stops at the clone's edge, so every entry older than that appears to start there. Fetch the full history (git fetch --unshallow) for real dates."));
   const created = S.entries.filter((e) => e.git?.created?.date && matches(e));
   const months = {}; const sup = {};
   for (const e of created) { const m = e.git.created.date.slice(0, 7); (months[m] ||= {})[e.git.created.author] = ((months[m] || {})[e.git.created.author] || 0) + 1; }

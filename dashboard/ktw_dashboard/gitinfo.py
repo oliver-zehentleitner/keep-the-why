@@ -51,6 +51,7 @@ class Repo:
     branch: str
     remote: str  # host/path, credentials and scheme stripped; "" when none
     head_full: str = ""
+    shallow: bool = False  # a shallow clone: first-seen dates are the clone's edge
 
     def rel(self, path: str) -> str:
         return os.path.relpath(path, self.root)
@@ -69,7 +70,17 @@ def open_repo(project_root: str) -> Repo | None:
     remote = re.sub(r"^[a-z+]+://", "", remote)
     remote = re.sub(r"^git@([^:]+):", r"\1/", remote)
     remote = re.sub(r"\.git$", "", remote)
-    return Repo(root=top, head=head, branch=branch, remote=remote, head_full=head_full)
+    shallow = (
+        _run(["rev-parse", "--is-shallow-repository"], top) or ""
+    ).strip() == "true"
+    return Repo(
+        root=top,
+        head=head,
+        branch=branch,
+        remote=remote,
+        head_full=head_full,
+        shallow=shallow,
+    )
 
 
 def fingerprint(project_root: str, context_dir: str, repo: Repo | None) -> str:

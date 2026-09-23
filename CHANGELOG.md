@@ -8,6 +8,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 - Evals: every case record carries what the CLI reports at the end of the session — `thinking_tokens`, `output_tokens`, input and cache tokens, `ttft_ms`, `duration_api_ms`, `total_cost_usd`, `service_tier`, `canonical_model` — and the run summary their medians (`median_thinking_tokens`, `median_output_tokens`, `median_ttft_ms`, `canonical_models`, `service_tiers`), printed on `summary.md`'s instrument line. Next to the turn medians they say *how* an instrument changed: fewer thinking tokens per turn is a lowered reasoning budget, a slow time to first token is load.
 
+### Fixed
+
+- `keep-the-why-dashboard` 0.1.4: the dashboard reads only what the linter would — a configured `context` location the linter rejects (`E009`: absolute, `..`, control characters, a symlink leaving the tree) is not read at all, and inside `context/` a topic file, the index or the directory itself that resolves outside the project is skipped; before, the page and the export took the linter's finding and read the files anyway, so a symlink named `x.md` could put any readable file into a shared export. Four regression tests. Git also reports whether the checkout is a shallow clone, and the Overview and Timeline say so instead of presenting the clone's edge as the day every entry was written.
+
 ### Changed
 
 - `docs/evals.md` carries the 0.17.1 release measurement re-taken the morning after the instrument drift: 87, 87 and 88 of 88, the series rule passed, 86 cases 3/3, guards held, median 11.5–12 turns per case as in every series before; the previous evening's 83 · 80 · 81 stays in the run history as the documented drift. `tools/evals/history.json` records the re-measured series. `context/evals.md` records the resolution.

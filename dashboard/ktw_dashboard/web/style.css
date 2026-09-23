@@ -306,3 +306,4 @@ kbd { font-family: var(--mono); font-size: 11px; background: var(--bg3); border:
   .search-results { left: 0; right: 0; width: auto; }
   .project-select { max-width: calc(100vw - 150px); }
 }
+.sub.warn { color: var(--warn, #b7791f); }

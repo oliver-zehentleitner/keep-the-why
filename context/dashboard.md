@@ -103,3 +103,19 @@ At start and once every 24 hours the server asks `pypi.org/pypi/<name>/json` for
 **Rejected alternative:** the check from the page (PyPI's JSON API allows cross-origin reads). Rejected because the same page is what `--export` publishes, and a static page must not call out on behalf of everyone who opens it — the export makes no requests, and the live page makes them only to its own server.
 
 **Consequence:** the README's "no network calls" sentence became "one network call, named, with an off switch"; the check compares version strings and nothing else, sends nothing but the request, and a failed lookup shows nothing rather than a warning.
+
+## The dashboard reads only what the linter would; the boundary check is its own copy of the linter's rule, not a linter API
+
+**Type:** decision
+**Status:** active
+**Evidence:** inferred
+**Source:** an external audit of `main` at 880be51 (2026-09-22), reproduced with synthetic files; the fix in the PR that added this entry
+**Revisit when:** the linter grows a public "files it would read" API, or a third reader of `context/` appears
+
+`StateBuilder.build()` reads no entries when the linter rejected the configured location (`E009`), and `_read_context()` skips any topic file, the index or the context directory itself that resolves outside the project — the same realpath rule `ktw_lint` applies before it reads. Before, the dashboard took the linter's finding and read the files anyway: a symlink named `x.md` inside `context/`, or a `context: ../…` line, put any readable file into the page and into a shared export, while the trust model said such a value "is not read".
+
+**Reason:** the first entry in this file says the linter is the parser and the dashboard shows what the linter accepts. Where the linter reads from is part of that verdict, and the dashboard had implemented only the parsing half of it. The export is the part that made it more than a local nuisance: an export is meant to be shared, and it carried whatever the symlink pointed at.
+
+**Rejected alternative:** have the linter expose the set of files it accepted and let the dashboard consume that (the audit's suggestion, and the cleaner shape). Rejected for now because it couples a dashboard fix to a linter release: the dashboard pins a `keep-the-why-lint>=` floor, and the linter is released first and with the skill. Five lines of the same rule, with a comment naming the linter's, ship the fix on the dashboard's own counter. The revisit line is the door back to the cleaner shape.
+
+**Consequence:** four regression tests (rejected location, topic symlink, index symlink, directory symlink) and a fifth for the new `shallow` flag. The fingerprint never stats a rejected location either.
