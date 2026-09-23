@@ -165,7 +165,15 @@ def run_case(case, args, results_dir):
     else:
         skill_loaded_at = skill_load_position(transcript)
         skill_loaded = skill_loaded_at is not None
-        restraint = restraint_analysis(transcript, diff)
+        restraint = restraint_analysis(
+            transcript,
+            diff,
+            protected=[
+                c["path"]
+                for c in case.get("checks") or []
+                if c.get("type") == "file_unchanged" and c.get("path")
+            ],
+        )
         failed = [c for c in checks if not c["ok"]]
         if failed and not args.judge_always:
             # A deterministic check settles it; no judge call for a case

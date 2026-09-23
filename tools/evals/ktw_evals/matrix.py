@@ -9,7 +9,7 @@ import re
 import sys
 from pathlib import Path
 
-from .analysis import RESTRAINT_CODES, RESTRAINT_LEGEND
+from .analysis import RESTRAINT_CODES, RESTRAINT_LEGEND, restraint_analysis
 from .cases import load_matrix_config
 from .common import TOOL_DIR, skill_version
 from .drivers import AGENT_RUNNERS, DRIVER_LABELS
@@ -109,6 +109,32 @@ def run_matrix(cases, args):
         model = ", ".join(canon) if canon else model_id.split("/", 1)[-1]
         return f"{driver} {cli} · {model} · ktw {version} · {date}"
 
+    protected = {
+        c["id"]: [
+            k["path"]
+            for k in c.get("checks") or []
+            if k.get("type") == "file_unchanged" and k.get("path")
+        ]
+        for c in cases
+    }
+
+    def category_of(driver, model_id, case_id, stored):
+        """The restraint category as `restraint_analysis` computes it today,
+        re-derived from the stored transcript and diff — so a table rendered
+        after the analysis changed (a resumed run, a re-render) shows every
+        cell by the same rule, not the rule in force when the cell ran."""
+        rec = matrix_dir / f"{driver}-{_model_slug(model_id)}" / f"{case_id}.json"
+        try:
+            r = json.loads(rec.read_text())
+            fresh = restraint_analysis(
+                r.get("transcript") or "",
+                r.get("disk_changes") or "",
+                protected=protected.get(case_id),
+            )
+            return fresh["restraint_category"]
+        except (OSError, ValueError, KeyError):
+            return stored
+
     def cell(driver, model_id):
         summary, all_resolved = results[(driver, model_id)]
         if summary["total"] == 0:
@@ -116,7 +142,7 @@ def run_matrix(cases, args):
         # Single-case matrix runs (the common case) collapse to one verdict;
         # multi-case runs show an aggregate pass count instead of a score.
         if summary["total"] == 1:
-            case = next(iter(summary["cases"].values()))
+            case_id, case = next(iter(summary["cases"].items()))
             verdict, score = case["verdict"], case.get("score")
             if verdict not in ("pass", "fail"):
                 return f"⚠️ {verdict}"
@@ -126,7 +152,9 @@ def run_matrix(cases, args):
             # judge-scored — shown as a bracketed code so a passing score
             # can't quietly hide e.g. the file having actually been deleted
             # (the real bug this caught on the old Cline column).
-            category = case.get("restraint_category")
+            category = category_of(
+                driver, model_id, case_id, case.get("restraint_category")
+            )
             code_part = (
                 f" [{RESTRAINT_CODES[category]}]" if category in RESTRAINT_CODES else ""
             )
