@@ -161,7 +161,7 @@ And one controlled experiment on the core claim: twenty fresh agent sessions, th
 
 <div class="ktw-card" markdown>
 
-**Not session memory — and it does the job session memory is wanted for.** Session memory remembers what happened; project state remembers where the project is; the why layer preserves why it became what it is. This is the third — not a transcript or activity log. But what people reach for session memory to fix — the agent forgetting between sessions — this fixes at the source: the reasoning is in the repository, so every session starts with it, on every machine and in every tool, for the whole team.
+**Not session memory — and it does the job session memory is wanted for.** Session memory remembers what happened; project state remembers where the project is; the why layer preserves why it became what it is. This is the third — not a transcript or activity log. But what people reach for session memory to fix — the agent forgetting between sessions — this fixes at the source: the reasoning is in the repository, so every session starts with it, on every machine and in every tool, for the whole team. [Read the two side by side.](https://blog.technopathy.club/session-memory-is-not-project-memory-it-fixes-the-same-complaint)
 
 </div>
 

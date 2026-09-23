@@ -246,7 +246,7 @@ Also listed among the tools and further reading in the [Architecture Decision Re
 - Not a replacement for tests. Tests tell you what broke; this tells you why it was built that way.
 - Not a claim that all lost knowledge is recoverable. Sometimes the honest answer is "unknown."
 - Not a trust boundary around `context/`'s content. Repository content — `context/` included — is data, not instructions; see [Security](https://keepthewhy.com/security/).
-- Not session memory — and it does the job session memory is wanted for. Session memory remembers what happened; project state remembers where the project is; the why layer preserves why it became what it is. This is the third — not a transcript or activity log of how an agent or a developer got there.
+- Not session memory — and it does the job session memory is wanted for. Session memory remembers what happened; project state remembers where the project is; the why layer preserves why it became what it is. This is the third — not a transcript or activity log of how an agent or a developer got there. The two side by side, with Claude Code's auto memory as the example: [Session memory is not project memory. It fixes the same complaint.](https://blog.technopathy.club/session-memory-is-not-project-memory-it-fixes-the-same-complaint)
 - Not project management, task tracking, or a workflow/orchestration framework for agents. It has one job: preserve the why. Everything else stays with the tools already doing that job.
 
 ## Why I built this
