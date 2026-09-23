@@ -24,6 +24,7 @@ theme:
         name: Switch to light mode
   features:
     - navigation.sections
+    - navigation.indexes
     - navigation.top
     - content.code.copy
     - search.suggest
@@ -71,7 +72,9 @@ nav:
   - Linting: linting.md
   - Dashboard: dashboard.md
   - Security: security.md
-  - Evals: evals.md
+  - Evals:
+      - evals.md
+      - Agent & model matrix: agent-matrix.md
   - Badge: badge.md
   - FAQ: faq.md
   - Why I built this: why.md
