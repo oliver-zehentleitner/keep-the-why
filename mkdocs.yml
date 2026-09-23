@@ -24,7 +24,6 @@ theme:
         name: Switch to light mode
   features:
     - navigation.sections
-    - navigation.indexes
     - navigation.top
     - content.code.copy
     - search.suggest
@@ -76,7 +75,7 @@ nav:
   - FAQ: faq.md
   - Why I built this: why.md
   - Evals:
-      - evals.md
+      - Full suite: evals.md
       - Agent & model matrix: agent-matrix.md
   - Reference:
       - Setup: setup.md
