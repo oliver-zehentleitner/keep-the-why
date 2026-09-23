@@ -10,6 +10,8 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Fixed
 
+- Evals: a release series is complete or it fails — `series.py` checks every run against the suite's case ids and the series against the expected run count (three), reports the missing or unknown ids per run, refuses to record an incomplete series, and `--partial` judges a deliberate subset on the cases it has, unrecordable. Before, the case set was the union of what the runs contained: three empty summaries judged 0/0 · 0/0 · 0/0 and passed every gate with exit code 0.
+- Evals: a session whose `modelUsage` reports no thinking tokens records `thinking_tokens: null`, not `0` — missing telemetry is not a measured zero; an explicit 0 stays 0, and `thinking_tokens_models` says how many of the session's models reported the number ("1/2").
 - `keep-the-why-dashboard` 0.1.4: the dashboard reads only what the linter would — a configured `context` location the linter rejects (`E009`: absolute, `..`, control characters, a symlink leaving the tree) is not read at all, and inside `context/` a topic file, the index or the directory itself that resolves outside the project is skipped; before, the page and the export took the linter's finding and read the files anyway, so a symlink named `x.md` could put any readable file into a shared export. Four regression tests. Git also reports whether the checkout is a shallow clone, and the Overview and Timeline say so instead of presenting the clone's edge as the day every entry was written.
 
 ### Changed

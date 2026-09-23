@@ -82,6 +82,35 @@ class Instrument(unittest.TestCase):
         self.assertEqual(u["service_tier"], "standard")
         self.assertEqual(u["canonical_model"], "claude-sonnet-5")
 
+    def test_thinking_tokens_stay_none_when_no_model_reports_them(self):
+        ev = {
+            "type": "result",
+            "usage": {"input_tokens": 10, "output_tokens": 20},
+            "modelUsage": {"m1": {"inputTokens": 10, "outputTokens": 20}},
+        }
+        u = session_usage([ev])
+        self.assertIsNone(u["thinking_tokens"])
+        self.assertEqual(u["thinking_tokens_models"], "0/1")
+        self.assertEqual(u["output_tokens"], 20)
+
+    def test_an_explicit_zero_of_thinking_tokens_is_a_measured_zero(self):
+        ev = {
+            "type": "result",
+            "usage": {"output_tokens": 20},
+            "modelUsage": {"m1": {"thinkingTokens": 0}},
+        }
+        self.assertEqual(session_usage([ev])["thinking_tokens"], 0)
+
+    def test_partially_reported_thinking_tokens_are_visible_as_such(self):
+        ev = {
+            "type": "result",
+            "usage": {"output_tokens": 20},
+            "modelUsage": {"m1": {"thinkingTokens": 300}, "m2": {"outputTokens": 5}},
+        }
+        u = session_usage([ev])
+        self.assertEqual(u["thinking_tokens"], 300)
+        self.assertEqual(u["thinking_tokens_models"], "1/2")
+
     def test_session_usage_without_a_result_event_is_all_none(self):
         u = session_usage([{"type": "system", "subtype": "init"}])
         self.assertTrue(all(v is None for v in u.values()))

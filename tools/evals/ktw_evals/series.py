@@ -99,14 +99,39 @@ def judge_series(
     guards=None,
     history=None,
     version=None,
+    expected_ids=None,
+    expected_runs=None,
 ):
     """``runs`` is a list of {case id: {"verdict": ...}} blocks, one per run.
 
-    A case missing from a run counts as not passed in it — a series compares
-    like with like, so a run over a different case set shows up as failures
-    rather than being silently tolerated.
+    ``expected_ids`` is the case set the series is supposed to cover — the
+    suite, for a release measurement. With it, a case missing from a run
+    counts as not passed in it *and* the series is incomplete; a case no run
+    was supposed to have is unknown and makes it incomplete too. Without it
+    the case set is whatever the runs contain, which is only right for a
+    deliberately partial series — and even then a series with no cases at
+    all is not a measurement. ``expected_runs`` does the same for the run
+    count. Completeness is reported next to the gate, the run limit and the
+    guards, and fails separately: an empty or half-finished run used to
+    pass all three (three empty summaries judged 0/0 · 0/0 · 0/0, PASS).
     """
-    ids = sorted(set().union(*[r.keys() for r in runs])) if runs else []
+    if expected_ids is not None:
+        ids = sorted(expected_ids)
+    else:
+        ids = sorted(set().union(*[r.keys() for r in runs])) if runs else []
+    expected = set(ids)
+    missing = {
+        i + 1: sorted(expected - set(r.keys()))
+        for i, r in enumerate(runs)
+        if expected - set(r.keys())
+    }
+    unknown = {
+        i + 1: sorted(set(r.keys()) - expected)
+        for i, r in enumerate(runs)
+        if set(r.keys()) - expected
+    }
+    runs_ok = expected_runs is None or len(runs) == expected_runs
+    complete_ok = bool(ids) and not missing and not unknown and runs_ok
     per_case = {}
     for cid in ids:
         verdicts = [r.get(cid, {}).get("verdict", "missing") for r in runs]
@@ -142,6 +167,14 @@ def judge_series(
         },
         "guard_violations": guard_violations,
         "guards_ok": not guard_violations,
+        "complete": {
+            "expected_cases": len(ids),
+            "expected_runs": expected_runs,
+            "missing": missing,
+            "unknown": unknown,
+            "runs_ok": runs_ok,
+        },
+        "complete_ok": complete_ok,
         "min_passes": min_passes,
         "max_flips_per_run": max_flips_per_run,
     }
@@ -176,4 +209,26 @@ def render(result):
         lines.append("guards (no guard check violated in any run): FAIL")
         for run, cid, label in result["guard_violations"]:
             lines.append(f"  run {run}  {cid}  {label}")
+    c = result.get("complete") or {}
+    want_runs = c.get("expected_runs")
+    shape = (
+        f"{want_runs} runs × {c.get('expected_cases', 0)} cases"
+        if want_runs
+        else f"{c.get('expected_cases', 0)} cases"
+    )
+    if result.get("complete_ok"):
+        lines.append(f"complete ({shape}): PASS")
+    else:
+        lines.append(f"complete ({shape}): FAIL")
+        if not c.get("expected_cases"):
+            lines.append("  no cases at all — nothing was measured")
+        if not c.get("runs_ok", True):
+            lines.append(f"  {n} run(s), expected {want_runs}")
+        for run, cids in (c.get("missing") or {}).items():
+            lines.append(
+                f"  run {run}  missing {len(cids)} case(s): {', '.join(cids[:5])}"
+                + (" …" if len(cids) > 5 else "")
+            )
+        for run, cids in (c.get("unknown") or {}).items():
+            lines.append(f"  run {run}  unknown id(s): {', '.join(cids)}")
     return "\n".join(lines)

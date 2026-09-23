@@ -62,6 +62,44 @@ class SeriesVerdict(unittest.TestCase):
         self.assertEqual(r["flipped"]["a"], ["error", "pass", "missing"])
         self.assertFalse(r["gate_ok"])
 
+    # -- completeness: an empty or half-finished run is not a measurement --
+
+    def test_three_empty_runs_are_not_a_passing_series(self):
+        r = judge_series([{}, {}, {}])
+        self.assertFalse(r["complete_ok"])
+        self.assertIn("no cases at all", render(r))
+
+    def test_a_run_missing_a_case_is_incomplete_and_the_case_counts_as_failed(self):
+        runs = [run(a="pass", b="pass"), run(a="pass"), run(a="pass", b="pass")]
+        r = judge_series(runs, expected_ids=["a", "b"], expected_runs=3)
+        self.assertFalse(r["complete_ok"])
+        self.assertEqual(r["complete"]["missing"], {2: ["b"]})
+        self.assertEqual(r["flipped"], {"b": ["pass", "missing", "pass"]})
+        self.assertIn("run 2  missing 1 case(s): b", render(r))
+
+    def test_an_unknown_case_id_is_incomplete(self):
+        runs = [run(a="pass", z="pass")] * 3
+        r = judge_series(runs, expected_ids=["a"], expected_runs=3)
+        self.assertFalse(r["complete_ok"])
+        self.assertEqual(r["complete"]["unknown"], {1: ["z"], 2: ["z"], 3: ["z"]})
+
+    def test_the_wrong_number_of_runs_is_incomplete(self):
+        r = judge_series([run(a="pass")] * 2, expected_ids=["a"], expected_runs=3)
+        self.assertFalse(r["complete_ok"])
+        self.assertIn("2 run(s), expected 3", render(r))
+
+    def test_a_complete_series_passes_completeness(self):
+        r = judge_series(
+            [run(a="pass", b="pass")] * 3, expected_ids=["a", "b"], expected_runs=3
+        )
+        self.assertTrue(r["complete_ok"])
+        self.assertIn("complete (3 runs × 2 cases): PASS", render(r))
+
+    def test_a_partial_series_is_judged_on_what_it_has(self):
+        r = judge_series([run(a="pass")] * 3)
+        self.assertTrue(r["complete_ok"])
+        self.assertEqual(r["cases"], 1)
+
     def test_render_names_the_flipped_cases(self):
         out = render(judge_series([run(a="fail"), run(a="pass"), run(a="pass")]))
         self.assertIn("2/3  a  (fail, pass, pass)", out)

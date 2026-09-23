@@ -99,6 +99,7 @@ def session_usage(events):
     not — and ttft would have said whether the servers were under load."""
     out = {k: None for k in USAGE_FIELDS}
     out["canonical_model"] = None
+    out["thinking_tokens_models"] = None  # "reported/total" when modelUsage exists
     for ev in events or []:
         if not (isinstance(ev, dict) and ev.get("type") == "result"):
             continue
@@ -118,11 +119,17 @@ def session_usage(events):
             out[k] = ev.get(k)
         models = ev.get("modelUsage") or {}
         if out["thinking_tokens"] is None and models:
-            out["thinking_tokens"] = sum(
-                (m.get("thinkingTokens") or 0)
+            # Sum what was reported; a model that reports no thinkingTokens
+            # is not a model that thought for zero tokens. No report at all
+            # stays None — missing telemetry must not read as a measured
+            # zero, or the drift signal this field exists for is fiction.
+            reported = [
+                m["thinkingTokens"]
                 for m in models.values()
-                if isinstance(m, dict)
-            )
+                if isinstance(m, dict) and m.get("thinkingTokens") is not None
+            ]
+            out["thinking_tokens"] = sum(reported) if reported else None
+            out["thinking_tokens_models"] = f"{len(reported)}/{len(models)}"
         canon = sorted(
             {
                 m.get("canonicalModel")

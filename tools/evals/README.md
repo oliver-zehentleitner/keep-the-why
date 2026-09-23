@@ -72,7 +72,7 @@ next to it, one module per responsibility:
 | `runner.py` | `run_case()`, `execute_pass()`, and the retry loop |
 | `matrix.py` | `--matrix` orchestration and its table |
 | `regrade.py` | re-grade stored records with the judge only, `times` verdicts per record; agreement with itself and with the stored verdict; `tools/evals/regrade.py` is its command line |
-| `series.py` | the verdict over a series of full runs — every case passes 2 of 3, no run with more than one failure, no guard check violated at all; `tools/evals/series.py` is its command line |
+| `series.py` | the verdict over a series of full runs — every run complete (the suite's 88 cases, three runs; `--partial` for a deliberate subset), every case passes 2 of 3, no run with more than one failure, no guard check violated at all; `tools/evals/series.py` is its command line |
 | `tests/` | offline tests for `checks.py`, `workdir.py` and `series.py` — `python3 -m unittest discover -s tools/evals/tests` |
 
 Adding a driver means one new module under `drivers/` plus its rows in the
