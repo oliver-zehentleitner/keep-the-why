@@ -6,6 +6,8 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
+import time
 from pathlib import Path
 
 from ..common import MAX_TOOL_RESULT_CHARS, MAX_TRANSCRIPT_CHARS, _cap
@@ -67,35 +69,121 @@ def run_agent_cline(prompt, cwd, model, timeout, disallowed_tools=None, home=Non
     if home is not None:
         fake_home_env(env, home)
     try:
-        proc = subprocess.run(
-            cmd,
-            cwd=cwd,
-            env=env,
-            capture_output=True,
-            stdin=subprocess.DEVNULL,
-            text=True,
-            timeout=timeout,
-        )
-    except subprocess.TimeoutExpired as e:
-        return {
-            "events": [],
-            "error": f"timeout after {timeout}s",
-            "raw": (e.stdout or "")[:MAX_TRANSCRIPT_CHARS],
-        }
+        return _run_until_question(cmd, cwd, env, timeout)
     finally:
         shutil.rmtree(data_dir, ignore_errors=True)
+
+
+def _run_until_question(cmd, cwd, env, timeout):
+    """Run cline, streaming its --json events, and end the session at the
+    agent's first `ask_question`.
+
+    In non-interactive mode cline answers that tool call itself, one
+    millisecond later, with a made-up user reply ("Safely remove it — nothing
+    downstream needs the 2s pause"), and the agent then does what it was
+    told. Every other CLI in this harness ends its session at a question once
+    stdin is closed; cline's answer comes from inside the process, so closing
+    stdin changes nothing. The driver therefore watches the event stream and
+    terminates cline the moment the `content_start` for `ask_question`
+    arrives — that event already carries the full question and its options
+    — and records the question as the agent's final response, the same shape
+    pi, omp or opencode leave behind. Nothing the agent did before the
+    question is touched, and nothing after it exists. Found on the
+    2026-09-23 rebuild (three cells) and first seen in #195."""
+    proc = subprocess.Popen(
+        cmd,
+        cwd=cwd,
+        env=env,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    lines = []
+    done = threading.Event()
+
+    def reader():
+        for line in proc.stdout:
+            lines.append(line)
+        done.set()
+
+    threading.Thread(target=reader, daemon=True).start()
+    deadline = time.monotonic() + timeout
     events = []
-    for line in proc.stdout.splitlines():
-        line = line.strip()
-        if not line:
-            continue
+    consumed = 0
+    cut = None
+    while True:
+        while consumed < len(lines):
+            line = lines[consumed].strip()
+            consumed += 1
+            if not line:
+                continue
+            try:
+                ev = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            e = ev.get("event") or {}
+            if (
+                ev.get("type") == "agent_event"
+                and e.get("type") == "content_start"
+                and e.get("contentType") == "tool"
+                and e.get("toolName") == "ask_question"
+            ):
+                cut = e
+                break
+            events.append(ev)
+        if cut is not None or done.is_set():
+            break
+        if time.monotonic() > deadline:
+            proc.kill()
+            proc.wait()
+            return {
+                "events": events,
+                "error": f"timeout after {timeout}s",
+                "raw": "".join(lines)[:MAX_TRANSCRIPT_CHARS],
+            }
+        time.sleep(0.2)
+    if cut is not None:
+        proc.terminate()
         try:
-            events.append(json.loads(line))
-        except json.JSONDecodeError:
-            pass
+            proc.wait(timeout=15)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait()
+        question = (cut.get("input") or {}).get("question") or ""
+        options = (cut.get("input") or {}).get("options") or []
+        events.append(
+            {
+                "type": "agent_event",
+                "event": {
+                    "type": "content_end",
+                    "contentType": "tool",
+                    "toolName": "ask_question",
+                    "input": cut.get("input") or {},
+                    "output": "(no answer — nobody present; the harness ended "
+                    "the session at the question, as the other CLIs do on "
+                    "their own when stdin is closed)",
+                },
+            }
+        )
+        text = question + (
+            "\n" + "\n".join(f"- {o}" for o in options) if options else ""
+        )
+        events.append(
+            {
+                "type": "agent_event",
+                "event": {"type": "content_end", "contentType": "text", "text": text},
+            }
+        )
+        events.append(
+            {"type": "agent_event", "event": {"type": "done", "reason": "question"}}
+        )
+        return {"events": events, "error": None}
+    proc.wait()
+    stderr = proc.stderr.read() if proc.stderr else ""
     error = None
     if proc.returncode != 0:
-        error = f"cline exited {proc.returncode}: {(proc.stderr or proc.stdout)[:2000]}"
+        error = f"cline exited {proc.returncode}: {(stderr or ''.join(lines))[:2000]}"
     return {"events": events, "error": error}
 
 

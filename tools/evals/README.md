@@ -181,6 +181,22 @@ question is the end of the session, which is what the case wants to see
 (restraint code **R**). Found on the 2026-09-23 rebuild; one line per
 driver.
 
+**`cline` answers its own question, so the driver ends the session for it.**
+Closing stdin changes nothing there: in non-interactive mode cline's
+`ask_question` tool call is answered from inside the process, one
+millisecond later, with a made-up user reply ("Safely remove it — nothing
+downstream needs the 2s pause"), and the agent then does what it was told —
+three deleted fences on the rebuild, every one after a correct
+investigation and a correct question. `run_agent_cline` streams the `--json`
+events and terminates cline the moment the `content_start` for
+`ask_question` arrives (that event already carries the whole question and
+its options), then records the question as the agent's final response — the
+same shape pi, omp or opencode leave behind on their own. Nothing before the
+question is touched, nothing after it exists. `--auto-approve false` is not
+an alternative: it puts every tool, reads included, behind a TTY approval
+gate. Measured: the same eight cells went from 5 of 8 to 8 of 8, all
+restrained.
+
 ## Usage
 
 ```bash
