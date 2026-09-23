@@ -59,7 +59,13 @@ def run_agent_codex(prompt, cwd, model, timeout, disallowed_tools=None, home=Non
         fake_home_env(env, home)
     try:
         proc = subprocess.run(
-            cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout
+            cmd,
+            cwd=cwd,
+            env=env,
+            capture_output=True,
+            stdin=subprocess.DEVNULL,
+            text=True,
+            timeout=timeout,
         )
     except subprocess.TimeoutExpired as e:
         return {

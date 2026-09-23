@@ -5,6 +5,7 @@ import concurrent.futures
 import copy
 import datetime
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -91,6 +92,23 @@ def run_matrix(cases, args):
     version = skill_version()
     date = datetime.date.today().isoformat()
 
+    def instrument(driver, model_id, summary):
+        """The exact things a cell was measured with: the agent CLI and its
+        version, the model as resolved (the vendor's canonical id when the
+        CLI reports one, else the id asked for), the skill version. The
+        row and column headings name the harness and the model; the cell
+        carries the versions, so two tables made months apart can be
+        compared line by line instead of by memory."""
+        raw = summary.get("cli_version") or ""
+        # `--version` output differs per CLI ("codex-cli 0.156.1", "2.1.280
+        # (Claude Code)", "Hermes Agent v0.21.4 (2026.9.21) · upstream …"):
+        # the cell keeps the version number, the summary keeps the raw line.
+        found = re.search(r"\d+\.\d+(?:\.\d+)?", raw)
+        cli = found.group(0) if found else (raw or "?")
+        canon = summary.get("canonical_models") or []
+        model = ", ".join(canon) if canon else model_id.split("/", 1)[-1]
+        return f"{driver} {cli} · {model} · ktw {version} · {date}"
+
     def cell(driver, model_id):
         summary, all_resolved = results[(driver, model_id)]
         if summary["total"] == 0:
@@ -112,7 +130,7 @@ def run_matrix(cases, args):
             code_part = (
                 f" [{RESTRAINT_CODES[category]}]" if category in RESTRAINT_CODES else ""
             )
-            return f"{mark} {score_part}{code_part} · v{version} · {date}"
+            return f"{mark} {score_part}{code_part} · {instrument(driver, model_id, summary)}"
         mark = (
             "✅"
             if all_resolved and summary["failed"] == 0
@@ -135,13 +153,14 @@ def run_matrix(cases, args):
                 )
                 + "]"
             )
-        return f"{mark} {summary['passed']}/{summary['total']}{breakdown} · v{version} · {date}"
+        return f"{mark} {summary['passed']}/{summary['total']}{breakdown} · {instrument(driver, model_id, summary)}"
 
     lines = [
         f"# Matrix run — {date}",
         "",
         f"Skill {version} · judge: `{args.judge_model}` · "
-        f"{len(drivers)} driver(s) × {len(models)} model(s)",
+        f"{len(drivers)} driver(s) × {len(models)} model(s) · "
+        "cell: verdict score [restraint] · agent version · model · skill · date",
         "",
         f"Restraint codes (mechanical, not judge-scored): {RESTRAINT_LEGEND}",
         "",
@@ -151,6 +170,28 @@ def run_matrix(cases, args):
     for model in models:
         row = [cell(d, model["id"]) for d in drivers]
         lines.append(f"| {model['label']} | " + " | ".join(row) + " |")
+    # The judge is the same instrument for every cell; name it once, with
+    # the hash of its prompt, the way a full run's summary does.
+    judges = sorted(
+        {
+            j
+            for s, _r in results.values()
+            for j in (s.get("judge_models_resolved") or [])
+        }
+    )
+    shas = sorted(
+        {
+            s.get("judge_prompt_sha")
+            for s, _r in results.values()
+            if s.get("judge_prompt_sha")
+        }
+    )
+    lines += [
+        "",
+        "Judge: "
+        + (", ".join(judges) if judges else f"`{args.judge_model}`")
+        + (f" · prompt {', '.join(shas)}" if shas else ""),
+    ]
     table_md = "\n".join(lines) + "\n"
 
     (matrix_dir / "matrix-summary.md").write_text(table_md)

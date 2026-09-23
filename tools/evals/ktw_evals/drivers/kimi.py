@@ -23,9 +23,16 @@ def run_agent_kimi(prompt, cwd, model, timeout, disallowed_tools=None, home=None
     env = dict(os.environ)
     if home is not None:
         fake_home_env(env, home)
+        _seed_kimi_config(home, model, env)
     try:
         proc = subprocess.run(
-            cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout
+            cmd,
+            cwd=cwd,
+            env=env,
+            capture_output=True,
+            stdin=subprocess.DEVNULL,
+            text=True,
+            timeout=timeout,
         )
     except subprocess.TimeoutExpired as e:
         return {
@@ -46,6 +53,38 @@ def run_agent_kimi(prompt, cwd, model, timeout, disallowed_tools=None, home=None
     if proc.returncode != 0:
         error = f"kimi exited {proc.returncode}: {(proc.stderr or proc.stdout)[:2000]}"
     return {"events": events, "error": error}
+
+
+def _seed_kimi_config(home, model, env):
+    """Kimi Code 2.x resolves `-m` against the model aliases in
+    `~/.kimi-code/config.toml` and refuses one it has not seen ("Model … is
+    not configured in config.toml"); 0.x passed a `provider/model` string
+    straight through. The fake home has no config, so write one per run:
+    the provider the model string names (only `openrouter` is wired here,
+    key from the environment) and the one alias this run asks for. The
+    operator's own config stays untouched — this is the fake home only."""
+    provider, _, model_id = model.partition("/")
+    if provider != "openrouter" or not model_id:
+        return
+    key = env.get("OPENROUTER_API_KEY", "")
+    conf_dir = os.path.join(str(home), ".kimi-code")
+    os.makedirs(conf_dir, exist_ok=True)
+    toml = (
+        f'default_model = "{model}"\n\n'
+        "[providers.openrouter]\n"
+        'base_url = "https://openrouter.ai/api/v1"\n'
+        'type = "openai"\n'
+        f'api_key = "{key}"\n\n'
+        f'[models."{model}"]\n'
+        'provider = "openrouter"\n'
+        f'model = "{model_id}"\n'
+        "max_context_size = 262144\n"
+        "max_output_size = 65536\n"
+        'capabilities = [ "thinking", "tool_use" ]\n'
+        f'display_name = "{model_id}"\n'
+    )
+    with open(os.path.join(conf_dir, "config.toml"), "w", encoding="utf-8") as fh:
+        fh.write(toml)
 
 
 def render_transcript_kimi(events):

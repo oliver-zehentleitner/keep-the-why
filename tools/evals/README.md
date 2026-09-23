@@ -130,11 +130,15 @@ equivalent to what the other drivers expose.
 (unscoped).** The unscoped package is a real but entirely unrelated tool
 ([whitesmith/kimi-code](https://github.com/whitesmith/kimi-code), a Groq
 proxy launcher for claude-code) that happens to install a same-named `kimi`
-binary — confirmed the hard way installing the wrong one first. Separately:
-npm's latest at time of writing, `@moonshot-ai/kimi-code` 0.38.0, crashes
-outright on any non-interactive `-p` prompt before producing a response (a
-genuine upstream bug, reproduced independent of this skill) — pin to 0.37.2
-until that's fixed upstream.
+binary — confirmed the hard way installing the wrong one first. Since Kimi
+Code 2.x, `-m` names a model *alias* that has to be declared in
+`~/.kimi-code/config.toml` (a `[models."…"]` block with its provider), and
+an undeclared one is refused ("Model … is not configured in config.toml");
+0.x passed a `provider/model` string straight through. The fake home has no
+config, so `run_agent_kimi` writes one per run — the OpenRouter provider
+(key from `OPENROUTER_API_KEY`) and the single alias the run asks for. The
+operator's own config is never touched. `-p` cannot be combined with
+`--auto` in 2.x either; the prompt mode is non-interactive on its own.
 
 **`omp` is a fork of `pi`** (can1357/oh-my-pi, forked from earendil-works/pi)
 rewritten as a "coding agent with the IDE wired in" — 31 built-in tools (LSP,
@@ -166,6 +170,16 @@ and `hermes-agent`'s missing directory scoping above — all three fixed (the
 first two in code, the third by never invoking that binary), see
 `CHANGELOG.md`. Re-check `render_transcript_*` against a fresh raw transcript
 if a driver's CLI version changes noticeably.
+
+**Every driver runs with stdin closed** (`stdin=subprocess.DEVNULL`). An
+agent that does the right thing on a Chesterton's Fence case asks a question
+— and a CLI in its non-interactive mode may then wait for the answer on
+stdin. With the harness's inherited stdin that wait never ended: `omp` and
+`cline` sat for the full 900 s timeout and recorded nothing, while the same
+binaries answered a trivial prompt in seconds. With stdin at EOF the
+question is the end of the session, which is what the case wants to see
+(restraint code **R**). Found on the 2026-09-23 rebuild; one line per
+driver.
 
 ## Usage
 
@@ -315,7 +329,14 @@ time, same as re-running a single-driver command. Prints and saves a
 ready-to-paste `docs/agent-matrix.md`-style table
 (`<results-dir>/matrix-summary.md` and `.json`) — that page's prose sections
 are hand-curated and this doesn't touch them, so pasting rows in is still a
-manual step. Exit code is non-zero if anything failed or didn't resolve,
+manual step. A cell names its instruments: verdict and judge score, the
+mechanical restraint code, then the agent CLI and its version, the model as
+resolved (the vendor's canonical id where the CLI reports one, else the id
+asked for), the skill version and the date — `✅ 9/10 [R] · codex 0.156.1 ·
+z-ai/glm-5.3 · ktw 0.17.1 · 2026-09-23`. The judge and its prompt hash are
+named once under the table. Rows and columns carry only the names; the
+versions live in the cells, so two tables made months apart compare line by
+line. Exit code is non-zero if anything failed or didn't resolve,
 which is what makes this safe to run unattended (e.g. a scheduled GitHub
 Actions job) — env-var credentials only, no interactive confirmation
 anywhere in the chain.
