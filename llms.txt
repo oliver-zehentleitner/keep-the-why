@@ -322,6 +322,10 @@ external service (no database, no MCP server).
   The two side by side, Claude Code auto memory as the example, what each one answers:
   https://blog.technopathy.club/session-memory-is-not-project-memory-it-fixes-the-same-complaint
 - No vendor lock-in: plain Markdown and Git; switch agents and the memory stays.
+- Not an ADR replacement: ADRs are written by a person at a decision point, one frozen file per
+  decision, for the few large decisions; Keep the Why is written by the agent while the reasoning
+  is spoken, one topic file with living entries, for those and the many small ones. A project with
+  an ADR folder keeps it.
 - Team sharing is Git: clone, branch, pull request — no sync service, no project id.
 
 ## Common Mistakes
