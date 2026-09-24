@@ -18,6 +18,20 @@ README's and `llms.txt`'s "Related work" don't compare Keep the Why against spec
 
 **Consequence (2026-09-22, second boundary):** the rule covers the repository — README, `llms.txt`, FAQ, the site. A blog article may compare by name, because an article is a dated snapshot by nature and nobody expects it to stay current; the repository is expected to. The maintainer's call, made when two AI-search probes (2026-09-22) showed that outside answers compare Keep the Why by name anyway, and get it wrong until the properties sit side by side. The same probes surfaced three objections that recur across answers — no similarity search, no commit gating, no UI for non-developers — and, as with the Obsidian entry, the FAQ and `llms.txt` now state each one plainly with its reason, without naming the tools the answers credited. The index skeleton got its name in the specification the same day, because both probes used the blog article's term "deterministic write areas" as if it were the skeleton's official name.
 
+## Site navigation: sections are headings, `navigation.indexes` stays off
+
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer requests, 2026-09-23/24 (matrix under Evals, then "Why this project is built this way" back to two entries)
+**Revisit when:** a section genuinely needs a clickable heading, or the `context/` pages stop being served from a file named `index.md`
+
+Every nav section is a plain heading with its entries beneath: Reference, Examples, "Why this project is built this way" (its two entries: this project's `context/` and the live dashboard), and Evals with "Full suite" and "Agent & model matrix", placed between "Why I built this" and Reference.
+
+**Reason:** Material's `navigation.indexes` was switched on for one day to make "Evals" a clickable section. Its side effect: the feature treats any `index.md` inside a section as that section's index page, and the `context/` section's page is `context/index.md` — so that heading became a link and its "Read this project's context/" entry disappeared. Naming the two Evals entries ("Full suite", the 88 cases on Claude Code; "Agent & model matrix", one case across agents) said what the heading could not, and needed no feature.
+
+**Rejected alternative:** keep `navigation.indexes` and rename `context/index.md`'s page so it stops being an index. Rejected: the file name is the format's own convention (`context/index.md` is what the skill writes and the linter checks), and the site should not bend it for a menu.
+
 ## The site's front page is a landing page in Markdown, not a template and not a raw HTML file
 
 **Type:** decision
