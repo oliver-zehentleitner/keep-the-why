@@ -102,7 +102,7 @@ Offered by the project wizard when a docs build exists (a GitHub Pages workflow,
 [![Keep the Why · live](https://example.org/dashboard/live/badge.svg)](https://example.org/dashboard/live/)
 ```
 
-with the site's real URL; `badge.svg` is rendered at export time with the project's numbers ("42 entries · 3 open" — open, needs-review and pending-confirmation count as open), so README → the project's own SVG → the project's own dashboard, and no badge service in between. Staged, not committed, like everything else setup writes.
+with the site's real URL, and `dashboard-state: https://example.org/dashboard/live/state.json` in `.keep-the-why` — the line another dashboard reads, in its *public* mode, to show this project's export in place of a checkout (the family web across repositories, `docs/dashboard.md`). `badge.svg` is rendered at export time with the project's numbers ("42 entries · 3 open" — open, needs-review and pending-confirmation count as open), so README → the project's own SVG → the project's own dashboard, and no badge service in between. Staged, not committed, like everything else setup writes.
 
 ## The local run is a different setting
 

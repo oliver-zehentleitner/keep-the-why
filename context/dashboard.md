@@ -102,7 +102,8 @@ The author layer comes from three Git calls per entry: `blame` on the heading fo
 **Status:** active
 **Evidence:** confirmed
 **Source:** maintainer request, 2026-09-11
-**Revisit when:** a second network call is proposed, or the check is asked to do anything but compare two version strings
+**Verification:** corroborated — re-checked 2026-09-27 when public mode arrived (`project-families.md`): the Python server still makes the one call, and the *page* now fetches a family member's raw `.keep-the-why` and its published `state.json` when a person switches it to public — on request, in the browser, never from the server and never from the skill; an exported page left in local mode still makes none
+**Revisit when:** the server is asked for a second call, the page is asked to fetch anything without the person switching to public, or the check is asked to do anything but compare two version strings
 
 At start and once every 24 hours the server asks `pypi.org/pypi/<name>/json` for the newest `keep-the-why-dashboard` and `keep-the-why-lint`; a newer release makes the package's entry in the status bar shimmer, with the version and the `pip install -U` line in its tooltip. `--no-update-check` turns it off. The exported page never checks.
 

@@ -148,6 +148,9 @@ def _body(lines: list[str], start: int, end: int) -> dict:
     }
 
 
+STATE_JSON_VERSION = 1
+
+
 def _config_dict(block) -> dict:
     if block is None:
         return {}
@@ -206,6 +209,10 @@ class StateBuilder:
         authors = self._authors(entries, names)
 
         state = {
+            # the shape of this document, for a reader that did not produce it
+            # (public mode loads another project's export; unknown keys are
+            # ignored there, missing ones rendered blank, never a broken page)
+            "state-json": STATE_JSON_VERSION,
             "generated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "dashboard": __version__,
             "linter": LINT_VERSION,
@@ -228,6 +235,9 @@ class StateBuilder:
                 "parent": _config_dict(parsed.config if parsed else None)
                 .get("parent", "")
                 .strip("`"),
+                "dashboard_state": _config_dict(parsed.config if parsed else None).get(
+                    "dashboard-state", ""
+                ),
                 "children": _children_list(parsed.children if parsed else None),
                 "git": self._repo_dict(repo),
             },

@@ -684,6 +684,27 @@ class ConfigFileIntegrity(_ProjectFixture):
         findings, _ = self.run_lint()
         self.assertIn("E003", self.codes(findings))
 
+    # -- dashboard-state: the published export ---------------------------------
+
+    def test_dashboard_state_is_an_https_json_url(self):
+        self.base_project(
+            config=self.config_with(
+                "- dashboard-state: https://keepthewhy.com/dashboard/live/state.json"
+            )
+        )
+        findings, _ = self.run_lint()
+        self.assertEqual([], self.codes(findings))
+        for bad in (
+            "http://x.org/state.json",
+            "https://x.org/dashboard/",
+            "dashboard/live/state.json",
+            "https://x.org/a b/state.json",
+        ):
+            with self.subTest(value=bad):
+                self.base_project(config=self.config_with(f"- dashboard-state: {bad}"))
+                findings, _ = self.run_lint()
+                self.assertIn("E003", self.codes(findings), msg=bad)
+
     # -- root: a sub-project's path below its git toplevel --------------------
 
     def test_root_relative_path_passes_below_a_toplevel(self):

@@ -70,6 +70,7 @@ CONFIG_KNOWN = CONFIG_REQUIRED + (
     "canonical",
     "root",
     "parent",
+    "dashboard-state",
     "pinned-version",
     "pinned-path",
 )
@@ -503,6 +504,24 @@ class Linter:
         parent = block.first("parent")
         if parent is not None:
             self._check_parent(path, parent)
+
+        dashboard_state = block.first("dashboard-state")
+        if dashboard_state is not None:
+            value = dashboard_state[1].strip()
+            if (
+                not value.startswith("https://")
+                or not value.endswith(".json")
+                or _CONTROL_RE.search(value)
+                or any(c.isspace() for c in value)
+            ):
+                self.add(
+                    ERROR,
+                    "E003",
+                    path,
+                    dashboard_state[0],
+                    f"dashboard-state {value!r} is not the https URL of a published "
+                    "state.json (https://<site>/<path>/state.json)",
+                )
 
         pinned_version = block.first("pinned-version")
         pinned_path = block.first("pinned-path")

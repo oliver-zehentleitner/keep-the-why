@@ -34,7 +34,53 @@ const headPill = (g) => {
 const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const isUuid = (s) => UUID_RE.test(s || "");
-const LIVE = () => !window.__KTW_STATE__;
+const PUBLIC = new URLSearchParams(location.search).get("public"); // a canonical: browse that project's published export
+const PUBLIC_ROOT = new URLSearchParams(location.search).get("root") || "";
+const MODE = PUBLIC ? "public" : window.__KTW_STATE__ ? "export" : "live";
+const LIVE = () => MODE === "live";
+// Raw-file URL of a repository file at HEAD, per host — the second and last
+// place host grammar lives (the first is hostFileLink below). Public mode
+// reads one file this way: a family member's .keep-the-why, for its
+// dashboard-state line.
+function rawFileUrl(canonical, root, path) {
+  const base = canonical.replace(/\/$/, "");
+  const rel = `${root ? root.replace(/\/$/, "") + "/" : ""}${path}`;
+  const gh = base.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)$/);
+  if (gh) return `https://raw.githubusercontent.com/${gh[1]}/${gh[2]}/HEAD/${rel}`;
+  if (/^https:\/\/gitlab\./.test(base)) return `${base}/-/raw/HEAD/${rel}`;
+  if (/^https:\/\/bitbucket\.org/.test(base)) return `${base}/raw/HEAD/${rel}`;
+  return `${base}/raw/branch/HEAD/${rel}`; // Codeberg, Gitea, Forgejo
+}
+const configLine = (text, key) => { const m = text.match(new RegExp(`^-\\s*${key}\\s*:\\s*(.+?)\\s*$`, "m")); return m ? m[1].replace(/^`|`$/g, "") : ""; };
+// A state document from anywhere: whatever this page did not produce may be
+// older or newer than it — unknown keys are ignored, missing ones blank.
+function normalizeState(s) {
+  s = s && typeof s === "object" ? s : {};
+  s.project = s.project && typeof s.project === "object" ? s.project : {};
+  s.project.config ||= {}; s.project.children ||= []; s.project.context ||= "context/"; s.project.schema ||= "?";
+  s.topics = Array.isArray(s.topics) ? s.topics : []; s.entries = Array.isArray(s.entries) ? s.entries : []; s.authors = Array.isArray(s.authors) ? s.authors : [];
+  s.findings = s.findings && typeof s.findings === "object" ? s.findings : {}; s.findings.errors ||= 0; s.findings.warnings ||= 0; s.findings.items ||= [];
+  for (const t of s.topics) { t.refs_out ||= []; t.refs_in ||= []; t.status ||= {}; t.evidence ||= {}; t.entries ||= 0; }
+  for (const e of s.entries) { e.type ||= []; e.refs ||= []; e.see ||= []; e.findings ||= []; e.body = e.body && typeof e.body === "object" ? e.body : { text: String(e.body || ""), reason: "" }; e.body.text ||= ""; e.id ||= `${e.file || "?"}#${slug(e.title || "")}`; }
+  return s;
+}
+const slug = (t) => t.toLowerCase().replace(/[^\w\- ]/g, "").replace(/ /g, "-");
+const PUBLIC_STATES = {}; // canonical -> {state, url} | {error}
+async function fetchPublicState(canonical, root = "") {
+  const key = `${canonical}|${root}`;
+  if (PUBLIC_STATES[key]) return PUBLIC_STATES[key];
+  let result;
+  try {
+    const cfg = await (await fetch(rawFileUrl(canonical, root, ".keep-the-why"), { cache: "no-store" })).text();
+    const url = configLine(cfg, "dashboard-state");
+    if (!url) result = { error: "no dashboard-state line — this project has no published export" };
+    else if (!/^https:\/\//.test(url)) result = { error: `dashboard-state is not an https URL: ${url}` };
+    else { const state = normalizeState(await (await fetch(url, { cache: "no-store" })).json()); result = { state, url, canonical, root }; }
+  } catch (err) { result = { error: `could not fetch the export (${err?.message || "network or CORS refused"})` }; }
+  PUBLIC_STATES[key] = result;
+  return result;
+}
+const publicHref = (canonical, root = "", hash = "#overview") => `${location.pathname}?public=${encodeURIComponent(canonical)}${root ? `&root=${encodeURIComponent(root)}` : ""}${hash}`;
 // The one place host URL grammar lives: a file (and heading anchor) of a
 // repository as its host renders it. Everything else in Keep the Why keeps
 // canonical + file + anchor apart and never bakes a host into a field.
@@ -284,6 +330,17 @@ function viewTopic(main, file) {
   renderDetailsTopic(t);
 }
 async function viewEntryElsewhere(main, uuid) {
+  if (MODE === "public") {
+    // an Id this export does not carry: look through the family's published exports
+    main.append(el("p", { class: "center" }, `Looking for ${uuid} in the family's published exports…`));
+    for (const m of familyDeclared()) {
+      if (!m.canonical) continue;
+      const r = await fetchPublicState(m.canonical, m.root || "");
+      const hit = r.state?.entries?.find((e) => e.uuid === uuid);
+      if (hit) { location.href = publicHref(m.canonical, m.root || "", `#entry/${uuid}`); return; }
+    }
+    return setKids(main, el("p", { class: "center" }, `No entry with Id ${uuid} in this export, nor in the family's published exports.`));
+  }
   // an Id this project does not carry: ask the server which known project does
   main.append(el("p", { class: "center" }, `Looking for ${uuid} in the other projects known here…`));
   try {
@@ -317,7 +374,7 @@ function parseSupersededBy(value) {
 function viewEntry(main, id) {
   let e = byId()[id];
   if (!e && isUuid(id)) e = byUuid()[id];
-  if (!e && isUuid(id) && LIVE()) return viewEntryElsewhere(main, id);
+  if (!e && isUuid(id) && (LIVE() || MODE === "public")) return viewEntryElsewhere(main, id);
   if (!e) return main.append(el("p", { class: "center" }, "No such entry"));
   const list = entriesOf(e.file); const idx = list.indexOf(e);
   const t = topicOf(e.file);
@@ -375,7 +432,23 @@ async function fetchFamily() {
   try { FAMILY = (await (await fetch(api("/api/family"), { cache: "no-store" })).json()).members || []; } catch { FAMILY = null; }
   return FAMILY;
 }
-const kindLabel = (k) => k === "cache" ? "cache, read only" : k === "repository" ? "repository, read and write" : "not available here";
+const kindLabel = (k) => k === "cache" ? "cache, read only" : k === "repository" ? "repository, read and write" : k === "public" ? "published export" : "not available here";
+// the family as .keep-the-why declares it — what an export or a public dump knows
+function familyDeclared() {
+  const p = S.project; const out = [];
+  if (p.parent) out.push({ role: "parent", name: p.parent.replace(/^https:\/\//, ""), location: p.parent, scope: "", canonical: p.parent.startsWith("https://") ? p.parent : "", root: "" });
+  for (const c of p.children || []) out.push({ role: "child", name: c.name, location: c.location, scope: c.scope, canonical: c.location.startsWith("https://") ? c.location : "", root: "" });
+  return out;
+}
+function publicMemberRow(m, r) {
+  const st = r?.state;
+  const title = st ? el("a", { href: publicHref(m.canonical, m.root || "") }, m.name) : el("b", {}, m.name);
+  return el("div", { class: `member ${m.role} ${st ? "public" : "none"}` },
+    el("div", { class: "mr" }, el("span", { class: "role" }, m.role), title, el("span", { class: `pill kind-${st ? "public" : "none"}` }, st ? "published export" : "no public export"),
+      st ? el("span", { class: "pill" }, `generated ${st.generated || "?"}`) : null),
+    m.scope ? el("div", { class: "ms" }, m.scope) : (m.role === "parent" ? el("div", { class: "ms note" }, "holds what is family-wide") : null),
+    el("div", { class: "mm mono" }, m.canonical || m.location, st ? ` · ${st.entries.length} entries · ${st.topics.length} topics · ${r.url}` : r?.error ? ` · ${r.error}` : ""));
+}
 function memberRow(m) {
   const here = m.role === "self";
   const title = m.key && !here ? el("a", { href: `${location.pathname}?project=${encodeURIComponent(m.key)}#overview` }, m.name) : el("b", {}, m.name);
@@ -392,6 +465,14 @@ async function viewFamily(main) {
   main.append(el("h1", {}, "Family"), el("p", { class: "sub" }, "One parent, its children: the projects whose context/ is organized together with this one. The parent's children block is the routing — where an entry about something belongs. Not a dependency graph."));
   if (!p.parent && !(p.children || []).length) return main.append(el("p", { class: "center" }, "This project is not part of a family: no parent line, no children block in .keep-the-why."));
   const box = el("div", { class: "family" }); main.append(box);
+  if (MODE === "public") {
+    box.append(memberRow({ role: "self", name: p.id || p.name, location: "", scope: "", canonical: canonicalOf(p), available: "public" }));
+    for (const m of familyDeclared()) {
+      const row = publicMemberRow(m, null); box.append(row);
+      if (m.canonical) fetchPublicState(m.canonical, m.root || "").then((r) => row.replaceWith(publicMemberRow(m, r)));
+    }
+    return;
+  }
   if (!LIVE()) {
     // an export knows only its own config: parent and children as declared
     if (p.parent) box.append(memberRow({ role: "parent", name: p.parent.replace(/^https:\/\//, ""), location: p.parent, scope: "", canonical: p.parent.startsWith("https://") ? p.parent : "", available: "none", fetch: null }));
@@ -718,6 +799,18 @@ function setupSearch() {
   const scopeSel = $("#search-scope");
   const MEMBER_STATES = {}; // project key -> state, fetched once for family-wide search (live mode only)
   async function familyEntries() {
+    if (MODE === "public") {
+      const out = S.entries.map((e) => ({ e, project: null, member: { name: S.project.id || S.project.name, role: "self" } }));
+      const members = [];
+      for (const m of familyDeclared()) {
+        if (!m.canonical) { members.push({ ...m, key: null }); continue; }
+        const r = await fetchPublicState(m.canonical, m.root || "");
+        if (!r.state) { members.push({ ...m, key: null }); continue; }
+        members.push({ ...m, key: m.canonical });
+        out.push(...r.state.entries.map((e) => ({ e, project: m.canonical, member: m, public: true })));
+      }
+      return { members, out };
+    }
     const members = FAMILY || await fetchFamily() || [];
     const out = [];
     for (const m of members) {
@@ -730,17 +823,17 @@ function setupSearch() {
   }
   const run = async () => {
     const q = input.value.trim().toLowerCase(); if (q.length < 2) return close();
-    const family = LIVE() && scopeSel.value === "family";
+    const family = (LIVE() || MODE === "public") && scopeSel.value === "family";
     let pool = S.entries.map((e) => ({ e, project: null, member: null })); let missing = [];
     if (family) { const f = await familyEntries(); pool = f.out; missing = f.members.filter((m) => !m.key); if (input.value.trim().toLowerCase() !== q) return; }
     rows = pool.map(({ e, project, member }) => { const hay = `${e.title}\n${e.body.text}`.toLowerCase(); const i = hay.indexOf(q); return i < 0 ? null : { e, i, project, member, title: e.title.toLowerCase().includes(q) }; }).filter(Boolean).sort((a, b) => (a.project === null) - (b.project === null) ? (a.project === null ? -1 : 1) : (b.title - a.title) || a.i - b.i).slice(0, 40);
-    const link = ({ e, project }) => project ? `${location.pathname}?project=${encodeURIComponent(project)}${entryHref(e)}` : entryHref(e);
+    const link = ({ e, project }) => project ? (MODE === "public" ? publicHref(project, "", entryHref(e)) : `${location.pathname}?project=${encodeURIComponent(project)}${entryHref(e)}`) : entryHref(e);
     box.replaceChildren(...(rows.length ? rows.map(({ e, i, project, member }) => { const txt = `${e.title}\n${e.body.text}`; const from = Math.max(0, i - 40); const snip = txt.slice(from, i + 80).replace(/\s+/g, " "); const hl = esc(snip).replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "ig"), (m) => `<mark>${m}</mark>`); return el("a", { href: link({ e, project }), onclick: close }, el("div", {}, e.title), el("div", { class: "sr-file" }, project ? `${member.name} (${member.role}) · ` : "", topicOf(e.file)?.title || e.file), el("div", { class: "sr-snip", html: hl })); }) : [el("div", { style: "padding:10px 12px;color:var(--fg3)" }, "no matches")]),
       ...missing.map((m) => el("div", { class: "sr-missing" }, `${m.name} (${m.role}) is not available here — not searched. See Family for how to get it.`)));
     box.hidden = false; sel = -1;
   };
   scopeSel.onchange = () => { localStorage.setItem("ktw-search-scope", scopeSel.value); if (input.value.trim().length >= 2) run(); };
-  if (LIVE()) { scopeSel.hidden = false; scopeSel.value = localStorage.getItem("ktw-search-scope") || "project"; }
+  if (LIVE() || MODE === "public") { scopeSel.hidden = false; scopeSel.value = localStorage.getItem("ktw-search-scope") || "project"; }
   input.oninput = run; input.onfocus = () => { if (input.value.trim().length >= 2) run(); };
   input.onkeydown = (ev) => { const items = [...box.querySelectorAll("a")]; if (ev.key === "Escape") { input.blur(); close(); } else if (ev.key === "ArrowDown") { sel = Math.min(items.length - 1, sel + 1); items.forEach((a, i) => a.classList.toggle("sel", i === sel)); items[sel]?.scrollIntoView?.({ block: "nearest" }); ev.preventDefault(); } else if (ev.key === "ArrowUp") { sel = Math.max(0, sel - 1); items.forEach((a, i) => a.classList.toggle("sel", i === sel)); ev.preventDefault(); } else if (ev.key === "Enter" && items[sel]) { items[sel].click(); input.blur(); } };
   document.addEventListener("click", (ev) => { if (!ev.target.closest(".topbar-right")) close(); });
@@ -780,11 +873,12 @@ function applyState(state) {
   setKids($("#statusbar"),
     el("span", { id: "pkg-dashboard" }, el("a", { href: "https://pypi.org/project/keep-the-why-dashboard/", target: "_blank", rel: "noopener", title: "keep-the-why-dashboard on PyPI" }, `keep-the-why-dashboard ${S.dashboard}`)),
     el("span", { id: "pkg-lint" }, el("a", { href: "https://pypi.org/project/keep-the-why-lint/", target: "_blank", rel: "noopener", title: "keep-the-why-lint on PyPI" }, `keep-the-why-lint ${S.linter}`)),
-    el("span", {}, S.exported ? `exported ${S.generated}` : `state ${S.generated}`),
+    el("span", {}, MODE === "public" ? `public export · generated ${S.generated}` : S.exported ? `exported ${S.generated}` : `state ${S.generated}`),
     el("span", {}, `${S.entries.length} entries · ${S.topics.length} topics · ${S.authors.length} authors`),
     el("span", { class: "grow" }, el("a", { href: "https://keepthewhy.com", target: "_blank", rel: "noopener" }, "keepthewhy.com")));
   FAMILY = null;
   if (LIVE()) $("#nav-projects").hidden = false;
+  setupMode();
   const main = $("#main"); const scroll = main.scrollTop;
   rerender();
   main.scrollTop = scroll;
@@ -812,7 +906,7 @@ function connectLive() {
   let es;
   const open = () => {
     es = new EventSource(api("/api/events"));
-    es.addEventListener("state", (ev) => { try { applyState(JSON.parse(ev.data)); dot.className = "live on"; dot.title = `live — last update ${new Date().toLocaleTimeString()}`; } catch (err) { console.error(err); } });
+    es.addEventListener("state", (ev) => { try { applyState(normalizeState(JSON.parse(ev.data))); dot.className = "live on"; dot.title = `live — last update ${new Date().toLocaleTimeString()}`; } catch (err) { console.error(err); } });
     es.onopen = () => { dot.className = "live on"; dot.title = "live — watching the project for changes"; };
     es.onerror = () => { dot.className = "live off"; dot.title = "connection lost — the server is gone; retrying"; };
   };
@@ -860,12 +954,40 @@ async function setupProjects() {
   if (S) { const t = $("#project-title").querySelector("b"); if (t) t.remove(); }
   sel.onchange = () => { location.href = `${location.pathname}?project=${encodeURIComponent(sel.value)}${location.hash || "#overview"}`; };
 }
+function setupMode() {
+  const box = $("#mode"); const p = S.project;
+  const canonical = canonicalOf(p);
+  const hasFamily = !!(p.parent || (p.children || []).length || p.dashboard_state);
+  if (!hasFamily) { box.hidden = true; return; }
+  box.hidden = false;
+  for (const b of box.querySelectorAll("button")) {
+    const on = b.dataset.mode === (MODE === "public" ? "public" : "local");
+    b.classList.toggle("on", on);
+    b.disabled = b.dataset.mode === "public" && !canonical;
+    b.title = b.dataset.mode === "public" ? (canonical ? "read this project's family from its published exports" : "no canonical — cannot be looked up publicly") : "read clones and caches on this machine";
+    b.onclick = () => {
+      if (on) return;
+      if (b.dataset.mode === "public") location.href = publicHref(canonical, p.root || "", location.hash || "#overview");
+      else location.href = `${location.pathname}${location.hash || "#overview"}`;
+    };
+  }
+  $("#mode-note").textContent = MODE === "public" ? `export generated ${S.generated}` : "";
+}
 async function boot() {
-  setupTheme(); setupSearch(); setupProjects(); setupSideToggle();
+  setupTheme(); setupSearch(); setupSideToggle();
   window.addEventListener("hashchange", render);
-  if (window.__KTW_STATE__) applyState(window.__KTW_STATE__);
+  if (MODE === "public") {
+    const r = await fetchPublicState(PUBLIC, PUBLIC_ROOT);
+    const dot = $("#live"); dot.className = "live export"; dot.title = "public export — no live updates";
+    if (!r.state) { $("#main").append(el("p", { class: "center" }, `Cannot browse ${PUBLIC} publicly: ${r.error}. `, el("a", { href: location.pathname }, "back to local"))); return; }
+    r.state.exported = true;
+    applyState(r.state);
+    return;
+  }
+  setupProjects();
+  if (window.__KTW_STATE__) applyState(normalizeState(window.__KTW_STATE__));
   else {
-    try { applyState(await (await fetch(api("/api/state.json"), { cache: "no-store" })).json()); }
+    try { applyState(normalizeState(await (await fetch(api("/api/state.json"), { cache: "no-store" })).json())); }
     catch (err) { $("#main").append(el("p", { class: "center" }, PROJECT ? `No state for project "${PROJECT}" — unknown id or unknown location.` : "Could not load the state — is the server running?")); }
   }
   connectLive();

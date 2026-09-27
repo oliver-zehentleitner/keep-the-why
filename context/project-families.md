@@ -445,3 +445,48 @@ Rejected with the `See` design: the locator across projects is the
 canonical alone, and the dashboard computes the host form from what it
 knows — canonical, branch, context directory, file and heading — the one
 place that knowledge is allowed to live.
+
+## Public mode is the browser reading published exports, bootstrapped from a raw `.keep-the-why` at `HEAD`
+
+**Id:** cae2d3bf-9ca6-42a8-98f4-6da2ca1904d3
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer design discussion, 2026-09-27, with external review; `HEAD` on raw URLs verified against GitHub, GitLab and Codeberg the same day
+**Revisit when:** a host stops serving raw files at `HEAD` or drops the CORS header on them, or a project wants public mode without publishing an export
+
+The dashboard's *public* switch reads a family member's published export
+instead of a checkout: the browser fetches the member's `.keep-the-why`
+as a raw file at `HEAD`, takes its `dashboard-state` line — the URL of the
+`state.json` its docs build published — and loads the project from that.
+Family, search and entry-by-Id work over those exports the same way. The
+export's `generated` time stands next to the switch. `state.json` carries
+a schema version and the page reads any version tolerantly.
+
+**Reason:** the export already produced exactly the document the page
+renders, and a docs site already served it with the CORS header a browser
+needs; public mode is a second data source for the same interface, not a
+second interface, and one never leaves the local dashboard for another
+project's. The browser makes the requests so that the Python server keeps
+its one-call promise and the skill stays off the network; a host that
+refuses the fetch fails visibly instead of being proxied. `HEAD` as the ref
+removes the default-branch question a review had raised — all three
+hosts resolve it. The schema version and tolerant reading exist because a
+family is never on one dashboard version, and a published export is
+whatever its producer last built.
+
+**Rejected alternative:** a hosted resolver on keepthewhy.com that takes a
+canonical and an Id and fetches the entry. Rejected because links in other
+people's repositories would then depend on this project's site being up —
+the "service in between" the philosophy excludes.
+
+**Rejected alternative:** the parent's export carrying its children's
+`dashboard-state` URLs, so that no raw `.keep-the-why` needs fetching.
+Considered when the bootstrap looked host-dependent; not needed once
+`HEAD` worked everywhere, and it would have copied a line the child owns
+into the parent's build.
+
+**Rejected alternative:** proxying the fetch through the local server to
+sidestep CORS. Rejected because it would make the server a second network
+caller and let a hostile export reach it; the browser's own rules are the
+right boundary for other people's published files.

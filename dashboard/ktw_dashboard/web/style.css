@@ -330,3 +330,11 @@ kbd { font-family: var(--mono); font-size: 11px; background: var(--bg3); border:
 .projects .prow.depth-1 { margin-left: 24px; } .projects .prow.depth-2 { margin-left: 48px; } .projects .prow.depth-3 { margin-left: 72px; }
 .projects .tree-mark { color: var(--fg3); }
 .projects .link-btn.danger { color: var(--bad); margin-top: 6px; }
+
+/* local / public switch */
+.mode { display: inline-flex; align-items: center; gap: 2px; margin-left: 8px; border: 1px solid #3a3a43; border-radius: 6px; padding: 2px; }
+.mode button { background: transparent; border: 0; color: #b4b4be; padding: 3px 9px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+.mode button.on { background: var(--accent); color: #fff; }
+.mode button:disabled { opacity: .4; cursor: not-allowed; }
+.mode .note { color: #7a7a86; font-size: 11px; padding: 0 6px; }
+.pill.kind-public { color: var(--accent2); }

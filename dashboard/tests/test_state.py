@@ -486,6 +486,8 @@ class EntryIdentityTest(StateTest):
                 "The sync step waits.\n"
             )
         state = StateBuilder(self.root).build()
+        self.assertEqual(state["state-json"], 1)
+        self.assertEqual(state["project"]["dashboard_state"], "")
         e = next(x for x in state["entries"] if x["file"] == "sync.md")
         self.assertEqual(e["uuid"], uid)
         self.assertEqual(len(e["see"]), 2)
