@@ -69,24 +69,39 @@ class BuildWorkdirExtras(unittest.TestCase):
                 '---\nname: keep-the-why\nmetadata:\n  version: "0.2.0"\n---\n'
             )
             old = (W.BASE_FIXTURE, W.FIXTURES_DIR, W.SKILL_DIR)
-            W.BASE_FIXTURE, W.FIXTURES_DIR, W.SKILL_DIR = fixtures / "_base", fixtures, skill
+            W.BASE_FIXTURE, W.FIXTURES_DIR, W.SKILL_DIR = (
+                fixtures / "_base",
+                fixtures,
+                skill,
+            )
             try:
                 work, home = tmp / "project", tmp / "home"
                 work.mkdir()
                 home.mkdir()
                 W.build_workdir(
-                    "c", {"remote": "git@github.com:acme/x.git"}, work, "claude", home=home
+                    "c",
+                    {"remote": "git@github.com:acme/x.git"},
+                    work,
+                    "claude",
+                    home=home,
                 )
             finally:
                 W.BASE_FIXTURE, W.FIXTURES_DIR, W.SKILL_DIR = old
-            self.assertIn("git@github.com:acme/x.git", W.sh(["git", "remote", "-v"], cwd=work).stdout)
+            self.assertIn(
+                "git@github.com:acme/x.git",
+                W.sh(["git", "remote", "-v"], cwd=work).stdout,
+            )
             mapping = json.loads((home / ".keep-the-why" / "projects.json").read_text())
-            self.assertEqual(mapping["projects"][0]["cache"], f"{home}/.keep-the-why/cache/acme---y")
+            self.assertEqual(
+                mapping["projects"][0]["cache"], f"{home}/.keep-the-why/cache/acme---y"
+            )
 
     def test_cwd_makes_the_skill_path_relative(self):
         from ktw_evals.drivers import build_prompt
 
-        prompt = build_prompt("do it", "claude", {"cwd": "packages/widget", "explicit_load": True})
+        prompt = build_prompt(
+            "do it", "claude", {"cwd": "packages/widget", "explicit_load": True}
+        )
         self.assertIn("./../../.claude/skills/keep-the-why/SKILL.md", prompt)
         self.assertTrue(prompt.endswith("do it"))
 
