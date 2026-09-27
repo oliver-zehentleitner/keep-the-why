@@ -65,7 +65,8 @@ An `##` heading in a topic file with no recognized field lines gets `W102`, not 
 **Status:** active
 **Evidence:** confirmed
 **Source:** external review of 0.11.0, 2026-09-04; reproduced before the fix (`context: ../outside` listed and read the files there)
-**Revisit when:** the linter grows a mode that deliberately reads outside the project (it has no reason to today)
+**Verification:** corroborated — re-checked 2026-09-27 when family locations arrived (`project-families.md`): the linter now resolves a path-form `parent` or child location against the Git toplevel, found by `.git` existence checks above the linted root, and reads that member's `.keep-the-why` as data for the back-reference check — never anything outside the repository, and `context`/`pinned-path` keep the project-root boundary unchanged
+**Revisit when:** the linter is asked to resolve anything outside the Git toplevel of the directory it was given, or `context`/`pinned-path` are ever allowed past the project root
 
 `context` and `pinned-path` from `.keep-the-why` are resolved with symlinks followed and must land inside the project root; absolute paths are rejected without resolving. A symlinked file inside the context directory that resolves outside the tree is skipped. Every case is `E009`, an error — the linter does not fall back to `context/` and continue.
 

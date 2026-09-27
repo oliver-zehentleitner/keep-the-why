@@ -106,17 +106,20 @@ None of this is specific to Keep the Why; it is the same set of settings any tea
 |---|---|---|
 | E001 | error | no config block found |
 | E002 | error | required config field missing |
-| E003 | error | invalid config value (also: a `canonical` that is not a normalized repository URL, a `root` on a git toplevel) |
-| E004 | error | config field recorded more than once |
+| E003 | error | invalid config value (also: a `canonical` or URL-form `parent` that is not a normalized repository URL, a `root` on a git toplevel) |
+| E004 | error | config field recorded more than once (a child listed twice) |
 | E005 | error | unknown config field |
 | E006 | error | `pinned-version`/`pinned-path` pair violation, or pinned path missing |
 | E007 | error | configured context location doesn't exist |
 | E008 | error | `last:` timestamp inside `personal-defaults` |
-| E009 | error | configured `context` / `pinned-path`, the config file itself, or a symlink inside the context directory, points outside the repository (or contains a control character); a `root` that would leave the repository |
+| E009 | error | configured `context` / `pinned-path`, the config file itself, or a symlink inside the context directory, points outside the repository (or contains a control character); a `root`, `parent` or child location that would leave the repository |
 | E010 | error | `id` is not a safe file name (path separator, `..`, space, control character) |
-| E011 | error | config, `personal-defaults`, `personal` or `global` block never closed |
+| E011 | error | config, `personal-defaults`, `children`, `personal` or `global` block never closed |
 | E012 | error | second start marker for the same block |
 | E013 | error | a file under `~/.keep-the-why/` exists but carries no `personal` / `global` block (`--setup`) |
+| E014 | error | a `children` line is not `<name>: <location> — <scope>`: the scope one-liner is missing, or the location is neither a normalized repository URL nor a relative path |
+| E015 | error | a local family link does not point both ways: the parent does not list this project, or the child does not name this parent |
+| E016 | error | a path-form `parent` or child location carries no `.keep-the-why` |
 | E101/E102 | error | entry missing `Status` / `Evidence` |
 | E103/E104 | error | invalid `Status` / `Evidence` value |
 | E105 | error | invalid `Type` value |

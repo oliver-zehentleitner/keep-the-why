@@ -23,6 +23,7 @@ import unicodedata
 
 from . import SUPPORTED_SCHEMA
 from .config import (
+    parse_config_text,
     ParsedConfig,
     context_dir_from_value,
     parse_home_block,
@@ -68,6 +69,7 @@ CONFIG_KNOWN = CONFIG_REQUIRED + (
     "id",
     "canonical",
     "root",
+    "parent",
     "pinned-version",
     "pinned-path",
 )
@@ -197,6 +199,7 @@ class Linter:
         )
         self.setup_checked = False  # --setup ran (the summary line says so)
         self._ids = {}  # entry Id -> (topic relpath, Entry), project-wide (E116)
+        self._toplevel = None  # the git toplevel above root, found once, or root
         self._undecodable = (
             set()
         )  # E302 reported once per file, however often it is read
@@ -226,6 +229,40 @@ class Linter:
             # location inside the tree, and neither gets a traceback.
             return False
         return resolved == self.root or resolved.startswith(self.root + os.sep)
+
+    def _git_toplevel(self) -> str:
+        """The nearest directory at or above the project root that carries a
+        `.git` — the boundary a family path location may not leave. Found by
+        existence checks only, nothing is read; without one, the project root
+        itself is the boundary."""
+        if self._toplevel is None:
+            here = self.root
+            self._toplevel = self.root
+            while True:
+                if os.path.exists(os.path.join(here, ".git")):
+                    self._toplevel = here
+                    break
+                parent = os.path.dirname(here)
+                if parent == here:
+                    break
+                here = parent
+        return self._toplevel
+
+    def _within_toplevel(self, relpath) -> str | None:
+        """Absolute, resolved path of `relpath` (relative to the project root)
+        when it stays inside the git toplevel; None otherwise. The same rule as
+        `_confined`, one level up: a family member may be a sibling directory
+        in the same repository, never something outside it."""
+        if _CONTROL_RE.search(relpath) or os.path.isabs(relpath):
+            return None
+        try:
+            resolved = os.path.realpath(os.path.join(self.root, relpath))
+        except (ValueError, OSError):
+            return None
+        top = self._git_toplevel()
+        if resolved == top or resolved.startswith(top + os.sep):
+            return resolved
+        return None
 
     def _read(self, relpath):
         """Text of a file inside the tree. Invalid UTF-8 is a finding (E302),
@@ -462,6 +499,10 @@ class Linter:
                     "of its repository (an isolated-context mono repo)",
                 )
 
+        parent = block.first("parent")
+        if parent is not None:
+            self._check_parent(path, parent)
+
         pinned_version = block.first("pinned-version")
         pinned_path = block.first("pinned-path")
         if (pinned_version is None) != (pinned_path is None):
@@ -526,6 +567,187 @@ class Linter:
                 )
 
         self._check_personal_defaults(parsed)
+        self._check_children(parsed)
+
+    # -- family: parent and children -------------------------------------
+
+    @staticmethod
+    def _is_url(value: str) -> bool:
+        return value.startswith("https://")
+
+    def _location_ok(self, value: str) -> bool:
+        """Shape of a family location: a normalized repository URL, or a
+        relative path (the git-toplevel boundary is checked separately)."""
+        if self._is_url(value):
+            return bool(
+                _CANONICAL_RE.match(value)
+                and not value.endswith("/")
+                and not value.endswith(".git")
+                and not _CONTROL_RE.search(value)
+            )
+        # a relative path: no scheme, no `user@host:` — a colon is a URL that
+        # is not the normalized https form, never a path
+        return (
+            bool(value)
+            and not _CONTROL_RE.search(value)
+            and not os.path.isabs(value)
+            and ":" not in value
+        )
+
+    def _family_config_at(self, abs_dir: str, display: str):
+        """The parsed `.keep-the-why` of another family member inside the git
+        toplevel, or None when there is none. Read as data, like our own."""
+        cfg = os.path.join(abs_dir, ".keep-the-why")
+        if not os.path.isfile(cfg):
+            return None
+        return parse_config_text(self._read_at(cfg, display), display, legacy=False)
+
+    def _check_parent(self, path, parent):
+        line, value = parent
+        value = value.strip().strip("`").strip()
+        if not value:
+            self.add(ERROR, "E003", path, line, "parent is empty")
+            return
+        if not self._location_ok(value):
+            self.add(
+                ERROR,
+                "E003",
+                path,
+                line,
+                f"parent {value!r} is neither a normalized repository URL "
+                "(https://<host>/<path>, no trailing slash, no '.git') nor a relative path",
+            )
+            return
+        if self._is_url(value):
+            return  # another repository: not resolved here
+        resolved = self._within_toplevel(value)
+        if resolved is None:
+            self.add(
+                ERROR,
+                "E009",
+                path,
+                line,
+                f"parent {value!r} would leave the repository — a path location stays "
+                "inside the git toplevel",
+            )
+            return
+        display = os.path.normpath(os.path.join(value, ".keep-the-why"))
+        parsed = self._family_config_at(resolved, display)
+        if parsed is None:
+            self.add(
+                ERROR,
+                "E016",
+                path,
+                line,
+                f"parent {value!r} carries no .keep-the-why",
+            )
+            return
+        listed = False
+        if parsed.children is not None:
+            for occurrences in parsed.children.fields.values():
+                for _l, raw in occurrences:
+                    head, _rest = _split_value(raw)
+                    head = head.strip().strip("`").strip()
+                    if self._is_url(head):
+                        continue
+                    try:
+                        target = os.path.realpath(os.path.join(resolved, head))
+                    except (ValueError, OSError):
+                        continue
+                    if target == self.root:
+                        listed = True
+        if not listed:
+            self.add(
+                ERROR,
+                "E015",
+                path,
+                line,
+                f"parent {value!r} does not list this project in its children block — "
+                "a family link points both ways",
+            )
+
+    def _check_children(self, parsed: ParsedConfig):
+        block = parsed.children
+        if block is None:
+            return
+        path = parsed.path
+        self._check_block_delimiters(block, "children")
+        for name, occurrences in block.fields.items():
+            if len(occurrences) > 1:
+                self.add(
+                    ERROR,
+                    "E004",
+                    path,
+                    occurrences[1][0],
+                    f"child '{name}' listed more than once",
+                )
+            line, raw = occurrences[0]
+            location, scope = _split_value(raw)
+            location = location.strip().strip("`").strip()
+            if not location or not scope.strip():
+                self.add(
+                    ERROR,
+                    "E014",
+                    path,
+                    line,
+                    f"child '{name}' is not '<location> — <scope>': the scope one-liner "
+                    "says what belongs in that project and is required — it is the routing",
+                )
+                continue
+            if not self._location_ok(location):
+                self.add(
+                    ERROR,
+                    "E014",
+                    path,
+                    line,
+                    f"child '{name}' location {location!r} is neither a normalized "
+                    "repository URL nor a relative path",
+                )
+                continue
+            if self._is_url(location):
+                continue  # another repository: not resolved here
+            resolved = self._within_toplevel(location)
+            if resolved is None:
+                self.add(
+                    ERROR,
+                    "E009",
+                    path,
+                    line,
+                    f"child '{name}' location {location!r} would leave the repository — "
+                    "a path location stays inside the git toplevel",
+                )
+                continue
+            display = os.path.normpath(os.path.join(location, ".keep-the-why"))
+            child = self._family_config_at(resolved, display)
+            if child is None:
+                self.add(
+                    ERROR,
+                    "E016",
+                    path,
+                    line,
+                    f"child '{name}' location {location!r} carries no .keep-the-why",
+                )
+                continue
+            back = child.config.first("parent") if child.config else None
+            points_back = False
+            if back is not None:
+                head = back[1].strip().strip("`").strip()
+                if not self._is_url(head):
+                    try:
+                        points_back = (
+                            os.path.realpath(os.path.join(resolved, head)) == self.root
+                        )
+                    except (ValueError, OSError):
+                        points_back = False
+            if not points_back:
+                self.add(
+                    ERROR,
+                    "E015",
+                    path,
+                    line,
+                    f"child '{name}' ({location}) does not name this project as its parent — "
+                    "a family link points both ways",
+                )
 
     def _check_block_delimiters(self, block, name: str):
         """E011/E012: the block's own markers, before any field is judged."""

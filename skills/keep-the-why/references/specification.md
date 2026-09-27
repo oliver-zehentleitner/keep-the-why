@@ -23,7 +23,7 @@ All of these are written and kept current by the skill — the config files by t
 
 **The project** is the tree under the nearest `.keep-the-why` walking up from the working directory, minus the trees under any deeper `.keep-the-why`. Discovery walks up the way Git walks up to `.git`; the nearest file wins and cuts off everything above it, whether or not a Git boundary lies in between. A directory above several projects and below none is not a project. The four layouts this admits — one repository with one instance, one repository with several, several repositories, one — are in `repository-structure.md`, "Layouts".
 
-Three boundaries hold for every path a config file names. `context` and `pinned-path` are relative to the project root and resolve inside it: no absolute path, no `..` out of the tree, no symlink that leaves it (`E009`). `root` is relative to the Git toplevel and resolves inside it — the same rule one level up (`E009`). `id` is a plain file name, because it becomes `~/.keep-the-why/<id>.md` (`E010`). A value outside its boundary is not read, written or followed. `canonical` is a URL and never a filesystem path.
+Three boundaries hold for every path a config file names. `context` and `pinned-path` are relative to the project root and resolve inside it: no absolute path, no `..` out of the tree, no symlink that leaves it (`E009`). `root`, a path-form `parent` and a path-form child location are relative and resolve inside the Git toplevel — the same rule one level up, since a family member may be a sibling directory in the same repository and nothing else (`E009`). `id` is a plain file name, because it becomes `~/.keep-the-why/<id>.md` (`E010`). A value outside its boundary is not read, written or followed. `canonical`, a URL-form `parent` and a URL-form child location are URLs and never filesystem paths.
 
 ## 2. Config blocks
 
@@ -53,6 +53,7 @@ Every field but the two pin fields is required in the file (`E002` when missing,
 |---|---|---|---|
 | `id` | file-name token: `[A-Za-z0-9._-]+`, not all dots | — (required, `E002`) | the project's identity across clones, machines and worktrees; keys the personal file. Written once at init: `<owner>---<repo>` from the `origin` remote of the nearest `.git` above the file, or `<uuid>---<folder-name>` without one; `/` and every other filesystem-unsafe character normalized to `-`. A `.keep-the-why` below the Git toplevel (an isolated-context mono repo) appends its `root` as a slug: `<owner>---<repo>---<sub-path>`. Never re-derived. |
 | `canonical` | `https://<host>/<path>`, no trailing slash, no `.git` suffix | absent when the project has no remote; backfilled from `origin` otherwise | the repository's stored locator: the normalized URL of the remote, SSH forms rewritten to `https`. Written once at init and changed only deliberately, when the repository is renamed, transferred or moved; not re-derived (`E003` when malformed). |
+| `parent` | `https://<host>/<path>` (another repository) or a relative directory path inside the Git toplevel | absent (no parent) | the project this one belongs to, when it is part of a larger one: the parent's `canonical`, or its path relative to this `.keep-the-why` in an isolated-context mono repo (`..` for a sub-project whose parent is the repository root). At most one. The parent lists this project back in its `children` block (§3.3); when both sides are in the checkout the linter checks the link both ways (`E015`), a URL is checked for shape only (`E003`, `E009`). |
 | `root` | relative directory path inside the Git toplevel | absent (the file is at the toplevel) | the path of this `.keep-the-why` relative to the Git toplevel, for a project below it (an isolated-context mono repo). Tooling keys such a project by `(canonical, root)`. Not set on a toplevel (`E003`); never `..` or absolute (`E009`). |
 | `context` | relative directory path inside the project | — (required) | where the why-knowledge lives; `context/` is what the wizard proposes |
 | `init` | `complete` | — (required) | the project has been set up. A file carrying any other value is a leftover to fix; `init: declined` was retired in 0.12.0. |
@@ -92,6 +93,33 @@ The values a project offers to a developer who has no personal file for it yet. 
 | `consistency-check` | `every <N> days` \| `no` |
 | `pending-confirmation-check` | `on-start` \| `no` |
 | `local-lint` | `auto` \| `ask` \| `no` |
+
+### 3.3 `keep-the-why:children` (optional)
+
+The parent of a family lists its children here, one line each — and this is the *routing*: where an entry about something belongs when it is not the project the agent happens to be working in. `setup.md`, "Family: routing and writing across projects", says what the skill does with it.
+
+```markdown
+<!-- keep-the-why:children -->
+- <name>: <location> — <scope>
+<!-- /keep-the-why:children -->
+```
+
+- `<name>`: a token in the block grammar's key alphabet, for prose and findings (`unicorn-binance-rest-api`, `widget`); listed once (`E004`).
+- `<location>`: the child's `canonical` (another repository), or a relative directory path inside the Git toplevel (an isolated-context mono repo: `packages/widget`). A path must exist and carry a `.keep-the-why` (`E016`) whose `parent` points back here (`E015`); a URL is checked for shape only. Any other form is `E014`; a path leaving the repository is `E009`.
+- `<scope>`: **required** (`E014`) — one line saying what belongs in that project. It is written once, here; the child does not repeat it, its own `index.md` already lists what it holds.
+
+The parent's own scope is not written: it holds what is family-wide, or clearly its own. The block is not a dependency graph and not a list of every related repository — a family member is a project whose `context/` is organized together with this one, one parent, any number of children. A project with a `children` block may itself carry a `parent` (a family can nest); nothing resolves through a grandparent.
+
+Example, the parent of a suite:
+
+```markdown
+<!-- keep-the-why:children -->
+- unicorn-binance-rest-api: https://github.com/oliver-zehentleitner/unicorn-binance-rest-api — REST client, endpoint coverage, rate limits
+- unicorn-binance-websocket-api: https://github.com/oliver-zehentleitner/unicorn-binance-websocket-api — stream client, websocket libraries, reconnect behaviour
+<!-- /keep-the-why:children -->
+```
+
+and a child's config line: `- parent: https://github.com/oliver-zehentleitner/unicorn-binance-suite`.
 
 ## 4. `~/.keep-the-why/<id>.md` — `keep-the-why:personal`
 

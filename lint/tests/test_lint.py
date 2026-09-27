@@ -1022,6 +1022,142 @@ class EntryIdentity(_ProjectFixture):
         )
 
 
+CHILD_CONFIG = GOOD_CONFIG.replace(
+    "- id: acme---widget-service",
+    "- id: acme---platform---packages-widget\n- root: packages/widget\n- parent: ../..",
+)
+PARENT_WITH_CHILDREN = (
+    GOOD_CONFIG
+    + "\n<!-- keep-the-why:children -->\n"
+    + "- widget: packages/widget — the widget package: rendering, its own API\n"
+    + "- other: https://github.com/acme/other — the other repo\n"
+    + "<!-- /keep-the-why:children -->\n"
+)
+
+
+class Family(_ProjectFixture):
+    """`parent` and the `children` block: locations are a repository URL
+    (shape only) or a relative path inside the git toplevel, a local link
+    must point both ways, and the scope one-liner is required."""
+
+    def mono_repo(self, parent_config=PARENT_WITH_CHILDREN, child_config=CHILD_CONFIG):
+        os.makedirs(os.path.join(self.root, ".git"), exist_ok=True)
+        self.base_project(config=parent_config)
+        self.write("packages/widget/.keep-the-why", child_config)
+        self.write("packages/widget/context/sync.md", GOOD_ENTRY)
+        self.write(
+            "packages/widget/context/index.md",
+            skeleton_index({"S": ["- [sync.md](sync.md) — sync design"]}),
+        )
+        for name in ("README.md", "AGENTS.md", "CLAUDE.md"):
+            self.write(f"packages/widget/context/{name}", "x\n")
+
+    def lint_child(self):
+        child = os.path.join(self.root, "packages", "widget")
+        linter = Linter(child)
+        return linter.run(_load_config(child, linter)), linter
+
+    def test_mono_repo_links_pass_from_both_ends(self):
+        self.mono_repo()
+        findings, _ = self.run_lint()
+        self.assertEqual(
+            [], self.codes(findings), msg=[f.format_text() for f in findings]
+        )
+        findings, _ = self.lint_child()
+        self.assertEqual(
+            [], self.codes(findings), msg=[f.format_text() for f in findings]
+        )
+
+    def test_child_location_shape_is_e014(self):
+        for bad in (
+            "git@github.com:acme/other",
+            "https://github.com/acme/other/",
+            "/srv/other",
+        ):
+            with self.subTest(location=bad):
+                cfg = PARENT_WITH_CHILDREN.replace(
+                    "https://github.com/acme/other —", f"{bad} —"
+                )
+                self.mono_repo(parent_config=cfg)
+                findings, _ = self.run_lint()
+                self.assertIn("E014", self.codes(findings), msg=bad)
+
+    def test_missing_scope_is_e014(self):
+        bad = PARENT_WITH_CHILDREN.replace(
+            "- widget: packages/widget — the widget package: rendering, its own API",
+            "- widget: packages/widget",
+        )
+        self.mono_repo(parent_config=bad)
+        findings, _ = self.run_lint()
+        self.assertIn("E014", self.codes(findings))
+
+    def test_child_without_config_is_e016(self):
+        self.mono_repo()
+        os.remove(os.path.join(self.root, "packages", "widget", ".keep-the-why"))
+        findings, _ = self.run_lint()
+        self.assertIn("E016", self.codes(findings))
+
+    def test_child_not_pointing_back_is_e015(self):
+        self.mono_repo(child_config=CHILD_CONFIG.replace("- parent: ../..\n", ""))
+        findings, _ = self.run_lint()
+        self.assertIn("E015", self.codes(findings))
+
+    def test_parent_not_listing_child_is_e015(self):
+        self.mono_repo(parent_config=GOOD_CONFIG)
+        findings, _ = self.lint_child()
+        self.assertIn("E015", self.codes(findings))
+
+    def test_parent_path_leaving_the_toplevel_is_e009(self):
+        # no .git anywhere: the project root is the boundary, so `..` leaves it
+        self.base_project(
+            config=GOOD_CONFIG.replace(
+                "- id: acme---widget-service", "- id: x\n- parent: .."
+            )
+        )
+        findings, _ = self.run_lint()
+        self.assertIn("E009", self.codes(findings))
+
+    def test_parent_url_is_shape_checked_only(self):
+        self.base_project(
+            config=GOOD_CONFIG.replace(
+                "- id: acme---widget-service",
+                "- id: x\n- parent: https://github.com/acme/suite",
+            )
+        )
+        findings, _ = self.run_lint()
+        self.assertEqual([], self.codes(findings))
+        for bad in (
+            "https://github.com/acme/suite/",
+            "https://github.com/acme/suite.git",
+            "git@github.com:acme/suite.git",
+            "/srv/suite",
+        ):
+            with self.subTest(parent=bad):
+                self.base_project(
+                    config=GOOD_CONFIG.replace(
+                        "- id: acme---widget-service", f"- id: x\n- parent: {bad}"
+                    )
+                )
+                findings, _ = self.run_lint()
+                self.assertTrue({"E003", "E009"} & set(self.codes(findings)), msg=bad)
+
+    def test_duplicate_child_is_e004_and_unclosed_block_is_e011(self):
+        dup = PARENT_WITH_CHILDREN.replace(
+            "<!-- /keep-the-why:children -->",
+            "- widget: packages/widget — again\n<!-- /keep-the-why:children -->",
+        )
+        self.mono_repo(parent_config=dup)
+        findings, _ = self.run_lint()
+        self.assertIn("E004", self.codes(findings))
+        self.mono_repo(
+            parent_config=PARENT_WITH_CHILDREN.replace(
+                "<!-- /keep-the-why:children -->\n", ""
+            )
+        )
+        findings, _ = self.run_lint()
+        self.assertIn("E011", self.codes(findings))
+
+
 class UntrustedInputRobustness(_ProjectFixture):
     """Whatever the config file or a knowledge file contains, the linter
     reports and exits — it never reads outside the tree, never raises, and

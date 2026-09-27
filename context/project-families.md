@@ -182,3 +182,115 @@ no permanent migration tool is wanted for a one-time pass.
 skill ships no executables on purpose — the security scanners flag a
 `bash` in a skill, and the project's line is that the only executables are
 the two optional packages.
+
+## A family is one parent and its children, and the parent's `children` block is the routing
+
+**Id:** 14c6f3cd-a3c1-4c42-9d76-8171b214617b
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer design discussion, 2026-09-26/27, with two rounds of external review
+**Revisit when:** a real family needs a member to belong to two parents, or a project asks for a relation that is neither parent nor child and cannot be expressed as a `See` line
+
+A project belongs to at most one parent, declared by one `parent` line;
+the parent lists its children in a `children` block, one line each with a
+required one-line scope. That block is the routing: family-wide knowledge
+goes to the parent, a child's subject goes to that child even when it
+surfaced elsewhere, an ambiguous case is asked, and the parent is not the
+place for everything no child claims. The family exists to organize
+`context/`; it does not model dependencies.
+
+**Reason:** the suite case that started this — a meta repository that
+already is the central place for what concerns all packages — needs one
+thing: that knowledge lives once, where it belongs, and is cited from
+everywhere else. That takes a map of *where things belong*, kept in one
+place so that a new module is one line in the parent and nothing is
+maintained twice; the child's own `index.md` already says what it holds,
+so the child repeats nothing. The scope is required because a child
+without one gives the routing nothing — the agent working in the
+websocket package cannot know that a REST quirk belongs to the REST
+package unless something says so. One parent keeps it maintainable; a
+family can nest, but nothing resolves through a grandparent.
+
+**Rejected alternative:** upstream and downstream roles beside parent and
+child, as the original issue sketched — the dependency direction as a
+declared relation. Rejected because every family member may cite every
+other with a `See` line, which covers the case the issue describes, and
+because dependencies are already in the package metadata; a second copy
+in `.keep-the-why` would drift.
+
+**Rejected alternative:** an inner instance reads the enclosing ones by
+position, so that a mono-repo sub-project sees the root's `context/` with
+no declaration. Rejected with the discovery rule: isolation is what the
+layout is for, and the family mechanism is the explicit way back.
+
+**Rejected alternative:** the scope in the child, next to its own config,
+with the parent holding only a list. Rejected because routing must be
+readable from the parent without opening — or cloning — every child, and
+because it would put the same information in N files instead of one.
+
+**Rejected alternative:** the parent's scope as "everything no child
+claims". Rejected on review: it makes the parent a dumping ground; what is
+family-wide or clearly the parent's own goes there, the rest is asked.
+
+## Children lines are `<name>: <location> — <scope>`, in the block grammar every config file already uses
+
+**Id:** c3ffbd28-b391-4437-8443-34b0d7f6a4e3
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer call while implementing, 2026-09-27
+**Revisit when:** a child needs more than a location and a scope (a per-child setting), or the block grammar gains a list form
+
+A child line is a `- key: value` line like every other config line: the
+key is a short name, the value is the location, an em-dash separator and
+the scope. The design draft had `- <location> — <scope>` without a name.
+
+**Reason:** the block parser splits a line at its first colon, and a URL
+location contains one; a nameless line would have needed a second grammar
+for one block, with its own duplicate and unknown-line rules. A name
+costs one token, gives the parser the key it expects (a child listed twice
+is the existing `E004`), and gives findings and prose something to say
+("child `widget` does not name this project as its parent") instead of
+repeating a URL.
+
+**Rejected alternative:** a list grammar for the `children` block only.
+Rejected because one config grammar for four block kinds is a property
+the linter, the dashboard and every reader rely on.
+
+## A write into another family member needs its local working tree, found in the same repository or the sibling folder
+
+**Id:** e4bc46e9-650a-4c87-a09d-e61a10196bbf
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer design discussion, 2026-09-26/27, with two rounds of external review
+**Revisit when:** the mapping and the read-only cache land (the next step of the series) — then "local" is what the mapping knows, not only the sibling folder; or dogfooding shows a real need to write into a project that is not checked out
+
+The agent may write into a family member that has a local working tree —
+the same mono repo, or a checkout in a sibling directory of the current
+project whose `.keep-the-why` carries the named `canonical` — under that
+project's own `capture-confirmation`, saying which project it wrote to. A
+member that is not local is named and the entry is not written into the
+current project instead. Nothing outside the family is written; nothing is
+cloned by this step.
+
+**Reason:** routing without a write path would name where an entry
+belongs and then lose it, and writing it locally with a note would
+recreate the redundancy the family exists to remove. A working tree is
+where a person expects uncommitted work and sees it at every
+`git status`; committing stays their action, so a multi-repo write is an
+ordinary change in another checkout. The sibling-folder rule is how a
+suite is laid out on a developer's machine anyway, and it needs no state
+file — the mapping comes with the next step. Working tree = work; what a
+cache is for, and why it is read-only, is decided there.
+
+**Rejected alternative:** write the entry into the current project with a
+pointer, for the parent to pull later. Rejected as redundancy through the
+back door.
+
+**Rejected alternative:** search the whole machine, or every path ever
+seen, for a checkout. Rejected for this step because a search without a
+recorded mapping guesses, and because two clones of one repository must
+never be told apart by whichever was opened last — the mapping step
+carries that rule.

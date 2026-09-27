@@ -25,6 +25,8 @@ CONFIG_START = "<!-- keep-the-why:config -->"
 CONFIG_END = "<!-- /keep-the-why:config -->"
 DEFAULTS_START = "<!-- keep-the-why:personal-defaults -->"
 DEFAULTS_END = "<!-- /keep-the-why:personal-defaults -->"
+CHILDREN_START = "<!-- keep-the-why:children -->"
+CHILDREN_END = "<!-- /keep-the-why:children -->"
 PERSONAL_START = "<!-- keep-the-why:personal -->"
 PERSONAL_END = "<!-- /keep-the-why:personal -->"
 GLOBAL_START = "<!-- keep-the-why:global -->"
@@ -59,6 +61,9 @@ class ParsedConfig:
     legacy: bool  # True when read from an AGENTS.md block, not .keep-the-why
     config: ConfigBlock | None
     personal_defaults: ConfigBlock | None
+    children: ConfigBlock | None = (
+        None  # the parent of a family lists its children here
+    )
 
 
 def _extract_block(lines, start_marker, end_marker, path):
@@ -99,6 +104,7 @@ def parse_config_text(text: str, path: str, legacy: bool) -> ParsedConfig:
         legacy=legacy,
         config=_extract_block(lines, CONFIG_START, CONFIG_END, path),
         personal_defaults=_extract_block(lines, DEFAULTS_START, DEFAULTS_END, path),
+        children=_extract_block(lines, CHILDREN_START, CHILDREN_END, path),
     )
 
 
