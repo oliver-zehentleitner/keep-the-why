@@ -2,6 +2,7 @@
 
 ## Snapshot-before-buffer ordering
 
+**Id:** 07a09f60-ff07-4a2f-9228-b37776e14724
 **Status:** active
 **Evidence:** confirmed
 **Source:** maintainer interview, 2024-01

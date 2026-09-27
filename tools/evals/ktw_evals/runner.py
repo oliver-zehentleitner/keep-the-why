@@ -107,9 +107,14 @@ def run_case(case, args, results_dir):
         seed_fake_home(Path.home(), fake_home, args.driver)
         build_workdir(case_id, cfg, workdir, args.driver, home=fake_home)
         prompt = build_prompt(case["prompt"], args.driver, cfg)
+        # A case may start the session below the project root (case.json
+        # "cwd"): the discovery rule — the nearest .keep-the-why walking up —
+        # and a mono repo's sub-project are only testable from there. Checks
+        # and the diff stay relative to the project root.
+        session_dir = workdir / cfg["cwd"] if cfg.get("cwd") else workdir
         agent = AGENT_RUNNERS[args.driver](
             prompt,
-            workdir,
+            session_dir,
             args.model,
             args.timeout,
             cfg.get("disallowed_tools"),

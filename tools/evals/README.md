@@ -393,13 +393,24 @@ code change.
     case's question
   - `"disallowed_tools": [names]` — passed to `--disallowedTools` (e.g. deny
     `WebFetch`/`WebSearch` to simulate a session without web access)
+  - `"cwd": "src"` — start the agent's session in that subdirectory of the
+    project instead of its root; checks and the diff stay relative to the
+    root. For the discovery rule (the nearest `.keep-the-why` walking up) and
+    for a mono repo's sub-project. With `explicit_load`, the skill path the
+    agent is told is made relative to that directory
+  - `"remote": "git@github.com:acme/widget.git"` — add it as `origin` after
+    the initial commit (nothing is fetched); for the `canonical` backfill
+  - keys starting with `_` are notes (an id a check refers to), ignored
 - `fixtures/<case-id>/home/` — optional, overlaid onto the fake `$HOME`
   (after the default personal config is seeded, or skipped per `"personal"`
   above) rather than into the project — for a case needing a *specific*
   `~/.keep-the-why/<id>.md` (an invalid or missing field, or values that
   differ from the default) or a `~/.keep-the-why/config` (the global
   `personal-defaults-policy`). `<id>` has to match whatever the case's
-  effective `.keep-the-why` actually carries as its `id` field.
+  effective `.keep-the-why` actually carries as its `id` field. `{{HOME}}` in
+  any text file under `home/` becomes the fake home's absolute path — the
+  mapping `~/.keep-the-why/projects.json` records where caches live as
+  absolute paths, which a fixture cannot know in advance.
 
 Keep the Why's personal config lives outside the project entirely, at
 `~/.keep-the-why/<id>.md` — each case run gets its own throwaway `$HOME`

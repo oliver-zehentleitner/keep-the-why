@@ -2,6 +2,7 @@
 
 ## Retry on timeout
 
+**Id:** 419ab142-aee2-4954-989f-9f195dcfe980
 **Status:** active
 **Evidence:** confirmed
 **Source:** initial design, 2026-05

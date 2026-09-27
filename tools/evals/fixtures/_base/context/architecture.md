@@ -2,6 +2,7 @@
 
 ## Single service, no queue between intake and gateway submission
 
+**Id:** 2270df11-1c57-4eb1-9381-06f829ad884a
 **Status:** active
 **Evidence:** confirmed
 **Source:** design discussion, 2026-05

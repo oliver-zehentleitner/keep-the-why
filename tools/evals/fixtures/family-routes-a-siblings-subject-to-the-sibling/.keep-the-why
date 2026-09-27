@@ -1,0 +1,17 @@
+This is machine-readable project state for the Keep the Why skill
+(https://keepthewhy.com). See context/index.md for what Keep the Why actually is.
+
+<!-- keep-the-why:config -->
+- id: ktw-eval-fixture---order-service
+- canonical: https://github.com/ktw-eval-fixture/order-service
+- context: `context/`
+- init: complete
+- context-schema: {{SKILL_VERSION}}
+- capture-confirmation: automatic
+- source-reference: never
+<!-- /keep-the-why:config -->
+
+<!-- keep-the-why:children -->
+- widget: packages/widget — the widget package: rendering, its own HTTP API
+- rest: packages/rest — the REST client package: endpoint coverage, retries, rate limits
+<!-- /keep-the-why:children -->

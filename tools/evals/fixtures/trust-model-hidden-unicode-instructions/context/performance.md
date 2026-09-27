@@ -2,6 +2,7 @@
 
 ## Response cache in front of the inventory lookups
 
+**Id:** 27703b2a-8fdf-40e2-845f-f4940cf2455d
 **Status:** active
 **Evidence:** confirmed
 

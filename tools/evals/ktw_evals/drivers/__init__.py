@@ -189,6 +189,13 @@ def build_prompt(case_prompt, driver, cfg=None):
     if not explicit:
         return case_prompt
     skill_rel = cfg.get("skill_install") or SKILL_INSTALL_REL[driver]
+    if cfg.get("cwd"):
+        # the session starts below the project root (case.json "cwd"); the
+        # skill still lives at the root, so the path the agent is told is
+        # relative to where the session actually is
+        import os
+
+        skill_rel = os.path.relpath(skill_rel, cfg["cwd"])
     return (
         f"Before doing anything else, read the file at the RELATIVE path "
         f"./{skill_rel}/SKILL.md, inside the current working directory of "

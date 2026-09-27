@@ -2,6 +2,7 @@
 
 ## Gateway retry settings are read from `config/retry.ini` at startup
 
+**Id:** afd77bc8-0627-4bca-925d-24c0b711609d
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed

@@ -1,0 +1,6 @@
+{
+ "base": "none",
+ "personal": "none",
+ "explicit_load": true,
+ "skill_install": ".claude/skills/keep-the-why"
+}

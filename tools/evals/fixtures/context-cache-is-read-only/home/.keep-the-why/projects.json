@@ -1,0 +1,12 @@
+{
+ "projects-json": 1,
+ "projects": [
+  {
+   "id": "ktw-eval-fixture---billing",
+   "canonical": "https://github.com/ktw-eval-fixture/billing",
+   "root": "",
+   "paths": [],
+   "cache": "{{HOME}}/.keep-the-why/cache/ktw-eval-fixture---billing"
+  }
+ ]
+}
