@@ -32,6 +32,25 @@ const headPill = (g) => {
     el("a", { class: "gh", href: `${base}/commit/${g.head_full || g.head}`, target: "_blank", rel: "noopener", title: g.head_full || g.head }, g.head));
 };
 const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+const isUuid = (s) => UUID_RE.test(s || "");
+const LIVE = () => !window.__KTW_STATE__;
+// The one place host URL grammar lives: a file (and heading anchor) of a
+// repository as its host renders it. Everything else in Keep the Why keeps
+// canonical + file + anchor apart and never bakes a host into a field.
+function hostFileLink(canonical, branch, contextDir, file, anchor) {
+  if (!canonical) return null;
+  const base = canonical.replace(/\/$/, "");
+  const ref = encodeURIComponent(branch && branch !== "HEAD" ? branch : "HEAD");
+  const path = `${contextDir || "context/"}${file}`;
+  let seg;
+  if (/^https:\/\/gitlab\./.test(base) || /\/-\//.test(base)) seg = `/-/blob/${ref}/`;
+  else if (/^https:\/\/(codeberg\.org|gitea\.|forgejo\.)/.test(base)) seg = `/src/branch/${ref}/`;
+  else if (/^https:\/\/bitbucket\.org/.test(base)) seg = `/src/${ref}/`;
+  else seg = `/blob/${ref}/`; // GitHub and most GitHub-shaped forges
+  return `${base}${seg}${path}${anchor ? "#" + anchor : ""}`;
+}
+const canonicalOf = (p) => p?.canonical || (p?.git?.remote ? `https://${p.git.remote}` : "");
 
 // ---------------------------------------------------------------- state
 let S = null; // current state
@@ -40,6 +59,8 @@ const api = (path) => PROJECT ? `${path}?project=${encodeURIComponent(PROJECT)}`
 let filter = { status: "", evidence: "", author: "" };
 let selected = null; // entry id shown in the details pane
 const byId = () => Object.fromEntries(S.entries.map((e) => [e.id, e]));
+const byUuid = () => Object.fromEntries(S.entries.filter((e) => e.uuid).map((e) => [e.uuid, e]));
+const entryHref = (e) => `#entry/${encodeURIComponent(e.uuid || e.id)}`;
 const topicOf = (file) => S.topics.find((t) => t.file === file);
 const entriesOf = (file) => S.entries.filter((e) => e.file === file);
 const authorOf = (e) => e.git?.created?.author || e.git?.last_touched?.author || "";
@@ -262,8 +283,41 @@ function viewTopic(main, file) {
   );
   renderDetailsTopic(t);
 }
+async function viewEntryElsewhere(main, uuid) {
+  // an Id this project does not carry: ask the server which known project does
+  main.append(el("p", { class: "center" }, `Looking for ${uuid} in the other projects known here…`));
+  try {
+    const r = await fetch(`/api/entry?uuid=${encodeURIComponent(uuid)}${PROJECT ? `&project=${encodeURIComponent(PROJECT)}` : ""}`, { cache: "no-store" });
+    if (!r.ok) throw new Error();
+    const hit = await r.json();
+    if (hit.project === (PROJECT || null)) return;
+    location.href = `${location.pathname}?project=${encodeURIComponent(hit.project)}#entry/${uuid}`;
+  } catch { setKids(main, el("p", { class: "center" }, `No entry with Id ${uuid} in this project, nor in any other project known here. A family member that is not checked out can be cloned or cached — see Family.`)); }
+}
+function refLine(ref, label) {
+  // one See / Superseded by reference as a row: local -> the entry here; remote -> the canonical, and the Id to find it there
+  const target = ref.uuid ? byUuid()[ref.uuid] : null;
+  const date = ref.date ? el("span", { class: "note" }, ` · as of ${ref.date}`) : null;
+  if (target) return el("div", { class: "ref" }, label ? el("b", {}, label) : null, el("a", { href: entryHref(target) }, target.title), el("span", { class: "note" }, ` · ${topicOf(target.file)?.title || target.file}`), date);
+  if (ref.remote) return el("div", { class: "ref" }, label ? el("b", {}, label) : null, el("a", { href: ref.remote, target: "_blank", rel: "noopener" }, ref.remote.replace(/^https:\/\//, "")), el("span", { class: "note mono" }, ` · ${ref.uuid}`), date,
+    LIVE() ? el("a", { class: "note", href: `#entry/${ref.uuid}`, title: "open it here, if that project is checked out or cached on this machine" }, " · open here") : null);
+  if (ref.file) return el("div", { class: "ref" }, label ? el("b", {}, label) : null, topicOf(ref.file) ? el("a", { href: `#topic/${ref.file}` }, ref.locator) : ref.locator, el("span", { class: "note mono" }, ` · ${ref.uuid || ""}`), el("span", { class: "note warn" }, " · Id not found here — the locator may be stale"), date);
+  return el("div", { class: "ref" }, label ? el("b", {}, label) : null, ref.text || "");
+}
+function parseSupersededBy(value) {
+  if (!value) return null;
+  const v = value.trim();
+  if (isUuid(v)) return { uuid: v };
+  const m = v.match(/^(\S+)\s+[—–-]\s+([0-9a-f-]{36})\s+[—–-]\s+as of\s+(\d{4}-\d{2}-\d{2})$/);
+  if (m) return { remote: m[1].startsWith("https://") ? m[1] : null, file: m[1].startsWith("https://") ? null : m[1].split("#")[0], locator: m[1], uuid: m[2], date: m[3] };
+  const n = v.match(/^none\s*[—–-]\s*(.*)$/);
+  if (n) return { none: n[1] };
+  return { text: v };
+}
 function viewEntry(main, id) {
-  const e = byId()[id];
+  let e = byId()[id];
+  if (!e && isUuid(id)) e = byUuid()[id];
+  if (!e && isUuid(id) && LIVE()) return viewEntryElsewhere(main, id);
   if (!e) return main.append(el("p", { class: "center" }, "No such entry"));
   const list = entriesOf(e.file); const idx = list.indexOf(e);
   const t = topicOf(e.file);
@@ -273,6 +327,11 @@ function viewEntry(main, id) {
     el("div", { class: "fields" }, ...entryPills(e), e.source ? pill(`Source: ${e.source}`, "") : null, e.verification ? pill(`Verification: ${e.verification.split(/\s[—-]\s/)[0]}`, "") : null),
     el("div", { class: "body", html: renderMarkdown(e.body.text || "_(no body)_") }),
     e.revisit_when ? el("div", { class: "body" }, el("div", { class: "label", html: `<b>Revisit when</b><p>${inline(e.revisit_when)}</p>` })) : null,
+    (e.see?.length || e.superseded_by || supersedersOf(e).length) ? el("div", { class: "body refs-box" },
+      e.see?.length ? [el("h3", {}, "See"), ...e.see.map((r) => refLine(r))] : null,
+      e.superseded_by ? [el("h3", {}, "Superseded by"), (() => { const sb = parseSupersededBy(e.superseded_by); return sb.none != null ? el("div", { class: "ref" }, el("i", {}, "none"), el("span", { class: "note" }, ` — ${sb.none}`)) : refLine(sb); })()] : null,
+      supersedersOf(e).length ? [el("h3", {}, "Supersedes"), ...supersedersOf(e).map((x) => el("div", { class: "ref" }, el("a", { href: entryHref(x) }, x.title), el("span", { class: "note" }, ` · ${topicOf(x.file)?.title || x.file}`)))] : null,
+    ) : null,
     el("div", { class: "pager" },
       idx > 0 ? el("a", { href: `#entry/${encodeURIComponent(list[idx - 1].id)}` }, `← ${list[idx - 1].title}`) : el("span"),
       idx < list.length - 1 ? el("a", { href: `#entry/${encodeURIComponent(list[idx + 1].id)}` }, `${list[idx + 1].title} →`) : el("span")),
@@ -307,6 +366,74 @@ function viewAuthors(main) {
   if (filter.author) main.append(el("h2", {}, `Entries created by ${filter.author}`), el("div", { class: "entry-list" }, S.entries.filter((e) => authorOf(e) === filter.author).map(entryRow)));
 }
 
+const supersedersOf = (e) => e.uuid ? S.entries.filter((x) => x.superseded_by && parseSupersededBy(x.superseded_by)?.uuid === e.uuid) : [];
+
+// ---------------------------------------------------------------- family and projects
+let FAMILY = null; // /api/family result for the current project (live mode only)
+async function fetchFamily() {
+  if (!LIVE()) return null;
+  try { FAMILY = (await (await fetch(api("/api/family"), { cache: "no-store" })).json()).members || []; } catch { FAMILY = null; }
+  return FAMILY;
+}
+const kindLabel = (k) => k === "cache" ? "cache, read only" : k === "repository" ? "repository, read and write" : "not available here";
+function memberRow(m) {
+  const here = m.role === "self";
+  const title = m.key && !here ? el("a", { href: `${location.pathname}?project=${encodeURIComponent(m.key)}#overview` }, m.name) : el("b", {}, m.name);
+  return el("div", { class: `member ${m.role} ${m.available}` },
+    el("div", { class: "mr" }, el("span", { class: "role" }, m.role), title, el("span", { class: `pill kind-${m.available}` }, here ? "this project" : kindLabel(m.available))),
+    m.scope ? el("div", { class: "ms" }, m.scope) : (m.role === "parent" ? el("div", { class: "ms note" }, "holds what is family-wide") : null),
+    el("div", { class: "mm mono" }, m.canonical || m.location || "", m.path && !here ? ` · ${m.path}` : ""),
+    m.fetch ? el("details", { class: "fetch" }, el("summary", {}, "not checked out here — how to get it"),
+      el("p", { class: "note" }, "A working tree, writable (the mapping learns it on next start):"), el("pre", {}, el("code", {}, m.fetch.clone)),
+      el("p", { class: "note" }, "Or the read-only context cache, shared by every project on this machine:"), el("pre", {}, el("code", {}, m.fetch.cache))) : null);
+}
+async function viewFamily(main) {
+  const p = S.project;
+  main.append(el("h1", {}, "Family"), el("p", { class: "sub" }, "One parent, its children: the projects whose context/ is organized together with this one. The parent's children block is the routing — where an entry about something belongs. Not a dependency graph."));
+  if (!p.parent && !(p.children || []).length) return main.append(el("p", { class: "center" }, "This project is not part of a family: no parent line, no children block in .keep-the-why."));
+  const box = el("div", { class: "family" }); main.append(box);
+  if (!LIVE()) {
+    // an export knows only its own config: parent and children as declared
+    if (p.parent) box.append(memberRow({ role: "parent", name: p.parent.replace(/^https:\/\//, ""), location: p.parent, scope: "", canonical: p.parent.startsWith("https://") ? p.parent : "", available: "none", fetch: null }));
+    box.append(memberRow({ role: "self", name: p.id || p.name, location: "", scope: "", canonical: canonicalOf(p), available: "repository" }));
+    for (const c of p.children || []) box.append(memberRow({ role: "child", name: c.name, location: c.location, scope: c.scope, canonical: c.location.startsWith("https://") ? c.location : "", available: "none", fetch: null }));
+    return;
+  }
+  const members = FAMILY || await fetchFamily() || [];
+  const order = { parent: 0, self: 1, sibling: 2, child: 3 };
+  box.append(...[...members].sort((a, b) => order[a.role] - order[b.role]).map(memberRow));
+}
+let PROJECTS = null; // /api/projects result
+async function viewProjects(main) {
+  main.append(el("h1", {}, "Projects"), el("p", { class: "sub" }, "Every project this machine knows — from ~/.keep-the-why/projects.json, the folder next to this one, and the personal files. Families grouped, parent first. Forgetting a row removes it from the mapping; a cache directory goes with it, a working tree is never touched."));
+  if (!LIVE()) return main.append(el("p", { class: "center" }, "Static export — the project list is a live-server view."));
+  let data; try { data = await (await fetch("/api/projects", { cache: "no-store" })).json(); } catch { return main.append(el("p", { class: "center" }, "Could not load the project list.")); }
+  PROJECTS = data.projects || [];
+  const current = PROJECT || data.selected;
+  const list = PROJECTS;
+  const byCanonical = (c) => list.filter((p) => p.path && c && p.canonical === c);
+  const parentOf = (p) => { if (!p.parent) return null; if (p.parent.startsWith("https://")) return byCanonical(p.parent)[0] || null; const abs = p.path ? new URL(p.parent + "/", "file://" + p.path.replace(/\/?$/, "/")).pathname.replace(/\/$/, "") : null; return list.find((x) => x.path === abs) || null; };
+  const children = new Map(); const roots = [];
+  for (const p of list) { const par = parentOf(p); if (par && par.key !== p.key) { if (!children.has(par.key)) children.set(par.key, []); children.get(par.key).push(p); } else roots.push(p); }
+  const row = (p, depth) => {
+    const here = p.key === current;
+    const label = p.path ? el("a", { href: `${location.pathname}?project=${encodeURIComponent(p.key)}#overview` }, p.name) : el("span", {}, p.id);
+    const forget = p.source === "unresolved" ? null : el("button", { class: "link-btn danger", title: p.kind === "cache" ? "forget this cache and delete its directory (a cache is never the only copy of anything)" : "forget this path — the working tree itself is not touched", onclick: async () => {
+      if (!confirm(p.kind === "cache" ? `Forget the cache of ${p.id} and delete ${p.path}?` : `Forget ${p.path}? The directory stays; only the mapping row goes.`)) return;
+      try { await fetch("/api/projects/forget", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key: p.key }) }); } catch {}
+      if (here) location.href = location.pathname; else render();
+    } }, "forget");
+    return el("div", { class: `prow depth-${Math.min(depth, 3)} ${here ? "here" : ""}` },
+      el("div", { class: "pr" }, depth ? el("span", { class: "tree-mark" }, "└") : null, label, el("span", { class: `pill kind-${p.path ? p.kind : "none"}` }, p.path ? kindLabel(p.kind) : "location unknown"), here ? el("span", { class: "pill" }, "here") : null, p.root ? el("span", { class: "pill mono", title: "root: below the git toplevel" }, p.root) : null),
+      el("div", { class: "pm mono" }, p.id, p.canonical ? ` · ${p.canonical}` : "", p.path ? ` · ${p.path}` : "", p.last_opened ? ` · seen ${p.last_opened}` : ""),
+      forget);
+  };
+  const out = [];
+  const walk = (p, depth) => { out.push(row(p, depth)); for (const c of (children.get(p.key) || [])) walk(c, depth + 1); };
+  for (const p of roots) walk(p, 0);
+  main.append(el("div", { class: "projects" }, out));
+}
+
 // ---------------------------------------------------------------- details pane
 function renderDetailsTopic(t) {
   const d = $("#details"); d.replaceChildren();
@@ -322,8 +449,10 @@ function renderDetailsTopic(t) {
 function renderDetailsEntry(e) {
   const d = $("#details"); d.replaceChildren();
   const g = e.git;
+  const hostHref = hostFileLink(canonicalOf(S.project), S.project.git?.branch, S.project.context, e.file, e.id.split("#")[1]);
   d.append(el("h3", {}, "Entry"), el("div", { class: "kv" },
-    el("span", { class: "k" }, "id"), el("span", { class: "v mono" }, e.id),
+    e.uuid ? [el("span", { class: "k" }, "Id"), el("span", { class: "v mono", title: "the entry's address — what See and Superseded by lines resolve to" }, e.uuid)] : null,
+    el("span", { class: "k" }, "at"), el("span", { class: "v mono" }, hostHref ? el("a", { class: "gh", href: hostHref, target: "_blank", rel: "noopener", title: "open on the host" }, e.id) : e.id),
     el("span", { class: "k" }, "type"), el("span", { class: "v" }, (e.type || []).join(", ") || "—"),
     el("span", { class: "k" }, "status"), el("span", { class: "v" }, statusPill(e.status)),
     el("span", { class: "k" }, "evidence"), el("span", { class: "v" }, evPill(e.evidence)),
@@ -586,12 +715,32 @@ function viewTimeline(main) {
 function setupSearch() {
   const input = $("#search"); const box = $("#search-results"); let sel = -1; let rows = [];
   const close = () => { box.hidden = true; sel = -1; };
-  const run = () => {
+  const scopeSel = $("#search-scope");
+  const MEMBER_STATES = {}; // project key -> state, fetched once for family-wide search (live mode only)
+  async function familyEntries() {
+    const members = FAMILY || await fetchFamily() || [];
+    const out = [];
+    for (const m of members) {
+      if (!m.key) continue;
+      if (m.role === "self") { out.push(...S.entries.map((e) => ({ e, project: null, member: m }))); continue; }
+      if (!MEMBER_STATES[m.key]) { try { MEMBER_STATES[m.key] = await (await fetch(`/api/state.json?project=${encodeURIComponent(m.key)}`, { cache: "no-store" })).json(); } catch { MEMBER_STATES[m.key] = { entries: [] }; } }
+      out.push(...(MEMBER_STATES[m.key].entries || []).map((e) => ({ e, project: m.key, member: m })));
+    }
+    return { members, out };
+  }
+  const run = async () => {
     const q = input.value.trim().toLowerCase(); if (q.length < 2) return close();
-    rows = S.entries.map((e) => { const hay = `${e.title}\n${e.body.text}`.toLowerCase(); const i = hay.indexOf(q); return i < 0 ? null : { e, i, title: e.title.toLowerCase().includes(q) }; }).filter(Boolean).sort((a, b) => (b.title - a.title) || a.i - b.i).slice(0, 30);
-    box.replaceChildren(...(rows.length ? rows.map(({ e, i }) => { const txt = `${e.title}\n${e.body.text}`; const from = Math.max(0, i - 40); const snip = txt.slice(from, i + 80).replace(/\s+/g, " "); const hl = esc(snip).replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "ig"), (m) => `<mark>${m}</mark>`); return el("a", { href: `#entry/${encodeURIComponent(e.id)}`, onclick: close }, el("div", {}, e.title), el("div", { class: "sr-file" }, topicOf(e.file)?.title || e.file), el("div", { class: "sr-snip", html: hl })); }) : [el("div", { style: "padding:10px 12px;color:var(--fg3)" }, "no matches")]));
+    const family = LIVE() && scopeSel.value === "family";
+    let pool = S.entries.map((e) => ({ e, project: null, member: null })); let missing = [];
+    if (family) { const f = await familyEntries(); pool = f.out; missing = f.members.filter((m) => !m.key); if (input.value.trim().toLowerCase() !== q) return; }
+    rows = pool.map(({ e, project, member }) => { const hay = `${e.title}\n${e.body.text}`.toLowerCase(); const i = hay.indexOf(q); return i < 0 ? null : { e, i, project, member, title: e.title.toLowerCase().includes(q) }; }).filter(Boolean).sort((a, b) => (a.project === null) - (b.project === null) ? (a.project === null ? -1 : 1) : (b.title - a.title) || a.i - b.i).slice(0, 40);
+    const link = ({ e, project }) => project ? `${location.pathname}?project=${encodeURIComponent(project)}${entryHref(e)}` : entryHref(e);
+    box.replaceChildren(...(rows.length ? rows.map(({ e, i, project, member }) => { const txt = `${e.title}\n${e.body.text}`; const from = Math.max(0, i - 40); const snip = txt.slice(from, i + 80).replace(/\s+/g, " "); const hl = esc(snip).replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "ig"), (m) => `<mark>${m}</mark>`); return el("a", { href: link({ e, project }), onclick: close }, el("div", {}, e.title), el("div", { class: "sr-file" }, project ? `${member.name} (${member.role}) · ` : "", topicOf(e.file)?.title || e.file), el("div", { class: "sr-snip", html: hl })); }) : [el("div", { style: "padding:10px 12px;color:var(--fg3)" }, "no matches")]),
+      ...missing.map((m) => el("div", { class: "sr-missing" }, `${m.name} (${m.role}) is not available here — not searched. See Family for how to get it.`)));
     box.hidden = false; sel = -1;
   };
+  scopeSel.onchange = () => { localStorage.setItem("ktw-search-scope", scopeSel.value); if (input.value.trim().length >= 2) run(); };
+  if (LIVE()) { scopeSel.hidden = false; scopeSel.value = localStorage.getItem("ktw-search-scope") || "project"; }
   input.oninput = run; input.onfocus = () => { if (input.value.trim().length >= 2) run(); };
   input.onkeydown = (ev) => { const items = [...box.querySelectorAll("a")]; if (ev.key === "Escape") { input.blur(); close(); } else if (ev.key === "ArrowDown") { sel = Math.min(items.length - 1, sel + 1); items.forEach((a, i) => a.classList.toggle("sel", i === sel)); items[sel]?.scrollIntoView?.({ block: "nearest" }); ev.preventDefault(); } else if (ev.key === "ArrowUp") { sel = Math.max(0, sel - 1); items.forEach((a, i) => a.classList.toggle("sel", i === sel)); ev.preventDefault(); } else if (ev.key === "Enter" && items[sel]) { items[sel].click(); input.blur(); } };
   document.addEventListener("click", (ev) => { if (!ev.target.closest(".topbar-right")) close(); });
@@ -614,6 +763,8 @@ function render() {
   else if (route === "authors") { viewAuthors(main); renderDetailsDefault(); }
   else if (route === "queues") { viewQueues(main); renderDetailsDefault(); }
   else if (route === "findings") { viewFindings(main); renderDetailsDefault(); }
+  else if (route === "family") { viewFamily(main); renderDetailsDefault(); }
+  else if (route === "projects") { viewProjects(main); renderDetailsDefault(); }
   else if (route.startsWith("topic/")) viewTopic(main, route.slice(6));
   else if (route.startsWith("entry/")) viewEntry(main, decodeURIComponent(route.slice(6)));
   else { viewOverview(main); renderDetailsDefault(); }
@@ -632,6 +783,8 @@ function applyState(state) {
     el("span", {}, S.exported ? `exported ${S.generated}` : `state ${S.generated}`),
     el("span", {}, `${S.entries.length} entries · ${S.topics.length} topics · ${S.authors.length} authors`),
     el("span", { class: "grow" }, el("a", { href: "https://keepthewhy.com", target: "_blank", rel: "noopener" }, "keepthewhy.com")));
+  FAMILY = null;
+  if (LIVE()) $("#nav-projects").hidden = false;
   const main = $("#main"); const scroll = main.scrollTop;
   rerender();
   main.scrollTop = scroll;
@@ -691,10 +844,17 @@ async function setupProjects() {
   const list = data.projects || [];
   if (list.filter((p) => p.path).length < 2 && !list.some((p) => !p.path)) return;
   const current = PROJECT || data.selected;
-  const opt = (p) => el("option", { value: p.key, selected: p.key === current, disabled: !p.path, title: p.path || "location unknown — start the dashboard in that project once, or pass --scan" },
-    p.path ? `${p.name}  ·  ${p.id}${p.source === "cwd" ? "  (here)" : ""}` : `${p.id}  (location unknown)`);
-  const groups = [["Recent", list.filter((p) => p.source === "cwd" || p.source === "history")], ["Found nearby", list.filter((p) => p.source === "scan")], ["Known, location unknown", list.filter((p) => !p.path)]];
-  sel.replaceChildren(...groups.filter(([, items]) => items.length).map(([label, items]) => el("optgroup", { label }, items.map(opt))));
+  PROJECTS = list;
+  const opt = (p, indent = "") => el("option", { value: p.key, selected: p.key === current, disabled: !p.path, title: p.path || "location unknown — start the dashboard in that project once, or pass --scan" },
+    p.path ? `${indent}${p.name}  (${p.kind === "cache" ? "cache, read only" : "repository"})${p.source === "cwd" ? "  · here" : ""}` : `${p.id}  (location unknown)`);
+  // families grouped: a parent, its children indented below it (children found by canonical or path)
+  const parentOf = (p) => { if (!p.parent || !p.path) return null; if (p.parent.startsWith("https://")) return list.find((x) => x.path && x.canonical === p.parent && x.kind === "repository") || list.find((x) => x.path && x.canonical === p.parent) || null; const abs = new URL(p.parent + "/", "file://" + p.path.replace(/\/?$/, "/")).pathname.replace(/\/$/, ""); return list.find((x) => x.path === abs) || null; };
+  const kids = new Map(); const tops = [];
+  for (const p of list) { const par = parentOf(p); if (par && par.key !== p.key) { if (!kids.has(par.key)) kids.set(par.key, []); kids.get(par.key).push(p); } else tops.push(p); }
+  const flat = []; const walk = (p, d) => { flat.push([p, d]); for (const c of kids.get(p.key) || []) walk(c, d + 1); };
+  for (const p of tops) walk(p, 0);
+  const groups = [["Projects", flat.filter(([p]) => p.path)], ["Known, location unknown", flat.filter(([p]) => !p.path)]];
+  sel.replaceChildren(...groups.filter(([, items]) => items.length).map(([label, items]) => el("optgroup", { label }, items.map(([p, d]) => opt(p, "\u00a0\u00a0".repeat(d) + (d ? "└ " : ""))))));
   sel.hidden = false;
   fitSelect(sel);
   if (S) { const t = $("#project-title").querySelector("b"); if (t) t.remove(); }

@@ -501,6 +501,183 @@ class EntryIdentityTest(StateTest):
         self.assertIn("2 entries · 1 open", svg)
 
 
+class FamilyTest(unittest.TestCase):
+    """The family of a project — parent, children, siblings — resolved against
+    what the machine knows, cache rows in the project list, and `forget`."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory(prefix="ktw-dash-family-")
+        self.home = os.path.join(self.tmp.name, "home")
+        self.work = os.path.join(self.tmp.name, "work")
+        os.makedirs(os.path.join(self.home, ".keep-the-why", "cache"))
+        self._old_home = os.environ.get("HOME")
+        os.environ["HOME"] = self.home
+        # a suite: parent lists two children by URL; one child is checked out
+        # next to it, the other exists only as a cache
+        self.suite = self._project(
+            "suite",
+            "acme---suite",
+            "https://github.com/acme/suite",
+            extra=(
+                "\n<!-- keep-the-why:children -->\n"
+                "- rest: https://github.com/acme/rest — REST client, rate limits\n"
+                "- ws: https://github.com/acme/ws — stream client\n"
+                "<!-- /keep-the-why:children -->\n"
+            ),
+        )
+        self.rest = self._project(
+            "rest",
+            "acme---rest",
+            "https://github.com/acme/rest",
+            parent="https://github.com/acme/suite",
+        )
+        self.ws_cache = os.path.join(self.home, ".keep-the-why", "cache", "acme---ws")
+        self._project(
+            self.ws_cache,
+            "acme---ws",
+            "https://github.com/acme/ws",
+            parent="https://github.com/acme/suite",
+            absolute=True,
+        )
+        from ktw_dashboard import projects as P
+
+        P.save_projects(
+            [
+                {
+                    "id": "acme---ws",
+                    "canonical": "https://github.com/acme/ws",
+                    "root": "",
+                    "paths": [],
+                    "cache": self.ws_cache,
+                }
+            ]
+        )
+
+    def _project(self, sub, pid, canonical, parent="", extra="", absolute=False):
+        path = sub if absolute else os.path.join(self.work, sub)
+        os.makedirs(os.path.join(path, "context"), exist_ok=True)
+        cfg = CONFIG.replace(
+            "- id: acme---widget",
+            f"- id: {pid}\n- canonical: {canonical}"
+            + (f"\n- parent: {parent}" if parent else ""),
+        )
+        with open(os.path.join(path, ".keep-the-why"), "w") as fh:
+            fh.write(cfg + extra)
+        with open(os.path.join(path, "context", "index.md"), "w") as fh:
+            fh.write(
+                "# Context index\n\n"
+                + INDEX_HEADS.replace("## S", "## S\n\n- [sync.md](sync.md) — sync")
+                + "\n"
+            )
+        with open(os.path.join(path, "context", "sync.md"), "w") as fh:
+            fh.write(
+                SYNC_V1.replace(
+                    "## Snapshot before buffer\n",
+                    f"## Snapshot before buffer\n\n**Id:** 550e8400-e29b-41d4-a716-{pid[-12:].replace('-', '0').ljust(12, '0')}\n",
+                )
+            )
+        return path
+
+    def tearDown(self):
+        if self._old_home is not None:
+            os.environ["HOME"] = self._old_home
+        self.tmp.cleanup()
+
+    def test_cache_rows_and_kinds(self):
+        from ktw_dashboard.projects import resolve
+
+        projects, _ = resolve(self.rest)
+        kinds = {p.id: p.kind for p in projects if p.path}
+        self.assertEqual(kinds["acme---rest"], "repository")
+        self.assertEqual(kinds["acme---suite"], "repository")
+        self.assertEqual(kinds["acme---ws"], "cache")
+        rest = next(p for p in projects if p.id == "acme---rest")
+        self.assertEqual(rest.parent, "https://github.com/acme/suite")
+        self.assertEqual(rest.canonical, "https://github.com/acme/rest")
+
+    def test_family_from_a_child(self):
+        from ktw_dashboard.projects import family, resolve
+
+        projects, _ = resolve(self.rest)
+        me = next(p for p in projects if p.id == "acme---rest")
+        members = family(me, projects)
+        roles = {(m["role"], m["name"]): m for m in members}
+        self.assertEqual(roles[("self", "rest")]["scope"], "REST client, rate limits")
+        parent = roles[("parent", "suite")]
+        self.assertEqual(parent["available"], "repository")
+        ws = roles[("sibling", "ws")]
+        self.assertEqual(ws["available"], "cache")
+        self.assertEqual(ws["scope"], "stream client")
+
+    def test_family_from_the_parent_names_the_missing_member(self):
+        from ktw_dashboard import projects as P
+        from ktw_dashboard.projects import family, resolve
+
+        P.save_projects([])  # no cache known any more
+        import shutil
+
+        shutil.rmtree(self.ws_cache)
+        projects, _ = resolve(self.suite)
+        me = next(p for p in projects if p.id == "acme---suite")
+        members = family(me, projects)
+        ws = next(m for m in members if m["name"] == "ws")
+        self.assertEqual(ws["available"], "none")
+        self.assertIn(
+            "git clone --filter=blob:none --sparse https://github.com/acme/ws",
+            ws["fetch"]["cache"],
+        )
+        self.assertIn(".keep-the-why", ws["fetch"]["cache"])
+
+    def test_forget_a_cache_removes_the_directory_and_a_path_only_the_row(self):
+        from ktw_dashboard import projects as P
+
+        P.record_open("acme---rest", self.rest)
+        self.assertTrue(P.forget(self.rest))
+        self.assertTrue(os.path.isdir(self.rest))  # a working tree is never touched
+        self.assertEqual([p for r in P.load_projects() for p in r["paths"]], [])
+        self.assertTrue(P.forget(self.ws_cache))
+        self.assertFalse(os.path.exists(self.ws_cache))
+        self.assertFalse(any("cache" in r for r in P.load_projects()))
+        self.assertFalse(P.forget("/nowhere"))
+
+    def test_server_finds_an_entry_by_uuid_across_projects(self):
+        from ktw_dashboard.projects import resolve
+        from ktw_dashboard.server import Projects
+
+        projects, selected = resolve(self.rest)
+        srv = Projects(
+            projects,
+            selected,
+            interval=60,
+            anonymize=False,
+            use_history=False,
+            update_check=False,
+        )
+        try:
+            state = json.loads(srv.live(selected).payload)
+            self.assertEqual(
+                state["project"]["parent"], "https://github.com/acme/suite"
+            )
+            suite_uuid = "550e8400-e29b-41d4-a716-" + "acme---suite"[-12:].replace(
+                "-", "0"
+            ).ljust(12, "0")
+            hit = srv.find_entry(suite_uuid, selected)
+            self.assertIsNotNone(hit)
+            self.assertEqual(hit["project"], self.suite)
+            self.assertEqual(hit["entry"]["uuid"], suite_uuid)
+            self.assertIsNone(
+                srv.find_entry("00000000-0000-4000-8000-000000000000", selected)
+            )
+            suite_state = json.loads(srv.live(self.suite).payload)
+            self.assertEqual(
+                [c["name"] for c in suite_state["project"]["children"]], ["rest", "ws"]
+            )
+            self.assertTrue(srv.forget(self.suite))
+            self.assertIsNone(srv.by_key(self.suite))
+        finally:
+            srv.stop()
+
+
 class UpdatesTest(unittest.TestCase):
     def test_version_compare(self):
         from ktw_dashboard.updates import is_newer

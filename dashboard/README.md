@@ -60,7 +60,7 @@ ktw-dashboard [PATH] [--host 127.0.0.1] [--port 8765] [--no-browser] [--interval
 
 ### Several projects
 
-Started inside a project, the dashboard shows that one. The project menu in the top bar lists the ten most recently opened projects (from the history file — one project id can appear at several paths, clones and worktrees included), projects found two levels under the parent directory or under `--scan DIR`, and ids that have a personal file in `~/.keep-the-why/` but no known location yet. Opening a project moves it to the top. `--no-history` leaves the file alone.
+Started inside a project, the dashboard shows that one. The project menu shows families grouped, a parent with its children indented, and each project's type; search has a *family* scope on the live server. The project menu in the top bar lists the ten most recently opened projects (from the history file — one project id can appear at several paths, clones and worktrees included), projects found two levels under the parent directory or under `--scan DIR`, and ids that have a personal file in `~/.keep-the-why/` but no known location yet. Opening a project moves it to the top. `--no-history` leaves the file alone.
 
 ## What it shows
 
@@ -74,6 +74,9 @@ Started inside a project, the dashboard shows that one. The project menu in the 
 | **Queues** | `open`, `needs-review`, `pending-confirmation`, `Evidence: unknown` on active entries, and the `Revisit when` triggers on record — the page lists, it does not decide |
 | **Timeline** | entries by the month their heading first appeared in Git, stacked by author; superseded events marked |
 | **Authors** | per Git author: created, touched, superseded, first / last activity, Evidence mix of what they created; click to filter every view |
+| **Family** | parent, siblings and children from `.keep-the-why`, each with its scope and how it is available here: a working tree, a read-only context cache, or not at all (with the commands to get it) |
+| **Projects** | everything this machine knows, families grouped, each row with its type; *forget* removes a mapping row (and a cache directory), never a working tree. Live server only |
+| **Entry by Id** | `#entry/<uuid>` opens an entry by its `Id`, here or in any project known here; the reader shows `See`, `Superseded by` and what the entry supersedes; the details pane links the entry on its host |
 | **Findings** | the linter's findings with links to the entries they sit in |
 | **Status bar** | the two package versions, linking PyPI; when a newer release exists the entry shimmers and its tooltip names the version and the `pip install -U` line |
 

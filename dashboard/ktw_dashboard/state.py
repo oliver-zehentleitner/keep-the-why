@@ -154,6 +154,24 @@ def _config_dict(block) -> dict:
     return {key: vals[0][1] for key, vals in block.fields.items() if vals}
 
 
+_CHILD_SPLIT_RE = re.compile(r"\s+[—–-]\s+")
+
+
+def _children_list(block) -> list[dict]:
+    """The parent's children block as [{name, location, scope}]."""
+    if block is None:
+        return []
+    rows = []
+    for name, vals in block.fields.items():
+        if not vals:
+            continue
+        parts = _CHILD_SPLIT_RE.split(vals[0][1].strip(), maxsplit=1)
+        location = parts[0].strip().strip("`").strip()
+        scope = parts[1].strip() if len(parts) > 1 else ""
+        rows.append({"name": name, "location": location, "scope": scope})
+    return rows
+
+
 class StateBuilder:
     """Holds the per-file Git cache between rebuilds. One instance per
     server run; `build()` is what the CLI, the server and the export call."""
@@ -201,6 +219,16 @@ class StateBuilder:
                     _config_dict(parsed.personal_defaults) if parsed else {}
                 ),
                 "config_file": parsed.path if parsed else None,
+                "canonical": _config_dict(parsed.config if parsed else None).get(
+                    "canonical", ""
+                ),
+                "root": _config_dict(parsed.config if parsed else None)
+                .get("root", "")
+                .strip("`"),
+                "parent": _config_dict(parsed.config if parsed else None)
+                .get("parent", "")
+                .strip("`"),
+                "children": _children_list(parsed.children if parsed else None),
                 "git": self._repo_dict(repo),
             },
             "topics": topics,

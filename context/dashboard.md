@@ -7,7 +7,8 @@
 **Status:** active
 **Evidence:** confirmed
 **Source:** maintainer conversation, 2026-09-11
-**Revisit when:** the dashboard is asked to write anything, hold state across restarts, or become the primary way anyone reads `context/`
+**Verification:** corroborated — re-checked 2026-09-27 when the *forget* control arrived (`project-families.md`): the dashboard now removes a row from `~/.keep-the-why/projects.json` and deletes a context cache on request, which is the "asked to write anything" trigger; the rule is restated more precisely rather than changed — the dashboard never modifies project content, and may manage Keep the Why's own local metadata and caches, all of it in the developer's home, none of it the only copy of anything
+**Revisit when:** the dashboard is asked to write into a project's own files, to hold state a project depends on, or to become the primary way anyone reads `context/`
 
 `docs/philosophy.md` said, until the dashboard existed, that the project introduces "no new platform, database, daemon, dashboard, or workflow". `keep-the-why-dashboard` exists — as a viewer over data the project already has: the entries in `context/`, `.keep-the-why`, the linter's findings, and the Git history of all of it. It writes nothing into any project, holds its state only in the memory of the terminal it runs in, and rebuilds that state from Markdown and Git whenever the project changes. Deleting it loses nothing. The one file it keeps — `~/.keep-the-why/dashboard-history.json`, the projects opened so far with their paths — is convenience for the project menu, next to the skill's own personal files and equally outside every repository. Since dashboard 0.2.0 (2026-09-27) that file is `~/.keep-the-why/projects.json`, the mapping the skill keeps too (`project-families.md`); the old file is folded in and removed, and the rule is unchanged: local metadata in the developer's home, never project content.
 

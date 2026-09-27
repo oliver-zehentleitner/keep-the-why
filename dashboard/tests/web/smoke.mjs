@@ -31,7 +31,8 @@ const tick = (ms) => new Promise((r) => setTimeout(r, ms));
 await tick(300);
 const S = window.__KTW_STATE__;
 if (!S || !S.entries) { console.log("ERRORS: 1\n  no state on the page"); process.exit(1); }
-const routes = ["#overview", "#graph", "#timeline", "#authors", "#queues", "#findings", `#topic/${S.topics[0].file}`, `#entry/${encodeURIComponent(S.entries[0].id)}`, `#entry/${encodeURIComponent(S.entries[S.entries.length - 1].id)}`];
+const withUuid = S.entries.find((e) => e.uuid);
+const routes = ["#overview", "#graph", "#timeline", "#authors", "#queues", "#findings", "#family", "#projects", `#topic/${S.topics[0].file}`, `#entry/${encodeURIComponent(S.entries[0].id)}`, `#entry/${encodeURIComponent(S.entries[S.entries.length - 1].id)}`, ...(withUuid ? [`#entry/${withUuid.uuid}`] : [])];
 const go = async (hash) => { window.location.hash = hash; window.dispatchEvent(new window.Event("hashchange")); await tick(120); };
 const report = {};
 for (const r of routes) {

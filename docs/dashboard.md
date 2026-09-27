@@ -43,7 +43,7 @@ ktw-dashboard [PATH] [--host 127.0.0.1] [--port 8765] [--no-browser] [--interval
 
 ## Several projects
 
-Started inside a project, the dashboard shows that one. The project menu in the top bar lists the ten most recently opened projects (one project id can appear at several paths — clones, worktrees), projects found near the start directory, and ids that have a personal file in `~/.keep-the-why/` but no known location yet; opening a project moves it to the top of the history.
+Started inside a project, the dashboard shows that one. The project menu shows families grouped — a parent, its children indented below it — and each project's type, repository or cache; the **Projects** view is the same list with the details and the *forget* control. The project menu in the top bar lists the ten most recently opened projects (one project id can appear at several paths — clones, worktrees), projects found near the start directory, and ids that have a personal file in `~/.keep-the-why/` but no known location yet; opening a project moves it to the top of the history.
 
 ## What it shows
 
@@ -56,8 +56,11 @@ Started inside a project, the dashboard shows that one. The project menu in the 
 | **Queues** | what needs a person: `Status: open`, `needs-review`, `pending-confirmation`, `Evidence: unknown` on active entries, and the `Revisit when` triggers on record. Whether a trigger has fired is a human judgement; the page lists, it does not decide |
 | **Timeline** | entries by the month their heading first appeared in Git, stacked by author; superseded events marked below |
 | **Authors** | per Git author: created, touched, superseded, first and last activity, the Evidence mix of what they created. Click a row to filter every view |
+| **Family** | the project's parent, siblings and children (`parent` line and `children` block in `.keep-the-why`), each with its scope from the parent's routing and how it is available on this machine — a working tree (read and write), a read-only context cache, or not at all, with the clone and cache commands to get it. An export shows the family as declared; the live server resolves it |
+| **Projects** | everything this machine knows, from `~/.keep-the-why/projects.json`, the folder next to the project and the personal files — families grouped, a parent with its children indented, each row with its type. *Forget* removes a row from the mapping; for a cache the directory goes too (it is never the only copy of anything), a working tree is never touched. Live server only |
+| **Entry by Id** | `#entry/<uuid>` opens an entry by its `Id`, in this project or — on the live server — in any other project known here (the page switches to it). The reader shows the entry's `See` references (local ones as links, cross-project ones as the canonical plus the Id, with "open here" when that project is checked out or cached), its `Superseded by` successor and what it supersedes; the details pane has the Id and an "open on the host" link (GitHub, GitLab, Codeberg/Gitea, Bitbucket URL forms — the one place host grammar lives) |
 
-Search (`/`) covers titles and bodies; filters by status, evidence and author apply to every view at once. Keys: `g` graph, `o` overview, `q` queues, `t` timeline, `a` authors.
+Search (`/`) covers titles and bodies; on the live server it has a scope, *this project* or *family* — the latter reads the family members that are checked out or cached here (fetched once, on first use) and lists hits grouped by project, naming the members it could not search. Filters by status, evidence and author apply to every view at once. Keys: `g` graph, `o` overview, `q` queues, `t` timeline, `a` authors.
 
 ## The author layer, and its limit
 

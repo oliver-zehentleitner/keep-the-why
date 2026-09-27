@@ -16,6 +16,7 @@
     <select id="project-select" class="project-select" hidden title="Project"></select>
     <div class="project" id="project-title"></div>
     <div class="topbar-right">
+      <select id="search-scope" class="search-scope" hidden title="Search this project, or the whole family"><option value="project">this project</option><option value="family">family</option></select>
       <input id="search" type="search" placeholder="Search entries…  ( / )" autocomplete="off" spellcheck="false">
       <div id="search-results" class="search-results" hidden></div>
       <span id="live" class="live" title="">●</span>
@@ -30,6 +31,8 @@
       <a href="#timeline" data-route="timeline">Timeline</a>
       <a href="#authors" data-route="authors">Authors</a>
       <a href="#queues" data-route="queues">Queues <span id="queue-count" class="count"></span></a>
+      <a href="#family" data-route="family">Family</a>
+      <a href="#projects" data-route="projects" id="nav-projects" hidden>Projects</a>
       <button id="side-toggle" class="nav-toggle" type="button" aria-expanded="false">Topics ▾</button>
     </div>
     <div class="filters" id="filters">

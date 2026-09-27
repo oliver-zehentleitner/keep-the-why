@@ -402,3 +402,46 @@ dashboard behind the link.
 **Rejected alternative:** a shields.io endpoint file (`badge.json`) that a
 badge service renders on request — the idea that had been parked in
 `TODO.md`. Rejected on review: a service in between, for a picture.
+
+## The dashboard shows the family as a view and a grouped menu, keeps *forget* out of the dropdown, and makes the Id an address
+
+**Id:** 55247232-1368-40b4-a955-3c929b7f7b6b
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer design discussion, 2026-09-26/27; implementation call on the menu, 2026-09-27
+**Revisit when:** a browser control lets a native `<select>` carry a per-row action, or the family view is asked to fetch a member itself
+
+The family surfaces on the page as a **Family** view (parent, siblings,
+children with their scopes and how each is available here, with the
+commands that would fetch a missing one), a **Projects** view (everything
+the machine knows, families grouped with children indented, each row with
+its type and a *forget* control), and a project menu grouped the same way
+with the type in parentheses. `#entry/<uuid>` is an entry's address: the
+page looks the Id up here, then asks the server, which searches every
+project it knows and the page switches to the one that holds it. Host URL
+grammar lives only in the dashboard's "open on the host" link.
+
+**Reason:** the request was a dropdown that lists projects and caches with
+their type and a delete control per row. A native `<select>` cannot carry
+a per-row button, and rebuilding the menu as a custom panel for one
+control would have replaced a working, accessible element with a worse
+one. The menu keeps the switching and shows the types; the list with the
+control is a view, where it can also show what a row is (id, canonical,
+path, last seen) before anyone forgets it. The Family view is a separate
+view because it is *this project's* family — one parent and its children
+— while Projects is everything known; the two questions have different
+answers. The dashboard names how to get a missing member and never fetches
+it: fetching is the skill's action after a question, and the dashboard is
+a viewer that manages only metadata and caches it is told to forget.
+
+**Rejected alternative:** a custom dropdown panel with delete buttons in
+place of the `<select>`. Rejected as above — a worse control for one
+action that has a better home.
+
+**Rejected alternative:** host links computed from the `See` locator
+itself, so that a cross-project reference is clickable to the file.
+Rejected with the `See` design: the locator across projects is the
+canonical alone, and the dashboard computes the host form from what it
+knows — canonical, branch, context directory, file and heading — the one
+place that knowledge is allowed to live.

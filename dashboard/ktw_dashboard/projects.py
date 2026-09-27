@@ -30,6 +30,11 @@ from dataclasses import asdict, dataclass
 _ID_RE = re.compile(r"^-\s*id:\s*(\S+)\s*$", re.M)
 _CANONICAL_RE = re.compile(r"^-\s*canonical:\s*(\S+)\s*$", re.M)
 _ROOT_RE = re.compile(r"^-\s*root:\s*`?([^`\s]+)`?\s*$", re.M)
+_PARENT_RE = re.compile(r"^-\s*parent:\s*`?([^`\s]+)`?\s*$", re.M)
+_CHILD_LINE_RE = re.compile(r"^-\s+([A-Za-z0-9_-]+)\s*:\s*(.*?)\s*$")
+_CHILD_SPLIT_RE = re.compile(r"\s+[—–-]\s+")
+CHILDREN_START = "<!-- keep-the-why:children -->"
+CHILDREN_END = "<!-- /keep-the-why:children -->"
 PROJECTS_JSON_VERSION = 1
 _SKIP_DIRS = {
     ".git",
@@ -83,10 +88,35 @@ def read_project_config(path: str) -> dict | None:
         return None
     canonical = _CANONICAL_RE.search(text)
     root = _ROOT_RE.search(text)
+    parent = _PARENT_RE.search(text)
+    children = []
+    inside = False
+    for raw in text.splitlines():
+        line = raw.strip()
+        if line == CHILDREN_START:
+            inside = True
+            continue
+        if line == CHILDREN_END:
+            break
+        if not inside:
+            continue
+        cm = _CHILD_LINE_RE.match(line)
+        if not cm:
+            continue
+        parts = _CHILD_SPLIT_RE.split(cm.group(2).strip(), maxsplit=1)
+        children.append(
+            {
+                "name": cm.group(1),
+                "location": parts[0].strip().strip("`").strip(),
+                "scope": parts[1].strip() if len(parts) > 1 else "",
+            }
+        )
     return {
         "id": m.group(1),
         "canonical": canonical.group(1) if canonical else "",
         "root": root.group(1) if root else "",
+        "parent": parent.group(1) if parent else "",
+        "children": children,
     }
 
 
@@ -254,11 +284,178 @@ class Project:
     id: str
     path: str | None  # None: known from ~/.keep-the-why, location not found
     name: str
-    source: str  # "cwd" | "history" | "scan" | "unresolved"
+    source: str  # "cwd" | "history" | "scan" | "cache" | "unresolved"
     last_opened: str = ""
+    kind: str = "repository"  # "repository" (a working tree) | "cache" (read-only)
+    canonical: str = ""
+    root: str = ""
+    parent: str = ""  # the parent's location from this project's own config
 
     def to_dict(self):
         return asdict(self)
+
+
+def cache_dir_for(row: dict) -> str | None:
+    """The cache directory of a mapping row, when it exists on disk."""
+    cache = row.get("cache")
+    if isinstance(cache, str) and os.path.isfile(os.path.join(cache, ".keep-the-why")):
+        return cache
+    return None
+
+
+def forget(key: str) -> bool:
+    """Drop one path from the mapping — the one write the project list makes.
+    For a cache (the skill's own, never the only copy of anything) the
+    directory and its settings file go too; a working tree is never touched,
+    only forgotten. Returns whether anything changed."""
+    rows = load_projects()
+    changed = False
+    for row in rows:
+        before = len(row["paths"])
+        row["paths"] = [p for p in row["paths"] if p.get("path") != key]
+        changed = changed or len(row["paths"]) != before
+        if row.get("cache") == key:
+            import shutil
+
+            shutil.rmtree(key, ignore_errors=True)
+            settings = key.rstrip("/\\") + ".md"
+            try:
+                os.remove(settings)
+            except OSError:
+                pass
+            del row["cache"]
+            changed = True
+    if changed:
+        save_projects(rows)
+    return changed
+
+
+def _fetch_commands(canonical: str, pid: str, root: str = "") -> dict:
+    """What a person would run to get a member: the full clone, or the
+    read-only context cache the skill describes (two stages)."""
+    cache = os.path.join(personal_dir(), "cache", pid)
+    prefix = f"{root.rstrip('/')}/" if root else ""
+    return {
+        "clone": f"git clone {canonical}",
+        "cache": (
+            f"git clone --filter=blob:none --sparse {canonical} {cache}\n"
+            f"git -C {cache} sparse-checkout set {prefix}.keep-the-why\n"
+            f"# then add the context directory that file names:\n"
+            f"git -C {cache} sparse-checkout add {prefix}context"
+        ),
+    }
+
+
+def family(project: "Project", projects: list["Project"]) -> list[dict]:
+    """The immediate family of `project`, one dict per member: role (self,
+    parent, child, sibling), name, location, scope, and how it is available
+    here — a repository (working tree), a cache, or not at all, with the
+    commands that would fetch it. Read from the project's own config and,
+    when the parent is local, from the parent's children block."""
+    if not project.path:
+        return []
+    cfg = read_project_config(project.path) or {}
+
+    def locate(location: str, base: str):
+        """(Project | None, kind) for a family location seen from `base`."""
+        if not location:
+            return None
+        if location.startswith("https://"):
+            found = [p for p in projects if p.path and p.canonical == location]
+            found.sort(key=lambda p: (p.kind != "repository", p.source != "cwd"))
+            return found[0] if found else None
+        path = os.path.realpath(os.path.join(base, location))
+        found = next(
+            (p for p in projects if p.path and os.path.realpath(p.path) == path), None
+        )
+        if found is None and os.path.isfile(os.path.join(path, ".keep-the-why")):
+            c = read_project_config(path) or {}
+            found = Project(
+                key=path,
+                id=c.get("id", ""),
+                path=path,
+                name=os.path.basename(path),
+                source="scan",
+                canonical=c.get("canonical", ""),
+                root=c.get("root", ""),
+                parent=c.get("parent", ""),
+            )
+        return found
+
+    def member(role, name, location, scope, found):
+        canonical = (
+            found.canonical
+            if found
+            else (location if location.startswith("https://") else "")
+        )
+        pid = found.id if found else ""
+        return {
+            "role": role,
+            "name": name,
+            "location": location,
+            "scope": scope,
+            "key": found.key if found else None,
+            "id": pid,
+            "path": found.path if found else None,
+            "kind": found.kind if found else None,
+            "canonical": canonical,
+            "available": found.kind if found else "none",
+            "fetch": (
+                None
+                if found or not canonical
+                else _fetch_commands(
+                    canonical, pid or canonical.rstrip("/").split("/")[-1]
+                )
+            ),
+        }
+
+    members = [member("self", project.name, project.path, "", project)]
+    parent_loc = cfg.get("parent", "")
+    parent = locate(parent_loc, project.path) if parent_loc else None
+    if parent_loc:
+        scope = ""
+        siblings = []
+        if parent and parent.path:
+            pcfg = read_project_config(parent.path) or {}
+            for ch in pcfg.get("children", []):
+                target = locate(ch["location"], parent.path)
+                if (
+                    target
+                    and target.path
+                    and os.path.realpath(target.path) == os.path.realpath(project.path)
+                ):
+                    scope = ch["scope"]
+                    members[0]["scope"] = scope
+                    continue
+                if (
+                    target
+                    and target.canonical
+                    and target.canonical == project.canonical
+                    and project.canonical
+                ):
+                    scope = ch["scope"]
+                    members[0]["scope"] = scope
+                    continue
+                siblings.append(
+                    member("sibling", ch["name"], ch["location"], ch["scope"], target)
+                )
+        members.append(
+            member(
+                "parent", parent.name if parent else parent_loc, parent_loc, "", parent
+            )
+        )
+        members.extend(siblings)
+    for ch in cfg.get("children", []):
+        members.append(
+            member(
+                "child",
+                ch["name"],
+                ch["location"],
+                ch["scope"],
+                locate(ch["location"], project.path),
+            )
+        )
+    return members
 
 
 def resolve(
@@ -279,11 +476,12 @@ def resolve(
     projects: list[Project] = []
     seen_paths: set[str] = set()
 
-    def add(pid, path, source, last=""):
+    def add(pid, path, source, last="", kind="repository"):
         key = path or f"unresolved:{pid}"
         if key in seen_paths:
             return
         seen_paths.add(key)
+        cfg = (read_project_config(path) if path else None) or {}
         projects.append(
             Project(
                 key=key,
@@ -292,6 +490,10 @@ def resolve(
                 name=os.path.basename(path) if path else pid,
                 source=source,
                 last_opened=last,
+                kind=kind,
+                canonical=cfg.get("canonical", ""),
+                root=cfg.get("root", ""),
+                parent=cfg.get("parent", ""),
             )
         )
 
@@ -308,6 +510,10 @@ def resolve(
             add(live_id, r["path"], "history", r.get("last_opened", ""))
     for path, pid in sorted(scanned.items()):
         add(pid, path, "scan")
+    for row in load_projects() if use_history else []:
+        cache = cache_dir_for(row)
+        if cache:
+            add(row["id"], cache, "cache", kind="cache")
     known_ids = {p.id for p in projects}
     for pid in personal_ids():
         if pid not in known_ids:

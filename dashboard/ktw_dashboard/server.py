@@ -17,7 +17,7 @@ import os
 import threading
 from urllib.parse import parse_qs, urlparse
 
-from .projects import record_open
+from .projects import family, forget, record_open
 from .state import StateBuilder
 from .updates import UpdateChecker
 
@@ -128,6 +128,44 @@ class Projects:
             ensure_ascii=False,
         ).encode("utf-8")
 
+    def family_listing(self, key: str | None) -> bytes:
+        p = self.by_key(key or self.selected) if (key or self.selected) else None
+        members = family(p, self.projects) if p else []
+        return json.dumps({"members": members}, ensure_ascii=False).encode("utf-8")
+
+    def find_entry(self, uuid: str, first: str | None) -> dict | None:
+        """The project key that holds the entry with `uuid`, searched in
+        `first`, then every other project with a working tree, then the
+        caches. Builds states lazily; a project's state stays live after."""
+        order = [self.by_key(first)] if first else []
+        order += sorted(
+            (p for p in self.projects if p.path and p.key != first),
+            key=lambda p: (p.kind != "repository", p.source != "cwd"),
+        )
+        for p in order:
+            if p is None:
+                continue
+            live = self.live(p.key)
+            if live is None or live.state is None:
+                continue
+            for e in live.state.get("entries", []):
+                if e.get("uuid") == uuid:
+                    return {"project": p.key, "kind": p.kind, "entry": e}
+        return None
+
+    def forget(self, key: str) -> bool:
+        changed = forget(key)
+        p = self.by_key(key)
+        if p is not None:
+            self.projects = [x for x in self.projects if x.key != key]
+            with self._lock:
+                live = self._live.pop(key, None)
+            if live:
+                live.stop()
+            if self.selected == key:
+                self.selected = next((x.key for x in self.projects if x.path), None)
+        return changed or p is not None
+
     def stop(self):
         self.updates.stop()
         for ls in self._live.values():
@@ -164,6 +202,24 @@ def make_handler(projects: Projects):
                 return self._send(
                     200, projects.listing(), "application/json; charset=utf-8"
                 )
+            if path == "/api/family":
+                return self._send(
+                    200, projects.family_listing(pid), "application/json; charset=utf-8"
+                )
+            if path == "/api/entry":
+                uuid = parse_qs(url.query).get("uuid", [""])[0]
+                hit = projects.find_entry(uuid, pid) if uuid else None
+                if hit is None:
+                    return self._send(
+                        404,
+                        b'{"error": "no entry with that Id in any project known here"}',
+                        "application/json; charset=utf-8",
+                    )
+                return self._send(
+                    200,
+                    json.dumps(hit, ensure_ascii=False).encode("utf-8"),
+                    "application/json; charset=utf-8",
+                )
             if path == "/api/updates":
                 return self._send(
                     200, projects.updates.payload(), "application/json; charset=utf-8"
@@ -194,6 +250,27 @@ def make_handler(projects: Projects):
                     with open(full, "rb") as fh:
                         return self._send(200, fh.read(), ctype)
             return self._send(404, b"not found", "text/plain; charset=utf-8")
+
+        def do_POST(self):
+            url = urlparse(self.path)
+            if url.path != "/api/projects/forget":
+                return self._send(404, b"not found", "text/plain; charset=utf-8")
+            length = int(self.headers.get("Content-Length") or 0)
+            try:
+                body = json.loads(self.rfile.read(length) or b"{}")
+                key = body.get("key", "")
+            except (ValueError, AttributeError):
+                key = ""
+            if not isinstance(key, str) or not key:
+                return self._send(
+                    400, b'{"error": "key required"}', "application/json; charset=utf-8"
+                )
+            ok = projects.forget(key)
+            return self._send(
+                200 if ok else 404,
+                json.dumps({"ok": ok}).encode("utf-8"),
+                "application/json; charset=utf-8",
+            )
 
         def _events(self, live: LiveState):
             self.send_response(200)

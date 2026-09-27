@@ -307,3 +307,26 @@ kbd { font-family: var(--mono); font-size: 11px; background: var(--bg3); border:
   .project-select { max-width: calc(100vw - 150px); }
 }
 .sub.warn { color: var(--warn, #b7791f); }
+
+/* family, projects, references (project families) */
+.search-scope { background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 5px 6px; font: inherit; font-size: 13px; margin-right: 6px; }
+.topbar .search-scope { background: #1e1e24; color: #e6e6ec; border-color: #3a3a43; }
+.search-results .sr-missing { padding: 8px 12px; color: var(--fg3); font-size: 12px; border-bottom: 1px solid var(--line); }
+.refs-box h3 { margin: 10px 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--fg3); }
+.ref { padding: 4px 0; font-size: 13px; }
+.ref b { margin-right: 6px; }
+.note.warn { color: var(--warn); }
+.family .member, .projects .prow { background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 8px; }
+.family .member.self, .projects .prow.here { border-color: var(--accent); }
+.family .mr, .projects .pr { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-weight: 600; }
+.family .role { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--fg3); min-width: 56px; }
+.family .ms, .projects .pm { color: var(--fg2); font-size: 12.5px; margin-top: 4px; }
+.family .mm { color: var(--fg3); font-size: 11px; margin-top: 4px; word-break: break-all; }
+.family details.fetch { margin-top: 8px; font-size: 12.5px; }
+.family details.fetch pre { background: var(--bg3); padding: 8px 10px; border-radius: 6px; overflow: auto; }
+.pill.kind-repository { color: var(--ok); }
+.pill.kind-cache { color: var(--info); }
+.pill.kind-none { color: var(--fg3); }
+.projects .prow.depth-1 { margin-left: 24px; } .projects .prow.depth-2 { margin-left: 48px; } .projects .prow.depth-3 { margin-left: 72px; }
+.projects .tree-mark { color: var(--fg3); }
+.projects .link-btn.danger { color: var(--bad); margin-top: 6px; }
