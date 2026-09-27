@@ -951,5 +951,214 @@
         "path": "context"
       }
     ]
+  },
+  {
+    "id": "discovery-walks-up-from-a-subdirectory",
+    "prompt": "We just changed src/orders.py so that a rejected order is re-validated once before it is reported to the customer — the gateway sometimes rejects on a transient schema-version mismatch and the second validation passes. Please make sure the reasoning is kept where this project keeps it.",
+    "expected_behavior": "The session starts in src/, one level below the project root. The project is the tree under the nearest .keep-the-why walking up from the working directory (SKILL.md step 0; 'Which project' in references/setup.md): the agent finds ../.keep-the-why and ../context/, and writes the entry into the project's existing context/ (architecture.md or a new topic file listed in context/index.md) — not into src/, and without creating a second .keep-the-why or a second context/ directory anywhere below the root. Records the transient-mismatch reason and the re-validation as the decision. What fails: a new .keep-the-why or context/ under src/, an entry written somewhere other than the root's context/, or a claim that this directory is not a Keep the Why project.",
+    "checks": [
+      {
+        "type": "changes_under",
+        "path": "context/"
+      },
+      {
+        "type": "file_absent",
+        "path": "src/.keep-the-why"
+      },
+      {
+        "type": "file_absent",
+        "path": "src/context/*"
+      }
+    ]
+  },
+  {
+    "id": "discovery-above-several-projects-asks",
+    "prompt": "Please record that we chose to validate order payloads at intake rather than at the gateway: the gateway's error messages are opaque, so validating early gives the customer a usable message. We considered validating only at the gateway and rejected it for that reason.",
+    "expected_behavior": "The working directory is a folder that holds two independent Keep the Why projects, alpha/ and beta/, and is itself not one (no .keep-the-why at this level). A directory above several projects and below none is not a project (SKILL.md step 0; 'Which project' in references/setup.md): the agent does not guess which of the two is meant — the request names neither — and asks, writing nothing anywhere: no entry in alpha/context/ or beta/context/, no .keep-the-why or context/ created at this level, no personal file written for either project. It may say what it found (two projects) and what it would record once told which one. What fails: an entry written into either project, a new .keep-the-why or context/ at the top level, or treating the folder as one project.",
+    "checks": [
+      {
+        "type": "no_changes_under",
+        "path": "alpha/"
+      },
+      {
+        "type": "no_changes_under",
+        "path": "beta/"
+      },
+      {
+        "type": "file_absent",
+        "path": ".keep-the-why"
+      },
+      {
+        "type": "file_absent",
+        "path": "context/*"
+      }
+    ]
+  },
+  {
+    "id": "canonical-backfilled-from-origin",
+    "prompt": "What does src/gateway.py actually do when the gateway answers with a 5xx? Just explain it, I'm reading the code for the first time.",
+    "expected_behavior": "A set-up project whose .keep-the-why has no `canonical` line, in a repository whose origin remote is git@github.com:ktw-eval-fixture/order-service.git. Since 0.18.0 the setup check backfills `canonical` silently from the origin remote — a documented derivation, not a guess ('Missing fields' in references/setup.md; migrations.md 0.18.0): the agent adds `- canonical: https://github.com/ktw-eval-fixture/order-service` to the config block — the https form, no .git suffix, no trailing slash, the SSH remote rewritten — without asking and without announcing it as a decision, then answers the code question (bounded retries with exponential backoff on 5xx, per src/gateway.py). No context/ entry: a plain question about what the code does is answered, not recorded (step 5, row 6). What fails: no canonical line after the run, the raw SSH form or a .git suffix stored, `id` changed, or an entry written for the question.",
+    "checks": [
+      {
+        "type": "file_changed",
+        "path": ".keep-the-why"
+      },
+      {
+        "type": "text_present",
+        "regex": "(?m)^- canonical: https://github\\.com/ktw-eval-fixture/order-service$",
+        "path": ".keep-the-why",
+        "guard": false
+      },
+      {
+        "type": "text_absent",
+        "regex": "canonical: .*(\\.git|git@)",
+        "path": ".keep-the-why"
+      },
+      {
+        "type": "text_present",
+        "text": "- id: ktw-eval-fixture---order-service",
+        "path": ".keep-the-why",
+        "guard": false
+      },
+      {
+        "type": "no_changes_under",
+        "path": "context/"
+      }
+    ]
+  },
+  {
+    "id": "new-entry-carries-a-uuid",
+    "prompt": "Record this before I forget: src/sync_client.py now waits for a full snapshot before it applies any buffered event, even though that adds latency on a cold start. We tried applying the buffer in parallel with the snapshot last week and got duplicate-then-overwritten state; the ordering constraint is not visible in the code.",
+    "expected_behavior": "A direct instruction to record a decision with its rejected alternative (step 5, row 2): the agent writes the entry into context/ (an existing topic file or a new one listed in the index). Since 0.18.0 every entry carries `**Id:** <uuid>` as its first header line — a UUID version 4, lowercase, made by an OS command (uuidgen, /proc/sys/kernel/random/uuid, [guid]::NewGuid()), never composed from memory (SKILL.md step 5; specification.md §9.1). The entry has the Id line in the 8-4-4-4-12 shape, then Type, Status, Evidence, the reason (duplicate-then-overwritten state) and the rejected parallel replay. What fails: an entry without an Id line, an Id that is not a UUID (a short token, uppercase, a made-up shape), or the Id placed after the other fields.",
+    "checks": [
+      {
+        "type": "changes_under",
+        "path": "context/"
+      },
+      {
+        "type": "text_present",
+        "regex": "\\*\\*Id:\\*\\* [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        "path": "context/*.md",
+        "guard": false
+      }
+    ]
+  },
+  {
+    "id": "superseded-entry-names-its-successor",
+    "prompt": "We put a queue between order intake and the gateway submission — see src/queue.py, a worker drains it. The old decision to submit synchronously from the intake handler is no longer how it works: the gateway's p99 climbed to four seconds last month and intake timed out waiting on it. Update the project's reasoning accordingly.",
+    "expected_behavior": "context/architecture.md holds an active entry 'Single service, no queue between intake and gateway submission' that this change replaces. The agent records the replacement as a new entry (its own Id, the p99 reason, the synchronous path as the rejected/previous alternative) and marks the old entry superseded rather than deleting or rewriting it (rule 5). Since 0.18.0 a superseded entry names its successor: the old entry gets `**Superseded by:** <uuid of the new entry>` (specification.md §9.1; the migrations.md 0.18.0 pass adds an Id to the old entry when it is touched, since it had none). What fails: the old entry deleted or edited into the new decision, `Status: superseded` without a Superseded by line, a Superseded by that names a heading instead of an Id, or a new entry without an Id.",
+    "checks": [
+      {
+        "type": "changes_under",
+        "path": "context/"
+      },
+      {
+        "type": "text_present",
+        "text": "**Status:** superseded",
+        "path": "context/architecture.md",
+        "guard": false
+      },
+      {
+        "type": "text_present",
+        "regex": "\\*\\*Superseded by:\\*\\* [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        "path": "context/architecture.md",
+        "guard": false
+      },
+      {
+        "type": "text_present",
+        "text": "Single service, no queue between intake and gateway submission",
+        "path": "context/architecture.md",
+        "guard": false
+      }
+    ]
+  },
+  {
+    "id": "see-line-when-citing-another-entry",
+    "prompt": "Because of the duplicate-orders incident in August, retries in src/orders.py now carry an Idempotency-Key derived from the order, so the gateway can recognise a resubmission. Record that decision — it follows directly from that incident.",
+    "expected_behavior": "context/incidents.md holds the incident '2026-08 duplicate orders after a gateway timeout' with an Id. The new decision follows from it, and since 0.18.0 an entry that follows from another cites it with a `**See:**` line: `<file>.md#<anchor> — <that entry's uuid> — as of <today>` for an entry in the same project (specification.md §9.1; SKILL.md step 5) — the locator is the incident's file with its heading anchor, the uuid is the incident's Id (9b9f9c23-bbf3-4353-bb26-7f67981a7eec), the date is a YYYY-MM-DD day. The new entry has its own Id, the reason and the rejected blind resubmission. Source may name the incident too; See is what makes the link mechanical. What fails: no See line, a See line without the incident's uuid or without the 'as of' date, or the incident entry rewritten instead of cited.",
+    "checks": [
+      {
+        "type": "changes_under",
+        "path": "context/"
+      },
+      {
+        "type": "text_present",
+        "regex": "\\*\\*See:\\*\\* incidents\\.md(#[A-Za-z0-9_-]+)? — 9b9f9c23-bbf3-4353-bb26-7f67981a7eec — as of \\d{4}-\\d{2}-\\d{2}",
+        "path": "context/*.md",
+        "guard": false
+      },
+      {
+        "type": "file_unchanged",
+        "path": "context/incidents.md"
+      }
+    ]
+  },
+  {
+    "id": "family-routes-family-wide-decision-to-the-parent",
+    "prompt": "Decision from today's release discussion: every package in this repository is tagged and published from the repository root in one go, never per package — the last time widget shipped alone, rest was two versions behind and the integration tests broke in production. Please keep that reasoning.",
+    "expected_behavior": "The session starts in packages/widget, a sub-project with its own .keep-the-why (root: packages/widget, parent: ../..) in an isolated-context mono repo whose root .keep-the-why lists widget and rest in a children block with their scopes. Before the write the agent routes by the parent's children block ('Family: routing and writing across projects' in references/setup.md; SKILL.md step 5): a release rule for every package is family-wide and belongs to the parent, not to the widget package — so the entry lands in the root's context/ (the parent has a local working tree: the same repository), written under the parent's own capture-confirmation (automatic), with its Id, the reason (the broken integration tests) and the per-package alternative as rejected; the reply says it wrote into the parent. packages/widget/context/ is not touched. What fails: the entry written into packages/widget/context/, written into both, or a refusal to write because 'the parent is another project'.",
+    "checks": [
+      {
+        "type": "changes_under",
+        "path": "context/"
+      },
+      {
+        "type": "no_changes_under",
+        "path": "packages/widget/context/"
+      },
+      {
+        "type": "no_changes_under",
+        "path": "packages/rest/context/"
+      }
+    ]
+  },
+  {
+    "id": "family-routes-a-siblings-subject-to-the-sibling",
+    "prompt": "While wiring the widget against the REST client I found out why the client caps retries at three: the payment gateway counts every attempt against the merchant's error budget, so a fourth retry is worse than a failure. That is not written down anywhere — please make sure it is, wherever it belongs.",
+    "expected_behavior": "The session starts in packages/widget; the root .keep-the-why's children block gives packages/rest the scope 'the REST client package: endpoint coverage, retries, rate limits'. The retry cap is the REST client's subject, so the agent routes the entry to the sibling — packages/rest/context/ (its own topic file or design.md, its index updated), under that project's capture-confirmation — not to widget and not to the parent ('Family: routing and writing across projects' in references/setup.md; SKILL.md step 5). The entry carries an Id, the error-budget reason, and 'more retries' or exponential backoff as the rejected alternative; the reply names the project written to. What fails: the entry in packages/widget/context/ or the root context/, a copy in more than one project, or asking which project when the scope answers it.",
+    "checks": [
+      {
+        "type": "changes_under",
+        "path": "packages/rest/context/"
+      },
+      {
+        "type": "no_changes_under",
+        "path": "packages/widget/context/"
+      },
+      {
+        "type": "no_changes_under",
+        "path": "context/"
+      }
+    ]
+  },
+  {
+    "id": "family-member-not-local-is-named-not-substituted",
+    "prompt": "Note for the record: billing retries a failed charge three times, one minute apart, and then hands the invoice to dunning — the payment provider counts every attempt against our error budget, and a fourth attempt has never succeeded. We considered exponential backoff over an hour and rejected it because the customer is waiting at the checkout.",
+    "expected_behavior": "This project's .keep-the-why lists a child, billing, at https://github.com/ktw-eval-fixture/billing with the scope 'the billing service: invoices, retries against the payment provider, dunning'; billing is not checked out on this machine (no sibling directory, nothing in ~/.keep-the-why/). The retry rule is billing's subject: the agent routes it to billing, finds no local working tree for it, and says so — names billing as the project the entry belongs to, that it is not available here, and offers the way to get it (a clone next to this project, or the read-only context cache; 'Not local: clone, or cache' in references/setup.md) — and writes the entry neither into this project's context/ as a substitute nor anywhere else; nothing is cloned or fetched on its own. What fails: the entry written into this project's context/, an attempt to create packages/ or a billing directory here, a git clone or fetch without asking, or a claim that the note cannot be kept at all without saying where it belongs.",
+    "checks": [
+      {
+        "type": "no_changes_under",
+        "path": "context/"
+      },
+      {
+        "type": "file_absent",
+        "path": "billing/*"
+      },
+      {
+        "type": "file_absent",
+        "path": "~/.keep-the-why/cache/**/*"
+      }
+    ]
+  },
+  {
+    "id": "context-cache-is-read-only",
+    "prompt": "Two things about billing: why does it retry a failed charge exactly three times — the number looks arbitrary from here? And add to billing's own reasoning that the order service now depends on that cap (our checkout timeout is set to four minutes because of it).",
+    "expected_behavior": "This project's .keep-the-why lists a child, billing, at https://github.com/ktw-eval-fixture/billing; billing is available on this machine only as a read-only context cache under ~/.keep-the-why/cache/ktw-eval-fixture---billing/ (a sparse clone with .keep-the-why and context/), recorded in ~/.keep-the-why/projects.json with a `cache` path and described in ~/.keep-the-why/cache/ktw-eval-fixture---billing.md (refresh: no). The agent reads the cache to answer the first question — three attempts because the provider's SLA counts every attempt against the merchant's error budget and a fourth has never succeeded (context/retries.md in the cache, Id 2d70a3fe-cd87-4b6e-9515-ed7ce1c9aafa) — and for the second request recognises that a cache is read-only ('A cache is read-only' in references/setup.md): it does not write into the cache, does not write the billing-side note into this project's context/ as a substitute, says the entry belongs in billing which is available here only as a context cache, and offers the full clone. It may record this project's own side (the four-minute checkout timeout because of billing's cap) here, with a See line to the billing entry by its Id — that is this project's decision. What fails: any write under ~/.keep-the-why/cache/, the billing-side note written into this project's context/ as if it were billing's, or a claim that billing's reasoning cannot be read.",
+    "checks": [
+      {
+        "type": "no_changes_under",
+        "path": "~/.keep-the-why/cache/"
+      }
+    ]
   }
 ]

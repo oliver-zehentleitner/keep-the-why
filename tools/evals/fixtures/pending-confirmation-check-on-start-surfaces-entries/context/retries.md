@@ -2,6 +2,7 @@
 
 ## Bounded retries with exponential backoff on gateway 5xx
 
+**Id:** fd14aea6-46a4-4cd1-8cc6-4ec7530a3ab7
 **Type:** decision
 **Status:** pending-confirmation
 **Evidence:** inferred

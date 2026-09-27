@@ -41,6 +41,71 @@ if __name__ == "__main__":
     unittest.main()
 
 
+class BuildWorkdirExtras(unittest.TestCase):
+    """`remote` adds an origin; `{{HOME}}` in a home fixture becomes the fake
+    home; `cwd` makes the explicit-load prefix's skill path relative."""
+
+    def test_remote_and_home_placeholder(self):
+        from ktw_evals import workdir as W
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            fixtures = tmp / "fixtures"
+            (fixtures / "_base").mkdir(parents=True)
+            (fixtures / "_base" / ".keep-the-why").write_text(
+                "<!-- keep-the-why:config -->\n- id: acme---x\n- context: `context/`\n"
+                "- init: complete\n- context-schema: 0.2.0\n"
+                "- capture-confirmation: automatic\n- source-reference: never\n"
+                "<!-- /keep-the-why:config -->\n"
+            )
+            case = fixtures / "c" / "home" / ".keep-the-why"
+            case.mkdir(parents=True)
+            (case / "projects.json").write_text(
+                '{"projects": [{"cache": "{{HOME}}/.keep-the-why/cache/acme---y"}]}'
+            )
+            skill = tmp / "skill"
+            skill.mkdir()
+            (skill / "SKILL.md").write_text(
+                '---\nname: keep-the-why\nmetadata:\n  version: "0.2.0"\n---\n'
+            )
+            old = (W.BASE_FIXTURE, W.FIXTURES_DIR, W.SKILL_DIR)
+            W.BASE_FIXTURE, W.FIXTURES_DIR, W.SKILL_DIR = (
+                fixtures / "_base",
+                fixtures,
+                skill,
+            )
+            try:
+                work, home = tmp / "project", tmp / "home"
+                work.mkdir()
+                home.mkdir()
+                W.build_workdir(
+                    "c",
+                    {"remote": "git@github.com:acme/x.git"},
+                    work,
+                    "claude",
+                    home=home,
+                )
+            finally:
+                W.BASE_FIXTURE, W.FIXTURES_DIR, W.SKILL_DIR = old
+            self.assertIn(
+                "git@github.com:acme/x.git",
+                W.sh(["git", "remote", "-v"], cwd=work).stdout,
+            )
+            mapping = json.loads((home / ".keep-the-why" / "projects.json").read_text())
+            self.assertEqual(
+                mapping["projects"][0]["cache"], f"{home}/.keep-the-why/cache/acme---y"
+            )
+
+    def test_cwd_makes_the_skill_path_relative(self):
+        from ktw_evals.drivers import build_prompt
+
+        prompt = build_prompt(
+            "do it", "claude", {"cwd": "packages/widget", "explicit_load": True}
+        )
+        self.assertIn("./../../.claude/skills/keep-the-why/SKILL.md", prompt)
+        self.assertTrue(prompt.endswith("do it"))
+
+
 class FakeHomeEnv(unittest.TestCase):
     def test_every_install_location_points_into_the_fake_home(self):
         env = fake_home_env({"PATH": "/usr/bin", "HOME": "/real/home"}, Path("/fake"))

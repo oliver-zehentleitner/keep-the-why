@@ -51,6 +51,14 @@ def read_case_config(case_id):
       skill_install: install path for the skill on every driver (default:
                      the driver's own, see drivers.SKILL_INSTALL_REL) — for
                      cases whose fixture names the path in an instruction
+      cwd: a subdirectory of the project to start the session in (the
+           discovery rule, a mono repo's sub-project); checks and the diff
+           stay relative to the project root, the explicit-load prefix's
+           skill path is made relative to it
+      remote: a URL added as `origin` after the initial commit, never
+              fetched — for the `canonical` backfill
+      Keys starting with "_" are notes for whoever reads the fixture (an id
+      a check refers to) and are ignored.
 
     A fixtures/<id>/home/ directory, if present, is overlaid onto the fake
     $HOME after the default personal config is (or isn't) seeded — for a case

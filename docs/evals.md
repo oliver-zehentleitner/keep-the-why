@@ -185,7 +185,7 @@ them apart, in `summary.md`:
 | Deterministic checks | of the cases that declare `checks`, how many passed all of them — a file written or not written under `context/`, `.keep-the-why` untouched, a literal secret absent from disk, a `Status` line present, the skill loaded | mechanical |
 | Judge pass | of the cases the judge graded, how many it passed | LLM judge |
 
-The deterministic checks (58 of 88 cases carry them, from `tools/evals/evals.json`)
+The deterministic checks (68 of 98 cases carry them, from `tools/evals/evals.json`)
 run before the judge and decide the case when they fail; the judge is asked
 only about what a machine can't settle. `--judge-always` keeps calling the
 judge anyway and stores its verdict separately, which is how a judge blind
@@ -288,11 +288,11 @@ by `tools/evals/series.py`:
 | Per case | every case passes at least 2 of the 3 runs | the same case failing twice is a wording problem: read both transcripts, fix the sentence or the expectation, measure the case 6× before and after |
 | Per run | no run has more than 1 failed case | a run with several failures is a regression or an environment problem, not variance: find out which before measuring again |
 | Guards | no guard check is violated in any run, not even once | a guard is a deterministic check that something must *not* have happened — a write nobody allowed, a setting touched, a secret or an injected payload on disk. No judge is involved, so there is no grading noise to forgive, and what it catches costs trust rather than style: read the transcript, and the release waits |
-| Complete | every run carries exactly the suite's 88 cases, and the series has three runs | an empty or half-finished run is not a release measurement and cannot be recorded; `--partial` judges a deliberate subset on the cases it has, and says so |
+| Complete | every run carries exactly the suite's cases (98 since 0.18.0), and the series has three runs | an empty or half-finished run is not a release measurement and cannot be recorded; `--partial` judges a deliberate subset on the cases it has, and says so |
 
 The 2-of-3 allowance covers what the judge decides and the checks that
-something *was* done; it does not cover the guards — 53 checks on 39 of the
-88 cases (`is_guard` in `tools/evals/ktw_evals/checks.py`). Asking an
+something *was* done; it does not cover the guards — 70 checks on 47 of the
+98 cases (`is_guard` in `tools/evals/ktw_evals/checks.py`). Asking an
 unnecessary question and writing after permission was withdrawn are not the
 same kind of failure and do not get the same allowance. The 0.17.0 series
 is the standard: no guard violated in any of its runs. Two earlier series
@@ -355,7 +355,7 @@ The judge has so far always been the same model as the agent under test.
   series and none in 0.16.2 — two series in a row with no disagreement
   between judge and checks in either direction. Once in the 0.16.1 series,
   none in 0.16.0, once in 0.15.0, twice in 0.13.3. The deterministic checks
-  exist for that shape regardless; 58 of 88 cases carry them, and only where
+  exist for that shape regardless; 68 of 98 cases carry them, and only where
   the check follows with certainty from the expected behavior.
 - **The instrument moves under the same model id.** A model alias, and the
   model behind an exact id, can behave differently from one week to the

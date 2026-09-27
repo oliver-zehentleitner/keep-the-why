@@ -122,6 +122,19 @@ def build_workdir(case_id, cfg, workdir: Path, driver, home: Path = None):
         home_fixture = FIXTURES_DIR / case_id / "home"
         if home_fixture.exists():
             copy_tree(home_fixture, home)
+            # A home fixture may need the fake home's own absolute path — the
+            # skill's mapping (~/.keep-the-why/projects.json) records where
+            # projects and caches live as absolute paths, which no fixture can
+            # know in advance. {{HOME}} in any text file under home/ becomes it.
+            for f in home.rglob("*"):
+                if not f.is_file():
+                    continue
+                try:
+                    text = f.read_text()
+                except (UnicodeDecodeError, OSError):
+                    continue
+                if "{{HOME}}" in text:
+                    f.write_text(text.replace("{{HOME}}", str(home)))
         # Snapshot whatever ~/.keep-the-why/ holds *before* the agent runs, so
         # the disk section handed to the judge can say which personal files
         # were seeded by the fixture and left untouched versus written by the
@@ -150,6 +163,11 @@ def build_workdir(case_id, cfg, workdir: Path, driver, home: Path = None):
         cwd=workdir,
         env=git_env,
     )
+    # A case whose behaviour depends on the repository having a remote (the
+    # `canonical` backfill from `origin`) names it in case.json; nothing is
+    # ever fetched from it.
+    if cfg.get("remote"):
+        sh(["git", "remote", "add", "origin", cfg["remote"]], cwd=workdir, env=git_env)
 
     for commit in cfg.get("commits", []):
         for rel, content in commit.get("files", {}).items():
