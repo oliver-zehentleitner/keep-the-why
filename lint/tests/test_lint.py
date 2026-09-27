@@ -639,6 +639,82 @@ class ConfigFileIntegrity(_ProjectFixture):
         findings, _ = self.run_lint()
         self.assertNotIn("E010", self.codes(findings))
 
+    # -- canonical: the stored repository locator ---------------------------
+
+    def config_with(self, line):
+        return GOOD_CONFIG.replace(
+            "- id: acme---widget-service", f"- id: acme---widget-service\n{line}"
+        )
+
+    def test_canonical_normalized_forms_pass(self):
+        for value in (
+            "https://github.com/acme/widget-service",
+            "https://gitlab.example.com/group/sub/widget-service",
+            "https://codeberg.org/acme/widget-service",
+        ):
+            with self.subTest(canonical=value):
+                self.base_project(config=self.config_with(f"- canonical: {value}"))
+                findings, _ = self.run_lint()
+                self.assertEqual([], self.codes(findings))
+
+    def test_canonical_unnormalized_or_foreign_forms_are_rejected(self):
+        for value in (
+            "https://github.com/acme/widget-service/",
+            "https://github.com/acme/widget-service.git",
+            "git@github.com:acme/widget-service.git",
+            "http://github.com/acme/widget-service",
+            "https://github.com",
+            "https://github.com/acme/widget service",
+            "../elsewhere",
+            "/srv/git/widget-service",
+            "https://github.com/acme/widget\x01service",
+        ):
+            with self.subTest(canonical=value):
+                self.base_project(config=self.config_with(f"- canonical: {value}"))
+                findings, _ = self.run_lint()
+                self.assertIn(
+                    "E003",
+                    self.codes(findings),
+                    msg=[f.format_text() for f in findings],
+                )
+
+    def test_canonical_empty_is_an_invalid_value(self):
+        self.base_project(config=self.config_with("- canonical:"))
+        findings, _ = self.run_lint()
+        self.assertIn("E003", self.codes(findings))
+
+    # -- root: a sub-project's path below its git toplevel --------------------
+
+    def test_root_relative_path_passes_below_a_toplevel(self):
+        for value in ("sub-project2", "packages/widget", "`packages/widget`"):
+            with self.subTest(root=value):
+                self.base_project(config=self.config_with(f"- root: {value}"))
+                findings, _ = self.run_lint()
+                self.assertEqual([], self.codes(findings))
+
+    def test_root_that_would_leave_the_repository_is_rejected(self):
+        for value in ("../other", "packages/../../x", "/srv/x", "C:\\x", "a\x00b"):
+            with self.subTest(root=value):
+                self.base_project(config=self.config_with(f"- root: {value}"))
+                findings, _ = self.run_lint()
+                self.assertIn(
+                    "E009",
+                    self.codes(findings),
+                    msg=[f.format_text() for f in findings],
+                )
+
+    def test_root_on_a_git_toplevel_is_an_invalid_value(self):
+        os.makedirs(os.path.join(self.root, ".git"))
+        self.base_project(config=self.config_with("- root: sub-project2"))
+        findings, _ = self.run_lint()
+        self.assertIn("E003", self.codes(findings))
+        self.assertNotIn("E009", self.codes(findings))
+
+    def test_root_empty_is_an_invalid_value(self):
+        self.base_project(config=self.config_with("- root:"))
+        findings, _ = self.run_lint()
+        self.assertIn("E003", self.codes(findings))
+
     # -- E011/E012: block delimiters ------------------------------------------
 
     def test_unterminated_config_block(self):

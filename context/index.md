@@ -67,6 +67,7 @@ Why this project is built the way it is.
 ## P
 
 - [positioning.md](positioning.md) — editorial/positioning choices for README, `llms.txt`, and docs
+- [project-families.md](project-families.md) — a project that is larger than one repository: how the project is found from the working directory, the four layouts, `canonical` and `root` beside `id`; the series that answers #450
 
 ## Q
 

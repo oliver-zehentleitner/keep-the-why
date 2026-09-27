@@ -106,13 +106,13 @@ None of this is specific to Keep the Why; it is the same set of settings any tea
 |---|---|---|
 | E001 | error | no config block found |
 | E002 | error | required config field missing |
-| E003 | error | invalid config value |
+| E003 | error | invalid config value (also: a `canonical` that is not a normalized repository URL, a `root` on a git toplevel) |
 | E004 | error | config field recorded more than once |
 | E005 | error | unknown config field |
 | E006 | error | `pinned-version`/`pinned-path` pair violation, or pinned path missing |
 | E007 | error | configured context location doesn't exist |
 | E008 | error | `last:` timestamp inside `personal-defaults` |
-| E009 | error | configured `context` / `pinned-path`, the config file itself, or a symlink inside the context directory, points outside the repository (or contains a control character) |
+| E009 | error | configured `context` / `pinned-path`, the config file itself, or a symlink inside the context directory, points outside the repository (or contains a control character); a `root` that would leave the repository |
 | E010 | error | `id` is not a safe file name (path separator, `..`, space, control character) |
 | E011 | error | config, `personal-defaults`, `personal` or `global` block never closed |
 | E012 | error | second start marker for the same block |

@@ -69,10 +69,12 @@ The retry-loop reasoning is a legitimate candidate for `context/` — inferred, 
 | `context` | a directory inside the project | an absolute path, `..` out of the tree, a symlink leaving it |
 | `pinned-path` | a vendored `SKILL.md` inside the project, `name: keep-the-why`, `metadata.version` equal to `pinned-version` | any other file, anywhere |
 | `id` | the file `~/.keep-the-why/<id>.md` — letters, digits, `.`, `_`, `-` only | a separator, a `..` segment, a control character |
+| `root` | a directory inside the Git toplevel, the one this `.keep-the-why` sits in | an absolute path, `..` out of the repository, a control character |
+| `canonical` | an `https://` URL naming the repository | a filesystem path of any kind — it is never resolved locally |
 
 The first two are the ordinary rule applied to configuration: a repository can say where *in itself* its knowledge lives and which *copy of this skill* it tested against, not point the agent at the rest of the filesystem. `pinned-path` deserves the extra identity check because a pin is the one place where repository content is *meant* to be followed as instructions — that authority is scoped to a copy of this skill at the version the project named, and to nothing else.
 
-The third is the same boundary from the other side: the personal file lives outside the project precisely so the project can't touch it, and an `id` that names a path instead of a file name (`../AGENTS`, `../.claude/CLAUDE`) would let it. A value outside its boundary is not read, written or followed; the field and the value get named, and the person decides (rule 1). `keep-the-why-lint` checks all three (`E009`, `E010`).
+The third is the same boundary from the other side: the personal file lives outside the project precisely so the project can't touch it, and an `id` that names a path instead of a file name (`../AGENTS`, `../.claude/CLAUDE`) would let it. A value outside its boundary is not read, written or followed; the field and the value get named, and the person decides (rule 1). `root` is the first boundary one level up — inside the repository rather than inside the project — and `canonical` is a name for the repository, not a place on this machine: a URL is followed only by a tool that clones or fetches on request, never by resolving it as a path. `keep-the-why-lint` checks all of them (`E003`, `E009`, `E010`).
 
 ## Related
 

@@ -30,6 +30,44 @@ Keep the Why creates `.keep-the-why` and `context/`. Everything else is what a p
 
 Adjust freely. A one-file script doesn't need a `docs/` folder or a changelog, and the layout of `docs/` and `tests/` is the project's own. `context/` stays flat — no subdirectories — even for a large project; if topic files alone stop scaling, namespace filenames instead (e.g. `auth-tokens.md` and `auth-oauth.md`, or `tokens-auth.md` and `oauth-auth.md` — prefix or suffix, whichever groups and sorts more usefully for that project) rather than nesting `context/auth/`. The shape should track the project's actual complexity, not a template.
 
+## Layouts: one repository or several
+
+`.keep-the-why` marks a project, and the project is the tree under the nearest one walking up from the working directory (`specification.md` §1). That admits four layouts, named so a reader finds their own:
+
+**Shared context mono repo** — one instance at the root, valid for the whole tree. Sub-folders are not projects of their own.
+
+```text
+project1/
+    .keep-the-why
+    sub-project2/
+    sub-project3/
+```
+
+**Isolated context mono repo** — several instances in one repository, each with its own `context/`, its own `id` (the sub-path appended as a slug, `setup.md`), its own `root` field and its own personal settings. The nearest instance wins; a sub-project does not see the root's `context/`.
+
+```text
+project1/
+    .keep-the-why
+    sub-project2/
+        .keep-the-why
+    sub-project3/
+        .keep-the-why
+```
+
+**Multi repo** — several repositories, one instance each. The same as several single repos as far as this skill is concerned.
+
+```text
+project1/
+    .keep-the-why
+
+project2/
+    .keep-the-why
+```
+
+**Single repo** — one repository, one instance: today's common case, and the one the default layout above shows.
+
+A repository nested inside another (a submodule, a subtree, a clone inside a clone) is not a fifth layout: the nearest `.keep-the-why` wins regardless of where the Git boundary lies, and a nested repository with its own remote gets its own ordinary `id`.
+
 ## Which file does this belong in?
 
 A project accumulates several files that all explain *something*: README, `docs/`, `CHANGELOG.md`, `CONTRIBUTING.md`, the tests, the build manifest, `AGENTS.md`, the Git history, and `context/` (Keep the Why owns only the last one, but routing decisions still need to account for all of them). Content ending up in the wrong one — or copied into more than one — is exactly the kind of redundancy this skill should prevent, not add to.

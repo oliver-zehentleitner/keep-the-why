@@ -21,7 +21,9 @@ The specification is versioned with the skill: its version is the `metadata.vers
 
 All of these are written and kept current by the skill — the config files by the two wizards and the setup check, `<context>/` by capture and maintenance. A person answers the setup once per project and the occasional question; editing a file by hand is for changing a setting, not part of using it.
 
-Two boundaries hold for every path a config file names. `context` and `pinned-path` are relative to the project root and resolve inside it: no absolute path, no `..` out of the tree, no symlink that leaves it (`E009`). `id` is a plain file name, because it becomes `~/.keep-the-why/<id>.md` (`E010`). A value outside its boundary is not read, written or followed.
+**The project** is the tree under the nearest `.keep-the-why` walking up from the working directory, minus the trees under any deeper `.keep-the-why`. Discovery walks up the way Git walks up to `.git`; the nearest file wins and cuts off everything above it, whether or not a Git boundary lies in between. A directory above several projects and below none is not a project. The four layouts this admits — one repository with one instance, one repository with several, several repositories, one — are in `repository-structure.md`, "Layouts".
+
+Three boundaries hold for every path a config file names. `context` and `pinned-path` are relative to the project root and resolve inside it: no absolute path, no `..` out of the tree, no symlink that leaves it (`E009`). `root` is relative to the Git toplevel and resolves inside it — the same rule one level up (`E009`). `id` is a plain file name, because it becomes `~/.keep-the-why/<id>.md` (`E010`). A value outside its boundary is not read, written or followed. `canonical` is a URL and never a filesystem path.
 
 ## 2. Config blocks
 
@@ -49,7 +51,9 @@ Every field but the two pin fields is required in the file (`E002` when missing,
 
 | Key | Values | Default | Meaning |
 |---|---|---|---|
-| `id` | file-name token: `[A-Za-z0-9._-]+`, not all dots | — (required, `E002`) | the project's identity across clones, machines and worktrees; keys the personal file. Written once at init: `<owner>---<repo>` from the `origin` remote, or `<uuid>---<folder-name>` without one; `/` and every other filesystem-unsafe character normalized to `-`. Never re-derived. |
+| `id` | file-name token: `[A-Za-z0-9._-]+`, not all dots | — (required, `E002`) | the project's identity across clones, machines and worktrees; keys the personal file. Written once at init: `<owner>---<repo>` from the `origin` remote of the nearest `.git` above the file, or `<uuid>---<folder-name>` without one; `/` and every other filesystem-unsafe character normalized to `-`. A `.keep-the-why` below the Git toplevel (an isolated-context mono repo) appends its `root` as a slug: `<owner>---<repo>---<sub-path>`. Never re-derived. |
+| `canonical` | `https://<host>/<path>`, no trailing slash, no `.git` suffix | absent when the project has no remote; backfilled from `origin` otherwise | the repository's stored locator: the normalized URL of the remote, SSH forms rewritten to `https`. Written once at init and changed only deliberately, when the repository is renamed, transferred or moved; not re-derived (`E003` when malformed). |
+| `root` | relative directory path inside the Git toplevel | absent (the file is at the toplevel) | the path of this `.keep-the-why` relative to the Git toplevel, for a project below it (an isolated-context mono repo). Tooling keys such a project by `(canonical, root)`. Not set on a toplevel (`E003`); never `..` or absolute (`E009`). |
 | `context` | relative directory path inside the project | — (required) | where the why-knowledge lives; `context/` is what the wizard proposes |
 | `init` | `complete` | — (required) | the project has been set up. A file carrying any other value is a leftover to fix; `init: declined` was retired in 0.12.0. |
 | `context-schema` | `X.Y.Z` | `0.2.0` when missing (`W001`) | the newest skill version this project's `context/` has been checked and migrated against; see §7 |
@@ -67,6 +71,7 @@ README, for what Keep the Why actually is.
 
 <!-- keep-the-why:config -->
 - id: acme---widget-service
+- canonical: https://github.com/acme/widget-service
 - context: `context/`
 - init: complete
 - context-schema: 0.17.1

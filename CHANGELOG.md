@@ -6,6 +6,9 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Added
 
+- The project is defined: the tree under the nearest `.keep-the-why` walking up from the working directory, minus the trees under any deeper one (`specification.md` §1, "Which project" in `setup.md`, step 0 in `SKILL.md`); a directory above several projects is not one — the agent takes the project the request names or asks. Four layouts are named in `repository-structure.md`: shared context mono repo, isolated context mono repo, multi repo, single repo; a nested repository is not a fifth. Two config fields: `canonical`, the repository's normalized `origin` URL as a stored locator (backfilled silently on existing projects, never re-derived afterwards), and `root`, the path of a `.keep-the-why` below its Git toplevel, whose `id` appends that path as a slug. `migrations.md` has the 0.18.0 entry; the FAQ answers the mono-repo question. First of the project-families series (#450).
+- `keep-the-why-lint`: `canonical` and `root` are known config fields; a `canonical` that is not a normalized repository URL, or a `root` on a directory that is itself a Git toplevel, is `E003`; a `root` that would leave the repository is `E009`. Eight tests.
+
 - Evals: every case record carries what the CLI reports at the end of the session — `thinking_tokens`, `output_tokens`, input and cache tokens, `ttft_ms`, `duration_api_ms`, `total_cost_usd`, `service_tier`, `canonical_model` — and the run summary their medians (`median_thinking_tokens`, `median_output_tokens`, `median_ttft_ms`, `canonical_models`, `service_tiers`), printed on `summary.md`'s instrument line. Next to the turn medians they say *how* an instrument changed: fewer thinking tokens per turn is a lowered reasoning budget, a slow time to first token is load.
 
 ### Fixed

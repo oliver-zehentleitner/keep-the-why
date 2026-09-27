@@ -109,6 +109,7 @@ This names the skill and its purpose directly — not a task that happens to mat
 
     <!-- keep-the-why:config -->
     - id: acme---widget-service
+    - canonical: https://github.com/acme/widget-service
     - context: `context/`
     - init: complete
     - context-schema: 0.17.1

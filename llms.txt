@@ -291,6 +291,10 @@ external service (no database, no MCP server).
 
 ## Plain Facts (what it is and is not)
 
+- A `.keep-the-why` file marks a project; the project is the tree under the nearest one walking
+  up from the working directory, the way Git finds `.git`. A mono repo is one project (one file
+  at the root) or several (one file per sub-project, each with its own `context/`); several
+  repositories are several projects. Each project records its repository URL as `canonical`.
 - There is no Keep the Why CLI and no init command. The skill is text (SKILL.md + references)
   read by the coding agent. Installing is one command (`npx skills add …`); "initialize Keep
   the Why in this project" is a sentence said to the agent once per project.

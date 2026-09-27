@@ -75,9 +75,10 @@ An `##` heading in a topic file with no recognized field lines gets `W102`, not 
 **Status:** active
 **Evidence:** confirmed
 **Source:** external review of 0.12.0, 2026-09-07 (finding: `id: ../.claude/CLAUDE` passed the old non-empty/no-spaces rule); maintainer call on the grammar the same day
-**Revisit when:** the personal file is ever keyed by something other than `<id>.md` under one fixed directory, or a second documented id form appears
+**Verification:** corroborated — re-checked 2026-09-27 when the third id form arrived (`<owner>---<repo>---<sub-path>` for an isolated-context mono repo, `project-families.md`): the slug is built from the same normalization as the repo name, fits the alphabet, and the rule needed no change
+**Revisit when:** the personal file is ever keyed by something other than `<id>.md` under one fixed directory
 
-`E010` accepts an `id` of letters, digits, `.`, `_` and `-` only, and rejects a value that is all dots. Nothing about the shape inside that alphabet is enforced — the two documented forms (`<owner>---<repo>`, `<uuid>---<folder>`) both fit, and so does a hand-chosen `my-service`.
+`E010` accepts an `id` of letters, digits, `.`, `_` and `-` only, and rejects a value that is all dots. Nothing about the shape inside that alphabet is enforced — the three documented forms (`<owner>---<repo>`, `<owner>---<repo>---<sub-path>`, `<uuid>---<folder>`) all fit, and so does a hand-chosen `my-service`.
 
 **Reason:** the property that matters is that `~/.keep-the-why/<id>.md` names a file *in* that directory. The alphabet guarantees it on every platform (no separator, no `..` segment, no control character) and is exactly what the two generation rules in `references/setup.md` produce once the folder name is slugified like the repo name. The old rule was written for readability (no spaces), not for the boundary, which is how a traversal passed it.
 

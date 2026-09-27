@@ -63,7 +63,13 @@ CONFIG_REQUIRED = (
     "capture-confirmation",
     "source-reference",
 )
-CONFIG_KNOWN = CONFIG_REQUIRED + ("id", "pinned-version", "pinned-path")
+CONFIG_KNOWN = CONFIG_REQUIRED + (
+    "id",
+    "canonical",
+    "root",
+    "pinned-version",
+    "pinned-path",
+)
 INIT_VALUES = ("complete",)
 CAPTURE_CONFIRMATION_VALUES = ("automatic", "confirm-always", "confirm-when-unsure")
 
@@ -114,6 +120,9 @@ _SOURCE_RE = re.compile(
 # fine, an id that reaches outside its directory is not.
 _ID_RE = re.compile(r"^[A-Za-z0-9._-]+$")
 _CONTROL_RE = re.compile(r"[\x00-\x1f\x7f]")
+# `canonical`: the normalized repository URL — https, a host, a path, no
+# whitespace; a trailing slash or a `.git` suffix is the un-normalized form.
+_CANONICAL_RE = re.compile(r"^https://[^\s/]+/[^\s]+$")
 
 NON_TOPIC_FILES = ("README.md", "AGENTS.md", "CLAUDE.md", "index.md")
 
@@ -388,6 +397,58 @@ class Linter:
                     "file ~/.keep-the-why/<id>.md, so only letters, digits, '.', '_' and "
                     "'-' are allowed: no path separators, no '..', no spaces or control "
                     "characters",
+                )
+
+        canonical = block.first("canonical")
+        if canonical is not None:
+            value = canonical[1]
+            if not value:
+                self.add(ERROR, "E003", path, canonical[0], "canonical is empty")
+            elif (
+                not _CANONICAL_RE.match(value)
+                or _CONTROL_RE.search(value)
+                or value.endswith("/")
+                or value.endswith(".git")
+            ):
+                self.add(
+                    ERROR,
+                    "E003",
+                    path,
+                    canonical[0],
+                    f"canonical {value!r} is not a normalized repository URL — "
+                    "https://<host>/<path>, no trailing slash, no '.git' suffix, "
+                    "no whitespace",
+                )
+
+        root = block.first("root")
+        if root is not None:
+            value = root[1].strip().strip("`").strip()
+            if not value:
+                self.add(ERROR, "E003", path, root[0], "root is empty")
+            elif (
+                _CONTROL_RE.search(value)
+                or os.path.isabs(value)
+                or "\\" in value
+                or ".." in value.replace("\\", "/").split("/")
+            ):
+                self.add(
+                    ERROR,
+                    "E009",
+                    path,
+                    root[0],
+                    f"root {value!r} would leave the repository — it is the path of "
+                    "this .keep-the-why relative to the git toplevel: relative, "
+                    "no '..', no control characters",
+                )
+            elif os.path.isdir(os.path.join(self.root, ".git")):
+                self.add(
+                    ERROR,
+                    "E003",
+                    path,
+                    root[0],
+                    f"root {value!r} is set, but this directory is itself a git "
+                    "toplevel — root is only for a .keep-the-why below the toplevel "
+                    "of its repository (an isolated-context mono repo)",
                 )
 
         pinned_version = block.first("pinned-version")
