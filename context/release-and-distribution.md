@@ -2,6 +2,7 @@
 
 ## Automation tokens need the `workflow` OAuth scope to push workflow files
 
+**Id:** 579689e0-de68-4e13-aa16-cd9ac9308b20
 **Type:** constraint
 **Status:** active
 **Evidence:** confirmed
@@ -12,6 +13,7 @@ The workaround (split the workflow file into its own commit, have someone with t
 
 ## The installable skill lives under `skills/keep-the-why/`, not at the repo root
 
+**Id:** 4d62a0f9-a255-438d-9b44-3b71490d4dc7
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -26,6 +28,7 @@ It also fixes a second, independent problem: cloning this whole repository into 
 
 ## `evals/` moved back out of `skills/keep-the-why/`, into `tools/evals/`
 
+**Id:** 69eb47fd-bf87-4e62-a35a-5cb2a6344f86
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -40,6 +43,7 @@ It also fixes a second, independent problem: cloning this whole repository into 
 
 ## `references/trust-model.md`'s worked example describes the injection payload instead of quoting it
 
+**Id:** 5b75db82-7054-4917-bfd4-f689c03c51cb
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -54,6 +58,7 @@ The "worked example" section's illustrative embedded instruction — previously 
 
 ## `release.yml`'s checkout pins the actual release tag, not the workflow's trigger ref
 
+**Id:** bde6f45b-86bb-4653-84f5-d94825c389e3
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -66,6 +71,7 @@ The `GH Release` workflow's `checkout` step explicitly sets `ref: ${{ github.eve
 
 ## `release.yml` gates on the tag agreeing with the commit, not only on the tag's shape
 
+**Id:** 41da8710-a4a3-4576-888d-ba62f1122f6d
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -80,6 +86,7 @@ Before `gh release create` and the `latest` move, the workflow compares the tag'
 
 ## Release authority is every write-access account, deliberately unprotected
 
+**Id:** da26d6e0-300d-4801-ad1e-0421a2eb1f1b
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -94,6 +101,7 @@ The `pypi` environment has no required reviewer and no deployment-branch policy,
 
 ## skills.sh rides the moving `latest` tag; awesome-copilot needs a pinned release instead
 
+**Id:** 71dcfa9d-0238-4db1-83ac-3d17c33a4107
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -112,6 +120,7 @@ skills.sh resolves this repo's skill via the moving `latest` tag `release.yml` f
 
 ## `.claude-plugin/plugin.json` is a second, separate manifest — not a replacement for the root `plugin.json`
 
+**Id:** 924007e1-c240-4bf2-8f2f-f47e6de26def
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -126,6 +135,7 @@ Added `.claude-plugin/plugin.json` (the official Claude Code plugin manifest, ve
 
 ## `.codex-plugin/plugin.json` plus a one-plugin marketplace make the repository installable as a Codex plugin
 
+**Id:** 3ecd61cb-eeb3-4c65-8f9b-de677ef7d5a7
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -142,6 +152,7 @@ A third manifest, `.codex-plugin/plugin.json` (the official Codex format: `name`
 
 ## `.cursor-plugin/plugin.json` plus one conditional rule make the repository a Cursor Plugin
 
+**Id:** 3a0f454b-18c5-4b24-98b7-85a662435fe4
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -159,6 +170,7 @@ A fourth manifest, `.cursor-plugin/plugin.json` (Cursor's own format, the same f
 
 ## The `[x.y.z]` CHANGELOG compare link always 404s on the release PR's own merge-to-main push
 
+**Id:** 276ec57b-0ef3-4bcc-b025-efdd5c19389b
 **Type:** constraint
 **Status:** active
 **Evidence:** confirmed
@@ -173,6 +185,7 @@ A fourth manifest, `.cursor-plugin/plugin.json` (Cursor's own format, the same f
 
 ## The linter lives in this repository under `lint/`, published to PyPI as its own package
 
+**Id:** 1e8bbd08-7e94-4362-a822-c76fb1b9a364
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -191,6 +204,7 @@ A fourth manifest, `.cursor-plugin/plugin.json` (Cursor's own format, the same f
 
 ## A release publishes the linter first, then the skill — every time, structural change or not
 
+**Id:** 90d78967-aa6d-4fd9-b163-4d35e10d6ca4
 **Type:** decision
 **Type:** constraint
 **Status:** active
@@ -208,6 +222,7 @@ The release checklist in `CONTRIBUTING.md` is ordered: one preparation PR bumps 
 
 ## The GitHub Action rides its own moving `lint-latest` tag, not the skill's `latest`
 
+**Id:** fccebacb-8cf1-4895-9e31-779ba0b306c3
 **Type:** decision
 **Type:** incident
 **Status:** active
@@ -229,6 +244,7 @@ The consumer snippet references the root composite action as `uses: oliver-zehen
 
 ## The GitHub Action installs the linter its own ref belongs to; `lint-latest` therefore rolls, a pinned ref pins both
 
+**Id:** 87d26828-815a-4d3c-91fe-b440b1fb585a
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -247,6 +263,7 @@ The consumer snippet references the root composite action as `uses: oliver-zehen
 
 ## `.codexignore` exists for the scanner; whether Codex reads it is unverified
 
+**Id:** 0033f7e5-7f35-471b-b292-763ac06e66cc
 **Type:** decision
 **Status:** active
 **Evidence:** inferred
@@ -262,6 +279,7 @@ A `.codexignore` at the repository root lists local state and build output, the 
 
 ## Bare `v<major>.<minor>.<patch>` tags are reserved for the skill; every other artifact is prefixed
 
+**Id:** 26ab5fd7-954e-4f2f-8b6b-4888208da051
 **Type:** decision
 **Type:** constraint
 **Status:** active
@@ -281,11 +299,13 @@ The skill's update check (`references/setup.md`) queries `/releases`, keeps only
 
 ## The skill's `description` stays under 250 characters, negative-trigger clause last
 
+**Id:** 93b104fe-8be3-45a2-9820-f58ce5249a16
 **Type:** constraint
 **Status:** superseded
 **Evidence:** confirmed
 **Source:** the asm registry's evaluator (`src/evaluator-core.ts` in luongnv89/asm: "Description fits the runtime context budget", target ≤ 250 chars); #205 (877 → 188 chars, score 71 → 90); PR #223 (188 → 318 → 239)
 **Revisit when:** the Agent Skills spec or a registry this skill is listed on publishes a different budget, or the `/skills` listing stops truncating tail-first
+**Superseded by:** 2d349f6e-2da5-49dc-83ba-bbd4085b1517
 
 `description` in `SKILL.md`'s frontmatter is the one piece of the skill every agent loads *before* deciding whether to activate it, and the one piece registries show in listings. Both put it on a budget: asm targets ≤ 250 characters and warns above it, and Claude Code's `/skills` listing truncates the tail — so the last clause, "Not for what changed (see Keep a Changelog) - only why", is exactly what gets cut first, and that clause is the negative trigger keeping the skill from activating on plain change-log work. This has been overrun twice: #205 found an 877-character description (score 71/100, C), and the 2026-09-03 evals pass extended it to 318 to make setup, decline, and interview requests match the skill (score 84/100, B, with the truncation warning). Both times the fix was the same: fold the activation-relevant nouns into one dense clause and keep the negative trigger at the end (now 239 characters).
 
@@ -299,6 +319,7 @@ The skill's update check (`references/setup.md`) queries `/releases`, keeps only
 
 ## `LICENSE` is duplicated into `skills/keep-the-why/`, because registries check the skill root
 
+**Id:** e4303248-e1bc-4238-9106-f0252f762bba
 **Type:** constraint
 **Status:** active
 **Evidence:** confirmed
@@ -309,6 +330,7 @@ The skill lives in a subdirectory (see "The installable skill lives under `skill
 
 ## Shell fences inside the skill package are ` ```sh `, not ` ```bash `
 
+**Id:** b0fa0270-1812-4aaf-8e49-f13f8fb410ff
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -327,6 +349,7 @@ The two shell snippets in `references/autostart.md` and `references/ci-linting.m
 
 ## The repository is its own one-plugin marketplace for Claude Code too, installed with a sparse checkout
 
+**Id:** 963c1401-9179-4162-8eb4-e3a4cc164e0b
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed

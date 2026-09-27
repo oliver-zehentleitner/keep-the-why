@@ -4,6 +4,7 @@ Design decisions internal to the structural linter. Where it lives and how it's 
 
 ## Checks are gated by the target project's `context-schema`
 
+**Id:** 10042ba6-5d09-461d-b43a-b8dc7e910b86
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -18,6 +19,7 @@ The linter reads `context-schema` from the target's `.keep-the-why` (or the pre-
 
 ## Severity model: errors block, "next-touched" material warns; index sorting is an error
 
+**Id:** 6e04b25a-893b-4264-aafe-3e6d0fa4a50a
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -30,6 +32,7 @@ Invalid values, missing mandatory fields, broken config, index breakage, and hid
 
 ## A level-2 heading without schema fields is a warning, not an error
 
+**Id:** a24659df-a6b9-4069-a3ed-22e01ee55235
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -44,6 +47,7 @@ An `##` heading in a topic file with no recognized field lines gets `W102`, not 
 
 ## `Verification` accepts any separator between value and explanation
 
+**Id:** 180c17bb-183f-411d-879c-41519bc5a22a
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -56,6 +60,7 @@ An `##` heading in a topic file with no recognized field lines gets `W102`, not 
 
 ## Configured paths are confined to the repository, and an escape is an error rather than a silent fallback
 
+**Id:** e54fcc5c-a90b-49ba-a33a-548ece147659
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -71,6 +76,7 @@ An `##` heading in a topic file with no recognized field lines gets `W102`, not 
 
 ## `id` is validated as a file-name alphabet, not as a `<left>---<right>` shape
 
+**Id:** bc7c91ba-db55-4af1-98ad-8ba30ce297fc
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -86,6 +92,7 @@ An `##` heading in a topic file with no recognized field lines gets `W102`, not 
 
 ## The home files are checked only behind `--setup`, never by default
 
+**Id:** c2162bae-c634-49e6-8b39-0b3eb05a0c1f
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed

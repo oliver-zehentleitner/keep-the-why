@@ -13,12 +13,33 @@ import re
 from dataclasses import dataclass, field
 
 # The schema's header fields. "Revisit when" contains a space on purpose.
-KNOWN_FIELDS = ("Type", "Status", "Evidence", "Source", "Verification", "Revisit when")
+KNOWN_FIELDS = (
+    "Id",
+    "Type",
+    "Status",
+    "Evidence",
+    "Source",
+    "Verification",
+    "Revisit when",
+    "See",
+    "Superseded by",
+)
 
 _HEADING_RE = re.compile(r"^(#{1,6})\s+(.*?)\s*$")
 _FIELD_RE = re.compile(
-    r"^\*\*(Type|Status|Evidence|Source|Verification|Revisit when):\*\*\s*(.*?)\s*$"
+    r"^\*\*(Id|Type|Status|Evidence|Source|Verification|Revisit when|See|Superseded by):\*\*"
+    r"\s*(.*?)\s*$"
 )
+_ANCHOR_DROP_RE = re.compile(r"[^\w\- ]", re.UNICODE)
+
+
+def anchor(title: str) -> str:
+    """The heading anchor a Markdown host derives from an entry title: lowercase,
+    punctuation dropped, spaces to hyphens (GitHub's rule; a local `See` locator
+    uses it as `<file>#<anchor>`)."""
+    return _ANCHOR_DROP_RE.sub("", title.strip().lower()).replace(" ", "-")
+
+
 _FENCE_RE = re.compile(r"^\s*(```|~~~)")
 
 

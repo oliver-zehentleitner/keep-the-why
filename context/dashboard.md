@@ -2,6 +2,7 @@
 
 ## A dashboard exists despite the "no dashboard" line, as a read-only lens that stores nothing
 
+**Id:** 55e36439-f311-48b9-9279-0197af4d5601
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -18,6 +19,7 @@
 
 ## The dashboard lives in this repository under `dashboard/`, on its own version counter, with the linter as its parser
 
+**Id:** 66a89059-545d-4134-a923-d9f9eabdf964
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -34,6 +36,7 @@ Same shape as the linter: developed in `dashboard/` with its own `pyproject.toml
 
 ## The page is plain JavaScript — no framework, no build step, no CDN
 
+**Id:** df1af5b5-8180-49e2-bdeb-97bf4e4aa030
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -48,6 +51,7 @@ One ES module served as-is, CSS bars, a canvas force layout of about a hundred l
 
 ## Live mode rebuilds the state from a fingerprint and pushes it over Server-Sent Events; nothing is stored
 
+**Id:** 1548c5d8-7472-470b-ace7-889396e3f42d
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -62,6 +66,7 @@ The server polls a cheap fingerprint every two seconds — HEAD, the mtimes of `
 
 ## Authors are Git authors, shown as-is; no agent-versus-human convention
 
+**Id:** 7992bf4b-6ca7-4f68-ae34-c61aa352cc2c
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -76,6 +81,7 @@ The author layer comes from three Git calls per entry: `blame` on the heading fo
 
 ## The skill names the dashboard, and never installs or starts it
 
+**Id:** b1fb0c8f-8472-49c1-91c3-97791b413fb9
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -90,6 +96,7 @@ The author layer comes from three Git calls per entry: `blame` on the heading fo
 
 ## The update check is the server's one network call, and the exported page makes none
 
+**Id:** 5b7a6c2d-8218-4987-b912-0fe7bb15cc1a
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -106,6 +113,7 @@ At start and once every 24 hours the server asks `pypi.org/pypi/<name>/json` for
 
 ## The dashboard reads only what the linter would; the boundary check is its own copy of the linter's rule, not a linter API
 
+**Id:** a0f40376-651e-4f87-ab24-7af80f31adc8
 **Type:** decision
 **Status:** active
 **Evidence:** inferred

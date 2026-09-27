@@ -28,7 +28,7 @@ from .config import (
     parse_home_block,
     parse_semver,
 )
-from .entries import parse_index_headings, parse_index_text, parse_topic_text
+from .entries import anchor, parse_index_headings, parse_index_text, parse_topic_text
 from .findings import ERROR, WARNING, Finding
 
 GATE_STATUS_EVIDENCE = (0, 3, 0)
@@ -38,6 +38,7 @@ GATE_MULTI_TYPE = (0, 9, 0)
 GATE_DEDICATED_CONFIG = (0, 10, 0)
 GATE_PENDING_CONFIRMATION = (0, 13, 0)
 GATE_INDEX_SKELETON = (0, 13, 0)
+GATE_ENTRY_ID = (0, 18, 0)  # Id, See, Superseded by
 
 INDEX_HEADINGS = tuple("0123456789") + tuple("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
@@ -129,6 +130,15 @@ NON_TOPIC_FILES = ("README.md", "AGENTS.md", "CLAUDE.md", "index.md")
 # Values may carry an em/en dash or hyphen separated remainder ("undefined — reason").
 _DASH_SPLIT_RE = re.compile(r"\s+[—–-]\s+")
 
+# An entry's Id: a UUID, lowercase hex in the 8-4-4-4-12 shape. The
+# specification asks for version 4; the linter checks the shape, not the
+# version nibble — an id is an address, and any UUID addresses.
+_UUID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
+_AS_OF_RE = re.compile(rf"^as of {_DATE}$")
+# A local See locator: `<file>.md` or `<file>.md#<anchor>`, a bare topic
+# file name — no directory part, since context/ is flat.
+_LOCAL_LOCATOR_RE = re.compile(r"^([^/\\#\s]+\.md)(?:#([^\s#]+))?$")
+
 # Verification in the wild separates value and explanation with a dash,
 # colon, or plain sentence punctuation — accept any, the value word is
 # what's constrained. "uncorroborated" must come first (it contains
@@ -186,6 +196,7 @@ class Linter:
             None  # the project id, once it passed E010 — names the personal file
         )
         self.setup_checked = False  # --setup ran (the summary line says so)
+        self._ids = {}  # entry Id -> (topic relpath, Entry), project-wide (E116)
         self._undecodable = (
             set()
         )  # E302 reported once per file, however often it is read
@@ -756,6 +767,29 @@ class Linter:
 
     # -- entries ---------------------------------------------------------
 
+    def collect_ids(self, relpath: str):
+        """First pass over a topic file: the project-wide Id map that See and
+        Superseded by resolve against, with duplicates reported once (E116)."""
+        if self.schema < GATE_ENTRY_ID:
+            return
+        for entry in parse_topic_text(self._read(relpath)):
+            for fld in entry.get("Id"):
+                value = fld.value.strip()
+                if not _UUID_RE.match(value):
+                    continue  # E115, reported by the entry pass
+                if value in self._ids:
+                    other_path, other = self._ids[value]
+                    self.add(
+                        ERROR,
+                        "E116",
+                        relpath,
+                        fld.line,
+                        f"Id {value} is already used by '{other.title}' "
+                        f"({other_path}:{other.line}) — an entry's Id is unique in the project",
+                    )
+                else:
+                    self._ids[value] = (relpath, entry)
+
     def check_topic_file(self, relpath: str):
         text = self._read(relpath)
         for entry in parse_topic_text(text):
@@ -817,6 +851,184 @@ class Linter:
                 self.add(
                     WARNING, "W105", path, fld.line, "empty 'Revisit when' condition"
                 )
+
+        if self.schema >= GATE_ENTRY_ID:
+            self._check_entry_id(path, entry)
+            self._check_see(path, entry)
+            self._check_superseded_by(path, entry)
+
+    # -- Id, See, Superseded by (since 0.18.0) ---------------------------
+
+    def _check_entry_id(self, path, entry):
+        fields = entry.get("Id")
+        if not fields:
+            self.add(
+                ERROR,
+                "E114",
+                path,
+                entry.line,
+                f"'{entry.title}': entry has no **Id:** field — every entry carries a "
+                "UUID since 0.18.0 (references/migrations.md)",
+            )
+            return
+        if len(fields) > 1:
+            self.add(
+                ERROR,
+                "E112",
+                path,
+                fields[1].line,
+                f"'{entry.title}': more than one **Id:** line",
+            )
+        value = fields[0].value.strip()
+        if not _UUID_RE.match(value):
+            self.add(
+                ERROR,
+                "E115",
+                path,
+                fields[0].line,
+                f"Id {value!r} is not a UUID (lowercase, 8-4-4-4-12 hex; "
+                "`uuidgen` or /proc/sys/kernel/random/uuid makes one)",
+            )
+
+    def _resolve_local_reference(self, path, line, field, uuid, locator=None):
+        """E118 when `uuid` names no entry in this project; with a local
+        `locator` (file[#anchor]), E119 when the entry the Id names is not
+        where the locator says — the locator went stale, the Id did not."""
+        found = self._ids.get(uuid)
+        if found is None:
+            self.add(
+                ERROR,
+                "E118",
+                path,
+                line,
+                f"{field} names Id {uuid}, which no entry in this project carries",
+            )
+            return
+        if locator is None:
+            return
+        found_path, found_entry = found
+        want_file = os.path.basename(found_path)
+        got_file, got_anchor = locator
+        if got_file != want_file or (
+            got_anchor is not None and got_anchor != anchor(found_entry.title)
+        ):
+            self.add(
+                ERROR,
+                "E119",
+                path,
+                line,
+                f"{field} locator '{got_file}"
+                f"{'#' + got_anchor if got_anchor else ''}' does not match the entry "
+                f"Id {uuid} names: '{found_entry.title}' in {want_file} "
+                f"(#{anchor(found_entry.title)}) — repair the locator, keep the Id",
+            )
+
+    @staticmethod
+    def _split_reference(value):
+        """`locator — uuid — as of YYYY-MM-DD` -> (locator, uuid, date) or None."""
+        parts = [p.strip() for p in _DASH_SPLIT_RE.split(value.strip(), maxsplit=2)]
+        if len(parts) != 3 or not all(parts):
+            return None
+        return parts[0], parts[1], parts[2]
+
+    def _check_see(self, path, entry):
+        for fld in entry.get("See"):
+            parts = self._split_reference(fld.value)
+            bad = (
+                parts is None
+                or not _UUID_RE.match(parts[1])
+                or not _AS_OF_RE.match(parts[2])
+            )
+            match = None
+            if not bad:
+                locator = parts[0]
+                if locator.startswith("https://"):
+                    continue  # another project: shape only, never resolved here
+                match = _LOCAL_LOCATOR_RE.match(locator)
+                if match is None or ".." in locator:
+                    bad = True
+            if bad:
+                self.add(
+                    ERROR,
+                    "E117",
+                    path,
+                    fld.line,
+                    f"See {fld.value!r} is not '<file>.md[#<anchor>] — <uuid> — as of "
+                    "YYYY-MM-DD' (an entry here) or 'https://<canonical> — <uuid> — as of "
+                    "YYYY-MM-DD' (an entry in another project)",
+                )
+                continue
+            self._resolve_local_reference(
+                path, fld.line, "See", parts[1], (match.group(1), match.group(2))
+            )
+
+    def _check_superseded_by(self, path, entry):
+        fields = entry.get("Superseded by")
+        status = [f.value.strip() for f in entry.get("Status")]
+        superseded = status == ["superseded"]
+        if superseded and not fields:
+            self.add(
+                ERROR,
+                "E120",
+                path,
+                entry.line,
+                f"'{entry.title}': Status is superseded but there is no **Superseded by:** "
+                "line — name the successor's Id, a 'https://<canonical> — <uuid> — as of "
+                "YYYY-MM-DD' reference, or 'none — <why nothing replaced it>'",
+            )
+            return
+        if fields and not superseded:
+            self.add(
+                ERROR,
+                "E121",
+                path,
+                fields[0].line,
+                f"'{entry.title}': **Superseded by:** is only for an entry whose Status is "
+                f"superseded (this one is {status[0] if status else 'unset'})",
+            )
+            return
+        if not fields:
+            return
+        if len(fields) > 1:
+            self.add(
+                ERROR,
+                "E112",
+                path,
+                fields[1].line,
+                f"'{entry.title}': more than one **Superseded by:** line",
+            )
+        value = fields[0].value.strip()
+        line = fields[0].line
+        if _UUID_RE.match(value):
+            self._resolve_local_reference(path, line, "Superseded by", value)
+            return
+        head, rest = _split_value(value)
+        if head == "none":
+            if not rest:
+                self.add(
+                    ERROR,
+                    "E117",
+                    path,
+                    line,
+                    "Superseded by 'none' must say why nothing replaced the entry: "
+                    "'none — <reason>'",
+                )
+            return
+        parts = self._split_reference(value)
+        if (
+            parts is None
+            or not parts[0].startswith("https://")
+            or not _UUID_RE.match(parts[1])
+            or not _AS_OF_RE.match(parts[2])
+        ):
+            self.add(
+                ERROR,
+                "E117",
+                path,
+                line,
+                f"Superseded by {value!r} is not an Id, a 'https://<canonical> — <uuid> — "
+                "as of YYYY-MM-DD' reference, or 'none — <reason>'",
+            )
 
     def _check_single_valued(
         self, path, entry, name, allowed, missing_code, invalid_code
@@ -1129,6 +1341,8 @@ class Linter:
             all_md.append(name)
         topic_files = [name for name in all_md if name not in NON_TOPIC_FILES]
 
+        for name in topic_files:
+            self.collect_ids(os.path.join(self.context_dir, name))
         for name in topic_files:
             self.check_topic_file(os.path.join(self.context_dir, name))
         self.check_index(topic_files)

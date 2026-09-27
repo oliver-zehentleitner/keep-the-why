@@ -2,6 +2,7 @@
 
 ## Setup/init state is tracked opportunistically, not via a real background schedule
 
+**Id:** 32d73065-9166-43a4-9387-08716fe8c0e3
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -16,9 +17,11 @@ The skill's periodic checks (update availability, `context/` staleness) run as a
 
 > Superseded 2026-08-31: the "not a separate file" conclusion no longer holds — see "Config moves to dedicated `.keep-the-why` files, not entry-point blocks" below. The delimited-block syntax itself (HTML comments, easy to locate and parse) wasn't the part that was wrong — it's exactly what the dedicated files below still use.
 
+**Id:** f8a7310f-15a2-4025-b65a-db8ce6824b62
 **Type:** decision
 **Status:** superseded
 **Evidence:** confirmed
+**Superseded by:** b52bd04b-a28c-481c-93e9-ffe261a961b5
 
 Setup state is written into `<!-- keep-the-why:config -->` / `<!-- keep-the-why:local -->` blocks inside files the project already has a reason to read (`AGENTS.md` and `AGENTS.local.md`), not a dedicated state file.
 
@@ -28,6 +31,7 @@ Setup state is written into `<!-- keep-the-why:config -->` / `<!-- keep-the-why:
 
 ## Config moves to dedicated `.keep-the-why` files, not entry-point blocks
 
+**Id:** b52bd04b-a28c-481c-93e9-ffe261a961b5
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -43,6 +47,7 @@ Project config moves from a block embedded in `AGENTS.md` (or whatever entry-poi
 
 ## Project identity is stored explicitly, not re-derived each session
 
+**Id:** 691f82ba-a054-4a98-83f2-fa0e1fbdb9ff
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -58,6 +63,7 @@ Project config moves from a block embedded in `AGENTS.md` (or whatever entry-poi
 
 ## `personal-defaults` and a machine-wide ask-vs-accept policy
 
+**Id:** 2192560d-ea8c-4371-9cdc-b039c4f0a194
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -73,6 +79,7 @@ A project can optionally offer a `personal-defaults` block in `.keep-the-why`, s
 
 ## Pinned versions defer by reading the vendored copy directly, not via a second skill name
 
+**Id:** 3e64ccae-7344-43fd-a9f2-6a04f39c7496
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -90,6 +97,7 @@ A project can pin `.keep-the-why` to an exact vendored copy (`pinned-version` + 
 
 ## `context/` gets `AGENTS.md`/`CLAUDE.md` guard files against hand-written schema edits
 
+**Id:** f1af8821-62d2-49bf-b9d6-46529c8cb802
 **Type:** incident
 **Type:** decision
 **Status:** active
@@ -106,6 +114,7 @@ Reported externally: a session with the project's Keep the Why setup already com
 
 ## Setup state splits across a project block and a personal block
 
+**Id:** da8515ff-f037-4422-bcf2-7e62b670bd06
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -119,6 +128,7 @@ Where `context/` lives, whether the project has been initialized, and how much c
 
 ## Update-check failures get surfaced once, not swallowed indefinitely
 
+**Id:** 7835e12a-3354-4e8e-9b68-f41a504e9c1b
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -131,6 +141,7 @@ If the update check can't run (no web access this session), the first failure is
 
 ## `context-schema` always tracks the released version, even when nothing migrated
 
+**Id:** ce43fcc8-5a80-439f-9a0e-1271052fb29c
 **Type:** incident
 **Status:** active
 **Evidence:** confirmed
@@ -143,6 +154,7 @@ Every release advances this repo's own `context-schema` (in this file's config b
 
 ## `migrations.md` covers anything an existing project needs to know about or act on, not only `context/` entry-format changes
 
+**Id:** cff0c5b9-ea2c-4b80-894b-fbea727bf7d1
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -157,6 +169,7 @@ Every release advances this repo's own `context-schema` (in this file's config b
 
 ## `capture-confirmation` is project-wide only, for now — deliberately, to test first
 
+**Id:** af793622-b416-4bdf-a171-7d416890ccb9
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -169,6 +182,7 @@ Every release advances this repo's own `context-schema` (in this file's config b
 
 ## `source-reference` asks about ticket/issue links, doesn't require one to exist, and ships project-wide only
 
+**Id:** ef5a3768-06cd-4a30-bdee-9905012f2061
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -185,6 +199,7 @@ New project setting `source-reference` (`always` / `never` / `filtered: <criteri
 
 ## `local-lint` is a personal setting with default `ask`, and the linter is brought up to the skill, never the reverse
 
+**Id:** 5af60a72-dce2-4127-a3d4-53a45d635a83
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -205,6 +220,7 @@ The setting that makes the skill run `keep-the-why-lint` after its own writes li
 
 ## Wizard defaults are the fully integrated values; a default is what a new setup gets, not what an absent field means
 
+**Id:** 426e2723-f526-4415-992f-e11d31e167ce
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed

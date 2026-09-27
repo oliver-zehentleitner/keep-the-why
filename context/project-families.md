@@ -10,6 +10,7 @@ where they are.
 
 ## The project is the nearest `.keep-the-why` walking up, not the working directory and not the Git toplevel
 
+**Id:** 81263e8a-ee54-41e2-84c3-83befcdf0331
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -53,6 +54,7 @@ mechanism that does not exist.
 
 ## `canonical` is a stored locator beside `id`, and a sub-project's place is a `root` field, not part of the URL
 
+**Id:** 4d77c151-4e83-4a9b-9c2a-68a04a0348f5
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -92,3 +94,91 @@ argument that put `id` into the file in the first place.
 session. Rejected for the reason `id` is not re-derived: a renamed remote
 would silently break every reference that names the old value, with
 nothing recording what it used to be.
+
+## Entries carry a UUID as their `Id`, and `See` and `Superseded by` resolve to it
+
+**Id:** 6cae3bbb-10ce-46d5-914b-f884da584532
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer design discussion, 2026-09-26/27, with two rounds of external review
+**Revisit when:** a host stops rendering heading anchors the way the locator rule assumes, or a project reports UUID lines as a real cost in readability
+
+Every entry gets `**Id:**`, a UUID version 4 made by an OS command and never
+changed; `See` cites another entry as `<locator> — <uuid> — as of <date>`;
+`Superseded by` is required on every superseded entry and names the
+successor's Id, a cross-project reference, or `none — <reason>`. The
+locator is what a person clicks, the Id is what a tool resolves: when a
+heading is reworded or a file is split, the linter finds the entry by Id
+and reports the stale locator (`E119`), and the agent repairs it. The date
+is a historical hint, not a revision.
+
+**Reason:** until now an entry was identified only by its heading, and the
+links in this repository's own `context/` are file-level for exactly that
+reason — a `file.md#heading` link breaks silently on the two operations
+the skill asks for, rewording and splitting (rule 6). The next step of the
+series lets projects cite each other's entries across repositories, and a
+web built on heading links would rot. A UUID is globally unique, so the Id
+alone is an address in any project, any family and any export, with no
+"unique within the project" clause and no disambiguation by project; and
+the same OS command that already makes a project id without a remote makes
+it, so nothing is composed by the agent from imagination.
+
+**Rejected alternative:** a short random token, eight or twelve hex
+characters. First chosen for line length, dropped on review: 32 bits
+collide at about 1 % for ten thousand entries, and even 48 bits would have
+needed a per-project uniqueness rule; a random token nobody reads or types
+gains nothing from being short.
+
+**Rejected alternative:** `See` as a prose convention rather than a field.
+Rejected because a convention cannot be linted and cannot be turned into
+edges by the dashboard; the field is what makes entry-to-entry references
+mechanical.
+
+**Rejected alternative:** a commit hash in the `See` line instead of, or
+next to, the date. Rejected for now: a `See` wants the living entry, whose
+Status may have moved to `superseded` since, and a hash would show the old
+state for ever; the day plus the target's history is enough to recover what
+was cited, and an optional fourth part would lengthen every line for a case
+nobody has.
+
+**Rejected alternative:** `Superseded by` optional, with a warning when
+absent. Rejected because the spec's lifecycle already says a replaced
+decision is recorded by a new entry; in the seventeen superseded entries
+surveyed across this repository and the suite the successor either existed
+or was an event — and `none — <reason>` covers the event, the way `Type:
+undefined — <reason>` covers an unclassifiable entry.
+
+## The linter reports stale locators and missing Ids; the agent repairs and migrates
+
+**Id:** 4d461bd1-ea3b-40d1-a8c5-cbb72f6ca5d4
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer call, 2026-09-27
+**See:** lint.md#the-home-files-are-checked-only-behind---setup-never-by-default — c2162bae-c634-49e6-8b39-0b3eb05a0c1f — as of 2026-09-27
+**Revisit when:** the linter gains a second consumer that needs it to write (an editor integration that expects fixes), or the migration pass turns out to be too large for an agent session in a real project
+
+The migration to entry ids is a pass the agent runs — generate a UUID per
+entry, add `Superseded by` where Status is `superseded` — and the linter
+then verifies it, `E114`–`E121`. A stale `See` locator is likewise a
+finding the agent acts on. The linter never writes a file.
+
+**Reason:** the linter is a CI tool that reads pull requests from
+strangers, and "it reads and reports, it never mutates" is a trust
+statement this project makes on its security page. A write mode, even a
+narrow one behind a flag, would have made that sentence carry a footnote.
+The agent is on every machine the skill runs on, the pass is additive (one
+line per entry, no existing link changes, because links were file-level
+and no `See` lines existed), and the linter finds what the agent missed —
+so the agent checks itself against the tool instead of the tool doing the
+work.
+
+**Rejected alternative:** a `--assign-ids` write mode in the linter, one
+parser for both jobs. Rejected for the trust statement above, and because
+no permanent migration tool is wanted for a one-time pass.
+
+**Rejected alternative:** a shipped migration script. Rejected because the
+skill ships no executables on purpose — the security scanners flag a
+`bash` in a skill, and the project's line is that the only executables are
+the two optional packages.

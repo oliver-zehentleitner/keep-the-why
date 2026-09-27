@@ -44,6 +44,7 @@ Open source under the [MIT license](https://keepthewhy.com/license/) — the ski
 
 ### Why retry_with_jitter isn't a plain retry loop
 
+**Id:** 7ba48019-a710-4fa4-b6ff-b741d69ca50b<br>
 **Type:** constraint<br>
 **Status:** active<br>
 **Evidence:** confirmed<br>

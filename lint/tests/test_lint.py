@@ -30,6 +30,7 @@ GOOD_ENTRY = """\
 
 ## Snapshot-before-buffer ordering
 
+**Id:** 2f1c5b7e-8a3d-4c6e-9b0f-1d2e3f4a5b6c
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -803,6 +804,224 @@ class ConfigFileIntegrity(_ProjectFixture):
         self.assertEqual(self.cli([self.root]), 1)
 
 
+ID_A = "2f1c5b7e-8a3d-4c6e-9b0f-1d2e3f4a5b6c"  # the one in GOOD_ENTRY
+ID_B = "550e8400-e29b-41d4-a716-446655440000"
+ID_C = "9b2d4f60-7c1e-4a8b-b3d5-6e7f8a9b0c1d"
+CONFIG_0_18 = GOOD_CONFIG.replace("context-schema: 0.10.1", "context-schema: 0.18.0")
+
+
+def entry(title, uid, status="active", extra=""):
+    return (
+        f"## {title}\n\n**Id:** {uid}\n**Type:** decision\n**Status:** {status}\n"
+        f"**Evidence:** confirmed\n{extra}\nBody.\n\n"
+    )
+
+
+class EntryIdentity(_ProjectFixture):
+    """Since 0.18.0 every entry carries a UUID, See lines cite by locator, Id
+    and date, and a superseded entry names its successor. Below the gate the
+    three fields are ignored, so a project on an older schema is untouched."""
+
+    def project_0_18(self, sync_extra="", more_files=None):
+        self.base_project(
+            config=CONFIG_0_18,
+            topic="# Sync\n\n"
+            + entry("Snapshot-before-buffer ordering", ID_A, extra=sync_extra),
+        )
+        for name, text in (more_files or {}).items():
+            self.write(f"context/{name}", text)
+            letter = name[0].upper()
+            self.write(
+                "context/index.md",
+                skeleton_index(
+                    {
+                        "S": ["- [sync.md](sync.md) — sync design"],
+                        letter: [f"- [{name}]({name}) — {name}"],
+                    }
+                ),
+            )
+
+    def test_gate_off_below_0_18(self):
+        self.base_project(
+            topic="# Sync\n\n## No id here\n\n**Status:** active\n**Evidence:** confirmed\n"
+        )
+        findings, _ = self.run_lint()
+        for code in ("E114", "E115", "E116", "E117", "E118", "E119", "E120", "E121"):
+            self.assertNotIn(code, self.codes(findings))
+
+    def test_missing_id_is_e114(self):
+        self.base_project(
+            config=CONFIG_0_18,
+            topic="# Sync\n\n## No id here\n\n**Type:** decision\n**Status:** active\n**Evidence:** confirmed\n",
+        )
+        findings, _ = self.run_lint()
+        self.assertIn("E114", self.codes(findings))
+
+    def test_malformed_id_is_e115(self):
+        for bad in (
+            "2F1C5B7E-8A3D-4C6E-9B0F-1D2E3F4A5B6C",
+            "a1b2c3d4",
+            "not-a-uuid",
+            "2f1c5b7e8a3d4c6e9b0f1d2e3f4a5b6c",
+        ):
+            with self.subTest(id=bad):
+                self.base_project(
+                    config=CONFIG_0_18, topic="# Sync\n\n" + entry("X", bad)
+                )
+                findings, _ = self.run_lint()
+                self.assertIn("E115", self.codes(findings))
+
+    def test_duplicate_id_across_files_is_e116(self):
+        self.project_0_18(
+            more_files={"auth.md": "# Auth\n\n" + entry("Token cache", ID_A)}
+        )
+        findings, _ = self.run_lint()
+        self.assertIn("E116", self.codes(findings))
+
+    def test_good_local_see_resolves(self):
+        see = f"**See:** auth.md#token-cache — {ID_B} — as of 2026-09-27\n"
+        self.project_0_18(
+            sync_extra=see,
+            more_files={"auth.md": "# Auth\n\n" + entry("Token cache", ID_B)},
+        )
+        findings, _ = self.run_lint()
+        self.assertEqual(
+            [], self.codes(findings), msg=[f.format_text() for f in findings]
+        )
+
+    def test_anchor_follows_the_host_rule(self):
+        # backticks and punctuation dropped, lowercase, spaces to hyphens
+        title = "`id` is validated as a file-name alphabet, not a shape"
+        see = f"**See:** auth.md#id-is-validated-as-a-file-name-alphabet-not-a-shape — {ID_B} — as of 2026-09-27\n"
+        self.project_0_18(
+            sync_extra=see, more_files={"auth.md": "# Auth\n\n" + entry(title, ID_B)}
+        )
+        findings, _ = self.run_lint()
+        self.assertEqual(
+            [], self.codes(findings), msg=[f.format_text() for f in findings]
+        )
+
+    def test_remote_see_is_shape_only(self):
+        see = f"**See:** https://github.com/acme/other — {ID_C} — as of 2026-09-27\n"
+        self.project_0_18(sync_extra=see)
+        findings, _ = self.run_lint()
+        self.assertEqual([], self.codes(findings))
+
+    def test_malformed_see_is_e117(self):
+        for bad in (
+            f"auth.md — {ID_B}",  # no date
+            f"auth.md — {ID_B} — 2026-09-27",  # no 'as of'
+            f"auth.md — nope — as of 2026-09-27",
+            f"../x.md — {ID_B} — as of 2026-09-27",
+            f"dir/auth.md — {ID_B} — as of 2026-09-27",
+            f"http://github.com/acme/other — {ID_B} — as of 2026-09-27",
+        ):
+            with self.subTest(see=bad):
+                self.project_0_18(sync_extra=f"**See:** {bad}\n")
+                findings, _ = self.run_lint()
+                self.assertIn("E117", self.codes(findings), msg=bad)
+
+    def test_unknown_local_id_is_e118(self):
+        self.project_0_18(sync_extra=f"**See:** auth.md — {ID_B} — as of 2026-09-27\n")
+        findings, _ = self.run_lint()
+        self.assertIn("E118", self.codes(findings))
+
+    def test_stale_locator_is_e119(self):
+        for locator in ("sync.md#token-cache", "auth.md#old-heading"):
+            with self.subTest(locator=locator):
+                see = f"**See:** {locator} — {ID_B} — as of 2026-09-27\n"
+                self.project_0_18(
+                    sync_extra=see,
+                    more_files={"auth.md": "# Auth\n\n" + entry("Token cache", ID_B)},
+                )
+                findings, _ = self.run_lint()
+                self.assertIn("E119", self.codes(findings))
+
+    def test_superseded_without_successor_is_e120(self):
+        self.base_project(
+            config=CONFIG_0_18,
+            topic="# Sync\n\n" + entry("Old", ID_A, status="superseded"),
+        )
+        findings, _ = self.run_lint()
+        self.assertIn("E120", self.codes(findings))
+
+    def test_superseded_by_on_active_entry_is_e121(self):
+        self.project_0_18(sync_extra=f"**Superseded by:** {ID_B}\n")
+        findings, _ = self.run_lint()
+        self.assertIn("E121", self.codes(findings))
+
+    def test_superseded_by_forms(self):
+        good = (
+            ID_B,
+            f"https://github.com/acme/other — {ID_C} — as of 2026-09-27",
+            "none — the upstream fix removed the reason for the workaround",
+        )
+        for value in good:
+            with self.subTest(value=value):
+                topic = (
+                    "# Sync\n\n"
+                    + entry(
+                        "Old",
+                        ID_A,
+                        status="superseded",
+                        extra=f"**Superseded by:** {value}\n",
+                    )
+                    + entry("New", ID_B)
+                )
+                self.base_project(config=CONFIG_0_18, topic=topic)
+                findings, _ = self.run_lint()
+                self.assertEqual(
+                    [], self.codes(findings), msg=[f.format_text() for f in findings]
+                )
+        for value in (
+            "none",
+            "some heading text",
+            f"auth.md — {ID_B} — as of 2026-09-27",
+        ):
+            with self.subTest(value=value):
+                topic = (
+                    "# Sync\n\n"
+                    + entry(
+                        "Old",
+                        ID_A,
+                        status="superseded",
+                        extra=f"**Superseded by:** {value}\n",
+                    )
+                    + entry("New", ID_B)
+                )
+                self.base_project(config=CONFIG_0_18, topic=topic)
+                findings, _ = self.run_lint()
+                self.assertIn("E117", self.codes(findings), msg=value)
+
+    def test_superseded_by_unknown_id_is_e118(self):
+        topic = "# Sync\n\n" + entry(
+            "Old", ID_A, status="superseded", extra=f"**Superseded by:** {ID_C}\n"
+        )
+        self.base_project(config=CONFIG_0_18, topic=topic)
+        findings, _ = self.run_lint()
+        self.assertIn("E118", self.codes(findings))
+
+    def test_chain_of_superseded_entries_is_fine(self):
+        topic = (
+            "# Sync\n\n"
+            + entry(
+                "First", ID_A, status="superseded", extra=f"**Superseded by:** {ID_B}\n"
+            )
+            + entry(
+                "Second",
+                ID_B,
+                status="superseded",
+                extra=f"**Superseded by:** {ID_C}\n",
+            )
+            + entry("Third", ID_C)
+        )
+        self.base_project(config=CONFIG_0_18, topic=topic)
+        findings, _ = self.run_lint()
+        self.assertEqual(
+            [], self.codes(findings), msg=[f.format_text() for f in findings]
+        )
+
+
 class UntrustedInputRobustness(_ProjectFixture):
     """Whatever the config file or a knowledge file contains, the linter
     reports and exits — it never reads outside the tree, never raises, and
@@ -853,7 +1072,7 @@ class UntrustedInputRobustness(_ProjectFixture):
         e302 = [f for f in findings if f.code == "E302"]
         self.assertEqual(len(e302), 1)
         self.assertEqual(e302[0].path, "context/sync.md")
-        self.assertEqual(e302[0].line, 17)
+        self.assertEqual(e302[0].line, 18)  # GOOD_ENTRY grew an Id line
         # the decodable part was still linted normally
         self.assertNotIn("E101", self.codes(findings))
 

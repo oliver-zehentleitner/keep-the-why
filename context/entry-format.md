@@ -2,6 +2,7 @@
 
 ## `context/` stays flat — no subdirectories, even for large projects
 
+**Id:** acc4266f-3b91-4e3f-9170-20926e6d925a
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -16,6 +17,7 @@
 
 ## Entries get an optional `Type` field (`decision` | `workaround` | `incident` | `constraint`)
 
+**Id:** e609880c-7a7f-4988-8a02-ab83987fe581
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -34,6 +36,7 @@ Filled in on new entries when a value clearly fits; not a blocking requirement �
 
 ## `undefined` Type value flags entries where none of the four fit
 
+**Id:** 829d9ea5-3b97-41e6-8cc8-7f3dda59be0e
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -50,6 +53,7 @@ An entry that actively considers Type but finds that none of `decision`, `workar
 
 ## `Type` accepts more than one value via repeated header lines
 
+**Id:** 38adc4ec-0919-4a2f-9253-3cf85a19e096
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -69,6 +73,7 @@ An entry that genuinely documents more than one kind of thing gets one `**Type:*
 
 ## `context/index.md` entries are sorted alphabetically by filename
 
+**Id:** 5443daf8-b878-4249-82ea-464afb76d804
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -85,6 +90,7 @@ New entries in `context/index.md` are inserted in alphabetical order by filename
 
 ## `Status` gets a fifth value, `pending-confirmation`, for sessions declared unattended
 
+**Id:** 201d6088-4a3c-445a-8eaa-39feae5b0b8b
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -101,6 +107,7 @@ An unattended session — a scheduled cloud agent, an autonomous loop, a CI job 
 
 ## `context/index.md` carries a fixed `0`–`9`, `A`–`Z` heading skeleton, empty headings included
 
+**Id:** 8aa88a2b-764e-4529-a340-0fe82309f880
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -117,6 +124,7 @@ Every `context/index.md` has thirty-six level-2 headings — `## 0` … `## 9`, 
 
 ## A contradiction the consistency check finds is surfaced, not resolved by superseding
 
+**Id:** 05f93713-92c0-433c-8921-5371a61c861e
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -132,6 +140,7 @@ When a maintenance pass finds an `active`, `confirmed` entry whose concrete clai
 
 ## One `Evidence` word per entry; mixed standing takes the weakest grade
 
+**Id:** fb511900-e982-4091-8a42-ffaf86631cd2
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed

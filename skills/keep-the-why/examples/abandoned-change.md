@@ -16,8 +16,9 @@ Mid-session, cleaning up what looks like dead weight in a payments service.
     ```markdown
     ## Why retry_with_jitter isn't a plain retry loop
 
+    **Id:** 3c66d4fa-90c7-4884-ae9e-9853cf316924
     **Type:** constraint
-    **Status:** active
+        **Status:** active
     **Evidence:** confirmed
     **Source:** discovered while considering simplifying it, 2026-07-22
 

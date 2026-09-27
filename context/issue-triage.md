@@ -4,6 +4,7 @@ How reports reach this repository and how they are sorted: issue forms, labels, 
 
 ## A skill deviation is its own report form and label, separate from a bug
 
+**Id:** 6d1c5209-6778-48b9-8585-064d26351f1a
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed

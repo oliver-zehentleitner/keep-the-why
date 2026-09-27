@@ -224,11 +224,13 @@ A topic file is a `# Title`, then entries. An entry is a level-2 heading followe
 
 ## Snapshot-before-buffer ordering
 
+**Id:** 2f1c5b7e-8a3d-4c6e-9b0f-1d2e3f4a5b6c
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
 **Source:** maintainer interview, 2026-03-14; incident postmortem 2025-11, `incidents.md`
 **Revisit when:** the sync protocol or snapshot mechanism changes
+**See:** incidents.md#duplicate-state-after-cold-start-2025-11 — 9b2d4f60-7c1e-4a8b-b3d5-6e7f8a9b0c1d — as of 2026-03-14
 
 The sync step always waits for a full snapshot before applying any
 buffered events, even though this adds latency on cold start.
@@ -247,16 +249,19 @@ was enforced instead.
 
 ### 9.1 Header fields
 
-Header fields are lines of the form `**<Field>:** <value>` directly after the heading (blank lines allowed). Order: `Type`, then `Status`, then `Evidence`, then the optional three. `Type` placed after `Status` is a warning (`W103`).
+Header fields are lines of the form `**<Field>:** <value>` directly after the heading (blank lines allowed). Order: `Id` first, then `Type`, `Status`, `Evidence`, then the optional ones in the order of the table. `Type` placed after `Status` is a warning (`W103`).
 
 | Field | Required | Values |
 |---|---|---|
+| `Id` | yes, exactly one line, since 0.18.0 (`E114`, `E112`) | a UUID version 4, lowercase, `8-4-4-4-12` hex (`E115`); unique in the project (`E116`). Assigned when the entry is written, by an OS command — `uuidgen`, `cat /proc/sys/kernel/random/uuid`, PowerShell's `[guid]::NewGuid()` — never composed by hand or from memory; never changed afterwards |
 | `Type` | no — fill in when a value fits, at the latest when the entry is next touched (`W101`) | `decision` \| `workaround` \| `incident` \| `constraint` — one line per value that applies (since 0.9.0), no value twice (`E109`); or a single `undefined — <short reason>` line (since 0.8.0), which combines with nothing (`E107`, `E108`) |
 | `Status` | yes, exactly one line (`E101`, `E112`) | `active` \| `superseded` \| `open` \| `needs-review` \| `pending-confirmation` (since 0.13.0, `E113` below it) |
 | `Evidence` | yes, exactly one line (`E102`, `E112`) | `confirmed` \| `inferred` \| `unknown` |
 | `Source` | no | free text: where the rationale came from (interview, issue, commit, post-mortem, "none — no tracked issue") — a kind of source, never a person's name, handle or e-mail address (rule 7) |
 | `Verification` | no | `corroborated` \| `uncorroborated` \| `contradicted`, optionally followed by an explanation after any separator; `contradicted` must carry one (`E111`) |
 | `Revisit when` | no | free text, non-empty (`W105`): a concrete trigger that makes the entry worth re-checking |
+| `See` | no; one line per cited entry, since 0.18.0 | `<locator> — <uuid> — as of <YYYY-MM-DD>` (`E117`). Inside the project the locator is `<file>.md` or `<file>.md#<anchor>`, the anchor being the target heading as the host renders it (lowercase, punctuation dropped, spaces to `-`); the `<uuid>` must name an entry here (`E118`) and the locator must still point at it (`E119`). In another project the locator is that project's `canonical` and nothing more — no path, no anchor — and is checked for shape only |
+| `Superseded by` | yes when `Status` is `superseded` (`E120`), forbidden otherwise (`E121`); exactly one line (`E112`); since 0.18.0 | the successor: an `<uuid>` of an entry here (`E118`), a `https://<canonical> — <uuid> — as of <YYYY-MM-DD>` reference to one in another project, or `none — <why nothing replaced it>` (`E117`) |
 
 Meanings:
 
@@ -265,10 +270,13 @@ Meanings:
 - **`Type`** is what kind of thing the entry is, for selecting entries without opening files: `^\*\*Type:\*\* incident` finds every incident.
 - **`Verification`** is whether something concrete was checked against the claim, and what came of it.
 - **`Revisit when`** is the condition under which the entry should be re-checked. Age alone is not a condition.
+- **`Id`** is the entry's address. Headings are reworded and topic files are split (§8), and a link built on a heading breaks silently when they are; the UUID does not move. It is the truth behind every `See` and `Superseded by` line: a tool that finds the Id somewhere else than the locator says reports the locator, not the Id.
+- **`See`** names the place of a related entry — the decision this one follows from, the incident it answers, the entry in the parent project that constrains it. The date is a historical hint, the day the link was written; it narrows the target's history to a day and does not name a revision. The locator is what a person clicks; the Id is what a tool resolves. `Source` still names the *kind* of evidence; an entry that exists because another project decided something carries both.
+- **`Superseded by`** makes the replacement checkable: a superseded entry points at what replaced it, and a chain of them (the successor itself superseded) is the history a reader follows. `none — <reason>` is for a supersession that was an event, not a decision — an upstream fix removed a workaround's reason, a constraint vanished — and the reason says so; it is not for a successor that simply was not written yet.
 
 ### 9.2 Body
 
-Free prose, with these bold-labelled paragraphs where they apply: `**Reason:**` (why the chosen path won), `**Rejected alternative:**` (one per alternative that was genuinely in contention, with why it lost), `**Consequence:**` (what follows from the decision), `**Considered:**` (for a change that was started and dropped: what was tried), `**Why this needs an answer:**` (for an `open` entry). A body may cite other entries and files; it never contains instructions to an agent, and it never quotes a directive verbatim (see `trust-model.md`).
+Free prose, with these bold-labelled paragraphs where they apply: `**Reason:**` (why the chosen path won), `**Rejected alternative:**` (one per alternative that was genuinely in contention, with why it lost), `**Consequence:**` (what follows from the decision), `**Considered:**` (for a change that was started and dropped: what was tried), `**Why this needs an answer:**` (for an `open` entry). A body may cite other entries and files in prose; a citation a tool should follow goes in a `See` line (§9.1). It never contains instructions to an agent, and it never quotes a directive verbatim (see `trust-model.md`).
 
 ### 9.3 Examples
 
@@ -312,7 +320,8 @@ not silently corrected either way.
 | a `Revisit when` condition is observed to hold | `Status` → `needs-review`, in the same turn, nothing else changes |
 | a `needs-review` entry is re-checked | `Status` → `active` (re-confirmed), `superseded`, or `open`; `Evidence` and `Verification` updated from the re-check |
 | a `pending-confirmation` entry gets its first confirmation | `Status` → `active`, `superseded`, or `open` |
-| a decision is replaced | the old entry → `superseded`, a new entry records the replacement; the old one is not deleted |
+| a decision is replaced | the old entry → `superseded` with `Superseded by` naming the new entry's Id, a new entry records the replacement; the old one is not deleted |
+| a heading is reworded or an entry moves to another file | its `Id` stays; `See` locators that named the old place are repaired to the new one (the linter reports them, `E119`) |
 | a `Verification` check contradicts the claim | `Verification: contradicted — <what>`; `Evidence` and `Status` are not changed silently |
 
 ### 9.5 What parsers ignore
@@ -326,5 +335,5 @@ No credentials, no personal data, no session narrative (who said what), no verba
 ## 10. Conformance
 
 - A **project** conforms when `.keep-the-why` and `<context>/` satisfy §1–§3 and §7–§9 for its `context-schema`; `keep-the-why-lint --strict` passing is the mechanical half of that.
-- An **agent or tool writing entries** conforms when it writes only the fields and values above, places new topic files under their index heading, never deletes a superseded entry, and never upgrades `Evidence` or clears a `Status` flag without the re-check the lifecycle names.
+- An **agent or tool writing entries** conforms when it writes only the fields and values above, gives every new entry an `Id` made by an OS command, places new topic files under their index heading, never deletes a superseded entry, never changes an `Id`, and never upgrades `Evidence` or clears a `Status` flag without the re-check the lifecycle names.
 - A **tool reading `context/`** may rely on the header-field grammar, the index grammar and the fenced-block rule, and on nothing about prose layout beyond them.

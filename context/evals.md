@@ -4,6 +4,7 @@ Design decisions about `tools/evals/` — the runner, the judge, the fixtures, w
 
 ## The runner is a package with one module per responsibility, `run.py` stays the entry point
 
+**Id:** 002223b0-9a06-47e8-bec1-5785845ee367
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -20,6 +21,7 @@ Design decisions about `tools/evals/` — the runner, the judge, the fixtures, w
 
 ## Deterministic checks decide a case when they fail; the judge only grades what a machine can't settle
 
+**Id:** c800497a-dc70-47fa-bf81-518ef72dccd2
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -36,6 +38,7 @@ A case in `evals.json` may declare `checks` (file written / not written under a 
 
 ## The summary reports activation, completion, deterministic checks and judge pass as four numbers, not one
 
+**Id:** 1bca6651-98b3-40c5-bb8b-af60e66f170f
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -50,6 +53,7 @@ A case in `evals.json` may declare `checks` (file written / not written under a 
 
 ## Case workdirs must not live under the operator's home; the runner refuses to start if they would
 
+**Id:** 2b87afc0-c8ac-4615-95ca-16d0a5db455f
 **Type:** incident
 **Type:** constraint
 **Status:** active
@@ -65,6 +69,7 @@ The eval runner's per-case fake `$HOME` isolates the agent from the operator's r
 
 ## A release series passes when every case passes two of three runs, no run has more than one failed case, and no guard check is violated at all
 
+**Id:** 3e9ac8de-02ec-41d3-bb6a-d2c44e93d2c7
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -87,6 +92,7 @@ Three consecutive full runs are judged together by `tools/evals/series.py`: per 
 
 ## A sentence goes into the skill for a failure form seen twice, not for a single flip; the ask-versus-write logic is a table
 
+**Id:** 0f4d02ef-8b28-415e-9f9f-a1513cd388df
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -103,6 +109,7 @@ Wording changes that come out of an eval series are limited to forms that failed
 
 ## The instrument moved under the same model id; a run now records CLI version and session shape, and stored runs can be re-graded
 
+**Id:** 3cd6ee21-a3e4-4e0c-9605-a902a762c038
 **Type:** incident
 **Type:** decision
 **Status:** active

@@ -2,9 +2,11 @@
 
 ## "Composition with other skills" needed an explicit re-check instruction, found via real testing
 
+**Id:** 82ec40b7-628d-4aa1-a740-5db7fed8505d
 **Type:** incident
 **Status:** superseded
 **Evidence:** confirmed
+**Superseded by:** af4017a7-6894-423e-8a01-cf5f0091c3bc
 
 Added a second paragraph to "Composition with other skills": checking whether Keep the Why applies isn't a one-time, start-of-turn decision — re-check specifically at the natural end of another skill's workflow step (a design settled, a root cause confirmed, an alternative rejected), since that's exactly when capture-worthy content has just been produced.
 
@@ -24,9 +26,11 @@ Added a second paragraph to "Composition with other skills": checking whether Ke
 
 > Superseded 2026-08-01: the project init wizard now actively asks about this and has the current agent set up whatever its own platform supports — see "The wizard now asks about activation reliability" below. The reasoning below for *why the project doesn't hardcode one tool's mechanism* still holds; what changed is that the wizard now prompts and delegates to the current agent's own platform knowledge, instead of staying entirely passive on the topic.
 
+**Id:** af4017a7-6894-423e-8a01-cf5f0091c3bc
 **Type:** decision
 **Status:** superseded
 **Evidence:** confirmed
+**Superseded by:** 13eb348c-1987-4060-9500-c85b27c16744
 
 Keep the Why doesn't build, recommend, or document a specific mechanism (e.g. a Claude Code `SessionStart` hook) to make its own Skill activate more reliably at session start. Whether and how to strengthen activation is left entirely to each agent tool's own capabilities and the developer's own setup.
 
@@ -38,6 +42,7 @@ Keep the Why doesn't build, recommend, or document a specific mechanism (e.g. a 
 
 ## The wizard now asks about activation reliability, and delegates setup to the current agent's own platform
 
+**Id:** 13eb348c-1987-4060-9500-c85b27c16744
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -57,6 +62,7 @@ The project init wizard (`references/setup.md`) now asks, as its last question, 
 
 ## Three start paths, all gated on `.keep-the-why`
 
+**Id:** bde1feca-da7e-4548-83bb-cbcf673ee38f
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -74,6 +80,7 @@ The project init wizard (`references/setup.md`) now asks, as its last question, 
 
 ## Project setup only ever runs from an explicit request, never from an organic activation
 
+**Id:** 8e1712e2-6ce4-46db-9e5f-472b29b84fb4
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -91,6 +98,7 @@ An organic activation — the skill's own broad description happening to match a
 
 ## `init: declined` retired: a called-off setup request writes nothing
 
+**Id:** 3f7f5380-0161-4ea0-a011-e299f243c7ab
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -108,6 +116,7 @@ When an explicit setup request is declined at the first question or retracted in
 
 ## The skill description names complaints, feedback and settings about the skill itself
 
+**Id:** 2d349f6e-2da5-49dc-83ba-bbd4085b1517
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed

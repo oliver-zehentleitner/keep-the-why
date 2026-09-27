@@ -17,8 +17,9 @@ Does not immediately produce a confident-sounding architecture overview covering
     ```markdown
     ## Session handling
 
+    **Id:** f8d5c887-89b7-4dfa-a00f-6af0b81fba64
     **Type:** undefined — can't yet tell whether this is a deliberate workaround or a leftover; see Unknown below
-    **Status:** active
+        **Status:** active
     **Evidence:** inferred
     **Source:** code structure and a 2019 commit message referencing
     "the mobile client issue" — original ticket not accessible

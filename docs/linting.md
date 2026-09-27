@@ -126,8 +126,16 @@ None of this is specific to Keep the Why; it is the same set of settings any tea
 | E109 | error | duplicate `Type` value |
 | E110 | error | multiple `Type` lines below schema 0.9.0 |
 | E111 | error | `Verification: contradicted` without explanation |
-| E112 | error | more than one `Status`/`Evidence` line |
+| E112 | error | more than one `Status`/`Evidence`/`Id`/`Superseded by` line |
 | E113 | error | `Status: pending-confirmation` below `context-schema` 0.13.0 |
+| E114 | error | entry has no `Id` (since 0.18.0) |
+| E115 | error | `Id` is not a lowercase UUID |
+| E116 | error | the same `Id` on two entries of the project |
+| E117 | error | `See` or `Superseded by` value not in its documented shape |
+| E118 | error | `See` / `Superseded by` names an `Id` no entry in this project carries |
+| E119 | error | a local `See` locator (`<file>.md#<anchor>`) no longer matches the entry its `Id` names — repair the locator, keep the `Id` |
+| E120 | error | `Status: superseded` without a `Superseded by` line |
+| E121 | error | `Superseded by` on an entry whose Status is not `superseded` |
 | E201–E204 | error | `index.md` missing / broken link / unlisted topic file / not sorted |
 | E205/E206 | error | `index.md` heading skeleton missing or out of order / topic listed under the wrong letter (since 0.13.0) |
 | E301 | error | invisible or directional Unicode character |

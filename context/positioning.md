@@ -2,6 +2,7 @@
 
 ## No name-by-name comparison against competing tools, only named standards
 
+**Id:** 6f5393b2-4bf6-419e-a52e-089ad7ebd33a
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -20,6 +21,7 @@ README's and `llms.txt`'s "Related work" don't compare Keep the Why against spec
 
 ## Site navigation: sections are headings, `navigation.indexes` stays off
 
+**Id:** 8e0f497c-f6da-4817-bc5f-4f3a4ecf9cb9
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -34,6 +36,7 @@ Every nav section is a plain heading with its entries beneath: Reference, Exampl
 
 ## The site's front page is a landing page in Markdown, not a template and not a raw HTML file
 
+**Id:** 4e1adc86-c045-45f3-99f6-ce4d04855281
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -55,10 +58,12 @@ Every nav section is a plain heading with its entries beneath: Reference, Exampl
 
 ## The project's own `context/` is published on the site through one-line include stubs
 
+**Id:** f6b2701b-998e-452d-9a37-ee7f5fa5d340
 **Type:** decision
 **Status:** superseded
 **Evidence:** confirmed
 **Source:** how the "Why this project is built this way" nav section has been built since the site exists; the gap noted by Oliver on 2026-09-08 ("are all context files under 'Why this project is built this way'?" — they weren't); the nav change requested on 2026-09-10 (#375, #377)
+**Superseded by:** a99c6a7f-7027-4b90-a2e3-b026585fdb5b
 
 Superseded on 2026-09-10 by the build-time hook (next entry); kept for how the section got here.
 
@@ -72,6 +77,7 @@ Every topic file in `context/` gets a stub at `docs/context/<name>.md` holding a
 
 ## The project's own `context/` is published on the site by a build-time hook, not by stubs
 
+**Id:** a99c6a7f-7027-4b90-a2e3-b026585fdb5b
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -87,6 +93,7 @@ Every topic file in `context/` gets a stub at `docs/context/<name>.md` holding a
 
 ## The format has a normative specification file, separate from the guidance that shows it in use
 
+**Id:** 7feab02f-0de5-48f6-8dfa-20fa233cf0a1
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
@@ -101,6 +108,7 @@ Every topic file in `context/` gets a stub at `docs/context/<name>.md` holding a
 
 ## Keep the Why is the why layer of repo-native project memory, not the memory itself
 
+**Id:** 92734fc2-5bb5-47e4-ab6e-fad8ee26551f
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
