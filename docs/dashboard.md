@@ -7,7 +7,7 @@ description: keep-the-why-dashboard — a read-only live view over a project's c
 
 `keep-the-why-dashboard` is a read-only viewer over what a Keep the Why project already has: the entries in `context/`, the config in `.keep-the-why`, the linter's findings, and the Git history of all of it — who created each entry, who last touched it, when its `Status` changed and by whom.
 
-It connects data that is already lying around. It writes nothing into any project, runs no daemon beyond the terminal you start it in, and is never a source of truth: delete it and nothing is lost. The one file it keeps is `~/.keep-the-why/dashboard-history.json` — the projects you opened, with their paths, so the project menu can offer them again. That is what keeps it inside this project's own rule — [no new platform, database, daemon, account, or workflow](philosophy.md) — a lens on Markdown and Git, not a place where anything lives.
+It connects data that is already lying around. It writes nothing into any project, runs no daemon beyond the terminal you start it in, and is never a source of truth: delete it and nothing is lost. The one file it keeps is `~/.keep-the-why/projects.json`: where the projects you opened live on this machine, shared with the skill's own setup check, so the project menu can offer them again (a `dashboard-history.json` from before 0.2.0 is folded in and removed). That is what keeps it inside this project's own rule — [no new platform, database, daemon, account, or workflow](philosophy.md) — a lens on Markdown and Git, not a place where anything lives.
 
 <div class="ktw-shot" markdown>
 
@@ -33,11 +33,11 @@ ktw-dashboard [PATH] [--host 127.0.0.1] [--port 8765] [--no-browser] [--interval
 
 | Flag | Effect |
 |---|---|
-| `--export DIR` | writes `DIR/index.html`, one self-contained page with the state embedded (no server, no external requests), plus `DIR/state.json`; then exits. For GitHub Pages, a release asset, or the link behind the [badge](badge.md) |
+| `--export DIR` | writes `DIR/index.html`, one self-contained page with the state embedded (no server, no external requests), plus `DIR/state.json` and `DIR/badge.svg` — a static badge with the project's numbers, "42 entries · 3 open", for the README to link to this export, no badge service in between; then exits. For GitHub Pages, a release asset, or the link behind the [badge](badge.md) |
 | `--json` | prints the state and exits |
 | `--anonymize` | Git author names become `author-1`, `author-2`, … — for exports of repositories whose contributors did not ask to be listed on a web page. E-mail addresses are never part of the state |
 | `--scan DIR` | also look for projects under `DIR` (two levels deep) for the project menu; the parent of the start directory is always scanned |
-| `--no-history` | neither read nor update `~/.keep-the-why/dashboard-history.json` |
+| `--no-history` | neither read nor update `~/.keep-the-why/projects.json` (where projects have been seen; the skill keeps the same file) |
 | `--no-update-check` | don't ask pypi.org for newer versions of the dashboard and the linter — the check runs at start and once every 24 hours and is the server's only network call; a found update makes the package's entry in the status bar shimmer, with the version and the `pip install -U` line in its tooltip. The exported page never checks |
 | `--host 0.0.0.0` | exposes the page on the network; the CLI warns. Everything shown is the project's `context/` — treat the port like the repository |
 

@@ -2,13 +2,17 @@
 
 The skill keeps one personal file per project in ``~/.keep-the-why/<id>.md``;
 the ``<id>`` is the project's identity, deliberately not its path, and one id
-can live at several paths (clones, worktrees). So the dashboard keeps its own
-history next to those files: ``~/.keep-the-why/dashboard-history.json``, one
-entry per *path* with the id, ordered by last opened. Opening a project moves
-it to the top; the page offers the most recent ten.
+can live at several paths (clones, worktrees). Where a project has been seen
+is recorded in ``~/.keep-the-why/projects.json`` — the mapping the skill and
+the dashboard share since skill 0.18.0: one row per project (id, canonical,
+root), each with the paths it was seen at and when. Opening a project here
+updates its ``last_seen``; the page offers the ten most recent.
 
-That history is the only thing the dashboard ever writes: ids and paths, in
-the user's home, outside every repository, safe to delete. No project content.
+Before 0.2.0 the dashboard kept its own ``dashboard-history.json`` with the
+same information; it is folded into ``projects.json`` on first use and then
+removed. That mapping is the only thing the dashboard ever writes: ids,
+URLs and paths, in the user's home, outside every repository, safe to
+delete. No project content.
 
 Paths also come from two other places so the list fills itself: the
 directory the dashboard was started in, and a shallow scan of that
@@ -24,6 +28,9 @@ import time
 from dataclasses import asdict, dataclass
 
 _ID_RE = re.compile(r"^-\s*id:\s*(\S+)\s*$", re.M)
+_CANONICAL_RE = re.compile(r"^-\s*canonical:\s*(\S+)\s*$", re.M)
+_ROOT_RE = re.compile(r"^-\s*root:\s*`?([^`\s]+)`?\s*$", re.M)
+PROJECTS_JSON_VERSION = 1
 _SKIP_DIRS = {
     ".git",
     "node_modules",
@@ -41,8 +48,15 @@ def personal_dir() -> str:
     return os.path.join(os.path.expanduser("~"), ".keep-the-why")
 
 
-def history_path() -> str:
+def projects_path() -> str:
+    return os.path.join(personal_dir(), "projects.json")
+
+
+def legacy_history_path() -> str:
     return os.path.join(personal_dir(), "dashboard-history.json")
+
+
+history_path = projects_path  # the name before 0.2.0; the file is projects.json now
 
 
 def personal_ids() -> list[str]:
@@ -54,17 +68,32 @@ def personal_ids() -> list[str]:
     return sorted(n[:-3] for n in names if n.endswith(".md"))
 
 
-def read_project_id(path: str) -> str | None:
-    """The `id` of the project at `path`, or None if it is not one."""
+def read_project_config(path: str) -> dict | None:
+    """id, canonical and root of the project at `path`, or None if it is not one."""
     cfg = os.path.join(path, ".keep-the-why")
     if not os.path.isfile(cfg):
         return None
     try:
         with open(cfg, encoding="utf-8", errors="replace") as fh:
-            m = _ID_RE.search(fh.read())
+            text = fh.read()
     except OSError:
         return None
-    return m.group(1) if m else None
+    m = _ID_RE.search(text)
+    if not m:
+        return None
+    canonical = _CANONICAL_RE.search(text)
+    root = _ROOT_RE.search(text)
+    return {
+        "id": m.group(1),
+        "canonical": canonical.group(1) if canonical else "",
+        "root": root.group(1) if root else "",
+    }
+
+
+def read_project_id(path: str) -> str | None:
+    """The `id` of the project at `path`, or None if it is not one."""
+    cfg = read_project_config(path)
+    return cfg["id"] if cfg else None
 
 
 def scan(roots, depth: int = 2) -> dict[str, str]:
@@ -96,41 +125,127 @@ def scan(roots, depth: int = 2) -> dict[str, str]:
     return found
 
 
-def load_history() -> list[dict]:
-    """[{id, path, last_opened}], most recently opened first."""
-    try:
-        with open(history_path(), encoding="utf-8") as fh:
-            data = json.load(fh)
-    except (OSError, ValueError):
-        return []
-    rows = [
-        r
-        for r in data.get("projects", [])
-        if isinstance(r, dict)
-        and isinstance(r.get("id"), str)
-        and isinstance(r.get("path"), str)
-    ]
-    rows.sort(key=lambda r: r.get("last_opened", ""), reverse=True)
+def _valid_rows(data) -> list[dict]:
+    rows = []
+    for r in data.get("projects", []) if isinstance(data, dict) else []:
+        if not isinstance(r, dict) or not isinstance(r.get("id"), str):
+            continue
+        paths = [
+            p
+            for p in r.get("paths", [])
+            if isinstance(p, dict) and isinstance(p.get("path"), str)
+        ]
+        rows.append(
+            {
+                "id": r["id"],
+                "canonical": r.get("canonical") or "",
+                "root": r.get("root") or "",
+                "paths": paths,
+                **({"cache": r["cache"]} if isinstance(r.get("cache"), str) else {}),
+            }
+        )
     return rows
 
 
-def save_history(rows: list[dict]) -> None:
+def _migrate_legacy_history() -> list[dict]:
+    """dashboard-history.json (dashboard < 0.2.0) -> projects.json rows. The
+    old file is removed once its content is written to the new one."""
+    try:
+        with open(legacy_history_path(), encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, ValueError):
+        return []
+    rows: dict[str, dict] = {}
+    for r in data.get("projects", []) if isinstance(data, dict) else []:
+        if (
+            not isinstance(r, dict)
+            or not isinstance(r.get("id"), str)
+            or not isinstance(r.get("path"), str)
+        ):
+            continue
+        row = rows.setdefault(
+            r["id"], {"id": r["id"], "canonical": "", "root": "", "paths": []}
+        )
+        row["paths"].append(
+            {"path": r["path"], "last_seen": r.get("last_opened", "") or ""}
+        )
+    result = list(rows.values())
+    if result and save_projects(result):
+        try:
+            os.remove(legacy_history_path())
+        except OSError:
+            pass
+    return result
+
+
+def load_projects() -> list[dict]:
+    """The rows of ~/.keep-the-why/projects.json: [{id, canonical, root,
+    paths: [{path, last_seen}], cache?}]. Folds the pre-0.2.0 history file
+    in the first time there is no projects.json yet."""
+    try:
+        with open(projects_path(), encoding="utf-8") as fh:
+            data = json.load(fh)
+    except FileNotFoundError:
+        return _migrate_legacy_history()
+    except (OSError, ValueError):
+        return []
+    return _valid_rows(data)
+
+
+def save_projects(rows: list[dict]) -> bool:
     try:
         os.makedirs(personal_dir(), exist_ok=True)
-        with open(history_path(), "w", encoding="utf-8") as fh:
-            json.dump({"dashboard-history": 1, "projects": rows}, fh, indent=1)
+        with open(projects_path(), "w", encoding="utf-8") as fh:
+            json.dump(
+                {"projects-json": PROJECTS_JSON_VERSION, "projects": rows},
+                fh,
+                indent=1,
+            )
+        return True
     except OSError:
-        pass  # a read-only home must not stop the dashboard
+        return False  # a read-only home must not stop the dashboard
+
+
+def load_history() -> list[dict]:
+    """[{id, path, last_opened}], most recently seen first — every path of
+    every project in projects.json, flattened for the project menu."""
+    flat = []
+    for r in load_projects():
+        for p in r["paths"]:
+            flat.append(
+                {
+                    "id": r["id"],
+                    "path": p["path"],
+                    "last_opened": p.get("last_seen", ""),
+                }
+            )
+    flat.sort(key=lambda r: r.get("last_opened", ""), reverse=True)
+    return flat
 
 
 def record_open(pid: str, path: str) -> None:
-    """Move (or add) `path` to the top of the history."""
+    """Record that project `pid` was seen at `path` now: the row is created or
+    updated, the path's `last_seen` set, canonical and root refreshed from the
+    project's own config."""
     path = os.path.abspath(path)
-    rows = [r for r in load_history() if r["path"] != path]
-    rows.insert(
-        0, {"id": pid, "path": path, "last_opened": time.strftime("%Y-%m-%dT%H:%M:%S")}
-    )
-    save_history(rows)
+    now = time.strftime("%Y-%m-%dT%H:%M:%S")
+    cfg = read_project_config(path) or {}
+    rows = load_projects()
+    row = next((r for r in rows if r["id"] == pid), None)
+    if row is None:
+        row = {"id": pid, "canonical": "", "root": "", "paths": []}
+        rows.append(row)
+    if cfg.get("canonical"):
+        row["canonical"] = cfg["canonical"]
+    if cfg.get("root"):
+        row["root"] = cfg["root"]
+    row["paths"] = [p for p in row["paths"] if p.get("path") != path]
+    row["paths"].insert(0, {"path": path, "last_seen": now})
+    # most recently seen first, rows and paths alike — the order breaks ties
+    # between timestamps of the same second
+    rows.remove(row)
+    rows.insert(0, row)
+    save_projects(rows)
 
 
 @dataclass

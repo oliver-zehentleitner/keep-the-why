@@ -36,6 +36,37 @@ _LABEL_RE = re.compile(
     r"^\*\*(Reason|Rejected alternative|Consequence|Considered|Why this needs an answer):\*\*\s*(.*)$"
 )
 _REF_RE = re.compile(r"`?([A-Za-z0-9][A-Za-z0-9._-]*\.md)`?")
+# `<locator> — <uuid> — as of <date>` (a See line, or a cross-project Superseded by)
+_SEE_RE = re.compile(
+    r"^(?P<locator>\S+)\s+[—–-]\s+(?P<uuid>[0-9a-f-]{36})\s+[—–-]\s+as of\s+(?P<date>\d{4}-\d{2}-\d{2})$"
+)
+
+
+def parse_reference(value: str) -> dict | None:
+    """A See value as {locator, file, anchor, uuid, date, remote}; None when it
+    is not in the documented shape. `file`/`anchor` are set for a local
+    locator, `remote` is the canonical for a cross-project one."""
+    m = _SEE_RE.match(value.strip())
+    if not m:
+        return None
+    locator = m.group("locator")
+    ref = {
+        "locator": locator,
+        "uuid": m.group("uuid"),
+        "date": m.group("date"),
+        "file": None,
+        "anchor": None,
+        "remote": None,
+    }
+    if locator.startswith("https://"):
+        ref["remote"] = locator
+    else:
+        file, _, anchor = locator.partition("#")
+        ref["file"] = file
+        ref["anchor"] = anchor or None
+    return ref
+
+
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
 _FENCE_RE = re.compile(r"^\s*(```|~~~)")
 
@@ -296,18 +327,29 @@ class StateBuilder:
                         end = j
                         break
                 body = _body(lines, e.line, end)
+                fields = {f.name: [x.value for x in e.get(f.name)] for f in e.fields}
+                see = [
+                    ref
+                    for ref in (parse_reference(v) for v in fields.get("See", []))
+                    if ref is not None
+                ]
                 refs = sorted(
                     {
                         r
                         for r in _REF_RE.findall(body["text"])
                         if r in known and r != name
                     }
+                    | {
+                        ref["file"]
+                        for ref in see
+                        if ref["file"] and ref["file"] in known and ref["file"] != name
+                    }
                 )
-                fields = {f.name: [x.value for x in e.get(f.name)] for f in e.fields}
                 status = (fields.get("Status") or [""])[0]
                 evidence = (fields.get("Evidence") or [""])[0]
                 entry = {
                     "id": f"{name}#{slugify(e.title)}",
+                    "uuid": (fields.get("Id") or [None])[0],
                     "file": name,
                     "line": e.line,
                     "end_line": end,
@@ -318,6 +360,8 @@ class StateBuilder:
                     "source": (fields.get("Source") or [None])[0],
                     "verification": (fields.get("Verification") or [None])[0],
                     "revisit_when": (fields.get("Revisit when") or [None])[0],
+                    "see": see,
+                    "superseded_by": (fields.get("Superseded by") or [None])[0],
                     "body": body,
                     "refs": refs,
                     "git": self._git_for_entry(git_file, e, end) if git_file else None,

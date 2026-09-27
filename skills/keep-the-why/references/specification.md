@@ -18,6 +18,9 @@ The specification is versioned with the skill: its version is the `metadata.vers
 | `<context>/<topic>.md` | inside `<context>/`, flat | yes | entries, one file per topic |
 | `~/.keep-the-why/<id>.md` | the developer's home | never | personal settings for one project on one machine |
 | `~/.keep-the-why/config` | the developer's home | never | machine-wide policy, all projects |
+| `~/.keep-the-why/projects.json` | the developer's home | never | the mapping: where each project has been seen on this machine, with a timestamp per path; written by the skill's setup check and by `keep-the-why-dashboard`, read by both (§5.2) |
+| `~/.keep-the-why/cache/<id>/` | the developer's home | never | a read-only context cache of a family member that is not checked out here: a sparse partial clone holding its `.keep-the-why` and its context directory, nothing else (§5.2) |
+| `~/.keep-the-why/cache/<id>.md` | the developer's home | never | that cache's own settings and refresh timestamp, next to the directory, not inside it (§5.1) |
 
 All of these are written and kept current by the skill — the config files by the two wizards and the setup check, `<context>/` by capture and maintenance. A person answers the setup once per project and the occasional question; editing a file by hand is for changing a setting, not part of using it.
 
@@ -158,6 +161,8 @@ One file per machine, all projects.
 |---|---|---|---|
 | `personal-defaults-policy` | `always-ask` \| `auto-accept` | asked the first time it matters | what to do when a project offers `personal-defaults` and this developer has no personal file for it yet |
 | `session` | `attended` \| `unattended` | `attended` | whether sessions on this machine have someone present to answer; a personal file's own `session` line wins for its project |
+| `cache-refresh` | `every <N> days` \| `no` | `every 1 day`, asked once when the first cache is created | how often a context cache is pulled before it is read; a cache file's own `refresh` line wins for that cache (`W002` when malformed) |
+| `cache-offline` | `ask` \| `read-stale` \| `stop` | `ask` | what to do when a cache cannot be pulled: ask, read it and say its date, or stop; a cache file's own `offline` line wins (`E003` when malformed) |
 
 Example:
 
@@ -167,6 +172,47 @@ Example:
 - session: unattended
 <!-- /keep-the-why:global -->
 ```
+
+### 5.1 `~/.keep-the-why/cache/<id>.md` — `keep-the-why:cache`
+
+One file per cache, next to the cache directory `~/.keep-the-why/cache/<id>/`, never inside it (the clone stays untouched and its `git status` clean). Written when the cache is created.
+
+| Key | Values | Default | Meaning |
+|---|---|---|---|
+| `canonical` | the cached project's `canonical` | written at creation | which repository this cache holds |
+| `refresh` | `every <N> days — last: <YYYY-MM-DD>` \| `no` | the machine-wide `cache-refresh` | this cache's own interval and when it was last pulled; overrides §5 |
+| `offline` | `ask` \| `read-stale` \| `stop` | the machine-wide `cache-offline` | this cache's own answer for a failed pull; overrides §5 |
+
+```markdown
+<!-- keep-the-why:cache -->
+- canonical: https://github.com/oliver-zehentleitner/unicorn-binance-suite
+- refresh: every 1 day — last: 2026-09-27
+- offline: read-stale
+<!-- /keep-the-why:cache -->
+```
+
+### 5.2 `~/.keep-the-why/projects.json` and the cache directory
+
+`projects.json` is JSON, not a Markdown block, because it is cache data rather than a setting: many rows, timestamps, written by tools and read by tools.
+
+```json
+{
+ "projects-json": 1,
+ "projects": [
+  {
+   "id": "oliver-zehentleitner---unicorn-binance-suite",
+   "canonical": "https://github.com/oliver-zehentleitner/unicorn-binance-suite",
+   "root": "",
+   "paths": [{"path": "/home/me/projects/unicorn-binance-suite", "last_seen": "2026-09-27T10:12:03"}],
+   "cache": "/home/me/.keep-the-why/cache/oliver-zehentleitner---unicorn-binance-suite"
+  }
+ ]
+}
+```
+
+- One row per project (`id`; `canonical` and `root` when the project has them), `paths` most recently seen first with `last_seen`, and `cache` when a context cache exists. Rows and paths are ordered most recent first; a reader may rely on the order and on the timestamps, and must tolerate unknown keys.
+- The skill's setup check records the current project's path on every session; the dashboard records a project when it is opened. Both write the whole file; neither writes anything else there.
+- `~/.keep-the-why/cache/<id>/` is a sparse partial clone (`git clone --filter=blob:none --sparse`) checked out to the member's `.keep-the-why` and its context directory only — no agent instruction files, nothing else of the repository. **It is read-only for every tool:** the skill reads from it and never writes into it, the dashboard reads it; deleting it loses nothing, because nothing lives only there.
 
 ## 6. Resolution order
 

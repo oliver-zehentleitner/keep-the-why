@@ -387,6 +387,120 @@ class ProjectsTest(unittest.TestCase):
         self.assertFalse(os.path.exists(history_path()))
 
 
+class ProjectsJsonTest(unittest.TestCase):
+    """projects.json, the mapping shared with the skill, and the fold-in of the
+    pre-0.2.0 dashboard-history.json."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory(prefix="ktw-dash-mapping-")
+        self.home = os.path.join(self.tmp.name, "home")
+        self.work = os.path.join(self.tmp.name, "work")
+        os.makedirs(os.path.join(self.home, ".keep-the-why"))
+        self.alpha = os.path.join(self.work, "alpha")
+        os.makedirs(self.alpha)
+        with open(os.path.join(self.alpha, ".keep-the-why"), "w") as fh:
+            fh.write(
+                CONFIG.replace(
+                    "- id: acme---widget",
+                    "- id: acme---alpha\n- canonical: https://github.com/acme/alpha",
+                )
+            )
+        self._old_home = os.environ.get("HOME")
+        os.environ["HOME"] = self.home
+
+    def tearDown(self):
+        if self._old_home is not None:
+            os.environ["HOME"] = self._old_home
+        self.tmp.cleanup()
+
+    def test_legacy_history_is_folded_in_and_removed(self):
+        from ktw_dashboard import projects as P
+
+        legacy = os.path.join(self.home, ".keep-the-why", "dashboard-history.json")
+        with open(legacy, "w") as fh:
+            json.dump(
+                {
+                    "dashboard-history": 1,
+                    "projects": [
+                        {
+                            "id": "acme---alpha",
+                            "path": self.alpha,
+                            "last_opened": "2026-09-01T10:00:00",
+                        },
+                        {
+                            "id": "acme---alpha",
+                            "path": "/elsewhere/alpha",
+                            "last_opened": "2026-08-01T10:00:00",
+                        },
+                        {
+                            "id": "acme---beta",
+                            "path": "/x/beta",
+                            "last_opened": "2026-07-01T10:00:00",
+                        },
+                    ],
+                },
+                fh,
+            )
+        rows = P.load_projects()
+        self.assertEqual({r["id"] for r in rows}, {"acme---alpha", "acme---beta"})
+        alpha = next(r for r in rows if r["id"] == "acme---alpha")
+        self.assertEqual(
+            [p["path"] for p in alpha["paths"]], [self.alpha, "/elsewhere/alpha"]
+        )
+        self.assertFalse(os.path.exists(legacy))
+        with open(P.projects_path()) as fh:
+            data = json.load(fh)
+        self.assertEqual(data["projects-json"], 1)
+        # the flattened history the menu uses, most recent first
+        self.assertEqual(
+            [h["path"] for h in P.load_history()][:2], [self.alpha, "/elsewhere/alpha"]
+        )
+
+    def test_record_open_writes_canonical_and_last_seen(self):
+        from ktw_dashboard import projects as P
+
+        P.record_open("acme---alpha", self.alpha)
+        rows = P.load_projects()
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["canonical"], "https://github.com/acme/alpha")
+        self.assertEqual(rows[0]["paths"][0]["path"], self.alpha)
+        self.assertTrue(rows[0]["paths"][0]["last_seen"])
+        P.record_open("acme---alpha", self.alpha)  # again: still one path
+        self.assertEqual(len(P.load_projects()[0]["paths"]), 1)
+
+
+class EntryIdentityTest(StateTest):
+    """Id, See and Superseded by reach the state, and See lines are edges."""
+
+    def test_uuid_see_and_edges(self):
+        from ktw_dashboard.export import badge_text, render_badge
+
+        uid = "550e8400-e29b-41d4-a716-446655440000"
+        inc = "9b2d4f60-7c1e-4a8b-b3d5-6e7f8a9b0c1d"
+        with open(os.path.join(self.root, "context", "sync.md"), "w") as fh:
+            fh.write(
+                "# Sync\n\n## Snapshot before buffer\n\n"
+                f"**Id:** {uid}\n**Type:** decision\n**Status:** active\n**Evidence:** confirmed\n"
+                f"**See:** incidents.md#2025-11-duplicate-state — {inc} — as of 2026-09-27\n"
+                f"**See:** https://github.com/acme/other — {inc} — as of 2026-09-27\n\n"
+                "The sync step waits.\n"
+            )
+        state = StateBuilder(self.root).build()
+        e = next(x for x in state["entries"] if x["file"] == "sync.md")
+        self.assertEqual(e["uuid"], uid)
+        self.assertEqual(len(e["see"]), 2)
+        self.assertEqual(e["see"][0]["file"], "incidents.md")
+        self.assertEqual(e["see"][0]["anchor"], "2025-11-duplicate-state")
+        self.assertEqual(e["see"][1]["remote"], "https://github.com/acme/other")
+        self.assertIn("incidents.md", e["refs"])  # the See line is an edge
+        sync = next(t for t in state["topics"] if t["file"] == "sync.md")
+        self.assertIn("incidents.md", sync["refs_out"])
+        self.assertEqual(badge_text(state), "2 entries · 1 open")
+        svg = render_badge(state)
+        self.assertTrue(svg.startswith("<svg "))
+        self.assertIn("2 entries · 1 open", svg)
+
+
 class UpdatesTest(unittest.TestCase):
     def test_version_compare(self):
         from ktw_dashboard.updates import is_newer

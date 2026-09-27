@@ -294,3 +294,111 @@ seen, for a checkout. Rejected for this step because a search without a
 recorded mapping guesses, and because two clones of one repository must
 never be told apart by whichever was opened last — the mapping step
 carries that rule.
+
+## The mapping is one JSON file in the developer's home, kept by the skill and the dashboard alike
+
+**Id:** 3c014723-e167-4018-b82a-eaef5425a437
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer design discussion, 2026-09-26/27, with two rounds of external review
+**Revisit when:** a third tool needs to write the mapping, or the file grows past what a whole-file rewrite on every session can carry
+
+`~/.keep-the-why/projects.json` records where every project has been seen
+on this machine: one row per project with `id`, `canonical`, `root`, its
+paths with `last_seen`, and a cache path when one exists. The skill's setup
+check writes the current project's path every session; the dashboard writes
+a project when it is opened; the dashboard's own history file is folded in
+and removed.
+
+**Reason:** resolving a family member needs a machine-local answer to
+"where is it checked out", and that answer is neither project content nor
+a setting: it is cache data, many rows with timestamps, written by tools.
+JSON says so; a Markdown block would have been the wrong shape for a file
+nobody edits. The dashboard already kept exactly this information for its
+project menu, so one file serves both instead of two files drifting, and
+"the one thing the dashboard writes" stays one thing.
+
+**Rejected alternative:** `last_seen` as the write target when a
+repository has several working trees. Rejected on review: two clones or
+Git worktrees of one repository would let an agent working in repository
+A write into yesterday's feature worktree of repository B because it was
+opened last. One working tree → use it; several → the one beside the
+current project's family, else ask.
+
+**Rejected alternative:** derive locations every time by scanning the
+folder that holds the current project. Kept as the fallback for a machine
+without a mapping yet, rejected as the rule because a scan guesses where
+a mapping knows.
+
+## A context cache is a sparse partial clone under the home directory, built in two stages, and read-only
+
+**Id:** af010083-0200-4b0a-a220-b94bbb7b566e
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer design discussion, 2026-09-26/27, with two rounds of external review
+**Revisit when:** dogfooding shows a real need to write into a project that is not checked out, or a host stops serving partial clones
+
+A family member that is not checked out is fetched only after a question
+— a full clone into the family's folder, or a context cache:
+`git clone --filter=blob:none --sparse` under `~/.keep-the-why/cache/<id>/`,
+checked out first to the member's `.keep-the-why`, then to the context
+directory that file names. No agent instruction files. The cache is
+read-only for every tool; it refreshes on a timer before reads (default
+daily, asked once), a failed pull asks or follows a stored answer, and its
+settings live in `~/.keep-the-why/cache/<id>.md` next to the directory.
+
+**Reason:** a sparse partial clone downloads commit metadata plus the named
+paths, is host-independent, keeps a commit hash for citations, and needs
+no service. Under the home directory, not inside the project that uses
+it, so every package of a suite shares one cache of its parent. Two stages
+because `context` is configurable and a hardcoded path would have fetched
+the wrong directory for a project that keeps its knowledge elsewhere; no
+`AGENTS.md` or `CLAUDE.md` because a family cache needs knowledge, not
+another project's instructions — the trust rule applied to what is fetched
+at all. Read-only because a write nobody commits would make the cache the
+only copy of that change, hidden where nobody looks; a working tree shows
+uncommitted work at every `git status`. Working tree = work, cache =
+knowledge. A full clone is the person's tree: never pulled by the skill,
+never judged for age, because the checked-out state is the one the
+developer chose.
+
+**Rejected alternative:** a writable cache with "pull before every write".
+First designed, dropped on review: it contradicted "the cache is never the
+only copy of anything" the moment a write went uncommitted, and it dragged
+the offline question into writes. Removing it simplified three rules at
+once.
+
+**Rejected alternative:** the settings file inside the cache directory.
+Rejected because the directory is a checkout of someone else's repository;
+a file in it would be untracked there and show in every `git status`.
+
+**Rejected alternative:** fetch the context directory with a hardcoded
+name, plus the repo-native memory files. Rejected on review for the two
+reasons above.
+
+## The live badge is a static SVG the export writes, not a badge service
+
+**Id:** 1d8d6273-8710-4c89-9b29-b1d408a4b1d7
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer design discussion, 2026-09-27, after external review
+**Revisit when:** the numbers on the badge need to be current between docs builds, or a host stops serving SVG from a pages site
+
+`ktw-dashboard --export` writes `badge.svg` next to `state.json`, rendered
+at export time with the project's numbers ("42 entries · 3 open" — open,
+needs-review and pending-confirmation count as open). A README links it as
+the *live* badge next to the static one from keepthewhy.com, and the link
+lands on the project's own dashboard.
+
+**Reason:** the export already produces artifacts, and a badge is one more.
+README → the project's own SVG → the project's own dashboard has nothing
+in between, which is the property the project argues for everywhere else.
+The numbers are as current as the docs build, which is as current as the
+dashboard behind the link.
+
+**Rejected alternative:** a shields.io endpoint file (`badge.json`) that a
+badge service renders on request — the idea that had been parked in
+`TODO.md`. Rejected on review: a service in between, for a picture.

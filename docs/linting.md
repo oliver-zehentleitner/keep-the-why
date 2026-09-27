@@ -144,7 +144,7 @@ None of this is specific to Keep the Why; it is the same set of settings any tea
 | E301 | error | invisible or directional Unicode character |
 | E302 | error | file is not valid UTF-8 |
 | W001 | warning | `context-schema` missing (assumed 0.2.0) |
-| W002 | warning | unrecognized check-interval shape in `personal-defaults`; with `--setup`, also a timer or `source` line in the personal file |
+| W002 | warning | unrecognized check-interval shape in `personal-defaults`; with `--setup`, also a timer or `source` line in the personal file, or `cache-refresh` in the global config |
 | W003 | warning | project `context-schema` newer than the newest schema this linter knows |
 | W004 | warning | no personal file for this project on this machine, or none locatable because the `id` is unusable (`--setup`) |
 | W101 | warning | entry has no `Type` field |

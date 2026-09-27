@@ -83,6 +83,27 @@ ktw-lint . --setup    # locally only: also ~/.keep-the-why/<id>.md and ~/.keep-t
 ```
 <!-- snippets:end -->
 
+## The dashboard export
+
+Offered by the project wizard when a docs build exists (a GitHub Pages workflow, `mkdocs.yml`, a `docs/` deploy job), never invented where none does. One step in that build, after the site is generated and before it is uploaded — `keep-the-why-dashboard` reads the checkout and writes three static files, no server, no external request:
+
+```yaml
+      # Keep the Why: the project's own dashboard on /dashboard/live/ — index.html,
+      # state.json and badge.svg, exported from this checkout. Needs the full
+      # history (fetch-depth: 0 on the checkout step) to date entries by commit.
+      - run: |
+          pip install --quiet keep-the-why-dashboard
+          ktw-dashboard --export site/dashboard/live .
+```
+
+`site/` is whatever directory the build uploads (`site/` for MkDocs, `_site/` for Jekyll, `build/` for Sphinx — match the project's own). `--anonymize` replaces Git author names with `author-1`, `author-2`, … for a repository whose contributors did not ask to be listed on a web page. The live badge in the README then points at the project's own export:
+
+```markdown
+[![Keep the Why · live](https://example.org/dashboard/live/badge.svg)](https://example.org/dashboard/live/)
+```
+
+with the site's real URL; `badge.svg` is rendered at export time with the project's numbers ("42 entries · 3 open" — open, needs-review and pending-confirmation count as open), so README → the project's own SVG → the project's own dashboard, and no badge service in between. Staged, not committed, like everything else setup writes.
+
 ## The local run is a different setting
 
 CI checks everyone's entries after the push, on a runner with no home files. The same linter run locally, after each write and — with `--setup` — over the developer's own two home files, is the personal `local-lint` setting: asked by the personal wizard, not the project one, because installing and running a tool is a per-developer, per-machine choice. Everything about it — when it runs, the version floor, how it gets installed, what to do with findings — is "Local linting" in `setup.md`.

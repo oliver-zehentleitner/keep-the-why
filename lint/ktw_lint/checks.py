@@ -96,7 +96,8 @@ _INTERVAL_RE = re.compile(r"^(every\s+\d+\s+days?|no)$")
 HOME_DIR_DISPLAY = "~/.keep-the-why"
 PERSONAL_KNOWN = DEFAULTS_KNOWN + ("session", "migration-prompt", "source")
 PERSONAL_REPEATABLE = ("migration-prompt",)  # one line per declined version
-GLOBAL_KNOWN = ("personal-defaults-policy", "session")
+GLOBAL_KNOWN = ("personal-defaults-policy", "session", "cache-refresh", "cache-offline")
+CACHE_OFFLINE_VALUES = ("ask", "read-stale", "stop")
 SESSION_VALUES = ("attended", "unattended")
 DEFAULTS_POLICY_VALUES = ("always-ask", "auto-accept")
 _DASH = r"\s+[—–-]\s+"
@@ -941,6 +942,17 @@ class Linter:
             self._check_enum(
                 block, display, "personal-defaults-policy", DEFAULTS_POLICY_VALUES
             )
+            self._check_enum(block, display, "cache-offline", CACHE_OFFLINE_VALUES)
+            fld = block.first("cache-refresh")
+            if fld and not _INTERVAL_RE.match(fld[1].strip()):
+                self.add(
+                    WARNING,
+                    "W002",
+                    display,
+                    fld[0],
+                    f"cache-refresh '{fld[1]}' doesn't match the documented shape "
+                    "('every N days' or 'no')",
+                )
         else:
             self._check_enum(block, display, "capture-mode", CAPTURE_MODE_VALUES)
             self._check_enum(

@@ -1378,6 +1378,23 @@ class LintSetup(_ProjectFixture):
         findings, _ = self.run_setup()
         self.assertEqual(self.codes(findings), ["E011", "E012"])
 
+    def test_global_cache_keys(self):
+        self.write_home("acme---widget-service.md", GOOD_PERSONAL)
+        self.write_home(
+            "config",
+            "<!-- keep-the-why:global -->\n- cache-refresh: every 1 day\n"
+            "- cache-offline: read-stale\n<!-- /keep-the-why:global -->\n",
+        )
+        findings, _ = self.run_setup()
+        self.assertEqual([], self.codes(self.home_findings(findings)))
+        self.write_home(
+            "config",
+            "<!-- keep-the-why:global -->\n- cache-refresh: daily\n"
+            "- cache-offline: guess\n<!-- /keep-the-why:global -->\n",
+        )
+        findings, _ = self.run_setup()
+        self.assertEqual(["E003", "W002"], self.codes(self.home_findings(findings)))
+
     def test_global_values(self):
         self.write_home("acme---widget-service.md", GOOD_PERSONAL)
         self.write_home(

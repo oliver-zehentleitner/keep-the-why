@@ -54,8 +54,8 @@ def main(argv=None) -> int:
     parser.add_argument(
         "--no-history",
         action="store_true",
-        help="don't read or update ~/.keep-the-why/dashboard-history.json (recently opened "
-        "projects with their paths, the only file the dashboard writes)",
+        help="don't read or update ~/.keep-the-why/projects.json (where projects have been "
+        "seen, shared with the skill; the only file the dashboard writes)",
     )
     parser.add_argument(
         "--no-browser", action="store_true", help="don't open the browser"
@@ -67,7 +67,9 @@ def main(argv=None) -> int:
         help="seconds between change checks (default: 2)",
     )
     parser.add_argument(
-        "--export", metavar="DIR", help="write DIR/index.html + DIR/state.json and exit"
+        "--export",
+        metavar="DIR",
+        help="write DIR/index.html + DIR/state.json + DIR/badge.svg and exit",
     )
     parser.add_argument(
         "--json", action="store_true", help="print the state as JSON and exit"
