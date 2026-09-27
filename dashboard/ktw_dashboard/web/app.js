@@ -2,6 +2,8 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
+import { esc, plural, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily } from "./lib.js";
+
 const $ = (sel, root = document) => root.querySelector(sel);
 const narrow = () => !!window.matchMedia?.("(max-width: 900px)").matches;
 const el = (tag, attrs = {}, ...kids) => {
@@ -17,7 +19,6 @@ const el = (tag, attrs = {}, ...kids) => {
   return n;
 };
 const setKids = (node, ...kids) => node.replaceChildren(...kids.flat(Infinity).filter((k) => k != null && k !== false));
-const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const fmtDate = (d) => d || "—";
 const remoteLink = (remote) => el("a", { class: "gh", href: `https://${remote}`, target: "_blank", rel: "noopener" }, remote);
 const onGitHub = (g) => !!g?.remote && /^github\.com\//.test(g.remote);
@@ -31,40 +32,10 @@ const headPill = (g) => {
     branch ? el("a", { class: "gh", href: `${base}/tree/${encodeURIComponent(branch)}`, target: "_blank", rel: "noopener" }, branch) : "detached", "@",
     el("a", { class: "gh", href: `${base}/commit/${g.head_full || g.head}`, target: "_blank", rel: "noopener", title: g.head_full || g.head }, g.head));
 };
-const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
-const isUuid = (s) => UUID_RE.test(s || "");
 const PUBLIC = new URLSearchParams(location.search).get("public"); // a canonical: browse that project's published export
 const PUBLIC_ROOT = new URLSearchParams(location.search).get("root") || "";
 const MODE = PUBLIC ? "public" : window.__KTW_STATE__ ? "export" : "live";
 const LIVE = () => MODE === "live";
-// Raw-file URL of a repository file at HEAD, per host — the second and last
-// place host grammar lives (the first is hostFileLink below). Public mode
-// reads one file this way: a family member's .keep-the-why, for its
-// dashboard-state line.
-function rawFileUrl(canonical, root, path) {
-  const base = canonical.replace(/\/$/, "");
-  const rel = `${root ? root.replace(/\/$/, "") + "/" : ""}${path}`;
-  const gh = base.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)$/);
-  if (gh) return `https://raw.githubusercontent.com/${gh[1]}/${gh[2]}/HEAD/${rel}`;
-  if (/^https:\/\/gitlab\./.test(base)) return `${base}/-/raw/HEAD/${rel}`;
-  if (/^https:\/\/bitbucket\.org/.test(base)) return `${base}/raw/HEAD/${rel}`;
-  return `${base}/raw/branch/HEAD/${rel}`; // Codeberg, Gitea, Forgejo
-}
-const configLine = (text, key) => { const m = text.match(new RegExp(`^-\\s*${key}\\s*:\\s*(.+?)\\s*$`, "m")); return m ? m[1].replace(/^`|`$/g, "") : ""; };
-// A state document from anywhere: whatever this page did not produce may be
-// older or newer than it — unknown keys are ignored, missing ones blank.
-function normalizeState(s) {
-  s = s && typeof s === "object" ? s : {};
-  s.project = s.project && typeof s.project === "object" ? s.project : {};
-  s.project.config ||= {}; s.project.children ||= []; s.project.context ||= "context/"; s.project.schema ||= "?";
-  s.topics = Array.isArray(s.topics) ? s.topics : []; s.entries = Array.isArray(s.entries) ? s.entries : []; s.authors = Array.isArray(s.authors) ? s.authors : [];
-  s.findings = s.findings && typeof s.findings === "object" ? s.findings : {}; s.findings.errors ||= 0; s.findings.warnings ||= 0; s.findings.items ||= [];
-  for (const t of s.topics) { t.refs_out ||= []; t.refs_in ||= []; t.status ||= {}; t.evidence ||= {}; t.entries ||= 0; }
-  for (const e of s.entries) { e.type ||= []; e.refs ||= []; e.see ||= []; e.findings ||= []; e.body = e.body && typeof e.body === "object" ? e.body : { text: String(e.body || ""), reason: "" }; e.body.text ||= ""; e.id ||= `${e.file || "?"}#${slug(e.title || "")}`; }
-  return s;
-}
-const slug = (t) => t.toLowerCase().replace(/[^\w\- ]/g, "").replace(/ /g, "-");
 const PUBLIC_STATES = {}; // canonical -> {state, url} | {error}
 async function fetchPublicState(canonical, root = "") {
   const key = `${canonical}|${root}`;
@@ -81,22 +52,6 @@ async function fetchPublicState(canonical, root = "") {
   return result;
 }
 const publicHref = (canonical, root = "", hash = "#overview") => `${location.pathname}?public=${encodeURIComponent(canonical)}${root ? `&root=${encodeURIComponent(root)}` : ""}${hash}`;
-// The one place host URL grammar lives: a file (and heading anchor) of a
-// repository as its host renders it. Everything else in Keep the Why keeps
-// canonical + file + anchor apart and never bakes a host into a field.
-function hostFileLink(canonical, branch, contextDir, file, anchor) {
-  if (!canonical) return null;
-  const base = canonical.replace(/\/$/, "");
-  const ref = encodeURIComponent(branch && branch !== "HEAD" ? branch : "HEAD");
-  const path = `${contextDir || "context/"}${file}`;
-  let seg;
-  if (/^https:\/\/gitlab\./.test(base) || /\/-\//.test(base)) seg = `/-/blob/${ref}/`;
-  else if (/^https:\/\/(codeberg\.org|gitea\.|forgejo\.)/.test(base)) seg = `/src/branch/${ref}/`;
-  else if (/^https:\/\/bitbucket\.org/.test(base)) seg = `/src/${ref}/`;
-  else seg = `/blob/${ref}/`; // GitHub and most GitHub-shaped forges
-  return `${base}${seg}${path}${anchor ? "#" + anchor : ""}`;
-}
-const canonicalOf = (p) => p?.canonical || (p?.git?.remote ? `https://${p.git.remote}` : "");
 
 // ---------------------------------------------------------------- state
 let S = null; // current state
@@ -361,16 +316,6 @@ function refLine(ref, label) {
   if (ref.file) return el("div", { class: "ref" }, label ? el("b", {}, label) : null, topicOf(ref.file) ? el("a", { href: `#topic/${ref.file}` }, ref.locator) : ref.locator, el("span", { class: "note mono" }, ` · ${ref.uuid || ""}`), el("span", { class: "note warn" }, " · Id not found here — the locator may be stale"), date);
   return el("div", { class: "ref" }, label ? el("b", {}, label) : null, ref.text || "");
 }
-function parseSupersededBy(value) {
-  if (!value) return null;
-  const v = value.trim();
-  if (isUuid(v)) return { uuid: v };
-  const m = v.match(/^(\S+)\s+[—–-]\s+([0-9a-f-]{36})\s+[—–-]\s+as of\s+(\d{4}-\d{2}-\d{2})$/);
-  if (m) return { remote: m[1].startsWith("https://") ? m[1] : null, file: m[1].startsWith("https://") ? null : m[1].split("#")[0], locator: m[1], uuid: m[2], date: m[3] };
-  const n = v.match(/^none\s*[—–-]\s*(.*)$/);
-  if (n) return { none: n[1] };
-  return { text: v };
-}
 function viewEntry(main, id) {
   let e = byId()[id];
   if (!e && isUuid(id)) e = byUuid()[id];
@@ -432,7 +377,6 @@ async function fetchFamily() {
   try { FAMILY = (await (await fetch(api("/api/family"), { cache: "no-store" })).json()).members || []; } catch { FAMILY = null; }
   return FAMILY;
 }
-const kindLabel = (k) => k === "cache" ? "cache, read only" : k === "repository" ? "repository, read and write" : k === "public" ? "published export" : "not available here";
 // the family as .keep-the-why declares it — what an export or a public dump knows
 function familyDeclared() {
   const p = S.project; const out = [];
@@ -492,10 +436,6 @@ async function viewProjects(main) {
   PROJECTS = data.projects || [];
   const current = PROJECT || data.selected;
   const list = PROJECTS;
-  const byCanonical = (c) => list.filter((p) => p.path && c && p.canonical === c);
-  const parentOf = (p) => { if (!p.parent) return null; if (p.parent.startsWith("https://")) return byCanonical(p.parent)[0] || null; const abs = p.path ? new URL(p.parent + "/", "file://" + p.path.replace(/\/?$/, "/")).pathname.replace(/\/$/, "") : null; return list.find((x) => x.path === abs) || null; };
-  const children = new Map(); const roots = [];
-  for (const p of list) { const par = parentOf(p); if (par && par.key !== p.key) { if (!children.has(par.key)) children.set(par.key, []); children.get(par.key).push(p); } else roots.push(p); }
   const row = (p, depth) => {
     const here = p.key === current;
     const label = p.path ? el("a", { href: `${location.pathname}?project=${encodeURIComponent(p.key)}#overview` }, p.name) : el("span", {}, p.id);
@@ -509,10 +449,7 @@ async function viewProjects(main) {
       el("div", { class: "pm mono" }, p.id, p.canonical ? ` · ${p.canonical}` : "", p.path ? ` · ${p.path}` : "", p.last_opened ? ` · seen ${p.last_opened}` : ""),
       forget);
   };
-  const out = [];
-  const walk = (p, depth) => { out.push(row(p, depth)); for (const c of (children.get(p.key) || [])) walk(c, depth + 1); };
-  for (const p of roots) walk(p, 0);
-  main.append(el("div", { class: "projects" }, out));
+  main.append(el("div", { class: "projects" }, groupByFamily(list).map(([p, depth]) => row(p, depth))));
 }
 
 // ---------------------------------------------------------------- details pane
@@ -942,11 +879,7 @@ async function setupProjects() {
   const opt = (p, indent = "") => el("option", { value: p.key, selected: p.key === current, disabled: !p.path, title: p.path || "location unknown — start the dashboard in that project once, or pass --scan" },
     p.path ? `${indent}${p.name}  (${p.kind === "cache" ? "cache, read only" : "repository"})${p.source === "cwd" ? "  · here" : ""}` : `${p.id}  (location unknown)`);
   // families grouped: a parent, its children indented below it (children found by canonical or path)
-  const parentOf = (p) => { if (!p.parent || !p.path) return null; if (p.parent.startsWith("https://")) return list.find((x) => x.path && x.canonical === p.parent && x.kind === "repository") || list.find((x) => x.path && x.canonical === p.parent) || null; const abs = new URL(p.parent + "/", "file://" + p.path.replace(/\/?$/, "/")).pathname.replace(/\/$/, ""); return list.find((x) => x.path === abs) || null; };
-  const kids = new Map(); const tops = [];
-  for (const p of list) { const par = parentOf(p); if (par && par.key !== p.key) { if (!kids.has(par.key)) kids.set(par.key, []); kids.get(par.key).push(p); } else tops.push(p); }
-  const flat = []; const walk = (p, d) => { flat.push([p, d]); for (const c of kids.get(p.key) || []) walk(c, d + 1); };
-  for (const p of tops) walk(p, 0);
+  const flat = groupByFamily(list);
   const groups = [["Projects", flat.filter(([p]) => p.path)], ["Known, location unknown", flat.filter(([p]) => !p.path)]];
   sel.replaceChildren(...groups.filter(([, items]) => items.length).map(([label, items]) => el("optgroup", { label }, items.map(([p, d]) => opt(p, "\u00a0\u00a0".repeat(d) + (d ? "└ " : ""))))));
   sel.hidden = false;

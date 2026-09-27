@@ -680,6 +680,80 @@ class FamilyTest(unittest.TestCase):
             srv.stop()
 
 
+class HttpEndpointsTest(FamilyTest):
+    """The endpoints project families added, over a real local server."""
+
+    def test_family_entry_and_forget_over_http(self):
+        import threading
+        import urllib.error
+        import urllib.request
+
+        from ktw_dashboard.projects import resolve
+        from ktw_dashboard.server import Projects, Server, make_handler
+
+        projects, selected = resolve(self.rest)
+        srv = Projects(
+            projects,
+            selected,
+            interval=60,
+            anonymize=False,
+            use_history=False,
+            update_check=False,
+        )
+        httpd = Server(("127.0.0.1", 0), make_handler(srv))
+        base = f"http://127.0.0.1:{httpd.server_address[1]}"
+        thread = threading.Thread(
+            target=httpd.serve_forever, kwargs={"poll_interval": 0.1}, daemon=True
+        )
+        thread.start()
+
+        def get(path):
+            with urllib.request.urlopen(base + path, timeout=10) as r:
+                return json.loads(r.read().decode())
+
+        try:
+            listing = get("/api/projects")
+            kinds = {p["id"]: p["kind"] for p in listing["projects"] if p["path"]}
+            self.assertEqual(kinds["acme---ws"], "cache")
+            fam = get("/api/family")
+            roles = {(m["role"], m["name"]): m["available"] for m in fam["members"]}
+            self.assertEqual(roles[("parent", "suite")], "repository")
+            self.assertEqual(roles[("sibling", "ws")], "cache")
+            suite_uuid = "550e8400-e29b-41d4-a716-" + "acme---suite"[-12:].replace(
+                "-", "0"
+            ).ljust(12, "0")
+            hit = get(f"/api/entry?uuid={suite_uuid}")
+            self.assertEqual(hit["project"], self.suite)
+            with self.assertRaises(urllib.error.HTTPError) as ctx:
+                get("/api/entry?uuid=00000000-0000-4000-8000-000000000000")
+            self.assertEqual(ctx.exception.code, 404)
+            # the page's module and its library are served
+            with urllib.request.urlopen(base + "/static/lib.js", timeout=10) as r:
+                self.assertIn("export function groupByFamily", r.read().decode())
+            req = urllib.request.Request(
+                base + "/api/projects/forget",
+                data=json.dumps({"key": self.ws_cache}).encode(),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=10) as r:
+                self.assertEqual(json.loads(r.read().decode()), {"ok": True})
+            self.assertFalse(os.path.exists(self.ws_cache))
+            req = urllib.request.Request(
+                base + "/api/projects/forget",
+                data=b'{"key": "/nowhere"}',
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with self.assertRaises(urllib.error.HTTPError) as ctx:
+                urllib.request.urlopen(req, timeout=10)
+            self.assertEqual(ctx.exception.code, 404)
+        finally:
+            httpd.shutdown()
+            httpd.server_close()
+            srv.stop()
+
+
 class UpdatesTest(unittest.TestCase):
     def test_version_compare(self):
         from ktw_dashboard.updates import is_newer

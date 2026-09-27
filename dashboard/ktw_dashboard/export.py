@@ -8,6 +8,7 @@ from __future__ import annotations
 import base64
 import json
 import os
+import re
 
 from .server import WEB_DIR
 
@@ -19,6 +20,15 @@ def render_page(state: dict) -> str:
         css = fh.read()
     with open(os.path.join(WEB_DIR, "app.js"), encoding="utf-8") as fh:
         js = fh.read()
+    with open(os.path.join(WEB_DIR, "lib.js"), encoding="utf-8") as fh:
+        lib = fh.read()
+    # one self-contained page: the library module is inlined ahead of the app,
+    # its `export` keywords dropped and the app's import line removed
+    js = (
+        re.sub(r"^export ", "", lib, flags=re.M)
+        + "\n"
+        + re.sub(r"^import \{[^}]*\} from \"\./lib\.js\";\n", "", js, flags=re.M)
+    )
     data = json.dumps(state, ensure_ascii=False).replace("</", "<\\/")
     for name in ("icon.png", "wordmark.png"):
         with open(os.path.join(WEB_DIR, name), "rb") as fh:

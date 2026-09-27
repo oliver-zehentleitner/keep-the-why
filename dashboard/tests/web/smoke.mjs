@@ -46,6 +46,27 @@ report.strip = window.document.querySelectorAll("#strip a.stat").length;
 report.entryMiniGraph = window.document.querySelectorAll("#details .mini canvas").length;
 await go(`#topic/${S.topics[0].file}`);
 report.topicMiniGraph = window.document.querySelectorAll("#details .mini canvas").length;
+// content, not only "something rendered": the views built for project families
+const withSee = S.entries.find((e) => e.see?.length);
+const main = window.document.getElementById("main");
+await go("#family");
+const inFamily = !!(S.project.parent || (S.project.children || []).length);
+if (inFamily ? !main.querySelector(".family .member.self") : !/not part of a family/.test(main.textContent)) errors.push("family view: neither a self row (in a family) nor the not-part-of-a-family line");
+if (withUuid) {
+  await go(`#entry/${withUuid.uuid}`);
+  if (!main.querySelector("h1")) errors.push("entry by uuid: no reader rendered");
+  const idCell = [...window.document.querySelectorAll("#details .kv .v")].some((n) => n.textContent === withUuid.uuid);
+  if (!idCell) errors.push("entry by uuid: the details pane does not show the Id");
+}
+if (withSee) {
+  await go(`#entry/${withSee.uuid || encodeURIComponent(withSee.id)}`);
+  if (![...main.querySelectorAll(".refs-box h3")].some((h) => h.textContent === "See")) errors.push("entry with See lines: no See section in the reader");
+}
+const search = window.document.getElementById("search");
+search.value = S.entries[0].title.split(" ").slice(0, 2).join(" ");
+search.dispatchEvent(new window.Event("input"));
+await tick(200);
+if (window.document.getElementById("search-results").hidden || !window.document.querySelector("#search-results a")) errors.push("search: no result for a known title");
 await go("#overview");
 report.defaultMiniGraph = window.document.querySelectorAll("#details .mini canvas").length;
 if (report.strip < 10) errors.push("strip: expected at least 10 stats, got " + report.strip);

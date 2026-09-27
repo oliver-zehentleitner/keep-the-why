@@ -69,6 +69,8 @@ Three Git commands make it: `git blame` on an entry's heading says who committed
 
 ## How it is built
 
+- Tested three ways: Python unit tests for everything the server computes (state, Git attribution, mapping, family, forget, export, the endpoints over a real local server); `node --test` unit tests for the page's pure part — `lib.js`, the host URL grammars, tolerant state reading, reference parsing, family grouping — with no dependencies; and a jsdom smoke test that loads an export, drives every route and checks that the family view, the entry page by Id and the search render what they should.
+
 - Python, standard library only, with [`keep-the-why-lint`](linting.md) as the parser. The dashboard shows exactly what the linter accepts; entry bodies, cross-references and Git are the only things it adds. A schema change lands in the linter once and the dashboard follows.
 - The page is plain JavaScript — one module, no framework, no build step, no CDN — so the exported file works offline and the repository carries no second toolchain. The graph is a hundred lines of canvas.
 - The server is `http.server` with one background thread for the fingerprint check and a Server-Sent Events endpoint. `--export` inlines the same page with the same state; the page never knows which mode it is in beyond a badge in the top bar.

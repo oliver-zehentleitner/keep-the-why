@@ -68,8 +68,11 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Syntax-check the page module
-        run: node --check dashboard/ktw_dashboard/web/app.js
+      - name: Syntax-check the page modules
+        run: node --check dashboard/ktw_dashboard/web/app.js && node --check dashboard/ktw_dashboard/web/lib.js
+
+      - name: Unit-test the page's pure part (node:test, no dependencies)
+        run: node --test dashboard/tests/web/lib.test.mjs
 
       - name: Export and drive every route in jsdom
         run: |
