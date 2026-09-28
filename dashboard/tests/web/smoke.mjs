@@ -53,6 +53,15 @@ const main = window.document.getElementById("main");
 await go("#graph/family");
 if (!main.querySelector(".graph-wrap canvas")) errors.push("graph/family in an export: no graph rendered");
 if (!window.document.getElementById("scope").hidden) errors.push("export: a this-project/family switch it cannot use");
+// the side-pane graph: near and project in an export (no family), and the switch works
+await go(`#entry/${encodeURIComponent(S.entries[0].id)}`);
+const modes = [...window.document.querySelectorAll("#details .mini-seg button")].map((b) => b.textContent);
+if (modes.join() !== "near,project") errors.push("side-pane graph in an export: expected near,project, got " + modes.join());
+[...window.document.querySelectorAll("#details .mini-seg button")].find((b) => b.textContent === "project")?.click();
+await tick(50);
+if (window.document.querySelector("#details .mini-seg button.on")?.textContent !== "project" || !window.document.querySelector("#details .mini canvas")) errors.push("side-pane graph: the project switch did not take");
+[...window.document.querySelectorAll("#details .mini-seg button")].find((b) => b.textContent === "near")?.click();
+await tick(50);
 await go("#family");
 const inFamily = !!(S.project.parent || (S.project.children || []).length);
 if (inFamily ? !main.querySelector(".family .member.self") : !/not part of a family/.test(main.textContent)) errors.push("family view: neither a self row (in a family) nor the not-part-of-a-family line");

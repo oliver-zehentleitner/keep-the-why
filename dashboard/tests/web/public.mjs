@@ -52,7 +52,7 @@ async function open(url) {
   vc.on("jsdomError", (e) => errors.push("jsdom: " + (e.detail?.stack || e.message || e).toString().split("\n").slice(0, 2).join(" | ")));
   vc.on("error", (...a) => errors.push("console: " + a.join(" ")));
   const dom = new JSDOM(html, { url, runScripts: "dangerously", pretendToBeVisual: true, virtualConsole: vc,
-    beforeParse(w) { w.fetch = stubFetch; w.ResizeObserver = class { observe() {} disconnect() {} }; w.HTMLCanvasElement.prototype.getContext = () => new Proxy({}, { get: (t, k) => (k === "measureText" ? () => ({ width: 10 }) : () => {}), set: () => true }); w.matchMedia = () => ({ matches: false }); } });
+    beforeParse(w) { w.fetch = stubFetch; w.ResizeObserver = class { observe() {} disconnect() {} }; w.HTMLCanvasElement.prototype.getContext = () => new Proxy({}, { get: (t, k) => (k === "measureText" ? () => ({ width: 10 }) : () => {}), set: () => true }); w.matchMedia = () => ({ matches: false }); w.CSS = { escape: (x) => x.replace(/([^\w-])/g, "\\$1") }; } });
   await tick(300);
   return dom.window;
 }
@@ -105,6 +105,19 @@ const report = {};
     await tick(100);
     if (!/topic \(size = entries\)/.test(window.document.querySelector(".graph-legend")?.textContent || "")) errors.push("scope back to this project: the graph did not switch to the local one");
   }
+  window.close();
+}
+{
+  // references to an entry from elsewhere in the family: the plugin's See to the suite's entry, seen from the suite
+  const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/suite`)}#entry/${SUITE_ID}`);
+  const d = window.document;
+  if (!/switch next to the project menu/.test(d.querySelector(".refs-box")?.textContent || "")) errors.push("entry, scope this project: no hint that references from the family need the family scope");
+  d.querySelector('#scope button[data-scope="family"]').click();
+  await tick(300);
+  report.referencedBy = d.querySelector(".refs-box")?.textContent.replace(/\s+/g, " ").slice(0, 160);
+  if (!/Referenced by \(See\), elsewhere in the family\s*Plugins load lazily · plugin/.test(report.referencedBy || "")) errors.push("entry, scope family: the plugin's See is not listed as a reference: " + report.referencedBy);
+  const modes = [...d.querySelectorAll("#details .mini-seg button")].map((b) => b.textContent);
+  if (modes.join() !== "near,project,family") errors.push("side-pane graph in public mode: expected near,project,family, got " + modes.join());
   window.close();
 }
 {

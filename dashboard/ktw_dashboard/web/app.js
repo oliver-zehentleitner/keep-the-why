@@ -334,11 +334,7 @@ function viewEntry(main, id) {
     el("div", { class: "fields" }, ...entryPills(e), e.source ? pill(`Source: ${e.source}`, "") : null, e.verification ? pill(`Verification: ${e.verification.split(/\s[—-]\s/)[0]}`, "") : null),
     el("div", { class: "body", html: renderMarkdown(e.body.text || "_(no body)_") }),
     e.revisit_when ? el("div", { class: "body" }, el("div", { class: "label", html: `<b>Revisit when</b><p>${inline(e.revisit_when)}</p>` })) : null,
-    (e.see?.length || e.superseded_by || supersedersOf(e).length) ? el("div", { class: "body refs-box" },
-      e.see?.length ? [el("h3", {}, "See"), ...e.see.map((r) => refLine(r))] : null,
-      e.superseded_by ? [el("h3", {}, "Superseded by"), (() => { const sb = parseSupersededBy(e.superseded_by); return sb.none != null ? el("div", { class: "ref" }, el("i", {}, "none"), el("span", { class: "note" }, ` — ${sb.none}`)) : refLine(sb); })()] : null,
-      supersedersOf(e).length ? [el("h3", {}, "Supersedes"), ...supersedersOf(e).map((x) => el("div", { class: "ref" }, el("a", { href: entryHref(x) }, x.title), el("span", { class: "note" }, ` · ${topicOf(x.file)?.title || x.file}`)))] : null,
-    ) : null,
+    refsBox(e),
     el("div", { class: "pager" },
       idx > 0 ? el("a", { href: `#entry/${encodeURIComponent(list[idx - 1].id)}` }, `← ${list[idx - 1].title}`) : el("span"),
       idx < list.length - 1 ? el("a", { href: `#entry/${encodeURIComponent(list[idx + 1].id)}` }, `${list[idx + 1].title} →`) : el("span")),
@@ -374,6 +370,34 @@ function viewAuthors(main) {
 }
 
 const supersedersOf = (e) => e.uuid ? S.entries.filter((x) => x.superseded_by && parseSupersededBy(x.superseded_by)?.uuid === e.uuid) : [];
+const seenFrom = (e, list) => e.uuid ? list.filter((x) => (x.see || []).some((r) => r?.uuid === e.uuid)) : [];
+// See and Superseded by of an entry, and the other way round: what supersedes
+// or points at it — here, and with the family scope anywhere in the tree
+function refsBox(e) {
+  const back = (label, rows) => rows.length ? [el("h3", {}, label), ...rows] : null;
+  const localRow = (x) => el("div", { class: "ref" }, el("a", { href: entryHref(x) }, x.title), el("span", { class: "note" }, ` · ${topicOf(x.file)?.title || x.file}`));
+  const sup = supersedersOf(e), seen = seenFrom(e, S.entries);
+  const box = el("div", { class: "body refs-box" },
+    e.see?.length ? [el("h3", {}, "See"), ...e.see.map((r) => refLine(r))] : null,
+    e.superseded_by ? [el("h3", {}, "Superseded by"), (() => { const sb = parseSupersededBy(e.superseded_by); return sb.none != null ? el("div", { class: "ref" }, el("i", {}, "none"), el("span", { class: "note" }, ` — ${sb.none}`)) : refLine(sb); })()] : null,
+    back("Supersedes", sup.map(localRow)), back("Referenced by (See)", seen.map(localRow)));
+  const family = e.uuid && canFamily();
+  if (family && scope() === "family") {
+    const more = el("div", {}, el("p", { class: "note" }, "Looking for references from the rest of the family…")); box.append(more);
+    searchPool("family").then((pool) => {
+      const sups = [], sees = [];
+      for (const g of pool.groups) {
+        if (g.member.role === "self") continue;
+        const row = (x) => el("div", { class: "ref" }, el("a", { href: g.href(x) }, x.title), el("span", { class: "note" }, ` · ${g.member.name} · ${topicTitle(g.state, x.file)}`));
+        for (const x of g.state.entries || []) { if (x.superseded_by && parseSupersededBy(x.superseded_by)?.uuid === e.uuid) sups.push(row(x)); if ((x.see || []).some((r) => r?.uuid === e.uuid)) sees.push(row(x)); }
+      }
+      setKids(more, back("Supersedes, elsewhere in the family", sups), back("Referenced by (See), elsewhere in the family", sees),
+        pool.missing.length ? el("p", { class: "note" }, `${plural(pool.missing.length, "family member")} not available here — not looked through.`) : null);
+      if (!sups.length && !sees.length && !pool.missing.length) more.replaceChildren(el("p", { class: "note" }, "No references to this entry from the rest of the family."));
+    });
+  } else if (family) box.append(el("p", { class: "note" }, "References from the rest of the family show with the family scope — the switch next to the project menu."));
+  return box.childNodes.length ? box : null;
+}
 
 // ---------------------------------------------------------------- family and projects
 let FAMILY = null; // /api/family result for the current project (live mode only)
@@ -485,11 +509,7 @@ function renderDetailsTopic(t) {
   d.append(el("h3", {}, "Topic"), el("div", { class: "kv" }, el("span", { class: "k" }, "file"), el("span", { class: "v mono" }, t.file), el("span", { class: "k" }, "entries"), el("span", { class: "v" }, t.entries)));
   d.append(el("h3", {}, `References out (${t.refs_out.length})`), ...(t.refs_out.length ? t.refs_out.map((f) => el("a", { class: "backlink", href: `#topic/${f}` }, topicOf(f)?.title || f)) : [el("p", { class: "empty" }, "none")]));
   d.append(el("h3", {}, `Referenced by (${t.refs_in.length})`), ...(t.refs_in.length ? t.refs_in.map((f) => el("a", { class: "backlink", href: `#topic/${f}` }, topicOf(f)?.title || f)) : [el("p", { class: "empty" }, "none")]));
-  if (narrow()) { d.append(el("h3", {}, "Graph"), el("a", { class: "backlink", href: "#graph" }, "Open the project graph →")); return; }
-  const box = el("div", { class: "mini tall" }, el("span", { class: "mini-title" }, "neighbourhood"), el("span", { class: "mini-hint" }, "click to open"));
-  const canvas = el("canvas"); box.prepend(canvas);
-  d.append(el("h3", {}, "Graph"), box);
-  requestAnimationFrame(() => runGraph(canvas, buildTopicSubgraph(t), { mini: true, focusId: `t:${t.file}` }));
+  miniGraph(d, { topic: t });
 }
 function renderDetailsEntry(e) {
   const d = $("#details"); d.replaceChildren();
@@ -539,19 +559,32 @@ function renderDetailsDefault() {
       el("h3", {}, "Keys"), el("p", { class: "note" }, el("kbd", {}, "/"), " search · ", el("kbd", {}, "g"), " graph · ", el("kbd", {}, "o"), " overview · ", el("kbd", {}, "q"), " queues · ", el("kbd", {}, "t"), " timeline · ", el("kbd", {}, "a"), " authors"));
     return;
   }
-  if (narrow()) { d.append(el("h3", {}, "Graph"), el("a", { class: "backlink", href: "#graph" }, "Open the project graph →")); return; }
-  const box = el("div", { class: "mini fill" }, el("span", { class: "mini-title" }, "graph"), el("span", { class: "mini-hint" }, "hover · click · g for the full view"));
-  const canvas = el("canvas"); box.prepend(canvas);
-  d.append(box);
-  requestAnimationFrame(() => runGraph(canvas, buildGraph(), { mini: true }));
+  miniGraph(d, {});
 }
-function renderDetailsNeighbourhood(e) {
-  const d = $("#details");
+function renderDetailsNeighbourhood(e) { miniGraph($("#details"), { entry: e }); }
+// The side-pane graph: the neighbourhood of an entry or topic, the whole
+// project, or the whole family — a switch in its corner, remembered per
+// browser. Family is offered where the family scope is (live, public).
+let MINI = (() => { try { return localStorage.getItem("ktw-mini") || "near"; } catch { return "near"; } })();
+function miniGraph(d, ctx) {
+  const focusId = ctx.entry ? `e:${ctx.entry.id}` : ctx.topic ? `t:${ctx.topic.file}` : null;
   if (narrow()) { d.append(el("h3", {}, "Graph"), el("a", { class: "backlink", href: "#graph" }, "Open the project graph →")); return; }
-  const box = el("div", { class: "mini tall" }, el("span", { class: "mini-title" }, "neighbourhood"), el("span", { class: "mini-hint" }, "click to open"));
-  const canvas = el("canvas"); box.prepend(canvas);
-  d.append(el("h3", {}, "Graph"), box);
-  requestAnimationFrame(() => runGraph(canvas, buildSubgraph(e), { mini: true, focusId: `e:${e.id}` }));
+  const modes = [...(focusId ? ["near"] : []), "project", ...(canFamily() ? ["family"] : [])];
+  const mode = modes.includes(MINI) ? MINI : focusId ? "near" : "project";
+  const box = el("div", { class: `mini ${focusId ? "tall" : "fill"}` });
+  const seg = el("span", { class: "mini-seg" }, modes.length > 1 ? modes.map((m) => el("button", { type: "button", class: m === mode ? "on" : "", title: { near: "this entry's or topic's neighbourhood", project: "the whole project", family: "the whole family tree" }[m], onclick: () => { MINI = m; try { localStorage.setItem("ktw-mini", m); } catch {} const keep = d.querySelector(".mini"); const h = keep?.previousElementSibling?.tagName === "H3" ? keep.previousElementSibling : null; h?.remove(); keep?.remove(); miniGraph(d, ctx); } }, m)) : el("span", { class: "mini-title" }, "graph"));
+  const canvas = el("canvas");
+  box.append(canvas, seg, el("span", { class: "mini-hint" }, mode === "near" ? "click to open" : "hover · click · g for the full view"));
+  if (focusId) d.append(el("h3", {}, "Graph"));
+  d.append(box);
+  const opts = { mini: true, focusId };
+  if (mode === "near") return requestAnimationFrame(() => runGraph(canvas, ctx.entry ? buildSubgraph(ctx.entry) : buildTopicSubgraph(ctx.topic), opts));
+  if (mode === "project") return requestAnimationFrame(() => runGraph(canvas, buildGraph(), opts));
+  // family: the family graph's nodes, in a view of its own (its own zoom, entries shown)
+  const note = el("span", { class: "mini-hint", style: "top:28px;bottom:auto" }, "loading the family…"); box.append(note);
+  const show = (fg) => { note.remove(); if (!canvas.isConnected) return; runGraph(canvas, { ...fg, scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true, raf: null, wake: null, alpha: Math.max(fg.alpha, 0.3) }, opts); };
+  if (fgraph && Date.now() - fgraph.at < 30000) requestAnimationFrame(() => show(fgraph));
+  else buildFamilyGraph().then(show);
 }
 // ---------------------------------------------------------------- graph (canvas force layout, no library)
 let graph = null; // the full graph persists across re-renders so positions survive live updates
@@ -572,8 +605,21 @@ function assemble(topics, entries, prev = {}) {
   }
   const seen = new Set();
   for (const t of topics) for (const f of t.refs_out) { if (index[`t:${f}`] == null) continue; const k = [t.file, f].sort().join("|"); if (seen.has(k)) continue; seen.add(k); links.push({ s: index[`t:${t.file}`], t: index[`t:${f}`], kind: "topic", len: 170 }); }
+  // See and Superseded by between entries, by Id; between their topics while entries are hidden
+  const tpairs = new Set();
+  for (const x of linkFamily([{ key: "self", role: "self", state: { entries } }]).xrefs) {
+    const a = entries.find((e) => e.id === x.from.id), b = entries.find((e) => e.id === x.to.id);
+    const s = index[`e:${x.from.id}`], t = index[`e:${x.to.id}`];
+    if (s == null || t == null) continue;
+    links.push({ s, t, kind: x.kind, len: 150 });
+    const ts = index[`t:${a.file}`], tt = index[`t:${b.file}`]; const k = `${ts}|${tt}`;
+    if (a.file !== b.file && ts != null && tt != null && !tpairs.has(k)) { tpairs.add(k); links.push({ s: ts, t: tt, kind: "xtopic", len: 200 }); }
+  }
   return { nodes, links, index };
 }
+// the Ids an entry points at, and the entries of `list` that point at it
+const pointsAt = (e) => [...(e.see || []).map((r) => r?.uuid), e.superseded_by ? parseSupersededBy(e.superseded_by)?.uuid : null].filter(Boolean);
+const linkedTo = (e, list) => list.filter((x) => x !== e && ((e.uuid && pointsAt(x).includes(e.uuid)) || (x.uuid && pointsAt(e).includes(x.uuid))));
 function buildGraph() {
   const prev = graph ? Object.fromEntries(graph.nodes.map((n) => [n.id, n])) : {};
   graph = Object.assign(graph || { scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true, alpha: 1 }, assemble(S.topics, S.entries, prev));
@@ -592,9 +638,10 @@ function buildSubgraph(e) {
   // the entry, its topic and siblings, the topics it references, and the entries elsewhere that reference its topic
   const files = new Set([e.file, ...e.refs]);
   const back = S.entries.filter((x) => x.refs.includes(e.file));
-  for (const b of back) files.add(b.file);
+  const linked = linkedTo(e, S.entries); // See / Superseded by, either direction
+  for (const b of [...back, ...linked]) files.add(b.file);
   const topics = S.topics.filter((t) => files.has(t.file));
-  const entries = S.entries.filter((x) => x.file === e.file || x.id === e.id || back.includes(x));
+  const entries = S.entries.filter((x) => x.file === e.file || x.id === e.id || back.includes(x) || linked.includes(x));
   const prev = graph ? Object.fromEntries(graph.nodes.map((n) => [n.id, n])) : {};
   return Object.assign({ scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true, alpha: 1 }, assemble(topics, entries, prev));
 }
