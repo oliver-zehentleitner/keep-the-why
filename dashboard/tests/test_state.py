@@ -173,10 +173,13 @@ class StateTest(unittest.TestCase):
     def test_mailmap_joins_two_identities_of_one_author(self):
         # Bob's commit came from a second identity of Alice's: the project's
         # .mailmap says so, and every author field follows it, as git does
-        s = StateBuilder(self.root).build()
+        b = StateBuilder(self.root)
+        s = b.build()
         self.assertEqual({a["name"] for a in s["authors"]}, {"Alice", "Bob"})
+        before = b.fingerprint()
         with open(os.path.join(self.root, ".mailmap"), "w") as fh:
             fh.write("Alice <alice@example.com> Bob <bob@example.com>\n")
+        self.assertNotEqual(before, b.fingerprint())  # the live server rebuilds
         s = StateBuilder(self.root).build()
         self.assertEqual({a["name"] for a in s["authors"]}, {"Alice"})
         parts = [

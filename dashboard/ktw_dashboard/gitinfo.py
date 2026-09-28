@@ -96,6 +96,11 @@ def fingerprint(project_root: str, context_dir: str, repo: Repo | None) -> str:
                 )
             except OSError:
                 parts.append("-")
+        # the mailmap decides author names; an edit to it changes the state
+        try:
+            parts.append(str(os.stat(os.path.join(repo.root, ".mailmap")).st_mtime_ns))
+        except OSError:
+            parts.append("-")
     for name in (".keep-the-why", "AGENTS.md"):
         try:
             parts.append(str(os.stat(os.path.join(project_root, name)).st_mtime_ns))

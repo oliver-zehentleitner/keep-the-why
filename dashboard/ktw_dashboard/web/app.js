@@ -1156,6 +1156,7 @@ let LAST_POOL = null; let MERGE_SEQ = 0;
 function mergeWith(pool) { S = mergeStates([{ ...pool.groups[0], state: SELF }, ...pool.groups.slice(1)]); S.missing = pool.missing; }
 async function showScope() {
   const mine = ++MERGE_SEQ;
+  if (!SELF) return; // no state yet: the first applyState merges when it arrives
   if (scope() !== "family") { S = SELF; LAST_POOL = null; return rerender(); }
   if (LAST_POOL) { mergeWith(LAST_POOL); rerender(); }
   const pool = await searchPool("family");
