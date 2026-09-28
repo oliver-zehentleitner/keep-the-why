@@ -36,33 +36,6 @@ Open source under the [MIT license](https://keepthewhy.com/license/) — the ski
 
 <div class="ktw-section" markdown>
 
-## What it leaves behind
-
-<div class="ktw-entry" markdown>
-
-<p class="ktw-entry__path"><code>context/retries.md</code></p>
-
-### Why retry_with_jitter isn't a plain retry loop
-
-**Id:** 7ba48019-a710-4fa4-b6ff-b741d69ca50b<br>
-**Type:** constraint<br>
-**Status:** active<br>
-**Evidence:** confirmed<br>
-**Source:** discovered while considering simplifying it, 2026-07-22
-
-The payment gateway's rate limiter returns 429 with a per-request `Retry-After` header. A fixed-delay retry loop would frequently retry before the limiter resets, causing repeated 429s under load.
-
-**Considered:** replacing it with a plain retry loop, since the wrapper looked like unnecessary complexity with nothing documenting why. Not adopted once the `Retry-After` behavior surfaced during review.
-
-</div>
-
-Decisions that shipped, alternatives that lost, workarounds, constraints — Keep the Why keeps the reasoning behind all of them: one entry per topic, plain Markdown, reviewed in the same pull request as the code, and found through a one-line-per-topic index, so an agent loads only the topic a task touches. This one is the case where it matters most: a change that was started and then dropped, so there is no commit, no diff, no pull request — and without the entry, no trace. Every entry says how well its claim is backed (`Evidence`) and whether it still holds (`Status`); "unknown" is a valid answer. [The full example →](examples/abandoned-change.md) · [Field reference →](repository-structure.md)
-{ .ktw-caption }
-
-</div>
-
-<div class="ktw-section" markdown>
-
 ## How it works
 
 **Install it with one command. Say "set up Keep the Why here" once in a project and answer the setup — "defaults" is a complete answer. Then work as usual.**
@@ -116,6 +89,33 @@ The next session — yours, a colleague's, an agent's — loads the index first 
 </div>
 
 </div>
+
+</div>
+
+<div class="ktw-section" markdown>
+
+## What it leaves behind
+
+<div class="ktw-entry" markdown>
+
+<p class="ktw-entry__path"><code>context/retries.md</code></p>
+
+### Why retry_with_jitter isn't a plain retry loop
+
+**Id:** 7ba48019-a710-4fa4-b6ff-b741d69ca50b<br>
+**Type:** constraint<br>
+**Status:** active<br>
+**Evidence:** confirmed<br>
+**Source:** discovered while considering simplifying it, 2026-07-22
+
+The payment gateway's rate limiter returns 429 with a per-request `Retry-After` header. A fixed-delay retry loop would frequently retry before the limiter resets, causing repeated 429s under load.
+
+**Considered:** replacing it with a plain retry loop, since the wrapper looked like unnecessary complexity with nothing documenting why. Not adopted once the `Retry-After` behavior surfaced during review.
+
+</div>
+
+Decisions that shipped, alternatives that lost, workarounds, constraints — Keep the Why keeps the reasoning behind all of them: one entry per topic, plain Markdown, reviewed in the same pull request as the code, and found through a one-line-per-topic index, so an agent loads only the topic a task touches. This one is the case where it matters most: a change that was started and then dropped, so there is no commit, no diff, no pull request — and without the entry, no trace. Every entry says how well its claim is backed (`Evidence`) and whether it still holds (`Status`); "unknown" is a valid answer. [The full example →](examples/abandoned-change.md) · [Field reference →](repository-structure.md)
+{ .ktw-caption }
 
 </div>
 

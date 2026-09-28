@@ -6,7 +6,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Changed
 
-- Landing page: the live dashboard section sits right before "One repository or many", after "How it works"; the *Use* card links "Audit the data" to the dashboard, and the *Multi repository* card links the UNICORN Binance Suite's published dashboard as an example of a family.
+- Landing page: "How it works" follows the hero, then "What it leaves behind" and the live dashboard, right before "One repository or many"; the *Use* card links "Audit the data" to the dashboard, and the *Multi repository* card links the UNICORN Binance Suite's published dashboard as an example of a family.
 
 ### Fixed
 
