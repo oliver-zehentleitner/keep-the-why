@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import {
   esc, plural, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, canonicalOf,
   parseSupersededBy, kindLabel, groupByFamily, searchTerms, searchHit, compareHits, snippetAt, highlight,
-  resolveLocation, bodyProse, linkFamily,
+  resolveLocation, bodyProse, linkFamily, authorLookup, mergeStates,
 } from "../../ktw_dashboard/web/lib.js";
 
 test("esc escapes the five HTML characters and nothing else", () => {
@@ -180,4 +180,43 @@ test("linkFamily: parent lines by canonical and root, roles as fallback, See and
     { from: { key: "self", id: "w1" }, to: { key: "suite", id: "s1" }, kind: "see" },
     { from: { key: "docs", id: "d1" }, to: { key: "suite", id: "s1" }, kind: "superseded" },
   ]); // an Id outside the graph and a reference to itself are left out
+});
+
+test("authorLookup: the host API that names a commit's account, and the commit page as fallback", () => {
+  const gh = authorLookup("https://github.com/acme/widget", "abc1234");
+  assert.equal(gh.api, "https://api.github.com/repos/acme/widget/commits/abc1234");
+  assert.equal(gh.pick({ author: { html_url: "https://github.com/someone" } }), "https://github.com/someone");
+  assert.equal(gh.pick({ author: null }), null); // an email GitHub knows no account for
+  assert.equal(gh.fallback, "https://github.com/acme/widget/commit/abc1234");
+  const cb = authorLookup("https://codeberg.org/acme/widget.git", "abc1234");
+  assert.equal(cb.api, "https://codeberg.org/api/v1/repos/acme/widget/git/commits/abc1234");
+  assert.equal(cb.pick({ author: { login: "someone" } }), "https://codeberg.org/someone");
+  const bb = authorLookup("https://bitbucket.org/acme/widget", "abc1234");
+  assert.equal(bb.pick({ author: { user: { links: { html: { href: "https://bitbucket.org/someone/" } } } } }), "https://bitbucket.org/someone/");
+  const gl = authorLookup("https://gitlab.com/group/sub/widget", "abc1234");
+  assert.equal(gl.api, null); // GitLab's commit API names no account: straight to the commit page
+  assert.equal(gl.fallback, "https://gitlab.com/group/sub/widget/-/commit/abc1234");
+  assert.equal(authorLookup("", "abc1234"), null);
+  assert.equal(authorLookup("https://github.com/acme/widget", ""), null);
+  assert.equal(authorLookup("https://github.com/acme/widget", "not a sha"), null);
+});
+
+test("mergeStates: one state for the family, a member's files and ids prefixed, authors and findings summed", () => {
+  const st = (name, files, authors, errors) => ({ project: { id: name }, topics: files.map((f) => ({ file: f, title: f, refs_out: [], refs_in: [] })), entries: files.map((f) => ({ id: `${f}#x`, file: f, refs: [f] })), authors, findings: { errors, warnings: 0, items: errors ? [{ path: `context/${files[0]}`, line: 1 }] : [] } });
+  const groups = [
+    { member: { role: "self", name: "suite" }, state: st("suite", ["history.md"], [{ name: "A", created: 1, touched: 1, superseded: 0, evidence: { confirmed: 1 }, first: "2026-01-02", last: "2026-01-03" }], 0) },
+    { member: { role: "child", name: "fy" }, state: { ...st("fy", ["history.md", "adapters.md"], [{ name: "A", created: 2, touched: 3, superseded: 1, evidence: { confirmed: 1, unknown: 1 }, first: "2025-12-01", last: "2026-02-01" }, { name: "B", created: 1, touched: 1, superseded: 0, evidence: {} }], 1), anonymized: true } },
+  ];
+  const m = mergeStates(groups);
+  assert.equal(m.merged, true);
+  assert.deepEqual(m.topics.map((t) => t.file), ["history.md", "fy/history.md", "fy/adapters.md"]); // the same file name stays two topics
+  assert.deepEqual(m.entries.map((e) => [e.id, e.project, e.localFile]), [["history.md#x", null, "history.md"], ["fy/history.md#x", "fy", "history.md"], ["fy/adapters.md#x", "fy", "adapters.md"]]);
+  assert.deepEqual(m.entries[1].refs, ["fy/history.md"]);
+  const a = m.authors.find((x) => x.name === "A");
+  assert.deepEqual([a.created, a.touched, a.superseded, a.evidence, a.first, a.last], [3, 4, 1, { confirmed: 2, unknown: 1 }, "2025-12-01", "2026-02-01"]);
+  assert.equal(m.authors[0].name, "A"); // most entries created first
+  assert.deepEqual([m.findings.errors, m.findings.items[0].path, m.findings.items[0].project], [1, "fy/context/history.md", "fy"]);
+  assert.equal(m.anonymized, true); // one anonymized member keeps profile lookups off for the whole family
+  assert.equal(m.project.id, "suite");
+  assert.equal(groups[1].state.entries[0].id, "history.md#x"); // the members' own states are left as they are
 });

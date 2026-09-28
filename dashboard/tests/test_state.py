@@ -175,6 +175,9 @@ class StateTest(unittest.TestCase):
         names = {a["name"] for a in s["authors"]}
         self.assertEqual(names, {"author-1", "author-2"})
         self.assertNotIn("@example.com", json.dumps(s))
+        # the page reads this and offers no profile lookup, which would name the person
+        self.assertIs(s["anonymized"], True)
+        self.assertIs(StateBuilder(self.root).build()["anonymized"], False)
 
     def test_fingerprint_changes_on_edit(self):
         b = StateBuilder(self.root)

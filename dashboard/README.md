@@ -75,11 +75,11 @@ Started inside a project, the dashboard shows that one. The project menu shows f
 | **Side pane** | the project graph by default; for a topic or an entry its neighbourhood graph, with a *near / project / family* switch in its corner; plus fields, created by / last touched / status history from Git, backlinks, linter findings |
 | **Queues** | `open`, `needs-review`, `pending-confirmation`, `Evidence: unknown` on active entries, and the `Revisit when` triggers on record — the page lists, it does not decide |
 | **Timeline** | entries by the month their heading first appeared in Git, stacked by author; superseded events marked |
-| **Authors** | per Git author: created, touched, superseded, first / last activity, Evidence mix of what they created; click to filter every view |
+| **Authors** | per Git author: created, touched, superseded, first / last activity, Evidence mix of what they created; a name opens the profile on the host (looked up on the click from one of their commits, the commit page when that fails), the rest of the row filters every view |
 | **Family** | the whole tree from the root down, each project nested under the one whose children block lists it, with its scope and how it is available here: a working tree, a read-only context cache, or not at all (with the commands to get it) |
 | **Projects** | everything this machine knows, families grouped, each row with its type; *forget* removes a mapping row (and a cache directory), never a working tree. Live server only |
 | **Entry by Id** | `#entry/<uuid>` opens an entry by its `Id`, here or in any project known here; the reader shows `See`, `Superseded by` and what the entry supersedes; the details pane links the entry on its host |
-| **This project / family** | next to the project menu: one scope for search and graph |
+| **This project / family** | next to the project menu: one scope for the whole page — with *family* every view shows the family merged (entries, topics, authors, queues, timeline, findings), search and graph over the whole tree |
 | **Local / public** | next to the project menu, for a project with a family: *local* reads clones and caches here, *public* reads a member's published export — the browser fetches its `.keep-the-why` at `HEAD`, takes the `dashboard-state` URL and loads that `state.json`; family, search and entry-by-Id work over the exports the same way |
 | **Findings** | the linter's findings with links to the entries they sit in |
 | **Status bar** | the two package versions, linking PyPI; when a newer release exists the entry shimmers and its tooltip names the version and the `pip install -U` line |

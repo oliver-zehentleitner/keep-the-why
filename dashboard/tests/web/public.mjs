@@ -115,9 +115,25 @@ const report = {};
   d.querySelector('#scope button[data-scope="family"]').click();
   await tick(300);
   report.referencedBy = d.querySelector(".refs-box")?.textContent.replace(/\s+/g, " ").slice(0, 160);
-  if (!/Referenced by \(See\), elsewhere in the family\s*Plugins load lazily · plugin/.test(report.referencedBy || "")) errors.push("entry, scope family: the plugin's See is not listed as a reference: " + report.referencedBy);
+  // with the family merged, the plugin's entry is part of what is shown: a reference like any other, named by its project
+  if (!/Referenced by \(See\)\s*Plugins load lazily · plugin · Design/.test(report.referencedBy || "")) errors.push("entry, scope family: the plugin's See is not listed as a reference: " + report.referencedBy);
   const modes = [...d.querySelectorAll("#details .mini-seg button")].map((b) => b.textContent);
   if (modes.join() !== "near,project,family") errors.push("side-pane graph in public mode: expected near,project,family, got " + modes.join());
+  window.close();
+}
+{
+  // the family scope merges every view: the strip counts, the sidebar, the overview
+  const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/web`)}#overview`);
+  const d = window.document;
+  const entries = () => [...d.querySelectorAll("#strip a.stat")][0]?.textContent;
+  report.mergedBefore = entries();
+  d.querySelector('#scope button[data-scope="family"]').click();
+  await tick(300);
+  report.mergedAfter = entries();
+  report.mergedSidebar = [...d.querySelectorAll(".tree .tree-project")].map((x) => x.textContent);
+  if (report.mergedBefore !== "1entries" || report.mergedAfter !== "4entries") errors.push(`family scope: strip should go from 1 to 4 entries, got ${report.mergedBefore} → ${report.mergedAfter}`);
+  if (report.mergedSidebar.length !== 4) errors.push("family scope: the sidebar has no heading per project: " + report.mergedSidebar.join());
+  if (!d.querySelector("#main .family-banner")) errors.push("family scope: no family banner on the overview");
   window.close();
 }
 {

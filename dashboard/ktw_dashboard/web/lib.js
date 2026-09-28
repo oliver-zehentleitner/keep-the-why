@@ -191,3 +191,52 @@ export function linkFamily(groups) {
   }
   return { parentOf, xrefs };
 }
+
+// A Git author's profile on the host, looked up from one of their commits:
+// the host's API names the account behind a commit, which the name and email
+// in Git do not. Returns { api, pick(json) -> profile URL | null, fallback }
+// — the fallback is the commit's own page, where the host links the author.
+// null when the canonical names no host this knows or there is no commit.
+export function authorLookup(canonical, sha) {
+  const m = String(canonical || "").replace(/\.git$/, "").replace(/\/+$/, "").match(/^https:\/\/([^/]+)\/(.+?)\/([^/]+)$/);
+  if (!m || !sha || !/^[0-9a-f]{4,40}$/.test(sha)) return null;
+  const [, host, owner, repo] = m;
+  const base = `https://${host}/${owner}/${repo}`;
+  if (host === "github.com") return { api: `https://api.github.com/repos/${owner}/${repo}/commits/${sha}`, pick: (j) => j?.author?.html_url || null, fallback: `${base}/commit/${sha}` };
+  if (host === "bitbucket.org") return { api: `https://api.bitbucket.org/2.0/repositories/${owner}/${repo}/commit/${sha}`, pick: (j) => j?.author?.user?.links?.html?.href || null, fallback: `${base}/commits/${sha}` };
+  if (/^gitlab\./.test(host)) return { api: null, pick: () => null, fallback: `${base}/-/commit/${sha}` }; // GitLab's commit API names no account
+  return { api: `https://${host}/api/v1/repos/${owner}/${repo}/git/commits/${sha}`, pick: (j) => (j?.author?.login ? `https://${host}/${j.author.login}` : null), fallback: `${base}/commit/${sha}` }; // Codeberg, Gitea, Forgejo
+}
+
+// The family as one state: every member's topics and entries, authors and
+// linter findings in one document the page renders like a single project.
+// `groups` are [{ member, state }], this project first; its files and ids
+// keep their names, a member's are prefixed with the member's name, so the
+// same `history.md` in two projects stays two topics. Every topic and entry
+// carries `project` (null for this project) and `origin` (its group).
+export function mergeStates(groups) {
+  const self = groups[0]?.state || {};
+  const pre = (P, f) => (P ? `${P}/${f}` : f);
+  const out = { ...self, merged: true, family: groups.map((G) => ({ name: G.member.name, role: G.member.role, project: G.member.role === "self" ? null : G.member.name })), topics: [], entries: [], authors: [], findings: { errors: 0, warnings: 0, items: [] } };
+  const authors = new Map();
+  for (const G of groups) {
+    const st = G.state || {}; const P = G.member.role === "self" ? null : G.member.name;
+    for (const t of st.topics || []) out.topics.push({ ...t, file: pre(P, t.file), refs_out: (t.refs_out || []).map((f) => pre(P, f)), refs_in: (t.refs_in || []).map((f) => pre(P, f)), project: P, origin: G, localFile: t.file });
+    for (const e of st.entries || []) out.entries.push({ ...e, id: pre(P, e.id), file: pre(P, e.file), refs: (e.refs || []).map((f) => pre(P, f)), project: P, origin: G, localId: e.id, localFile: e.file });
+    for (const a of st.authors || []) {
+      const cur = authors.get(a.name);
+      if (!cur) { authors.set(a.name, { ...a, evidence: { ...(a.evidence || {}) }, projects: [P] }); continue; }
+      for (const k of ["created", "touched", "superseded"]) cur[k] = (cur[k] || 0) + (a[k] || 0);
+      for (const [k, v] of Object.entries(a.evidence || {})) cur.evidence[k] = (cur.evidence[k] || 0) + v;
+      if (a.first && (!cur.first || a.first < cur.first)) cur.first = a.first;
+      if (a.last && (!cur.last || a.last > cur.last)) cur.last = a.last;
+      cur.projects.push(P);
+    }
+    const f = st.findings || {};
+    out.findings.errors += f.errors || 0; out.findings.warnings += f.warnings || 0;
+    for (const x of f.items || []) out.findings.items.push({ ...x, path: pre(P, x.path), project: P, localPath: x.path });
+  }
+  out.authors = [...authors.values()].sort((a, b) => (b.created || 0) - (a.created || 0) || String(a.name).localeCompare(String(b.name)));
+  out.anonymized = groups.some((G) => G.state?.anonymized);
+  return out;
+}

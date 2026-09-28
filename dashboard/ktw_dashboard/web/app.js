@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-import { esc, plural, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, searchTerms, searchHit, compareHits, snippetAt, highlight, resolveLocation, linkFamily } from "./lib.js";
+import { esc, plural, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, searchTerms, searchHit, compareHits, snippetAt, highlight, resolveLocation, linkFamily, authorLookup, mergeStates } from "./lib.js";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const narrow = () => !!window.matchMedia?.("(max-width: 900px)").matches;
@@ -60,7 +60,8 @@ async function fetchPublicState(canonical, root = "") {
 const publicHref = (canonical, root = "", hash = "#overview") => `${location.pathname}?public=${encodeURIComponent(canonical)}${root ? `&root=${encodeURIComponent(root)}` : ""}${hash}`;
 
 // ---------------------------------------------------------------- state
-let S = null; // current state
+let S = null; // what the page shows: this project, or with the family scope the whole family merged (lib.js, mergeStates)
+let SELF = null; // this project's own state, always
 const PROJECT = new URLSearchParams(location.search).get("project"); // null: the server's selected one
 const api = (path) => PROJECT ? `${path}?project=${encodeURIComponent(PROJECT)}` : path;
 let filter = { status: "", evidence: "", author: "" };
@@ -86,6 +87,9 @@ const queues = () => ({
 const queueTotal = () => { const q = queues(); return q.open.length + q["needs-review"].length + q["pending-confirmation"].length + q.unknown.length; };
 
 // ---------------------------------------------------------------- markdown (small, safe)
+// a merged member's entry names its own project's topic files: resolve them there
+let INLINE_PROJECT = null;
+const inProject = (f) => (INLINE_PROJECT ? `${INLINE_PROJECT}/${f}` : f);
 function inline(md) {
   let s = esc(md);
   s = s.replace(/`([^`]+)`/g, (m, c) => `<code>${c}</code>`);
@@ -93,13 +97,13 @@ function inline(md) {
   s = s.replace(/(^|[\s(])\*([^*\s][^*]*)\*(?=[\s).,;:]|$)/g, "$1<i>$2</i>");
   s = s.replace(/(^|[\s(])_([^_\s][^_]*)_(?=[\s).,;:]|$)/g, "$1<i>$2</i>");
   s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (m, t, u) => {
-    if (/^[A-Za-z0-9._-]+\.md(#.*)?$/.test(u) && topicOf(u.split("#")[0])) return `<a href="#topic/${u.split("#")[0]}">${t}</a>`;
+    if (/^[A-Za-z0-9._-]+\.md(#.*)?$/.test(u) && topicOf(inProject(u.split("#")[0]))) return `<a href="#topic/${inProject(u.split("#")[0])}">${t}</a>`;
     if (/^https?:\/\//.test(u)) return `<a href="${u}" target="_blank" rel="noopener">${t}</a>`;
     return `<a>${t}</a>`;
   });
   // bare topic references become links
   s = s.replace(/(^|[^\w/">#-])(<code>)?([A-Za-z0-9][A-Za-z0-9._-]*\.md)(<\/code>)?(?![\w"])/g, (m, pre, c1, f, c2) =>
-    topicOf(f) ? `${pre}<a href="#topic/${f}">${c1 || ""}${f}${c2 || ""}</a>` : m);
+    topicOf(inProject(f)) ? `${pre}<a href="#topic/${inProject(f)}">${c1 || ""}${f}${c2 || ""}</a>` : m);
   return s;
 }
 function renderMarkdown(md) {
@@ -166,13 +170,14 @@ const typeCounts = (list) => list.reduce((m, e) => { for (const t of e.type?.len
 const STATUS_ORDER = ["active", "open", "needs-review", "pending-confirmation", "superseded"];
 const EV_ORDER = ["confirmed", "inferred", "unknown"];
 const entryLink = (e, extra = "") => el("a", { href: `#entry/${encodeURIComponent(e.id)}`, class: extra }, e.title);
+const projectOf = (x) => (x?.project ? x.project : null); // a merged family member's name, null for this project
 function entryRow(e) {
   const snippet = e.body.reason || e.body.text.split("\n")[0] || "";
   const g = e.git;
   return el("a", { href: `#entry/${encodeURIComponent(e.id)}`, class: `row ${matches(e) ? "" : "dim"}` },
     el("div", { class: "rt" }, el("span", { html: inline(e.title) }), ...entryPills(e)),
     el("div", { class: "rs" }, snippet.replace(/\*\*|`/g, "")),
-    el("div", { class: "rm" }, [topicOf(e.file)?.title || e.file, g?.created?.author ? `${g.created.author} · ${g.created.date}` : null, g?.last_touched?.date && g.last_touched.date !== g?.created?.date ? `touched ${g.last_touched.date}` : null].filter(Boolean).join("  ·  ")));
+    el("div", { class: "rm" }, [projectOf(e), topicOf(e.file)?.title || e.file, g?.created?.author ? `${g.created.author} · ${g.created.date}` : null, g?.last_touched?.date && g.last_touched.date !== g?.created?.date ? `touched ${g.last_touched.date}` : null].filter(Boolean).join("  ·  ")));
 }
 
 
@@ -198,7 +203,7 @@ function viewFindings(main) {
   if (!f.items.length) return main.append(el("p", { class: "center" }, "Clean — nothing to show."));
   main.append(el("div", { class: "table-wrap" }, el("table", { class: "t findings" }, el("thead", {}, el("tr", {}, ["Severity", "Code", "Where", "Message"].map((h) => el("th", {}, h)))),
     el("tbody", {}, f.items.map((x) => {
-      const entry = S.entries.find((e) => `${S.project.context}${e.file}` === x.path && e.line <= x.line && x.line <= e.end_line + 1);
+      const entry = S.entries.find((e) => (e.project || null) === (x.project || null) && `${(e.origin?.state?.project || S.project).context}${e.localFile || e.file}` === (x.localPath || x.path) && e.line <= x.line && x.line <= e.end_line + 1);
       return el("tr", {}, el("td", {}, pill(x.severity, `sev-${x.severity}`)), el("td", { class: "mono" }, x.code),
         el("td", { class: "mono" }, entry ? el("a", { href: `#entry/${encodeURIComponent(entry.id)}` }, `${x.path}:${x.line}`) : `${x.path}${x.line ? ":" + x.line : ""}`), el("td", {}, x.message));
     })))));
@@ -209,7 +214,9 @@ function renderSidebar() {
   const tree = $("#tree");
   tree.replaceChildren();
   const openState = JSON.parse(sessionStorage.getItem("ktw-tree") || "{}");
+  let lastProject;
   for (const t of S.topics) {
+    if (S.merged && t.project !== lastProject) { lastProject = t.project; tree.append(el("div", { class: "tree-project" }, t.project || (SELF.project.name || SELF.project.id))); }
     const list = entriesOf(t.file);
     const d = el("details", { open: openState[t.file] ?? (S.topics.length <= 6) });
     d.addEventListener("toggle", () => { openState[t.file] = d.open; sessionStorage.setItem("ktw-tree", JSON.stringify(openState)); });
@@ -249,6 +256,9 @@ function markActive() {
 function viewOverview(main) {
   const list = S.entries;
   const p = S.project; const g = p.git;
+  if (S.merged) main.append(el("div", { class: "family-banner" }, el("b", {}, `Family · ${plural(S.family.length, "project")}`), " — ",
+    S.family.map((m, i) => [i ? " · " : "", m.project ? el("span", {}, m.project, el("span", { class: "note" }, ` ${S.entries.filter((e) => e.project === m.project).length}`)) : el("span", {}, m.name, el("span", { class: "note" }, ` ${S.entries.filter((e) => !e.project).length}`))]),
+    S.missing?.length ? el("span", { class: "warn" }, ` · ${plural(S.missing.length, "member")} not available here`) : null));
   main.append(
     el("h1", {}, p.id || p.name),
     el("p", { class: "sub" }, `${p.context} · schema ${p.schema} · ${p.config["capture-confirmation"] || "?"} · source-reference ${p.config["source-reference"] || "?"}`,
@@ -269,6 +279,7 @@ function viewOverview(main) {
 function topicCard(t) {
   return el("a", { class: "topic-card", href: `#topic/${t.file}` },
     el("div", { class: "tt" }, t.title, el("span", { class: "count" }, plural(t.entries, "entry").replace("entrys", "entries"))),
+    t.project ? el("div", { class: "note" }, t.project) : null,
     el("div", { class: "td" }, t.index_line || el("span", { class: "note" }, "not described in index.md")),
     stack(t.evidence, EV_ORDER),
     el("div", { class: "refs" }, `${t.file} · → ${t.refs_out.length} · ← ${t.refs_in.length}`));
@@ -328,6 +339,7 @@ function viewEntry(main, id) {
   if (!e) return main.append(el("p", { class: "center" }, "No such entry"));
   const list = entriesOf(e.file); const idx = list.indexOf(e);
   const t = topicOf(e.file);
+  INLINE_PROJECT = e.project || null;
   const r = el("div", { class: `reader ${e.status}` },
     el("div", { class: "crumbs" }, el("a", { href: "#overview" }, "Overview"), " / ", el("a", { href: `#topic/${e.file}` }, t?.title || e.file), ` / line ${e.line}`),
     el("h1", { html: inline(e.title) }),
@@ -339,6 +351,7 @@ function viewEntry(main, id) {
       idx > 0 ? el("a", { href: `#entry/${encodeURIComponent(list[idx - 1].id)}` }, `← ${list[idx - 1].title}`) : el("span"),
       idx < list.length - 1 ? el("a", { href: `#entry/${encodeURIComponent(list[idx + 1].id)}` }, `${list[idx + 1].title} →`) : el("span")),
   );
+  INLINE_PROJECT = null;
   main.append(r);
   selected = e.id;
   renderDetailsEntry(e);
@@ -363,9 +376,9 @@ function viewAuthors(main) {
   if (!S.project.git?.available) return main.append(el("p", { class: "center" }, "No Git repository — nothing to attribute."));
   const tbl = el("table", { class: "t" }, el("thead", {}, el("tr", {}, ["Author", "Created", "Touched", "Superseded", "Evidence of created entries", "First", "Last"].map((h) => el("th", {}, h)))),
     el("tbody", {}, rows.map((a) => el("tr", { class: `clickable ${filter.author === a.name ? "sel" : ""}`, onclick: () => { filter.author = filter.author === a.name ? "" : a.name; rerender(); } },
-      el("td", {}, el("b", {}, a.name)), el("td", {}, a.created), el("td", {}, a.touched), el("td", {}, a.superseded),
+      el("td", {}, authorLink(a.name, ...authorCommit(a.name))), el("td", {}, a.created), el("td", {}, a.touched), el("td", {}, a.superseded),
       el("td", {}, el("div", { style: "min-width:160px" }, stack(a.evidence, EV_ORDER))), el("td", { class: "mono" }, fmtDate(a.first)), el("td", { class: "mono" }, fmtDate(a.last))))));
-  main.append(el("div", { class: "table-wrap" }, tbl), el("p", { class: "note", style: "margin-top:10px" }, "Click a row to filter every view to that author; click again to clear."));
+  main.append(el("div", { class: "table-wrap" }, tbl), el("p", { class: "note", style: "margin-top:10px" }, "Click a name to open the author's profile on the host; click elsewhere in the row to filter every view to that author, again to clear."));
   if (filter.author) main.append(el("h2", {}, `Entries created by ${filter.author}`), el("div", { class: "entry-list" }, S.entries.filter((e) => authorOf(e) === filter.author).map(entryRow)));
 }
 
@@ -375,14 +388,15 @@ const seenFrom = (e, list) => e.uuid ? list.filter((x) => (x.see || []).some((r)
 // or points at it — here, and with the family scope anywhere in the tree
 function refsBox(e) {
   const back = (label, rows) => rows.length ? [el("h3", {}, label), ...rows] : null;
-  const localRow = (x) => el("div", { class: "ref" }, el("a", { href: entryHref(x) }, x.title), el("span", { class: "note" }, ` · ${topicOf(x.file)?.title || x.file}`));
+  const localRow = (x) => el("div", { class: "ref" }, el("a", { href: entryHref(x) }, x.title), el("span", { class: "note" }, ` · ${x.project ? x.project + " · " : ""}${topicOf(x.file)?.title || x.file}`));
   const sup = supersedersOf(e), seen = seenFrom(e, S.entries);
   const box = el("div", { class: "body refs-box" },
     e.see?.length ? [el("h3", {}, "See"), ...e.see.map((r) => refLine(r))] : null,
     e.superseded_by ? [el("h3", {}, "Superseded by"), (() => { const sb = parseSupersededBy(e.superseded_by); return sb.none != null ? el("div", { class: "ref" }, el("i", {}, "none"), el("span", { class: "note" }, ` — ${sb.none}`)) : refLine(sb); })()] : null,
     back("Supersedes", sup.map(localRow)), back("Referenced by (See)", seen.map(localRow)));
+  if (S.merged) return box.childNodes.length ? box : null; // the merged family holds every reference
   const family = e.uuid && canFamily();
-  if (family && scope() === "family") {
+  if (family && scope() === "family" && !S.merged) {
     const more = el("div", {}, el("p", { class: "note" }, "Looking for references from the rest of the family…")); box.append(more);
     searchPool("family").then((pool) => {
       const sups = [], sees = [];
@@ -514,9 +528,11 @@ function renderDetailsTopic(t) {
 function renderDetailsEntry(e) {
   const d = $("#details"); d.replaceChildren();
   const g = e.git;
-  const hostHref = hostFileLink(canonicalOf(S.project), S.project.git?.branch, S.project.context, e.file, e.id.split("#")[1]);
+  const P = e.origin?.state?.project || S.project; // a merged member's entry lives in its own repository
+  const hostHref = hostFileLink(canonicalOf(P), P.git?.branch, P.context, e.localFile || e.file, (e.localId || e.id).split("#")[1]);
   d.append(el("h3", {}, "Entry"), el("div", { class: "kv" },
     e.uuid ? [el("span", { class: "k" }, "Id"), el("span", { class: "v mono", title: "the entry's address — what See and Superseded by lines resolve to" }, e.uuid)] : null,
+    e.project ? [el("span", { class: "k" }, "project"), el("span", { class: "v" }, e.origin?.href ? el("a", { href: memberLink(e.origin.member, "#overview") }, e.project) : e.project)] : null,
     el("span", { class: "k" }, "at"), el("span", { class: "v mono" }, hostHref ? el("a", { class: "gh", href: hostHref, target: "_blank", rel: "noopener", title: "open on the host" }, e.id) : e.id),
     el("span", { class: "k" }, "type"), el("span", { class: "v" }, (e.type || []).join(", ") || "—"),
     el("span", { class: "k" }, "status"), el("span", { class: "v" }, statusPill(e.status)),
@@ -528,11 +544,11 @@ function renderDetailsEntry(e) {
   d.append(el("h3", {}, "Git"));
   if (!g) d.append(el("p", { class: "empty" }, S.project.git?.available ? "not in Git yet" : "no repository"));
   else {
-    const who = (c) => c ? [`${c.author}${c.date ? " · " + c.date : ""}${c.commit ? " · " : ""}`, c.commit ? el("code", {}, c.commit) : null] : ["—"];
+    const who = (c) => c ? [authorLink(c.author, c.commit, P), `${c.date ? " · " + c.date : ""}${c.commit ? " · " : ""}`, c.commit ? el("code", {}, c.commit) : null] : ["—"];
     d.append(el("div", { class: "kv" },
       el("span", { class: "k" }, "created"), el("span", { class: "v" }, ...who(g.created)),
       el("span", { class: "k" }, "last touched"), el("span", { class: "v" }, ...who(g.last_touched))));
-    if (g.status_history?.length) d.append(el("h3", {}, "Status history"), el("ul", { class: "hist" }, g.status_history.map((h) => el("li", { class: h.status }, `${h.status}`, el("div", { class: "d" }, `${h.author} · ${h.date} · ${h.commit}`)))));
+    if (g.status_history?.length) d.append(el("h3", {}, "Status history"), el("ul", { class: "hist" }, g.status_history.map((h) => el("li", { class: h.status }, `${h.status}`, el("div", { class: "d" }, authorLink(h.author, h.commit, P), ` · ${h.date} · ${h.commit}`)))));
   }
   const back = S.entries.filter((x) => x.id !== e.id && x.refs.includes(e.file));
   d.append(el("h3", {}, `Backlinks (${back.length})`), ...(back.length ? back.map((x) => el("a", { class: "backlink", href: `#entry/${encodeURIComponent(x.id)}` }, x.title, el("div", { class: "note" }, topicOf(x.file)?.title || x.file))) : [el("p", { class: "empty" }, `nothing references ${e.file}`)]));
@@ -579,7 +595,7 @@ function miniGraph(d, ctx) {
   d.append(box);
   const opts = { mini: true, focusId };
   if (mode === "near") return requestAnimationFrame(() => runGraph(canvas, ctx.entry ? buildSubgraph(ctx.entry) : buildTopicSubgraph(ctx.topic), opts));
-  if (mode === "project") return requestAnimationFrame(() => runGraph(canvas, buildGraph(), opts));
+  if (mode === "project") return requestAnimationFrame(() => runGraph(canvas, buildGraph(ctx.entry?.project || ctx.topic?.project || null), opts));
   // family: the family graph's nodes, in a view of its own (its own zoom, entries shown)
   const note = el("span", { class: "mini-hint", style: "top:28px;bottom:auto" }, "loading the family…"); box.append(note);
   const show = (fg) => { note.remove(); if (!canvas.isConnected) return; runGraph(canvas, { ...fg, scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true, raf: null, wake: null, alpha: Math.max(fg.alpha, 0.3) }, opts); };
@@ -620,9 +636,9 @@ function assemble(topics, entries, prev = {}) {
 // the Ids an entry points at, and the entries of `list` that point at it
 const pointsAt = (e) => [...(e.see || []).map((r) => r?.uuid), e.superseded_by ? parseSupersededBy(e.superseded_by)?.uuid : null].filter(Boolean);
 const linkedTo = (e, list) => list.filter((x) => x !== e && ((e.uuid && pointsAt(x).includes(e.uuid)) || (x.uuid && pointsAt(e).includes(x.uuid))));
-function buildGraph() {
+function buildGraph(project = null) {
   const prev = graph ? Object.fromEntries(graph.nodes.map((n) => [n.id, n])) : {};
-  graph = Object.assign(graph || { scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true, alpha: 1 }, assemble(S.topics, S.entries, prev));
+  graph = Object.assign(graph || { scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true, alpha: 1 }, assemble(S.topics.filter((t) => (t.project || null) === project), S.entries.filter((e) => (e.project || null) === project), prev));
   graph.alpha = Math.max(graph.alpha, 0.6);
   return graph;
 }
@@ -933,12 +949,12 @@ async function publicTree() {
   if (PUBLIC_TREE) return PUBLIC_TREE;
   const canon = canonicalOf(S.project); const myRoot = PUBLIC_ROOT;
   const keyOf = (c, r) => `${c}|${r}`;
-  const self = { member: { role: "self", name: S.project.id || S.project.name, canonical: canon, root: myRoot, node: keyOf(canon, myRoot), up: null }, state: S, href: (e) => entryHref(e) };
+  const self = { member: { role: "self", name: S.project.id || S.project.name, canonical: canon, root: myRoot, node: keyOf(canon, myRoot), up: null }, state: SELF, href: (e) => entryHref(e) };
   const groups = [self]; const missing = []; const seen = new Set([keyOf(canon, myRoot)]);
   const label = (loc) => loc.root ? `${loc.canonical.replace(/^https:\/\//, "")}/${loc.root}` : loc.canonical.replace(/^https:\/\//, "");
   const add = (m, r) => { if (r.state) groups.push({ member: m, state: r.state, href: (e) => publicHref(m.canonical, m.root, entryHref(e)) }); else missing.push({ member: m, reason: r.error }); return r.state; };
   // up: the parent chain, as far as each level is published
-  let cur = { state: S, canonical: canon, root: myRoot }; let depth = 1; let parentKey = null; let below = self.member;
+  let cur = { state: SELF, canonical: canon, root: myRoot }; let depth = 1; let parentKey = null; let below = self.member;
   while (cur.state?.project?.parent && depth < 12) {
     const loc = resolveLocation(cur.state.project.parent, cur.canonical, cur.root);
     if (!loc || seen.has(keyOf(loc.canonical, loc.root))) break;
@@ -970,7 +986,7 @@ async function publicTree() {
 }
 // { groups: [{ member, state, href(e) }], missing: [{ member, reason }] } — this project first
 async function searchPool(scope) {
-  const self = { member: { role: "self", name: S.project.name || S.project.id }, state: S, href: (e) => entryHref(e) };
+  const self = { member: { role: "self", name: S.project.name || S.project.id }, state: SELF, href: (e) => entryHref(e) };
   if (scope !== "family") return { groups: [self], missing: [] };
   if (MODE === "public") return publicTree();
   if (!LIVE()) return { groups: [self], missing: [] };
@@ -1004,10 +1020,11 @@ function setScope(v, { rerender: again = true } = {}) {
   const changed = SCOPE !== v; SCOPE = v;
   try { localStorage.setItem("ktw-scope", v); } catch {}
   markScope();
-  if (!changed || !again) return;
+  if (!changed) return;
+  if (!again) { setTimeout(showScope); return; } // the caller renders now; the merge follows
   const route = location.hash.slice(1);
   if (route.startsWith("search/")) { const q = decodeURIComponent(route.split("/").slice(2).join("/")); location.hash = searchHref(scope(), q); }
-  else render();
+  showScope();
   window.__ktwScopeChanged?.();
 }
 function setupScope() { for (const b of $("#scope").querySelectorAll("button")) b.onclick = () => setScope(b.dataset.scope); markScope(); }
@@ -1131,9 +1148,50 @@ function render() {
   markActive();
   if (!route.startsWith("graph")) { main.scrollTop = 0; if (narrow()) { const stuck = $("#sidebar").getBoundingClientRect().height; window.scrollTo(0, Math.max(0, main.getBoundingClientRect().top + window.scrollY - stuck - 8)); } }
 }
-function rerender() { renderSidebar(); renderStrip(); render(); }
+function rerender() { renderSidebar(); renderStrip(); renderCounts(); render(); }
+// With the family scope every view shows the family merged; the merge needs
+// the members' states, so it runs after them — the last merge is kept, so a
+// live update of this project re-merges at once and refreshes behind it.
+let LAST_POOL = null; let MERGE_SEQ = 0;
+function mergeWith(pool) { S = mergeStates([{ ...pool.groups[0], state: SELF }, ...pool.groups.slice(1)]); S.missing = pool.missing; }
+async function showScope() {
+  const mine = ++MERGE_SEQ;
+  if (scope() !== "family") { S = SELF; LAST_POOL = null; return rerender(); }
+  if (LAST_POOL) { mergeWith(LAST_POOL); rerender(); }
+  const pool = await searchPool("family");
+  if (mine !== MERGE_SEQ || scope() !== "family") return;
+  LAST_POOL = pool; const keep = $("#main").scrollTop; mergeWith(pool); rerender(); $("#main").scrollTop = keep;
+}
+// the numbers in the status bar follow what is shown
+function renderCounts() { const c = $("#counts"); if (c) c.textContent = `${S.entries.length} entries · ${S.topics.length} topics · ${S.authors.length} authors${S.merged ? ` · family of ${S.family.length}` : ""}`; }
+// A Git author as a link to their profile on the host: the host's API names
+// the account behind one of their commits (asked on click, in the browser);
+// when it cannot, the commit's page opens, where the host links the author.
+const AUTHOR_URLS = {};
+function authorCommit(name) {
+  // the newest commit of this author among the entries shown, and the project it is in
+  let best = null;
+  for (const e of S.entries) for (const c of [e.git?.created, e.git?.last_touched, ...(e.git?.status_history || [])]) if (c?.author === name && c.commit && (!best || (c.date || "") > (best.c.date || ""))) best = { c, e };
+  return best ? [best.c.commit, best.e.origin?.state?.project || SELF.project] : [null, null];
+}
+function authorLink(name, commit, project) {
+  const look = !S.anonymized && project ? authorLookup(canonicalOf(project), commit) : null;
+  if (!name || !look) return el("span", {}, name || "—");
+  const key = `${canonicalOf(project)}|${name}`;
+  return el("a", { class: "author", href: AUTHOR_URLS[key] || look.fallback, target: "_blank", rel: "noopener", title: `${name} — open the profile on the host (looked up from commit ${commit})`, onclick: async (ev) => {
+    ev.stopPropagation();
+    if (AUTHOR_URLS[key] || !look.api) return; // known, or a host whose API names no account: the link goes straight there
+    ev.preventDefault();
+    const w = window.open("about:blank", "_blank"); if (w) w.opener = null;
+    let url = look.fallback;
+    try { const r = await fetch(look.api, { headers: { Accept: "application/json" } }); if (r.ok) url = look.pick(await r.json()) || look.fallback; } catch { /* offline or rate-limited: the commit page names the author too */ }
+    if (url !== look.fallback) AUTHOR_URLS[key] = url;
+    ev.target.closest("a").href = url;
+    if (w) w.location.href = url; else window.open(url, "_blank", "noopener");
+  } }, name);
+}
 function applyState(state) {
-  S = state;
+  SELF = state; S = state;
   const p = S.project;
   setKids($("#project-title"), $("#project-select").hidden ? el("b", {}, p.id || p.name) : null, schemaPill(p), headPill(p.git), p.git?.remote ? el("span", { class: "pill" }, remoteLink(p.git.remote)) : null);
   document.title = `${p.id || p.name} — Keep the Why`;
@@ -1141,13 +1199,14 @@ function applyState(state) {
     el("span", { id: "pkg-dashboard" }, el("a", { href: "https://pypi.org/project/keep-the-why-dashboard/", target: "_blank", rel: "noopener", title: "keep-the-why-dashboard on PyPI" }, `keep-the-why-dashboard ${S.dashboard}`)),
     el("span", { id: "pkg-lint" }, el("a", { href: "https://pypi.org/project/keep-the-why-lint/", target: "_blank", rel: "noopener", title: "keep-the-why-lint on PyPI" }, `keep-the-why-lint ${S.linter}`)),
     el("span", {}, MODE === "public" ? `public export · generated ${S.generated}` : S.exported ? `exported ${S.generated}` : `state ${S.generated}`),
-    el("span", {}, `${S.entries.length} entries · ${S.topics.length} topics · ${S.authors.length} authors`),
+    el("span", { id: "counts" }, `${S.entries.length} entries · ${S.topics.length} topics · ${S.authors.length} authors`),
     el("span", { class: "grow" }, el("a", { href: "https://keepthewhy.com", target: "_blank", rel: "noopener" }, "keepthewhy.com")));
   FAMILY = null;
   if (LIVE()) $("#nav-projects").hidden = false;
   setupMode(); markScope();
   const main = $("#main"); const scroll = main.scrollTop;
   RESTORE_SCROLL = scroll;
+  if (scope() === "family") { if (LAST_POOL) mergeWith(LAST_POOL); showScope(); }
   rerender();
   main.scrollTop = scroll;
   markUpdates();

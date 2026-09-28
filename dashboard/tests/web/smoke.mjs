@@ -53,6 +53,12 @@ const main = window.document.getElementById("main");
 await go("#graph/family");
 if (!main.querySelector(".graph-wrap canvas")) errors.push("graph/family in an export: no graph rendered");
 if (!window.document.getElementById("scope").hidden) errors.push("export: a this-project/family switch it cannot use");
+// an author name links to the host (the commit page until a click has looked up the profile)
+if (S.project.git?.available && /^github\.com\//.test(S.project.git.remote || "") && !S.anonymized) {
+  await go(`#entry/${encodeURIComponent(S.entries[0].id)}`);
+  const a = window.document.querySelector("#details a.author");
+  if (!a || !/^https:\/\/github\.com\/.+\/commit\/[0-9a-f]+$/.test(a.getAttribute("href") || "")) errors.push("entry details: the author is not linked to the host: " + (a?.getAttribute("href") || "no link"));
+}
 // the side-pane graph: near and project in an export (no family), and the switch works
 await go(`#entry/${encodeURIComponent(S.entries[0].id)}`);
 const modes = [...window.document.querySelectorAll("#details .mini-seg button")].map((b) => b.textContent);

@@ -244,6 +244,9 @@ class StateBuilder:
             "topics": topics,
             "entries": entries,
             "authors": authors,
+            # names replaced by --anonymize: the page offers no profile lookup,
+            # which would name the person behind a commit
+            "anonymized": bool(self.anonymize),
             "findings": {
                 "errors": errors,
                 "warnings": len(findings) - errors,
