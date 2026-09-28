@@ -3,7 +3,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   esc, plural, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, canonicalOf,
-  parseSupersededBy, kindLabel, groupByFamily,
+  parseSupersededBy, kindLabel, groupByFamily, searchTerms, searchHit, compareHits, snippetAt, highlight,
+  resolveLocation, bodyProse,
 } from "../../ktw_dashboard/web/lib.js";
 
 test("esc escapes the five HTML characters and nothing else", () => {
@@ -114,4 +115,53 @@ test("groupByFamily: children under their parent by canonical or path, cache aft
   const idx = (k) => flat.findIndex(([p]) => p.key === k);
   assert.equal(idx("/w/rest"), idx("/w/suite") + 1);
   assert.equal(idx("/w/mono/packages/widget"), idx("/w/mono") + 1);
+});
+
+test("searchHit: every term somewhere, strength and snippet source", () => {
+  const e = { title: "picows stays opt-in", body: { text: "**Id:** 11111111-1111-4111-8111-111111111111\n**Status:** active\n**Source:** picows soak report\n\nThe soak ran 24 h with picows.\n\n**Reason:** a buffer bug upstream." }, source: "picows soak report", uuid: "11111111-1111-4111-8111-111111111111", file: "websocket-library.md", type: ["decision"], status: "active", evidence: "confirmed" };
+  assert.equal(searchHit(e, ""), null);
+  assert.equal(searchHit(e, "picows nosuchword"), null);
+  const h = searchHit(e, "PicoWS buffer");
+  assert.deepEqual(h.terms, ["picows", "buffer"]);
+  assert.equal(h.inTitle, 1);
+  assert.equal(h.where.field, "body");
+  assert.equal(h.where.text.slice(h.where.i, h.where.i + h.where.len), "picows");
+  // the field lines are not counted twice: title 1 + body 1 + source 1 + buffer 1
+  assert.equal(h.count, 4);
+  assert.equal(searchHit(e, "report").where.field, "source");
+  assert.equal(searchHit(e, "soak report").where.field, "body"); // the first field after the title that carries a term
+  assert.equal(searchHit(e, "11111111").where.field, "id");
+  assert.equal(searchHit(e, "opt-in").where.field, "title");
+  assert.ok(compareHits({ inTitle: 1, count: 1 }, { inTitle: 0, count: 9 }) < 0);
+  assert.ok(compareHits({ inTitle: 0, count: 2 }, { inTitle: 0, count: 5 }) > 0);
+  assert.deepEqual(searchTerms("  a  B "), ["a", "b"]);
+});
+
+test("bodyProse drops the field lines and keeps the prose, labels included", () => {
+  assert.equal(bodyProse("**Id:** x\n**Type:** decision\n\nText.\n\n**Reason:** why."), "Text.\n\n**Reason:** why.");
+  assert.equal(bodyProse(undefined), "");
+});
+
+test("snippetAt cuts around the hit and marks the cuts", () => {
+  const t = "a".repeat(100) + "HIT" + "b".repeat(300);
+  const s = snippetAt(t, 100, 3, 10, 10);
+  assert.equal(s, "…" + "a".repeat(10) + "HIT" + "b".repeat(10) + "…");
+  assert.equal(snippetAt("short  text", 0, 5), "short text");
+});
+
+test("highlight escapes first and marks every term, longest first", () => {
+  assert.equal(highlight("a <b> PicoWS and picows", ["picows"]), "a &lt;b&gt; <mark>PicoWS</mark> and <mark>picows</mark>");
+  assert.equal(highlight("proxy_type", ["proxy", "proxy_type"]), "<mark>proxy_type</mark>");
+  assert.equal(highlight("a.b", ["."]), "a<mark>.</mark>b");
+  assert.equal(highlight("<x>", []), "&lt;x&gt;");
+});
+
+test("resolveLocation: https is another repository, a path stays in this one", () => {
+  assert.deepEqual(resolveLocation("https://github.com/acme/web/", "https://github.com/acme/mono", "x"), { canonical: "https://github.com/acme/web", root: "" });
+  assert.deepEqual(resolveLocation("packages/cluster", "https://github.com/acme/mono", ""), { canonical: "https://github.com/acme/mono", root: "packages/cluster" });
+  assert.deepEqual(resolveLocation("../..", "https://github.com/acme/mono", "packages/cluster/web"), { canonical: "https://github.com/acme/mono", root: "packages" });
+  assert.deepEqual(resolveLocation("..", "https://github.com/acme/mono", "packages"), { canonical: "https://github.com/acme/mono", root: "" });
+  assert.equal(resolveLocation("..", "https://github.com/acme/mono", ""), null); // above the repository
+  assert.equal(resolveLocation("web", "", ""), null); // no canonical to resolve against
+  assert.equal(resolveLocation("", "https://github.com/acme/mono", ""), null);
 });

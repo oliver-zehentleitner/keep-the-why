@@ -739,6 +739,45 @@ class NestedFamilyTest(unittest.TestCase):
         self.assertEqual(roles["grandparent"]["depth"], 2)
         self.assertNotIn("ancestor", roles)
 
+    def test_tree_from_the_leaf_reaches_the_uncle_and_its_children(self):
+        from ktw_dashboard.projects import family, resolve, tree
+
+        # a second child of the root, with a child of its own: neither is in
+        # the leaf's family, both are in its tree
+        client = os.path.join(self.root, "packages", "client")
+        self._project(
+            client,
+            "acme---mono---packages-client",
+            parent="../..",
+            extra="- cli: cli — the command line on top of the client",
+        )
+        self._project(
+            os.path.join(client, "cli"),
+            "acme---mono---packages-client-cli",
+            parent="..",
+        )
+        cfg = open(os.path.join(self.root, ".keep-the-why")).read()
+        cfg = cfg.replace(
+            "- cluster: packages/cluster — the cluster: nodes, management, its web UI",
+            "- cluster: packages/cluster — the cluster: nodes, management, its web UI\n"
+            "- client: packages/client — the client library",
+        )
+        open(os.path.join(self.root, ".keep-the-why"), "w").write(cfg)
+        projects, _ = resolve(self.web, use_history=False)
+        me = next(p for p in projects if p.path == self.web)
+        fam = {m["name"] for m in family(me, projects)}
+        self.assertNotIn("client", fam)
+        members = tree(me, projects)
+        rel = {m["name"]: m for m in members if m["role"] == "relative"}
+        self.assertEqual(set(rel), {"client", "cli"})
+        self.assertEqual(rel["client"]["via"], "mono")
+        self.assertEqual(rel["cli"]["via"], "client")
+        self.assertEqual(rel["cli"]["scope"], "the command line on top of the client")
+        self.assertTrue(all(m["key"] for m in rel.values()))
+        # nobody twice: the family's members are not repeated as relatives
+        paths = [os.path.realpath(m["path"]) for m in members if m["path"]]
+        self.assertEqual(len(paths), len(set(paths)))
+
     def test_a_cycle_in_parent_lines_stops(self):
         from ktw_dashboard.projects import family, resolve
 

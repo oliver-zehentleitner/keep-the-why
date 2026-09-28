@@ -129,3 +129,20 @@ At start and once every 24 hours the server asks `pypi.org/pypi/<name>/json` for
 **Rejected alternative:** have the linter expose the set of files it accepted and let the dashboard consume that (the audit's suggestion, and the cleaner shape). Rejected for now because it couples a dashboard fix to a linter release: the dashboard pins a `keep-the-why-lint>=` floor, and the linter is released first and with the skill. Five lines of the same rule, with a comment naming the linter's, ship the fix on the dashboard's own counter. The revisit line is the door back to the cleaner shape.
 
 **Consequence:** four regression tests (rejected location, topic symlink, index symlink, directory symlink) and a fifth for the new `shallow` flag. The fingerprint never stats a rejected location either.
+
+## Family search covers the whole tree; routing keeps to the family
+
+**Id:** 9befaaa5-5823-4efd-9050-a055c8cfe0dc
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer testing the dashboard on the suite, 2026-09-28 — a term known to be in the WebSocket client's context/ was not found from the cluster's dashboard with the family scope
+**Revisit when:** a tree grows large enough that fetching every member's state on the first family search is slow, or search is asked to follow references outside the tree
+
+The search's *family* scope reads every member of the tree the project belongs to: the parent chain up to the topmost local ancestor, and from there every project a children block names, level by level — uncles, cousins, a sibling's children. The server lists them with `/api/family?tree=1` (role `relative` and `via` for what the Family view does not show); public mode walks the published exports the same way, a relative location resolved inside its own repository. The Family view itself still shows the family as routing sees it.
+
+**Reason:** the family, as routing defines it, stops at the parent's children. From a grandchild (the cluster's dashboard) that left out the rest of the suite, so a subject recorded in a sibling of the parent — the WebSocket client — was unreachable from exactly the place a reader was likely to ask. Reading across the tree was already allowed (any member may be read; only writes are bounded), so the narrower scope protected nothing.
+
+**Rejected alternative:** searching the family only, as before, and linking to the parent for more. Rejected because a search that silently misses part of the tree reads as "not recorded anywhere", which is the one wrong answer a reader cannot detect.
+
+**Consequence:** members that are not on the machine, or whose state does not load, are listed under "Not searched" on the results page and counted in the dropdown, never dropped silently.

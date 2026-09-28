@@ -17,7 +17,7 @@ import os
 import threading
 from urllib.parse import parse_qs, urlparse
 
-from .projects import family, forget, record_open
+from .projects import family, forget, record_open, tree
 from .state import StateBuilder
 from .updates import UpdateChecker
 
@@ -128,9 +128,9 @@ class Projects:
             ensure_ascii=False,
         ).encode("utf-8")
 
-    def family_listing(self, key: str | None) -> bytes:
+    def family_listing(self, key: str | None, whole_tree: bool = False) -> bytes:
         p = self.by_key(key or self.selected) if (key or self.selected) else None
-        members = family(p, self.projects) if p else []
+        members = (tree if whole_tree else family)(p, self.projects) if p else []
         return json.dumps({"members": members}, ensure_ascii=False).encode("utf-8")
 
     def find_entry(self, uuid: str, first: str | None) -> dict | None:
@@ -203,8 +203,11 @@ def make_handler(projects: Projects):
                     200, projects.listing(), "application/json; charset=utf-8"
                 )
             if path == "/api/family":
+                whole = parse_qs(url.query).get("tree", [""])[0] == "1"
                 return self._send(
-                    200, projects.family_listing(pid), "application/json; charset=utf-8"
+                    200,
+                    projects.family_listing(pid, whole),
+                    "application/json; charset=utf-8",
                 )
             if path == "/api/entry":
                 uuid = parse_qs(url.query).get("uuid", [""])[0]

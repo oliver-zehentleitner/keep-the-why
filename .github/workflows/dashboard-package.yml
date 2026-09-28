@@ -79,3 +79,6 @@ jobs:
           python -m pip install --quiet ./lint ./dashboard
           ktw-dashboard --export /tmp/ktw-dashboard-export .
           cd dashboard/tests/web && npm install --silent --no-audit --no-fund jsdom@24 && node smoke.mjs /tmp/ktw-dashboard-export/index.html
+
+      - name: Public mode over a stubbed published tree (jsdom)
+        run: cd dashboard/tests/web && node public.mjs

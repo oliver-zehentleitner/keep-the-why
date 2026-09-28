@@ -91,3 +91,63 @@ export function groupByFamily(list) {
   for (const p of list) walk(p, 0); // a cycle would otherwise drop rows
   return flat;
 }
+
+// Search. A query is a set of terms, all of which must occur somewhere in the
+// entry: its title, body, Revisit when, Source, Id, file, type, status or
+// evidence. The hit says how strong it is (terms in the title, occurrences in
+// total) and where the snippet comes from: the first field after the title
+// that carries a term, or the title when no other field does.
+export const searchTerms = (query) => String(query || "").toLowerCase().split(/\s+/).filter(Boolean);
+// the body without its field lines: those are searched as their own fields
+const FIELD_LINE = /^\*\*(Id|Type|Status|Evidence|Source|Verification|Revisit when|See|Superseded by):\*\*/;
+export const bodyProse = (text) => String(text || "").split("\n").filter((l) => !FIELD_LINE.test(l.trim())).join("\n").trim();
+export function searchHit(e, query) {
+  const terms = searchTerms(query);
+  if (!terms.length) return null;
+  const fields = [["title", e.title || ""], ["body", bodyProse(e.body?.text)], ["revisit when", e.revisit_when || ""], ["source", e.source || ""],
+    ["verification", e.verification || ""], ["superseded by", e.superseded_by || ""],
+    ["id", e.uuid || ""], ["file", e.file || ""], ["type", (e.type || []).join(" ")], ["status", e.status || ""], ["evidence", e.evidence || ""]]
+    .map(([name, text]) => ({ name, text, low: text.toLowerCase() }));
+  if (!terms.every((t) => fields.some((f) => f.low.includes(t)))) return null;
+  let count = 0;
+  for (const t of terms) for (const f of fields) for (let i = f.low.indexOf(t); i >= 0; i = f.low.indexOf(t, i + t.length)) count++;
+  const inTitle = terms.filter((t) => fields[0].low.includes(t)).length;
+  let where = null;
+  for (const f of [...fields.slice(1), fields[0]]) {
+    const at = terms.map((t) => [f.low.indexOf(t), t]).filter(([i]) => i >= 0).sort((a, b) => a[0] - b[0])[0];
+    if (at) { where = { field: f.name, text: f.text, i: at[0], len: at[1].length }; break; }
+  }
+  return { terms, count, inTitle, where };
+}
+// best first: more terms in the title, then more occurrences
+export const compareHits = (a, b) => (b.inTitle - a.inTitle) || (b.count - a.count);
+// the text around a hit, whitespace collapsed, cut marks where it was cut
+export function snippetAt(text, i, len, before = 60, after = 160) {
+  const from = Math.max(0, i - before); const to = Math.min(text.length, i + len + after);
+  return (from > 0 ? "…" : "") + text.slice(from, to).replace(/\s+/g, " ").trim() + (to < text.length ? "…" : "");
+}
+// HTML-escaped text with every term marked, case-insensitively
+export function highlight(text, terms) {
+  const ts = (terms || []).filter(Boolean);
+  const s = String(text ?? "");
+  if (!ts.length) return esc(s);
+  const re = new RegExp([...ts].sort((a, b) => b.length - a.length).map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|"), "gi");
+  let out = ""; let at = 0;
+  for (const m of s.matchAll(re)) { out += esc(s.slice(at, m.index)) + `<mark>${esc(m[0])}</mark>`; at = m.index + m[0].length; }
+  return out + esc(s.slice(at));
+}
+
+// A family location as the published side reads it: an https URL is another
+// repository (its own root), a relative path is a directory in the same
+// repository, resolved against the root the location was read from.
+export function resolveLocation(location, canonical, root = "") {
+  if (!location) return null;
+  if (/^https:\/\//.test(location)) return { canonical: location.replace(/\/+$/, ""), root: "" };
+  if (!canonical) return null;
+  const parts = [];
+  for (const seg of `${root}/${location}`.split("/")) {
+    if (!seg || seg === ".") continue;
+    if (seg === "..") { if (!parts.length) return null; parts.pop(); } else parts.push(seg);
+  }
+  return { canonical, root: parts.join("/") };
+}

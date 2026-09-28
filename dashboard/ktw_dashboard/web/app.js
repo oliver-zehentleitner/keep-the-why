@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-import { esc, plural, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily } from "./lib.js";
+import { esc, plural, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, searchTerms, searchHit, compareHits, snippetAt, highlight, resolveLocation } from "./lib.js";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const narrow = () => !!window.matchMedia?.("(max-width: 900px)").matches;
@@ -41,13 +41,19 @@ async function fetchPublicState(canonical, root = "") {
   const key = `${canonical}|${root}`;
   if (PUBLIC_STATES[key]) return PUBLIC_STATES[key];
   let result;
+  const raw = rawFileUrl(canonical, root, ".keep-the-why");
   try {
-    const cfg = await (await fetch(rawFileUrl(canonical, root, ".keep-the-why"), { cache: "no-store" })).text();
-    const url = configLine(cfg, "dashboard-state");
-    if (!url) result = { error: "no dashboard-state line — this project has no published export" };
-    else if (!/^https:\/\//.test(url)) result = { error: `dashboard-state is not an https URL: ${url}` };
-    else { const state = normalizeState(await (await fetch(url, { cache: "no-store" })).json()); result = { state, url, canonical, root }; }
-  } catch (err) { result = { error: `could not fetch the export (${err?.message || "network or CORS refused"})` }; }
+    const res = await fetch(raw, { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status} for ${raw}`);
+    const url = configLine(await res.text(), "dashboard-state");
+    if (!url) result = { error: `no dashboard-state line in the published .keep-the-why (${raw}) — this project has no published export yet`, raw, missingLine: true };
+    else if (!/^https:\/\//.test(url)) result = { error: `dashboard-state is not an https URL: ${url}`, raw };
+    else {
+      const sr = await fetch(url, { cache: "no-store" });
+      if (!sr.ok) throw new Error(`HTTP ${sr.status} for ${url}`);
+      result = { state: normalizeState(await sr.json()), url, canonical, root, raw };
+    }
+  } catch (err) { result = { error: `could not fetch the export (${err?.message || "network or CORS refused"})`, raw }; }
   PUBLIC_STATES[key] = result;
   return result;
 }
@@ -288,11 +294,10 @@ async function viewEntryElsewhere(main, uuid) {
   if (MODE === "public") {
     // an Id this export does not carry: look through the family's published exports
     main.append(el("p", { class: "center" }, `Looking for ${uuid} in the family's published exports…`));
-    for (const m of familyDeclared()) {
-      if (!m.canonical) continue;
-      const r = await fetchPublicState(m.canonical, m.root || "");
-      const hit = r.state?.entries?.find((e) => e.uuid === uuid);
-      if (hit) { location.href = publicHref(m.canonical, m.root || "", `#entry/${uuid}`); return; }
+    const t = await publicTree();
+    for (const g of t.groups) {
+      if (g.member.role === "self") continue;
+      if (g.state.entries?.some((e) => e.uuid === uuid)) { location.href = publicHref(g.member.canonical, g.member.root || "", `#entry/${uuid}`); return; }
     }
     return setKids(main, el("p", { class: "center" }, `No entry with Id ${uuid} in this export, nor in the family's published exports.`));
   }
@@ -731,49 +736,183 @@ function viewTimeline(main) {
 }
 
 // ---------------------------------------------------------------- search
+// What a search runs over: this project, or every member of its tree — the
+// whole family from the root down, not only the parent chain. Shared by the
+// dropdown under the search field and the results page (#search/<scope>/<q>).
+const familyRank = (m) => (m.role === "self" ? -100 : m.role === "ancestor" || m.role === "grandparent" ? -(m.depth || 2) : { parent: 0, sibling: 2, child: 3, relative: 4 }[m.role] ?? 5);
+let TREE = null; let TREE_AT = 0; // /api/family?tree=1, live mode
+async function fetchTree() {
+  if (!LIVE()) return null;
+  if (TREE && Date.now() - TREE_AT < 30000) return TREE;
+  try { TREE = (await (await fetch(`${api("/api/family")}${PROJECT ? "&" : "?"}tree=1`, { cache: "no-store" })).json()).members || []; TREE_AT = Date.now(); } catch { TREE = null; }
+  return TREE;
+}
+const MEMBER_STATES = {}; // project key -> { at, p: Promise<{state}|{error}> }, live mode
+function memberState(key) {
+  const c = MEMBER_STATES[key];
+  if (c && Date.now() - c.at < 30000) return c.p;
+  const p = fetch(`/api/state.json?project=${encodeURIComponent(key)}`, { cache: "no-store" })
+    .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+    .then((st) => ({ state: normalizeState(st) }), (err) => ({ error: `could not load its state (${err?.message || "server gone"})` }));
+  MEMBER_STATES[key] = { at: Date.now(), p };
+  return p;
+}
+let PUBLIC_TREE = null; // the tree read from published exports, public mode
+async function publicTree() {
+  if (PUBLIC_TREE) return PUBLIC_TREE;
+  const canon = canonicalOf(S.project); const myRoot = PUBLIC_ROOT;
+  const keyOf = (c, r) => `${c}|${r}`;
+  const self = { member: { role: "self", name: S.project.id || S.project.name, canonical: canon, root: myRoot }, state: S, href: (e) => entryHref(e) };
+  const groups = [self]; const missing = []; const seen = new Set([keyOf(canon, myRoot)]);
+  const label = (loc) => loc.root ? `${loc.canonical.replace(/^https:\/\//, "")}/${loc.root}` : loc.canonical.replace(/^https:\/\//, "");
+  const add = (m, r) => { if (r.state) groups.push({ member: m, state: r.state, href: (e) => publicHref(m.canonical, m.root, entryHref(e)) }); else missing.push({ member: m, reason: r.error }); return r.state; };
+  // up: the parent chain, as far as each level is published
+  let cur = { state: S, canonical: canon, root: myRoot }; let depth = 1; let parentKey = null;
+  while (cur.state?.project?.parent && depth < 12) {
+    const loc = resolveLocation(cur.state.project.parent, cur.canonical, cur.root);
+    if (!loc || seen.has(keyOf(loc.canonical, loc.root))) break;
+    seen.add(keyOf(loc.canonical, loc.root));
+    if (depth === 1) parentKey = keyOf(loc.canonical, loc.root);
+    const m = { role: depth === 1 ? "parent" : depth === 2 ? "grandparent" : "ancestor", depth, name: label(loc), ...loc };
+    const st = add(m, await fetchPublicState(loc.canonical, loc.root));
+    cur = { state: st, canonical: loc.canonical, root: loc.root }; depth++;
+  }
+  // down: every published children block, level by level from the top
+  let level = groups.map((g) => ({ state: g.state, canonical: g.member.canonical, root: g.member.root || "", key: keyOf(g.member.canonical, g.member.root || "") }));
+  for (let round = 0; level.length && round < 12; round++) {
+    const next = [];
+    const kids = level.flatMap((l) => (l.state?.project?.children || []).map((c) => ({ c, from: l, loc: resolveLocation(c.location, l.canonical, l.root) })))
+      .filter(({ loc }) => loc && !seen.has(keyOf(loc.canonical, loc.root)));
+    for (const k of kids) seen.add(keyOf(k.loc.canonical, k.loc.root));
+    const results = await Promise.all(kids.map((k) => fetchPublicState(k.loc.canonical, k.loc.root)));
+    kids.forEach((k, i) => {
+      const role = k.from.key === keyOf(canon, myRoot) ? "child" : k.from.key === parentKey ? "sibling" : "relative";
+      const st = add({ role, name: k.c.name, scope: k.c.scope, via: k.from.state?.project?.id || "", ...k.loc }, results[i]);
+      if (st) next.push({ state: st, canonical: k.loc.canonical, root: k.loc.root, key: keyOf(k.loc.canonical, k.loc.root) });
+    });
+    level = next;
+  }
+  groups.sort((a, b) => familyRank(a.member) - familyRank(b.member));
+  PUBLIC_TREE = { groups, missing };
+  return PUBLIC_TREE;
+}
+// { groups: [{ member, state, href(e) }], missing: [{ member, reason }] } — this project first
+async function searchPool(scope) {
+  const self = { member: { role: "self", name: S.project.id || S.project.name }, state: S, href: (e) => entryHref(e) };
+  if (scope !== "family") return { groups: [self], missing: [] };
+  if (MODE === "public") return publicTree();
+  if (!LIVE()) return { groups: [self], missing: [] };
+  const others = [...(await fetchTree() || [])].filter((m) => m.role !== "self").sort((a, b) => familyRank(a) - familyRank(b));
+  const results = await Promise.all(others.map((m) => m.key ? memberState(m.key) : { error: m.available === "none" ? "not checked out or cached on this machine" : "location unknown" }));
+  const groups = [self]; const missing = [];
+  others.forEach((m, i) => { const r = results[i]; if (r.state) groups.push({ member: m, state: r.state, href: (e) => `${location.pathname}?project=${encodeURIComponent(m.key)}${entryHref(e)}` }); else missing.push({ member: m, reason: r.error }); });
+  return { groups, missing };
+}
+// every hit, best first; the dropdown keeps this project's hits on top
+function searchRows(pool, q) {
+  const rows = [];
+  for (const g of pool.groups) for (const e of g.state.entries || []) { const hit = searchHit(e, q); if (hit) rows.push({ e, hit, g }); }
+  return rows.sort((a, b) => compareHits(a.hit, b.hit));
+}
+const searchScopes = () => (LIVE() || MODE === "public" ? ["project", "family"] : ["project"]);
+const searchHref = (scope, q) => `#search/${scope}/${encodeURIComponent(q)}`;
+const memberLabel = (m) => m.role === "self" ? "this project" : m.role === "relative" && m.via ? `relative, via ${m.via}` : m.role;
+const topicTitle = (st, file) => st.topics?.find((t) => t.file === file)?.title || file;
+function hitSnippet(hit) {
+  const w = hit.where; if (!w) return "";
+  const text = snippetAt(w.text.replace(/\*\*|`/g, ""), Math.max(0, w.text.slice(0, w.i).replace(/\*\*|`/g, "").length), w.len);
+  return (w.field === "body" || w.field === "title" ? "" : `<b>${esc(w.field)}:</b> `) + highlight(text, hit.terms);
+}
+let RESTORE_SCROLL = 0; // a live update re-renders the results page; its rows arrive after the scroll was restored
+async function viewSearch(main, scope, q) {
+  if (!searchScopes().includes(scope)) scope = "project";
+  const input = $("#search"); if (document.activeElement !== input) input.value = q;
+  const scopeSel = $("#search-scope"); if (!scopeSel.hidden) scopeSel.value = scope;
+  const terms = searchTerms(q);
+  const scopeBtns = searchScopes().length > 1 ? el("div", { class: "seg" }, searchScopes().map((sc) => el("a", { href: searchHref(sc, q), class: sc === scope ? "on" : "" }, sc === "project" ? "this project" : "whole family"))) : null;
+  const sub = el("p", { class: "sub" }, "Searching…");
+  main.append(el("div", { class: "search-head" }, el("h1", {}, "Search ", el("span", { class: "q" }, `“${q}”`)), scopeBtns), sub);
+  if (terms.length === 0 || q.trim().length < 2) { sub.textContent = "Type at least two characters in the search field and press Enter."; return; }
+  const pool = await searchPool(scope);
+  if (location.hash !== searchHref(scope, q) && decodeURIComponent(location.hash) !== decodeURIComponent(searchHref(scope, q))) return; // navigated away meanwhile
+  const rows = searchRows(pool, q);
+  const shown = rows.filter(({ e }) => matches(e)).length;
+  const projectsHit = new Set(rows.map((r) => r.g)).size;
+  sub.textContent = `${plural(rows.length, "entry").replace("entrys", "entries")} in ${plural(projectsHit, "project")}` +
+    (scope === "family" ? ` · ${plural(pool.groups.length, "project")} searched` : "") +
+    (terms.length > 1 ? ` · all of: ${terms.join(", ")}` : "") +
+    (filterActive() ? ` · ${shown} match the sidebar filters, the rest dimmed` : "") +
+    " · searched: title, body, Revisit when, Source, Verification, Superseded by, Id, file, type, status, evidence";
+  const box = el("div", { class: "search-page" });
+  for (const g of pool.groups) {
+    const mine = rows.filter((r) => r.g === g);
+    if (!mine.length) continue;
+    const m = g.member;
+    const head = el("div", { class: "sg-head" },
+      m.role === "self" ? el("b", {}, m.name) : el("a", { href: MODE === "public" ? publicHref(m.canonical, m.root || "") : `${location.pathname}?project=${encodeURIComponent(m.key)}#overview` }, m.name),
+      pill(memberLabel(m), "role"), el("span", { class: "count" }, plural(mine.length, "hit")));
+    box.append(el("section", { class: "sgroup" }, head, m.scope ? el("div", { class: "ms note" }, m.scope) : null,
+      el("div", { class: "entry-list" }, mine.map(({ e, hit }) => {
+        const gt = e.git;
+        const meta = [topicTitle(g.state, e.file), e.file, gt?.created?.author ? `${gt.created.author} · ${gt.created.date}` : null,
+          gt?.last_touched?.date && gt.last_touched.date !== gt?.created?.date ? `touched ${gt.last_touched.date}` : null,
+          e.uuid ? `Id ${e.uuid.slice(0, 8)}` : null, plural(hit.count, "match").replace("matchs", "matches")].filter(Boolean).join("  ·  ");
+        return el("a", { href: g.href(e), class: `row ${matches(e) ? "" : "dim"}` },
+          el("div", { class: "rt" }, el("span", { html: highlight(e.title.replace(/`/g, ""), hit.terms) }), ...entryPills(e)),
+          el("div", { class: "rs", html: hitSnippet(hit) }),
+          el("div", { class: "rm" }, meta));
+      }))));
+  }
+  if (!rows.length) box.append(el("p", { class: "center" }, `No entry matches “${q}”`, scope === "project" && searchScopes().includes("family") && (S.project.parent || (S.project.children || []).length) ? [" in this project — ", el("a", { href: searchHref("family", q) }, "search the whole family")] : "", "."));
+  if (pool.missing.length) box.append(el("section", { class: "sgroup missing" }, el("div", { class: "sg-head" }, el("b", {}, "Not searched"), el("span", { class: "count" }, pool.missing.length)),
+    pool.missing.map(({ member: m, reason }) => el("div", { class: "sr-missing" }, el("b", {}, m.name), ` (${memberLabel(m)}) — ${reason}`)),
+    el("p", { class: "note" }, "Family shows how to get a member that is not on this machine.")));
+  main.append(box);
+  if (RESTORE_SCROLL) main.scrollTop = RESTORE_SCROLL;
+}
 function setupSearch() {
-  const input = $("#search"); const box = $("#search-results"); let sel = -1; let rows = [];
+  const input = $("#search"); const box = $("#search-results"); let sel = -1; let seq = 0;
   const close = () => { box.hidden = true; sel = -1; };
   const scopeSel = $("#search-scope");
-  const MEMBER_STATES = {}; // project key -> state, fetched once for family-wide search (live mode only)
-  async function familyEntries() {
-    if (MODE === "public") {
-      const out = S.entries.map((e) => ({ e, project: null, member: { name: S.project.id || S.project.name, role: "self" } }));
-      const members = [];
-      for (const m of familyDeclared()) {
-        if (!m.canonical) { members.push({ ...m, key: null }); continue; }
-        const r = await fetchPublicState(m.canonical, m.root || "");
-        if (!r.state) { members.push({ ...m, key: null }); continue; }
-        members.push({ ...m, key: m.canonical });
-        out.push(...r.state.entries.map((e) => ({ e, project: m.canonical, member: m, public: true })));
-      }
-      return { members, out };
-    }
-    const members = FAMILY || await fetchFamily() || [];
-    const out = [];
-    for (const m of members) {
-      if (!m.key) continue;
-      if (m.role === "self") { out.push(...S.entries.map((e) => ({ e, project: null, member: m }))); continue; }
-      if (!MEMBER_STATES[m.key]) { try { MEMBER_STATES[m.key] = await (await fetch(`/api/state.json?project=${encodeURIComponent(m.key)}`, { cache: "no-store" })).json(); } catch { MEMBER_STATES[m.key] = { entries: [] }; } }
-      out.push(...(MEMBER_STATES[m.key].entries || []).map((e) => ({ e, project: m.key, member: m })));
-    }
-    return { members, out };
-  }
+  const scope = () => (searchScopes().includes(scopeSel.value) && !scopeSel.hidden ? scopeSel.value : "project");
   const run = async () => {
-    const q = input.value.trim().toLowerCase(); if (q.length < 2) return close();
-    const family = (LIVE() || MODE === "public") && scopeSel.value === "family";
-    let pool = S.entries.map((e) => ({ e, project: null, member: null })); let missing = [];
-    if (family) { const f = await familyEntries(); pool = f.out; missing = f.members.filter((m) => !m.key); if (input.value.trim().toLowerCase() !== q) return; }
-    rows = pool.map(({ e, project, member }) => { const hay = `${e.title}\n${e.body.text}`.toLowerCase(); const i = hay.indexOf(q); return i < 0 ? null : { e, i, project, member, title: e.title.toLowerCase().includes(q) }; }).filter(Boolean).sort((a, b) => (a.project === null) - (b.project === null) ? (a.project === null ? -1 : 1) : (b.title - a.title) || a.i - b.i).slice(0, 40);
-    const link = ({ e, project }) => project ? (MODE === "public" ? publicHref(project, "", entryHref(e)) : `${location.pathname}?project=${encodeURIComponent(project)}${entryHref(e)}`) : entryHref(e);
-    box.replaceChildren(...(rows.length ? rows.map(({ e, i, project, member }) => { const txt = `${e.title}\n${e.body.text}`; const from = Math.max(0, i - 40); const snip = txt.slice(from, i + 80).replace(/\s+/g, " "); const hl = esc(snip).replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "ig"), (m) => `<mark>${m}</mark>`); return el("a", { href: link({ e, project }), onclick: close }, el("div", {}, e.title), el("div", { class: "sr-file" }, project ? `${member.name} (${member.role}) · ` : "", topicOf(e.file)?.title || e.file), el("div", { class: "sr-snip", html: hl })); }) : [el("div", { style: "padding:10px 12px;color:var(--fg3)" }, "no matches")]),
-      ...missing.map((m) => el("div", { class: "sr-missing" }, `${m.name} (${m.role}) is not available here — not searched. See Family for how to get it.`)));
+    const q = input.value.trim(); if (q.length < 2 || !S) return close();
+    const mine = ++seq;
+    const pool = await searchPool(scope());
+    if (mine !== seq) return; // a newer keystroke won
+    const all = searchRows(pool, q);
+    // this project's hits first, then the rest; the page shows everything
+    const rows = [...all.filter((r) => r.g.member.role === "self"), ...all.filter((r) => r.g.member.role !== "self")].slice(0, 12);
+    const projects = new Set(all.map((r) => r.g)).size;
+    box.replaceChildren(...(rows.length ? rows.map(({ e, hit, g }) => el("a", { href: g.href(e), onclick: close },
+      el("div", { html: highlight(e.title.replace(/`/g, ""), hit.terms) }),
+      el("div", { class: "sr-file" }, g.member.role === "self" ? "" : `${g.member.name} (${memberLabel(g.member)}) · `, topicTitle(g.state, e.file)),
+      el("div", { class: "sr-snip", html: hitSnippet(hit) }))) : [el("div", { style: "padding:10px 12px;color:var(--fg3)" }, "no matches")]),
+      pool.missing.length ? el("div", { class: "sr-missing" }, `${plural(pool.missing.length, "family member")} not available here — not searched.`) : null,
+      el("a", { class: "sr-all", href: searchHref(scope(), q), onclick: close }, all.length > rows.length ? `↵  all ${all.length} results in ${plural(projects, "project")}` : "↵  results page"));
     box.hidden = false; sel = -1;
   };
-  scopeSel.onchange = () => { localStorage.setItem("ktw-search-scope", scopeSel.value); if (input.value.trim().length >= 2) run(); };
-  if (LIVE() || MODE === "public") { scopeSel.hidden = false; scopeSel.value = localStorage.getItem("ktw-search-scope") || "project"; }
-  input.oninput = run; input.onfocus = () => { if (input.value.trim().length >= 2) run(); };
-  input.onkeydown = (ev) => { const items = [...box.querySelectorAll("a")]; if (ev.key === "Escape") { input.blur(); close(); } else if (ev.key === "ArrowDown") { sel = Math.min(items.length - 1, sel + 1); items.forEach((a, i) => a.classList.toggle("sel", i === sel)); items[sel]?.scrollIntoView?.({ block: "nearest" }); ev.preventDefault(); } else if (ev.key === "ArrowUp") { sel = Math.max(0, sel - 1); items.forEach((a, i) => a.classList.toggle("sel", i === sel)); ev.preventDefault(); } else if (ev.key === "Enter" && items[sel]) { items[sel].click(); input.blur(); } };
+  scopeSel.onchange = () => {
+    try { localStorage.setItem("ktw-search-scope", scopeSel.value); } catch {}
+    const route = location.hash.slice(1);
+    if (route.startsWith("search/")) location.hash = searchHref(scopeSel.value, input.value.trim());
+    else if (input.value.trim().length >= 2) run();
+  };
+  if (searchScopes().length > 1) { scopeSel.hidden = false; let v = "project"; try { v = localStorage.getItem("ktw-search-scope") || "project"; } catch {} scopeSel.value = v; }
+  input.oninput = run; input.onfocus = () => { if (input.value.trim().length >= 2 && !location.hash.startsWith("#search/")) run(); };
+  input.onkeydown = (ev) => {
+    const items = [...box.querySelectorAll("a")];
+    if (ev.key === "Escape") { input.blur(); close(); }
+    else if (ev.key === "ArrowDown") { sel = Math.min(items.length - 1, sel + 1); items.forEach((a, i) => a.classList.toggle("sel", i === sel)); items[sel]?.scrollIntoView?.({ block: "nearest" }); ev.preventDefault(); }
+    else if (ev.key === "ArrowUp") { sel = Math.max(0, sel - 1); items.forEach((a, i) => a.classList.toggle("sel", i === sel)); ev.preventDefault(); }
+    else if (ev.key === "Enter") {
+      ev.preventDefault();
+      if (!box.hidden && items[sel]) { items[sel].click(); input.blur(); return; }
+      const q = input.value.trim(); if (q.length < 2) return;
+      seq++; close(); input.blur(); // Enter without a selection: the results page
+      location.hash = searchHref(scope(), q);
+    }
+  };
   document.addEventListener("click", (ev) => { if (!ev.target.closest(".topbar-right")) close(); });
   document.addEventListener("keydown", (ev) => {
     if (ev.target.matches("input,select,textarea") || ev.metaKey || ev.ctrlKey || ev.altKey) return;
@@ -798,6 +937,7 @@ function render() {
   else if (route === "projects") { viewProjects(main); renderDetailsDefault(); }
   else if (route.startsWith("topic/")) viewTopic(main, route.slice(6));
   else if (route.startsWith("entry/")) viewEntry(main, decodeURIComponent(route.slice(6)));
+  else if (route.startsWith("search/")) { const [, scope, ...q] = route.split("/"); viewSearch(main, scope, decodeURIComponent(q.join("/"))); renderDetailsDefault(); }
   else { viewOverview(main); renderDetailsDefault(); }
   markActive();
   if (!route.startsWith("graph")) { main.scrollTop = 0; if (narrow()) { const stuck = $("#sidebar").getBoundingClientRect().height; window.scrollTo(0, Math.max(0, main.getBoundingClientRect().top + window.scrollY - stuck - 8)); } }
@@ -818,6 +958,7 @@ function applyState(state) {
   if (LIVE()) $("#nav-projects").hidden = false;
   setupMode();
   const main = $("#main"); const scroll = main.scrollTop;
+  RESTORE_SCROLL = scroll;
   rerender();
   main.scrollTop = scroll;
   markUpdates();
@@ -892,7 +1033,7 @@ function setupMode() {
   const box = $("#mode"); const p = S.project;
   const canonical = canonicalOf(p);
   const hasFamily = !!(p.parent || (p.children || []).length || p.dashboard_state);
-  if (!hasFamily) { box.hidden = true; return; }
+  if (!hasFamily && MODE !== "public") { box.hidden = true; return; }
   box.hidden = false;
   for (const b of box.querySelectorAll("button")) {
     const on = b.dataset.mode === (MODE === "public" ? "public" : "local");
@@ -909,11 +1050,23 @@ function setupMode() {
 }
 async function boot() {
   setupTheme(); setupSearch(); setupSideToggle();
-  window.addEventListener("hashchange", render);
+  window.addEventListener("hashchange", () => { RESTORE_SCROLL = 0; render(); });
   if (MODE === "public") {
     const r = await fetchPublicState(PUBLIC, PUBLIC_ROOT);
     const dot = $("#live"); dot.className = "live export"; dot.title = "public export — no live updates";
-    if (!r.state) { $("#main").append(el("p", { class: "center" }, `Cannot browse ${PUBLIC} publicly: ${r.error}. `, el("a", { href: location.pathname }, "back to local"))); return; }
+    if (!r.state) {
+      const msg = el("div", { class: "center" }, el("p", {}, `Cannot browse ${PUBLIC} publicly: ${r.error}.`));
+      $("#main").append(msg);
+      if (r.missingLine) {
+        // the live server may know a local checkout that already carries the line, on a branch the default branch has not merged
+        try {
+          const local = ((await (await fetch("/api/projects", { cache: "no-store" })).json()).projects || []).find((p) => p.canonical === PUBLIC && p.dashboard_state);
+          if (local) msg.append(el("p", { class: "note" }, `Your checkout at ${local.path} names ${local.dashboard_state} — on a branch that is not on the default branch yet. Public mode reads what is published: the line counts once it is merged, and the family once the published export carries it.`));
+        } catch { /* not served by a live dashboard */ }
+      }
+      msg.append(el("p", {}, el("a", { href: location.pathname }, "back to local")));
+      return;
+    }
     r.state.exported = true;
     applyState(r.state);
     return;

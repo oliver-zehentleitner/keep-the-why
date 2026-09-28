@@ -31,6 +31,7 @@ _ID_RE = re.compile(r"^-\s*id:\s*(\S+)\s*$", re.M)
 _CANONICAL_RE = re.compile(r"^-\s*canonical:\s*(\S+)\s*$", re.M)
 _ROOT_RE = re.compile(r"^-\s*root:\s*`?([^`\s]+)`?\s*$", re.M)
 _PARENT_RE = re.compile(r"^-\s*parent:\s*`?([^`\s]+)`?\s*$", re.M)
+_STATE_RE = re.compile(r"^-\s*dashboard-state:\s*`?([^`\s]+)`?\s*$", re.M)
 _CHILD_LINE_RE = re.compile(r"^-\s+([A-Za-z0-9_-]+)\s*:\s*(.*?)\s*$")
 _CHILD_SPLIT_RE = re.compile(r"\s+[—–-]\s+")
 CHILDREN_START = "<!-- keep-the-why:children -->"
@@ -89,6 +90,7 @@ def read_project_config(path: str) -> dict | None:
     canonical = _CANONICAL_RE.search(text)
     root = _ROOT_RE.search(text)
     parent = _PARENT_RE.search(text)
+    state_url = _STATE_RE.search(text)
     children = []
     inside = False
     for raw in text.splitlines():
@@ -116,6 +118,7 @@ def read_project_config(path: str) -> dict | None:
         "canonical": canonical.group(1) if canonical else "",
         "root": root.group(1) if root else "",
         "parent": parent.group(1) if parent else "",
+        "dashboard_state": state_url.group(1) if state_url else "",
         "children": children,
     }
 
@@ -290,6 +293,9 @@ class Project:
     canonical: str = ""
     root: str = ""
     parent: str = ""  # the parent's location from this project's own config
+    dashboard_state: str = (
+        ""  # the published export's URL, as the local config names it
+    )
 
     def to_dict(self):
         return asdict(self)
@@ -346,6 +352,60 @@ def _fetch_commands(canonical: str, pid: str, root: str = "") -> dict:
     }
 
 
+def _locate(location: str, base: str, projects: list["Project"]):
+    """The Project a family location names, seen from `base` — or None."""
+    if not location:
+        return None
+    if location.startswith("https://"):
+        found = [p for p in projects if p.path and p.canonical == location]
+        found.sort(key=lambda p: (p.kind != "repository", p.source != "cwd"))
+        return found[0] if found else None
+    path = os.path.realpath(os.path.join(base, location))
+    found = next(
+        (p for p in projects if p.path and os.path.realpath(p.path) == path), None
+    )
+    if found is None and os.path.isfile(os.path.join(path, ".keep-the-why")):
+        c = read_project_config(path) or {}
+        found = Project(
+            key=path,
+            id=c.get("id", ""),
+            path=path,
+            name=os.path.basename(path),
+            source="scan",
+            canonical=c.get("canonical", ""),
+            root=c.get("root", ""),
+            parent=c.get("parent", ""),
+        )
+    return found
+
+
+def _member(role, name, location, scope, found):
+    """One family member as the page reads it."""
+    canonical = (
+        found.canonical
+        if found
+        else (location if location.startswith("https://") else "")
+    )
+    pid = found.id if found else ""
+    return {
+        "role": role,
+        "name": name,
+        "location": location,
+        "scope": scope,
+        "key": found.key if found else None,
+        "id": pid,
+        "path": found.path if found else None,
+        "kind": found.kind if found else None,
+        "canonical": canonical,
+        "available": found.kind if found else "none",
+        "fetch": (
+            None
+            if found or not canonical
+            else _fetch_commands(canonical, pid or canonical.rstrip("/").split("/")[-1])
+        ),
+    }
+
+
 def family(project: "Project", projects: list["Project"]) -> list[dict]:
     """The family of `project`, one dict per member: role (self, parent,
     grandparent and further ancestors up the parent chain, sibling, child),
@@ -359,57 +419,9 @@ def family(project: "Project", projects: list["Project"]) -> list[dict]:
     cfg = read_project_config(project.path) or {}
 
     def locate(location: str, base: str):
-        """(Project | None, kind) for a family location seen from `base`."""
-        if not location:
-            return None
-        if location.startswith("https://"):
-            found = [p for p in projects if p.path and p.canonical == location]
-            found.sort(key=lambda p: (p.kind != "repository", p.source != "cwd"))
-            return found[0] if found else None
-        path = os.path.realpath(os.path.join(base, location))
-        found = next(
-            (p for p in projects if p.path and os.path.realpath(p.path) == path), None
-        )
-        if found is None and os.path.isfile(os.path.join(path, ".keep-the-why")):
-            c = read_project_config(path) or {}
-            found = Project(
-                key=path,
-                id=c.get("id", ""),
-                path=path,
-                name=os.path.basename(path),
-                source="scan",
-                canonical=c.get("canonical", ""),
-                root=c.get("root", ""),
-                parent=c.get("parent", ""),
-            )
-        return found
+        return _locate(location, base, projects)
 
-    def member(role, name, location, scope, found):
-        canonical = (
-            found.canonical
-            if found
-            else (location if location.startswith("https://") else "")
-        )
-        pid = found.id if found else ""
-        return {
-            "role": role,
-            "name": name,
-            "location": location,
-            "scope": scope,
-            "key": found.key if found else None,
-            "id": pid,
-            "path": found.path if found else None,
-            "kind": found.kind if found else None,
-            "canonical": canonical,
-            "available": found.kind if found else "none",
-            "fetch": (
-                None
-                if found or not canonical
-                else _fetch_commands(
-                    canonical, pid or canonical.rstrip("/").split("/")[-1]
-                )
-            ),
-        }
+    member = _member
 
     members = [member("self", project.name, project.path, "", project)]
     parent_loc = cfg.get("parent", "")
@@ -481,6 +493,54 @@ def family(project: "Project", projects: list["Project"]) -> list[dict]:
     return members
 
 
+def tree(project: "Project", projects: list["Project"]) -> list[dict]:
+    """Every member of the tree `project` belongs to: its family (see
+    `family`), and below the topmost local ancestor every project a children
+    block names, level by level — uncles, cousins, a sibling's children.
+    What the family view does not list gets the role `relative` and `via`,
+    the member whose children block names it. For searching the whole tree;
+    routing stays with the family. Members not available here are listed
+    with `key` None, so the page can say they were not searched."""
+    members = family(project, projects)
+    if not members:
+        return members
+    seen_paths = {os.path.realpath(m["path"]) for m in members if m.get("path")}
+    seen_canon = {m["canonical"] for m in members if m.get("canonical")}
+    seen_loc = {m["location"] for m in members if not m.get("path")}
+    # every local member whose children block is not yet expanded; self's
+    # children and the parent's (the siblings) are in the family already
+    expanded = {os.path.realpath(project.path)}
+    parent = next((m for m in members if m["role"] == "parent"), None)
+    if parent and parent.get("path"):
+        expanded.add(os.path.realpath(parent["path"]))
+    queue = [m for m in members if m.get("path")]
+    while queue and len(members) < 500:
+        cur = queue.pop(0)
+        here = os.path.realpath(cur["path"])
+        if here in expanded:
+            continue
+        expanded.add(here)
+        for ch in (read_project_config(cur["path"]) or {}).get("children", []):
+            found = _locate(ch["location"], cur["path"], projects)
+            if found and found.path and os.path.realpath(found.path) in seen_paths:
+                continue
+            if found and found.canonical and found.canonical in seen_canon:
+                continue
+            if not found and ch["location"] in seen_loc | seen_canon:
+                continue
+            m = _member("relative", ch["name"], ch["location"], ch["scope"], found)
+            m["via"] = cur["name"]
+            members.append(m)
+            if m.get("path"):
+                seen_paths.add(os.path.realpath(m["path"]))
+                queue.append(m)
+            else:
+                seen_loc.add(ch["location"])
+            if m.get("canonical"):
+                seen_canon.add(m["canonical"])
+    return members
+
+
 def resolve(
     cwd: str, scan_roots=(), use_history: bool = True
 ) -> tuple[list[Project], str | None]:
@@ -517,6 +577,7 @@ def resolve(
                 canonical=cfg.get("canonical", ""),
                 root=cfg.get("root", ""),
                 parent=cfg.get("parent", ""),
+                dashboard_state=cfg.get("dashboard_state", ""),
             )
         )
 

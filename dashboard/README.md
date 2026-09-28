@@ -19,7 +19,7 @@ Keep the Why preserves the reasoning behind your code. keep-the-why-dashboard sh
 
 **keep-the-why-dashboard** is the read-only viewer for [Keep the Why](https://keepthewhy.com) projects — Obsidian's graph and reader, for the *why* behind a codebase. Keep the Why is a repo-native convention and agent skill for preserving that reasoning: decisions, rejected alternatives, workarounds, incidents, constraints, stored as versioned Markdown in `context/`. Everything the dashboard shows is already in the repository — the entries, the config in `.keep-the-why`, the linter's findings, and the Git history of all of it. It connects them into one page: a graph of topics and references, an entry reader with backlinks, queues of what needs a person, a timeline, and per-author attribution from `git blame` and `git log`.
 
-**Tested three ways.** Python unit tests for what the server computes (state, Git, mapping, family, the endpoints over a real local server); `node --test` for the page's pure part (`web/lib.js`: host URL grammars, tolerant state reading, reference parsing, family grouping), no dependencies; and a jsdom smoke test that loads an export, drives every route and checks the family view, the entry page by Id and the search.
+**Tested three ways.** Python unit tests for what the server computes (state, Git, mapping, family, the endpoints over a real local server); `node --test` for the page's pure part (`web/lib.js`: host URL grammars, tolerant state reading, reference parsing, family grouping), no dependencies; a jsdom smoke test that loads an export, drives every route and checks the family view, the entry page by Id, the search and its results page; and a jsdom test of public mode over a stubbed published tree.
 
 **A viewer, not a store.** It writes nothing into any project, runs no daemon beyond the terminal you start it in, and is never a source of truth: delete it and nothing is lost. That is what keeps it inside Keep the Why's own rule — *no new platform, database, daemon, account, or workflow* — a lens on Markdown and Git, not a place where anything lives; see [Philosophy](https://keepthewhy.com/philosophy/). The one file it keeps is `~/.keep-the-why/projects.json`: where the projects you opened live on this machine, shared with the skill's own setup check, so the project menu can offer them again (a `dashboard-history.json` from before 0.2.0 is folded in and removed).
 
@@ -83,7 +83,7 @@ Started inside a project, the dashboard shows that one. The project menu shows f
 | **Findings** | the linter's findings with links to the entries they sit in |
 | **Status bar** | the two package versions, linking PyPI; when a newer release exists the entry shimmers and its tooltip names the version and the `pip install -U` line |
 
-Search (`/`) over titles and bodies; filters by status, evidence and author apply everywhere. Keys: `g` graph, `o` overview, `q` queues, `t` timeline, `a` authors, `l` findings.
+Search (`/`): every word must occur in the entry (title, body, the field lines, Id, file); Enter opens a results page with every hit grouped by project, and the *family* scope covers the whole tree, root to leaves. Filters by status, evidence and author apply everywhere. Keys: `g` graph, `o` overview, `q` queues, `t` timeline, `a` authors, `l` findings.
 
 ## Example
 

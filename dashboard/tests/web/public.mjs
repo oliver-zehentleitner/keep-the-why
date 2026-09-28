@@ -1,0 +1,93 @@
+// Headless check of the page's public mode: a family published as static
+// exports, fetched by the browser. fetch is stubbed with a small published
+// tree — nothing goes over the network:
+//
+//   acme/suite (root)  children: web (repository), docs (directory of suite), cli (repository, no export)
+//   acme/web           parent: suite    children: plugin (repository)
+//   acme/plugin        parent: web
+//
+// The page starts on acme/web. The family search must reach the root, the
+// sibling in the root's own repository, the child, and name the one member
+// without an export as not searched; Enter opens the results page; a project
+// whose published .keep-the-why has no dashboard-state line says so.
+import { JSDOM, VirtualConsole } from "jsdom";
+import fs from "node:fs";
+
+const W = new URL("../../ktw_dashboard/web/", import.meta.url).pathname;
+const lib = fs.readFileSync(W + "lib.js", "utf8").replace(/^export /gm, "");
+const app = fs.readFileSync(W + "app.js", "utf8").replace(/^import \{[^}]*\} from "\.\/lib\.js";\n/m, "");
+// jsdom runs no module scripts: the page loads without its script tag, and
+// lib and app run as one classic script in its window
+const html = fs.readFileSync(W + "index.html", "utf8").replace('<script type="module" src="/static/app.js"></script>', "");
+const script = `${lib}\n${app}`;
+
+const GH = "https://github.com/acme";
+const config = (id, lines) => `<!-- keep-the-why:config -->\n- id: ${id}\n${lines.join("\n")}\n<!-- /keep-the-why:config -->\n`;
+const entry = (title, text) => ({ title, file: "design.md", line: 3, end_line: 9, type: ["decision"], status: "active", evidence: "confirmed", body: { text, reason: "" } });
+const state = (id, project, entries) => ({ generated: "2026-09-28 10:00", dashboard: "0.2.0", linter: "0.18.0.0", project: { id, name: id, context: "context/", schema: "0.18.0", ...project }, topics: [{ file: "design.md", title: "Design", entries: entries.length }], entries, authors: [], findings: { errors: 0, warnings: 0, items: [] } });
+const FILES = {
+  "https://raw.githubusercontent.com/acme/suite/HEAD/.keep-the-why": config("acme---suite", ["- dashboard-state: https://acme.github.io/suite/state.json"]),
+  "https://acme.github.io/suite/state.json": state("acme---suite", { canonical: `${GH}/suite`, children: [{ name: "web", location: `${GH}/web`, scope: "the web UI" }, { name: "docs", location: "docs", scope: "the manual" }, { name: "cli", location: `${GH}/cli`, scope: "the command line" }] }, [entry("Release together", "Every package ships with the same needle version.")]),
+  "https://raw.githubusercontent.com/acme/suite/HEAD/docs/.keep-the-why": config("acme---suite---docs", ["- dashboard-state: https://acme.github.io/suite/docs/state.json"]),
+  "https://acme.github.io/suite/docs/state.json": state("acme---suite---docs", { canonical: `${GH}/suite`, root: "docs", parent: ".." }, [entry("Docs are built in CI", "No needle in a local build.")]),
+  "https://raw.githubusercontent.com/acme/web/HEAD/.keep-the-why": config("acme---web", ["- dashboard-state: https://acme.github.io/web/state.json"]),
+  "https://acme.github.io/web/state.json": state("acme---web", { canonical: `${GH}/web`, parent: `${GH}/suite`, children: [{ name: "plugin", location: `${GH}/plugin`, scope: "the plugin" }] }, [entry("Server-rendered pages", "The needle is not a single-page app.")]),
+  "https://raw.githubusercontent.com/acme/plugin/HEAD/.keep-the-why": config("acme---plugin", ["- dashboard-state: https://acme.github.io/plugin/state.json"]),
+  "https://acme.github.io/plugin/state.json": state("acme---plugin", { canonical: `${GH}/plugin`, parent: `${GH}/web` }, [entry("Plugins load lazily", "A needle in the plugin.")]),
+  "https://raw.githubusercontent.com/acme/cli/HEAD/.keep-the-why": config("acme---cli", []),
+};
+const fetched = [];
+const stubFetch = async (url) => {
+  const u = String(url); fetched.push(u);
+  if (!(u in FILES)) return { ok: false, status: 404, text: async () => "404: Not Found", json: async () => { throw new Error("404"); } };
+  const body = FILES[u];
+  return { ok: true, status: 200, text: async () => (typeof body === "string" ? body : JSON.stringify(body)), json: async () => (typeof body === "string" ? JSON.parse(body) : structuredClone(body)) };
+};
+
+const errors = [];
+const tick = (ms) => new Promise((r) => setTimeout(r, ms));
+async function open(url) {
+  const vc = new VirtualConsole();
+  vc.on("jsdomError", (e) => errors.push("jsdom: " + (e.detail?.stack || e.message || e).toString().split("\n").slice(0, 2).join(" | ")));
+  vc.on("error", (...a) => errors.push("console: " + a.join(" ")));
+  const dom = new JSDOM(html, { url, runScripts: "outside-only", pretendToBeVisual: true, virtualConsole: vc,
+    beforeParse(w) { w.fetch = stubFetch; w.ResizeObserver = class { observe() {} disconnect() {} }; w.HTMLCanvasElement.prototype.getContext = () => new Proxy({}, { get: (t, k) => (k === "measureText" ? () => ({ width: 10 }) : () => {}), set: () => true }); w.matchMedia = () => ({ matches: false }); } });
+  dom.window.eval(script);
+  await tick(300);
+  return dom.window;
+}
+
+const report = {};
+{
+  const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/web`)}#overview`);
+  const d = window.document;
+  if (d.getElementById("mode").hidden) errors.push("public mode: the local/public switch is hidden — no way back to local");
+  const scope = d.getElementById("search-scope"); scope.value = "family"; scope.dispatchEvent(new window.Event("change"));
+  const input = d.getElementById("search"); input.value = "needle"; input.dispatchEvent(new window.Event("input"));
+  await tick(300);
+  report.dropdown = d.querySelectorAll("#search-results a").length;
+  input.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+  await tick(50); window.dispatchEvent(new window.Event("hashchange")); await tick(300);
+  report.hash = window.location.hash;
+  const main = d.getElementById("main");
+  report.groups = [...main.querySelectorAll(".sgroup:not(.missing) .sg-head")].map((h) => h.textContent);
+  report.missing = [...main.querySelectorAll(".sgroup.missing .sr-missing")].map((m) => m.textContent);
+  report.links = [...main.querySelectorAll(".sgroup .row")].map((a) => a.getAttribute("href"));
+  if (report.hash !== "#search/family/needle") errors.push("Enter without a selection did not open the results page: " + report.hash);
+  const want = [["acme---web", "this project"], ["github.com/acme/suite", "parent"], ["docs", "sibling"], ["plugin", "child"]];
+  for (const [name, role] of want) if (!report.groups.some((g) => g.startsWith(name) && g.includes(role))) errors.push(`results page: no group for ${name} (${role})`);
+  if (report.groups.length !== 4) errors.push("results page: expected 4 groups, got " + report.groups.length);
+  if (!report.missing.some((m) => m.startsWith("cli") && /no dashboard-state line/.test(m))) errors.push("results page: cli (no export) not named as not searched");
+  if (!report.links.some((h) => h.includes("public=https%3A%2F%2Fgithub.com%2Facme%2Fsuite&root=docs#entry/"))) errors.push("results page: the docs hit does not link to the docs export");
+  window.close();
+}
+{
+  const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/cli`)}#overview`);
+  const text = window.document.getElementById("main").textContent;
+  report.noExport = text.slice(0, 160);
+  if (!/no dashboard-state line in the published \.keep-the-why \(https:\/\/raw\.githubusercontent\.com\/acme\/cli\/HEAD\/\.keep-the-why\)/.test(text)) errors.push("a project without dashboard-state: the page does not say which file lacks the line");
+  window.close();
+}
+console.log(JSON.stringify(report, null, 1));
+console.log("ERRORS:", errors.length); for (const e of errors) console.log("  " + e);
+process.exit(errors.length ? 1 : 0);

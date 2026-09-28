@@ -67,6 +67,11 @@ search.value = S.entries[0].title.split(" ").slice(0, 2).join(" ");
 search.dispatchEvent(new window.Event("input"));
 await tick(200);
 if (window.document.getElementById("search-results").hidden || !window.document.querySelector("#search-results a")) errors.push("search: no result for a known title");
+// Enter without a selection: the results page, every hit with its topic
+search.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+await tick(50); window.dispatchEvent(new window.Event("hashchange")); await tick(150);
+report.searchPage = { hash: window.location.hash, rows: main.querySelectorAll(".search-page .row").length };
+if (!window.location.hash.startsWith("#search/project/") || !report.searchPage.rows) errors.push("search: Enter did not open a results page with rows: " + JSON.stringify(report.searchPage));
 await go("#overview");
 report.defaultMiniGraph = window.document.querySelectorAll("#details .mini canvas").length;
 if (report.strip < 10) errors.push("strip: expected at least 10 stats, got " + report.strip);
