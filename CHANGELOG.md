@@ -4,7 +4,12 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-09-28
+
 ### Added
+
+- This repository's own `.keep-the-why` is at `context-schema` 0.18.0, with `canonical` and `dashboard-state` (the live export on `/dashboard/live/`), and its `context/` ran the new part of the migration pass: twelve `See` lines where a body names one entry; a reference already carried by `Superseded by` gets no second line, and one that fits several entries stays prose.
+- `keep-the-why-dashboard` 0.2.0 requires `keep-the-why-lint>=0.18.0.0`: its parser returns the entry `Id`, `See` and `Superseded by` the dashboard now draws.
 
 - The 0.18.0 migration pass turns an existing reference to one entry into a `See` line — a heading link, a topic file holding only that entry, or a file or family member together with what the sentence says about it, when exactly one entry there fits; a family member only when it can be read here — and leaves the prose as it is; a reference that leaves a doubt which entry is meant stays prose (`migrations.md` 0.18.0). Before, body links were left alone until an entry was next touched. Found migrating the suite: eight repositories came out with no `See` line at all, so the dashboard showed none of their references. One eval case, `migration-018-turns-an-entry-reference-into-a-see-line`.
 - `keep-the-why-dashboard`: cross-references by Id everywhere. The project graph draws every `See` and `Superseded by` between two entries (between their topics while entries are hidden), and an entry's neighbourhood includes every entry it points at or that points at it. The entry page lists what supersedes or points at it by `See` — in the project, and with the family scope from anywhere in the tree (the missing cross-project *Supersedes*: the suite's LUCIT-removal entry now lists the six repositories' history entries it replaced). The side pane's graph has a *near / project / family* switch in its corner, remembered per browser.
@@ -788,7 +793,8 @@ Initial release.
 - Logo, wordmark, and favicon.
 - `context/repo-conventions.md`, dogfooding the skill on its own repository from day one.
 
-[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.17.1...HEAD
+[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.18.0...HEAD
+[0.18.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.17.1...v0.18.0
 [0.17.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.17.0...v0.17.1
 [0.17.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.16.3...v0.17.0
 [0.16.3]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.16.2...v0.16.3

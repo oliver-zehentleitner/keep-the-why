@@ -10,7 +10,7 @@ license = { text = "MIT" }
 authors = [{ name = "Oliver Zehentleitner" }]
 requires-python = ">=3.10"
 dynamic = ["version"]
-dependencies = ["keep-the-why-lint>=0.16.1.0"]
+dependencies = ["keep-the-why-lint>=0.18.0.0"]
 keywords = [
     "keep-the-why",
     "dashboard",

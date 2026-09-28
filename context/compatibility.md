@@ -31,6 +31,7 @@ Added a second paragraph to "Composition with other skills": checking whether Ke
 **Status:** superseded
 **Evidence:** confirmed
 **Superseded by:** 13eb348c-1987-4060-9500-c85b27c16744
+**See:** positioning.md#no-name-by-name-comparison-against-competing-tools-only-named-standards — 6f5393b2-4bf6-419e-a52e-089ad7ebd33a — as of 2026-09-28
 
 Keep the Why doesn't build, recommend, or document a specific mechanism (e.g. a Claude Code `SessionStart` hook) to make its own Skill activate more reliably at session start. Whether and how to strengthen activation is left entirely to each agent tool's own capabilities and the developer's own setup.
 

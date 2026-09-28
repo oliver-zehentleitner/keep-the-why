@@ -79,7 +79,7 @@ README, for what Keep the Why actually is.
 - canonical: https://github.com/acme/widget-service
 - context: `context/`
 - init: complete
-- context-schema: 0.17.1
+- context-schema: 0.18.0
 - capture-confirmation: confirm-when-unsure
 - source-reference: never
 <!-- /keep-the-why:config -->

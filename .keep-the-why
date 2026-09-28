@@ -4,9 +4,11 @@ README, for what Keep the Why actually is.
 
 <!-- keep-the-why:config -->
 - id: oliver-zehentleitner---keep-the-why
+- canonical: https://github.com/oliver-zehentleitner/keep-the-why
+- dashboard-state: https://keepthewhy.com/dashboard/live/state.json
 - context: `context/`
 - init: complete
-- context-schema: 0.17.1
+- context-schema: 0.18.0
 - capture-confirmation: automatic
 - source-reference: never
 <!-- /keep-the-why:config -->

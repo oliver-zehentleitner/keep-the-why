@@ -158,6 +158,7 @@ Every release advances this repo's own `context-schema` (in this file's config b
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
+**See:** entry-format.md#contextindexmd-entries-are-sorted-alphabetically-by-filename — 5443daf8-b878-4249-82ea-464afb76d804 — as of 2026-09-28
 
 `references/migrations.md` records what changed in each version that an existing project may need to know about or act on — structural/placement conventions (e.g. `context/index.md`'s sort order) and config defaults added to the project or personal config file (`.keep-the-why`, `~/.keep-the-why/<id>.md`; the `AGENTS.md`/`AGENTS.local.md` blocks when this was decided), not only changes to the `context/` entry format itself. A purely informational entry (a field silently backfilled to a documented default) still gets recorded, just without the migrate-now/defer/decline prompt — that prompt is reserved for entries that actually require doing something.
 
@@ -186,6 +187,7 @@ Every release advances this repo's own `context-schema` (in this file's config b
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
+**See:** positioning.md#no-name-by-name-comparison-against-competing-tools-only-named-standards — 6f5393b2-4bf6-419e-a52e-089ad7ebd33a — as of 2026-09-28
 
 New project setting `source-reference` (`always` / `never` / `filtered: <criteria>`, default `never`) governs whether the skill actively asks for a related issue, ticket, PR, or post-mortem when recording a `context/` entry — distinct from rule 2's existing Source field, which was already able to hold this but was never actively sought.
 

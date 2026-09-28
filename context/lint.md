@@ -53,6 +53,7 @@ An `##` heading in a topic file with no recognized field lines gets `W102`, not 
 **Evidence:** confirmed
 **Source:** first real-world run against this repository's `context/`, 2026-09-01
 **Revisit when:** the entry format ever standardizes a separator
+**See:** compatibility.md#composition-with-other-skills-needed-an-explicit-re-check-instruction-found-via-real-testing — 82ec40b7-628d-4aa1-a740-5db7fed8505d — as of 2026-09-28
 
 `**Verification:** contradicted. Retested …` is valid — the value word is what's constrained, and anything after it (period, colon, dash, plain sentence) counts as the explanation `contradicted` requires. `Type: undefined — <reason>` keeps its documented dash form, since that one *is* specified.
 
@@ -84,6 +85,7 @@ An `##` heading in a topic file with no recognized field lines gets `W102`, not 
 **Source:** external review of 0.12.0, 2026-09-07 (finding: `id: ../.claude/CLAUDE` passed the old non-empty/no-spaces rule); maintainer call on the grammar the same day
 **Verification:** corroborated — re-checked 2026-09-27 when the third id form arrived (`<owner>---<repo>---<sub-path>` for an isolated-context mono repo, `project-families.md`): the slug is built from the same normalization as the repo name, fits the alphabet, and the rule needed no change
 **Revisit when:** the personal file is ever keyed by something other than `<id>.md` under one fixed directory
+**See:** project-families.md#canonical-is-a-stored-locator-beside-id-and-a-sub-projects-place-is-a-root-field-not-part-of-the-url — 4d77c151-4e83-4a9b-9c2a-68a04a0348f5 — as of 2026-09-28
 
 `E010` accepts an `id` of letters, digits, `.`, `_` and `-` only, and rejects a value that is all dots. Nothing about the shape inside that alphabet is enforced — the three documented forms (`<owner>---<repo>`, `<owner>---<repo>---<sub-path>`, `<uuid>---<folder>`) all fit, and so does a hand-chosen `my-service`.
 

@@ -21,6 +21,7 @@
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
+**See:** config-format.md#source-reference-asks-about-ticketissue-links-doesnt-require-one-to-exist-and-ships-project-wide-only — ef5a3768-06cd-4a30-bdee-9905012f2061 — as of 2026-09-28
 
 Every `context/` entry can carry a `**Type:**` header field, placed before `**Status:**`, with one of four values: `decision`, `workaround`, `incident`, `constraint`. It categorizes what kind of thing an entry is, independent of Status and Evidence.
 

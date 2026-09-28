@@ -9,6 +9,8 @@
 **Source:** maintainer conversation, 2026-09-11
 **Verification:** corroborated — re-checked 2026-09-27 when the *forget* control arrived (`project-families.md`): the dashboard now removes a row from `~/.keep-the-why/projects.json` and deletes a context cache on request, which is the "asked to write anything" trigger; the rule is restated more precisely rather than changed — the dashboard never modifies project content, and may manage Keep the Why's own local metadata and caches, all of it in the developer's home, none of it the only copy of anything
 **Revisit when:** the dashboard is asked to write into a project's own files, to hold state a project depends on, or to become the primary way anyone reads `context/`
+**See:** project-families.md#the-dashboard-shows-the-family-as-a-view-and-a-grouped-menu-keeps-forget-out-of-the-dropdown-and-makes-the-id-an-address — 55247232-1368-40b4-a955-3c929b7f7b6b — as of 2026-09-28
+**See:** project-families.md#the-mapping-is-one-json-file-in-the-developers-home-kept-by-the-skill-and-the-dashboard-alike — 3c014723-e167-4018-b82a-eaef5425a437 — as of 2026-09-28
 
 `docs/philosophy.md` said, until the dashboard existed, that the project introduces "no new platform, database, daemon, dashboard, or workflow". `keep-the-why-dashboard` exists — as a viewer over data the project already has: the entries in `context/`, `.keep-the-why`, the linter's findings, and the Git history of all of it. It writes nothing into any project, holds its state only in the memory of the terminal it runs in, and rebuilds that state from Markdown and Git whenever the project changes. Deleting it loses nothing. The one file it keeps — `~/.keep-the-why/dashboard-history.json`, the projects opened so far with their paths — is convenience for the project menu, next to the skill's own personal files and equally outside every repository. Since dashboard 0.2.0 (2026-09-27) that file is `~/.keep-the-why/projects.json`, the mapping the skill keeps too (`project-families.md`); the old file is folded in and removed, and the rule is unchanged: local metadata in the developer's home, never project content.
 
@@ -26,6 +28,7 @@
 **Evidence:** confirmed
 **Source:** maintainer conversation, 2026-09-11; the linter precedent in `release-and-distribution.md`
 **Revisit when:** the dashboard's release cadence or contributor base outgrows this repository's checklist, or it stops depending on the linter's parser
+**See:** release-and-distribution.md#the-linter-lives-in-this-repository-under-lint-published-to-pypi-as-its-own-package — 1e8bbd08-7e94-4362-a822-c76fb1b9a364 — as of 2026-09-28
 
 Same shape as the linter: developed in `dashboard/` with its own `pyproject.toml`, tests and PyPI README, published as `keep-the-why-dashboard` with its own version, tagged `dashboard-v<version>` by its own publish workflow. It imports `ktw_lint` for `.keep-the-why` and entry parsing and adds only what the linter does not keep — entry bodies, cross-references between topics, Git attribution.
 
@@ -104,6 +107,7 @@ The author layer comes from three Git calls per entry: `blame` on the heading fo
 **Source:** maintainer request, 2026-09-11
 **Verification:** corroborated — re-checked 2026-09-27 when public mode arrived (`project-families.md`): the Python server still makes the one call, and the *page* now fetches a family member's raw `.keep-the-why` and its published `state.json` when a person switches it to public — on request, in the browser, never from the server and never from the skill; an exported page left in local mode still makes none
 **Revisit when:** the server is asked for a second call, the page is asked to fetch anything without the person switching to public, or the check is asked to do anything but compare two version strings
+**See:** project-families.md#public-mode-is-the-browser-reading-published-exports-bootstrapped-from-a-raw-keep-the-why-at-head — cae2d3bf-9ca6-42a8-98f4-6da2ca1904d3 — as of 2026-09-28
 
 At start and once every 24 hours the server asks `pypi.org/pypi/<name>/json` for the newest `keep-the-why-dashboard` and `keep-the-why-lint`; a newer release makes the package's entry in the status bar shimmer, with the version and the `pip install -U` line in its tooltip. `--no-update-check` turns it off. The exported page never checks.
 

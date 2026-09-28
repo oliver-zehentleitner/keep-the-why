@@ -60,6 +60,7 @@ mechanism that does not exist.
 **Evidence:** confirmed
 **Source:** maintainer design discussion, 2026-09-26/27, with two rounds of external review
 **Revisit when:** a second locator kind is needed (a project reachable by something other than a repository URL), or a host stops resolving the normalized `https://` form
+**See:** config-format.md#project-identity-is-stored-explicitly-not-re-derived-each-session — 691f82ba-a054-4a98-83f2-fa0e1fbdb9ff — as of 2026-09-28
 
 `.keep-the-why` gains `canonical`, the `origin` URL normalized (`https://`,
 no `.git`, no trailing slash, SSH rewritten), written once at init and
