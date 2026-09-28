@@ -170,6 +170,26 @@ class StateTest(unittest.TestCase):
         self.assertEqual(fresh["git"]["last_touched"]["author"], "working tree")
         self.assertEqual(fresh["git"]["status_history"], [])
 
+    def test_mailmap_joins_two_identities_of_one_author(self):
+        # Bob's commit came from a second identity of Alice's: the project's
+        # .mailmap says so, and every author field follows it, as git does
+        s = StateBuilder(self.root).build()
+        self.assertEqual({a["name"] for a in s["authors"]}, {"Alice", "Bob"})
+        with open(os.path.join(self.root, ".mailmap"), "w") as fh:
+            fh.write("Alice <alice@example.com> Bob <bob@example.com>\n")
+        s = StateBuilder(self.root).build()
+        self.assertEqual({a["name"] for a in s["authors"]}, {"Alice"})
+        parts = [
+            p
+            for e in s["entries"]
+            for p in (
+                e["git"]["created"],
+                e["git"]["last_touched"],
+                *e["git"]["status_history"],
+            )
+        ]
+        self.assertEqual({p["author"] for p in parts}, {"Alice"})
+
     def test_anonymize_and_no_emails(self):
         s = StateBuilder(self.root, anonymize=True).build()
         names = {a["name"] for a in s["authors"]}

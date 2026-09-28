@@ -159,7 +159,7 @@ def first_commit_with(repo: Repo, path: str, needle: str):
     """The commit that introduced `needle` into `path` (pickaxe, oldest
     first): the closest thing Git has to 'when was this entry created'."""
     out = _run(
-        ["log", "--reverse", "--format=%h|%an|%at", "-S", needle, "--", path],
+        ["log", "--reverse", "--format=%h|%aN|%at", "-S", needle, "--", path],
         repo.root,
     )
     if not out:
@@ -176,7 +176,7 @@ def status_history(repo: Repo, path: str, line: int):
     """Every value the Status line at `line` has had, oldest first, with who
     set it and when — `git log -L` follows the line through history."""
     out = _run(
-        ["log", "--format=@@commit %h|%an|%at", "-L", f"{line},{line}:{path}"],
+        ["log", "--format=@@commit %h|%aN|%at", "-L", f"{line},{line}:{path}"],
         repo.root,
     )
     if not out:
