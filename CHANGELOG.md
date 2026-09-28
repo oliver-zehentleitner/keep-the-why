@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Changed
+
+- Landing page: the live dashboard section sits right before "One repository or many", after "How it works"; the *Use* card links "Audit the data" to the dashboard, and the *Multi repository* card links the UNICORN Binance Suite's published dashboard as an example of a family.
+
 ### Fixed
 
 - `keep-the-why-dashboard` 0.2.1: a static export no longer calls itself *local* — its half of the switch reads *export*, with the time it was generated, and the tooltip says it reads no machine; an export of a project without a family shows no switch. The live server keeps *local*: it reads the clones on the machine it runs on, whatever device the browser is on. Found opening the site's live example on a phone. A smoke check for both cases.

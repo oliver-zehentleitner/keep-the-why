@@ -63,20 +63,6 @@ Decisions that shipped, alternatives that lost, workarounds, constraints — Kee
 
 <div class="ktw-section" markdown>
 
-## Live Dashboard
-
-<div class="ktw-shot" markdown>
-
-[![keep-the-why-dashboard: the graph of a project's context/, an entry with its Git history, and the queues of what still needs a person](assets/dashboard-screenschot.png)](https://keepthewhy.com/dashboard/live/){ target=_blank rel=noopener }
-
-</div>
-
-The dashboard — a read-only view over `context/` and its Git history: who recorded what, when a status changed, what still needs a person. Run locally, it updates as the project changes; the example behind the screenshot is a static export of this repository's own `context/`, rebuilt with every docs deploy. [Dashboard →](dashboard.md) · [Example →](https://keepthewhy.com/dashboard/live/)
-
-</div>
-
-<div class="ktw-section" markdown>
-
 ## How it works
 
 **Install it with one command. Say "set up Keep the Why here" once in a project and answer the setup — "defaults" is a complete answer. Then work as usual.**
@@ -125,11 +111,25 @@ Everything lives in `context/`, one file per topic, versioned with the code. A l
 
 The next session — yours, a colleague's, an agent's — loads the index first and reads the why before touching the code. An agent that finds the reason explains it and builds on it instead of repeating the attempt; one that finds nothing says so and asks, instead of guessing. That is what the capture was for.
 
-[Install →](installation.md) · [Autostart →](autostart.md) · [Agent matrix →](agent-matrix.md) · [Trust model →](trust-model.md)
+[Install →](installation.md) · [Autostart →](autostart.md) · [Agent matrix →](agent-matrix.md) · [Trust model →](trust-model.md) · [Audit the data →](dashboard.md)
 
 </div>
 
 </div>
+
+</div>
+
+<div class="ktw-section" markdown>
+
+## Live Dashboard
+
+<div class="ktw-shot" markdown>
+
+[![keep-the-why-dashboard: the graph of a project's context/, an entry with its Git history, and the queues of what still needs a person](assets/dashboard-screenschot.png)](https://keepthewhy.com/dashboard/live/){ target=_blank rel=noopener }
+
+</div>
+
+The dashboard — a read-only view over `context/` and its Git history: who recorded what, when a status changed, what still needs a person. Run locally, it updates as the project changes; the example behind the screenshot is a static export of this repository's own `context/`, rebuilt with every docs deploy. [Dashboard →](dashboard.md) · [Example →](https://keepthewhy.com/dashboard/live/)
 
 </div>
 
@@ -162,6 +162,8 @@ One `context/` for the whole tree, or one per sub-project — each with its own 
 ### Multi repository
 
 A family: one parent project lists its children, one line each on what belongs where. The why lives once, in the project it binds, and is cited from everywhere else — families can nest, a suite, its cluster, the cluster's dashboard.
+
+[Example: the UNICORN Binance Suite's dashboard →](https://oliver-zehentleitner.github.io/unicorn-binance-suite/keep-the-why-dashboard/){ target=_blank rel=noopener }
 
 </div>
 
