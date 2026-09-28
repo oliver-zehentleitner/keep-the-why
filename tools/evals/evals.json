@@ -1160,5 +1160,37 @@
         "path": "~/.keep-the-why/cache/"
       }
     ]
+  },
+  {
+    "id": "canonical-backfill-takes-upstream-in-a-fork-checkout",
+    "prompt": "What does src/gateway.py actually do when the gateway answers with a 5xx? Just explain it, I'm reading the code for the first time.",
+    "expected_behavior": "A set-up project whose .keep-the-why has no `canonical` line, in a fork checkout: `origin` is git@github.com:a-contributor/order-service.git (a contributor's fork), `upstream` is https://github.com/ktw-eval-fixture/order-service.git (the project). The setup check backfills `canonical` silently from the published remote — `upstream` in a fork checkout, else `origin` (SKILL.md step 0; 'Project config' in references/setup.md): the agent writes `- canonical: https://github.com/ktw-eval-fixture/order-service`, normalized (https, no .git), without asking and without announcing it as a decision, then answers the code question (bounded retries with exponential backoff on 5xx). No context/ entry for a plain question. What fails: canonical taken from origin (the fork, a-contributor), the raw form with .git, no canonical line at all, `id` changed, or an entry written for the question.",
+    "checks": [
+      {
+        "type": "file_changed",
+        "path": ".keep-the-why"
+      },
+      {
+        "type": "text_present",
+        "regex": "(?m)^- canonical: https://github\\.com/ktw-eval-fixture/order-service$",
+        "path": ".keep-the-why",
+        "guard": false
+      },
+      {
+        "type": "text_absent",
+        "text": "a-contributor",
+        "path": ".keep-the-why"
+      },
+      {
+        "type": "text_present",
+        "text": "- id: ktw-eval-fixture---order-service",
+        "path": ".keep-the-why",
+        "guard": false
+      },
+      {
+        "type": "no_changes_under",
+        "path": "context/"
+      }
+    ]
   }
 ]

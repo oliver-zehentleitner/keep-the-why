@@ -168,6 +168,10 @@ def build_workdir(case_id, cfg, workdir: Path, driver, home: Path = None):
     # ever fetched from it.
     if cfg.get("remote"):
         sh(["git", "remote", "add", "origin", cfg["remote"]], cwd=workdir, env=git_env)
+    # several named remotes (a fork checkout: origin = the fork, upstream =
+    # the project), for the rule that canonical comes from the published one
+    for name, url in (cfg.get("remotes") or {}).items():
+        sh(["git", "remote", "add", name, url], cwd=workdir, env=git_env)
 
     for commit in cfg.get("commits", []):
         for rel, content in commit.get("files", {}).items():

@@ -400,6 +400,8 @@ code change.
     agent is told is made relative to that directory
   - `"remote": "git@github.com:acme/widget.git"` — add it as `origin` after
     the initial commit (nothing is fetched); for the `canonical` backfill
+  - `"remotes": {"origin": "…", "upstream": "…"}` — several named remotes, e.g.
+    a fork checkout, where `canonical` must come from `upstream`
   - keys starting with `_` are notes (an id a check refers to), ignored
 - `fixtures/<case-id>/home/` — optional, overlaid onto the fake `$HOME`
   (after the default personal config is seeded, or skipped per `"personal"`

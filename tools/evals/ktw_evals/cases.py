@@ -57,6 +57,8 @@ def read_case_config(case_id):
            skill path is made relative to it
       remote: a URL added as `origin` after the initial commit, never
               fetched — for the `canonical` backfill
+      remotes: {name: url} — several named remotes, e.g. a fork checkout
+               (origin = the fork, upstream = the project); never fetched
       Keys starting with "_" are notes for whoever reads the fixture (an id
       a check refers to) and are ignored.
 

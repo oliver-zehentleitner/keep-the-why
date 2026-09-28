@@ -80,17 +80,19 @@ class BuildWorkdirExtras(unittest.TestCase):
                 home.mkdir()
                 W.build_workdir(
                     "c",
-                    {"remote": "git@github.com:acme/x.git"},
+                    {
+                        "remote": "git@github.com:acme/x.git",
+                        "remotes": {"upstream": "https://github.com/real/x.git"},
+                    },
                     work,
                     "claude",
                     home=home,
                 )
             finally:
                 W.BASE_FIXTURE, W.FIXTURES_DIR, W.SKILL_DIR = old
-            self.assertIn(
-                "git@github.com:acme/x.git",
-                W.sh(["git", "remote", "-v"], cwd=work).stdout,
-            )
+            remotes = W.sh(["git", "remote", "-v"], cwd=work).stdout
+            self.assertIn("git@github.com:acme/x.git", remotes)
+            self.assertIn("upstream	https://github.com/real/x.git", remotes)
             mapping = json.loads((home / ".keep-the-why" / "projects.json").read_text())
             self.assertEqual(
                 mapping["projects"][0]["cache"], f"{home}/.keep-the-why/cache/acme---y"

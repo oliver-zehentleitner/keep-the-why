@@ -490,3 +490,32 @@ into the parent's build.
 sidestep CORS. Rejected because it would make the server a second network
 caller and let a hostile export reach it; the browser's own rules are the
 right boundary for other people's published files.
+
+## `canonical` comes from the published remote: `upstream` in a fork checkout, else `origin`
+
+**Id:** 2f464b89-3f06-477b-8a73-3e86bb1e0538
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** migrating the suite's eight repositories, 2026-09-28 — every checkout used there is a fork checkout; maintainer call the same day
+**Revisit when:** a hosting convention appears that names the published remote differently (no `upstream`), or a project reports the ask as noise
+
+`canonical` — and `id` for a project set up now — is derived from the
+published remote: `upstream` when that remote exists, else `origin`. When
+the remotes leave it unclear which one is the project's own repository,
+the agent asks.
+
+**Reason:** the first real migration ran in fork checkouts, where `origin`
+is the contributor's fork. Taken from `origin`, `canonical` would have named
+the fork in all eight repositories, and every `parent` line, `children` entry
+and cross-project `See` or `Superseded by` would have pointed at the wrong
+repository — silently, because the fork's URL is a perfectly valid one. The
+`upstream` convention is what `gh repo fork` and most contributor guides set
+up, so it identifies the published repository without any configuration.
+
+**Rejected alternative:** always `origin`, as first written. Rejected for the
+reason above — it is right only for the maintainer's own clone.
+
+**Rejected alternative:** ask every time. Rejected as noise for the common
+case: one remote, or `origin` plus `upstream`, is unambiguous; the question
+is kept for the case that is not.

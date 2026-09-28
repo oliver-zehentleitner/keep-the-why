@@ -1,0 +1,6 @@
+{
+ "remotes": {
+  "origin": "git@github.com:a-contributor/order-service.git",
+  "upstream": "https://github.com/ktw-eval-fixture/order-service.git"
+ }
+}
