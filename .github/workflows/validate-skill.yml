@@ -28,6 +28,18 @@ jobs:
       - name: Validate evals.json is well-formed
         run: python -m json.tool tools/evals/evals.json >/dev/null
 
+      # agent-skill-manager labels a package High Risk at install time on the
+      # word bash (or `sh -c`) anywhere in it; shell fences in the package are
+      # ```sh (context/release-and-distribution.md, "Shell fences inside the
+      # skill package are ```sh"). One slipped back in with 0.18.0 — this
+      # mirrors asm's pattern so it cannot again.
+      - name: No asm shell-command match in the skill package
+        run: |
+          if grep -rnwE 'bash|sh[[:space:]]+-c' skills/keep-the-why; then
+            echo "::error::the skill package matches asm's shell-command pattern (bash, sh -c): fence shell snippets as sh — see context/release-and-distribution.md"
+            exit 1
+          fi
+
       - name: Check version consistency across the repo
         run: |
           V=$(grep -oP '(?<=version: ")[0-9]+\.[0-9]+\.[0-9]+' skills/keep-the-why/SKILL.md | head -1)

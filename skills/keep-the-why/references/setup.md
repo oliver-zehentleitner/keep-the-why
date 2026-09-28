@@ -165,7 +165,7 @@ A family is one parent and its children — projects whose `context/` directorie
 
 **Not local: clone, or cache.** A member the mapping does not know is not fetched silently. Ask the person, once: clone the whole repository into the folder that holds the family's other checkouts (a working tree, writable, the mapping learns it), or fetch the *context cache* only. The cache is a sparse partial clone under `~/.keep-the-why/cache/<id>/`, built in two stages so that it holds knowledge and nothing else:
 
-```bash
+```sh
 git clone --filter=blob:none --sparse <canonical> ~/.keep-the-why/cache/<id>
 git -C ~/.keep-the-why/cache/<id> sparse-checkout set <root>/.keep-the-why
 # read the context: path from that file, then

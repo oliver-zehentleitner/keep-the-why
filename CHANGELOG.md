@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Fixed
+
+- The context-cache commands in `references/setup.md` are fenced ` ```sh `, as every shell snippet in the skill package is: fenced ` ```bash ` in 0.18.0, they were asm's only shell-command match at install time. `validate-skill.yml` now fails on asm's pattern (`bash`, `sh -c`) anywhere under `skills/keep-the-why/`, so the recorded rule is checked instead of remembered.
+
 ### Changed
 
 - The asm install line (README, installation page, `llms.txt`) is a command to paste as it is: `--tool all --scope global` installs one shared copy for every agent asm knows; how to install for one agent or into a project follows below it. Tested with asm 2.14.0, `all` and each named tool.
