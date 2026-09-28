@@ -172,11 +172,6 @@ table.t tr.clickable { cursor: pointer; }
 .search-results .sr-missing { padding: 6px 12px; color: var(--fg3); font-size: 12px; border-bottom: 1px solid var(--line); }
 .search-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .search-head h1 .q { color: var(--accent2); }
-.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; font-size: 12px; }
-.seg a { padding: 3px 12px; color: var(--fg2); }
-.seg a.on { background: var(--accent); color: #fff; }
-.seg a:hover { text-decoration: none; color: var(--fg); }
-.seg a.on:hover { color: #fff; }
 .search-page { max-width: 980px; }
 .search-page .sgroup { margin: 0 0 22px; }
 .search-page .sg-head { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 14px; }
@@ -327,8 +322,6 @@ kbd { font-family: var(--mono); font-size: 11px; background: var(--bg3); border:
 .sub.warn { color: var(--warn, #b7791f); }
 
 /* family, projects, references (project families) */
-.search-scope { background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 5px 6px; font: inherit; font-size: 13px; margin-right: 6px; }
-.topbar .search-scope { background: #1e1e24; color: #e6e6ec; border-color: #3a3a43; }
 .search-results .sr-missing { padding: 8px 12px; color: var(--fg3); font-size: 12px; border-bottom: 1px solid var(--line); }
 .refs-box h3 { margin: 10px 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--fg3); }
 .ref { padding: 4px 0; font-size: 13px; }
@@ -350,9 +343,15 @@ kbd { font-family: var(--mono); font-size: 11px; background: var(--bg3); border:
 .projects .link-btn.danger { color: var(--bad); margin-top: 6px; }
 
 /* local / public switch */
-.mode { display: inline-flex; align-items: center; gap: 2px; margin-left: 8px; border: 1px solid #3a3a43; border-radius: 6px; padding: 2px; }
+.mode { display: inline-flex; align-items: center; gap: 2px; border: 1px solid #3a3a43; border-radius: 6px; padding: 2px; flex: none; }
+.mode[hidden] { display: none; }
 .mode button { background: transparent; border: 0; color: #b4b4be; padding: 3px 9px; border-radius: 4px; cursor: pointer; font-size: 13px; }
 .mode button.on { background: var(--accent); color: #fff; }
 .mode button:disabled { opacity: .4; cursor: not-allowed; }
 .mode .note { color: #7a7a86; font-size: 11px; padding: 0 6px; }
 .pill.kind-public { color: var(--accent2); }
+
+/* the Family view as a tree */
+.family .tree-row { display: flex; align-items: flex-start; gap: 6px; }
+.family .tree-row > .member { flex: 1; min-width: 0; }
+.family .tree-row .tree-mark { color: var(--fg3); padding-top: 12px; flex: none; }

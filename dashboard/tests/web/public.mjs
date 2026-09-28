@@ -62,7 +62,9 @@ const report = {};
   const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/web`)}#overview`);
   const d = window.document;
   if (d.getElementById("mode").hidden) errors.push("public mode: the local/public switch is hidden — no way back to local");
-  const scope = d.getElementById("search-scope"); scope.value = "family"; scope.dispatchEvent(new window.Event("change"));
+  // one scope switch, next to the project menu, for search and graph alike
+  if (d.getElementById("scope").hidden) errors.push("public mode: the this-project/family switch is hidden");
+  d.querySelector('#scope button[data-scope="family"]').click();
   const input = d.getElementById("search"); input.value = "needle"; input.dispatchEvent(new window.Event("input"));
   await tick(300);
   report.dropdown = d.querySelectorAll("#search-results a").length;
@@ -82,9 +84,10 @@ const report = {};
   window.close();
 }
 {
-  // the family graph over the same published tree
+  // the family graph over the same published tree; an old #graph/family link sets the scope and lands on #graph
   const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/web`)}#graph/family`);
   await tick(300);
+  if (window.location.hash !== "#graph") errors.push("#graph/family did not land on #graph: " + window.location.hash);
   const g = window.__fg();
   if (!g) errors.push("family graph: not built");
   else {
@@ -95,8 +98,23 @@ const report = {};
     if (hubs.join() !== "acme---web,docs,github.com/acme/suite,plugin") errors.push("family graph: wrong project hubs " + hubs.join());
     if (fam.join() !== "docs>github.com/acme/suite,plugin>acme---web,acme---web>github.com/acme/suite".split(",").sort().join()) errors.push("family graph: wrong parent links " + fam.join());
     if (see.join() !== "Plugins load lazily>Release together") errors.push("family graph: the See from the plugin to the suite is missing");
-    if (!window.document.querySelector(".graph-ui input")?.checked) errors.push("family graph: the family switch is not on");
+    if (window.document.querySelector("#scope button.on")?.dataset.scope !== "family") errors.push("family graph: the scope switch does not show family");
+    if (!/references? across projects/.test(window.document.querySelector(".graph-legend")?.textContent || "")) errors.push("family graph: no family legend");
+    // back to this project: the local graph, from the same switch
+    window.document.querySelector('#scope button[data-scope="project"]').click();
+    await tick(100);
+    if (!/topic \(size = entries\)/.test(window.document.querySelector(".graph-legend")?.textContent || "")) errors.push("scope back to this project: the graph did not switch to the local one");
   }
+  window.close();
+}
+{
+  // the Family view: the whole published tree, each member under the one that lists it
+  const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/web`)}#family`);
+  await tick(300);
+  const rows = [...window.document.querySelectorAll(".family .tree-row")].map((r) => [parseInt(r.style.paddingLeft || "0", 10) / 26, r.querySelector(".mr b, .mr a")?.textContent]);
+  report.familyTree = rows.map(([d, n]) => `${d}:${n}`);
+  const want = ["0:github.com/acme/suite", "1:acme---web", "2:plugin", "1:cli", "1:docs"]; // this project first, then its siblings by name
+  if (report.familyTree.join() !== want.join()) errors.push("Family view: wrong tree " + report.familyTree.join() + " — expected " + want.join());
   window.close();
 }
 {

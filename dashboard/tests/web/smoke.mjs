@@ -52,7 +52,7 @@ const main = window.document.getElementById("main");
 // an export has no family to load: the family graph falls back to the project's own
 await go("#graph/family");
 if (!main.querySelector(".graph-wrap canvas")) errors.push("graph/family in an export: no graph rendered");
-if ([...main.querySelectorAll(".graph-ui label")].some((l) => l.textContent === "family")) errors.push("graph in an export: a family switch it cannot use");
+if (!window.document.getElementById("scope").hidden) errors.push("export: a this-project/family switch it cannot use");
 await go("#family");
 const inFamily = !!(S.project.parent || (S.project.children || []).length);
 if (inFamily ? !main.querySelector(".family .member.self") : !/not part of a family/.test(main.textContent)) errors.push("family view: neither a self row (in a family) nor the not-part-of-a-family line");

@@ -538,6 +538,34 @@ def tree(project: "Project", projects: list["Project"]) -> list[dict]:
                 seen_loc.add(ch["location"])
             if m.get("canonical"):
                 seen_canon.add(m["canonical"])
+    # the shape of the tree, for a view that draws it: `node` names each
+    # member, `up` the member whose children block lists it (None at the root)
+    node = lambda m: m.get("key") or m.get("location") or m.get("name")
+    self_m = members[0]
+    by_depth = {
+        m.get("depth"): m for m in members if m["role"] in ("grandparent", "ancestor")
+    }
+    parent_m = next((m for m in members if m["role"] == "parent"), None)
+    for m in members:
+        m["node"] = node(m)
+    for m in members:
+        role = m["role"]
+        if role == "self":
+            up = parent_m
+        elif role in ("sibling",):
+            up = parent_m
+        elif role == "child":
+            up = self_m
+        elif role == "parent":
+            up = by_depth.get(2)
+        elif role in ("grandparent", "ancestor"):
+            up = by_depth.get((m.get("depth") or 2) + 1)
+        else:  # relative
+            up = next(
+                (x for x in members if x["name"] == m.get("via") and x.get("path")),
+                None,
+            )
+        m["up"] = up["node"] if up else None
     return members
 
 

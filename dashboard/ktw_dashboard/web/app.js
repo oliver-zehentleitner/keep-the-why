@@ -409,17 +409,39 @@ function memberRow(m) {
       el("p", { class: "note" }, "A working tree, writable (the mapping learns it on next start):"), el("pre", {}, el("code", {}, m.fetch.clone)),
       el("p", { class: "note" }, "Or the read-only context cache, shared by every project on this machine:"), el("pre", {}, el("code", {}, m.fetch.cache))) : null);
 }
+// the tree as nested rows: every member under the one whose children block lists it
+function treeRows(members, rowOf) {
+  const ids = new Set(members.map((m) => m.node));
+  const kids = new Map(); const roots = [];
+  for (const m of members) {
+    if (m.up && ids.has(m.up) && m.up !== m.node) { if (!kids.has(m.up)) kids.set(m.up, []); kids.get(m.up).push(m); }
+    else roots.push(m);
+  }
+  const out = []; const seen = new Set();
+  const walk = (m, d) => {
+    if (seen.has(m.node)) return; seen.add(m.node);
+    out.push(el("div", { class: "tree-row", style: `padding-left:${Math.min(d, 6) * 26}px` }, d ? el("span", { class: "tree-mark" }, "└") : null, rowOf(m)));
+    for (const c of (kids.get(m.node) || []).sort((a, b) => familyRank(a) - familyRank(b) || String(a.name).localeCompare(String(b.name)))) walk(c, d + 1);
+  };
+  for (const r of roots) walk(r, 0);
+  for (const m of members) walk(m, 0); // a cycle would otherwise drop rows
+  return out;
+}
 async function viewFamily(main) {
   const p = S.project;
-  main.append(el("h1", {}, "Family"), el("p", { class: "sub" }, "The projects whose context/ is organized together with this one: the parent chain up to the root, siblings, children. Each level's children block is the routing — where an entry about something belongs; what is wider than a level goes one level up. Not a dependency graph."));
+  main.append(el("h1", {}, "Family"), el("p", { class: "sub" }, "The whole tree this project belongs to, from the root down: each project under the one whose children block lists it. That block is the routing — where an entry about something belongs; what is wider than a level goes one level up, to the root at most. Every member can be read; a member checked out here can be written to. Not a dependency graph."));
   if (!p.parent && !(p.children || []).length) return main.append(el("p", { class: "center" }, "This project is not part of a family: no parent line, no children block in .keep-the-why."));
   const box = el("div", { class: "family" }); main.append(box);
   if (MODE === "public") {
-    box.append(memberRow({ role: "self", name: p.id || p.name, location: "", scope: "", canonical: canonicalOf(p), available: "public" }));
-    for (const m of familyDeclared()) {
-      const row = publicMemberRow(m, null); box.append(row);
-      if (m.canonical) fetchPublicState(m.canonical, m.root || "").then((r) => row.replaceWith(publicMemberRow(m, r)));
-    }
+    box.append(el("p", { class: "center" }, "Reading the family's published exports…"));
+    const t = await publicTree();
+    const members = [...t.groups.map((g) => g.member), ...t.missing.map((x) => x.member)];
+    const results = await Promise.all(members.map((m) => (m.role === "self" || !m.canonical ? null : fetchPublicState(m.canonical, m.root || ""))));
+    const byNode = new Map(members.map((m, i) => [m.node, results[i]]));
+    if (!box.isConnected) return;
+    box.replaceChildren(...treeRows(members, (m) => m.role === "self"
+      ? memberRow({ role: "self", name: p.id || p.name, location: "", scope: m.scope || "", canonical: canonicalOf(p), available: "public" })
+      : publicMemberRow(m, byNode.get(m.node))));
     return;
   }
   if (!LIVE()) {
@@ -429,10 +451,9 @@ async function viewFamily(main) {
     for (const c of p.children || []) box.append(memberRow({ role: "child", name: c.name, location: c.location, scope: c.scope, canonical: c.location.startsWith("https://") ? c.location : "", available: "none", fetch: null }));
     return;
   }
-  const members = FAMILY || await fetchFamily() || [];
-  // the chain from the root down, then this level: ancestors by depth, parent, self, siblings, children
-  const rank = (m) => (m.role === "ancestor" || m.role === "grandparent" ? -(m.depth || 2) : { parent: 0, self: 1, sibling: 2, child: 3 }[m.role] ?? 4);
-  box.append(...[...members].sort((a, b) => rank(a) - rank(b)).map(memberRow));
+  const members = await fetchTree() || [];
+  if (!box.isConnected) return;
+  box.replaceChildren(...treeRows(members, memberRow));
 }
 let PROJECTS = null; // /api/projects result
 async function viewProjects(main) {
@@ -504,7 +525,7 @@ function renderDetailsDefault() {
   const route = location.hash.slice(1) || "overview";
   if (route === "graph" || route === "graph/family") {
     d.append(el("h3", {}, "Legend"), el("div", { class: "legend-list" },
-      route === "graph/family" ? [
+      scope() === "family" ? [
         el("span", {}, el("i", { class: "dot", style: "background:var(--bg);border:3px solid var(--accent);width:12px;height:12px" }), "project — a ring in its colour; its topics take the same colour"),
         el("span", {}, "thick dashed line — parent and child project"),
         el("span", {}, "coloured line — a See between two entries, within a project or across"),
@@ -582,7 +603,6 @@ function buildSubgraph(e) {
 // the See and Superseded by lines between entries drawn across projects.
 let fgraph = null; // kept across re-renders so positions survive live updates
 const memberLink = (m, hash) => m.role === "self" ? hash : MODE === "public" ? publicHref(m.canonical, m.root || "", hash) : `${location.pathname}?project=${encodeURIComponent(m.key)}${hash}`;
-const canFamilyGraph = () => searchScopes().includes("family") && !!(S.project.parent || (S.project.children || []).length);
 async function buildFamilyGraph() {
   const pool = await searchPool("family");
   const groups = pool.groups.map((g, i) => ({
@@ -644,17 +664,16 @@ async function buildFamilyGraph() {
   return fgraph;
 }
 const color0 = () => getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#835bec";
-function viewGraph(main, family = false) {
-  if (family && !canFamilyGraph()) family = false;
+function viewGraph(main) {
+  const family = scope() === "family";
   const wrap = el("div", { class: "graph-wrap" });
   main.append(wrap);
   const fill = (g) => {
     const canvas = el("canvas");
     const ui = el("div", { class: "graph-ui" },
-      canFamilyGraph() ? el("label", { title: "every project of the tree, joined by parent lines and by See and Superseded by between entries" }, el("input", { type: "checkbox", checked: family, onchange: (ev) => { location.hash = ev.target.checked ? "#graph/family" : "#graph"; } }), "family") : null,
       el("label", {}, el("input", { type: "checkbox", checked: g.showEntries, onchange: (ev) => { g.showEntries = ev.target.checked; g.alpha = 0.5; g.wake?.(); } }), "entries"),
       el("label", {}, el("input", { type: "checkbox", checked: g.showLabels, onchange: (ev) => { g.showLabels = ev.target.checked; g.wake?.(); } }), "labels"),
-      el("button", { class: "link-btn", onclick: () => { g.scale = family ? 0.7 : 1; g.ox = 0; g.oy = 0; for (const n of g.nodes) { n.fixed = false; } g.alpha = 1; g.wake?.(); } }, "reset"),
+      el("button", { class: "link-btn", onclick: () => { g.scale = family ? 0.7 : 1; g.ox = 0; g.oy = 0; g.userMoved = false; for (const n of g.nodes) { n.fixed = false; } g.alpha = 1; g.wake?.(); } }, "reset"),
     );
     const legend = family
       ? el("div", { class: "graph-legend" },
@@ -666,13 +685,13 @@ function viewGraph(main, family = false) {
         el("span", {}, el("i", { class: "dot confirmed" }), "confirmed"), el("span", {}, el("i", { class: "dot inferred" }), "inferred"), el("span", {}, el("i", { class: "dot unknown" }), "unknown"),
         el("span", {}, el("i", { class: "dot", style: "background:transparent;border:1.5px solid var(--fg3)" }), "superseded"),
         el("span", {}, "— reference · ··· membership"));
-    wrap.replaceChildren(canvas, ui, legend, el("div", { class: "graph-hint" }, family ? "a project opens its overview · drag nodes · wheel zoom · drag background to pan" : "drag nodes · wheel zoom · drag background to pan · click to open"));
-    runGraph(canvas, g, {});
+    wrap.replaceChildren(canvas, ui, legend, el("div", { class: "graph-hint" }, family ? "family — a project opens its overview · drag nodes · wheel zoom · drag background to pan" : "drag nodes · wheel zoom · drag background to pan · click to open"));
+    runGraph(canvas, g, { fit: family });
   };
   if (!family) return fill(buildGraph());
   if (fgraph && Date.now() - fgraph.at < 30000) return fill(fgraph); // a live update re-renders: no refetch
   wrap.append(el("p", { class: "center" }, "Loading the family…"));
-  buildFamilyGraph().then((g) => { if (wrap.isConnected && location.hash === "#graph/family") fill(g); });
+  buildFamilyGraph().then((g) => { if (wrap.isConnected && location.hash === "#graph" && scope() === "family") fill(g); });
 }
 const go = (href) => { if (href.startsWith("#")) location.hash = href; else location.href = href; };
 function runGraph(canvas, g, opts = {}) {
@@ -697,16 +716,17 @@ function runGraph(canvas, g, opts = {}) {
     if (pan) { g.ox = pan.ox + (px - pan.px); g.oy = pan.oy + (py - pan.py); moved = true; return; }
     hover = pick(px, py); canvas.style.cursor = hover ? "pointer" : "grab";
   };
-  canvas.onmousedown = (ev) => { const r = canvas.getBoundingClientRect(); const px = ev.clientX - r.left, py = ev.clientY - r.top; moved = false; const n = pick(px, py); if (n) drag = n; else pan = { px, py, ox: g.ox, oy: g.oy }; canvas.classList.add("grabbing"); };
+  canvas.onmousedown = (ev) => { const r = canvas.getBoundingClientRect(); const px = ev.clientX - r.left, py = ev.clientY - r.top; moved = false; g.userMoved = true; const n = pick(px, py); if (n) drag = n; else pan = { px, py, ox: g.ox, oy: g.oy }; canvas.classList.add("grabbing"); };
   window.addEventListener("mouseup", () => { if (drag && !moved) go(drag.href); drag = null; pan = null; canvas.classList.remove("grabbing"); });
   canvas.onmouseleave = () => { hover = null; };
-  canvas.onwheel = (ev) => { ev.preventDefault(); const r = canvas.getBoundingClientRect(); const px = ev.clientX - r.left - W / 2, py = ev.clientY - r.top - H / 2; const f = Math.exp(-ev.deltaY * 0.0012); const ns = Math.min(6, Math.max(0.15, g.scale * f)); const k = ns / g.scale; g.ox = px - (px - g.ox) * k; g.oy = py - (py - g.oy) * k; g.scale = ns; };
+  canvas.onwheel = (ev) => { ev.preventDefault(); g.userMoved = true; const r = canvas.getBoundingClientRect(); const px = ev.clientX - r.left - W / 2, py = ev.clientY - r.top - H / 2; const f = Math.exp(-ev.deltaY * 0.0012); const ns = Math.min(6, Math.max(0.15, g.scale * f)); const k = ns / g.scale; g.ox = px - (px - g.ox) * k; g.oy = py - (py - g.oy) * k; g.scale = ns; };
   canvas.ondblclick = (ev) => { const r = canvas.getBoundingClientRect(); const n = pick(ev.clientX - r.left, ev.clientY - r.top); if (n) { n.fixed = false; g.alpha = 0.4; } };
   // touch: one finger drags a node or pans (full view only), two fingers pinch-zoom, a tap opens
   let pinch = null;
   const tpos = (t) => { const r = canvas.getBoundingClientRect(); return [t.clientX - r.left, t.clientY - r.top]; };
   const tdist = (ts) => Math.hypot(ts[0].clientX - ts[1].clientX, ts[0].clientY - ts[1].clientY);
   canvas.addEventListener("touchstart", (ev) => {
+    g.userMoved = true;
     if (ev.touches.length === 2) { pinch = { d: tdist(ev.touches), scale: g.scale, ox: g.ox, oy: g.oy }; drag = null; pan = null; return; }
     const [px, py] = tpos(ev.touches[0]); moved = false; const n = pick(px, py);
     if (n) drag = n; else if (!mini) pan = { px, py, ox: g.ox, oy: g.oy };
@@ -744,10 +764,12 @@ function runGraph(canvas, g, opts = {}) {
       for (const n of ns) { if (n.fixed) continue; n.vx -= n.x * 0.004 * k; n.vy -= n.y * 0.004 * k; n.vx *= 0.82; n.vy *= 0.82; n.x += n.vx; n.y += n.vy; }
       g.alpha *= 0.985;
     }
-    if (mini && g.alpha > 0.01) { // keep the small canvas framed on the nodes while they settle
+    // keep the canvas framed on the nodes while they settle: the small one always, the family graph until the person moves it
+    if ((mini || (opts.fit && !g.userMoved)) && g.alpha > 0.01 && W && H) {
       let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
-      for (const n of ns) { minX = Math.min(minX, n.x); maxX = Math.max(maxX, n.x); minY = Math.min(minY, n.y); maxY = Math.max(maxY, n.y); }
-      if (ns.length) { const sw = Math.max(80, maxX - minX + 60), sh = Math.max(80, maxY - minY + 60); g.scale = Math.min(2.2, Math.min(W / sw, H / sh)); g.ox = -((minX + maxX) / 2) * g.scale; g.oy = -((minY + maxY) / 2) * g.scale; }
+      for (const n of ns) { minX = Math.min(minX, n.x - n.r); maxX = Math.max(maxX, n.x + n.r); minY = Math.min(minY, n.y - n.r); maxY = Math.max(maxY, n.y + n.r + 18); }
+      const pad = mini ? 60 : 140;
+      if (ns.length) { const sw = Math.max(80, maxX - minX + pad), sh = Math.max(80, maxY - minY + pad); g.scale = Math.min(mini ? 2.2 : 1.2, Math.min(W / sw, H / sh)); g.ox = -((minX + maxX) / 2) * g.scale; g.oy = -((minY + maxY) / 2) * g.scale; }
     }
     // draw
     ctx.clearRect(0, 0, W, H);
@@ -864,18 +886,19 @@ async function publicTree() {
   if (PUBLIC_TREE) return PUBLIC_TREE;
   const canon = canonicalOf(S.project); const myRoot = PUBLIC_ROOT;
   const keyOf = (c, r) => `${c}|${r}`;
-  const self = { member: { role: "self", name: S.project.id || S.project.name, canonical: canon, root: myRoot }, state: S, href: (e) => entryHref(e) };
+  const self = { member: { role: "self", name: S.project.id || S.project.name, canonical: canon, root: myRoot, node: keyOf(canon, myRoot), up: null }, state: S, href: (e) => entryHref(e) };
   const groups = [self]; const missing = []; const seen = new Set([keyOf(canon, myRoot)]);
   const label = (loc) => loc.root ? `${loc.canonical.replace(/^https:\/\//, "")}/${loc.root}` : loc.canonical.replace(/^https:\/\//, "");
   const add = (m, r) => { if (r.state) groups.push({ member: m, state: r.state, href: (e) => publicHref(m.canonical, m.root, entryHref(e)) }); else missing.push({ member: m, reason: r.error }); return r.state; };
   // up: the parent chain, as far as each level is published
-  let cur = { state: S, canonical: canon, root: myRoot }; let depth = 1; let parentKey = null;
+  let cur = { state: S, canonical: canon, root: myRoot }; let depth = 1; let parentKey = null; let below = self.member;
   while (cur.state?.project?.parent && depth < 12) {
     const loc = resolveLocation(cur.state.project.parent, cur.canonical, cur.root);
     if (!loc || seen.has(keyOf(loc.canonical, loc.root))) break;
     seen.add(keyOf(loc.canonical, loc.root));
     if (depth === 1) parentKey = keyOf(loc.canonical, loc.root);
-    const m = { role: depth === 1 ? "parent" : depth === 2 ? "grandparent" : "ancestor", depth, name: label(loc), ...loc };
+    const m = { role: depth === 1 ? "parent" : depth === 2 ? "grandparent" : "ancestor", depth, name: label(loc), ...loc, node: keyOf(loc.canonical, loc.root), up: null };
+    below.up = m.node; below = m; // the tree's shape: each level names the one above it
     const st = add(m, await fetchPublicState(loc.canonical, loc.root));
     cur = { state: st, canonical: loc.canonical, root: loc.root }; depth++;
   }
@@ -889,7 +912,7 @@ async function publicTree() {
     const results = await Promise.all(kids.map((k) => fetchPublicState(k.loc.canonical, k.loc.root)));
     kids.forEach((k, i) => {
       const role = k.from.key === keyOf(canon, myRoot) ? "child" : k.from.key === parentKey ? "sibling" : "relative";
-      const st = add({ role, name: k.c.name, scope: k.c.scope, via: k.from.state?.project?.id || "", ...k.loc }, results[i]);
+      const st = add({ role, name: k.c.name, scope: k.c.scope, via: k.from.state?.project?.id || "", ...k.loc, node: keyOf(k.loc.canonical, k.loc.root), up: k.from.key }, results[i]);
       if (st) next.push({ state: st, canonical: k.loc.canonical, root: k.loc.root, key: keyOf(k.loc.canonical, k.loc.root) });
     });
     level = next;
@@ -917,6 +940,30 @@ function searchRows(pool, q) {
   return rows.sort((a, b) => compareHits(a.hit, b.hit));
 }
 const searchScopes = () => (LIVE() || MODE === "public" ? ["project", "family"] : ["project"]);
+// One setting for every view that can span projects (search, graph): this
+// project, or the whole family tree. Kept per browser; a results-page link
+// carries its own scope and sets it.
+const hasFamily = () => !!(S?.project?.parent || (S?.project?.children || []).length);
+const canFamily = () => searchScopes().includes("family") && hasFamily();
+let SCOPE = (() => { try { return localStorage.getItem("ktw-scope") || localStorage.getItem("ktw-search-scope") || "project"; } catch { return "project"; } })();
+const scope = () => (canFamily() && SCOPE === "family" ? "family" : "project");
+function markScope() {
+  const box = $("#scope"); if (!box) return;
+  box.hidden = !canFamily();
+  for (const b of box.querySelectorAll("button")) b.classList.toggle("on", b.dataset.scope === scope());
+}
+function setScope(v, { rerender: again = true } = {}) {
+  if (v !== "project" && v !== "family") return;
+  const changed = SCOPE !== v; SCOPE = v;
+  try { localStorage.setItem("ktw-scope", v); } catch {}
+  markScope();
+  if (!changed || !again) return;
+  const route = location.hash.slice(1);
+  if (route.startsWith("search/")) { const q = decodeURIComponent(route.split("/").slice(2).join("/")); location.hash = searchHref(scope(), q); }
+  else render();
+  window.__ktwScopeChanged?.();
+}
+function setupScope() { for (const b of $("#scope").querySelectorAll("button")) b.onclick = () => setScope(b.dataset.scope); markScope(); }
 const searchHref = (scope, q) => `#search/${scope}/${encodeURIComponent(q)}`;
 const memberLabel = (m) => m.role === "self" ? "this project" : m.role === "relative" && m.via ? `relative, via ${m.via}` : m.role;
 const topicTitle = (st, file) => st.topics?.find((t) => t.file === file)?.title || file;
@@ -926,14 +973,14 @@ function hitSnippet(hit) {
   return (w.field === "body" || w.field === "title" ? "" : `<b>${esc(w.field)}:</b> `) + highlight(text, hit.terms);
 }
 let RESTORE_SCROLL = 0; // a live update re-renders the results page; its rows arrive after the scroll was restored
-async function viewSearch(main, scope, q) {
-  if (!searchScopes().includes(scope)) scope = "project";
+async function viewSearch(main, linkScope, q) {
+  if (linkScope === "family" || linkScope === "project") setScope(linkScope, { rerender: false }); // a shared link brings its scope
+  const scope = SCOPE === "family" && canFamily() ? "family" : "project";
+  if (scope !== linkScope) { history.replaceState(null, "", searchHref(scope, q)); } // this project has no family: the link falls back
   const input = $("#search"); if (document.activeElement !== input) input.value = q;
-  const scopeSel = $("#search-scope"); if (!scopeSel.hidden) scopeSel.value = scope;
   const terms = searchTerms(q);
-  const scopeBtns = searchScopes().length > 1 ? el("div", { class: "seg" }, searchScopes().map((sc) => el("a", { href: searchHref(sc, q), class: sc === scope ? "on" : "" }, sc === "project" ? "this project" : "whole family"))) : null;
   const sub = el("p", { class: "sub" }, "Searching…");
-  main.append(el("div", { class: "search-head" }, el("h1", {}, "Search ", el("span", { class: "q" }, `“${q}”`)), scopeBtns), sub);
+  main.append(el("div", { class: "search-head" }, el("h1", {}, "Search ", el("span", { class: "q" }, `“${q}”`)), el("span", { class: "note" }, scope === "family" ? "whole family — switch next to the project menu" : canFamily() ? "this project — switch next to the project menu" : "")), sub);
   if (terms.length === 0 || q.trim().length < 2) { sub.textContent = "Type at least two characters in the search field and press Enter."; return; }
   const pool = await searchPool(scope);
   if (location.hash !== searchHref(scope, q) && decodeURIComponent(location.hash) !== decodeURIComponent(searchHref(scope, q))) return; // navigated away meanwhile
@@ -965,7 +1012,7 @@ async function viewSearch(main, scope, q) {
           el("div", { class: "rm" }, meta));
       }))));
   }
-  if (!rows.length) box.append(el("p", { class: "center" }, `No entry matches “${q}”`, scope === "project" && searchScopes().includes("family") && (S.project.parent || (S.project.children || []).length) ? [" in this project — ", el("a", { href: searchHref("family", q) }, "search the whole family")] : "", "."));
+  if (!rows.length) box.append(el("p", { class: "center" }, `No entry matches “${q}”`, scope === "project" && canFamily() ? [" in this project — ", el("a", { href: searchHref("family", q) }, "search the whole family")] : "", "."));
   if (pool.missing.length) box.append(el("section", { class: "sgroup missing" }, el("div", { class: "sg-head" }, el("b", {}, "Not searched"), el("span", { class: "count" }, pool.missing.length)),
     pool.missing.map(({ member: m, reason }) => el("div", { class: "sr-missing" }, el("b", {}, m.name), ` (${memberLabel(m)}) — ${reason}`)),
     el("p", { class: "note" }, "Family shows how to get a member that is not on this machine.")));
@@ -975,8 +1022,6 @@ async function viewSearch(main, scope, q) {
 function setupSearch() {
   const input = $("#search"); const box = $("#search-results"); let sel = -1; let seq = 0;
   const close = () => { box.hidden = true; sel = -1; };
-  const scopeSel = $("#search-scope");
-  const scope = () => (searchScopes().includes(scopeSel.value) && !scopeSel.hidden ? scopeSel.value : "project");
   const run = async () => {
     const q = input.value.trim(); if (q.length < 2 || !S) return close();
     const mine = ++seq;
@@ -994,13 +1039,7 @@ function setupSearch() {
       el("a", { class: "sr-all", href: searchHref(scope(), q), onclick: close }, all.length > rows.length ? `↵  all ${all.length} results in ${plural(projects, "project")}` : "↵  results page"));
     box.hidden = false; sel = -1;
   };
-  scopeSel.onchange = () => {
-    try { localStorage.setItem("ktw-search-scope", scopeSel.value); } catch {}
-    const route = location.hash.slice(1);
-    if (route.startsWith("search/")) location.hash = searchHref(scopeSel.value, input.value.trim());
-    else if (input.value.trim().length >= 2) run();
-  };
-  if (searchScopes().length > 1) { scopeSel.hidden = false; let v = "project"; try { v = localStorage.getItem("ktw-search-scope") || "project"; } catch {} scopeSel.value = v; }
+  window.__ktwScopeChanged = () => { if (!box.hidden && input.value.trim().length >= 2) run(); };
   input.oninput = run; input.onfocus = () => { if (input.value.trim().length >= 2 && !location.hash.startsWith("#search/")) run(); };
   input.onkeydown = (ev) => {
     const items = [...box.querySelectorAll("a")];
@@ -1030,7 +1069,8 @@ function render() {
   const route = location.hash.slice(1) || "overview";
   selected = null;
   if (route === "overview") { viewOverview(main); renderDetailsDefault(); }
-  else if (route === "graph" || route === "graph/family") { viewGraph(main, route === "graph/family"); renderDetailsDefault(); }
+  else if (route === "graph/family") { setScope("family", { rerender: false }); history.replaceState(null, "", "#graph"); viewGraph(main); renderDetailsDefault(); }
+  else if (route === "graph") { viewGraph(main); renderDetailsDefault(); }
   else if (route === "timeline") { viewTimeline(main); renderDetailsDefault(); }
   else if (route === "authors") { viewAuthors(main); renderDetailsDefault(); }
   else if (route === "queues") { viewQueues(main); renderDetailsDefault(); }
@@ -1058,7 +1098,7 @@ function applyState(state) {
     el("span", { class: "grow" }, el("a", { href: "https://keepthewhy.com", target: "_blank", rel: "noopener" }, "keepthewhy.com")));
   FAMILY = null;
   if (LIVE()) $("#nav-projects").hidden = false;
-  setupMode();
+  setupMode(); markScope();
   const main = $("#main"); const scroll = main.scrollTop;
   RESTORE_SCROLL = scroll;
   rerender();
@@ -1151,7 +1191,7 @@ function setupMode() {
   $("#mode-note").textContent = MODE === "public" ? `export generated ${S.generated}` : "";
 }
 async function boot() {
-  setupTheme(); setupSearch(); setupSideToggle();
+  setupTheme(); setupSearch(); setupScope(); setupSideToggle();
   window.addEventListener("hashchange", () => { RESTORE_SCROLL = 0; render(); });
   if (MODE === "public") {
     const r = await fetchPublicState(PUBLIC, PUBLIC_ROOT);

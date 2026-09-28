@@ -774,6 +774,14 @@ class NestedFamilyTest(unittest.TestCase):
         self.assertEqual(rel["cli"]["via"], "client")
         self.assertEqual(rel["cli"]["scope"], "the command line on top of the client")
         self.assertTrue(all(m["key"] for m in rel.values()))
+        # the shape: every member names the one above it, the root names none
+        up = {m["name"]: m["up"] for m in members}
+        node = {m["name"]: m["node"] for m in members}
+        self.assertIsNone(up["mono"])
+        self.assertEqual(up["client"], node["mono"])
+        self.assertEqual(up["cli"], node["client"])
+        self.assertEqual(up[os.path.basename(self.web)], node["cluster"])
+        self.assertEqual(up["cluster"], node["mono"])
         # nobody twice: the family's members are not repeated as relatives
         paths = [os.path.realpath(m["path"]) for m in members if m["path"]]
         self.assertEqual(len(paths), len(set(paths)))
