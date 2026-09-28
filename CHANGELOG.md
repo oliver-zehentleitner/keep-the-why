@@ -6,6 +6,8 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Added
 
+- README, "The payoff, made concrete": the rejected-change experiment (seven of ten sessions without a recorded reason offered the rejected simplification again, none with one `context/` entry), linked to the article and the transcripts, and what it saves — time, tokens and nerves.
+
 - README "Format" and `llms.txt` name the entry `Id` (a UUID, the entry's address), `See` and `Superseded by` — the 0.18.0 fields were in the specification and the skill, not in the two places most readers see first.
 
 - `keep-the-why-dashboard`: the family scope merges the whole page — overview (with a banner of the projects and their counts), topics in the sidebar under a heading per project, entries, authors, queues, timeline, linter findings and the numbers in the strip and status bar; a member's files and ids are prefixed with its name, so the same `history.md` in two projects stays two topics, an entry opens with its own repository's host link, and a topic name in its text resolves in its own project (`mergeStates` in `web/lib.js`). A Git author's name opens their profile on the host, looked up on the click from one of their commits through the host's API (GitHub, Codeberg / Gitea / Forgejo, Bitbucket), the commit page when that fails or on GitLab; an `--anonymize` state carries `anonymized` and gets no link (`authorLookup`, `docs/security.md`). Author names follow the project's `.mailmap` (`%aN` in the two `git log` calls; `blame` already did), so two identities of one person are joined where Git joins them; one test. Unit tests for both, a Python test for the flag, the public-mode test checks the merged strip, sidebar and banner, the smoke test the author link.
