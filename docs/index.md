@@ -133,6 +133,52 @@ The next session — yours, a colleague's, an agent's — loads the index first 
 
 </div>
 
+<div class="ktw-section" markdown>
+
+## One repository or many
+
+**A `.keep-the-why` marks a project, and the project is the nearest one above wherever the agent works — the way Git finds `.git`. However your code is laid out, the why sits next to it.**
+
+<div class="ktw-cards" markdown>
+
+<div class="ktw-card" markdown>
+
+### Single repository
+
+One `.keep-the-why`, one `context/`. The common case — nothing to configure.
+
+</div>
+
+<div class="ktw-card" markdown>
+
+### Mono repository
+
+One `context/` for the whole tree, or one per sub-project — each with its own settings, and still one family under the repository's root.
+
+</div>
+
+<div class="ktw-card" markdown>
+
+### Multi repository
+
+A family: one parent project lists its children, one line each on what belongs where. The why lives once, in the project it binds, and is cited from everywhere else — families can nest, a suite, its cluster, the cluster's dashboard.
+
+</div>
+
+<div class="ktw-card" markdown>
+
+### Nested repositories
+
+A repository inside another — a submodule, a vendored checkout — is a project of its own. The nearest `.keep-the-why` wins; nothing leaks across.
+
+</div>
+
+</div>
+
+[Layouts →](repository-structure.md#layouts-one-repository-or-several) · [Families →](setup.md#family-routing-and-writing-across-projects) · [Dashboard: the family view →](dashboard.md)
+
+</div>
+
 <div class="ktw-section ktw-trust" markdown>
 
 ## Tested, measured, stated plainly
