@@ -74,11 +74,13 @@ gh skill install oliver-zehentleitner/keep-the-why keep-the-why@latest
 Also installable with asm (agent-skill-manager, https://luongnv.com/asm/):
 
 ```bash
-asm install github:oliver-zehentleitner/keep-the-why#latest:skills/keep-the-why --tool <tool>
+asm install "github:oliver-zehentleitner/keep-the-why#latest:skills/keep-the-why" --tool all --scope global
 ```
 
-Replace <tool> with your agent (claude, codex, opencode, cline, gemini, and more — run
-`asm install --help` for the full list).
+`--tool all` installs one shared copy to ~/.agents/skills/ and links it into every agent asm
+knows (Claude Code, Codex, OpenCode, Cursor, GitHub Copilot, Gemini CLI, Cline and more). For one
+agent only, replace `all` with its name (claude, codex, opencode, cline, gemini, ... —
+`asm install --help` lists them); `--scope project` installs into the current project.
 Codex plugin: the repository is its own one-plugin marketplace (`.codex-plugin/plugin.json` +
 `.agents/plugins/marketplace.json`) — `codex plugin marketplace add oliver-zehentleitner/keep-the-why`
 then `codex plugin add keep-the-why@keep-the-why`; tested on Codex CLI 0.149.0 (2026-09-08).

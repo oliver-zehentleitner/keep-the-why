@@ -50,13 +50,13 @@ Either form prompts for which agent and scope (project or personal) to install f
 
 ## Also installable: asm
 
-With [`asm`](https://luongnv.com/asm/) (agent-skill-manager), pinned to a release, from the skill's subdirectory in this repo:
+With [`asm`](https://luongnv.com/asm/) (agent-skill-manager), for every agent on the machine at once, from the skill's subdirectory in this repo:
 
 ```bash
-asm install github:oliver-zehentleitner/keep-the-why#latest:skills/keep-the-why --tool <tool>
+asm install "github:oliver-zehentleitner/keep-the-why#latest:skills/keep-the-why" --tool all --scope global
 ```
 
-Replace `<tool>` with your agent (`claude`, `codex`, `opencode`, `cline`, `gemini`, and more — run `asm install --help` for the full list). Replace `#latest` with an exact [tag](https://github.com/oliver-zehentleitner/keep-the-why/releases) to pin to a specific version instead of always the newest, or drop it to track `main` directly.
+`--tool all` installs one shared copy to `~/.agents/skills/` and links it into every agent asm knows — Claude Code, Codex, OpenCode, Cursor, GitHub Copilot, Gemini CLI, Cline and more. For one agent only, replace `all` with its name (`claude`, `codex`, `opencode`, `cline`, `gemini`, … — `asm install --help` lists them); `--scope project` installs into the current project instead of your home. Replace `#latest` with an exact [tag](https://github.com/oliver-zehentleitner/keep-the-why/releases) to pin to a specific version instead of always the newest, or drop it to track `main` directly.
 
 ## Also installable: Claude Code plugin
 

@@ -102,10 +102,10 @@ Prompts for which agent and scope (project or personal) to install for. This ins
 **Also installable via [asm](https://luongnv.com/asm/)** (agent-skill-manager):
 
 ```bash
-asm install github:oliver-zehentleitner/keep-the-why#latest:skills/keep-the-why --tool <tool>
+asm install "github:oliver-zehentleitner/keep-the-why#latest:skills/keep-the-why" --tool all --scope global
 ```
 
-Replace `<tool>` with your agent (`claude`, `codex`, `opencode`, `cline`, `gemini`, and more — run `asm install --help` for the full list).
+`--tool all` installs one shared copy to `~/.agents/skills/` and links it into every agent asm knows — Claude Code, Codex, OpenCode, Cursor, GitHub Copilot, Gemini CLI, Cline and more. For one agent only, replace `all` with its name (`claude`, `codex`, `opencode`, `cline`, `gemini`, … — `asm install --help` lists them); `--scope project` installs into the current project instead of your home.
 
 **Also installable as a Claude Code plugin** — the repository is its own one-plugin marketplace (`.claude-plugin/plugin.json` and `marketplace.json` at the repo root): `claude plugin marketplace add oliver-zehentleitner/keep-the-why --sparse .claude-plugin skills`, then `claude plugin install keep-the-why@keep-the-why` (tested on Claude Code 2.1.273; `/plugin …` inside a session is the same). **As a GitHub Copilot CLI plugin** — `copilot plugin install keep-the-why@awesome-copilot`, from the Awesome Copilot marketplace, which pins a release tag (the root `plugin.json` serves that format). **And as a Codex plugin** — the repository is its own one-plugin marketplace: `codex plugin marketplace add oliver-zehentleitner/keep-the-why`, then `codex plugin add keep-the-why@keep-the-why` (tested on Codex CLI 0.149.0; details and pinning on the [installation page](https://keepthewhy.com/installation/)). **And as a Cursor plugin** — `.cursor-plugin/plugin.json` plus one always-on rule that loads the skill in a workspace carrying a `.keep-the-why` file and does nothing elsewhere; marketplace submission pending.
 
