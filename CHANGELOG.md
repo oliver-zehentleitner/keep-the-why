@@ -6,6 +6,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Fixed
 
+- `keep-the-why-dashboard`: the side pane's graph follows the scope — with *family*, the overview and every page without an entry shows the family graph, not the project's; *near* stays the start on an entry or topic, and a click in its corner holds until the scope changes instead of being stored for good. The family graph shows entries by default, as the project graph does.
 - The context-cache commands in `references/setup.md` are fenced ` ```sh `, as every shell snippet in the skill package is: fenced ` ```bash ` in 0.18.0, they were asm's only shell-command match at install time. `validate-skill.yml` now fails on asm's pattern (`bash`, `sh -c`) anywhere under `skills/keep-the-why/`, so the recorded rule is checked instead of remembered.
 
 ### Changed

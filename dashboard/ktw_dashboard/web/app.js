@@ -581,14 +581,17 @@ function renderDetailsNeighbourhood(e) { miniGraph($("#details"), { entry: e });
 // The side-pane graph: the neighbourhood of an entry or topic, the whole
 // project, or the whole family — a switch in its corner, remembered per
 // browser. Family is offered where the family scope is (live, public).
-let MINI = (() => { try { return localStorage.getItem("ktw-mini") || "near"; } catch { return "near"; } })();
+// An explicit choice in the corner of the side pane's graph; until then — and
+// again after every scope change — it follows the page: the neighbourhood of
+// the entry or topic shown, else the scope (the project, or the whole family).
+let MINI = null;
 function miniGraph(d, ctx) {
   const focusId = ctx.entry ? `e:${ctx.entry.id}` : ctx.topic ? `t:${ctx.topic.file}` : null;
   if (narrow()) { d.append(el("h3", {}, "Graph"), el("a", { class: "backlink", href: "#graph" }, "Open the project graph →")); return; }
   const modes = [...(focusId ? ["near"] : []), "project", ...(canFamily() ? ["family"] : [])];
-  const mode = modes.includes(MINI) ? MINI : focusId ? "near" : "project";
+  const mode = MINI && modes.includes(MINI) ? MINI : focusId ? "near" : scope() === "family" && modes.includes("family") ? "family" : "project";
   const box = el("div", { class: `mini ${focusId ? "tall" : "fill"}` });
-  const seg = el("span", { class: "mini-seg" }, modes.length > 1 ? modes.map((m) => el("button", { type: "button", class: m === mode ? "on" : "", title: { near: "this entry's or topic's neighbourhood", project: "the whole project", family: "the whole family tree" }[m], onclick: () => { MINI = m; try { localStorage.setItem("ktw-mini", m); } catch {} const keep = d.querySelector(".mini"); const h = keep?.previousElementSibling?.tagName === "H3" ? keep.previousElementSibling : null; h?.remove(); keep?.remove(); miniGraph(d, ctx); } }, m)) : el("span", { class: "mini-title" }, "graph"));
+  const seg = el("span", { class: "mini-seg" }, modes.length > 1 ? modes.map((m) => el("button", { type: "button", class: m === mode ? "on" : "", title: { near: "this entry's or topic's neighbourhood", project: "the whole project", family: "the whole family tree" }[m], onclick: () => { MINI = m; const keep = d.querySelector(".mini"); const h = keep?.previousElementSibling?.tagName === "H3" ? keep.previousElementSibling : null; h?.remove(); keep?.remove(); miniGraph(d, ctx); } }, m)) : el("span", { class: "mini-title" }, "graph"));
   const canvas = el("canvas");
   box.append(canvas, seg, el("span", { class: "mini-hint" }, mode === "near" ? "click to open" : "hover · click · g for the full view"));
   if (focusId) d.append(el("h3", {}, "Graph"));
@@ -722,7 +725,7 @@ async function buildFamilyGraph() {
     const k = `${ts}|${tt}`;
     if (ts != null && tt != null && !topicPairs.has(k)) { topicPairs.add(k); links.push({ s: ts, t: tt, kind: "xtopic", len: 220, color: A.color }); }
   }
-  fgraph = Object.assign(fgraph || { scale: 0.7, ox: 0, oy: 0, showEntries: false, showLabels: true, alpha: 1 }, { nodes, links, index, groups, missing: pool.missing, across, at: Date.now() });
+  fgraph = Object.assign(fgraph || { scale: 0.7, ox: 0, oy: 0, showEntries: true, showLabels: true, alpha: 1 }, { nodes, links, index, groups, missing: pool.missing, across, at: Date.now() });
   fgraph.alpha = Math.max(fgraph.alpha, 0.6);
   return fgraph;
 }
@@ -1018,6 +1021,7 @@ function markScope() {
 function setScope(v, { rerender: again = true } = {}) {
   if (v !== "project" && v !== "family") return;
   const changed = SCOPE !== v; SCOPE = v;
+  if (changed) MINI = null; // the side pane's graph follows the new scope
   try { localStorage.setItem("ktw-scope", v); } catch {}
   markScope();
   if (!changed) return;

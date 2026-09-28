@@ -119,6 +119,12 @@ const report = {};
   if (!/Referenced by \(See\)\s*Plugins load lazily · plugin · Design/.test(report.referencedBy || "")) errors.push("entry, scope family: the plugin's See is not listed as a reference: " + report.referencedBy);
   const modes = [...d.querySelectorAll("#details .mini-seg button")].map((b) => b.textContent);
   if (modes.join() !== "near,project,family") errors.push("side-pane graph in public mode: expected near,project,family, got " + modes.join());
+  // on a page without an entry the side pane's graph follows the scope: family here
+  window.location.hash = "#overview"; window.dispatchEvent(new window.Event("hashchange")); await tick(300);
+  report.miniOnOverview = d.querySelector("#details .mini-seg button.on")?.textContent;
+  if (report.miniOnOverview !== "family") errors.push("overview with the family scope: the side-pane graph shows " + report.miniOnOverview + ", not family");
+  const fg = window.__fg?.();
+  if (fg && fg.showEntries !== true) errors.push("family graph: entries are not shown by default");
   window.close();
 }
 {
