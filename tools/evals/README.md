@@ -435,6 +435,23 @@ already present.
 Six cases intentionally have no fixture directory and run on `_base` as-is;
 their prompts carry the whole scenario.
 
+## A logged-out CLI stops the run
+
+A session that expires mid-run (or a machine with no valid credential) makes
+every further case fail within seconds. That is not retried: no wait fixes it,
+only a person logging in does. The `claude` driver recognises it from the
+CLI's own signal — an event with `"error": "authentication_failed"`, the text
+"Not logged in · Please run /login" — and the runner matches the same text
+forms for every driver and for the judge (`AUTH_FAILURE_RE` in
+`ktw_evals/results.py`). The first such case marks the pass, the rest of the
+pass is skipped without an API call (verdict `auth_failed`), and the run
+stops with exit code 5 and the instruction to log in and re-run the same
+command against the same `--results-dir` — resolved cases are kept, only the
+rest runs again. Before this, an expired login on 2026-09-27 left fifteen
+cases failing in three to nine seconds each, retried every thirty seconds for
+the full ten hours of `--max-wait-hours`, and the error text showed only the
+head of the CLI's output — its session hooks — not the reason.
+
 ## Resilience to the account's own session/spend limits
 
 This section applies to the `claude` driver only — the detection is a match

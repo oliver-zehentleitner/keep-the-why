@@ -20,9 +20,25 @@ from .drivers import CLI_BINARY, DRIVER_LABELS, PERMISSION_BYPASS
 # fixture content that discusses a gateway's own rate limiter.
 RATE_LIMIT_RE = re.compile(r"hit your [\w ]{0,25}\blimit\b", re.IGNORECASE)
 
+# The agent CLI is not logged in (an expired session, a missing credential).
+# Unlike a rate limit, no wait fixes it — only a person logging in does — so
+# a run stops instead of retrying. Claude Code reports it as an assistant
+# event with `"error": "authentication_failed"` and the text "Not logged in ·
+# Please run /login" (probed 2026-09-28, 2.1.282); the text forms of other
+# CLIs are covered as well, since their error output is matched the same way.
+AUTH_FAILURE_RE = re.compile(
+    r"authentication_failed|not logged in|please run /login|invalid api key"
+    r"|oauth token (?:has )?expired|\b401\b[^\n]{0,40}unauthori[sz]ed",
+    re.IGNORECASE,
+)
+
 
 def rate_limit_sentinel(results_dir):
     return results_dir / ".rate_limited"
+
+
+def auth_failure_sentinel(results_dir):
+    return results_dir / ".auth_failed"
 
 
 def load_resolved(case_id, results_dir):

@@ -57,12 +57,35 @@ def run_agent_claude(prompt, cwd, model, timeout, disallowed_tools=None, home=No
             events.append(json.loads(line))
         except json.JSONDecodeError:
             pass
-    error = None
-    if proc.returncode != 0:
-        error = (
-            f"claude exited {proc.returncode}: {(proc.stderr or proc.stdout)[:2000]}"
-        )
-    return {"events": events, "error": error}
+    error, auth_failed = error_from_run(
+        proc.returncode, events, proc.stdout, proc.stderr
+    )
+    return {"events": events, "error": error, "auth_failed": auth_failed}
+
+
+def error_from_run(returncode, events, stdout, stderr):
+    """(error message or None, auth_failed) for one CLI run.
+
+    The message names what went wrong: the result event's text when the CLI
+    reports one ("Not logged in · Please run /login"), else stderr, else the
+    tail of stdout — not the head, which is the session's hook and init
+    events and says nothing about the failure (it did, until 2026-09-28: a
+    night of "claude exited 1: {hook_started…}" hid an expired login).
+    `auth_failed` is the CLI's own structured signal, an event whose `error`
+    is "authentication_failed", or the text saying so."""
+    from ..results import AUTH_FAILURE_RE
+
+    result = next((e for e in reversed(events) if e.get("type") == "result"), None)
+    auth_failed = any(e.get("error") == "authentication_failed" for e in events)
+    failed = returncode != 0 or bool(result and result.get("is_error"))
+    if not failed:
+        return None, False
+    reason = (result or {}).get("result") if result else None
+    if not reason:
+        reason = (stderr or "").strip() or (stdout or "")[-2000:]
+    reason = str(reason)[:2000]
+    auth_failed = auth_failed or bool(AUTH_FAILURE_RE.search(reason))
+    return f"claude exited {returncode}: {reason}", auth_failed
 
 
 def render_transcript_claude(events):

@@ -27,7 +27,14 @@ from .drivers import (
     seed_fake_home,
 )
 from .judge import JUDGE_PROMPT_SHA, judge, resolved_model, session_usage
-from .results import RATE_LIMIT_RE, load_resolved, rate_limit_sentinel, write_summary
+from .results import (
+    AUTH_FAILURE_RE,
+    RATE_LIMIT_RE,
+    auth_failure_sentinel,
+    load_resolved,
+    rate_limit_sentinel,
+    write_summary,
+)
 from .workdir import build_workdir, collect_diff
 
 
@@ -42,8 +49,55 @@ def _checks_verdict(failed):
     }
 
 
+def _skipped_record(case_id, args, verdict, reasoning):
+    return {
+        "id": case_id,
+        "verdict": verdict,
+        "score": None,
+        "reasoning": reasoning,
+        "violations": [],
+        "expectations": [],
+        "deductions": [],
+        "agent_model": args.model,
+        "judge_model": args.judge_model,
+        "driver": args.driver,
+        "permission_bypass": PERMISSION_BYPASS[args.driver],
+        "started": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "duration_s": 0,
+        "transcript": "",
+        "disk_changes": "",
+        "disk_changed": None,
+        "ended_with_no_response": None,
+        "evidence_tool_calls_found": None,
+        "evidence_claim": None,
+        "restraint_category": None,
+        "skill_loaded": None,
+        "skill_loaded_at": None,
+        "checks": [],
+        "checks_passed": None,
+        "judge_verdict": None,
+    }
+
+
+AUTH_FAILED_HINT = (
+    "the agent CLI is not logged in — log in (claude: /login), then re-run the "
+    "same command against the same --results-dir; resolved cases are kept"
+)
+
+
 def run_case(case, args, results_dir):
     case_id = case["id"]
+    if auth_failure_sentinel(results_dir).exists():
+        # An earlier case in this pass found the CLI logged out: every further
+        # case would fail the same way within seconds. Skip, no API call.
+        record = _skipped_record(
+            case_id, args, "auth_failed", f"Skipped: {AUTH_FAILED_HINT}."
+        )
+        (results_dir / f"{case_id}.json").write_text(
+            json.dumps(record, indent=2, ensure_ascii=False)
+        )
+        print(f"  skip   {case_id}  (CLI not logged in)", flush=True)
+        return record
     sentinel = rate_limit_sentinel(results_dir)
     if sentinel.exists():
         # Another case in this same pass already hit the account's own
@@ -131,7 +185,24 @@ def run_case(case, args, results_dir):
     checks_passed = all(c["ok"] for c in checks) if checks else None
     skill_loaded = None
     skill_loaded_at = None
-    if agent.get("error"):
+    if agent.get("auth_failed") or AUTH_FAILURE_RE.search(agent.get("error") or ""):
+        auth_failure_sentinel(results_dir).touch()
+        verdict = {
+            "verdict": "auth_failed",
+            "reasoning": f"{AUTH_FAILED_HINT}. CLI: {agent.get('error') or ''}",
+        }
+        checks_passed = None
+        restraint = {
+            k: None
+            for k in (
+                "disk_changed",
+                "ended_with_no_response",
+                "evidence_tool_calls_found",
+                "evidence_claim",
+                "restraint_category",
+            )
+        }
+    elif agent.get("error"):
         verdict = {"verdict": "error", "reasoning": agent["error"]}
         checks_passed = None  # no real run to check
         # A driver-level error (crash, timeout) means there's no real agent
@@ -186,6 +257,15 @@ def run_case(case, args, results_dir):
             verdict = _checks_verdict(failed)
         else:
             verdict = judge(case, transcript, diff, args.judge_model, args.timeout)
+            if verdict.get("verdict") == "error" and AUTH_FAILURE_RE.search(
+                verdict.get("reasoning") or ""
+            ):
+                # the judge runs through the same logged-in CLI
+                auth_failure_sentinel(results_dir).touch()
+                verdict = {
+                    "verdict": "auth_failed",
+                    "reasoning": f"judge: {AUTH_FAILED_HINT}. CLI: {verdict.get('reasoning')}",
+                }
             judge_verdict = verdict.get("verdict")
             judge_model_resolved = verdict.pop("judge_model_resolved", None)
             if failed and verdict.get("verdict") in ("pass", "fail"):
@@ -242,6 +322,7 @@ def execute_pass(cases, args, results_dir):
     """Run every not-yet-resolved case once; return (records, all_resolved)."""
     sentinel = rate_limit_sentinel(results_dir)
     sentinel.unlink(missing_ok=True)  # start this pass without a stale marker
+    auth_failure_sentinel(results_dir).unlink(missing_ok=True)
 
     resolved, pending = [], []
     for c in cases:
@@ -298,7 +379,7 @@ def run_until_resolved(cases, args, results_dir):
     with --retry-until-complete further passes over whatever is still
     unresolved, until everything has a pass/fail verdict or --max-wait-hours
     runs out. Returns the process exit code (0 all passed, 1 failures or
-    unresolved cases, 4 gave up waiting)."""
+    unresolved cases, 4 gave up waiting, 5 the agent CLI is not logged in)."""
     deadline = time.monotonic() + args.max_wait_hours * 3600
     attempt = 0
     while True:
@@ -308,6 +389,18 @@ def run_until_resolved(cases, args, results_dir):
             f"[{now}] pass {attempt}" + (" (retry)" if attempt > 1 else ""), flush=True
         )
         records, summary, all_resolved = execute_pass(cases, args, results_dir)
+
+        # A logged-out CLI is the one unresolved state no wait fixes: stop now
+        # instead of retrying every 30 seconds until --max-wait-hours (ten
+        # hours on 2026-09-27, with fifteen cases failing in seconds each).
+        auth = [r["id"] for r in records if r.get("verdict") == "auth_failed"]
+        if auth:
+            print(
+                f"\n[{now}] {len(auth)} case(s) not run: {AUTH_FAILED_HINT}. "
+                f"({summary['passed']}/{summary['total']} passed so far; see {results_dir}/summary.md)",
+                flush=True,
+            )
+            return 5
 
         if all_resolved or not args.retry_until_complete:
             print(
