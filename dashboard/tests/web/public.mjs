@@ -25,6 +25,7 @@ const GH = "https://github.com/acme";
 const config = (id, lines) => `<!-- keep-the-why:config -->\n- id: ${id}\n${lines.join("\n")}\n<!-- /keep-the-why:config -->\n`;
 const entry = (title, text, extra = {}) => ({ title, file: "design.md", line: 3, end_line: 9, type: ["decision"], status: "active", evidence: "confirmed", body: { text, reason: "" }, ...extra });
 const SUITE_ID = "5a1e5a1e-0000-4000-8000-000000000001";
+const NOTES_ID = "5a1e5a1e-0000-4000-8000-000000000003";
 const state = (id, project, entries) => ({ generated: "2026-09-28 10:00", dashboard: "0.2.0", linter: "0.18.0.0", project: { id, name: id, context: "context/", schema: "0.18.0", ...project }, topics: [{ file: "design.md", title: "Design", entries: entries.length }], entries, authors: [], findings: { errors: 0, warnings: 0, items: [] } });
 const FILES = {
   "https://raw.githubusercontent.com/acme/suite/HEAD/.keep-the-why": config("acme---suite", ["- dashboard-state: https://acme.github.io/suite/state.json"]),
@@ -36,6 +37,9 @@ const FILES = {
   "https://raw.githubusercontent.com/acme/plugin/HEAD/.keep-the-why": config("acme---plugin", ["- dashboard-state: https://acme.github.io/plugin/state.json"]),
   "https://acme.github.io/plugin/state.json": state("acme---plugin", { canonical: `${GH}/plugin`, parent: `${GH}/web` }, [entry("Plugins load lazily", "A needle in the plugin.", { uuid: "5a1e5a1e-0000-4000-8000-000000000002", see: [{ remote: `${GH}/suite`, uuid: SUITE_ID, date: "2026-09-28" }] })]),
   "https://raw.githubusercontent.com/acme/cli/HEAD/.keep-the-why": config("acme---cli", []),
+  // outside the family: no parent, no children — reached only through a See
+  "https://raw.githubusercontent.com/acme/notes/HEAD/.keep-the-why": config("acme---notes", ["- dashboard-state: https://acme.github.io/notes/state.json"]),
+  "https://acme.github.io/notes/state.json": state("acme---notes", { canonical: `${GH}/notes` }, [entry("Notes are plain text", "No needle here either.", { uuid: NOTES_ID })]),
 };
 const fetched = [];
 const stubFetch = async (url) => {
@@ -46,10 +50,11 @@ const stubFetch = async (url) => {
 };
 
 const errors = [];
+const navigations = []; // jsdom does not navigate: a location.href to another page is reported, not followed
 const tick = (ms) => new Promise((r) => setTimeout(r, ms));
 async function open(url, page = html) {
   const vc = new VirtualConsole();
-  vc.on("jsdomError", (e) => errors.push("jsdom: " + (e.detail?.stack || e.message || e).toString().split("\n").slice(0, 2).join(" | ")));
+  vc.on("jsdomError", (e) => /^Not implemented: navigation/.test(e.message || "") ? navigations.push(e.message) : errors.push("jsdom: " + (e.detail?.stack || e.message || e).toString().split("\n").slice(0, 2).join(" | ")));
   vc.on("error", (...a) => errors.push("console: " + a.join(" ")));
   const dom = new JSDOM(page, { url, runScripts: "dangerously", pretendToBeVisual: true, virtualConsole: vc,
     beforeParse(w) { w.fetch = stubFetch; w.ResizeObserver = class { observe() {} disconnect() {} }; w.HTMLCanvasElement.prototype.getContext = () => new Proxy({}, { get: (t, k) => (k === "measureText" ? () => ({ width: 10 }) : () => {}), set: () => true }); w.matchMedia = () => ({ matches: false }); w.CSS = { escape: (x) => x.replace(/([^\w-])/g, "\\$1") }; } });
@@ -177,6 +182,27 @@ const report = {};
   const text = window.document.getElementById("main").textContent;
   report.noExport = text.slice(0, 160);
   if (!/no dashboard-state line in the published \.keep-the-why \(https:\/\/raw\.githubusercontent\.com\/acme\/cli\/HEAD\/\.keep-the-why\)/.test(text)) errors.push("a project without dashboard-state: the page does not say which file lacks the line");
+  window.close();
+}
+{
+  // a See into another repository — family or not — opens the entry itself: the reader offers "open", and the
+  // click fetches the target's raw .keep-the-why and its published export, then goes to the entry there
+  const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/plugin`)}#entry/5a1e5a1e-0000-4000-8000-000000000002`);
+  const d = window.document;
+  const open_ = [...d.querySelectorAll(".refs-box a")].find((a) => a.textContent.includes("open"));
+  report.remoteOpen = open_?.getAttribute("href");
+  if (report.remoteOpen !== `#ref/${encodeURIComponent(`${GH}/suite`)}/${SUITE_ID}`) errors.push("remote See: no open link to the entry in the other repository: " + report.remoteOpen);
+  const nav = navigations.length;
+  window.location.hash = `#ref/${encodeURIComponent(`${GH}/notes`)}/${NOTES_ID}`; window.dispatchEvent(new window.Event("hashchange")); await tick(300);
+  if (!fetched.includes("https://acme.github.io/notes/state.json")) errors.push("remote See outside the family: the target's published export was not fetched");
+  if (navigations.length <= nav) errors.push("remote See outside the family: the page did not go to the entry in the target's export");
+  // an Id the target's export does not carry: said so, with the repository and the Id left on the page
+  window.location.hash = `#ref/${encodeURIComponent(`${GH}/notes`)}/5a1e5a1e-0000-4000-8000-00000000dead`; window.dispatchEvent(new window.Event("hashchange")); await tick(300);
+  report.remoteMissing = d.getElementById("main").textContent.slice(0, 120);
+  if (!/published export of github\.com\/acme\/notes has no entry with Id/.test(report.remoteMissing)) errors.push("remote See, unknown Id: no message naming the export: " + report.remoteMissing);
+  // a target without a published export: the reason, not a silent nothing
+  window.location.hash = `#ref/${encodeURIComponent(`${GH}/cli`)}/${NOTES_ID}`; window.dispatchEvent(new window.Event("hashchange")); await tick(300);
+  if (!/no dashboard-state line/.test(d.getElementById("main").textContent)) errors.push("remote See, target without export: the reason is not shown");
   window.close();
 }
 console.log(JSON.stringify(report, null, 1));

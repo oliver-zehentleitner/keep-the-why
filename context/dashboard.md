@@ -105,7 +105,7 @@ The author layer comes from three Git calls per entry: `blame` on the heading fo
 **Status:** active
 **Evidence:** confirmed
 **Source:** maintainer request, 2026-09-11
-**Verification:** corroborated — re-checked 2026-09-27 when public mode arrived (`project-families.md`): the Python server still makes the one call, and the *page* now fetches a family member's raw `.keep-the-why` and its published `state.json` when a person switches it to public — on request, in the browser, never from the server and never from the skill; an exported page left in local mode still makes none; re-checked 2026-09-28 when author profile links arrived: the page also asks a host's API for one commit, on a click on an author's name — again a request the person makes, from the browser
+**Verification:** corroborated — re-checked 2026-09-27 when public mode arrived (`project-families.md`): the Python server still makes the one call, and the *page* now fetches a family member's raw `.keep-the-why` and its published `state.json` when a person switches it to public — on request, in the browser, never from the server and never from the skill; an exported page left in local mode still makes none; re-checked 2026-09-28 when author profile links arrived: the page also asks a host's API for one commit, on a click on an author's name — again a request the person makes, from the browser; re-checked 2026-09-28 when a `See` into another repository learned to open its entry: the page fetches that repository's raw `.keep-the-why` and its published `state.json` on the click on *open*, never before, and an export that nobody clicks in still makes none
 **Revisit when:** the server is asked for a second call, the page is asked to fetch anything without the person switching to public, or the check is asked to do anything but compare two version strings
 **See:** project-families.md#public-mode-is-the-browser-reading-published-exports-bootstrapped-from-a-raw-keep-the-why-at-head — cae2d3bf-9ca6-42a8-98f4-6da2ca1904d3 — as of 2026-09-28
 
@@ -186,3 +186,24 @@ right only for the rare noreply address and wrong in silence otherwise.
 
 **Rejected alternative:** a link on an anonymized export. Rejected because
 the commit hash names the person the export was made to hide.
+
+## A `See` into another repository opens the entry there, family or not, through that repository's published export
+
+**Id:** ffdb33a5-3d9c-43b8-951b-a95a90ac2a74
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer request, 2026-09-28, while linking the thesis page's `context/` with this one
+**Revisit when:** a reference is asked to resolve without a click, a host refuses the raw fetch for public repositories, or a `See` locator grows a `root` for a project below a repository's top level
+**See:** dashboard.md#the-update-check-is-the-servers-one-network-call-and-the-exported-page-makes-none — 5b7a6c2d-8218-4987-b912-0fe7bb15cc1a — as of 2026-09-28
+**See:** dashboard.md#family-search-covers-the-whole-tree-routing-keeps-to-the-family — 9befaaa5-5823-4efd-9050-a055c8cfe0dc — as of 2026-09-28
+
+The reader shows a cross-project `See` or `Superseded by` as the target's canonical and the Id, with *open* beside them in every mode. *Open* uses the entry when the page already holds it (the family merged in), then — on the live server — any project known on this machine, then the target's published export: the raw `.keep-the-why` at `HEAD`, its `dashboard-state`, that `state.json`, and the page goes to the entry in public mode. A target without an export, or an export without that Id, is said so, with the repository and the Id left on the page.
+
+**Reason:** the format already allowed a `See` into any repository — the locator is a canonical, not a family member — but the page could follow one only inside the family, and in a static export not at all. Two projects that are related without one being part of the other (a thesis page and the practice it names) link their decisions to each other like any other pair; making them a family to get the link working would have routed entries between them, which neither wants. Public mode already had the whole mechanism for family members — raw config, `dashboard-state`, the published state — so following a reference outside the family is the same fetch on a different trigger.
+
+**Rejected alternative:** resolve cross-project references at export time, in CI, and bake the target's export URL into `state.json`. Rejected — the export would make network calls on behalf of the build, and the baked URL would go stale the day the target moves its site; the click-time fetch reads the target's own config as it is now.
+
+**Rejected alternative:** leave references outside the family as text (canonical plus Id, found by grep in a clone). Rejected — that is what the page did, and it is the case the maintainer asked to fix.
+
+**Consequence:** only a project at its repository's top level can be reached this way, because a `See` locator carries the canonical and nothing more; a project below the top level (an isolated-context mono repo) is found only when it is in the family, or checked out here.

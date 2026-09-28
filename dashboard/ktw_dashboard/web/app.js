@@ -331,13 +331,35 @@ async function viewEntryElsewhere(main, uuid) {
     location.href = `${location.pathname}?project=${encodeURIComponent(hit.project)}#entry/${uuid}`;
   } catch { setKids(main, el("p", { class: "center" }, `No entry with Id ${uuid} in this project, nor in any other project known here. A family member that is not checked out can be cloned or cached — see Family.`)); }
 }
+// a See or Superseded by pointing into another repository, family or not:
+// the entry itself when it can be found — in the state on the page, in a
+// project known to the live server, or in the target's published export
+// (its raw .keep-the-why names the dashboard-state). Fetched on the click,
+// never before; the canonical and the Id stay on the page when nothing loads.
+async function viewRemoteEntry(main, canonical, uuid) {
+  const here = byUuid()[uuid];
+  if (here) { history.replaceState(null, "", entryHref(here)); return render(); }
+  const back = () => el("p", { class: "note" }, el("a", { href: canonical, target: "_blank", rel: "noopener" }, canonical.replace(/^https:\/\//, "")), ` · Id ${uuid}`);
+  main.append(el("p", { class: "center" }, `Looking for ${uuid} in ${canonical.replace(/^https:\/\//, "")}…`));
+  if (LIVE()) {
+    try {
+      const r = await fetch(`/api/entry?uuid=${encodeURIComponent(uuid)}${PROJECT ? `&project=${encodeURIComponent(PROJECT)}` : ""}`, { cache: "no-store" });
+      if (r.ok) { const hit = await r.json(); if (hit.project !== (PROJECT || null)) { location.href = `${location.pathname}?project=${encodeURIComponent(hit.project)}#entry/${uuid}`; return; } }
+    } catch { /* not known here: try the published export */ }
+  }
+  const r = await fetchPublicState(canonical, "");
+  if (r.state?.entries?.some((e) => e.uuid === uuid)) { location.href = publicHref(canonical, "", `#entry/${uuid}`); return; }
+  setKids(main, el("div", { class: "center" },
+    el("p", {}, r.state ? `The published export of ${canonical.replace(/^https:\/\//, "")} has no entry with Id ${uuid} — the reference may be newer than the export, or the entry lives below the repository's top level.` : `Cannot open ${uuid}: ${r.error}.`),
+    back()));
+}
 function refLine(ref, label) {
   // one See / Superseded by reference as a row: local -> the entry here; remote -> the canonical, and the Id to find it there
   const target = ref.uuid ? byUuid()[ref.uuid] : null;
   const date = ref.date ? el("span", { class: "note" }, ` · as of ${ref.date}`) : null;
   if (target) return el("div", { class: "ref" }, label ? el("b", {}, label) : null, el("a", { href: entryHref(target) }, target.title), el("span", { class: "note" }, ` · ${topicOf(target.file)?.title || target.file}`), date);
   if (ref.remote) return el("div", { class: "ref" }, label ? el("b", {}, label) : null, el("a", { href: ref.remote, target: "_blank", rel: "noopener" }, ref.remote.replace(/^https:\/\//, "")), el("span", { class: "note mono" }, ` · ${ref.uuid}`), date,
-    LIVE() ? el("a", { class: "note", href: `#entry/${ref.uuid}`, title: "open it here, if that project is checked out or cached on this machine" }, " · open here") : null);
+    ref.uuid ? el("a", { class: "note", href: `#ref/${encodeURIComponent(ref.remote)}/${ref.uuid}`, title: "open the entry itself: from a checkout on this machine, else from that project's published export" }, " · open") : null);
   if (ref.file) return el("div", { class: "ref" }, label ? el("b", {}, label) : null, topicOf(ref.file) ? el("a", { href: `#topic/${ref.file}` }, ref.locator) : ref.locator, el("span", { class: "note mono" }, ` · ${ref.uuid || ""}`), el("span", { class: "note warn" }, " · Id not found here — the locator may be stale"), date);
   return el("div", { class: "ref" }, label ? el("b", {}, label) : null, ref.text || "");
 }
@@ -1156,6 +1178,7 @@ function render() {
   else if (route === "projects") { viewProjects(main); renderDetailsDefault(); }
   else if (route.startsWith("topic/")) viewTopic(main, route.slice(6));
   else if (route.startsWith("entry/")) viewEntry(main, decodeURIComponent(route.slice(6)));
+  else if (route.startsWith("ref/")) { const cut = route.lastIndexOf("/"); viewRemoteEntry(main, decodeURIComponent(route.slice(4, cut)), route.slice(cut + 1)); renderDetailsDefault(); }
   else if (route.startsWith("search/")) { const [, scope, ...q] = route.split("/"); viewSearch(main, scope, decodeURIComponent(q.join("/"))); renderDetailsDefault(); }
   else { viewOverview(main); renderDetailsDefault(); }
   markActive();

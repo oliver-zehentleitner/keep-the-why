@@ -114,6 +114,7 @@ Every topic file in `context/` gets a stub at `docs/context/<name>.md` holding a
 **Evidence:** confirmed
 **Source:** maintainer decision, 2026-09-14, with the publication of the thesis page
 **Revisit when:** the thesis page changes its architecture, or Keep the Why grows a layer beyond the why
+**See:** https://github.com/oliver-zehentleitner/repo-native-project-memory — 6288e2c2-5d05-405a-8355-3d1c2564adf0 — as of 2026-09-28
 
 Every self-description — landing hero, README intro, Philosophy, Installation, `llms.txt`, the `context/README.md` the wizard writes — says that the repository already is the project's memory (README, docs, tests, changelog, history) and that Keep the Why is the layer it was missing: the why. The thesis itself lives on its own page, https://oliver-zehentleitner.github.io/repo-native-project-memory/, by the same author, and Keep the Why links it rather than restating it.
 
