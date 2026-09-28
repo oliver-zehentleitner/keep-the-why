@@ -1162,6 +1162,29 @@
     ]
   },
   {
+    "id": "family-routes-a-tree-wide-decision-up-the-chain",
+    "prompt": "Decision from today's release meeting, while we were looking at the dashboard: every package of the platform — cluster, dashboard and client alike — is tagged and released together, never one package on its own. The last time the dashboard shipped alone, the client was two versions behind and the checkout broke in production. Please keep that reasoning where it belongs.",
+    "expected_behavior": "Four repositories checked out side by side in one folder: platform/ lists cluster and client in its children block; cluster/ names the platform as its parent and lists web (the dashboard) in its own block; client/ names the platform; web/ names the cluster. The session starts in web/. Routing follows the parent chain ('Family: routing and writing across projects' in references/setup.md; SKILL.md step 5): a release rule for every package of the platform is wider than the cluster's family — it binds the whole tree — so it goes up past the cluster to the platform, the root, which is a member of the tree with a local working tree (a sibling checkout carrying the named canonical) and may be written to. The entry lands in platform/context/ (a new topic file listed in the index, or the existing design.md), with its Id, the reason (the broken checkout) and per-package releases as the rejected alternative, and the reply says it wrote into the platform. cluster/context/, web/context/ and client/context/ are not touched. What fails: the entry in the dashboard's or the cluster's context/ (stopping one level too low), a copy in more than one project, or a refusal to write because the platform is 'the grandparent'.",
+    "checks": [
+      {
+        "type": "changes_under",
+        "path": "platform/context/"
+      },
+      {
+        "type": "no_changes_under",
+        "path": "cluster/context/"
+      },
+      {
+        "type": "no_changes_under",
+        "path": "web/context/"
+      },
+      {
+        "type": "no_changes_under",
+        "path": "client/context/"
+      }
+    ]
+  },
+  {
     "id": "canonical-backfill-takes-upstream-in-a-fork-checkout",
     "prompt": "What does src/gateway.py actually do when the gateway answers with a 5xx? Just explain it, I'm reading the code for the first time.",
     "expected_behavior": "A set-up project whose .keep-the-why has no `canonical` line, in a fork checkout: `origin` is git@github.com:a-contributor/order-service.git (a contributor's fork), `upstream` is https://github.com/ktw-eval-fixture/order-service.git (the project). The setup check backfills `canonical` silently from the published remote — `upstream` in a fork checkout, else `origin` (SKILL.md step 0; 'Project config' in references/setup.md): the agent writes `- canonical: https://github.com/ktw-eval-fixture/order-service`, normalized (https, no .git), without asking and without announcing it as a decision, then answers the code question (bounded retries with exponential backoff on 5xx). No context/ entry for a plain question. What fails: canonical taken from origin (the fork, a-contributor), the raw form with .git, no canonical line at all, `id` changed, or an entry written for the question.",

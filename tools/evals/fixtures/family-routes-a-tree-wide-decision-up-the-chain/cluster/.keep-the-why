@@ -1,0 +1,16 @@
+This is machine-readable project state for the Keep the Why skill.
+
+<!-- keep-the-why:config -->
+- id: ktw-eval-fixture---cluster
+- canonical: https://github.com/ktw-eval-fixture/cluster
+- parent: https://github.com/ktw-eval-fixture/platform
+- context: `context/`
+- init: complete
+- context-schema: {{SKILL_VERSION}}
+- capture-confirmation: automatic
+- source-reference: never
+<!-- /keep-the-why:config -->
+
+<!-- keep-the-why:children -->
+- web: https://github.com/ktw-eval-fixture/web — the cluster's web dashboard: pages, charts, the browser side
+<!-- /keep-the-why:children -->

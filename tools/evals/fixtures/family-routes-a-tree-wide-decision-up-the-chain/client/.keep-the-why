@@ -1,0 +1,12 @@
+This is machine-readable project state for the Keep the Why skill.
+
+<!-- keep-the-why:config -->
+- id: ktw-eval-fixture---client
+- canonical: https://github.com/ktw-eval-fixture/client
+- parent: https://github.com/ktw-eval-fixture/platform
+- context: `context/`
+- init: complete
+- context-schema: {{SKILL_VERSION}}
+- capture-confirmation: automatic
+- source-reference: never
+<!-- /keep-the-why:config -->

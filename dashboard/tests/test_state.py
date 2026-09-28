@@ -680,6 +680,85 @@ class FamilyTest(unittest.TestCase):
             srv.stop()
 
 
+class NestedFamilyTest(unittest.TestCase):
+    """A family three levels deep in one repository: suite -> cluster -> web.
+    The family view walks the parent chain above the parent."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory(prefix="ktw-dash-nested-")
+        self.home = os.path.join(self.tmp.name, "home")
+        os.makedirs(os.path.join(self.home, ".keep-the-why"))
+        self._old_home = os.environ.get("HOME")
+        os.environ["HOME"] = self.home
+        self.root = os.path.join(self.tmp.name, "mono")
+        self.cluster = os.path.join(self.root, "packages", "cluster")
+        self.web = os.path.join(self.cluster, "web")
+        self._project(
+            self.root,
+            "acme---mono",
+            extra="- cluster: packages/cluster — the cluster: nodes, management, its web UI",
+        )
+        self._project(
+            self.cluster,
+            "acme---mono---packages-cluster",
+            parent="../..",
+            extra="- web: web — the cluster's web dashboard",
+        )
+        self._project(self.web, "acme---mono---packages-cluster-web", parent="..")
+
+    def _project(self, path, pid, parent="", extra=""):
+        os.makedirs(os.path.join(path, "context"), exist_ok=True)
+        cfg = CONFIG.replace(
+            "- id: acme---widget",
+            f"- id: {pid}" + (f"\n- parent: {parent}" if parent else ""),
+        )
+        if extra:
+            cfg += f"\n<!-- keep-the-why:children -->\n{extra}\n<!-- /keep-the-why:children -->\n"
+        with open(os.path.join(path, ".keep-the-why"), "w") as fh:
+            fh.write(cfg)
+
+    def tearDown(self):
+        if self._old_home is not None:
+            os.environ["HOME"] = self._old_home
+        self.tmp.cleanup()
+
+    def test_family_from_the_leaf_includes_the_grandparent(self):
+        from ktw_dashboard.projects import family, resolve
+
+        projects, _ = resolve(self.web, use_history=False)
+        me = next(p for p in projects if p.path == self.web)
+        members = family(me, projects)
+        roles = {m["role"]: m for m in members}
+        self.assertEqual(roles["self"]["scope"], "the cluster's web dashboard")
+        self.assertEqual(
+            os.path.realpath(roles["parent"]["path"]), os.path.realpath(self.cluster)
+        )
+        self.assertEqual(
+            os.path.realpath(roles["grandparent"]["path"]), os.path.realpath(self.root)
+        )
+        self.assertEqual(roles["grandparent"]["depth"], 2)
+        self.assertNotIn("ancestor", roles)
+
+    def test_a_cycle_in_parent_lines_stops(self):
+        from ktw_dashboard.projects import family, resolve
+
+        # the root claims the leaf as its parent: the walk must end, not loop
+        with open(os.path.join(self.root, ".keep-the-why"), "a") as fh:
+            fh.write("")
+        cfg = (
+            open(os.path.join(self.root, ".keep-the-why"))
+            .read()
+            .replace(
+                "- id: acme---mono", "- id: acme---mono\n- parent: packages/cluster/web"
+            )
+        )
+        open(os.path.join(self.root, ".keep-the-why"), "w").write(cfg)
+        projects, _ = resolve(self.web, use_history=False)
+        me = next(p for p in projects if p.path == self.web)
+        members = family(me, projects)
+        self.assertLess(len(members), 10)
+
+
 class HttpEndpointsTest(FamilyTest):
     """The endpoints project families added, over a real local server."""
 

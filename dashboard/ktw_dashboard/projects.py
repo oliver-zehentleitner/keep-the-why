@@ -347,11 +347,13 @@ def _fetch_commands(canonical: str, pid: str, root: str = "") -> dict:
 
 
 def family(project: "Project", projects: list["Project"]) -> list[dict]:
-    """The immediate family of `project`, one dict per member: role (self,
-    parent, child, sibling), name, location, scope, and how it is available
-    here — a repository (working tree), a cache, or not at all, with the
-    commands that would fetch it. Read from the project's own config and,
-    when the parent is local, from the parent's children block."""
+    """The family of `project`, one dict per member: role (self, parent,
+    grandparent and further ancestors up the parent chain, sibling, child),
+    name, location, scope, and how it is available here — a repository
+    (working tree), a cache, or not at all, with the commands that would
+    fetch it. Read from the project's own config and, when the parent is
+    local, from the parent's children block; the chain above the parent is
+    followed as far as each level is local — routing walks the same chain."""
     if not project.path:
         return []
     cfg = read_project_config(project.path) or {}
@@ -445,6 +447,27 @@ def family(project: "Project", projects: list["Project"]) -> list[dict]:
             )
         )
         members.extend(siblings)
+        # a nested family: the chain above the parent, as far as it is local
+        cur, depth, seen = parent, 2, {os.path.realpath(project.path)}
+        while cur is not None and cur.path and depth < 12:
+            here = os.path.realpath(cur.path)
+            if here in seen:
+                break  # a cycle in the parent lines: stop, never loop
+            seen.add(here)
+            up = (read_project_config(cur.path) or {}).get("parent", "")
+            if not up:
+                break
+            anc = locate(up, cur.path)
+            m = member(
+                "grandparent" if depth == 2 else "ancestor",
+                anc.name if anc else up,
+                up,
+                "",
+                anc,
+            )
+            m["depth"] = depth
+            members.append(m)
+            cur, depth = anc, depth + 1
     for ch in cfg.get("children", []):
         members.append(
             member(
