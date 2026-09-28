@@ -205,6 +205,7 @@ This isn't a new pattern, either. Docs and changelogs are already commonly kept 
 
 | Field | Meaning |
 |---|---|
+| **Id** | A UUID (version 4), the entry's address — the first header line, made by an OS command, never changed. Headings get reworded and files split; the Id stays, so every reference to the entry keeps working, across repositories too |
 | Decision / behavior | What was actually done |
 | Rejected alternative(s) | What else was considered, and why it lost |
 | Reason | Why the chosen path won |
@@ -213,8 +214,10 @@ This isn't a new pattern, either. Docs and changelogs are already commonly kept 
 | **Evidence** | `confirmed` \| `inferred` \| `unknown` — how certain the rationale is |
 | Source | Where the rationale came from (interview, issue, commit, postmortem) |
 | Revisit when | A concrete trigger that should prompt re-checking the entry |
+| See | Another entry this one follows from or relates to: `<locator> — <its Id> — as of <date>`, the locator a topic file and anchor here or another project's canonical URL |
+| **Superseded by** | On every `superseded` entry: the successor's Id, a reference into another project, or `none — <why nothing replaced it>` |
 
-Not every field belongs on every entry — Status, Evidence, and the rejected alternative carry the most weight even in a minimal one. The normative format — config files, the context directory, the index skeleton, every field and value: [Specification](https://keepthewhy.com/specification/). Where each file goes and which file a piece of knowledge belongs in: [`references/repository-structure.md`](https://keepthewhy.com/repository-structure/).
+Not every field belongs on every entry — Id, Status, Evidence, and the rejected alternative carry the most weight even in a minimal one; an entry without an Id is a linter error from `context-schema` 0.18.0 on. The normative format — config files, the context directory, the index skeleton, every field and value: [Specification](https://keepthewhy.com/specification/). Where each file goes and which file a piece of knowledge belongs in: [`references/repository-structure.md`](https://keepthewhy.com/repository-structure/).
 
 The structural half of this format is mechanically checkable — in CI, and locally by the agent itself: [keep-the-why-lint](https://pypi.org/project/keep-the-why-lint/) (developed in this repository under `lint/`) validates required fields, value sets, index consistency, and `.keep-the-why` integrity — schema-version-aware, so unmigrated projects don't fail on structure their version never defined. Content (whether the rationale is *true*) stays a human judgment; the linter doesn't pretend otherwise. One line in GitHub Actions (`uses: oliver-zehentleitner/keep-the-why@lint-latest`, published as [keep-the-why-lint on the GitHub Marketplace](https://github.com/marketplace/actions/keep-the-why-lint)), or [`pip install keep-the-why-lint`](https://pypi.org/project/keep-the-why-lint/) anywhere else — see [Linting](https://keepthewhy.com/linting/). The skill runs it itself too, when a developer's personal `local-lint` setting says so (the default asks before installing, never installs unasked): after every entry it writes, and with `--setup` over the developer's own two home files after a settings change — the part a CI runner can't see. This repository lints its own `context/` with it in CI.
 
