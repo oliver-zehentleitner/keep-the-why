@@ -36,6 +36,13 @@ const PUBLIC = new URLSearchParams(location.search).get("public"); // a canonica
 const PUBLIC_ROOT = new URLSearchParams(location.search).get("root") || "";
 const MODE = PUBLIC ? "public" : window.__KTW_STATE__ ? "export" : "live";
 const LIVE = () => MODE === "live";
+// A static page (an export on a docs site, on a phone) is public by nature: it
+// has no machine to read, so it has no local/public switch, and its family —
+// like public mode's — comes from the members' published exports, fetched
+// when someone asks for the family, never before.
+const STATIC = !!window.__KTW_STATE__;
+const PUBLISHED = () => MODE === "public" || MODE === "export";
+const MY_ROOT = () => (MODE === "export" ? SELF?.project?.root || "" : PUBLIC_ROOT);
 const PUBLIC_STATES = {}; // canonical -> {state, url} | {error}
 async function fetchPublicState(canonical, root = "") {
   const key = `${canonical}|${root}`;
@@ -302,7 +309,7 @@ function viewTopic(main, file) {
   renderDetailsTopic(t);
 }
 async function viewEntryElsewhere(main, uuid) {
-  if (MODE === "public") {
+  if (PUBLISHED()) {
     // an Id this export does not carry: look through the family's published exports
     main.append(el("p", { class: "center" }, `Looking for ${uuid} in the family's published exports…`));
     const t = await publicTree();
@@ -335,7 +342,7 @@ function refLine(ref, label) {
 function viewEntry(main, id) {
   let e = byId()[id];
   if (!e && isUuid(id)) e = byUuid()[id];
-  if (!e && isUuid(id) && (LIVE() || MODE === "public")) return viewEntryElsewhere(main, id);
+  if (!e && isUuid(id) && (LIVE() || (PUBLISHED() && canonicalOf(S.project)))) return viewEntryElsewhere(main, id);
   if (!e) return main.append(el("p", { class: "center" }, "No such entry"));
   const list = entriesOf(e.file); const idx = list.indexOf(e);
   const t = topicOf(e.file);
@@ -470,7 +477,7 @@ async function viewFamily(main) {
   main.append(el("h1", {}, "Family"), el("p", { class: "sub" }, "The whole tree this project belongs to, from the root down: each project under the one whose children block lists it. That block is the routing — where an entry about something belongs; what is wider than a level goes one level up, to the root at most. Every member can be read; a member checked out here can be written to. Not a dependency graph."));
   if (!p.parent && !(p.children || []).length) return main.append(el("p", { class: "center" }, "This project is not part of a family: no parent line, no children block in .keep-the-why."));
   const box = el("div", { class: "family" }); main.append(box);
-  if (MODE === "public") {
+  if (PUBLISHED() && canonicalOf(p)) {
     box.append(el("p", { class: "center" }, "Reading the family's published exports…"));
     const t = await publicTree();
     const members = [...t.groups.map((g) => g.member), ...t.missing.map((x) => x.member)];
@@ -668,13 +675,13 @@ function buildSubgraph(e) {
 // its topics and entries around it, parent and child projects joined, and
 // the See and Superseded by lines between entries drawn across projects.
 let fgraph = null; // kept across re-renders so positions survive live updates
-const memberLink = (m, hash) => m.role === "self" ? hash : MODE === "public" ? publicHref(m.canonical, m.root || "", hash) : `${location.pathname}?project=${encodeURIComponent(m.key)}${hash}`;
+const memberLink = (m, hash) => m.role === "self" ? hash : PUBLISHED() ? publicHref(m.canonical, m.root || "", hash) : `${location.pathname}?project=${encodeURIComponent(m.key)}${hash}`;
 async function buildFamilyGraph() {
   const pool = await searchPool("family");
   const groups = pool.groups.map((g, i) => ({
     g, key: g.member.role === "self" ? "self" : g.member.key || `${g.member.canonical}|${g.member.root || ""}`,
     canonical: g.state.project?.canonical || g.member.canonical || (g.member.role === "self" ? canonicalOf(S.project) : ""),
-    root: g.state.project?.root || g.member.root || (g.member.role === "self" ? PUBLIC_ROOT : ""),
+    root: g.state.project?.root || g.member.root || (g.member.role === "self" ? MY_ROOT() : ""),
     role: g.member.role, state: g.state, color: i === 0 ? color0() : PALETTE[i % PALETTE.length],
   }));
   const { parentOf, xrefs } = linkFamily(groups);
@@ -950,7 +957,7 @@ function memberState(key) {
 let PUBLIC_TREE = null; // the tree read from published exports, public mode
 async function publicTree() {
   if (PUBLIC_TREE) return PUBLIC_TREE;
-  const canon = canonicalOf(S.project); const myRoot = PUBLIC_ROOT;
+  const canon = canonicalOf(S.project); const myRoot = MY_ROOT();
   const keyOf = (c, r) => `${c}|${r}`;
   const self = { member: { role: "self", name: S.project.id || S.project.name, canonical: canon, root: myRoot, node: keyOf(canon, myRoot), up: null }, state: SELF, href: (e) => entryHref(e) };
   const groups = [self]; const missing = []; const seen = new Set([keyOf(canon, myRoot)]);
@@ -991,7 +998,7 @@ async function publicTree() {
 async function searchPool(scope) {
   const self = { member: { role: "self", name: S.project.name || S.project.id }, state: SELF, href: (e) => entryHref(e) };
   if (scope !== "family") return { groups: [self], missing: [] };
-  if (MODE === "public") return publicTree();
+  if (PUBLISHED()) return publicTree();
   if (!LIVE()) return { groups: [self], missing: [] };
   const others = [...(await fetchTree() || [])].filter((m) => m.role !== "self").sort((a, b) => familyRank(a) - familyRank(b));
   const results = await Promise.all(others.map((m) => m.key ? memberState(m.key) : { error: m.available === "none" ? "not checked out or cached on this machine" : "location unknown" }));
@@ -1005,7 +1012,7 @@ function searchRows(pool, q) {
   for (const g of pool.groups) for (const e of g.state.entries || []) { const hit = searchHit(e, q); if (hit) rows.push({ e, hit, g }); }
   return rows.sort((a, b) => compareHits(a.hit, b.hit));
 }
-const searchScopes = () => (LIVE() || MODE === "public" ? ["project", "family"] : ["project"]);
+const searchScopes = () => (LIVE() || MODE === "public" || (MODE === "export" && !!canonicalOf(S?.project)) ? ["project", "family"] : ["project"]);
 // One setting for every view that can span projects (search, graph): this
 // project, or the whole family tree. Kept per browser; a results-page link
 // carries its own scope and sets it.
@@ -1066,7 +1073,7 @@ async function viewSearch(main, linkScope, q) {
     if (!mine.length) continue;
     const m = g.member;
     const head = el("div", { class: "sg-head" },
-      m.role === "self" ? el("b", {}, m.name) : el("a", { href: MODE === "public" ? publicHref(m.canonical, m.root || "") : `${location.pathname}?project=${encodeURIComponent(m.key)}#overview` }, m.name),
+      m.role === "self" ? el("b", {}, m.name) : el("a", { href: PUBLISHED() ? publicHref(m.canonical, m.root || "") : `${location.pathname}?project=${encodeURIComponent(m.key)}#overview` }, m.name),
       pill(memberLabel(m), "role"), el("span", { class: "count" }, plural(mine.length, "hit")));
     box.append(el("section", { class: "sgroup" }, head, m.scope ? el("div", { class: "ms note" }, m.scope) : null,
       el("div", { class: "entry-list" }, mine.map(({ e, hit }) => {
@@ -1285,30 +1292,23 @@ async function setupProjects() {
 function setupMode() {
   const box = $("#mode"); const p = S.project;
   const canonical = canonicalOf(p);
-  // what the other half of the switch is: a live server reads this machine's
-  // clones and caches; a static export (on a docs site, on a phone) only has
-  // the snapshot embedded in the page when it was built
-  const exported = !!window.__KTW_STATE__;
-  const family = !!(p.parent || (p.children || []).length);
-  const hasFamily = family || (!exported && !!p.dashboard_state); // an export without a family: public would show the same snapshot again
-  if (!hasFamily && MODE !== "public") { box.hidden = true; return; }
+  // two sources exist only on the live server: this machine's clones, or the
+  // published exports. A static page has one — it is published — so no switch
+  const hasFamily = !!(p.parent || (p.children || []).length || p.dashboard_state);
+  if (STATIC || (!hasFamily && MODE !== "public")) { box.hidden = true; return; }
   box.hidden = false;
-  const home = box.querySelector('[data-mode="local"]');
-  box.title = exported ? "Export is this page's own snapshot; public reads the family's published exports" : "Local reads clones and caches on this machine; public reads the family's published exports";
-  home.textContent = exported ? "export" : "local";
   for (const b of box.querySelectorAll("button")) {
     const on = b.dataset.mode === (MODE === "public" ? "public" : "local");
     b.classList.toggle("on", on);
     b.disabled = b.dataset.mode === "public" && !canonical;
-    b.title = b.dataset.mode === "public" ? (canonical ? "read this project's family from its published exports" : "no canonical — cannot be looked up publicly")
-      : exported ? `this page's own snapshot, exported ${(window.__KTW_STATE__ && window.__KTW_STATE__.generated) || S.generated || ""} — nothing here reads a clone or a machine` : "read clones and caches on this machine";
+    b.title = b.dataset.mode === "public" ? (canonical ? "read this project's family from its published exports" : "no canonical — cannot be looked up publicly") : "read clones and caches on this machine";
     b.onclick = () => {
       if (on) return;
       if (b.dataset.mode === "public") location.href = publicHref(canonical, p.root || "", location.hash || "#overview");
       else location.href = `${location.pathname}${location.hash || "#overview"}`;
     };
   }
-  $("#mode-note").textContent = MODE === "public" || exported ? `generated ${S.generated}` : "";
+  $("#mode-note").textContent = MODE === "public" ? `generated ${S.generated}` : "";
 }
 async function boot() {
   setupTheme(); setupSearch(); setupScope(); setupSideToggle();

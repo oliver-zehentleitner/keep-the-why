@@ -32,6 +32,7 @@ await tick(300);
 const S = window.__KTW_STATE__;
 if (!S || !S.entries) { console.log("ERRORS: 1\n  no state on the page"); process.exit(1); }
 const withUuid = S.entries.find((e) => e.uuid);
+const exportFamily = !!((S.project.parent || (S.project.children || []).length) && (S.project.canonical || S.project.git?.remote));
 const routes = ["#overview", "#graph", "#timeline", "#authors", "#queues", "#findings", "#family", "#projects", `#topic/${S.topics[0].file}`, `#entry/${encodeURIComponent(S.entries[0].id)}`, `#entry/${encodeURIComponent(S.entries[S.entries.length - 1].id)}`, ...(withUuid ? [`#entry/${withUuid.uuid}`] : [])];
 const go = async (hash) => { window.location.hash = hash; window.dispatchEvent(new window.Event("hashchange")); await tick(120); };
 const report = {};
@@ -52,26 +53,24 @@ const main = window.document.getElementById("main");
 // an export has no family to load: the family graph falls back to the project's own
 await go("#graph/family");
 if (!main.querySelector(".graph-wrap canvas")) errors.push("graph/family in an export: no graph rendered");
-if (!window.document.getElementById("scope").hidden) errors.push("export: a this-project/family switch it cannot use");
+if (window.document.getElementById("scope").hidden === exportFamily) errors.push(`export: the this-project/family switch is ${exportFamily ? "missing for a family member" : "shown without a family"}`);
 // an author name links to the host (the commit page until a click has looked up the profile)
 if (S.project.git?.available && /^github\.com\//.test(S.project.git.remote || "") && !S.anonymized) {
   await go(`#entry/${encodeURIComponent(S.entries[0].id)}`);
   const a = window.document.querySelector("#details a.author");
   if (!a || !/^https:\/\/github\.com\/.+\/commit\/[0-9a-f]+$/.test(a.getAttribute("href") || "")) errors.push("entry details: the author is not linked to the host: " + (a?.getAttribute("href") || "no link"));
 }
-// an export reads no machine: its half of the switch says "export", never "local"; without a family there is no switch
+// a static page is published by nature: no local/public switch at all — the family scope reaches the members' exports
 {
   const box = window.document.getElementById("mode");
-  const family = !!(S.project.parent || (S.project.children || []).length);
   report.modeSwitch = box.hidden ? "hidden" : [...box.querySelectorAll("button")].map((b) => b.textContent).join("/");
-  if (!family && !box.hidden) errors.push("export without a family: the local/public switch is shown");
-  if (!box.hidden && /(^|\/)local(\/|$)/.test(report.modeSwitch)) errors.push("export: the switch says local — " + report.modeSwitch);
-  if (family && box.hidden) errors.push("export of a family member: no switch to public");
+  if (!box.hidden) errors.push("export: a local/public switch on a static page — " + report.modeSwitch);
 }
 // the side-pane graph: near and project in an export (no family), and the switch works
 await go(`#entry/${encodeURIComponent(S.entries[0].id)}`);
 const modes = [...window.document.querySelectorAll("#details .mini-seg button")].map((b) => b.textContent);
-if (modes.join() !== "near,project") errors.push("side-pane graph in an export: expected near,project, got " + modes.join());
+const wantModes = exportFamily ? "near,project,family" : "near,project";
+if (modes.join() !== wantModes) errors.push(`side-pane graph in an export: expected ${wantModes}, got ` + modes.join());
 [...window.document.querySelectorAll("#details .mini-seg button")].find((b) => b.textContent === "project")?.click();
 await tick(50);
 if (window.document.querySelector("#details .mini-seg button.on")?.textContent !== "project" || !window.document.querySelector("#details .mini canvas")) errors.push("side-pane graph: the project switch did not take");
@@ -99,7 +98,7 @@ if (window.document.getElementById("search-results").hidden || !window.document.
 search.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
 await tick(50); window.dispatchEvent(new window.Event("hashchange")); await tick(150);
 report.searchPage = { hash: window.location.hash, rows: main.querySelectorAll(".search-page .row").length };
-if (!window.location.hash.startsWith("#search/project/") || !report.searchPage.rows) errors.push("search: Enter did not open a results page with rows: " + JSON.stringify(report.searchPage));
+if (!/^#search\/(project|family)\//.test(window.location.hash) || !report.searchPage.rows) errors.push("search: Enter did not open a results page with rows: " + JSON.stringify(report.searchPage));
 await go("#overview");
 report.defaultMiniGraph = window.document.querySelectorAll("#details .mini canvas").length;
 if (report.strip < 10) errors.push("strip: expected at least 10 stats, got " + report.strip);

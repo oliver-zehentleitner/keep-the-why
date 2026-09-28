@@ -80,7 +80,7 @@ Started inside a project, the dashboard shows that one. The project menu shows f
 | **Projects** | everything this machine knows, families grouped, each row with its type; *forget* removes a mapping row (and a cache directory), never a working tree. Live server only |
 | **Entry by Id** | `#entry/<uuid>` opens an entry by its `Id`, here or in any project known here; the reader shows `See`, `Superseded by` and what the entry supersedes; the details pane links the entry on its host |
 | **This project / family** | next to the project menu: one scope for the whole page — with *family* every view shows the family merged (entries, topics, authors, queues, timeline, findings), search and graph over the whole tree |
-| **Local / public** | next to the project menu, for a project with a family: *local* reads clones and caches here, *public* reads a member's published export — the browser fetches its `.keep-the-why` at `HEAD`, takes the `dashboard-state` URL and loads that `state.json`; family, search and entry-by-Id work over the exports the same way |
+| **Local / public** | next to the project menu, for a project with a family: *local* reads clones and caches here, *public* reads a member's published export — the browser fetches its `.keep-the-why` at `HEAD`, takes the `dashboard-state` URL and loads that `state.json`; family, search and entry-by-Id work over the exports the same way; a static export has no such switch — its family scope reads the members' published exports directly |
 | **Findings** | the linter's findings with links to the entries they sit in |
 | **Status bar** | the two package versions, linking PyPI; when a newer release exists the entry shimmers and its tooltip names the version and the `pip install -U` line |
 

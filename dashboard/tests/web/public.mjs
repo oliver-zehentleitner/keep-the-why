@@ -47,11 +47,11 @@ const stubFetch = async (url) => {
 
 const errors = [];
 const tick = (ms) => new Promise((r) => setTimeout(r, ms));
-async function open(url) {
+async function open(url, page = html) {
   const vc = new VirtualConsole();
   vc.on("jsdomError", (e) => errors.push("jsdom: " + (e.detail?.stack || e.message || e).toString().split("\n").slice(0, 2).join(" | ")));
   vc.on("error", (...a) => errors.push("console: " + a.join(" ")));
-  const dom = new JSDOM(html, { url, runScripts: "dangerously", pretendToBeVisual: true, virtualConsole: vc,
+  const dom = new JSDOM(page, { url, runScripts: "dangerously", pretendToBeVisual: true, virtualConsole: vc,
     beforeParse(w) { w.fetch = stubFetch; w.ResizeObserver = class { observe() {} disconnect() {} }; w.HTMLCanvasElement.prototype.getContext = () => new Proxy({}, { get: (t, k) => (k === "measureText" ? () => ({ width: 10 }) : () => {}), set: () => true }); w.matchMedia = () => ({ matches: false }); w.CSS = { escape: (x) => x.replace(/([^\w-])/g, "\\$1") }; } });
   await tick(300);
   return dom.window;
@@ -140,6 +140,26 @@ const report = {};
   if (report.mergedBefore !== "1entries" || report.mergedAfter !== "4entries") errors.push(`family scope: strip should go from 1 to 4 entries, got ${report.mergedBefore} → ${report.mergedAfter}`);
   if (report.mergedSidebar.length !== 4) errors.push("family scope: the sidebar has no heading per project: " + report.mergedSidebar.join());
   if (!d.querySelector("#main .family-banner")) errors.push("family scope: no family banner on the overview");
+  window.close();
+}
+{
+  // a static export of a family member, as a docs site serves it: no local/public switch, the family scope right there,
+  // and the family merged from the members' published exports — nothing fetched until the family is asked for
+  const embedded = JSON.stringify({ ...FILES["https://acme.github.io/web/state.json"], exported: true }).replace(/</g, "\\u003c");
+  const page = html.replace("<script>", `<script>window.__KTW_STATE__ = ${embedded};</script><script>`);
+  const before = fetched.length;
+  const window = await open("http://localhost/web/keep-the-why-dashboard/#overview", page);
+  const d = window.document;
+  report.staticFetchedBefore = fetched.length - before;
+  report.staticMode = d.getElementById("mode").hidden ? "hidden" : "shown";
+  report.staticScope = d.getElementById("scope").hidden ? "hidden" : "shown";
+  if (report.staticFetchedBefore !== 0) errors.push(`static export, scope this project: ${report.staticFetchedBefore} request(s) before the family was asked for`);
+  if (report.staticMode !== "hidden") errors.push("static export: a local/public switch is shown");
+  if (report.staticScope !== "shown") errors.push("static export of a family member: no this-project/family switch");
+  d.querySelector('#scope button[data-scope="family"]').click();
+  await tick(300);
+  report.staticMerged = [...d.querySelectorAll("#strip a.stat")][0]?.textContent;
+  if (report.staticMerged !== "4entries") errors.push("static export, family scope: the family is not merged — " + report.staticMerged);
   window.close();
 }
 {
