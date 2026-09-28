@@ -16,10 +16,10 @@ import fs from "node:fs";
 const W = new URL("../../ktw_dashboard/web/", import.meta.url).pathname;
 const lib = fs.readFileSync(W + "lib.js", "utf8").replace(/^export /gm, "");
 const app = fs.readFileSync(W + "app.js", "utf8").replace(/^import \{[^}]*\} from "\.\/lib\.js";\n/m, "");
-// jsdom runs no module scripts: the page loads without its script tag, and
-// lib and app run as one classic script in its window
-const html = fs.readFileSync(W + "index.html", "utf8").replace('<script type="module" src="/static/app.js"></script>', "");
-const script = `${lib}\n${app}`;
+// jsdom runs no module scripts: lib and app go into the page as one classic
+// script, which jsdom runs itself (as in smoke.mjs; this file runs no code
+// strings). split/join, not replace: the sources contain `$&`-like sequences.
+const html = fs.readFileSync(W + "index.html", "utf8").split('<script type="module" src="/static/app.js"></script>').join("<script>" + lib + "\n" + app + "</script>");
 
 const GH = "https://github.com/acme";
 const config = (id, lines) => `<!-- keep-the-why:config -->\n- id: ${id}\n${lines.join("\n")}\n<!-- /keep-the-why:config -->\n`;
@@ -50,9 +50,8 @@ async function open(url) {
   const vc = new VirtualConsole();
   vc.on("jsdomError", (e) => errors.push("jsdom: " + (e.detail?.stack || e.message || e).toString().split("\n").slice(0, 2).join(" | ")));
   vc.on("error", (...a) => errors.push("console: " + a.join(" ")));
-  const dom = new JSDOM(html, { url, runScripts: "outside-only", pretendToBeVisual: true, virtualConsole: vc,
+  const dom = new JSDOM(html, { url, runScripts: "dangerously", pretendToBeVisual: true, virtualConsole: vc,
     beforeParse(w) { w.fetch = stubFetch; w.ResizeObserver = class { observe() {} disconnect() {} }; w.HTMLCanvasElement.prototype.getContext = () => new Proxy({}, { get: (t, k) => (k === "measureText" ? () => ({ width: 10 }) : () => {}), set: () => true }); w.matchMedia = () => ({ matches: false }); } });
-  dom.window.eval(script);
   await tick(300);
   return dom.window;
 }
