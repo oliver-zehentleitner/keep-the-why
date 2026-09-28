@@ -406,7 +406,7 @@ function memberRow(m) {
 }
 async function viewFamily(main) {
   const p = S.project;
-  main.append(el("h1", {}, "Family"), el("p", { class: "sub" }, "One parent, its children: the projects whose context/ is organized together with this one. The parent's children block is the routing — where an entry about something belongs. Not a dependency graph."));
+  main.append(el("h1", {}, "Family"), el("p", { class: "sub" }, "The projects whose context/ is organized together with this one: the parent chain up to the root, siblings, children. Each level's children block is the routing — where an entry about something belongs; what is wider than a level goes one level up. Not a dependency graph."));
   if (!p.parent && !(p.children || []).length) return main.append(el("p", { class: "center" }, "This project is not part of a family: no parent line, no children block in .keep-the-why."));
   const box = el("div", { class: "family" }); main.append(box);
   if (MODE === "public") {
@@ -425,8 +425,9 @@ async function viewFamily(main) {
     return;
   }
   const members = FAMILY || await fetchFamily() || [];
-  const order = { parent: 0, self: 1, sibling: 2, child: 3 };
-  box.append(...[...members].sort((a, b) => order[a.role] - order[b.role]).map(memberRow));
+  // the chain from the root down, then this level: ancestors by depth, parent, self, siblings, children
+  const rank = (m) => (m.role === "ancestor" || m.role === "grandparent" ? -(m.depth || 2) : { parent: 0, self: 1, sibling: 2, child: 3 }[m.role] ?? 4);
+  box.append(...[...members].sort((a, b) => rank(a) - rank(b)).map(memberRow));
 }
 let PROJECTS = null; // /api/projects result
 async function viewProjects(main) {

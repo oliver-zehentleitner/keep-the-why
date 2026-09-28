@@ -210,7 +210,8 @@ so the child repeats nothing. The scope is required because a child
 without one gives the routing nothing — the agent working in the
 websocket package cannot know that a REST quirk belongs to the REST
 package unless something says so. One parent keeps it maintainable; a
-family can nest, but nothing resolves through a grandparent.
+family can nest, and routing then follows the parent chain (the entry on
+nested families below).
 
 **Rejected alternative:** upstream and downstream roles beside parent and
 child, as the original issue sketched — the dependency direction as a
@@ -490,3 +491,44 @@ into the parent's build.
 sidestep CORS. Rejected because it would make the server a second network
 caller and let a hostile export reach it; the browser's own rules are the
 right boundary for other people's published files.
+
+## In a nested family, routing follows the parent chain up to the root
+
+**Id:** 5ee1ab7e-03e2-400f-aa4e-809dce75959a
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer design discussion, 2026-09-28, while migrating the suite (the cluster's dashboard as a child of the cluster, the cluster a child of the suite)
+**Revisit when:** a real tree turns out to need routing into a branch that is not on the chain, or the "which level is this wide enough for" question gets asked so often that it needs a rule of its own
+
+A family can nest: a child can be the parent of its own children. The
+family is then the whole tree, and routing follows the parent chain. Each
+level's `children` block routes among its own children only; what a
+level's family shares goes to that level's parent, and what is wider goes
+one level further up, to the root at most. A child's subject goes to that
+child and on down through its own block. Any member of the tree with a
+local working tree may be written to; a project outside the tree is
+read-only. Which level a subject is wide enough for, when it is unclear,
+is asked.
+
+**Reason:** the first real nested family — the suite, its cluster, the
+cluster's dashboard — showed what the previous rule ("nothing resolves
+through a grandparent") did: from the dashboard, the suite was read-only
+and a suite-wide release rule would have been routed to the cluster, the
+wrong place, because "family-wide" only reached one level. The levels of
+the tree are responsibilities — the dashboard's developers, the cluster's,
+the suite's — and a decision belongs to the level whose family it binds.
+Walking the chain keeps that: each level still routes only its own
+children, so nothing needs a global table, and a block is read only when
+the chain reaches it.
+
+**Rejected alternative:** keep the grandparent read-only and treat a
+subject wider than the parent's family like a member that is not checked
+out — named, not written. Rejected because in a tree the root is exactly
+the central place a suite is meant to have; a leaf that cannot reach it
+would push every wide decision into the level below it or into a question.
+
+**Rejected alternative:** flatten every family to one level (the dashboard
+as a direct child of the suite). Possible, and still allowed, but it moves
+the cluster's own routing into the suite's block and loses the cluster as
+the place for what binds its packages only.
