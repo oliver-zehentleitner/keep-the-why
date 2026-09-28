@@ -151,3 +151,43 @@ export function resolveLocation(location, canonical, root = "") {
   }
   return { canonical, root: parts.join("/") };
 }
+
+// The family graph's structure. `groups` are the projects in it, each
+// { key, canonical, root, role, state }. Returns
+//   parentOf: key -> the key of the project its parent line names (when that
+//             project is in the graph), from canonical and root; the roles
+//             self/parent/child are the fallback when a canonical is missing
+//   xrefs:    every See and Superseded by between two entries in the graph,
+//             across projects or within one, found by Id
+export function linkFamily(groups) {
+  const norm = (c) => String(c || "").replace(/\.git$/, "").replace(/\/+$/, "");
+  const at = new Map(groups.filter((g) => g.canonical).map((g) => [`${norm(g.canonical)}|${g.root || ""}`, g.key]));
+  const parentOf = {};
+  for (const g of groups) {
+    const p = g.state?.project?.parent;
+    if (!p) continue;
+    const loc = resolveLocation(p, norm(g.canonical), g.root || "");
+    const hit = loc ? at.get(`${norm(loc.canonical)}|${loc.root}`) : undefined;
+    if (hit && hit !== g.key) parentOf[g.key] = hit;
+  }
+  const self = groups.find((g) => g.role === "self");
+  const parent = groups.find((g) => g.role === "parent");
+  if (self && parent && !parentOf[self.key]) parentOf[self.key] = parent.key;
+  if (self) for (const g of groups) if (g.role === "child" && !parentOf[g.key]) parentOf[g.key] = self.key;
+  const byUuid = new Map();
+  for (const g of groups) for (const e of g.state?.entries || []) if (e.uuid) byUuid.set(e.uuid, { key: g.key, id: e.id });
+  const xrefs = []; const seen = new Set();
+  const push = (from, uuid, kind) => {
+    const to = uuid && byUuid.get(uuid);
+    if (!to || (to.key === from.key && to.id === from.id)) return;
+    const k = `${from.key}|${from.id}|${to.key}|${to.id}|${kind}`;
+    if (seen.has(k)) return; seen.add(k);
+    xrefs.push({ from, to, kind });
+  };
+  for (const g of groups) for (const e of g.state?.entries || []) {
+    const from = { key: g.key, id: e.id };
+    for (const r of e.see || []) push(from, r?.uuid, "see");
+    if (e.superseded_by) push(from, parseSupersededBy(e.superseded_by)?.uuid, "superseded");
+  }
+  return { parentOf, xrefs };
+}

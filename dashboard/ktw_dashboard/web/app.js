@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-import { esc, plural, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, searchTerms, searchHit, compareHits, snippetAt, highlight, resolveLocation } from "./lib.js";
+import { esc, plural, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, searchTerms, searchHit, compareHits, snippetAt, highlight, resolveLocation, linkFamily } from "./lib.js";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const narrow = () => !!window.matchMedia?.("(max-width: 900px)").matches;
@@ -502,8 +502,14 @@ function renderDetailsEntry(e) {
 function renderDetailsDefault() {
   const d = $("#details"); d.replaceChildren();
   const route = location.hash.slice(1) || "overview";
-  if (route === "graph") {
+  if (route === "graph" || route === "graph/family") {
     d.append(el("h3", {}, "Legend"), el("div", { class: "legend-list" },
+      route === "graph/family" ? [
+        el("span", {}, el("i", { class: "dot", style: "background:var(--bg);border:3px solid var(--accent);width:12px;height:12px" }), "project — a ring in its colour; its topics take the same colour"),
+        el("span", {}, "thick dashed line — parent and child project"),
+        el("span", {}, "coloured line — a See between two entries, within a project or across"),
+        el("span", {}, "grey dashed line — Superseded by"),
+        el("span", {}, "with entries hidden, references between projects are drawn between their topics")] : null,
       el("span", {}, el("i", { class: "dot", style: "background:var(--accent);width:12px;height:12px" }), "topic — size follows its entry count"),
       el("span", {}, el("i", { class: "dot confirmed" }), "entry, Evidence confirmed"), el("span", {}, el("i", { class: "dot inferred" }), "entry, Evidence inferred"), el("span", {}, el("i", { class: "dot unknown" }), "entry, Evidence unknown"),
       el("span", {}, el("i", { class: "dot", style: "background:transparent;border:1.5px solid var(--fg3)" }), "superseded — hollow"),
@@ -571,24 +577,104 @@ function buildSubgraph(e) {
   const prev = graph ? Object.fromEntries(graph.nodes.map((n) => [n.id, n])) : {};
   return Object.assign({ scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true, alpha: 1 }, assemble(topics, entries, prev));
 }
-function viewGraph(main) {
-  const g = buildGraph();
-  const wrap = el("div", { class: "graph-wrap" });
-  const canvas = el("canvas");
-  const ui = el("div", { class: "graph-ui" },
-    el("label", {}, el("input", { type: "checkbox", checked: g.showEntries, onchange: (ev) => { g.showEntries = ev.target.checked; g.alpha = 0.5; g.wake?.(); } }), "entries"),
-    el("label", {}, el("input", { type: "checkbox", checked: g.showLabels, onchange: (ev) => { g.showLabels = ev.target.checked; g.wake?.(); } }), "labels"),
-    el("button", { class: "link-btn", onclick: () => { g.scale = 1; g.ox = 0; g.oy = 0; for (const n of g.nodes) { n.fixed = false; } g.alpha = 1; g.wake?.(); } }, "reset"),
-  );
-  const legend = el("div", { class: "graph-legend" },
-    el("span", {}, el("i", { class: "dot", style: "background:var(--accent);width:12px;height:12px" }), "topic (size = entries)"),
-    el("span", {}, el("i", { class: "dot confirmed" }), "confirmed"), el("span", {}, el("i", { class: "dot inferred" }), "inferred"), el("span", {}, el("i", { class: "dot unknown" }), "unknown"),
-    el("span", {}, el("i", { class: "dot", style: "background:transparent;border:1.5px solid var(--fg3)" }), "superseded"),
-    el("span", {}, "— reference · ··· membership"));
-  wrap.append(canvas, ui, legend, el("div", { class: "graph-hint" }, "drag nodes · wheel zoom · drag background to pan · click to open"));
-  main.append(wrap);
-  runGraph(canvas, g, {});
+// The family graph: every project of the tree as a hub in its own colour,
+// its topics and entries around it, parent and child projects joined, and
+// the See and Superseded by lines between entries drawn across projects.
+let fgraph = null; // kept across re-renders so positions survive live updates
+const memberLink = (m, hash) => m.role === "self" ? hash : MODE === "public" ? publicHref(m.canonical, m.root || "", hash) : `${location.pathname}?project=${encodeURIComponent(m.key)}${hash}`;
+const canFamilyGraph = () => searchScopes().includes("family") && !!(S.project.parent || (S.project.children || []).length);
+async function buildFamilyGraph() {
+  const pool = await searchPool("family");
+  const groups = pool.groups.map((g, i) => ({
+    g, key: g.member.role === "self" ? "self" : g.member.key || `${g.member.canonical}|${g.member.root || ""}`,
+    canonical: g.state.project?.canonical || g.member.canonical || (g.member.role === "self" ? canonicalOf(S.project) : ""),
+    root: g.state.project?.root || g.member.root || (g.member.role === "self" ? PUBLIC_ROOT : ""),
+    role: g.member.role, state: g.state, color: i === 0 ? color0() : PALETTE[i % PALETTE.length],
+  }));
+  const { parentOf, xrefs } = linkFamily(groups);
+  const prev = fgraph ? Object.fromEntries(fgraph.nodes.map((n) => [n.id, n])) : {};
+  const nodes = []; const links = []; const index = {};
+  const add = (n, near) => {
+    const p = prev[n.id];
+    if (p) Object.assign(n, { x: p.x, y: p.y, vx: 0, vy: 0, fixed: p.fixed });
+    else { n.x = (near?.x || 0) + (Math.random() - 0.5) * 140; n.y = (near?.y || 0) + (Math.random() - 0.5) * 140; n.vx = n.vy = 0; }
+    index[n.id] = nodes.length; nodes.push(n); return n;
+  };
+  // this project keeps the local graph's ids, so the selected entry and the positions carry over
+  const tid = (G, file) => (G.key === "self" ? `t:${file}` : `t:${G.key}:${file}`);
+  const eid = (G, id) => (G.key === "self" ? `e:${id}` : `e:${G.key}:${id}`);
+  const R = groups.length > 1 ? 220 + 45 * groups.length : 0;
+  groups.forEach((G, i) => {
+    const ang = (2 * Math.PI * i) / groups.length;
+    const hub = add({ id: `p:${G.key}`, kind: "project", label: G.g.member.name, r: 15, color: G.color, href: memberLink(G.g.member, "#overview") }, { x: R * Math.cos(ang), y: R * Math.sin(ang) });
+    for (const t of G.state.topics || []) {
+      const n = add({ id: tid(G, t.file), kind: "topic", label: t.title, file: t.file, color: G.color, r: 8 + Math.sqrt(t.entries || 0) * 2.8, href: memberLink(G.g.member, `#topic/${t.file}`) }, hub);
+      links.push({ s: index[hub.id], t: index[n.id], kind: "hub", len: 80 });
+    }
+    for (const e of G.state.entries || []) {
+      const t = nodes[index[tid(G, e.file)]];
+      add({ id: eid(G, e.id), kind: "entry", label: e.title, file: e.file, entry: e, r: 4.2, href: G.key === "self" ? `#entry/${encodeURIComponent(e.id)}` : G.g.href(e) }, t || hub);
+    }
+    for (const e of G.state.entries || []) {
+      const me = index[eid(G, e.id)];
+      if (index[tid(G, e.file)] != null) links.push({ s: me, t: index[tid(G, e.file)], kind: "member", len: 42 });
+      for (const f of e.refs || []) if (index[tid(G, f)] != null) links.push({ s: me, t: index[tid(G, f)], kind: "ref", len: 110 });
+    }
+    const seen = new Set();
+    for (const t of G.state.topics || []) for (const f of t.refs_out || []) { if (index[tid(G, f)] == null) continue; const k = [t.file, f].sort().join("|"); if (seen.has(k)) continue; seen.add(k); links.push({ s: index[tid(G, t.file)], t: index[tid(G, f)], kind: "topic", len: 150 }); }
+  });
+  for (const [child, parent] of Object.entries(parentOf)) if (index[`p:${child}`] != null && index[`p:${parent}`] != null) links.push({ s: index[`p:${child}`], t: index[`p:${parent}`], kind: "family", len: 320 });
+  const byKey = Object.fromEntries(groups.map((G) => [G.key, G]));
+  const entryOf = (G, id) => (G.state.entries || []).find((e) => e.id === id);
+  const topicPairs = new Set(); let across = 0;
+  for (const x of xrefs) {
+    const A = byKey[x.from.key], B = byKey[x.to.key];
+    const s = index[eid(A, x.from.id)], t = index[eid(B, x.to.id)];
+    if (s == null || t == null) continue;
+    links.push({ s, t, kind: x.kind, len: 170, color: A.color });
+    if (x.from.key === x.to.key) continue;
+    across++;
+    // the same reference between the two topics, for the view with entries hidden
+    const ts = index[tid(A, entryOf(A, x.from.id)?.file)], tt = index[tid(B, entryOf(B, x.to.id)?.file)];
+    const k = `${ts}|${tt}`;
+    if (ts != null && tt != null && !topicPairs.has(k)) { topicPairs.add(k); links.push({ s: ts, t: tt, kind: "xtopic", len: 220, color: A.color }); }
+  }
+  fgraph = Object.assign(fgraph || { scale: 0.7, ox: 0, oy: 0, showEntries: false, showLabels: true, alpha: 1 }, { nodes, links, index, groups, missing: pool.missing, across, at: Date.now() });
+  fgraph.alpha = Math.max(fgraph.alpha, 0.6);
+  return fgraph;
 }
+const color0 = () => getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#835bec";
+function viewGraph(main, family = false) {
+  if (family && !canFamilyGraph()) family = false;
+  const wrap = el("div", { class: "graph-wrap" });
+  main.append(wrap);
+  const fill = (g) => {
+    const canvas = el("canvas");
+    const ui = el("div", { class: "graph-ui" },
+      canFamilyGraph() ? el("label", { title: "every project of the tree, joined by parent lines and by See and Superseded by between entries" }, el("input", { type: "checkbox", checked: family, onchange: (ev) => { location.hash = ev.target.checked ? "#graph/family" : "#graph"; } }), "family") : null,
+      el("label", {}, el("input", { type: "checkbox", checked: g.showEntries, onchange: (ev) => { g.showEntries = ev.target.checked; g.alpha = 0.5; g.wake?.(); } }), "entries"),
+      el("label", {}, el("input", { type: "checkbox", checked: g.showLabels, onchange: (ev) => { g.showLabels = ev.target.checked; g.wake?.(); } }), "labels"),
+      el("button", { class: "link-btn", onclick: () => { g.scale = family ? 0.7 : 1; g.ox = 0; g.oy = 0; for (const n of g.nodes) { n.fixed = false; } g.alpha = 1; g.wake?.(); } }, "reset"),
+    );
+    const legend = family
+      ? el("div", { class: "graph-legend" },
+        g.groups.map((G) => el("span", {}, el("i", { class: "dot", style: `background:${G.color};width:10px;height:10px` }), G.g.member.name)),
+        el("span", {}, `${plural(g.across, "reference")} across projects`),
+        g.missing.length ? el("span", { class: "warn", title: g.missing.map(({ member: m, reason }) => `${m.name}: ${reason}`).join("\n") }, `${plural(g.missing.length, "member")} not available here`) : null)
+      : el("div", { class: "graph-legend" },
+        el("span", {}, el("i", { class: "dot", style: "background:var(--accent);width:12px;height:12px" }), "topic (size = entries)"),
+        el("span", {}, el("i", { class: "dot confirmed" }), "confirmed"), el("span", {}, el("i", { class: "dot inferred" }), "inferred"), el("span", {}, el("i", { class: "dot unknown" }), "unknown"),
+        el("span", {}, el("i", { class: "dot", style: "background:transparent;border:1.5px solid var(--fg3)" }), "superseded"),
+        el("span", {}, "— reference · ··· membership"));
+    wrap.replaceChildren(canvas, ui, legend, el("div", { class: "graph-hint" }, family ? "a project opens its overview · drag nodes · wheel zoom · drag background to pan" : "drag nodes · wheel zoom · drag background to pan · click to open"));
+    runGraph(canvas, g, {});
+  };
+  if (!family) return fill(buildGraph());
+  if (fgraph && Date.now() - fgraph.at < 30000) return fill(fgraph); // a live update re-renders: no refetch
+  wrap.append(el("p", { class: "center" }, "Loading the family…"));
+  buildFamilyGraph().then((g) => { if (wrap.isConnected && location.hash === "#graph/family") fill(g); });
+}
+const go = (href) => { if (href.startsWith("#")) location.hash = href; else location.href = href; };
 function runGraph(canvas, g, opts = {}) {
   const mini = !!opts.mini;
   const ctx = canvas.getContext("2d");
@@ -600,7 +686,9 @@ function runGraph(canvas, g, opts = {}) {
   resize();
   const ro = new ResizeObserver(resize); ro.observe(canvas);
   const toWorld = (px, py) => [(px - W / 2 - g.ox) / g.scale, (py - H / 2 - g.oy) / g.scale];
-  const visible = (n) => n.kind === "topic" || g.showEntries;
+  const visible = (n) => n.kind !== "entry" || g.showEntries;
+  // a topic-level reference stands in for entry references only while entries are hidden
+  const linkOn = (l) => visible(g.nodes[l.s]) && visible(g.nodes[l.t]) && (l.kind !== "xtopic" || !g.showEntries);
   const dim = (n) => n.kind === "entry" && filterActive() && !matches(n.entry);
   const pick = (px, py) => { const [x, y] = toWorld(px, py); let best = null, bd = 1e9; for (const n of g.nodes) { if (!visible(n)) continue; const d = Math.hypot(n.x - x, n.y - y); if (d < Math.max(n.r + 4, 8) / Math.min(g.scale, 1) && d < bd) { best = n; bd = d; } } return best; };
   canvas.onmousemove = (ev) => {
@@ -610,7 +698,7 @@ function runGraph(canvas, g, opts = {}) {
     hover = pick(px, py); canvas.style.cursor = hover ? "pointer" : "grab";
   };
   canvas.onmousedown = (ev) => { const r = canvas.getBoundingClientRect(); const px = ev.clientX - r.left, py = ev.clientY - r.top; moved = false; const n = pick(px, py); if (n) drag = n; else pan = { px, py, ox: g.ox, oy: g.oy }; canvas.classList.add("grabbing"); };
-  window.addEventListener("mouseup", () => { if (drag && !moved) { location.hash = drag.href; } drag = null; pan = null; canvas.classList.remove("grabbing"); });
+  window.addEventListener("mouseup", () => { if (drag && !moved) go(drag.href); drag = null; pan = null; canvas.classList.remove("grabbing"); });
   canvas.onmouseleave = () => { hover = null; };
   canvas.onwheel = (ev) => { ev.preventDefault(); const r = canvas.getBoundingClientRect(); const px = ev.clientX - r.left - W / 2, py = ev.clientY - r.top - H / 2; const f = Math.exp(-ev.deltaY * 0.0012); const ns = Math.min(6, Math.max(0.15, g.scale * f)); const k = ns / g.scale; g.ox = px - (px - g.ox) * k; g.oy = py - (py - g.oy) * k; g.scale = ns; };
   canvas.ondblclick = (ev) => { const r = canvas.getBoundingClientRect(); const n = pick(ev.clientX - r.left, ev.clientY - r.top); if (n) { n.fixed = false; g.alpha = 0.4; } };
@@ -632,7 +720,7 @@ function runGraph(canvas, g, opts = {}) {
   }, { passive: false });
   canvas.addEventListener("touchend", (ev) => {
     if (pinch) { if (!ev.touches.length) pinch = null; return; }
-    if (drag && !moved) location.hash = drag.href;
+    if (drag && !moved) go(drag.href);
     drag = null; pan = null;
   });
   const ev = (n) => n.entry.evidence;
@@ -643,13 +731,15 @@ function runGraph(canvas, g, opts = {}) {
       const k = g.alpha;
       // repulsion
       for (let i = 0; i < ns.length; i++) for (let j = i + 1; j < ns.length; j++) {
-        const a = ns[i], b = ns[j]; let dx = b.x - a.x, dy = b.y - a.y; let d2 = dx * dx + dy * dy + 0.01; if (d2 > 250000) continue;
-        const rep = (a.kind === "topic" && b.kind === "topic" ? 2600 : a.kind === "entry" && b.kind === "entry" ? 260 : 900) / d2; const d = Math.sqrt(d2);
+        const a = ns[i], b = ns[j]; let dx = b.x - a.x, dy = b.y - a.y; let d2 = dx * dx + dy * dy + 0.01;
+        const hubs = a.kind === "project" && b.kind === "project";
+        if (d2 > (hubs ? 4000000 : 250000)) continue;
+        const rep = (hubs ? 30000 : a.kind === "entry" && b.kind === "entry" ? 260 : a.kind === "entry" || b.kind === "entry" ? 900 : 2600) / d2; const d = Math.sqrt(d2);
         const fx = (dx / d) * rep * k, fy = (dy / d) * rep * k;
         if (!a.fixed) { a.vx -= fx; a.vy -= fy; } if (!b.fixed) { b.vx += fx; b.vy += fy; }
       }
       // springs
-      for (const l of g.links) { const a = g.nodes[l.s], b = g.nodes[l.t]; if (!visible(a) || !visible(b)) continue; const dx = b.x - a.x, dy = b.y - a.y; const d = Math.hypot(dx, dy) || 0.01; const f = (d - l.len) * (l.kind === "member" ? 0.05 : 0.02) * k; const fx = (dx / d) * f, fy = (dy / d) * f; if (!a.fixed) { a.vx += fx; a.vy += fy; } if (!b.fixed) { b.vx -= fx; b.vy -= fy; } }
+      for (const l of g.links) { if (!linkOn(l)) continue; const a = g.nodes[l.s], b = g.nodes[l.t]; const dx = b.x - a.x, dy = b.y - a.y; const d = Math.hypot(dx, dy) || 0.01; const f = (d - l.len) * (l.kind === "member" || l.kind === "hub" ? 0.05 : l.kind === "family" ? 0.03 : 0.02) * k; const fx = (dx / d) * f, fy = (dy / d) * f; if (!a.fixed) { a.vx += fx; a.vy += fy; } if (!b.fixed) { b.vx -= fx; b.vy -= fy; } }
       // gravity + integrate
       for (const n of ns) { if (n.fixed) continue; n.vx -= n.x * 0.004 * k; n.vy -= n.y * 0.004 * k; n.vx *= 0.82; n.vy *= 0.82; n.x += n.vx; n.y += n.vy; }
       g.alpha *= 0.985;
@@ -663,14 +753,24 @@ function runGraph(canvas, g, opts = {}) {
     ctx.clearRect(0, 0, W, H);
     ctx.save(); ctx.translate(W / 2 + g.ox, H / 2 + g.oy); ctx.scale(g.scale, g.scale);
     const focus = hover || (opts.focusId && g.index[opts.focusId] != null ? g.nodes[g.index[opts.focusId]] : null) || (!mini && selected ? g.nodes[g.index[`e:${selected}`]] : null);
-    const neigh = new Set(); if (focus) { neigh.add(focus); for (const l of g.links) { if (g.nodes[l.s] === focus) neigh.add(g.nodes[l.t]); if (g.nodes[l.t] === focus) neigh.add(g.nodes[l.s]); } }
-    for (const l of g.links) { const a = g.nodes[l.s], b = g.nodes[l.t]; if (!visible(a) || !visible(b)) continue; const hi = focus && (a === focus || b === focus); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineWidth = (l.kind === "topic" ? 1.6 : l.kind === "ref" ? 1 : 0.6) / g.scale; ctx.setLineDash(l.kind === "member" ? [2 / g.scale, 3 / g.scale] : []); ctx.strokeStyle = hi ? color("--accent2") : color("--line"); ctx.globalAlpha = focus && !hi ? 0.25 : 1; ctx.stroke(); }
+    const neigh = new Set(); if (focus) { neigh.add(focus); for (const l of g.links) { if (!linkOn(l)) continue; if (g.nodes[l.s] === focus) neigh.add(g.nodes[l.t]); if (g.nodes[l.t] === focus) neigh.add(g.nodes[l.s]); } }
+    const LW = { topic: 1.6, ref: 1, family: 2.6, see: 1.5, xtopic: 1.5, superseded: 1.3 };
+    const DASH = { member: [2, 3], hub: [2, 3], family: [9, 6], superseded: [5, 4] };
+    for (const l of g.links) {
+      if (!linkOn(l)) continue;
+      const a = g.nodes[l.s], b = g.nodes[l.t]; const hi = focus && (a === focus || b === focus);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+      ctx.lineWidth = (LW[l.kind] || 0.6) / g.scale; ctx.setLineDash((DASH[l.kind] || []).map((v) => v / g.scale));
+      const base = l.kind === "see" || l.kind === "xtopic" ? (l.color || color("--accent2")) : l.kind === "superseded" ? color("--fg3") : l.kind === "family" ? color("--fg3") : color("--line");
+      ctx.strokeStyle = hi ? (l.kind === "see" || l.kind === "xtopic" ? color("--fg") : color("--accent2")) : base; ctx.globalAlpha = focus && !hi ? 0.25 : l.kind === "see" || l.kind === "xtopic" ? 0.85 : 1; ctx.stroke();
+    }
     ctx.setLineDash([]);
     for (const n of ns) {
       const faded = (focus && !neigh.has(n)) || dim(n);
       ctx.globalAlpha = faded ? 0.18 : 1;
       ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-      if (n.kind === "topic") { ctx.fillStyle = color("--accent"); ctx.fill(); }
+      if (n.kind === "project") { ctx.fillStyle = color("--bg"); ctx.fill(); ctx.lineWidth = 3.5 / g.scale; ctx.strokeStyle = n.color; ctx.stroke(); ctx.beginPath(); ctx.arc(n.x, n.y, n.r * 0.38, 0, Math.PI * 2); ctx.fillStyle = n.color; ctx.fill(); }
+      else if (n.kind === "topic") { ctx.fillStyle = n.color || color("--accent"); ctx.fill(); }
       else { const sup = n.entry.status === "superseded"; ctx.fillStyle = sup ? color("--bg") : evColor[ev(n)] || color("--muted"); ctx.fill(); if (sup) { ctx.lineWidth = 1.2 / g.scale; ctx.strokeStyle = evColor[ev(n)] || color("--fg3"); ctx.stroke(); } if (n.entry.status === "open" || n.entry.status === "needs-review" || n.entry.status === "pending-confirmation") { ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 2.5 / g.scale, 0, Math.PI * 2); ctx.lineWidth = 1.2 / g.scale; ctx.strokeStyle = color(`--${n.entry.status}`); ctx.stroke(); } }
       if (n === focus) { ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 4 / g.scale, 0, Math.PI * 2); ctx.lineWidth = 1.5 / g.scale; ctx.strokeStyle = color("--fg"); ctx.stroke(); }
     }
@@ -678,13 +778,15 @@ function runGraph(canvas, g, opts = {}) {
     if (g.showLabels || focus) {
       ctx.font = `${(mini ? 11 : 12) / g.scale}px ${color("--font") || "sans-serif"}`; ctx.textAlign = "center"; ctx.textBaseline = "top";
       for (const n of ns) {
-        const show = n.kind === "topic" ? (mini ? neigh.has(n) || n === focus || g.nodes.filter((x) => x.kind === "topic").length <= 12 : g.showLabels || neigh.has(n)) : (focus && (neigh.has(n) || n === focus)) || (!mini && g.showLabels && g.scale > 1.6);
+        const show = n.kind === "project" ? true : n.kind === "topic" ? (mini ? neigh.has(n) || n === focus || g.nodes.filter((x) => x.kind === "topic").length <= 12 : g.showLabels || neigh.has(n)) : (focus && (neigh.has(n) || n === focus)) || (!mini && g.showLabels && g.scale > 1.6);
         if (!show) continue;
         const faded = focus && !neigh.has(n) && n !== focus; if (faded) continue;
         const lbl = n.label.replace(/`/g, ""); const txt = lbl.length > 48 ? lbl.slice(0, 46) + "…" : lbl;
         const tw = ctx.measureText(txt).width; const y = n.y + n.r + 3 / g.scale;
         ctx.fillStyle = color("--bg"); ctx.globalAlpha = 0.75; ctx.fillRect(n.x - tw / 2 - 3 / g.scale, y - 1 / g.scale, tw + 6 / g.scale, 15 / g.scale); ctx.globalAlpha = 1;
-        ctx.fillStyle = n.kind === "topic" ? color("--fg") : color("--fg2"); ctx.fillText(txt, n.x, y);
+        if (n.kind === "project") ctx.font = `600 ${13 / g.scale}px ${color("--font") || "sans-serif"}`;
+        ctx.fillStyle = n.kind === "entry" ? color("--fg2") : color("--fg"); ctx.fillText(txt, n.x, y);
+        if (n.kind === "project") ctx.font = `${(mini ? 11 : 12) / g.scale}px ${color("--font") || "sans-serif"}`;
       }
     }
     ctx.restore();
@@ -798,7 +900,7 @@ async function publicTree() {
 }
 // { groups: [{ member, state, href(e) }], missing: [{ member, reason }] } — this project first
 async function searchPool(scope) {
-  const self = { member: { role: "self", name: S.project.id || S.project.name }, state: S, href: (e) => entryHref(e) };
+  const self = { member: { role: "self", name: S.project.name || S.project.id }, state: S, href: (e) => entryHref(e) };
   if (scope !== "family") return { groups: [self], missing: [] };
   if (MODE === "public") return publicTree();
   if (!LIVE()) return { groups: [self], missing: [] };
@@ -928,7 +1030,7 @@ function render() {
   const route = location.hash.slice(1) || "overview";
   selected = null;
   if (route === "overview") { viewOverview(main); renderDetailsDefault(); }
-  else if (route === "graph") { viewGraph(main); renderDetailsDefault(); }
+  else if (route === "graph" || route === "graph/family") { viewGraph(main, route === "graph/family"); renderDetailsDefault(); }
   else if (route === "timeline") { viewTimeline(main); renderDetailsDefault(); }
   else if (route === "authors") { viewAuthors(main); renderDetailsDefault(); }
   else if (route === "queues") { viewQueues(main); renderDetailsDefault(); }

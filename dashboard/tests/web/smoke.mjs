@@ -49,6 +49,10 @@ report.topicMiniGraph = window.document.querySelectorAll("#details .mini canvas"
 // content, not only "something rendered": the views built for project families
 const withSee = S.entries.find((e) => e.see?.length);
 const main = window.document.getElementById("main");
+// an export has no family to load: the family graph falls back to the project's own
+await go("#graph/family");
+if (!main.querySelector(".graph-wrap canvas")) errors.push("graph/family in an export: no graph rendered");
+if ([...main.querySelectorAll(".graph-ui label")].some((l) => l.textContent === "family")) errors.push("graph in an export: a family switch it cannot use");
 await go("#family");
 const inFamily = !!(S.project.parent || (S.project.children || []).length);
 if (inFamily ? !main.querySelector(".family .member.self") : !/not part of a family/.test(main.textContent)) errors.push("family view: neither a self row (in a family) nor the not-part-of-a-family line");

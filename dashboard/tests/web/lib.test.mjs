@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import {
   esc, plural, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, canonicalOf,
   parseSupersededBy, kindLabel, groupByFamily, searchTerms, searchHit, compareHits, snippetAt, highlight,
-  resolveLocation, bodyProse,
+  resolveLocation, bodyProse, linkFamily,
 } from "../../ktw_dashboard/web/lib.js";
 
 test("esc escapes the five HTML characters and nothing else", () => {
@@ -164,4 +164,20 @@ test("resolveLocation: https is another repository, a path stays in this one", (
   assert.equal(resolveLocation("..", "https://github.com/acme/mono", ""), null); // above the repository
   assert.equal(resolveLocation("web", "", ""), null); // no canonical to resolve against
   assert.equal(resolveLocation("", "https://github.com/acme/mono", ""), null);
+});
+
+test("linkFamily: parent lines by canonical and root, roles as fallback, See and Superseded by by Id", () => {
+  const U = (n) => `${String(n).repeat(8)}-1111-4111-8111-111111111111`;
+  const groups = [
+    { key: "self", role: "self", canonical: "https://github.com/acme/web", root: "", state: { project: { parent: "https://github.com/acme/suite" }, entries: [{ id: "w1", uuid: U(1), see: [{ uuid: U(2) }, { uuid: U(9) }] }] } },
+    { key: "suite", role: "parent", canonical: "https://github.com/acme/suite.git", root: "", state: { project: {}, entries: [{ id: "s1", uuid: U(2) }] } },
+    { key: "docs", role: "sibling", canonical: "https://github.com/acme/suite", root: "docs", state: { project: { parent: ".." }, entries: [{ id: "d1", uuid: U(3), superseded_by: `https://github.com/acme/suite — ${U(2)} — as of 2026-09-28` }] } },
+    { key: "plugin", role: "child", canonical: "", root: "", state: { project: {}, entries: [{ id: "p1", uuid: U(4), see: [{ uuid: U(4) }] }] } },
+  ];
+  const { parentOf, xrefs } = linkFamily(groups);
+  assert.deepEqual(parentOf, { self: "suite", docs: "suite", plugin: "self" });
+  assert.deepEqual(xrefs, [
+    { from: { key: "self", id: "w1" }, to: { key: "suite", id: "s1" }, kind: "see" },
+    { from: { key: "docs", id: "d1" }, to: { key: "suite", id: "s1" }, kind: "superseded" },
+  ]); // an Id outside the graph and a reference to itself are left out
 });

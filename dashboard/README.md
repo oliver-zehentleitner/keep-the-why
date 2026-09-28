@@ -70,7 +70,7 @@ Started inside a project, the dashboard shows that one. The project menu shows f
 |---|---|
 | **Strip** (every view) | entries, topics, authors · what needs a person: open, needs review, pending confirmation, unknown evidence, revisit-when triggers · linter errors and warnings — each a link |
 | **Overview** | Type / Status / Evidence distributions, config, topic cards, recently touched entries |
-| **Graph** | topics as hubs, entries around them colored by Evidence (ring = open / needs-review / pending-confirmation, hollow = superseded), references between topics as edges; drag, zoom, hover to focus, click to open |
+| **Graph** | topics as hubs, entries around them colored by Evidence (ring = open / needs-review / pending-confirmation, hollow = superseded), references between topics as edges; drag, zoom, hover to focus, click to open. The *family* switch (`#graph/family`) draws every project of the tree as a hub in its own colour, parent and child projects joined, and the See and Superseded by lines between entries across projects |
 | **Topics** and the **reader** | one topic file, its entries; an entry rendered with its fields and callouts, references as links, previous / next |
 | **Side pane** | the project graph by default; for a topic or an entry its neighbourhood graph, plus fields, created by / last touched / status history from Git, backlinks, linter findings |
 | **Queues** | `open`, `needs-review`, `pending-confirmation`, `Evidence: unknown` on active entries, and the `Revisit when` triggers on record — the page lists, it does not decide |
