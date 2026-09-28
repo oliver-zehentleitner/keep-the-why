@@ -62,7 +62,7 @@ The agent notices rationale as it surfaces — a decision, an alternative that l
 
 ### Check
 
-`keep-the-why-lint` validates the structure — locally and in CI — required fields, valid values, index consistency, plus security checks such as hidden Unicode and others. It says plainly what it cannot check: whether a recorded reason is true. That part stays with review, in the same pull request as the code.
+`keep-the-why-lint` validates the structure — locally, in CI, or both — required fields, valid values, index consistency, plus security checks such as hidden Unicode and others. It says plainly what it cannot check: whether a recorded reason is true. That part stays with review, in the same pull request as the code. Optional, not required: the skill works without it, and you add the linter where you want the extra check.
 
 [Linting →](linting.md) · [GitHub Marketplace](https://github.com/marketplace/actions/keep-the-why-lint) · [PyPI](https://pypi.org/project/keep-the-why-lint/) · [Security →](security.md)
 
