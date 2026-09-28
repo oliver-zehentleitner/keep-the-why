@@ -6,7 +6,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Changed
 
-- Landing page, live dashboard section: a second example, the UNICORN Binance Suite's dashboard, for a family.
+- Landing page, live dashboard section: two named examples — single / mono repository, Keep the Why's own `context/`, and multi repository, the UNICORN Binance Suite, a family of eight repositories.
 - Landing page, *Check* card: the linter runs "locally, in CI, or both", and the card says it is optional — the skill works without it.
 - Landing page: "How it works" follows the hero, then "What it leaves behind" and the live dashboard, right before "One repository or many"; the *Use* card links "Audit the data" to the dashboard, and the *Multi repository* card links the UNICORN Binance Suite's published dashboard as an example of a family.
 
