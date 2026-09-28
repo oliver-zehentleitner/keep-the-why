@@ -228,6 +228,20 @@ Reading it back has a tool too: [keep-the-why-dashboard](https://pypi.org/projec
 
 <p align="center"><sub>The dashboard on this repository's own <code>context/</code> — <a href="https://keepthewhy.com/dashboard/live/">the live example</a>, a static export rebuilt with every docs deploy. Run locally, it updates as the project changes.</sub></p>
 
+### One repository or many
+
+A `.keep-the-why` file marks a project, and the project is the nearest one above wherever the agent works — the same way Git finds `.git`. That one rule covers every layout:
+
+| Layout | What it looks like | What Keep the Why does |
+|---|---|---|
+| Single repository | one `.keep-the-why` at the root | one `context/`, nothing else to configure |
+| Mono repository, shared | one `.keep-the-why` at the root, sub-projects below it | one `context/` for the whole tree |
+| Mono repository, isolated | a `.keep-the-why` per sub-project | a `context/` per sub-project, each with its own settings and an `id` that carries its path (`root`); the root lists the sub-projects as its children |
+| Multi repository | one repository per module, one of them the umbrella | a family: each module names its `parent`, the parent lists its `children` with one scope line each — the routing that says where an entry belongs |
+| Nested repositories | a submodule or a vendored checkout inside another repository | a project of its own; the nearest `.keep-the-why` wins, nothing leaks across |
+
+Families can nest — a suite, its cluster, the cluster's dashboard — and routing then follows the parent chain: what binds a level's family goes to that level, what is wider goes up, to the root at most. The agent writes into any family member that is checked out on the machine, under that project's own confirmation setting; a member that is not is fetched only after a question, as a full clone or a read-only context cache. Entries carry a UUID, so a `See` or `Superseded by` line in one repository can cite an entry in another and stays valid when a heading changes or a file is split. The dashboard shows the family, and its public mode reads the other members' published exports without a checkout. Layouts: [Repository structure](https://keepthewhy.com/repository-structure/#layouts-one-repository-or-several); the rules: [Setup, "Family"](https://keepthewhy.com/setup/#family-routing-and-writing-across-projects); every field: [Specification](https://keepthewhy.com/specification/).
+
 ## Related work
 
 The idea of capturing AI-agent rationale isn't new, and this project doesn't claim otherwise. Related standards and conventions:
