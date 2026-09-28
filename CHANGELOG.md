@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Fixed
+
+- `keep-the-why-dashboard`: a static export no longer calls itself *local* — its half of the switch reads *export*, with the time it was generated, and the tooltip says it reads no machine; an export of a project without a family shows no switch. The live server keeps *local*: it reads the clones on the machine it runs on, whatever device the browser is on. Found opening the site's live example on a phone. A smoke check for both cases.
+
 ### Added
 
 - README, "The payoff, made concrete": the rejected-change experiment (seven of ten sessions without a recorded reason offered the rejected simplification again, none with one `context/` entry), linked to the article and the transcripts, and what it saves — time, tokens and nerves.

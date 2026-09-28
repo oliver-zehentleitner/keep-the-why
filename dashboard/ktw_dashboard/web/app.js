@@ -1281,21 +1281,30 @@ async function setupProjects() {
 function setupMode() {
   const box = $("#mode"); const p = S.project;
   const canonical = canonicalOf(p);
-  const hasFamily = !!(p.parent || (p.children || []).length || p.dashboard_state);
+  // what the other half of the switch is: a live server reads this machine's
+  // clones and caches; a static export (on a docs site, on a phone) only has
+  // the snapshot embedded in the page when it was built
+  const exported = !!window.__KTW_STATE__;
+  const family = !!(p.parent || (p.children || []).length);
+  const hasFamily = family || (!exported && !!p.dashboard_state); // an export without a family: public would show the same snapshot again
   if (!hasFamily && MODE !== "public") { box.hidden = true; return; }
   box.hidden = false;
+  const home = box.querySelector('[data-mode="local"]');
+  box.title = exported ? "Export is this page's own snapshot; public reads the family's published exports" : "Local reads clones and caches on this machine; public reads the family's published exports";
+  home.textContent = exported ? "export" : "local";
   for (const b of box.querySelectorAll("button")) {
     const on = b.dataset.mode === (MODE === "public" ? "public" : "local");
     b.classList.toggle("on", on);
     b.disabled = b.dataset.mode === "public" && !canonical;
-    b.title = b.dataset.mode === "public" ? (canonical ? "read this project's family from its published exports" : "no canonical — cannot be looked up publicly") : "read clones and caches on this machine";
+    b.title = b.dataset.mode === "public" ? (canonical ? "read this project's family from its published exports" : "no canonical — cannot be looked up publicly")
+      : exported ? `this page's own snapshot, exported ${(window.__KTW_STATE__ && window.__KTW_STATE__.generated) || S.generated || ""} — nothing here reads a clone or a machine` : "read clones and caches on this machine";
     b.onclick = () => {
       if (on) return;
       if (b.dataset.mode === "public") location.href = publicHref(canonical, p.root || "", location.hash || "#overview");
       else location.href = `${location.pathname}${location.hash || "#overview"}`;
     };
   }
-  $("#mode-note").textContent = MODE === "public" ? `export generated ${S.generated}` : "";
+  $("#mode-note").textContent = MODE === "public" || exported ? `generated ${S.generated}` : "";
 }
 async function boot() {
   setupTheme(); setupSearch(); setupScope(); setupSideToggle();

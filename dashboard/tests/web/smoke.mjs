@@ -59,6 +59,15 @@ if (S.project.git?.available && /^github\.com\//.test(S.project.git.remote || ""
   const a = window.document.querySelector("#details a.author");
   if (!a || !/^https:\/\/github\.com\/.+\/commit\/[0-9a-f]+$/.test(a.getAttribute("href") || "")) errors.push("entry details: the author is not linked to the host: " + (a?.getAttribute("href") || "no link"));
 }
+// an export reads no machine: its half of the switch says "export", never "local"; without a family there is no switch
+{
+  const box = window.document.getElementById("mode");
+  const family = !!(S.project.parent || (S.project.children || []).length);
+  report.modeSwitch = box.hidden ? "hidden" : [...box.querySelectorAll("button")].map((b) => b.textContent).join("/");
+  if (!family && !box.hidden) errors.push("export without a family: the local/public switch is shown");
+  if (!box.hidden && /(^|\/)local(\/|$)/.test(report.modeSwitch)) errors.push("export: the switch says local — " + report.modeSwitch);
+  if (family && box.hidden) errors.push("export of a family member: no switch to public");
+}
 // the side-pane graph: near and project in an export (no family), and the switch works
 await go(`#entry/${encodeURIComponent(S.entries[0].id)}`);
 const modes = [...window.document.querySelectorAll("#details .mini-seg button")].map((b) => b.textContent);
