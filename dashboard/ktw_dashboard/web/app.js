@@ -88,10 +88,12 @@ const queues = () => ({
   open: S.entries.filter((e) => e.status === "open"),
   "needs-review": S.entries.filter((e) => e.status === "needs-review"),
   "pending-confirmation": S.entries.filter((e) => e.status === "pending-confirmation"),
-  unknown: S.entries.filter((e) => e.evidence === "unknown" && e.status === "active"),
+  // Evidence is its own axis (Core rule 5): an open question with an untraced origin counts here and under open
+  unknown: S.entries.filter((e) => e.evidence === "unknown" && e.status !== "superseded"),
   revisit: S.entries.filter((e) => e.revisit_when && e.status !== "superseded"),
 });
-const queueTotal = () => { const q = queues(); return q.open.length + q["needs-review"].length + q["pending-confirmation"].length + q.unknown.length; };
+// every entry that needs a person, once — an entry can wait in two queues
+const queueTotal = () => { const q = queues(); return new Set([...q.open, ...q["needs-review"], ...q["pending-confirmation"], ...q.unknown]).size; };
 
 // ---------------------------------------------------------------- markdown (small, safe)
 // a merged member's entry names its own project's topic files: resolve them there
@@ -373,7 +375,7 @@ function viewQueues(main) {
     section("Open questions", "Status: open — the entry's central question has no answer yet.", q.open),
     section("Needs review", "Status: needs-review — a Revisit-when trigger fired and nobody re-checked yet.", q["needs-review"]),
     section("Pending confirmation", "Written in an unattended session where a question would have been asked; never confirmed by anyone.", q["pending-confirmation"]),
-    section("Unknown evidence on active entries", "The claim stands, its origin could not be traced. A maintainer can often settle these in a minute.", q.unknown),
+    section("Unknown evidence", "Where the claim came from could not be traced — on any entry still in force, an open question included: Evidence and Status are separate axes. A maintainer can often settle these in a minute.", q.unknown),
     section("Revisit-when triggers", "The conditions on record. Whether one has fired is a human judgement; the dashboard cannot tell.", q.revisit),
   );
 }

@@ -101,6 +101,13 @@ report.searchPage = { hash: window.location.hash, rows: main.querySelectorAll(".
 if (!/^#search\/(project|family)\//.test(window.location.hash) || !report.searchPage.rows) errors.push("search: Enter did not open a results page with rows: " + JSON.stringify(report.searchPage));
 await go("#overview");
 report.defaultMiniGraph = window.document.querySelectorAll("#details .mini canvas").length;
+// unknown evidence is its own axis: the strip counts every entry in force with Evidence unknown, open questions included
+{
+  const want = S.entries.filter((e) => e.evidence === "unknown" && e.status !== "superseded").length;
+  const stat = [...window.document.querySelectorAll("#strip a.stat")].find((a) => /unknown evidence/.test(a.textContent));
+  report.unknownEvidence = stat?.textContent;
+  if (!stat || parseInt(stat.textContent, 10) !== want) errors.push(`strip: unknown evidence shows ${stat?.textContent}, the state has ${want}`);
+}
 if (report.strip < 10) errors.push("strip: expected at least 10 stats, got " + report.strip);
 if (report.entryMiniGraph !== 1 || report.topicMiniGraph !== 1 || report.defaultMiniGraph !== 1) errors.push(`mini graph missing: entry=${report.entryMiniGraph} topic=${report.topicMiniGraph} default=${report.defaultMiniGraph}`);
 if (window.document.body.textContent.includes("[object ")) errors.push("[object ...] leaked into the page text");
