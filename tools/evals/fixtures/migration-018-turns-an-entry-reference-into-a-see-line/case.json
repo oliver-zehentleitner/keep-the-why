@@ -1,0 +1,3 @@
+{
+ "_notes": "context-schema 0.17.1: the 0.18.0 migration is due once the skill says 0.18.0; the prompt asks for it, so it runs in this session. Before the release the skill still reads 0.17.1 and the agent rightly asks instead of migrating (2 of 3 runs did) \u2014 measure after the release, or with metadata.version set to 0.18.0 in the worktree (3 of 3 on 2026-09-28)."
+}

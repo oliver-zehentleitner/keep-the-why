@@ -168,9 +168,10 @@ finding the agent acts on. The linter never writes a file.
 strangers, and "it reads and reports, it never mutates" is a trust
 statement this project makes on its security page. A write mode, even a
 narrow one behind a flag, would have made that sentence carry a footnote.
-The agent is on every machine the skill runs on, the pass is additive (one
-line per entry, no existing link changes, because links were file-level
-and no `See` lines existed), and the linter finds what the agent missed —
+The agent is on every machine the skill runs on, the pass is additive (it
+adds header lines — an `Id` per entry, a `See` where a body already names
+one entry — and changes no existing text), and the linter finds what the
+agent missed —
 so the agent checks itself against the tool instead of the tool doing the
 work.
 
@@ -560,3 +561,39 @@ reason above — it is right only for the maintainer's own clone.
 **Rejected alternative:** ask every time. Rejected as noise for the common
 case: one remote, or `origin` plus `upstream`, is unambiguous; the question
 is kept for the case that is not.
+
+## The migration pass turns an existing reference to one entry into a `See` line
+
+**Id:** 65d62e60-9b8c-41b1-8439-17bc38886ad2
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer call, 2026-09-28, after browsing the suite's migrated repositories in the dashboard
+**See:** project-families.md#the-linter-reports-stale-locators-and-missing-ids-the-agent-repairs-and-migrates — 4d461bd1-ea3b-40d1-a8c5-cbb72f6ca5d4 — as of 2026-09-28
+**Revisit when:** a project reports `See` lines from the pass that point at the wrong entry, or the pass turns out too large for one session because of them
+
+The 0.18.0 migration adds a `See` line wherever a body already means one
+specific entry — a heading link, a topic file holding only that entry, or
+a file or family member together with what the sentence says about it,
+when exactly one entry there fits; a family member only when it can be
+read here. The prose stays. A reference that leaves a doubt which entry is
+meant stays prose.
+
+**Reason:** the first real migration, eight repositories of one family,
+came out with ten `Superseded by` lines and no `See` line at all, while
+the bodies were full of references — "see `release-workflow.md`", the
+sibling cluster's fail-loud entry, the WebSocket client's Portfolio Margin
+entry. The dashboard draws references by Id, so none of them appeared in
+the graph or as a reverse reference, and nothing would change until each
+entry happened to be touched — for a history entry, never.
+
+**Rejected alternative:** a `See` only when an entry is next touched, as
+first written. Rejected for the reason above: it leaves the references of
+every stable entry invisible indefinitely.
+
+**Rejected alternative:** the dashboard inferring links from the text —
+a topic file name or a project name in a body. Rejected because the names
+are not unique: every repository of the suite has a `history.md`, and a
+match by name linked entries that had nothing to do with each other. A
+`See` is a claim about which entry is meant; the agent makes it, where the
+text says so, and the linter checks the Id resolves.

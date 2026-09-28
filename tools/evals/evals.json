@@ -1215,5 +1215,44 @@
         "path": "context/"
       }
     ]
+  },
+  {
+    "id": "migration-018-turns-an-entry-reference-into-a-see-line",
+    "prompt": "Please migrate this project's context/ to the current Keep the Why version now, I want the new entry ids.",
+    "expected_behavior": "The project is at context-schema 0.17.1 and the person asks for the migration in the request, so the 0.18.0 pass runs in this session (references/migrations.md, '0.18.0'): every entry gets `**Id:**` with a UUID made by an OS command, inserted before `Type`. In the same pass, the one reference in a body that names a specific entry — `incidents.md#duplicate-orders-after-a-gateway-timeout-2025-11` in the retry entry of gateway.md — gets a `**See:** incidents.md#duplicate-orders-after-a-gateway-timeout-2025-11 — <the incident's new Id> — as of <today>` line with the header lines of that entry; the prose stays as it is. The timeout entry's mention of `queue.md` names a file with two entries, both about how the queue is drained, and the sentence does not tell them apart, so it stays prose, with no `See` line. context-schema advances to 0.18.0. What fails: no `See` line for the heading link, a `See` whose Id is not the incident's, a `See` pointing at queue.md, the prose reference removed or rewritten, an entry left without an Id.",
+    "checks": [
+      {
+        "type": "file_changed",
+        "path": ".keep-the-why"
+      },
+      {
+        "type": "text_present",
+        "regex": "(?m)^- context-schema: 0\\.18\\.0$",
+        "path": ".keep-the-why",
+        "guard": false
+      },
+      {
+        "type": "text_present",
+        "regex": "\\*\\*See:\\*\\* incidents\\.md#duplicate-orders-after-a-gateway-timeout-2025-11 — [0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12} — as of \\d{4}-\\d{2}-\\d{2}",
+        "path": "context/gateway.md",
+        "guard": false
+      },
+      {
+        "type": "text_absent",
+        "regex": "\\*\\*See:\\*\\* queue\\.md",
+        "path": "context/gateway.md"
+      },
+      {
+        "type": "text_present",
+        "text": "see `incidents.md#duplicate-orders-after-a-gateway-timeout-2025-11`",
+        "path": "context/gateway.md",
+        "guard": false
+      },
+      {
+        "type": "text_absent",
+        "regex": "\\n## [^\\n]*\\n\\n\\*\\*Type:\\*\\*",
+        "path": "context/"
+      }
+    ]
   }
 ]
