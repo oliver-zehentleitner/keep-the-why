@@ -142,12 +142,9 @@
 /* the experiment line in the trust section: same caption style, set off by a hairline */
 .ktw-experiment { margin-top: 1rem; padding-top: .9rem; border-top: 1px solid var(--ktw-border); }
 
-/* dashboard screenshots: a row of three under the big one, one per idea on the dashboard page */
-.ktw-shots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin: .4rem 0 1.2rem; }
-.md-typeset .ktw-shots figure, .md-typeset .ktw-shot-small { margin: 0; max-width: 100%; }
+/* dashboard screenshots on the Dashboard page: one under each of family, friends, thoughts */
 .md-typeset .ktw-shot-small { margin: .8rem 0 1.4rem; max-width: 40rem; }
-.ktw-shots img, .ktw-shot-small img { display: block; width: 100%; border-radius: .4rem; border: 1px solid var(--md-default-fg-color--lightest); box-shadow: 0 6px 18px rgba(0, 0, 0, .15); }
-.ktw-shots a:hover img, .ktw-shot-small a:hover img { border-color: var(--md-accent-fg-color); }
-.md-typeset .ktw-shots figcaption, .md-typeset .ktw-shot-small figcaption { font-size: .72rem; opacity: .85; margin: .4rem 0 0; text-align: left; max-width: none; }
-@media screen and (max-width: 44.9375em) { .ktw-shots { grid-template-columns: 1fr; } }
-.md-typeset .ktw-shots figure > p, .md-typeset .ktw-shot-small > p { margin: 0; }
+.ktw-shot-small img { display: block; width: 100%; border-radius: .4rem; border: 1px solid var(--md-default-fg-color--lightest); box-shadow: 0 6px 18px rgba(0, 0, 0, .15); }
+.ktw-shot-small a:hover img { border-color: var(--md-accent-fg-color); }
+.md-typeset .ktw-shot-small figcaption { font-size: .72rem; opacity: .85; margin: .4rem 0 0; text-align: left; max-width: none; }
+.md-typeset .ktw-shot-small > p { margin: 0; }

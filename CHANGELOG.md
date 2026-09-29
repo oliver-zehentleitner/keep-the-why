@@ -21,7 +21,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Changed
 
-- Dashboard screenshots on the site: under the big one on the landing page and in the README a row of three — friends in the graph, the UNICORN Binance Suite's family, a thought read whole — each linked to the live view; on the Dashboard page one under each of family, friends and thoughts.
+- Dashboard screenshots on the Dashboard page: one under each of family (the UNICORN Binance Suite's family view), friends (the graph) and thoughts (a thought read whole), each linked to its live view.
 - Landing page, *Capture* card: *Install* and *Autostart* links, as on the *Use* card.
 - `references/continuous-capture.md`: "the skill" in the opening line links to the installation page.
 - `keep-the-why-dashboard` 0.3.8, docs, specification §9.7: the wording follows what a link records. A `See` names a related entry — often one it follows from, not always — so a thought is a *chain of linked entries*, not a line of argument: *first entry* instead of *origin*, *linked after* instead of *rests on*; *Starting from an unconfirmed entry* and *Chains through a step in question* name entries to check, not what depends on them.
