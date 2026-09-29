@@ -281,10 +281,12 @@ the linter, the dashboard and every reader rely on.
 
 **Id:** e4bc46e9-650a-4c87-a09d-e61a10196bbf
 **Type:** decision
-**Status:** needs-review
+**Status:** active
 **Evidence:** confirmed
-**Source:** maintainer design discussion, 2026-09-26/27, with two rounds of external review
-**Revisit when:** the mapping and the read-only cache land (the next step of the series) — then "local" is what the mapping knows, not only the sibling folder; or dogfooding shows a real need to write into a project that is not checked out
+**Source:** maintainer design discussion, 2026-09-26/27, with two rounds of external review; re-checked with the maintainer after the mapping and the cache landed, 2026-09-29
+**Revisit when:** dogfooding shows a real need to write into a project that is not checked out
+**See:** project-families.md#the-mapping-is-one-json-file-in-the-developers-home-kept-by-the-skill-and-the-dashboard-alike — 3c014723-e167-4018-b82a-eaef5425a437 — as of 2026-09-29
+**See:** project-families.md#a-context-cache-is-a-sparse-partial-clone-under-the-home-directory-built-in-two-stages-and-read-only — af010083-0200-4b0a-a220-b94bbb7b566e — as of 2026-09-29
 
 The agent may write into a family member that has a local working tree —
 the same mono repo, or a checkout in a sibling directory of the current
@@ -307,6 +309,17 @@ cache is for, and why it is read-only, is decided there.
 **Rejected alternative:** write the entry into the current project with a
 pointer, for the parent to pull later. Rejected as redundancy through the
 back door.
+
+**Consequence (0.18.0):** the first `Revisit when` fired with the next
+step of the series — "local" is now also what the mapping in
+`~/.keep-the-why/projects.json` knows, not only the same repository and
+the sibling folder; with several working trees of one repository the one
+beside this project's family wins, else the agent asks, and `last_seen`
+never decides a write. A member that is not local is still named and not
+written into the current project instead; fetching it is a question —
+a clone, or a read-only context cache under `~/.keep-the-why/cache/`,
+which is never written into. The decision itself stands: writes go to a
+working tree, and nothing is fetched silently.
 
 **Rejected alternative:** search the whole machine, or every path ever
 seen, for a checkout. Rejected for this step because a search without a

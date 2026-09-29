@@ -203,11 +203,11 @@ New project setting `source-reference` (`always` / `never` / `filtered: <criteri
 
 **Id:** 5af60a72-dce2-4127-a3d4-53a45d635a83
 **Type:** decision
-**Status:** needs-review
+**Status:** active
 **Evidence:** confirmed
-**Source:** maintainer design discussion, 2026-09-08 (two runs with two audiences, the version floor, "lowering the schema is out of the question", "the wizard installs it, with an OK" and "the default should lint" were all maintainer calls; `ask` rather than `auto` as that default was the implementer's proposal, accepted)
-**Verification:** contradicted — the wizard default is `auto` since 0.15.0, `ask` only what an absent line means ("Wizard defaults are the fully integrated values", 426e2723-f526-4415-992f-e11d31e167ce; `references/specification.md`, `references/setup.md`); found in the documentation audit of 2026-09-29
+**Source:** maintainer design discussion, 2026-09-08 (two runs with two audiences, the version floor, "lowering the schema is out of the question", "the wizard installs it, with an OK" and "the default should lint" were all maintainer calls; `ask` rather than `auto` as that default was the implementer's proposal, accepted); the default re-checked with the maintainer, 2026-09-29
 **Revisit when:** the linter is bundled with the skill or runs without an install step, or a project-level "everyone here lints locally" requirement turns out to be wanted
+**See:** config-format.md#wizard-defaults-are-the-fully-integrated-values-a-default-is-what-a-new-setup-gets-not-what-an-absent-field-means — 426e2723-f526-4415-992f-e11d31e167ce — as of 2026-09-29
 
 The setting that makes the skill run `keep-the-why-lint` after its own writes lives in `~/.keep-the-why/<id>.md` (`local-lint: auto | ask | no`), is asked by the personal wizard, defaults to `ask`, and can be suggested by a project through `personal-defaults`. The linter's first three version segments must be at least the skill's `metadata.version`; the skill installs or updates the linter to get there (unasked under `auto`, asked under `ask`), and never edits `context-schema` or its own version to meet an older linter.
 
@@ -220,6 +220,8 @@ The setting that makes the skill run `keep-the-why-lint` after its own writes li
 **Rejected alternative:** a project-level `local-lint` in `.keep-the-why`, so a team can require it. Rejected for now: a committed file cannot install anything on a developer's machine, so the requirement would be a request in disguise; `personal-defaults` carries the suggestion, which is what a committed file can honestly do.
 
 **Rejected alternative:** run the older linter anyway when the required version is not on PyPI, with a note. Rejected because a linter below the skill's version doesn't know the gates the skill just wrote to, so its "clean" would be no information — saying once that the check is unavailable is more honest than a green line that checks less than it looks.
+
+**Consequence (0.15.0, maintainer decision):** the default was turned around the same day — a new setup gets `local-lint: auto`, the wizard's question names the install and "defaults" is the go-ahead; `ask` stays what an absent line means, so no existing machine installs anything because of a skill update ("Wizard defaults are the fully integrated values", this file). The argument above for `ask` as the default was overruled there; the rest of this entry — a personal setting, the floor pointing one direction, never lowering `context-schema` — stands. Surfaced by the documentation audit of 2026-09-29 and re-checked then.
 
 ## Wizard defaults are the fully integrated values; a default is what a new setup gets, not what an absent field means
 
