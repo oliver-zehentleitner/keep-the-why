@@ -158,3 +158,21 @@ When an entry covers parts of different standing — a new value whose reason is
 
 Measured: case `capture-confirmation-automatic-unclear-evidence` 2 of 3 before the wording, 3 of 3 after (sonnet, Claude Code 2.1.267, 2026-09-10).
 
+
+## Topic files get no `Id`; the file name stays their address
+
+**Id:** ea85fe33-0cfa-43a6-aaf5-77de7d82e098
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer design discussion, 2026-09-29, after the dashboard's entry links moved to the Id address
+**Revisit when:** a topic file is renamed and links to it break in practice — shared dashboard URLs, `See` locators, a published export linked from elsewhere
+**See:** project-families.md#the-dashboard-shows-the-family-as-a-view-and-a-grouped-menu-keeps-forget-out-of-the-dropdown-and-makes-the-id-an-address — 55247232-1368-40b4-a955-3c929b7f7b6b — as of 2026-09-29
+
+A topic is addressed by its file name — in `index.md`, in `See` locators and in the dashboard's `#topic/<file>` — and carries no `Id` of its own. Entries do, because their heading is a sentence that gets reworded and an entry moves between files; a topic's name is a short theme name that rarely changes (none of this repository's topic files has been renamed so far).
+
+**Reason:** an `Id` would help with exactly one case, a renamed file. It does not help with a split (which half keeps it?) or a merge (one of two dies anyway), and it would not replace the file name where it is already used: `index.md` and `See` locators would still need updating on a rename. For that one case it would add a new format element to topic files, which carry no header fields today — specification, a linter rule, a schema bump and a migration for every project. Links that people pass on point at entries far more often than at topics, and those carry the Id.
+
+**Rejected alternative:** an `**Id:**` line under the topic file's title, UUID v4, like an entry's. Rejected as above — the cost of a format change for a rare case that it only partly covers.
+
+**Deferred alternative:** if renamed topics do cause broken links, the dashboard resolves the old name instead of the format changing: in live mode it follows the rename in the Git history (`git log --follow` / `--diff-filter=R`) and forwards `#topic/<old>.md` to the new file; without a hit, and in a static export, it says the topic is gone and offers a search for the old name. No format element, and it covers the one case a topic `Id` would. Not built until a real problem shows up.
