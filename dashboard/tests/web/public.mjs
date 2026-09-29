@@ -134,11 +134,11 @@ const report = {};
   report.referencedBy = d.querySelector(".refs-box")?.textContent.replace(/\s+/g, " ").slice(0, 160);
   // with the family merged, the plugin's entry is part of what is shown: a reference like any other, named by its project
   if (!/Referenced by \(See\)\s*Plugins load lazily · plugin · Design/.test(report.referencedBy || "")) errors.push("entry, scope family: the plugin's See is not listed as a reference: " + report.referencedBy);
-  const modes = [...d.querySelectorAll("#details .mini-seg button")].map((b) => b.textContent);
+  const modes = [...d.querySelectorAll("#details .mini-seg:not(.mini-friends) button")].map((b) => b.textContent);
   if (modes.join() !== "near,project,family") errors.push("side-pane graph in public mode: expected near,project,family, got " + modes.join());
   // on a page without an entry the side pane's graph follows the scope: family here
   window.location.hash = "#overview"; window.dispatchEvent(new window.Event("hashchange")); await tick(300);
-  report.miniOnOverview = d.querySelector("#details .mini-seg button.on")?.textContent;
+  report.miniOnOverview = d.querySelector("#details .mini-seg:not(.mini-friends) button.on")?.textContent;
   if (report.miniOnOverview !== "family") errors.push("overview with the family scope: the side-pane graph shows " + report.miniOnOverview + ", not family");
   const fg = window.__fg?.();
   if (fg && fg.showEntries !== true) errors.push("family graph: entries are not shown by default");
@@ -262,6 +262,20 @@ const report = {};
   if (!/^1 entries/.test(d.getElementById("counts")?.textContent || "1 entries")) errors.push("friends: merged into the counts: " + d.getElementById("counts")?.textContent);
   g.nodes.find((n) => n.friend && n.label === "acme/notes").action(); await tick(100);
   if (notesEntries() !== 2) errors.push("friends: an expanded hub should show all of the friend's entries, got " + notesEntries());
+  window.close();
+}
+{
+  // friends from an entry's neighbourhood: the side pane's control switches to the project level and loads them there
+  const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/refs`)}#entry/5a1e5a1e-0000-4000-8000-000000000004`);
+  await tick(200);
+  const d = window.document;
+  const b = d.querySelector("#details .mini-friends button");
+  report.nearFriends = b?.textContent;
+  if (b?.textContent !== "friends (4)") errors.push("friends, near: no 'friends (4)' on the neighbourhood graph: " + b?.textContent);
+  b?.click(); await tick(400);
+  const mode = d.querySelector("#details .mini-seg:not(.mini-friends) button.on")?.textContent;
+  if (mode !== "project") errors.push("friends, near: did not switch to the project level: " + mode);
+  if (!d.querySelector("#details .mini-friends button")?.classList.contains("on")) errors.push("friends, near: the friends were not loaded at the project level");
   window.close();
 }
 console.log(JSON.stringify(report, null, 1));

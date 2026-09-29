@@ -681,7 +681,14 @@ function miniGraph(d, ctx) {
   if (focusId) d.append(el("h3", {}, "Graph"));
   d.append(box);
   const opts = { mini: true, focusId };
-  if (mode === "near") return requestAnimationFrame(() => runGraph(canvas, ctx.entry ? buildSubgraph(ctx.entry) : buildTopicSubgraph(ctx.topic), opts));
+  if (mode === "near") {
+    // friends live at the project level: the control switches there (the family level with the family scope) and loads them
+    const n = friendCandidates(S.entries.filter((e) => (e.project || null) === (ctx.entry?.project || ctx.topic?.project || null))).length;
+    const up = modes.includes("family") && scope() === "family" ? "family" : "project";
+    if (n || hasFamily()) box.append(el("span", { class: "mini-seg mini-friends" }, el("button", { type: "button", title: `show the friends — switches to the ${up} level; nothing is fetched before this click`,
+      onclick: () => { MINI = up; FRIENDS.load = true; render(); } }, n ? `friends (${n})` : "friends")));
+    return requestAnimationFrame(() => runGraph(canvas, ctx.entry ? buildSubgraph(ctx.entry) : buildTopicSubgraph(ctx.topic), opts));
+  }
   if (mode === "project") { const g = buildGraph(ctx.entry?.project || ctx.topic?.project || null); const f = miniFriends(g); if (f) box.append(f); return requestAnimationFrame(() => runGraph(canvas, g, opts)); }
   // family: the family graph's nodes, in a view of its own (its own zoom, entries shown)
   const note = el("span", { class: "mini-hint", style: "top:28px;bottom:auto" }, "loading the family…"); box.append(note);
@@ -828,7 +835,7 @@ const color0 = () => getComputedStyle(document.documentElement).getPropertyValue
 // friends are not followed. A friend is linked into the graph, never merged:
 // search, queues, counts and the other views stay with the project or family.
 // Its hub shows the entries cited there; a click on the hub shows all of it.
-const FRIENDS = { on: false, loaded: {}, pending: {}, expanded: new Set() }; // loaded: key -> {state, name, href(e), topicHref(file), open} | {error}
+const FRIENDS = { on: false, loaded: {}, pending: {}, expanded: new Set(), load: false }; // loaded: key -> {state, name, href(e), topicHref(file), open} | {error}
 const fkey = (c) => String(c || "").replace(/\/+$/, "").toLowerCase();
 const friendColor = (i) => PALETTE[(i + 5) % PALETTE.length];
 function friendCandidates(entries, family = []) {
@@ -943,9 +950,11 @@ function friendsUi(g) {
 }
 // the same control, small, in the corner of the side pane's graph
 function miniFriends(g) {
+  const want = FRIENDS.load; FRIENDS.load = false; // asked for from the neighbourhood view: that click is the request
   const list = g.friends || [];
   if (!list.length) return null;
   const waiting = list.filter((f) => !FRIENDS.loaded[fkey(f.canonical)]);
+  if (want) { if (!FRIENDS.on || waiting.length) { loadFriends(FRIENDS.on ? waiting : list); return el("span", { class: "mini-seg mini-friends" }, el("button", { type: "button", disabled: true }, "loading…")); } }
   const on = FRIENDS.on && !waiting.length;
   const b = el("button", { type: "button", class: on ? "on" : "", title: on ? "hide the friends" : "load the repositories these entries cite outside the family — nothing is fetched before this click",
     onclick: () => { if (on) { FRIENDS.on = false; if (fgraph) fgraph.at = 0; render(); } else { b.disabled = true; b.textContent = "loading…"; loadFriends(FRIENDS.on ? waiting : list); } } },
