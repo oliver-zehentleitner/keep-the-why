@@ -654,7 +654,8 @@ function renderDetailsDefault() {
       el("span", {}, el("i", { class: "dot confirmed" }), "entry, Evidence confirmed"), el("span", {}, el("i", { class: "dot inferred" }), "entry, Evidence inferred"), el("span", {}, el("i", { class: "dot unknown" }), "entry, Evidence unknown"),
       el("span", {}, el("i", { class: "dot", style: "background:transparent;border:1.5px solid var(--fg3)" }), "superseded — hollow"),
       el("span", {}, el("i", { class: "dot", style: "background:var(--bg);border:1.5px solid var(--open)" }), "ring — open, needs review, pending"),
-      el("span", {}, "solid line — a reference between topics; dotted — membership")),
+      el("span", {}, "solid line — a reference between topics; dotted — membership"),
+      el("span", {}, el("i", { class: "dot", style: "background:transparent;border:2px dashed var(--fg3);width:10px;height:10px" }), "friend — a repository cited outside the family, loaded with friends (N) in the graph; a click on its hub shows all of it")),
       el("h3", {}, "Keys"), el("p", { class: "note" }, el("kbd", {}, "/"), " search · ", el("kbd", {}, "g"), " graph · ", el("kbd", {}, "o"), " overview · ", el("kbd", {}, "q"), " queues · ", el("kbd", {}, "t"), " timeline · ", el("kbd", {}, "a"), " authors · ", el("kbd", {}, "l"), " findings"));
     return;
   }
@@ -681,10 +682,10 @@ function miniGraph(d, ctx) {
   d.append(box);
   const opts = { mini: true, focusId };
   if (mode === "near") return requestAnimationFrame(() => runGraph(canvas, ctx.entry ? buildSubgraph(ctx.entry) : buildTopicSubgraph(ctx.topic), opts));
-  if (mode === "project") return requestAnimationFrame(() => runGraph(canvas, buildGraph(ctx.entry?.project || ctx.topic?.project || null), opts));
+  if (mode === "project") { const g = buildGraph(ctx.entry?.project || ctx.topic?.project || null); const f = miniFriends(g); if (f) box.append(f); return requestAnimationFrame(() => runGraph(canvas, g, opts)); }
   // family: the family graph's nodes, in a view of its own (its own zoom, entries shown)
   const note = el("span", { class: "mini-hint", style: "top:28px;bottom:auto" }, "loading the family…"); box.append(note);
-  const show = (fg) => { note.remove(); if (!canvas.isConnected) return; runGraph(canvas, { ...fg, scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true, raf: null, wake: null, alpha: Math.max(fg.alpha, 0.3) }, opts); };
+  const show = (fg) => { note.remove(); if (!canvas.isConnected) return; const f = miniFriends(fg); if (f) box.append(f); runGraph(canvas, { ...fg, scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true, raf: null, wake: null, alpha: Math.max(fg.alpha, 0.3) }, opts); };
   if (fgraph && Date.now() - fgraph.at < 30000) requestAnimationFrame(() => show(fgraph));
   else buildFamilyGraph().then(show);
 }
@@ -846,14 +847,14 @@ function loadFriend(f) {
         if (res.ok) {
           const hit = await res.json(); const m = await memberState(hit.project);
           const at = (hash) => `${location.pathname}?project=${encodeURIComponent(hit.project)}${hash}`;
-          if (m.state) r = { state: m.state, name: m.state.project?.id || repoLabel(f.canonical), href: (e) => at(entryHref(e)), topicHref: (file) => at(`#topic/${file}`), open: at("#overview") };
+          if (m.state) r = { state: m.state, name: m.state.project?.id || repoLabel(f.canonical), href: (e) => at(entryHref(e)), topicHref: (file) => at(`#topic/${file}`), open: at("#graph") };
         }
       } catch { /* not known here: the published export */ }
     }
     if (!r) {
       const p = await fetchPublicState(f.canonical, "");
       r = p.state
-        ? { state: p.state, name: repoLabel(f.canonical), href: (e) => publicHref(f.canonical, "", entryHref(e)), topicHref: (file) => publicHref(f.canonical, "", `#topic/${file}`), open: publicHref(f.canonical, "", "#overview") }
+        ? { state: p.state, name: repoLabel(f.canonical), href: (e) => publicHref(f.canonical, "", entryHref(e)), topicHref: (file) => publicHref(f.canonical, "", `#topic/${file}`), open: publicHref(f.canonical, "", "#graph") }
         : { error: p.error };
     }
     r.canonical = f.canonical;
@@ -939,6 +940,17 @@ function friendsUi(g) {
     return b;
   }
   return el("label", { title: "the repositories these entries cite outside the family" }, el("input", { type: "checkbox", checked: true, onchange: () => { FRIENDS.on = false; if (fgraph) fgraph.at = 0; render(); } }), "friends");
+}
+// the same control, small, in the corner of the side pane's graph
+function miniFriends(g) {
+  const list = g.friends || [];
+  if (!list.length) return null;
+  const waiting = list.filter((f) => !FRIENDS.loaded[fkey(f.canonical)]);
+  const on = FRIENDS.on && !waiting.length;
+  const b = el("button", { type: "button", class: on ? "on" : "", title: on ? "hide the friends" : "load the repositories these entries cite outside the family — nothing is fetched before this click",
+    onclick: () => { if (on) { FRIENDS.on = false; if (fgraph) fgraph.at = 0; render(); } else { b.disabled = true; b.textContent = "loading…"; loadFriends(FRIENDS.on ? waiting : list); } } },
+    on ? "friends" : `friends (${FRIENDS.on ? waiting.length : list.length})`);
+  return el("span", { class: "mini-seg mini-friends" }, b);
 }
 function friendsLegend(g) {
   if (!FRIENDS.on) return [];
