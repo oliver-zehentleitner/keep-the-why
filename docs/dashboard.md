@@ -23,9 +23,24 @@ Three ways projects and entries connect, from close to loose — each one read f
 
 **Family** — projects that belong together. A parent lists its children in its `.keep-the-why`, one scope line each, and each child names its parent; that list is the routing: the agent writes an entry into the member whose scope fits ([Setup, "Family"](setup.md#family-routing-and-writing-across-projects)). The dashboard can show a family as one: with the *family* scope every view — overview, topics, queues, search, the graph — covers the whole tree, and the **Family** view shows its shape.
 
+<figure class="ktw-shot-small" markdown>
+[![The Family view of the UNICORN Binance Suite: eight repositories, each under the one that lists it](assets/dashboard-family-screenschot.png)](https://oliver-zehentleitner.github.io/unicorn-binance-suite/keep-the-why-dashboard/#family){ target=_blank rel=noopener }
+<figcaption>The UNICORN Binance Suite's family — open it live</figcaption>
+</figure>
+
 **Friends** — repositories outside the family that entries here cite, with a `See` or `Superseded by` line naming the other repository's `canonical` and an entry's `Id`. Nothing is routed between friends; they are only linked. The graph draws each friend as a hub with the entries that connect to this project — a friend that is part of a family comes as its whole family, one unit like a repository. One hop: a friend's own friends are not loaded. Click a friend's name to walk there and look one hop from it; the page keeps the *path* you walked, so a web of projects is read from centre to centre. The **Friends** view lists them, with what cites what in both directions.
 
+<figure class="ktw-shot-small" markdown>
+[![The graph: Keep the Why in the centre, repo-native project memory and the UNICORN Binance Suite around it as friends](assets/dashboard-graph-screenschot.png)](https://keepthewhy.com/dashboard/live/#graph){ target=_blank rel=noopener }
+<figcaption>Keep the Why with its friends — open it live</figcaption>
+</figure>
+
 **Thoughts** — chains of linked entries: each one cites the one before (`See`) or replaced it (`Superseded by`), across projects wherever the graph reaches. Nobody writes a thought; the recorded citations are one. Beside the graph they are listed and light up when pointed at, *read ›* shows a whole thought in one view, and an entry shows the thoughts it is a step of. The **Thoughts** view adds what the lines have in common — where many lead, where many start, the entries many pass through — and where they need a second look: a chain that starts from an entry nobody confirmed, or passes a step in question, with the entries linked after it (a link says related — often follows from, not always), when a line grew. A chain that goes on into a repository the page has not loaded is marked, and one click follows it there.
+
+<figure class="ktw-shot-small" markdown>
+[![A thought read whole: a chain of linked entries, first to last, with the graph beside it](assets/dashboard-thoughts-screenschot.png)](https://keepthewhy.com/dashboard/live/#thoughts){ target=_blank rel=noopener }
+<figcaption>A thought, read whole — open the Thoughts view live</figcaption>
+</figure>
 
 ## Run it
 

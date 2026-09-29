@@ -4,10 +4,6 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
-### Changed
-
-- Landing page, *Capture* card: *Install* and *Autostart* links, as on the *Use* card.
-
 ### Added
 
 - `keep-the-why-dashboard` 0.3.9: a project's name under its hub is always drawn in the graph — *labels* on or off, in the full graph and the side pane's — and it is a link: pointed at, it is underlined; clicked, it goes to that project — a friend's graph in place, keeping the path, a step of the path back, a family member's graph. A click on the hub itself still expands a friend.
@@ -25,6 +21,8 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Changed
 
+- Dashboard screenshots on the site: under the big one on the landing page and in the README a row of three — friends in the graph, the UNICORN Binance Suite's family, a thought read whole — each linked to the live view; on the Dashboard page one under each of family, friends and thoughts.
+- Landing page, *Capture* card: *Install* and *Autostart* links, as on the *Use* card.
 - `references/continuous-capture.md`: "the skill" in the opening line links to the installation page.
 - `keep-the-why-dashboard` 0.3.8, docs, specification §9.7: the wording follows what a link records. A `See` names a related entry — often one it follows from, not always — so a thought is a *chain of linked entries*, not a line of argument: *first entry* instead of *origin*, *linked after* instead of *rests on*; *Starting from an unconfirmed entry* and *Chains through a step in question* name entries to check, not what depends on them.
 - Docs: family, friends and thoughts explained where the dashboard is described — a section on the Dashboard page, a short one in the dashboard's README, the README's and `llms.txt`'s dashboard paragraphs, a sentence on the landing page; the Friends and Thoughts views in the dashboard README's table, the details pane's thoughts and width in both tables.

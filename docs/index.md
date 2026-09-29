@@ -129,6 +129,25 @@ Decisions that shipped, alternatives that lost, workarounds, constraints — Kee
 
 </div>
 
+<div class="ktw-shots" markdown>
+
+<figure markdown>
+[![The graph: Keep the Why in the centre, repo-native project memory and the UNICORN Binance Suite around it as friends](assets/dashboard-graph-screenschot.png)](https://keepthewhy.com/dashboard/live/#graph){ target=_blank rel=noopener }
+<figcaption>Friends in the graph — the repositories its entries cite</figcaption>
+</figure>
+
+<figure markdown>
+[![The Family view of the UNICORN Binance Suite: eight repositories, each under the one that lists it](assets/dashboard-family-screenschot.png)](https://oliver-zehentleitner.github.io/unicorn-binance-suite/keep-the-why-dashboard/#family){ target=_blank rel=noopener }
+<figcaption>A family of eight repositories, shown as one</figcaption>
+</figure>
+
+<figure markdown>
+[![A thought read whole: a chain of linked entries, first to last, with the graph beside it](assets/dashboard-thoughts-screenschot.png)](https://keepthewhy.com/dashboard/live/#thoughts){ target=_blank rel=noopener }
+<figcaption>A thought, read whole — entries linked across repositories</figcaption>
+</figure>
+
+</div>
+
 The dashboard — a read-only view over `context/` and its Git history: who recorded what, when a status changed, what still needs a person. It follows the reasoning beyond one repository: the project's [*family*](https://oliver-zehentleitner.github.io/unicorn-binance-suite/keep-the-why-dashboard/#family){ target=_blank rel=noopener }, its [*friends*](https://keepthewhy.com/dashboard/live/#friends){ target=_blank rel=noopener } — the repositories its entries cite — and the [*thoughts*](https://keepthewhy.com/dashboard/live/#thoughts){ target=_blank rel=noopener } running through them, lines of decisions each citing the one before. Run locally, it updates as the project changes. Static exports, each rebuilt with its project's docs deploy: Keep the Why's own `context/` — a mono repository, the export behind the screenshot — repo-native project memory, a single repository, and the UNICORN Binance Suite, a family of eight repositories. [Dashboard →](dashboard.md) · [Mono repository example: Keep the Why →](https://keepthewhy.com/dashboard/live/) · [Single repository example: repo-native project memory →](https://oliver-zehentleitner.github.io/repo-native-project-memory/dashboard/live/){ target=_blank rel=noopener } · [Multi repository example: unicorn-binance-suite →](https://oliver-zehentleitner.github.io/unicorn-binance-suite/keep-the-why-dashboard/){ target=_blank rel=noopener }
 
 </div>
