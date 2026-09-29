@@ -39,7 +39,19 @@ const FILES = {
   "https://raw.githubusercontent.com/acme/cli/HEAD/.keep-the-why": config("acme---cli", []),
   // outside the family: no parent, no children — reached only through a See
   "https://raw.githubusercontent.com/acme/notes/HEAD/.keep-the-why": config("acme---notes", ["- dashboard-state: https://acme.github.io/notes/state.json"]),
-  "https://acme.github.io/notes/state.json": state("acme---notes", { canonical: `${GH}/notes` }, [entry("Notes are plain text", "No needle here either.", { uuid: NOTES_ID })]),
+  "https://acme.github.io/notes/state.json": state("acme---notes", { canonical: `${GH}/notes` }, [entry('Notes are <img src=x onerror="window.__pwned=1"> plain text', "No needle here either.", { uuid: NOTES_ID })]),
+  // an export that claims to be another repository's
+  "https://raw.githubusercontent.com/acme/impostor/HEAD/.keep-the-why": config("acme---impostor", ["- dashboard-state: https://acme.github.io/impostor/state.json"]),
+  "https://acme.github.io/impostor/state.json": state("acme---impostor", { canonical: `${GH}/suite` }, [entry("Release together", "A copy.", { uuid: NOTES_ID })]),
+  // outside the family too: one entry citing entries in five other places
+  "https://raw.githubusercontent.com/acme/refs/HEAD/.keep-the-why": config("acme---refs", ["- dashboard-state: https://acme.github.io/refs/state.json"]),
+  "https://acme.github.io/refs/state.json": state("acme---refs", { canonical: `${GH}/refs` }, [entry("Cites elsewhere", "References only.", { uuid: "5a1e5a1e-0000-4000-8000-000000000004", see: [
+    { remote: `${GH}/suite`, uuid: SUITE_ID, date: "2026-09-29" },
+    { remote: `${GH}/notes`, uuid: NOTES_ID, date: "2026-09-29" },
+    { remote: `${GH}/notes`, uuid: "5a1e5a1e-0000-4000-8000-00000000dead", date: "2026-09-29" },
+    { remote: `${GH}/cli`, uuid: NOTES_ID, date: "2026-09-29" },
+    { remote: `${GH}/impostor`, uuid: NOTES_ID, date: "2026-09-29" },
+  ] })]),
 };
 const fetched = [];
 const stubFetch = async (url) => {
@@ -185,24 +197,29 @@ const report = {};
   window.close();
 }
 {
-  // a See into another repository — family or not — opens the entry itself: the reader offers "open", and the
-  // click fetches the target's raw .keep-the-why and its published export, then goes to the entry there
-  const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/plugin`)}#entry/5a1e5a1e-0000-4000-8000-000000000002`);
+  // references into other repositories — family or not — are resolved when the entry is shown: the row carries the
+  // target's title and links into its export; what cannot be resolved says why, and foreign text stays text
+  const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/refs`)}#entry/5a1e5a1e-0000-4000-8000-000000000004`);
+  await tick(300);
   const d = window.document;
-  const open_ = [...d.querySelectorAll(".refs-box a")].find((a) => a.textContent.includes("open"));
-  report.remoteOpen = open_?.getAttribute("href");
-  if (report.remoteOpen !== `#ref/${encodeURIComponent(`${GH}/suite`)}/${SUITE_ID}`) errors.push("remote See: no open link to the entry in the other repository: " + report.remoteOpen);
+  const rows = [...d.querySelectorAll(".refs-box .ref")];
+  report.remoteRows = rows.map((r) => r.textContent.replace(/\s+/g, " "));
+  const link = (i) => rows[i]?.querySelector("a")?.getAttribute("href") || "";
+  if (!/^Release together · acme\/suite · active · confirmed/.test(report.remoteRows[0] || "")) errors.push("remote See, resolved: no title and state from the target: " + report.remoteRows[0]);
+  if (!link(0).includes(`public=${encodeURIComponent(`${GH}/suite`)}#entry/${SUITE_ID}`)) errors.push("remote See, resolved: the row does not link into the target's export: " + link(0));
+  if (d.querySelector(".refs-box img") || window.__pwned) errors.push("remote See: a foreign title was rendered as HTML");
+  if (!/^Notes are <img/.test(report.remoteRows[1] || "")) errors.push("remote See: the foreign title is not shown as text: " + report.remoteRows[1]);
+  if (!/not resolved: its published export .* has no entry with this Id/.test(report.remoteRows[2] || "")) errors.push("remote See, unknown Id: no reason: " + report.remoteRows[2]);
+  if (!/not resolved: no dashboard-state line/.test(report.remoteRows[3] || "")) errors.push("remote See, target without export: no reason: " + report.remoteRows[3]);
+  if (!/not resolved: the export at .* belongs to https:\/\/github\.com\/acme\/suite/.test(report.remoteRows[4] || "")) errors.push("remote See, export claiming another repository: shown anyway: " + report.remoteRows[4]);
+  // one lookup per target: notes' export fetched once for two references
+  if (fetched.filter((u) => u === "https://acme.github.io/notes/state.json").length !== 1) errors.push("remote See: the same export was fetched more than once");
+  // the #ref route (a shared link) resolves the same way and goes there
   const nav = navigations.length;
   window.location.hash = `#ref/${encodeURIComponent(`${GH}/notes`)}/${NOTES_ID}`; window.dispatchEvent(new window.Event("hashchange")); await tick(300);
-  if (!fetched.includes("https://acme.github.io/notes/state.json")) errors.push("remote See outside the family: the target's published export was not fetched");
-  if (navigations.length <= nav) errors.push("remote See outside the family: the page did not go to the entry in the target's export");
-  // an Id the target's export does not carry: said so, with the repository and the Id left on the page
-  window.location.hash = `#ref/${encodeURIComponent(`${GH}/notes`)}/5a1e5a1e-0000-4000-8000-00000000dead`; window.dispatchEvent(new window.Event("hashchange")); await tick(300);
-  report.remoteMissing = d.getElementById("main").textContent.slice(0, 120);
-  if (!/published export of github\.com\/acme\/notes has no entry with Id/.test(report.remoteMissing)) errors.push("remote See, unknown Id: no message naming the export: " + report.remoteMissing);
-  // a target without a published export: the reason, not a silent nothing
+  if (navigations.length <= nav) errors.push("#ref route: the page did not go to the entry in the target's export");
   window.location.hash = `#ref/${encodeURIComponent(`${GH}/cli`)}/${NOTES_ID}`; window.dispatchEvent(new window.Event("hashchange")); await tick(300);
-  if (!/no dashboard-state line/.test(d.getElementById("main").textContent)) errors.push("remote See, target without export: the reason is not shown");
+  if (!/Cannot open .* no dashboard-state line/.test(d.getElementById("main").textContent)) errors.push("#ref route, target without export: the reason is not shown");
   window.close();
 }
 console.log(JSON.stringify(report, null, 1));

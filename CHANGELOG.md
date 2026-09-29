@@ -13,6 +13,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Changed
 
+- `keep-the-why-dashboard`: a reference into another repository is resolved when the entry is shown, not on a click — the row carries the target entry's title, status and evidence and links into that repository's published export (or a checkout known to the live server); the repository and the Id stay as a fallback with the reason when it cannot be resolved. The fetch of another project's files is hardened for this: no referrer, no credentials, a 10 s timeout, a 20 MB limit, one fetch per project however many rows ask, and an export whose `canonical` names another repository is refused. Foreign titles are shown as text.
 - README: the static Keep the Why badge is replaced by the live one — `badge.svg` from the dashboard export on `/dashboard/live/`, with this repository's own numbers, linked to the live dashboard.
 - The asm install line (README, installation page, `llms.txt`) is a command to paste as it is: `--tool all --scope global` installs one shared copy for every agent asm knows; how to install for one agent or into a project follows below it. Tested with asm 2.14.0, `all` and each named tool.
 - Landing page, live dashboard section: two named examples — single / mono repository, Keep the Why's own `context/`, and multi repository, the UNICORN Binance Suite, a family of eight repositories.

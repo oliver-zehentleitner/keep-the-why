@@ -43,25 +43,43 @@ const LIVE = () => MODE === "live";
 const STATIC = !!window.__KTW_STATE__;
 const PUBLISHED = () => MODE === "public" || MODE === "export";
 const MY_ROOT = () => (MODE === "export" ? SELF?.project?.root || "" : PUBLIC_ROOT);
-const PUBLIC_STATES = {}; // canonical -> {state, url} | {error}
-async function fetchPublicState(canonical, root = "") {
+const PUBLIC_STATES = {}; // `${canonical}|${root}` -> Promise<{state, url} | {error}>, one fetch per project however many ask at once
+// A published file of another project: whoever owns that repository chose the
+// URL, so no referrer and no credentials go with the request, a slow host
+// times out, and an oversized answer is refused before it is parsed.
+const FOREIGN_TIMEOUT_MS = 10000, FOREIGN_MAX_BYTES = 20 * 1024 * 1024;
+async function fetchForeign(url) {
+  const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), FOREIGN_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { cache: "no-store", credentials: "omit", referrerPolicy: "no-referrer", signal: ctl.signal });
+    if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+    if (Number(res.headers?.get?.("content-length") || 0) > FOREIGN_MAX_BYTES) throw new Error(`${url} is larger than ${FOREIGN_MAX_BYTES / 1024 / 1024} MB`);
+    const text = await res.text();
+    if (text.length > FOREIGN_MAX_BYTES) throw new Error(`${url} is larger than ${FOREIGN_MAX_BYTES / 1024 / 1024} MB`);
+    return text;
+  } catch (err) { throw err?.name === "AbortError" ? new Error(`${url} did not answer within ${FOREIGN_TIMEOUT_MS / 1000} s`) : err; }
+  finally { clearTimeout(timer); }
+}
+const sameCanonical = (a, b) => String(a || "").replace(/\/+$/, "").toLowerCase() === String(b || "").replace(/\/+$/, "").toLowerCase();
+function fetchPublicState(canonical, root = "") {
   const key = `${canonical}|${root}`;
-  if (PUBLIC_STATES[key]) return PUBLIC_STATES[key];
+  return (PUBLIC_STATES[key] ||= loadPublicState(canonical, root));
+}
+async function loadPublicState(canonical, root) {
   let result;
   const raw = rawFileUrl(canonical, root, ".keep-the-why");
   try {
-    const res = await fetch(raw, { cache: "no-store" });
-    if (!res.ok) throw new Error(`HTTP ${res.status} for ${raw}`);
-    const url = configLine(await res.text(), "dashboard-state");
+    const url = configLine(await fetchForeign(raw), "dashboard-state");
     if (!url) result = { error: `no dashboard-state line in the published .keep-the-why (${raw}) — this project has no published export yet`, raw, missingLine: true };
     else if (!/^https:\/\//.test(url)) result = { error: `dashboard-state is not an https URL: ${url}`, raw };
     else {
-      const sr = await fetch(url, { cache: "no-store" });
-      if (!sr.ok) throw new Error(`HTTP ${sr.status} for ${url}`);
-      result = { state: normalizeState(await sr.json()), url, canonical, root, raw };
+      const state = normalizeState(JSON.parse(await fetchForeign(url)));
+      // an export names the project it was made from; one that claims another repository is not shown as this one
+      const claimed = state.project?.canonical;
+      if (claimed && !sameCanonical(claimed, canonical)) result = { error: `the export at ${url} belongs to ${claimed}, not to ${canonical}`, raw };
+      else result = { state, url, canonical, root, raw };
     }
   } catch (err) { result = { error: `could not fetch the export (${err?.message || "network or CORS refused"})`, raw }; }
-  PUBLIC_STATES[key] = result;
   return result;
 }
 const publicHref = (canonical, root = "", hash = "#overview") => `${location.pathname}?public=${encodeURIComponent(canonical)}${root ? `&root=${encodeURIComponent(root)}` : ""}${hash}`;
@@ -331,35 +349,66 @@ async function viewEntryElsewhere(main, uuid) {
     location.href = `${location.pathname}?project=${encodeURIComponent(hit.project)}#entry/${uuid}`;
   } catch { setKids(main, el("p", { class: "center" }, `No entry with Id ${uuid} in this project, nor in any other project known here. A family member that is not checked out can be cloned or cached — see Family.`)); }
 }
-// a See or Superseded by pointing into another repository, family or not:
-// the entry itself when it can be found — in the state on the page, in a
-// project known to the live server, or in the target's published export
-// (its raw .keep-the-why names the dashboard-state). Fetched on the click,
-// never before; the canonical and the Id stay on the page when nothing loads.
+// #ref/<canonical>/<uuid>: an entry in another repository, family or not — a
+// reference row's link before it resolved, or a link someone shared. Resolved
+// as the row resolves it (resolveRemoteRef), then the page goes there; the
+// canonical and the Id stay on the page when nothing loads.
 async function viewRemoteEntry(main, canonical, uuid) {
   const here = byUuid()[uuid];
   if (here) { history.replaceState(null, "", entryHref(here)); return render(); }
-  const back = () => el("p", { class: "note" }, el("a", { href: canonical, target: "_blank", rel: "noopener" }, canonical.replace(/^https:\/\//, "")), ` · Id ${uuid}`);
-  main.append(el("p", { class: "center" }, `Looking for ${uuid} in ${canonical.replace(/^https:\/\//, "")}…`));
-  if (LIVE()) {
-    try {
-      const r = await fetch(`/api/entry?uuid=${encodeURIComponent(uuid)}${PROJECT ? `&project=${encodeURIComponent(PROJECT)}` : ""}`, { cache: "no-store" });
-      if (r.ok) { const hit = await r.json(); if (hit.project !== (PROJECT || null)) { location.href = `${location.pathname}?project=${encodeURIComponent(hit.project)}#entry/${uuid}`; return; } }
-    } catch { /* not known here: try the published export */ }
-  }
-  const r = await fetchPublicState(canonical, "");
-  if (r.state?.entries?.some((e) => e.uuid === uuid)) { location.href = publicHref(canonical, "", `#entry/${uuid}`); return; }
-  setKids(main, el("div", { class: "center" },
-    el("p", {}, r.state ? `The published export of ${canonical.replace(/^https:\/\//, "")} has no entry with Id ${uuid} — the reference may be newer than the export, or the entry lives below the repository's top level.` : `Cannot open ${uuid}: ${r.error}.`),
-    back()));
+  main.append(el("p", { class: "center" }, `Looking for ${uuid} in ${repoLabel(canonical)}…`));
+  const r = await resolveRemoteRef(canonical, uuid);
+  if (r.entry) { location.href = r.href; return; }
+  setKids(main, el("div", { class: "center" }, el("p", {}, `Cannot open ${uuid} in ${repoLabel(canonical)}: ${r.error}.`),
+    el("p", { class: "note" }, el("a", { href: canonical, target: "_blank", rel: "noopener" }, canonical.replace(/^https:\/\//, "")))));
+}
+// A reference into another repository, resolved when it is shown: the entry
+// from a project known to the live server, else from the repository's
+// published export (its .keep-the-why at HEAD names the dashboard-state).
+// One lookup per canonical and Id per page; what comes back is shown as text
+// in the reference's row, never merged into this project's counts or queues.
+const REMOTE_REFS = {}; // `${canonical}|${uuid}` -> Promise<{entry, href} | {error}>
+function resolveRemoteRef(canonical, uuid) {
+  const key = `${canonical}|${uuid}`;
+  if (!REMOTE_REFS[key]) REMOTE_REFS[key] = (async () => {
+    if (LIVE()) {
+      try {
+        const r = await fetch(`/api/entry?uuid=${encodeURIComponent(uuid)}${PROJECT ? `&project=${encodeURIComponent(PROJECT)}` : ""}`, { cache: "no-store" });
+        if (r.ok) { const hit = await r.json(); return { entry: hit.entry || {}, href: `${location.pathname}?project=${encodeURIComponent(hit.project)}#entry/${uuid}` }; }
+      } catch { /* not known here: the published export */ }
+    }
+    const r = await fetchPublicState(canonical, "");
+    if (!r.state) return { error: r.error };
+    const entry = r.state.entries?.find((e) => e.uuid === uuid);
+    if (!entry) return { error: `its published export (generated ${r.state.generated || "?"}) has no entry with this Id — the reference may be newer than the export, or the entry lives below the repository's top level` };
+    return { entry, href: publicHref(canonical, "", `#entry/${uuid}`) };
+  })();
+  return REMOTE_REFS[key];
+}
+const repoLabel = (canonical) => canonical.replace(/^https:\/\/(github\.com|gitlab\.com|codeberg\.org|bitbucket\.org)\//, "").replace(/^https:\/\//, "");
+function remoteRefLine(ref, label) {
+  const lead = () => (label ? el("b", {}, label) : null);
+  const date = ref.date ? el("span", { class: "note" }, ` · as of ${ref.date}`) : null;
+  const repo = () => el("a", { class: "note", href: ref.remote, target: "_blank", rel: "noopener", title: "the repository on its host" }, " · repository");
+  const row = el("div", { class: "ref remote" }, lead(), el("a", { href: `#ref/${encodeURIComponent(ref.remote)}/${ref.uuid}` }, repoLabel(ref.remote)),
+    el("span", { class: "note mono" }, ` · ${ref.uuid}`), el("span", { class: "note" }, " · resolving…"), date, repo());
+  resolveRemoteRef(ref.remote, ref.uuid).then((r) => {
+    if (r.entry) {
+      const e = r.entry; const state = [e.status, e.evidence].filter(Boolean).join(" · ");
+      setKids(row, lead(), el("a", { href: r.href }, e.title || ref.uuid), el("span", { class: "note" }, ` · ${repoLabel(ref.remote)}${state ? " · " + state : ""}`), date, repo());
+    } else {
+      setKids(row, lead(), el("a", { href: ref.remote, target: "_blank", rel: "noopener" }, repoLabel(ref.remote)), el("span", { class: "note mono" }, ` · ${ref.uuid}`), el("span", { class: "note warn" }, ` · not resolved: ${r.error}`), date);
+    }
+  });
+  return row;
 }
 function refLine(ref, label) {
   // one See / Superseded by reference as a row: local -> the entry here; remote -> the canonical, and the Id to find it there
   const target = ref.uuid ? byUuid()[ref.uuid] : null;
   const date = ref.date ? el("span", { class: "note" }, ` · as of ${ref.date}`) : null;
   if (target) return el("div", { class: "ref" }, label ? el("b", {}, label) : null, el("a", { href: entryHref(target) }, target.title), el("span", { class: "note" }, ` · ${topicOf(target.file)?.title || target.file}`), date);
-  if (ref.remote) return el("div", { class: "ref" }, label ? el("b", {}, label) : null, el("a", { href: ref.remote, target: "_blank", rel: "noopener" }, ref.remote.replace(/^https:\/\//, "")), el("span", { class: "note mono" }, ` · ${ref.uuid}`), date,
-    ref.uuid ? el("a", { class: "note", href: `#ref/${encodeURIComponent(ref.remote)}/${ref.uuid}`, title: "open the entry itself: from a checkout on this machine, else from that project's published export" }, " · open") : null);
+  if (ref.remote && ref.uuid) return remoteRefLine(ref, label);
+  if (ref.remote) return el("div", { class: "ref" }, label ? el("b", {}, label) : null, el("a", { href: ref.remote, target: "_blank", rel: "noopener" }, ref.remote.replace(/^https:\/\//, "")), date);
   if (ref.file) return el("div", { class: "ref" }, label ? el("b", {}, label) : null, topicOf(ref.file) ? el("a", { href: `#topic/${ref.file}` }, ref.locator) : ref.locator, el("span", { class: "note mono" }, ` · ${ref.uuid || ""}`), el("span", { class: "note warn" }, " · Id not found here — the locator may be stale"), date);
   return el("div", { class: "ref" }, label ? el("b", {}, label) : null, ref.text || "");
 }
