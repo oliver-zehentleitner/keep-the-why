@@ -695,6 +695,11 @@ function renderDetailsEntry(e) {
   }
   const back = S.entries.filter((x) => x.id !== e.id && x.refs.includes(e.file));
   d.append(el("h3", {}, `Backlinks (${back.length})`), ...(back.length ? back.map((x) => el("a", { class: "backlink", href: entryHref(x) }, x.title, el("div", { class: "note" }, topicOf(x.file)?.title || x.file))) : [el("p", { class: "empty" }, `nothing references ${e.file}`)]));
+  // the thoughts this entry is a step of — in the graph of the scope, friends and path included
+  const mine = entryThoughts(e);
+  if (mine.length) d.append(el("h3", {}, `In thoughts (${mine.length})`), ...mine.map(({ t, i }) => el("a", { class: "backlink", href: thoughtHref(t), title: t.steps.map((n) => n.label).join("\n→ ") },
+    `${shortLabel(t.steps[0])} → ${shortLabel(t.steps[t.steps.length - 1])}`,
+    el("div", { class: "note" }, `step ${i + 1} of ${t.steps.length}${t.evolution ? " · evolution" : ""}${t.ends.length ? " · continues ↗" : ""}`))));
   if (e.refs.length) d.append(el("h3", {}, "References"), ...e.refs.map((f) => el("a", { class: "backlink", href: `#topic/${f}` }, topicOf(f)?.title || f)));
   if (e.findings.length) d.append(el("h3", {}, "Linter"), ...e.findings.map((f) => el("div", { class: "finding" }, pill(f.code, `sev-${f.severity}`), ` line ${f.line}: ${f.message}`)));
   renderDetailsNeighbourhood(e);
@@ -867,7 +872,7 @@ async function buildFamilyGraph() {
     const seen = new Set();
     for (const t of G.state.topics || []) for (const f of t.refs_out || []) { if (index[tid(G, f)] == null) continue; const k = [t.file, f].sort().join("|"); if (seen.has(k)) continue; seen.add(k); links.push({ s: index[tid(G, t.file)], t: index[tid(G, f)], kind: "topic", len: 150 }); }
   });
-  for (const [child, parent] of Object.entries(parentOf)) if (index[`p:${child}`] != null && index[`p:${parent}`] != null) links.push({ s: index[`p:${child}`], t: index[`p:${parent}`], kind: "family", len: 320 });
+  for (const [child, parent] of Object.entries(parentOf)) if (index[`p:${child}`] != null && index[`p:${parent}`] != null) links.push({ s: index[`p:${child}`], t: index[`p:${parent}`], kind: "family", len: 260 });
   const byKey = Object.fromEntries(groups.map((G) => [G.key, G]));
   const entryOf = (G, id) => (G.state.entries || []).find((e) => e.id === id);
   const topicPairs = new Set(); let across = 0;
@@ -1035,10 +1040,12 @@ function addFriendLayer(g, prev) {
 }
 function addLinkedLayer(g, prev, items) {
   const { nodes, links, index } = g;
+  let unit = null; // the item being placed: its nodes keep together, and apart from the graph's own and the other items'
   const add = (n, near) => {
     const p = prev[n.id];
     if (p) Object.assign(n, { x: p.x, y: p.y, vx: 0, vy: 0, fixed: p.fixed });
     else { n.x = (near?.x || 0) + (Math.random() - 0.5) * 120; n.y = (near?.y || 0) + (Math.random() - 0.5) * 120; n.vx = n.vy = 0; }
+    n.unit = unit; n.ext = true;
     index[n.id] = nodes.length; nodes.push(n); return n;
   };
   const refsOf = entryRefs;
@@ -1046,7 +1053,7 @@ function addLinkedLayer(g, prev, items) {
   const ourUuids = new Set(ours.map((n) => n.entry.uuid).filter(Boolean));
   const pool = new Set(ours.map((n) => n.entry.uuid).filter(Boolean));
   for (const it of items) for (const m of it.members) for (const e of m.state.entries || []) if (e.uuid) pool.add(e.uuid);
-  const R = 440 + 30 * items.length;
+  const R = 680 + 40 * items.length;
   const placed = [];
   items.forEach((it, i) => {
     const col = it.color;
@@ -1071,11 +1078,12 @@ function addLinkedLayer(g, prev, items) {
     }
     const ang = (2 * Math.PI * i) / items.length + Math.PI / 5;
     const centre = { x: R * Math.cos(ang), y: R * Math.sin(ang) };
+    unit = it.k;
     const idx = {}; // uuid -> node index, across the unit
     const hubs = {};
     const entriesShown = [];
     it.members.forEach((m, j) => {
-      const off = it.members.length > 1 ? { x: centre.x + 130 * Math.cos((2 * Math.PI * j) / it.members.length), y: centre.y + 130 * Math.sin((2 * Math.PI * j) / it.members.length) } : centre;
+      const off = it.members.length > 1 ? { x: centre.x + 110 * Math.cos((2 * Math.PI * j) / it.members.length), y: centre.y + 110 * Math.sin((2 * Math.PI * j) / it.members.length) } : centre;
       const hub = add({ id: `f:${it.k}:${m.key}`, kind: "project", friend: it.kind === "friend", chain: !!it.chain, trail: it.kind === "trail", label: m.name, r: j === 0 ? 13 : 10, color: col, href: m.open || "#graph", action: it.hub }, off);
       hubs[m.key] = index[hub.id];
       const own = (m.state.entries || []).filter((e) => !cited || (e.uuid && cited.has(e.uuid)));
@@ -1099,7 +1107,7 @@ function addLinkedLayer(g, prev, items) {
     // the unit's own shape: each project joined to its parent, as in the family graph
     if (it.members.length > 1) {
       const { parentOf } = linkFamily(it.members.map((m) => ({ key: m.key, role: m.role === "self" ? "self" : m.role || "relative", canonical: m.canonical, root: m.root, state: m.state })));
-      for (const [child, parent] of Object.entries(parentOf)) if (hubs[child] != null && hubs[parent] != null) links.push({ s: hubs[child], t: hubs[parent], kind: "family", len: 200 });
+      for (const [child, parent] of Object.entries(parentOf)) if (hubs[child] != null && hubs[parent] != null) links.push({ s: hubs[child], t: hubs[parent], kind: "family", len: 170 });
     }
     placed.push({ it, canons, idx, col, entries: entriesShown, firstHub: hubs[it.members[0].key] });
   });
@@ -1109,7 +1117,7 @@ function addLinkedLayer(g, prev, items) {
   const join = (s, t, kind, col) => {
     if (s == null || t == null || s === t) return;
     const key = `${s}|${t}|${kind}`; if (joined.has(key)) return; joined.add(key);
-    links.push({ s, t, kind, len: 190, color: col });
+    links.push({ s, t, kind, len: 240, color: col });
     const ts = topicOfNode[s], tt = topicOfNode[t];
     if (ts != null && tt != null && ts !== tt && !pairs.has(`${ts}|${tt}`)) { pairs.add(`${ts}|${tt}`); links.push({ s: ts, t: tt, kind: "xtopic", len: 240, color: col }); }
   };
@@ -1302,6 +1310,13 @@ function graphChains(g) {
     for (const e of ends) if (!t.ends.some((x) => x.uuid === e.uuid && x.canonical === e.canonical)) t.ends.push(e);
   }
   return [...merged.values()].sort((a, b) => b.steps.length - a.steps.length || a.ids.join().localeCompare(b.ids.join()));
+}
+const shortLabel = (n) => { const t = (n?.label || "").replace(/`/g, ""); return t.length > 34 ? t.slice(0, 32) + "…" : t; };
+// the thoughts an entry is a step of, with its place in each
+function entryThoughts(e) {
+  const g = scope() === "family" && fgraph && Date.now() - fgraph.at < 30000 ? fgraph : graph && !e.project ? graph : buildGraph(e.project || null);
+  const same = (n) => n.entry === e || (e.uuid && n.entry?.uuid === e.uuid);
+  return graphChains(g).filter((t) => t.steps.length >= THOUGHT_MIN || t.ends.length).map((t) => ({ t, i: t.steps.findIndex(same) })).filter((x) => x.i >= 0);
 }
 // the thoughts (at least THOUGHT_MIN entries), and the shorter chains that go on beyond this page
 function graphThoughts(g) {
@@ -1504,15 +1519,17 @@ function runGraph(canvas, g, opts = {}) {
       for (let i = 0; i < ns.length; i++) for (let j = i + 1; j < ns.length; j++) {
         const a = ns[i], b = ns[j]; let dx = b.x - a.x, dy = b.y - a.y; let d2 = dx * dx + dy * dy + 0.01;
         const hubs = a.kind === "project" && b.kind === "project";
-        if (d2 > (hubs ? 4000000 : 250000)) continue;
-        const rep = (hubs ? 30000 : a.kind === "entry" && b.kind === "entry" ? 260 : a.kind === "entry" || b.kind === "entry" ? 900 : 2600) / d2; const d = Math.sqrt(d2);
+        const apart = (a.unit || "") !== (b.unit || ""); // this graph and a friend, or two friends: a family keeps together, strangers keep their distance
+        if (d2 > (hubs ? (apart ? 9000000 : 4000000) : apart ? 640000 : 250000)) continue;
+        const base = hubs ? (apart ? 70000 : 22000) : a.kind === "entry" && b.kind === "entry" ? 260 : a.kind === "entry" || b.kind === "entry" ? 900 : 2600;
+        const rep = (apart && !hubs ? base * 2.5 : base) / d2; const d = Math.sqrt(d2);
         const fx = (dx / d) * rep * k, fy = (dy / d) * rep * k;
         if (!a.fixed) { a.vx -= fx; a.vy -= fy; } if (!b.fixed) { b.vx += fx; b.vy += fy; }
       }
       // springs
       for (const l of g.links) { if (!linkOn(l)) continue; const a = g.nodes[l.s], b = g.nodes[l.t]; const dx = b.x - a.x, dy = b.y - a.y; const d = Math.hypot(dx, dy) || 0.01; const f = (d - l.len) * (l.kind === "member" || l.kind === "hub" ? 0.05 : l.kind === "family" ? 0.03 : 0.02) * k; const fx = (dx / d) * f, fy = (dy / d) * f; if (!a.fixed) { a.vx += fx; a.vy += fy; } if (!b.fixed) { b.vx -= fx; b.vy -= fy; } }
       // gravity + integrate
-      for (const n of ns) { if (n.fixed) continue; n.vx -= n.x * 0.004 * k; n.vy -= n.y * 0.004 * k; n.vx *= 0.82; n.vy *= 0.82; n.x += n.vx; n.y += n.vy; }
+      for (const n of ns) { if (n.fixed) continue; const gr = n.ext ? 0.0015 : 0.004; n.vx -= n.x * gr * k; n.vy -= n.y * gr * k; n.vx *= 0.82; n.vy *= 0.82; n.x += n.vx; n.y += n.vy; }
       g.alpha *= 0.985;
     }
     // keep the canvas framed on the nodes while they settle: the small one always, the family graph until the person moves it

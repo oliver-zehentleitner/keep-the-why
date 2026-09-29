@@ -134,6 +134,10 @@ if (withSee) {
     if (report.thoughtView.steps < 4) errors.push("thought view: fewer than four entries shown: " + report.thoughtView.steps);
     if (report.thoughtView.links.length !== report.thoughtView.steps - 1) errors.push("thought view: the joins between the entries are missing");
     if (!main.querySelector(".thought-step .body")?.textContent.trim()) errors.push("thought view: an entry's body is not shown");
+    // an entry that is a step of a thought says so beside it, with its place
+    await go(main.querySelector(".thought-step h2 a").getAttribute("href"));
+    const side = window.document.getElementById("details").textContent;
+    if (!/In thoughts \(\d+\)/.test(side) || !/step 1 of \d+/.test(side)) errors.push("entry details: the thoughts it is a step of are not listed");
   }
 }
 const search = window.document.getElementById("search");
