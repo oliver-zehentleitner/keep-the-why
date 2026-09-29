@@ -54,7 +54,7 @@ That line covers any of 70+ agents (Claude Code, Codex, OpenCode, Cursor, …); 
 
 The agent notices rationale as it surfaces — a decision, an alternative that lost, a workaround, a change that was started and abandoned — and writes it down, without being asked. No separate documentation step. An existing repository can start late too. History, issues and code give back only part of the past why — but from that point on the reasons that matter are written down once, never again, and the gaps close over time.
 
-[Continuous capture →](continuous-capture.md) · [Retrospective →](retrospective-analysis.md)
+[Install →](installation.md) · [Autostart →](autostart.md) · [Continuous capture →](continuous-capture.md) · [Retrospective →](retrospective-analysis.md)
 
 </div>
 

@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Changed
+
+- Landing page, *Capture* card: *Install* and *Autostart* links, as on the *Use* card.
+
 ### Added
 
 - `keep-the-why-dashboard` 0.3.9: a project's name under its hub is always drawn in the graph — *labels* on or off, in the full graph and the side pane's — and it is a link: pointed at, it is underlined; clicked, it goes to that project — a friend's graph in place, keeping the path, a step of the path back, a family member's graph. A click on the hub itself still expands a friend.
