@@ -21,7 +21,13 @@ exclude_path = ["tools/evals/fixtures", "experiments/rejected-change/results", "
 # site/ at deploy time by ktw-dashboard --export) exist on the live site only
 # after the deploy that carries them; the tree/main/dashboard link on GitHub
 # only after the merge. Same shape as the CHANGELOG compare-link case.
+# deepwiki.com answers the runners with 429 Too Many Requests and
+# hol.org/registry times out on them (both since 2026-09-29, red on every push
+# and PR); both open fine in a browser and hol.org is known to be flaky —
+# rate limiting and slow hosts on their side, not dead links.
 exclude = [
+  "^https://deepwiki\\.com/",
+  "^https://hol\\.org/",
   "^https://mcpmarket\\.com/",
   "^https://x\\.com/",
   "^https://keepthewhy\\.com/dashboard/",
