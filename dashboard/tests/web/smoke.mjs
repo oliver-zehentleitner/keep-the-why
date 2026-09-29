@@ -125,6 +125,15 @@ if (withSee) {
     if (steps < 4) errors.push("thoughts: a held thought lists fewer than four steps: " + steps);
     window.document.querySelector("#thoughts .thought.on .thought-head")?.click(); await tick(50);
     if (window.document.querySelector("#thoughts .thought.on")) errors.push("thoughts: a second click does not let go");
+    // the whole thought in one view: every entry in order, in full, joined by how each follows
+    const read = window.document.querySelector("#thoughts .thought-read");
+    await go(read.getAttribute("href"));
+    const main = window.document.getElementById("main");
+    report.thoughtView = { h1: main.querySelector("h1")?.textContent, steps: main.querySelectorAll(".thought-step:not(.missing)").length, links: [...main.querySelectorAll(".thought-link")].map((x) => x.textContent) };
+    if (!/^An? (thought|evolution) in \d+ entries$/.test(report.thoughtView.h1 || "")) errors.push("thought view: no heading: " + report.thoughtView.h1);
+    if (report.thoughtView.steps < 4) errors.push("thought view: fewer than four entries shown: " + report.thoughtView.steps);
+    if (report.thoughtView.links.length !== report.thoughtView.steps - 1) errors.push("thought view: the joins between the entries are missing");
+    if (!main.querySelector(".thought-step .body")?.textContent.trim()) errors.push("thought view: an entry's body is not shown");
   }
 }
 const search = window.document.getElementById("search");

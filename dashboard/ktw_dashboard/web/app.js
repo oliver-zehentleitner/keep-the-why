@@ -442,6 +442,55 @@ function viewEntry(main, id) {
   selected = e.id;
   renderDetailsEntry(e);
 }
+// #thought/<id>,<id>,…: a whole thought in one view — every entry of the chain
+// in reading order, origin first, each in full, joined by how the next one
+// follows from it. The Ids are the entries' own, so the address names the
+// thought; entries of friends or of the path's projects are found in what the
+// page has loaded, and a missing one says so.
+const thoughtHref = (t) => `#thought/${t.steps.map((n) => encodeURIComponent(n.entry.uuid || n.entry.id)).join(",")}`;
+function findEntry(ref) {
+  const here = entryOf(ref);
+  if (here) return { e: here, href: entryHref(here), where: here.project || null, own: true };
+  const pools = [
+    ...Object.values(FRIENDS.loaded).filter((r) => r?.state).map((r) => ({ state: r.state, name: r.name, href: r.href })),
+    ...TRAIL.map((t) => ({ state: t.state, name: t.name, href: (e) => t.url + entryHref(e) })),
+  ];
+  for (const p of pools) { const e = (p.state.entries || []).find((x) => x.uuid === ref || x.id === ref); if (e) return { e, href: p.href ? p.href(e) : "#graph", where: p.name, own: false }; }
+  return null;
+}
+function thoughtLink(a, b) {
+  if (!a || !b) return "then";
+  if (a.e.uuid && (b.e.see || []).some((x) => x?.uuid === a.e.uuid)) return "cited by";
+  const sb = a.e.superseded_by ? parseSupersededBy(a.e.superseded_by) : null;
+  if (sb?.uuid && sb.uuid === b.e.uuid) return "superseded by";
+  return "then";
+}
+function viewThought(main, refs) {
+  const steps = refs.map(findEntry);
+  // an entry of a friend is found once the friends are in: they load with a graph, and the view renders again
+  if (steps.some((f) => !f) && FRIENDS_AUTO && !FRIENDS.on && !FRIENDS.loading) buildGraph();
+  const links = steps.map((f, i) => (i ? thoughtLink(steps[i - 1], f) : null));
+  const evolution = steps.length > 1 && links.slice(1).every((l) => l === "superseded by");
+  const r = el("div", { class: "reader thought-reader" },
+    el("div", { class: "crumbs" }, el("a", { href: "#graph" }, "Graph"), " / thought"),
+    el("h1", {}, evolution ? `An evolution in ${refs.length} entries` : `A thought in ${refs.length} entries`),
+    el("p", { class: "sub" }, evolution ? "One decision, replaced step by step — from the first version to the one in force." : "A chain of entries, each citing the one before — read from the origin to where it led."));
+  steps.forEach((f, i) => {
+    if (i) r.append(el("div", { class: "thought-link" }, `↓ ${links[i]}`));
+    if (!f) { r.append(el("section", { class: "thought-step missing" }, el("div", { class: "crumbs" }, `${i + 1} / ${refs.length}`), el("p", { class: "note" }, `Entry ${refs[i]} is not loaded on this page — it lives in a project outside it (a friend, or a step of a path); load the friends in the graph, or walk there.`))); return; }
+    const e = f.e;
+    INLINE_PROJECT = f.own ? e.project || null : "\u0000"; // a foreign entry's file names are not this page's topics
+    r.append(el("section", { class: `thought-step ${e.status}` },
+      el("div", { class: "crumbs" }, `${i + 1} / ${refs.length}`, f.where ? ` · ${f.where}` : "", f.own && topicOf(e.file) ? [" · ", el("a", { href: `#topic/${e.file}` }, topicOf(e.file).title)] : null),
+      el("h2", {}, el("a", { href: f.href, html: inline(e.title) })),
+      el("div", { class: "fields" }, ...entryPills(e)),
+      el("div", { class: "body", html: renderMarkdown(e.body?.text || "_(no body)_") }),
+      e.revisit_when ? el("div", { class: "body" }, el("div", { class: "label", html: `<b>Revisit when</b><p>${inline(e.revisit_when)}</p>` })) : null));
+    INLINE_PROJECT = null;
+  });
+  main.append(r);
+  renderDetailsDefault();
+}
 function viewQueues(main) {
   const q = queues();
   const section = (title, why, list) => el("section", { class: "queue" },
@@ -1168,6 +1217,7 @@ function renderThoughts(g) {
           onmouseenter: () => { if (!THOUGHT_PIN) lightThought(g, t); }, onmouseleave: () => { if (!THOUGHT_PIN) lightThought(g, null); },
           onclick: () => { THOUGHT_PIN = on ? null : key; renderThoughts(g); } },
           el("span", { class: "count" }, String(t.steps.length)), `${short(t.steps[0])} → ${short(t.steps[t.steps.length - 1])}`, t.evolution ? el("span", { class: "pill" }, "evolution") : null),
+        el("a", { class: "thought-read", href: thoughtHref(t), title: "read the whole thought — every entry in order, in full" }, "read ›"),
         on ? el("ol", { class: "thought-steps" }, t.steps.map((n) => el("li", {}, el("a", { href: n.href }, n.label.replace(/`/g, ""))))) : null);
       return row;
     }));
@@ -1622,6 +1672,7 @@ function render() {
   else if (route === "projects") { viewProjects(main); renderDetailsDefault(); }
   else if (route.startsWith("topic/")) viewTopic(main, route.slice(6));
   else if (route.startsWith("entry/")) viewEntry(main, decodeURIComponent(route.slice(6)));
+  else if (route.startsWith("thought/")) viewThought(main, route.slice(8).split(",").filter(Boolean).map(decodeURIComponent));
   else if (route.startsWith("ref/")) { const cut = route.lastIndexOf("/"); viewRemoteEntry(main, decodeURIComponent(route.slice(4, cut)), route.slice(cut + 1)); renderDetailsDefault(); }
   else if (route.startsWith("search/")) { const [, scope, ...q] = route.split("/"); viewSearch(main, scope, decodeURIComponent(q.join("/"))); renderDetailsDefault(); }
   else { viewOverview(main); renderDetailsDefault(); }

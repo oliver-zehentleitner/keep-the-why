@@ -256,6 +256,8 @@ Beside the graph, *Thoughts* lists its lines of reasoning: the longest chains of
 
 **Rejected alternative:** thoughts named and kept by a person (a field or a file listing the entries). Rejected for now — a format change for something the recorded citations already express; revisit when derived chains turn out not to be the thoughts people mean.
 
+**Consequence (2026-09-29, maintainer request, dashboard 0.3.1):** a thought can be read whole — *read ›* opens every entry of the chain in one view, in order and in full, joined by *cited by* or *superseded by*. Its address lists the entries' Ids, so a thought is named by what it consists of, not by a name someone gave it; that keeps the rejected alternative above rejected.
+
 ## The graph turns very slowly in its plane
 
 **Id:** 5f097cf0-af55-47cf-8b23-4125855a8b1a
