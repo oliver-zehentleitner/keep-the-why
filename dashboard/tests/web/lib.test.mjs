@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import {
   esc, plural, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, canonicalOf,
   parseSupersededBy, kindLabel, typeName, groupByFamily, searchTerms, searchHit, compareHits, snippetAt, highlight,
-  resolveLocation, bodyProse, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf,
+  resolveLocation, bodyProse, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights,
 } from "../../ktw_dashboard/web/lib.js";
 
 test("esc escapes the five HTML characters and nothing else", () => {
@@ -254,4 +254,20 @@ test("thoughtsOf: longest citation chains of at least four entries, origin first
   // a fan of many long chains stops at the cap instead of enumerating them all
   const fan = []; for (let i = 0; i < 50; i++) fan.push([`s${i}`, "m"]); fan.push(["m", "n"], ["n", "o"], ["o", "p"]);
   assert.equal(thoughtsOf(fan, 4, 10).length, 10);
+});
+
+test("thoughtInsights: an unconfirmed origin, steps in question and what rests on them, the days it grew", () => {
+  const e = (evidence, status, date) => ({ evidence, status, git: date ? { created: { date } } : undefined });
+  const a = thoughtInsights([e("inferred", "active", "2026-08-01"), e("confirmed", "needs-review", "2026-08-10"), e("confirmed", "active"), e("confirmed", "active", "2026-09-02")], ["see", "see", "see"]);
+  assert.equal(a.weakOrigin, "inferred");
+  assert.deepEqual(a.shaky, [{ i: 1, why: "needs-review" }]);
+  assert.deepEqual(a.affected, [2, 3]);
+  assert.equal(a.from, "2026-08-01"); assert.equal(a.to, "2026-09-02");
+  // an evolution: superseded steps followed by their successors are not in question; a See to a replaced one is
+  const evo = thoughtInsights([e("confirmed", "superseded"), e("confirmed", "superseded"), e("confirmed", "active")], ["superseded", "superseded"]);
+  assert.deepEqual([evo.weakOrigin, evo.shaky, evo.affected], [null, [], []]);
+  const stale = thoughtInsights([e("confirmed", "superseded"), e("confirmed", "active"), e("unknown", "active")], ["see", "see"]);
+  assert.deepEqual(stale.shaky, [{ i: 0, why: "superseded, still cited" }]);
+  assert.deepEqual(stale.affected, [1, 2]);
+  assert.equal(stale.from, "");
 });

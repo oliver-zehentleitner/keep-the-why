@@ -43,15 +43,15 @@ const FILES = {
   "https://acme.github.io/notes/state.json": state("acme---notes", { canonical: `${GH}/notes` }, [entry('Notes are <img src=x onerror="window.__pwned=1"> plain text', "No needle here either.", { uuid: NOTES_ID, see: [{ remote: `${GH}/far`, uuid: FAR_ID, date: "2026-09-29" }] }), entry("Notes are kept short", "Short.", { uuid: "5a1e5a1e-0000-4000-8000-000000000005" })]),
   // a chain beyond the friends: notes cites far, far cites farther — reached only by following a thought
   "https://raw.githubusercontent.com/acme/far/HEAD/.keep-the-why": config("acme---far", ["- dashboard-state: https://acme.github.io/far/state.json"]),
-  "https://acme.github.io/far/state.json": state("acme---far", { canonical: `${GH}/far` }, [entry("Far away", "Cited from notes.", { uuid: FAR_ID, see: [{ remote: `${GH}/farther`, uuid: FARTHER_ID, date: "2026-09-29" }] })]),
+  "https://acme.github.io/far/state.json": state("acme---far", { canonical: `${GH}/far` }, [entry("Far away", "Cited from notes.", { uuid: FAR_ID, status: "needs-review", git: { created: { date: "2026-08-10" } }, see: [{ remote: `${GH}/farther`, uuid: FARTHER_ID, date: "2026-09-29" }] })]),
   "https://raw.githubusercontent.com/acme/farther/HEAD/.keep-the-why": config("acme---farther", ["- dashboard-state: https://acme.github.io/farther/state.json"]),
-  "https://acme.github.io/farther/state.json": state("acme---farther", { canonical: `${GH}/farther` }, [entry("The origin", "Where it started.", { uuid: FARTHER_ID })]),
+  "https://acme.github.io/farther/state.json": state("acme---farther", { canonical: `${GH}/farther` }, [entry("The origin", "Where it started.", { uuid: FARTHER_ID, evidence: "inferred", git: { created: { date: "2026-08-01" } } })]),
   // an export that claims to be another repository's
   "https://raw.githubusercontent.com/acme/impostor/HEAD/.keep-the-why": config("acme---impostor", ["- dashboard-state: https://acme.github.io/impostor/state.json"]),
   "https://acme.github.io/impostor/state.json": state("acme---impostor", { canonical: `${GH}/suite` }, [entry("Release together", "A copy.", { uuid: NOTES_ID })]),
   // outside the family too: one entry citing entries in five other places
   "https://raw.githubusercontent.com/acme/refs/HEAD/.keep-the-why": config("acme---refs", ["- dashboard-state: https://acme.github.io/refs/state.json"]),
-  "https://acme.github.io/refs/state.json": state("acme---refs", { canonical: `${GH}/refs` }, [entry("Cites elsewhere", "References only.", { uuid: "5a1e5a1e-0000-4000-8000-000000000004", see: [
+  "https://acme.github.io/refs/state.json": state("acme---refs", { canonical: `${GH}/refs` }, [entry("Cites elsewhere", "References only.", { uuid: "5a1e5a1e-0000-4000-8000-000000000004", git: { created: { date: "2026-09-20" } }, see: [
     { remote: `${GH}/suite`, uuid: SUITE_ID, date: "2026-09-29" },
     { remote: `${GH}/notes`, uuid: NOTES_ID, date: "2026-09-29" },
     { remote: `${GH}/notes`, uuid: "5a1e5a1e-0000-4000-8000-00000000dead", date: "2026-09-29" },
@@ -361,6 +361,20 @@ const report = {};
   if (!heads.some((h) => /^4The origin/.test(h))) errors.push("chains: after following, no thought of four from the origin: " + heads.join(" | "));
   if (report.chainFollowed.open) errors.push("chains: still going on after following it to its end");
   if (!/via a thought/.test(d.querySelector(".graph-legend")?.textContent || "")) errors.push("chains: the legend does not say the repositories came via a thought");
+  // what it rests on: an origin nobody confirmed, a step in question and what builds on it
+  const pills = [...d.querySelectorAll("#thoughts .thought:not(.open) .warn-pill")].map((p) => p.textContent);
+  if (!pills.includes("origin inferred") || !pills.includes("on shaky ground")) errors.push("insights: the thought is not marked (origin inferred, on shaky ground): " + pills.join());
+  window.location.hash = "#thoughts"; window.dispatchEvent(new window.Event("hashchange")); await tick(500);
+  const page = d.getElementById("main").textContent;
+  report.insightsPage = [...d.querySelectorAll("#main .stat")].map((x) => x.textContent);
+  if (!/Resting on unconfirmed origins/.test(page) || !/Evidence inferred · 1 thought build on it/.test(page)) errors.push("insights page: the unconfirmed origin is not listed");
+  if (!/Standing on shaky ground/.test(page) || !/needs-review · 2 later entries rest on it, in 2 projects/.test(page)) errors.push("insights page: the step in question and what rests on it are not listed: " + (page.match(/Standing on shaky ground.{0,300}/) || [""])[0]);
+  const read = d.querySelector("#main .thought-row a")?.getAttribute("href");
+  window.location.hash = read; window.dispatchEvent(new window.Event("hashchange")); await tick(300);
+  const view = d.getElementById("main").textContent;
+  if (!/starts from an origin whose Evidence is inferred/.test(view)) errors.push("reader: no note on the unconfirmed origin");
+  if (!/In question — needs-review\. 2 later steps below rest on it/.test(view)) errors.push("reader: no note on the step in question");
+  if (!/2026-08-01 → 2026-09-20 · grew over 50 days/.test(view)) errors.push("reader: no timeline of the steps' days: " + (d.querySelector(".thought-timeline")?.textContent || "none"));
   window.close();
 }
 {

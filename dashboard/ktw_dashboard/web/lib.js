@@ -205,6 +205,29 @@ export function thoughtsOf(edges, min = 4, cap = 2000) {
   return uniq.sort((a, b) => b.length - a.length || a.join().localeCompare(b.join()));
 }
 
+// What a thought rests on and how it grew. `steps` are its entries in reading
+// order (origin first), `kinds[i]` the link from step i to step i + 1 ("see":
+// the later cites the earlier; "superseded": the later replaced it).
+// - weakOrigin: the origin's Evidence when it is `inferred` or `unknown` — the
+//   whole line rests on a reason nobody confirmed;
+// - shaky: steps a later one builds on although they are in question — open,
+//   needs-review, pending-confirmation — or superseded yet still cited (a See
+//   to a replaced decision; a Superseded by is how an evolution goes on);
+// - affected: every step after the first shaky one, which rests on it;
+// - from, to: the first and last day a step was created (Git), when known.
+export const SHAKY = ["open", "needs-review", "pending-confirmation"];
+export function thoughtInsights(steps, kinds = []) {
+  const weakOrigin = ["inferred", "unknown"].includes(steps[0]?.evidence) ? steps[0].evidence : null;
+  const shaky = [];
+  steps.forEach((e, i) => {
+    if (SHAKY.includes(e?.status)) shaky.push({ i, why: e.status });
+    else if (e?.status === "superseded" && i < steps.length - 1 && kinds[i] === "see") shaky.push({ i, why: "superseded, still cited" });
+  });
+  const affected = shaky.length ? steps.map((_, i) => i).filter((i) => i > shaky[0].i) : [];
+  const days = steps.map((e) => e?.git?.created?.date || "").filter(Boolean).sort();
+  return { weakOrigin, shaky, affected, from: days[0] || "", to: days[days.length - 1] || "" };
+}
+
 // The family graph's structure. `groups` are the projects in it, each
 // { key, canonical, root, role, state }. Returns
 //   parentOf: key -> the key of the project its parent line names (when that
