@@ -8,9 +8,11 @@ Last reviewed: 2026-09-29.
 
 ### Active
 
-0.18.0 (skill + linter 0.18.0.0) is released: project families and entry
-Ids. `keep-the-why-dashboard` is at 0.2.7. The 0.18.0 eval series is not yet
-recorded in `docs/evals.md`; the latest published series is 0.17.1.
+0.18.1 (skill + linter 0.18.1.0) is released: corrected references, the
+stricter cross-project locator check, and the `context/README.md` migration
+step. `keep-the-why-dashboard` is at 0.2.8. No 0.18.x eval series is
+recorded in `docs/evals.md` yet — the latest published series is 0.17.1; the
+0.18.1 series runs on request.
 The skill is considered complete: no wording or eval work is planned, changes
 follow user feedback.
 
@@ -21,7 +23,7 @@ follow user feedback.
   submitted 2026-09-08. Nothing to do on our side but answer.
 - [ ] **awesome-copilot**
   ([github/awesome-copilot#3478](https://github.com/github/awesome-copilot/pull/3478)),
-  the bump to 0.18.0, waits on their review. Every release gets its own bump
+  the bump to 0.18.1, waits on their review. Every release gets its own bump
   PR there.
 
 ## Ideas

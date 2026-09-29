@@ -6,7 +6,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Fixed
 
-- `keep-the-why-dashboard`: the scope switch's tooltip says it sets what every view shows, not only search and graph, and the keys legend lists `l` for findings.
+- `keep-the-why-dashboard` 0.2.8: the scope switch's tooltip says it sets what every view shows, not only search and graph, and the keys legend lists `l` for findings.
 
 ## [0.18.1] - 2026-09-29
 
