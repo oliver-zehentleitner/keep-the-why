@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   esc, plural, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, canonicalOf,
-  parseSupersededBy, kindLabel, groupByFamily, searchTerms, searchHit, compareHits, snippetAt, highlight,
+  parseSupersededBy, kindLabel, typeName, groupByFamily, searchTerms, searchHit, compareHits, snippetAt, highlight,
   resolveLocation, bodyProse, linkFamily, authorLookup, mergeStates,
 } from "../../ktw_dashboard/web/lib.js";
 
@@ -87,6 +87,13 @@ test("parseSupersededBy: id, cross-project reference, none with reason, free tex
   assert.deepEqual(parseSupersededBy("none — the upstream fix removed the reason"), { none: "the upstream fix removed the reason" });
   assert.deepEqual(parseSupersededBy("  the entry below  "), { text: "the entry below" });
   assert.equal(parseSupersededBy(""), null);
+});
+
+test("typeName", () => {
+  assert.equal(typeName("decision"), "decision");
+  assert.equal(typeName("undefined — open question awaiting maintainer input, not yet classifiable"), "undefined");
+  assert.equal(typeName("undefined - a plain hyphen"), "undefined");
+  assert.equal(typeName(undefined), "");
 });
 
 test("kindLabel", () => {

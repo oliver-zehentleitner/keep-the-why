@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-import { esc, plural, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, searchTerms, searchHit, compareHits, snippetAt, highlight, resolveLocation, linkFamily, authorLookup, mergeStates } from "./lib.js";
+import { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, searchTerms, searchHit, compareHits, snippetAt, highlight, resolveLocation, linkFamily, authorLookup, mergeStates } from "./lib.js";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const narrow = () => !!window.matchMedia?.("(max-width: 900px)").matches;
@@ -177,7 +177,7 @@ function renderMarkdown(md) {
 const pill = (text, cls = "") => el("span", { class: `pill ${cls}` }, text);
 const statusPill = (s) => pill(s || "—", `status-${s}`);
 const evPill = (e) => pill(e || "—", `ev-${e}`);
-const typePills = (types) => (types?.length ? types : ["—"]).map((t) => pill(t, "type"));
+const typePills = (types) => (types?.length ? types : ["—"]).map((t) => { const p = pill(typeName(t), "type"); if (t !== typeName(t)) p.title = t; return p; });
 const entryPills = (e) => [...typePills(e.type), statusPill(e.status), evPill(e.evidence)];
 function bars(counts, order, clsPrefix = "") {
   const total = Object.values(counts).reduce((a, b) => a + b, 0) || 1;
@@ -193,7 +193,7 @@ function stack(counts, order) {
   return el("div", { class: "stack" }, order.filter((k) => counts[k]).map((k) => el("i", { style: `width:${(100 * counts[k]) / total}%;background:var(--${k})`, title: `${k}: ${counts[k]}` })));
 }
 const count = (list, key) => list.reduce((m, e) => ((m[e[key] || ""] = (m[e[key] || ""] || 0) + 1), m), {});
-const typeCounts = (list) => list.reduce((m, e) => { for (const t of e.type?.length ? e.type : ["(none)"]) m[t] = (m[t] || 0) + 1; return m; }, {});
+const typeCounts = (list) => list.reduce((m, e) => { for (const t of e.type?.length ? e.type.map(typeName) : ["(none)"]) m[t] = (m[t] || 0) + 1; return m; }, {});
 const STATUS_ORDER = ["active", "open", "needs-review", "pending-confirmation", "superseded"];
 const EV_ORDER = ["confirmed", "inferred", "unknown"];
 const entryLink = (e, extra = "") => el("a", { href: `#entry/${encodeURIComponent(e.id)}`, class: extra }, e.title);
@@ -291,7 +291,7 @@ function viewOverview(main) {
     el("p", { class: "sub" }, `${p.context} · schema ${p.schema} · ${p.config["capture-confirmation"] || "?"} · source-reference ${p.config["source-reference"] || "?"}`,
       g?.available ? [" · ", headPill(g), g.remote ? [" · ", remoteLink(g.remote)] : null, g.shallow ? " · shallow clone (dates are the clone's edge)" : null] : " · no Git"),
     el("div", { class: "grid2" },
-      el("div", { class: "card" }, el("h3", {}, "Type"), bars(typeCounts(list), ["decision", "constraint", "workaround", "incident"])),
+      el("div", { class: "card" }, el("h3", {}, "Type"), bars(typeCounts(list), ["decision", "constraint", "workaround", "incident", "undefined"])),
       el("div", { class: "card" }, el("h3", {}, "Status"), bars(count(list, "status"), STATUS_ORDER)),
       el("div", { class: "card" }, el("h3", {}, "Evidence"), bars(count(list, "evidence"), EV_ORDER)),
       el("div", { class: "card" }, el("h3", {}, "Config"), el("div", { class: "kv" }, Object.entries(p.config).map(([k, v]) => [el("span", { class: "k" }, k), el("span", { class: "v mono" }, v)])),

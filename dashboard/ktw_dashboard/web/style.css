@@ -135,8 +135,8 @@ h3 { font-size: 13px; margin: 18px 0 8px; text-transform: uppercase; letter-spac
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 @media (max-width: 1100px) { .grid2 { grid-template-columns: 1fr; } }
 .card { background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
-.bars { display: grid; grid-template-columns: max-content 1fr max-content; gap: 6px 10px; align-items: center; }
-.bars .k { color: var(--fg2); font-size: 12px; }
+.bars { display: grid; grid-template-columns: minmax(0, max-content) 1fr max-content; gap: 6px 10px; align-items: center; }
+.bars .k { color: var(--fg2); font-size: 12px; overflow-wrap: anywhere; }
 .bars .v { font-size: 12px; color: var(--fg2); text-align: right; min-width: 24px; }
 .bar { height: 10px; background: var(--bg3); border-radius: 4px; overflow: hidden; }
 .bar i { display: block; height: 100%; background: var(--accent); border-radius: 4px; }

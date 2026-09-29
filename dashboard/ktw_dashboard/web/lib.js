@@ -70,6 +70,10 @@ export function parseSupersededBy(value) {
   return { text: v };
 }
 
+// A Type value as a name: `undefined — <reason>` is counted and shown as
+// `undefined`; the reason stays on the entry (the pill's tooltip, the details pane).
+export const typeName = (t) => String(t ?? "").split(/\s+[—–-]\s+/)[0].trim();
+
 export const kindLabel = (k) => k === "cache" ? "cache, read only" : k === "repository" ? "repository, read and write" : k === "public" ? "published export" : "not available here";
 
 // Families in a project list: every row with its depth, a parent first and
