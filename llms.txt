@@ -279,8 +279,17 @@ cited outside the family, load into it by default (a checkbox turns that off) an
 moves the page there and keeps the path walked, in memory only), topics and an entry reader with
 backlinks, queues of what needs a person (open, needs-review, pending-confirmation, unknown
 evidence, Revisit-when triggers), timeline by month and author, authors, the linter's findings,
-the project's family tree, and every project known on the machine. Search covers the project
-or, with the family scope, the whole family tree. `#entry/<uuid>` is an entry's address and
+the project's family tree, its friends, its thoughts, and every project known on the machine.
+Three ways projects and entries connect: a *family* is projects that belong together (a parent's
+`children` block, one scope line each — the routing; the family scope shows the tree as one);
+*friends* are repositories outside the family that entries cite by a `See` / `Superseded by`
+naming their `canonical` and an entry's Id (linked, never merged; a friend in a family comes as
+its whole family; one hop — walk to a friend to see its friends); *thoughts* are chains of
+entries, each citing the one before, across projects — found in the recorded citations, never
+written by hand. The Thoughts view shows where many lines lead and start, the entries many pass
+through, and what they rest on (an origin with Evidence inferred or unknown; a step that is open,
+needs review or superseded-yet-cited, and everything built on it); `#thought/<id>,<id>,…` reads
+one whole. Search covers the project or, with the family scope, the whole family tree. `#entry/<uuid>` is an entry's address and
 every entry link on the page uses it, so a copied URL survives a reworded heading or a moved
 entry. `ktw-dashboard --export DIR` writes a self-contained `index.html` (state embedded, no
 server, no CDN) plus `state.json` and `badge.svg`, the project's numbers for a README badge;

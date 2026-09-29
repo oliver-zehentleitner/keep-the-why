@@ -129,7 +129,7 @@ Decisions that shipped, alternatives that lost, workarounds, constraints — Kee
 
 </div>
 
-The dashboard — a read-only view over `context/` and its Git history: who recorded what, when a status changed, what still needs a person. Run locally, it updates as the project changes. Two static exports, each rebuilt with its project's docs deploy: Keep the Why's own `context/` — one repository, the export behind the screenshot — and the UNICORN Binance Suite, a family of eight repositories. [Dashboard →](dashboard.md) · [Single / mono repository example: Keep the Why →](https://keepthewhy.com/dashboard/live/) · [Multi repository example: unicorn-binance-suite →](https://oliver-zehentleitner.github.io/unicorn-binance-suite/keep-the-why-dashboard/){ target=_blank rel=noopener }
+The dashboard — a read-only view over `context/` and its Git history: who recorded what, when a status changed, what still needs a person. It follows the reasoning beyond one repository: the project's family, its *friends* — the repositories its entries cite — and the *thoughts* running through them, lines of decisions each citing the one before. Run locally, it updates as the project changes. Two static exports, each rebuilt with its project's docs deploy: Keep the Why's own `context/` — one repository, the export behind the screenshot — and the UNICORN Binance Suite, a family of eight repositories. [Dashboard →](dashboard.md) · [Single / mono repository example: Keep the Why →](https://keepthewhy.com/dashboard/live/) · [Multi repository example: unicorn-binance-suite →](https://oliver-zehentleitner.github.io/unicorn-binance-suite/keep-the-why-dashboard/){ target=_blank rel=noopener }
 
 </div>
 
