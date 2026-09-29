@@ -203,9 +203,10 @@ New project setting `source-reference` (`always` / `never` / `filtered: <criteri
 
 **Id:** 5af60a72-dce2-4127-a3d4-53a45d635a83
 **Type:** decision
-**Status:** active
+**Status:** needs-review
 **Evidence:** confirmed
 **Source:** maintainer design discussion, 2026-09-08 (two runs with two audiences, the version floor, "lowering the schema is out of the question", "the wizard installs it, with an OK" and "the default should lint" were all maintainer calls; `ask` rather than `auto` as that default was the implementer's proposal, accepted)
+**Verification:** contradicted — the wizard default is `auto` since 0.15.0, `ask` only what an absent line means ("Wizard defaults are the fully integrated values", 426e2723-f526-4415-992f-e11d31e167ce; `references/specification.md`, `references/setup.md`); found in the documentation audit of 2026-09-29
 **Revisit when:** the linter is bundled with the skill or runs without an install step, or a project-level "everyone here lints locally" requirement turns out to be wanted
 
 The setting that makes the skill run `keep-the-why-lint` after its own writes lives in `~/.keep-the-why/<id>.md` (`local-lint: auto | ask | no`), is asked by the personal wizard, defaults to `ask`, and can be suggested by a project through `personal-defaults`. The linter's first three version segments must be at least the skill's `metadata.version`; the skill installs or updates the linter to get there (unasked under `auto`, asked under `ask`), and never edits `context-schema` or its own version to meet an older linter.

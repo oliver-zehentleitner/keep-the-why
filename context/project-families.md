@@ -61,6 +61,7 @@ mechanism that does not exist.
 **Source:** maintainer design discussion, 2026-09-26/27, with two rounds of external review
 **Revisit when:** a second locator kind is needed (a project reachable by something other than a repository URL), or a host stops resolving the normalized `https://` form
 **See:** config-format.md#project-identity-is-stored-explicitly-not-re-derived-each-session — 691f82ba-a054-4a98-83f2-fa0e1fbdb9ff — as of 2026-09-28
+**See:** project-families.md#canonical-comes-from-the-published-remote-upstream-in-a-fork-checkout-else-origin — 2f464b89-3f06-477b-8a73-3e86bb1e0538 — as of 2026-09-29
 
 `.keep-the-why` gains `canonical`, the `origin` URL normalized (`https://`,
 no `.git`, no trailing slash, SSH rewritten), written once at init and
@@ -102,8 +103,8 @@ nothing recording what it used to be.
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
-**Source:** maintainer design discussion, 2026-09-26/27, with two rounds of external review
-**Revisit when:** a host stops rendering heading anchors the way the locator rule assumes, or a project reports UUID lines as a real cost in readability
+**Source:** maintainer design discussion, 2026-09-26/27, with two rounds of external review; the cross-project locator form re-checked with the maintainer, 2026-09-29
+**Revisit when:** a host stops rendering heading anchors the way the locator rule assumes, or a project reports UUID lines as a real cost in readability, or a `See` into a sub-project below a repository's toplevel (`root`) cannot be resolved in practice
 
 Every entry gets `**Id:**`, a UUID version 4 made by an OS command and never
 changed; `See` cites another entry as `<locator> — <uuid> — as of <date>`;
@@ -149,6 +150,21 @@ decision is recorded by a new entry; in the seventeen superseded entries
 surveyed across this repository and the suite the successor either existed
 or was an event — and `none — <reason>` covers the event, the way `Type:
 undefined — <reason>` covers an unclassifiable entry.
+
+**Rejected alternative:** the host URL of the target project's
+`.keep-the-why` as the cross-project locator
+(`https://github.com/owner/repo/blob/master/.keep-the-why`), so that the
+link names the exact file and a sub-project's `root` is part of it.
+Rejected on 2026-09-29: the repository is the unit a family is built
+from — nesting is already expressed by `root` and the `children` block —
+and the bare `canonical` works reliably and stays flexible. The host form
+would put host grammar (`blob/`, `-/blob/`, `src/branch/`) and a branch
+name into every line, would have to be taken apart again into
+`(canonical, root)` by every tool, and a click would still land on a
+config file, not on the entry. If a `See` into a sub-project ever fails
+to resolve in practice, the resolver first walks the target repository's
+`children` block from the `canonical`; an optional `root` part in the
+locator is the fallback — neither is built until a real case needs it.
 
 ## The linter reports stale locators and missing Ids; the agent repairs and migrates
 
@@ -265,7 +281,7 @@ the linter, the dashboard and every reader rely on.
 
 **Id:** e4bc46e9-650a-4c87-a09d-e61a10196bbf
 **Type:** decision
-**Status:** active
+**Status:** needs-review
 **Evidence:** confirmed
 **Source:** maintainer design discussion, 2026-09-26/27, with two rounds of external review
 **Revisit when:** the mapping and the read-only cache land (the next step of the series) — then "local" is what the mapping knows, not only the sibling folder; or dogfooding shows a real need to write into a project that is not checked out
