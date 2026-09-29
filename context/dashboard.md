@@ -266,3 +266,23 @@ The graph turns in its plane, one turn in about six minutes, rotating the node p
 **Reason:** a slight movement makes the web read as alive without asking for attention; turning the positions rather than the canvas keeps the text level and the click targets where they are drawn.
 
 **Rejected alternative:** a turntable in 3D, the axis tilted 30° to the left. Considered first and dropped by the maintainer in favour of staying simple: a third dimension for the layout, projection and depth cues, and moving labels and click targets while working.
+
+## A walk to a friend moves the centre in place, and the page keeps the path in memory
+
+**Id:** 4b41fbe0-d50c-4209-9028-14b8a5ad0a48
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer design discussion, 2026-09-29
+**Revisit when:** a path is asked to survive a reload or to be shared, or walks get long enough that the states held in memory become a cost
+**See:** dashboard.md#friends--repositories-cited-outside-the-family--load-into-the-graph-on-a-click-linked-and-never-merged — b1b36585-edb2-416c-95fe-126ed4b4b788 — as of 2026-09-29
+
+Going to a friend — its name in the legend, its hub's entries, a link to it anywhere on the page — changes the page's centre in place, without a reload: the friend's state is already loaded, the address becomes that project's (`?public=` or `?project=`, a link like any other), and the project left joins the *path*. The path is the projects walked through to get here, kept in memory for this page: a bar above every view (an overlay on the graph) names them in order, each a way back that shortens the path; the graph shows them as numbered hubs with a dotted ring, joined in the order walked, with the entries that link them. Back and forward walk it in place. *Discard* clears it, *in graph* hides it, *path* in the graph turns keeping it off (kept per browser, on by default). A reload, or a link opened anew, starts without a path.
+
+**Reason:** one hop is enough to see from a project, and moving the centre is how the web is walked (the friends entry); the path is what makes a walk readable afterwards — how the reader got from A to Y. The states are already in memory once a friend is loaded, so a move needs no fetch and no reload, and keeping what was walked costs nothing. A link leads to an entry, not to a walk: the path belongs to the person walking, not to the address.
+
+**Rejected alternative:** the path in the URL (`&trail=A,B,D`), shareable and surviving a reload. Rejected by the maintainer — a link leads to an entry; a shared link that loaded a stranger's walk would fetch other hosts nobody asked for.
+
+**Rejected alternative:** keep the path across a reload in the tab's session storage. Rejected by the maintainer: a reload starts fresh, which is the simplest thing to understand.
+
+**Rejected alternative:** keep the page loads (every move a new page) and carry the path along. Rejected — every step would load again what is already in memory, and the path would have to be rebuilt from storage on each page.

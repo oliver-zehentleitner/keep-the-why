@@ -278,6 +278,38 @@ const report = {};
   if (!d.querySelector("#details .mini-friends button")?.classList.contains("on")) errors.push("friends, near: the friends were not loaded at the project level");
   window.close();
 }
+{
+  // the path: a walk to a friend changes the centre in place (no page load), the page keeps where it came from,
+  // back returns along it, and a discarded path is gone
+  const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/refs`)}#graph`);
+  await tick(200);
+  const d = window.document;
+  d.querySelector(".graph-ui .friends-load")?.click(); await tick(400);
+  const navBefore = navigations.length;
+  [...d.querySelectorAll(".graph-legend .friend a")].find((a) => a.textContent === "acme/notes")?.click(); await tick(300);
+  report.pathWalk = { search: window.location.search, hash: window.location.hash, bar: d.querySelector(".path-bar")?.textContent.replace(/\s+/g, " ") };
+  if (navigations.length !== navBefore) errors.push("path: the walk to a friend loaded a page instead of moving in place");
+  if (window.location.search !== `?public=${encodeURIComponent(`${GH}/notes`)}` || window.location.hash !== "#graph") errors.push("path: the address is not the friend's graph: " + window.location.search + window.location.hash);
+  if (!/1 · acme---refs › acme---notes/.test(report.pathWalk.bar || "")) errors.push("path: no path bar 'refs › notes': " + report.pathWalk.bar);
+  const g = window.__g();
+  const trailHub = g?.nodes.find((n) => n.trail);
+  if (trailHub?.label !== "1 · acme---refs") errors.push("path: the project walked from is not a hub in the graph: " + trailHub?.label);
+  if (!g?.links.some((l) => l.kind === "see" && g.nodes[l.s].label === "Cites elsewhere")) errors.push("path: the See from the path's project to this one is not drawn");
+  if (!/acme---notes/.test(d.title)) errors.push("path: the page did not switch to the friend: " + d.title);
+  // back along the path: in place, and the path shortens
+  window.history.back(); await tick(300);
+  if (!/acme---refs/.test(d.title) || window.location.search !== `?public=${encodeURIComponent(`${GH}/refs`)}`) errors.push("path: back did not return to the project walked from: " + d.title + " " + window.location.search);
+  if (d.querySelector(".path-bar")) errors.push("path: back at the start, a path bar is still shown");
+  if (navigations.length !== navBefore) errors.push("path: back loaded a page instead of moving in place");
+  // forward again, then discard
+  window.history.forward(); await tick(300);
+  if (!/acme---notes/.test(d.title)) errors.push("path: forward did not return to the friend: " + d.title);
+  window.location.hash = "#overview"; window.dispatchEvent(new window.Event("hashchange")); await tick(150);
+  if (!d.querySelector("#main .path-bar")) errors.push("path: no path bar above the overview");
+  [...d.querySelectorAll("#main .path-bar button")].find((b) => b.textContent === "discard")?.click(); await tick(100);
+  if (d.querySelector(".path-bar")) errors.push("path: discard did not clear the path");
+  window.close();
+}
 console.log(JSON.stringify(report, null, 1));
 console.log("ERRORS:", errors.length); for (const e of errors) console.log("  " + e);
 process.exit(errors.length ? 1 : 0);

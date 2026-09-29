@@ -32,9 +32,12 @@ const headPill = (g) => {
     branch ? el("a", { class: "gh", href: `${base}/tree/${encodeURIComponent(branch)}`, target: "_blank", rel: "noopener" }, branch) : "detached", "@",
     el("a", { class: "gh", href: `${base}/commit/${g.head_full || g.head}`, target: "_blank", rel: "noopener", title: g.head_full || g.head }, g.head));
 };
-const PUBLIC = new URLSearchParams(location.search).get("public"); // a canonical: browse that project's published export
-const PUBLIC_ROOT = new URLSearchParams(location.search).get("root") || "";
-const MODE = PUBLIC ? "public" : window.__KTW_STATE__ ? "export" : "live";
+// The centre: the project the page shows. Read from the URL when the page
+// loads; a walk to a friend or back along the path changes it in place
+// (setCentre), without a reload — see "path" below.
+let PUBLIC = new URLSearchParams(location.search).get("public"); // a canonical: browse that project's published export
+let PUBLIC_ROOT = new URLSearchParams(location.search).get("root") || "";
+let MODE = PUBLIC ? "public" : window.__KTW_STATE__ ? "export" : "live";
 const LIVE = () => MODE === "live";
 // A static page (an export on a docs site, on a phone) is public by nature: it
 // has no machine to read, so it has no local/public switch, and its family —
@@ -87,7 +90,7 @@ const publicHref = (canonical, root = "", hash = "#overview") => `${location.pat
 // ---------------------------------------------------------------- state
 let S = null; // what the page shows: this project, or with the family scope the whole family merged (lib.js, mergeStates)
 let SELF = null; // this project's own state, always
-const PROJECT = new URLSearchParams(location.search).get("project"); // null: the server's selected one
+let PROJECT = new URLSearchParams(location.search).get("project"); // null: the server's selected one
 const api = (path) => PROJECT ? `${path}?project=${encodeURIComponent(PROJECT)}` : path;
 let filter = { status: "", evidence: "", author: "" };
 let selected = null; // entry id shown in the details pane
@@ -577,6 +580,7 @@ async function viewFamily(main) {
   box.replaceChildren(...treeRows(members, memberRow));
 }
 let PROJECTS = null; // /api/projects result
+let SELECTED_DEFAULT = null; // the server's own project, for the menu when the URL names none
 async function viewProjects(main) {
   main.append(el("h1", {}, "Projects"), el("p", { class: "sub" }, "Every project this machine knows — from ~/.keep-the-why/projects.json, the folder next to this one, and the personal files. Families grouped, parent first. Forgetting a row removes it from the mapping; a cache directory goes with it, a working tree is never touched."));
   if (!LIVE()) return main.append(el("p", { class: "center" }, "Static export — the project list is a live-server view."));
@@ -657,7 +661,8 @@ function renderDetailsDefault() {
       el("span", {}, el("i", { class: "dot", style: "background:transparent;border:1.5px solid var(--fg3)" }), "superseded — hollow"),
       el("span", {}, el("i", { class: "dot", style: "background:var(--bg);border:1.5px solid var(--open)" }), "ring — open, needs review, pending"),
       el("span", {}, "solid line — a reference between topics; dotted — membership"),
-      el("span", {}, el("i", { class: "dot", style: "background:transparent;border:2px dashed var(--fg3);width:10px;height:10px" }), "friend — a repository cited outside the family, loaded with friends (N) in the graph; a click on its hub shows all of it")),
+      el("span", {}, el("i", { class: "dot", style: "background:transparent;border:2px dashed var(--fg3);width:10px;height:10px" }), "friend — a repository cited outside the family, loaded with friends (N) in the graph; a click on its hub shows all of it"),
+      el("span", {}, el("i", { class: "dot", style: "background:transparent;border:2px dotted var(--fg3);width:10px;height:10px" }), "path — a project you walked through to get here, numbered in order; a click goes back there")),
       el("h3", {}, "Keys"), el("p", { class: "note" }, el("kbd", {}, "/"), " search · ", el("kbd", {}, "g"), " graph · ", el("kbd", {}, "o"), " overview · ", el("kbd", {}, "q"), " queues · ", el("kbd", {}, "t"), " timeline · ", el("kbd", {}, "a"), " authors · ", el("kbd", {}, "l"), " findings"));
     return;
   }
@@ -856,14 +861,14 @@ function loadFriend(f) {
         if (res.ok) {
           const hit = await res.json(); const m = await memberState(hit.project);
           const at = (hash) => `${location.pathname}?project=${encodeURIComponent(hit.project)}${hash}`;
-          if (m.state) r = { state: m.state, name: m.state.project?.id || repoLabel(f.canonical), href: (e) => at(entryHref(e)), topicHref: (file) => at(`#topic/${file}`), open: at("#graph") };
+          if (m.state) r = { state: m.state, name: m.state.project?.id || repoLabel(f.canonical), href: (e) => at(entryHref(e)), topicHref: (file) => at(`#topic/${file}`), open: at("#graph"), centre: { mode: "live", project: hit.project } };
         }
       } catch { /* not known here: the published export */ }
     }
     if (!r) {
       const p = await fetchPublicState(f.canonical, "");
       r = p.state
-        ? { state: p.state, name: repoLabel(f.canonical), href: (e) => publicHref(f.canonical, "", entryHref(e)), topicHref: (file) => publicHref(f.canonical, "", `#topic/${file}`), open: publicHref(f.canonical, "", "#graph") }
+        ? { state: p.state, name: repoLabel(f.canonical), href: (e) => publicHref(f.canonical, "", entryHref(e)), topicHref: (file) => publicHref(f.canonical, "", `#topic/${file}`), open: publicHref(f.canonical, "", "#graph"), centre: { mode: "public", canonical: f.canonical, root: "" } }
         : { error: p.error };
     }
     r.canonical = f.canonical;
@@ -882,11 +887,32 @@ function toggleFriend(k) {
   if (fgraph) fgraph.at = 0;
   render();
 }
-// The loaded friends of `g.friends` as hubs with the entries cited there (all
-// of them once the hub is expanded), joined by See and Superseded by to the
-// entries of the graph, both ways.
+// Linked projects in the graph: friends (loaded on a click) and the path
+// (the projects walked through to get here). Each is a hub with some of its
+// entries — the ones that link to what the graph shows, or all of them once a
+// friend's hub is expanded — joined by See and Superseded by, both ways, a
+// reference counting only when it names that repository and an Id there.
+// Called by buildGraph and buildFamilyGraph after their own nodes.
 function addFriendLayer(g, prev) {
-  if (!FRIENDS.on) return;
+  const items = [];
+  const trail = pathShown() ? TRAIL.filter((t) => !sameCentreAsGraph(g, t)) : [];
+  trail.forEach((t, i) => items.push({
+    k: `trail:${t.key}`, kind: "trail", r: t, label: `${i + 1} · ${t.name}`, color: PALETTE[(i + 2) % PALETTE.length], cited: "linked",
+    hub: () => moveTo(t, "#graph"), entry: (e) => moveTo(t, entryHref(e)), topic: (file) => moveTo(t, `#topic/${file}`),
+    next: i + 1 < trail.length ? `trail:${trail[i + 1].key}` : null,
+  }));
+  if (FRIENDS.on) (g.friends || []).forEach((f, i) => {
+    const k = fkey(f.canonical); const r = FRIENDS.loaded[k];
+    if (!r?.state || onPath(f.canonical)) return;
+    const expanded = FRIENDS.expanded.has(k);
+    items.push({
+      k, kind: "friend", r, label: r.name, color: friendColor(i), cited: expanded ? null : new Set(f.uuids), canonical: f.canonical,
+      hub: () => toggleFriend(k), entry: r.centre ? (e) => moveTo({ centre: r.centre, state: r.state }, entryHref(e)) : null, topic: r.centre ? (file) => moveTo({ centre: r.centre, state: r.state }, `#topic/${file}`) : null,
+    });
+  });
+  if (items.length) addLinkedLayer(g, prev, items);
+}
+function addLinkedLayer(g, prev, items) {
   const { nodes, links, index } = g;
   const add = (n, near) => {
     const p = prev[n.id];
@@ -894,51 +920,164 @@ function addFriendLayer(g, prev) {
     else { n.x = (near?.x || 0) + (Math.random() - 0.5) * 120; n.y = (near?.y || 0) + (Math.random() - 0.5) * 120; n.vx = n.vy = 0; }
     index[n.id] = nodes.length; nodes.push(n); return n;
   };
-  const ours = nodes.filter((n) => n.kind === "entry");
-  const topicOfNode = {}; for (const l of links) if (l.kind === "member") topicOfNode[l.s] = l.t;
-  const byUuid = {}; for (const n of ours) if (n.entry.uuid) byUuid[n.entry.uuid] = index[n.id];
-  const shown = (g.friends || []).filter((f) => FRIENDS.loaded[fkey(f.canonical)]?.state);
-  const R = 420 + 30 * shown.length;
-  shown.forEach((f, i) => {
-    const k = fkey(f.canonical); const r = FRIENDS.loaded[k]; const col = friendColor(i);
-    const ang = (2 * Math.PI * i) / shown.length + Math.PI / 5;
-    const expanded = FRIENDS.expanded.has(k);
-    const hub = add({ id: `f:${k}`, kind: "project", friend: true, label: r.name, r: 13, color: col, href: r.open, action: () => toggleFriend(k) }, { x: R * Math.cos(ang), y: R * Math.sin(ang) });
-    const cited = new Set(f.uuids);
-    const entries = (r.state.entries || []).filter((e) => expanded || (e.uuid && cited.has(e.uuid)));
+  const refsOf = (e) => [...(e.see || []).map((x) => x && { uuid: x.uuid, remote: x.remote, kind: "see" }), e.superseded_by ? { ...parseSupersededBy(e.superseded_by), kind: "superseded" } : null].filter((x) => x?.uuid);
+  // the path's hubs show what links to the rest: the graph's own entries, the friends', the other steps'
+  const graphUuids = new Set(nodes.filter((n) => n.kind === "entry" && n.entry.uuid).map((n) => n.entry.uuid));
+  const pool = new Set(graphUuids);
+  for (const it of items) for (const e of it.r.state.entries || []) if (e.uuid) pool.add(e.uuid);
+  const R = 420 + 30 * items.length;
+  const placed = [];
+  items.forEach((it, i) => {
+    const r = it.r; const col = it.color; const canon = fkey(it.canonical || r.canonical || canonicalOf(r.state.project));
+    const ang = (2 * Math.PI * i) / items.length + Math.PI / 5;
+    const hub = add({ id: `f:${it.k}`, kind: "project", friend: it.kind === "friend", trail: it.kind === "trail", label: it.label, r: 13, color: col, href: r.open || "#graph", action: it.hub }, { x: R * Math.cos(ang), y: R * Math.sin(ang) });
+    const own = r.state.entries || [];
+    const ownUuids = new Set(own.map((e) => e.uuid).filter(Boolean));
+    const cited = it.cited === "linked"
+      ? new Set(own.filter((e) => e.uuid && (refsOf(e).some((x) => pool.has(x.uuid) && !ownUuids.has(x.uuid)))).map((e) => e.uuid))
+      : it.cited;
+    if (it.cited === "linked") for (const n of nodes) if (n.kind === "entry" && n.entry) for (const x of refsOf(n.entry)) if (ownUuids.has(x.uuid) && (!x.remote || fkey(x.remote) === canon)) cited.add(x.uuid);
+    if (it.cited === "linked") for (const o of items) if (o !== it) for (const e of o.r.state.entries || []) for (const x of refsOf(e)) if (ownUuids.has(x.uuid) && x.remote && fkey(x.remote) === canon) cited.add(x.uuid);
+    const entries = own.filter((e) => !cited || (e.uuid && cited.has(e.uuid)));
     const files = new Set(entries.map((e) => e.file));
     const tIdx = {};
     for (const t of r.state.topics || []) {
-      if (!expanded && !files.has(t.file)) continue;
-      const n = add({ id: `ft:${k}:${t.file}`, kind: "topic", label: t.title, file: t.file, color: col, r: 7 + Math.sqrt(t.entries || 0) * 2.4, href: r.topicHref(t.file) }, hub);
+      if (cited && !files.has(t.file)) continue;
+      const n = add({ id: `ft:${it.k}:${t.file}`, kind: "topic", label: t.title, file: t.file, color: col, r: 7 + Math.sqrt(t.entries || 0) * 2.4, href: r.topicHref ? r.topicHref(t.file) : "#graph", action: it.topic ? () => it.topic(t.file) : null }, hub);
       tIdx[t.file] = index[n.id];
       links.push({ s: index[hub.id], t: tIdx[t.file], kind: "hub", len: 70 });
     }
     const fIdx = {};
     for (const e of entries) {
-      const n = add({ id: `fe:${k}:${e.id}`, kind: "entry", label: e.title, file: e.file, entry: e, r: 4.2, href: r.href(e) }, nodes[tIdx[e.file]] || hub);
+      const n = add({ id: `fe:${it.k}:${e.id}`, kind: "entry", label: e.title, file: e.file, entry: e, r: 4.2, href: r.href ? r.href(e) : "#graph", action: it.entry ? () => it.entry(e) : null }, nodes[tIdx[e.file]] || hub);
       if (e.uuid) fIdx[e.uuid] = index[n.id];
       if (tIdx[e.file] != null) links.push({ s: index[n.id], t: tIdx[e.file], kind: "member", len: 40 });
     }
-    const pairs = new Set(); const joined = new Set();
-    const join = (s, t, kind) => {
-      if (joined.has(`${s}|${t}|${kind}`)) return; joined.add(`${s}|${t}|${kind}`);
-      links.push({ s, t, kind, len: 190, color: col });
-      const ts = topicOfNode[s] ?? tIdx[nodes[s].file], tt = topicOfNode[t] ?? tIdx[nodes[t].file];
-      const key = `${ts}|${tt}`;
-      if (ts != null && tt != null && ts !== tt && !pairs.has(key)) { pairs.add(key); links.push({ s: ts, t: tt, kind: "xtopic", len: 240, color: col }); }
-    };
-    for (const n of ours) {
-      // a reference counts for this friend only when it names this repository and an Id there
-      for (const x of n.entry.see || []) if (x?.uuid && fkey(x.remote) === k && fIdx[x.uuid] != null) join(index[n.id], fIdx[x.uuid], "see");
-      const sup = n.entry.superseded_by ? parseSupersededBy(n.entry.superseded_by) : null;
-      if (sup?.uuid && fkey(sup.remote) === k && fIdx[sup.uuid] != null) join(index[n.id], fIdx[sup.uuid], "superseded");
-    }
-    for (const e of entries) {
-      const s = fIdx[e.uuid]; if (s == null) continue;
-      for (const x of e.see || []) if (x?.uuid && x.remote && byUuid[x.uuid] != null) join(s, byUuid[x.uuid], "see");
-    }
+    placed.push({ it, canon, fIdx, tIdx, col, entries });
   });
+  // See and Superseded by between any two placed groups and the graph, both ways; between their topics while entries are hidden
+  const topicOfNode = {}; for (const l of links) if (l.kind === "member") topicOfNode[l.s] = l.t;
+  const joined = new Set(); const pairs = new Set();
+  const join = (s, t, kind, col) => {
+    if (s == null || t == null || s === t) return;
+    const key = `${s}|${t}|${kind}`; if (joined.has(key)) return; joined.add(key);
+    links.push({ s, t, kind, len: 190, color: col });
+    const ts = topicOfNode[s], tt = topicOfNode[t];
+    if (ts != null && tt != null && ts !== tt && !pairs.has(`${ts}|${tt}`)) { pairs.add(`${ts}|${tt}`); links.push({ s: ts, t: tt, kind: "xtopic", len: 240, color: col }); }
+  };
+  const ours = nodes.filter((n) => n.kind === "entry" && !String(n.id).startsWith("fe:"));
+  const byUuid = {}; for (const n of ours) if (n.entry.uuid) byUuid[n.entry.uuid] = index[n.id];
+  for (const P of placed) {
+    // the graph's entries citing this group
+    for (const n of ours) for (const x of refsOf(n.entry)) if (fkey(x.remote) === P.canon && P.fIdx[x.uuid] != null) join(index[n.id], P.fIdx[x.uuid], x.kind, P.col);
+    for (const e of P.entries) {
+      const s = P.fIdx[e.uuid]; if (s == null) continue;
+      for (const x of refsOf(e)) {
+        if (!x.remote) continue;
+        if (byUuid[x.uuid] != null) join(s, byUuid[x.uuid], x.kind, P.col); // this group citing the graph
+        for (const Q of placed) if (Q !== P && fkey(x.remote) === Q.canon && Q.fIdx[x.uuid] != null) join(s, Q.fIdx[x.uuid], x.kind, P.col); // citing another group
+      }
+    }
+    // the walk's order: one step's hub to the next
+    if (P.it.next && index[`f:${P.it.next}`] != null) links.push({ s: index[`f:${P.it.k}`], t: index[`f:${P.it.next}`], kind: "trail", len: 360 });
+  }
+}
+
+// ---------------------------------------------------------------- path
+// The path: the projects walked through to get here — A to a friend B, from
+// B to its friend D, on to Y. A walk changes the centre in place, without a
+// reload, so what was loaded stays in memory: the path is those states, kept
+// for this tab and this page only. A reload, or a link opened anew, starts
+// without one — a link leads to an entry, not to a path. Back and forward
+// walk it; a step back shortens it; *discard* clears it; *path* in the graph
+// turns keeping it off (kept per browser). The path's projects are hubs in
+// the graph, joined in the order walked, with the entries that link them.
+let TRAIL = []; // [{ key, centre, state, name, canonical, url }], oldest first; the centre shown is not in it
+const VISITED = new Map(); // key -> the same, every centre of this page, for back and forward
+let TRAIL_SHOW = true;
+let KEEP_PATH = (() => { try { return localStorage.getItem("ktw-path") !== "off"; } catch { return true; } })();
+const keepPath = () => KEEP_PATH;
+function setKeepPath(on) { KEEP_PATH = on; if (!on) TRAIL = []; try { localStorage.setItem("ktw-path", on ? "on" : "off"); } catch {} }
+const pathShown = () => KEEP_PATH && TRAIL_SHOW && TRAIL.length > 0;
+const onPath = (canonical) => pathShown() && TRAIL.some((t) => fkey(t.canonical) === fkey(canonical));
+// a step of the path that the graph already shows — a member of the family graph — is not drawn twice
+const sameCentreAsGraph = (g, t) => (g.groups || []).some((G) => fkey(G.canonical) === fkey(t.canonical) && (G.root || "") === (t.state.project?.root || ""));
+const currentCentre = () => (MODE === "public" ? { mode: "public", canonical: PUBLIC, root: PUBLIC_ROOT } : MODE === "export" ? { mode: "export" } : { mode: "live", project: PROJECT });
+function centreKey(c) { return c.mode === "public" ? `P:${fkey(c.canonical)}|${c.root || ""}` : c.mode === "export" ? "E" : `L:${c.project || ""}`; }
+function centreFromUrl(loc) {
+  const q = new URLSearchParams(loc.search);
+  if (q.get("public")) return { mode: "public", canonical: q.get("public"), root: q.get("root") || "" };
+  return window.__KTW_STATE__ ? { mode: "export" } : { mode: "live", project: q.get("project") };
+}
+function centreUrl(c) {
+  if (c.mode === "public") return `${location.pathname}?public=${encodeURIComponent(c.canonical)}${c.root ? `&root=${encodeURIComponent(c.root)}` : ""}`;
+  if (c.mode === "live" && c.project) return `${location.pathname}?project=${encodeURIComponent(c.project)}`;
+  return location.pathname;
+}
+function remember(c, state) {
+  const e = { key: centreKey(c), centre: c, state, name: state.project?.id || state.project?.name || repoLabel(canonicalOf(state.project) || ""), canonical: canonicalOf(state.project), url: centreUrl(c) };
+  VISITED.set(e.key, e); return e;
+}
+// Everything that belongs to one centre starts over when the centre moves; the
+// fetched states (friends, members, published exports) stay cached.
+function setCentre(c, state) {
+  MODE = c.mode; PUBLIC = c.mode === "public" ? c.canonical : null; PUBLIC_ROOT = c.mode === "public" ? c.root || "" : ""; PROJECT = c.mode === "live" ? c.project || null : null;
+  graph = null; fgraph = null; TREE = null; TREE_AT = 0; TREE_ASKED = false; PUBLIC_TREE = null; LAST_POOL = null;
+  FRIENDS.on = false; FRIENDS.expanded.clear(); THOUGHT_PIN = null; MINI = null;
+  if (MODE === "public") state.exported = true;
+  connectLive();
+  const sel = $("#project-select");
+  if (sel && !sel.hidden && MODE === "live") sel.value = PROJECT || SELECTED_DEFAULT || sel.value;
+  applyState(state);
+}
+// Go to another centre whose state is loaded: the path grows by the centre
+// left, or — when the target is already on it — goes back to it.
+function moveTo(t, hash = "#graph", { push = true } = {}) {
+  const target = t.key ? t : remember(t.centre, t.state);
+  const here = remember(currentCentre(), SELF);
+  if (target.key === here.key) { if (location.hash !== hash) location.hash = hash; return; }
+  const i = TRAIL.findIndex((x) => x.key === target.key);
+  if (i >= 0) TRAIL = TRAIL.slice(0, i);
+  else if (KEEP_PATH) { TRAIL = TRAIL.filter((x) => x.key !== here.key); TRAIL.push(here); }
+  else TRAIL = [];
+  if (push) history.pushState({ ktw: target.key }, "", target.url + hash);
+  setCentre(target.centre, target.state);
+}
+// Back and forward: a step inside this centre is a hash change (rendered
+// there); a step to another centre goes there in place when its state is in
+// memory, else the page loads it.
+function onPopState() {
+  const c = centreFromUrl(location); const key = centreKey(c);
+  if (key === centreKey(currentCentre())) return;
+  const known = VISITED.get(key);
+  if (!known) { location.reload(); return; }
+  moveTo(known, location.hash || "#overview", { push: false });
+}
+// A link to another centre whose state is loaded (a friend, a step of the
+// path) goes there in place, so the path grows; anything else loads as a link does.
+function stateForUrl(url) {
+  const key = centreKey(centreFromUrl(url));
+  if (VISITED.has(key)) return VISITED.get(key);
+  for (const r of Object.values(FRIENDS.loaded)) if (r?.state && r.centre && centreKey(r.centre) === key) return { centre: r.centre, state: r.state };
+  return null;
+}
+function onLinkClick(ev) {
+  if (ev.defaultPrevented || ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
+  const a = ev.target.closest?.("a[href]"); if (!a || a.target === "_blank") return;
+  let url; try { url = new URL(a.getAttribute("href"), location.href); } catch { return; }
+  if (url.origin !== location.origin || url.pathname !== location.pathname || url.search === location.search) return;
+  const t = stateForUrl(url); if (!t) return;
+  ev.preventDefault();
+  moveTo(t, url.hash || "#overview");
+}
+function pathBar() {
+  if (!KEEP_PATH || !TRAIL.length) return null;
+  const here = SELF?.project?.id || SELF?.project?.name || "";
+  const steps = TRAIL.map((t, i) => [el("a", { href: t.url + "#graph", title: `back to ${t.name} — the path shortens to here`, onclick: (ev) => { ev.preventDefault(); moveTo(t, "#graph"); } }, `${i + 1} · ${t.name}`), el("span", { class: "sep" }, " › ")]).flat();
+  return el("div", { class: "path-bar" }, el("span", { class: "label" }, "Path "), ...steps, el("b", {}, here),
+    el("span", { class: "grow" }),
+    el("label", { title: "show the path's projects in the graph" }, el("input", { type: "checkbox", checked: TRAIL_SHOW, onchange: (ev) => { TRAIL_SHOW = ev.target.checked; if (fgraph) fgraph.at = 0; render(); } }), "in graph"),
+    el("button", { type: "button", class: "link-btn", title: "forget the path; this project becomes the start", onclick: () => { TRAIL = []; if (fgraph) fgraph.at = 0; render(); } }, "discard"));
 }
 function friendsUi(g) {
   const list = g.friends || [];
@@ -1018,8 +1157,8 @@ function renderThoughts(g) {
 function friendsLegend(g) {
   if (!FRIENDS.on) return [];
   let i = -1;
-  return (g.friends || []).map((f) => FRIENDS.loaded[fkey(f.canonical)]).filter(Boolean).map((r) => r.state
-    ? (i++, el("span", { class: "friend", title: `friend: ${r.canonical} — its hub shows the entries cited there; a click on the hub shows all of it` }, el("i", { class: "dot", style: `background:transparent;border:2px dashed ${friendColor(i)};width:10px;height:10px` }), el("a", { href: r.open }, r.name)))
+  return (g.friends || []).filter((f) => !onPath(f.canonical)).map((f) => FRIENDS.loaded[fkey(f.canonical)]).filter(Boolean).map((r) => r.state
+    ? (i++, el("span", { class: "friend", title: `friend: ${r.canonical} — its hub shows the entries cited there; a click on the hub shows all of it, a click on the name goes there` }, el("i", { class: "dot", style: `background:transparent;border:2px dashed ${friendColor(i)};width:10px;height:10px` }), el("a", { href: r.open, onclick: (ev) => { if (!r.centre) return; ev.preventDefault(); moveTo({ centre: r.centre, state: r.state }, "#graph"); } }, r.name)))
     : el("span", { class: "warn", title: r.error }, `${repoLabel(r.canonical)} not loaded`));
 }
 let TREE_ASKED = false;
@@ -1036,6 +1175,7 @@ function viewGraph(main) {
       el("label", {}, el("input", { type: "checkbox", checked: g.showLabels, onchange: (ev) => { g.showLabels = ev.target.checked; g.wake?.(); } }), "labels"),
       el("button", { class: "link-btn", onclick: () => { g.scale = family ? 0.7 : 1; g.ox = 0; g.oy = 0; g.userMoved = false; for (const n of g.nodes) { n.fixed = false; } g.alpha = 1; g.wake?.(); } }, "reset"),
       friendsUi(g),
+      el("label", { title: "keep the path while you walk from project to project — the projects you came through stay in the graph" }, el("input", { type: "checkbox", checked: keepPath(), onchange: (ev) => { setKeepPath(ev.target.checked); render(); } }), "path"),
       el("label", { title: "the graph turns very slowly; it stops while you point at it" }, el("input", { type: "checkbox", checked: driftOn(), onchange: (ev) => { setDrift(ev.target.checked); g.wake?.(); } }), "motion"),
     );
     const legend = family
@@ -1048,7 +1188,7 @@ function viewGraph(main) {
         el("span", {}, el("i", { class: "dot confirmed" }), "confirmed"), el("span", {}, el("i", { class: "dot inferred" }), "inferred"), el("span", {}, el("i", { class: "dot unknown" }), "unknown"),
         el("span", {}, el("i", { class: "dot", style: "background:transparent;border:1.5px solid var(--fg3)" }), "superseded"),
         el("span", {}, "— reference · ··· membership"), ...friendsLegend(g));
-    wrap.replaceChildren(canvas, ui, legend, el("div", { class: "graph-hint" }, family ? "family — a project opens its overview · drag nodes · wheel zoom · drag background to pan" : "drag nodes · wheel zoom · drag background to pan · click to open"));
+    wrap.replaceChildren(canvas, ui, legend, ...[pathBar()].filter(Boolean), el("div", { class: "graph-hint" }, family ? "family — a project opens its overview · drag nodes · wheel zoom · drag background to pan" : "drag nodes · wheel zoom · drag background to pan · click to open"));
     runGraph(canvas, g, { fit: family });
     renderThoughts(g);
   };
@@ -1158,14 +1298,14 @@ function runGraph(canvas, g, opts = {}) {
     const neigh = new Set(); if (focus) { neigh.add(focus); for (const l of g.links) { if (!linkOn(l)) continue; if (g.nodes[l.s] === focus) neigh.add(g.nodes[l.t]); if (g.nodes[l.t] === focus) neigh.add(g.nodes[l.s]); } }
     if (th) for (const n of th.nodes) neigh.add(n);
     const onThought = (l) => !!th && (l.kind === "see" || l.kind === "superseded") && (th.pairs.has(`${g.nodes[l.s].id}|${g.nodes[l.t].id}`) || th.pairs.has(`${g.nodes[l.t].id}|${g.nodes[l.s].id}`));
-    const LW = { topic: 1.6, ref: 1, family: 2.6, see: 1.5, xtopic: 1.5, superseded: 1.3 };
-    const DASH = { member: [2, 3], hub: [2, 3], family: [9, 6], superseded: [5, 4] };
+    const LW = { topic: 1.6, ref: 1, family: 2.6, see: 1.5, xtopic: 1.5, superseded: 1.3, trail: 2.2 };
+    const DASH = { member: [2, 3], hub: [2, 3], family: [9, 6], superseded: [5, 4], trail: [2, 6] };
     for (const l of g.links) {
       if (!linkOn(l)) continue;
       const a = g.nodes[l.s], b = g.nodes[l.t]; const hi = (focus && (a === focus || b === focus)) || onThought(l);
       ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
       ctx.lineWidth = (LW[l.kind] || 0.6) / g.scale; ctx.setLineDash((DASH[l.kind] || []).map((v) => v / g.scale));
-      const base = l.kind === "see" || l.kind === "xtopic" ? (l.color || color("--accent2")) : l.kind === "superseded" ? color("--fg3") : l.kind === "family" ? color("--fg3") : color("--line");
+      const base = l.kind === "see" || l.kind === "xtopic" ? (l.color || color("--accent2")) : l.kind === "superseded" || l.kind === "family" || l.kind === "trail" ? color("--fg3") : color("--line");
       ctx.strokeStyle = hi ? (l.kind === "see" || l.kind === "xtopic" ? color("--fg") : color("--accent2")) : base; ctx.globalAlpha = (focus || th) && !hi ? (th ? 0.12 : 0.25) : l.kind === "see" || l.kind === "xtopic" ? 0.85 : 1; if (onThought(l)) ctx.lineWidth = 3 / g.scale; ctx.stroke();
     }
     ctx.setLineDash([]);
@@ -1173,7 +1313,7 @@ function runGraph(canvas, g, opts = {}) {
       const faded = ((focus || th) && !neigh.has(n)) || dim(n);
       ctx.globalAlpha = faded ? 0.18 : 1;
       ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-      if (n.kind === "project") { ctx.fillStyle = color("--bg"); ctx.fill(); ctx.lineWidth = 3.5 / g.scale; ctx.strokeStyle = n.color; if (n.friend) ctx.setLineDash([5 / g.scale, 3 / g.scale]); ctx.stroke(); ctx.setLineDash([]); ctx.beginPath(); ctx.arc(n.x, n.y, n.r * 0.38, 0, Math.PI * 2); ctx.fillStyle = n.color; ctx.fill(); }
+      if (n.kind === "project") { ctx.fillStyle = color("--bg"); ctx.fill(); ctx.lineWidth = 3.5 / g.scale; ctx.strokeStyle = n.color; if (n.friend) ctx.setLineDash([5 / g.scale, 3 / g.scale]); else if (n.trail) ctx.setLineDash([1.5 / g.scale, 3 / g.scale]); ctx.stroke(); ctx.setLineDash([]); ctx.beginPath(); ctx.arc(n.x, n.y, n.r * 0.38, 0, Math.PI * 2); ctx.fillStyle = n.color; ctx.fill(); }
       else if (n.kind === "topic") { ctx.fillStyle = n.color || color("--accent"); ctx.fill(); }
       else { const sup = n.entry.status === "superseded"; ctx.fillStyle = sup ? color("--bg") : evColor[ev(n)] || color("--muted"); ctx.fill(); if (sup) { ctx.lineWidth = 1.2 / g.scale; ctx.strokeStyle = evColor[ev(n)] || color("--fg3"); ctx.stroke(); } if (n.entry.status === "open" || n.entry.status === "needs-review" || n.entry.status === "pending-confirmation") { ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 2.5 / g.scale, 0, Math.PI * 2); ctx.lineWidth = 1.2 / g.scale; ctx.strokeStyle = color(`--${n.entry.status}`); ctx.stroke(); } }
       if (n === focus) { ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 4 / g.scale, 0, Math.PI * 2); ctx.lineWidth = 1.5 / g.scale; ctx.strokeStyle = color("--fg"); ctx.stroke(); }
@@ -1452,6 +1592,7 @@ function render() {
   const main = $("#main"); main.replaceChildren();
   const route = location.hash.slice(1) || "overview";
   selected = null;
+  if (!route.startsWith("graph")) { const bar = pathBar(); if (bar) main.append(bar); } // the graph carries it as an overlay
   if (route === "overview") { viewOverview(main); renderDetailsDefault(); }
   else if (route === "graph/family") { setScope("family", { rerender: false }); history.replaceState(null, "", "#graph"); viewGraph(main); renderDetailsDefault(); }
   else if (route === "graph") { viewGraph(main); renderDetailsDefault(); }
@@ -1549,12 +1690,15 @@ async function pollUpdates() {
   if (window.__KTW_STATE__) return;
   try { UPDATES = await (await fetch("/api/updates", { cache: "no-store" })).json(); markUpdates(); } catch { /* server gone; the live dot says so */ }
 }
+let LIVE_ES = null;
 function connectLive() {
   const dot = $("#live");
-  if (window.__KTW_STATE__) { dot.className = "live export"; dot.title = "static export — no live updates"; return; }
+  if (LIVE_ES) { LIVE_ES.close(); LIVE_ES = null; }
+  if (window.__KTW_STATE__ && MODE === "export") { dot.className = "live export"; dot.title = "static export — no live updates"; return; }
+  if (!LIVE()) { dot.className = "live export"; dot.title = "public export — no live updates"; return; }
   let es;
   const open = () => {
-    es = new EventSource(api("/api/events"));
+    es = LIVE_ES = new EventSource(api("/api/events"));
     es.addEventListener("state", (ev) => { try { applyState(normalizeState(JSON.parse(ev.data))); dot.className = "live on"; dot.title = `live — last update ${new Date().toLocaleTimeString()}`; } catch (err) { console.error(err); } });
     es.onopen = () => { dot.className = "live on"; dot.title = "live — watching the project for changes"; };
     es.onerror = () => { dot.className = "live off"; dot.title = "connection lost — the server is gone; retrying"; };
@@ -1598,6 +1742,7 @@ async function setupProjects() {
   fitSelect(sel);
   if (S) { const t = $("#project-title").querySelector("b"); if (t) t.remove(); }
   sel.onchange = () => { location.href = `${location.pathname}?project=${encodeURIComponent(sel.value)}${location.hash || "#overview"}`; };
+  SELECTED_DEFAULT = data.selected;
 }
 function setupMode() {
   const box = $("#mode"); const p = S.project;
@@ -1623,6 +1768,8 @@ function setupMode() {
 async function boot() {
   setupTheme(); setupSearch(); setupScope(); setupSideToggle();
   window.addEventListener("hashchange", () => { RESTORE_SCROLL = 0; render(); });
+  window.addEventListener("popstate", onPopState);
+  document.addEventListener("click", onLinkClick);
   if (MODE === "public") {
     const r = await fetchPublicState(PUBLIC, PUBLIC_ROOT);
     const dot = $("#live"); dot.className = "live export"; dot.title = "public export — no live updates";
