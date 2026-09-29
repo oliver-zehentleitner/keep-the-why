@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import {
   esc, plural, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, canonicalOf,
   parseSupersededBy, kindLabel, typeName, groupByFamily, searchTerms, searchHit, compareHits, snippetAt, highlight,
-  resolveLocation, bodyProse, linkFamily, authorLookup, mergeStates, friendsOf,
+  resolveLocation, bodyProse, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf,
 } from "../../ktw_dashboard/web/lib.js";
 
 test("esc escapes the five HTML characters and nothing else", () => {
@@ -243,4 +243,15 @@ test("friendsOf: repositories cited by See or Superseded by, the family left out
   ]);
   assert.deepEqual(friendsOf([], [SELF]), []);
   assert.deepEqual(friendsOf(entries.slice(2), [SELF]), []);
+});
+
+test("thoughtsOf: longest citation chains of at least four entries, origin first, no part of a longer one", () => {
+  // e cites d cites c cites b cites a; f cites c too; g-h is short; x-y-z-x is a cycle of three
+  const edges = [["e", "d"], ["d", "c"], ["c", "b"], ["b", "a"], ["f", "c"], ["g", "h"], ["x", "y"], ["y", "z"], ["z", "x"]];
+  assert.deepEqual(thoughtsOf(edges), [["a", "b", "c", "d", "e"], ["a", "b", "c", "f"]]);
+  assert.deepEqual(thoughtsOf(edges, 6), []);
+  assert.deepEqual(thoughtsOf([["a", "b"], ["b", "c"], ["c", "a"]], 3), [["a", "c", "b"], ["b", "a", "c"], ["c", "b", "a"]]);
+  // a fan of many long chains stops at the cap instead of enumerating them all
+  const fan = []; for (let i = 0; i < 50; i++) fan.push([`s${i}`, "m"]); fan.push(["m", "n"], ["n", "o"], ["o", "p"]);
+  assert.equal(thoughtsOf(fan, 4, 10).length, 10);
 });

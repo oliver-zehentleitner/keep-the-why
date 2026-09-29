@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-import { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, searchTerms, searchHit, compareHits, snippetAt, highlight, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf } from "./lib.js";
+import { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, searchTerms, searchHit, compareHits, snippetAt, highlight, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf } from "./lib.js";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const narrow = () => !!window.matchMedia?.("(max-width: 900px)").matches;
@@ -643,6 +643,8 @@ function renderDetailsDefault() {
   const d = $("#details"); d.replaceChildren();
   const route = location.hash.slice(1) || "overview";
   if (route === "graph" || route === "graph/family") {
+    d.append(el("div", { id: "thoughts" }));
+    renderThoughts(scope() === "family" ? (fgraph && Date.now() - fgraph.at < 30000 ? fgraph : null) : graph);
     d.append(el("h3", {}, "Legend"), el("div", { class: "legend-list" },
       scope() === "family" ? [
         el("span", {}, el("i", { class: "dot", style: "background:var(--bg);border:3px solid var(--accent);width:12px;height:12px" }), "project — a ring in its colour; its topics take the same colour"),
@@ -961,6 +963,58 @@ function miniFriends(g) {
     on ? "friends" : `friends (${FRIENDS.on ? waiting.length : list.length})`);
   return el("span", { class: "mini-seg mini-friends" }, b);
 }
+// ---------------------------------------------------------------- thoughts
+// Thoughts: lines of reasoning through the graph — the longest chains of See
+// and Superseded by between entries (each one cites the one before), at least
+// four entries long, across projects where the graph spans them (family,
+// friends). Listed beside the graph; pointing at one lights its path, a click
+// holds it and lists its steps in reading order, origin first. A chain made
+// only of Superseded by is how one decision changed over time: an evolution.
+let THOUGHT_MIN = (() => { try { return Number(localStorage.getItem("ktw-thought-min")) || 4; } catch { return 4; } })(); // entries a thought has at least, kept per browser
+function graphThoughts(g) {
+  const kind = {};
+  const edges = [];
+  for (const l of g.links) {
+    if (l.kind !== "see" && l.kind !== "superseded") continue;
+    const a = g.nodes[l.s], b = g.nodes[l.t];
+    if (a?.kind !== "entry" || b?.kind !== "entry") continue;
+    // later first: a See runs from the entry that cites to the one cited, a Superseded by from the old entry to its successor
+    const [later, earlier] = l.kind === "see" ? [a, b] : [b, a];
+    edges.push([later.id, earlier.id]); kind[`${later.id}|${earlier.id}`] = l.kind;
+  }
+  const byId = Object.fromEntries(g.nodes.map((n) => [n.id, n]));
+  return thoughtsOf(edges, THOUGHT_MIN).map((ids) => {
+    const steps = ids.map((id) => byId[id]);
+    const kinds = ids.slice(1).map((id, i) => kind[`${id}|${ids[i]}`]);
+    return { ids, steps, evolution: kinds.every((k) => k === "superseded") };
+  });
+}
+let THOUGHT_PIN = null; // the ids of the held thought, joined
+function lightThought(g, t) {
+  g.thought = t ? { nodes: new Set(t.steps), pairs: new Set(t.ids.slice(1).map((id, i) => `${id}|${t.ids[i]}`)) } : null;
+  g.alpha = Math.max(g.alpha, 0.02); g.wake?.();
+}
+function renderThoughts(g) {
+  const box = $("#thoughts");
+  if (!box || !g) return;
+  const list = graphThoughts(g);
+  const short = (n) => { const t = (n?.label || "").replace(/`/g, ""); return t.length > 34 ? t.slice(0, 32) + "…" : t; };
+  const held = list.find((t) => t.ids.join("|") === THOUGHT_PIN) || null;
+  lightThought(g, held);
+  const minSeg = el("span", { class: "thought-min", title: "entries a thought has at least" }, "from ", ...[3, 4, 5].map((m) => el("button", { type: "button", class: m === THOUGHT_MIN ? "on" : "", onclick: () => { THOUGHT_MIN = m; try { localStorage.setItem("ktw-thought-min", String(m)); } catch {} THOUGHT_PIN = null; renderThoughts(g); } }, String(m))));
+  if (!list.length) return setKids(box, el("h3", {}, "Thoughts ", minSeg), el("p", { class: "note" }, `No line of reasoning in this graph is ${THOUGHT_MIN} or more entries long yet — a thought is a chain of See or Superseded by, each entry citing the one before.`));
+  setKids(box, el("h3", {}, `Thoughts (${list.length}) `, minSeg), el("p", { class: "note" }, "Chains of See and Superseded by, origin first. Point at one to light its path, click to hold it."),
+    ...list.map((t) => {
+      const key = t.ids.join("|"); const on = key === THOUGHT_PIN;
+      const row = el("div", { class: `thought ${on ? "on" : ""}` },
+        el("button", { type: "button", class: "thought-head", title: t.steps.map((n) => n.label).join("\n→ "),
+          onmouseenter: () => { if (!THOUGHT_PIN) lightThought(g, t); }, onmouseleave: () => { if (!THOUGHT_PIN) lightThought(g, null); },
+          onclick: () => { THOUGHT_PIN = on ? null : key; renderThoughts(g); } },
+          el("span", { class: "count" }, String(t.steps.length)), `${short(t.steps[0])} → ${short(t.steps[t.steps.length - 1])}`, t.evolution ? el("span", { class: "pill" }, "evolution") : null),
+        on ? el("ol", { class: "thought-steps" }, t.steps.map((n) => el("li", {}, el("a", { href: n.href }, n.label.replace(/`/g, ""))))) : null);
+      return row;
+    }));
+}
 function friendsLegend(g) {
   if (!FRIENDS.on) return [];
   let i = -1;
@@ -982,6 +1036,7 @@ function viewGraph(main) {
       el("label", {}, el("input", { type: "checkbox", checked: g.showLabels, onchange: (ev) => { g.showLabels = ev.target.checked; g.wake?.(); } }), "labels"),
       el("button", { class: "link-btn", onclick: () => { g.scale = family ? 0.7 : 1; g.ox = 0; g.oy = 0; g.userMoved = false; for (const n of g.nodes) { n.fixed = false; } g.alpha = 1; g.wake?.(); } }, "reset"),
       friendsUi(g),
+      el("label", { title: "the graph turns very slowly; it stops while you point at it" }, el("input", { type: "checkbox", checked: driftOn(), onchange: (ev) => { setDrift(ev.target.checked); g.wake?.(); } }), "motion"),
     );
     const legend = family
       ? el("div", { class: "graph-legend" },
@@ -995,6 +1050,7 @@ function viewGraph(main) {
         el("span", {}, "— reference · ··· membership"), ...friendsLegend(g));
     wrap.replaceChildren(canvas, ui, legend, el("div", { class: "graph-hint" }, family ? "family — a project opens its overview · drag nodes · wheel zoom · drag background to pan" : "drag nodes · wheel zoom · drag background to pan · click to open"));
     runGraph(canvas, g, { fit: family });
+    renderThoughts(g);
   };
   if (!family) return fill(buildGraph());
   if (fgraph && Date.now() - fgraph.at < 30000) return fill(fgraph); // a live update re-renders: no refetch
@@ -1002,6 +1058,14 @@ function viewGraph(main) {
   buildFamilyGraph().then((g) => { if (wrap.isConnected && location.hash === "#graph" && scope() === "family") fill(g); });
 }
 const go = (href) => { if (href.startsWith("#")) location.hash = href; else location.href = href; };
+// The graph turns very slowly in its plane — one turn in about six minutes —
+// and stops while it is pointed at, dragged or panned. Off with the system's
+// reduced-motion setting, or with *motion* in the graph (kept per browser).
+const DRIFT_RATE = (2 * Math.PI) / 360000; // radians per millisecond
+let DRIFT = (() => { try { return localStorage.getItem("ktw-motion") !== "off"; } catch { return true; } })();
+const reducedMotion = () => { try { return !!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches; } catch { return false; } };
+const driftOn = () => DRIFT && !reducedMotion();
+function setDrift(on) { DRIFT = on; try { localStorage.setItem("ktw-motion", on ? "on" : "off"); } catch {} }
 function runGraph(canvas, g, opts = {}) {
   const mini = !!opts.mini;
   const ctx = canvas.getContext("2d");
@@ -1013,7 +1077,7 @@ function runGraph(canvas, g, opts = {}) {
   resize();
   const ro = new ResizeObserver(resize); ro.observe(canvas);
   const toWorld = (px, py) => [(px - W / 2 - g.ox) / g.scale, (py - H / 2 - g.oy) / g.scale];
-  const visible = (n) => n.kind !== "entry" || g.showEntries;
+  const visible = (n) => n.kind !== "entry" || g.showEntries || !!g.thought?.nodes.has(n);
   // a topic-level reference stands in for entry references only while entries are hidden
   const linkOn = (l) => visible(g.nodes[l.s]) && visible(g.nodes[l.t]) && (l.kind !== "xtopic" || !g.showEntries);
   const dim = (n) => n.kind === "entry" && filterActive() && !matches(n.entry);
@@ -1054,7 +1118,13 @@ function runGraph(canvas, g, opts = {}) {
   });
   const ev = (n) => n.entry.evidence;
   const evColor = { confirmed: color("--confirmed"), inferred: color("--inferred"), unknown: color("--unknown") };
-  function step() {
+  let lastT = 0, frame = 0;
+  function step(now) {
+    const dt = lastT && now ? Math.min(100, now - lastT) : 16; lastT = now || 0;
+    const drifting = driftOn() && !hover && !drag && !pan && !pinch;
+    if (drifting) { const a = DRIFT_RATE * dt, c = Math.cos(a), sn = Math.sin(a); for (const n of g.nodes) { const x = n.x, y = n.y; n.x = x * c - y * sn; n.y = x * sn + y * c; } }
+    // settled and only turning: every other frame is enough
+    if (drifting && g.alpha <= 0.003 && (frame++ & 1)) { g.raf = canvas.isConnected ? requestAnimationFrame(step) : null; return; }
     const ns = g.nodes.filter(visible);
     if (g.alpha > 0.003) {
       const k = g.alpha;
@@ -1083,21 +1153,24 @@ function runGraph(canvas, g, opts = {}) {
     // draw
     ctx.clearRect(0, 0, W, H);
     ctx.save(); ctx.translate(W / 2 + g.ox, H / 2 + g.oy); ctx.scale(g.scale, g.scale);
-    const focus = hover || (opts.focusId && g.index[opts.focusId] != null ? g.nodes[g.index[opts.focusId]] : null) || (!mini && selected ? g.nodes[g.index[`e:${selected}`]] : null);
+    const th = g.thought;
+    const focus = th ? null : hover || (opts.focusId && g.index[opts.focusId] != null ? g.nodes[g.index[opts.focusId]] : null) || (!mini && selected ? g.nodes[g.index[`e:${selected}`]] : null);
     const neigh = new Set(); if (focus) { neigh.add(focus); for (const l of g.links) { if (!linkOn(l)) continue; if (g.nodes[l.s] === focus) neigh.add(g.nodes[l.t]); if (g.nodes[l.t] === focus) neigh.add(g.nodes[l.s]); } }
+    if (th) for (const n of th.nodes) neigh.add(n);
+    const onThought = (l) => !!th && (l.kind === "see" || l.kind === "superseded") && (th.pairs.has(`${g.nodes[l.s].id}|${g.nodes[l.t].id}`) || th.pairs.has(`${g.nodes[l.t].id}|${g.nodes[l.s].id}`));
     const LW = { topic: 1.6, ref: 1, family: 2.6, see: 1.5, xtopic: 1.5, superseded: 1.3 };
     const DASH = { member: [2, 3], hub: [2, 3], family: [9, 6], superseded: [5, 4] };
     for (const l of g.links) {
       if (!linkOn(l)) continue;
-      const a = g.nodes[l.s], b = g.nodes[l.t]; const hi = focus && (a === focus || b === focus);
+      const a = g.nodes[l.s], b = g.nodes[l.t]; const hi = (focus && (a === focus || b === focus)) || onThought(l);
       ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
       ctx.lineWidth = (LW[l.kind] || 0.6) / g.scale; ctx.setLineDash((DASH[l.kind] || []).map((v) => v / g.scale));
       const base = l.kind === "see" || l.kind === "xtopic" ? (l.color || color("--accent2")) : l.kind === "superseded" ? color("--fg3") : l.kind === "family" ? color("--fg3") : color("--line");
-      ctx.strokeStyle = hi ? (l.kind === "see" || l.kind === "xtopic" ? color("--fg") : color("--accent2")) : base; ctx.globalAlpha = focus && !hi ? 0.25 : l.kind === "see" || l.kind === "xtopic" ? 0.85 : 1; ctx.stroke();
+      ctx.strokeStyle = hi ? (l.kind === "see" || l.kind === "xtopic" ? color("--fg") : color("--accent2")) : base; ctx.globalAlpha = (focus || th) && !hi ? (th ? 0.12 : 0.25) : l.kind === "see" || l.kind === "xtopic" ? 0.85 : 1; if (onThought(l)) ctx.lineWidth = 3 / g.scale; ctx.stroke();
     }
     ctx.setLineDash([]);
     for (const n of ns) {
-      const faded = (focus && !neigh.has(n)) || dim(n);
+      const faded = ((focus || th) && !neigh.has(n)) || dim(n);
       ctx.globalAlpha = faded ? 0.18 : 1;
       ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
       if (n.kind === "project") { ctx.fillStyle = color("--bg"); ctx.fill(); ctx.lineWidth = 3.5 / g.scale; ctx.strokeStyle = n.color; if (n.friend) ctx.setLineDash([5 / g.scale, 3 / g.scale]); ctx.stroke(); ctx.setLineDash([]); ctx.beginPath(); ctx.arc(n.x, n.y, n.r * 0.38, 0, Math.PI * 2); ctx.fillStyle = n.color; ctx.fill(); }
@@ -1106,12 +1179,12 @@ function runGraph(canvas, g, opts = {}) {
       if (n === focus) { ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 4 / g.scale, 0, Math.PI * 2); ctx.lineWidth = 1.5 / g.scale; ctx.strokeStyle = color("--fg"); ctx.stroke(); }
     }
     ctx.globalAlpha = 1;
-    if (g.showLabels || focus) {
+    if (g.showLabels || focus || th) {
       ctx.font = `${(mini ? 11 : 12) / g.scale}px ${color("--font") || "sans-serif"}`; ctx.textAlign = "center"; ctx.textBaseline = "top";
       for (const n of ns) {
-        const show = n.kind === "project" ? true : n.kind === "topic" ? (mini ? neigh.has(n) || n === focus || g.nodes.filter((x) => x.kind === "topic").length <= 12 : g.showLabels || neigh.has(n)) : (focus && (neigh.has(n) || n === focus)) || (!mini && g.showLabels && g.scale > 1.6);
+        const show = th && th.nodes.has(n) ? true : n.kind === "project" ? true : n.kind === "topic" ? (mini ? neigh.has(n) || n === focus || g.nodes.filter((x) => x.kind === "topic").length <= 12 : g.showLabels || neigh.has(n)) : (focus && (neigh.has(n) || n === focus)) || (!mini && g.showLabels && g.scale > 1.6);
         if (!show) continue;
-        const faded = focus && !neigh.has(n) && n !== focus; if (faded) continue;
+        const faded = (focus || th) && !neigh.has(n) && n !== focus; if (faded) continue;
         const lbl = n.label.replace(/`/g, ""); const txt = lbl.length > 48 ? lbl.slice(0, 46) + "…" : lbl;
         const tw = ctx.measureText(txt).width; const y = n.y + n.r + 3 / g.scale;
         ctx.fillStyle = color("--bg"); ctx.globalAlpha = 0.75; ctx.fillRect(n.x - tw / 2 - 3 / g.scale, y - 1 / g.scale, tw + 6 / g.scale, 15 / g.scale); ctx.globalAlpha = 1;
@@ -1122,7 +1195,7 @@ function runGraph(canvas, g, opts = {}) {
     }
     ctx.restore();
     if (!canvas.isConnected) { ro.disconnect(); g.raf = null; return; }
-    const busy = g.alpha > 0.003 || drag || pan || pinch || hover;
+    const busy = g.alpha > 0.003 || drag || pan || pinch || hover || driftOn();
     g.raf = busy ? requestAnimationFrame(step) : null; // idle: no frames until something happens
   }
   const wake = () => { if (!g.raf && canvas.isConnected) g.raf = requestAnimationFrame(step); };

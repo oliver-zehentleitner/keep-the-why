@@ -112,6 +112,20 @@ if (withSee) {
   if (cited.size && !btn) errors.push(`graph: entries cite ${cited.size} other repositories, but there is no friends button`);
   if (!cited.size && btn) errors.push("graph: a friends button without a cross-project reference");
 }
+// thoughts: the chains of See and Superseded by beside the graph; a click holds one and lists its steps
+{
+  await go("#graph"); await tick(100);
+  const heads = [...window.document.querySelectorAll("#thoughts .thought-head")];
+  report.thoughts = heads.map((h) => h.textContent.slice(0, 60));
+  if (!window.document.getElementById("thoughts")) errors.push("graph: no thoughts box beside the graph");
+  if (heads.length) {
+    heads[0].click(); await tick(50);
+    const steps = window.document.querySelectorAll("#thoughts .thought.on .thought-steps li").length;
+    if (steps < 4) errors.push("thoughts: a held thought lists fewer than four steps: " + steps);
+    window.document.querySelector("#thoughts .thought.on .thought-head")?.click(); await tick(50);
+    if (window.document.querySelector("#thoughts .thought.on")) errors.push("thoughts: a second click does not let go");
+  }
+}
 const search = window.document.getElementById("search");
 search.value = S.entries[0].title.split(" ").slice(0, 2).join(" ");
 search.dispatchEvent(new window.Event("input"));

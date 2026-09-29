@@ -178,6 +178,33 @@ export function friendsOf(entries, exclude = []) {
   return [...out.values()].sort((a, b) => a.canonical.localeCompare(b.canonical));
 }
 
+// Thoughts: lines of reasoning through the graph. `edges` are [from, to]
+// pairs of entry ids, one per See or Superseded by: `from` cites `to`, so
+// `to` came first. A thought is a
+// longest chain of such citations with at least `min` entries, returned in
+// reading order (origin first), never a part of a longer one. Enumeration
+// stops at `cap` chains, so a dense web cannot hang the page.
+export function thoughtsOf(edges, min = 4, cap = 2000) {
+  const out = new Map();
+  for (const [a, b] of edges) { if (a === b) continue; if (!out.has(a)) out.set(a, new Set()); out.get(a).add(b); }
+  const cited = new Set(edges.map(([, b]) => b));
+  const found = []; let budget = cap;
+  const walk = (n, path, seen) => {
+    if (budget <= 0) return;
+    let longer = false;
+    for (const m of out.get(n) || []) if (!seen.has(m)) { longer = true; seen.add(m); path.push(m); walk(m, path, seen); path.pop(); seen.delete(m); }
+    if (!longer && path.length >= min) { found.push([...path].reverse()); budget--; }
+  };
+  // start where nothing cites the entry (the newest end); a web that is all cycles starts everywhere
+  const starts = [...out.keys()].filter((n) => !cited.has(n));
+  for (const n of starts.length ? starts : [...out.keys()]) walk(n, [n], new Set([n]));
+  const key = (p) => "\u0000" + p.join("\u0000") + "\u0000";
+  const keys = found.map(key);
+  const kept = found.filter((p, i) => !keys.some((k, j) => j !== i && k.length > keys[i].length && k.includes(keys[i])));
+  const uniq = [...new Map(kept.map((p) => [key(p), p])).values()];
+  return uniq.sort((a, b) => b.length - a.length || a.join().localeCompare(b.join()));
+}
+
 // The family graph's structure. `groups` are the projects in it, each
 // { key, canonical, root, role, state }. Returns
 //   parentOf: key -> the key of the project its parent line names (when that
