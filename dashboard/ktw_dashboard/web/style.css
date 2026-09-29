@@ -404,3 +404,8 @@ a.author:hover { color: var(--accent2); }
 .thought-reader .thought-step.superseded { opacity: .85; }
 .thought-reader .thought-step.missing { background: transparent; border-style: dashed; }
 .thought-reader .thought-link { color: var(--fg3); font-size: 12px; text-align: center; padding: 6px 0; letter-spacing: .04em; }
+.details .thought.open .thought-head .count { color: var(--accent2); }
+.details .thought-follow { display: block; font-size: 11px; margin: 0 0 4px 26px; text-align: left; }
+.details .thought-follow-all { display: block; font-size: 12px; margin: 0 0 8px; }
+.details .thought-open-head { margin-top: 16px; }
+.thought-reader .thought-beyond { border: 1px dashed var(--line); border-radius: var(--radius); padding: 8px 12px; margin: 8px 0; font-size: 12px; color: var(--fg2); }

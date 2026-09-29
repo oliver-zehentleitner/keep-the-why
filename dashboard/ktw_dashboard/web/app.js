@@ -470,11 +470,17 @@ function viewThought(main, refs) {
   // an entry of a friend is found once the friends are in: they load with a graph, and the view renders again
   if (steps.some((f) => !f) && FRIENDS_AUTO && !FRIENDS.on && !FRIENDS.loading) buildGraph();
   const links = steps.map((f, i) => (i ? thoughtLink(steps[i - 1], f) : null));
+  // where the chain goes on beyond what the page has loaded: before its origin, after its newest entry
+  const beyond = (f, kind) => (f ? entryRefs(f.e).filter((x) => x.kind === kind && x.remote && !findEntry(x.uuid)) : []);
+  const before = beyond(steps[0], "see"), after = beyond(steps[steps.length - 1], "superseded");
+  const goOn = (ends, where) => el("div", { class: "thought-beyond" }, `${where} goes on in ${[...new Set(ends.map((x) => repoLabel(x.remote)))].join(", ")} — not loaded on this page. `,
+    el("button", { type: "button", class: "link-btn", disabled: CHAIN.busy, onclick: () => followThought({ anchor: steps.filter(Boolean).pop()?.e.uuid }, (c) => { if (c) location.hash = thoughtHref(c); else render(); }) }, CHAIN.busy ? "loading…" : "load the whole chain"));
   const evolution = steps.length > 1 && links.slice(1).every((l) => l === "superseded by");
   const r = el("div", { class: "reader thought-reader" },
     el("div", { class: "crumbs" }, el("a", { href: "#graph" }, "Graph"), " / thought"),
     el("h1", {}, evolution ? `An evolution in ${refs.length} entries` : `A thought in ${refs.length} entries`),
-    el("p", { class: "sub" }, evolution ? "One decision, replaced step by step — from the first version to the one in force." : "A chain of entries, each citing the one before — read from the origin to where it led."));
+    el("p", { class: "sub" }, evolution ? "One decision, replaced step by step — from the first version to the one in force." : "A chain of entries, each citing the one before — read from the origin to where it led."),
+    before.length ? goOn(before.map((x) => ({ ...x })), "↑ Before its origin, it") : null);
   steps.forEach((f, i) => {
     if (i) r.append(el("div", { class: "thought-link" }, `↓ ${links[i]}`));
     if (!f) { r.append(el("section", { class: "thought-step missing" }, el("div", { class: "crumbs" }, `${i + 1} / ${refs.length}`), el("p", { class: "note" }, `Entry ${refs[i]} is not loaded on this page — it lives in a project outside it (a friend, or a step of a path); load the friends in the graph, or walk there.`))); return; }
@@ -488,6 +494,7 @@ function viewThought(main, refs) {
       e.revisit_when ? el("div", { class: "body" }, el("div", { class: "label", html: `<b>Revisit when</b><p>${inline(e.revisit_when)}</p>` })) : null));
     INLINE_PROJECT = null;
   });
+  if (after.length) r.append(goOn(after, "↓ After its newest entry, it"));
   main.append(r);
   renderDetailsDefault();
 }
@@ -991,17 +998,22 @@ function toggleFriend(k) {
 // the unit's repositories and an Id there. Called by buildGraph and
 // buildFamilyGraph after their own nodes.
 const unitKey = (members) => members.map((m) => m.key).sort().join(" ");
+// an entry's See and Superseded by, each { uuid, remote, kind }
+const entryRefs = (e) => [...(e.see || []).map((x) => x && { uuid: x.uuid, remote: x.remote, kind: "see" }), e.superseded_by ? { ...parseSupersededBy(e.superseded_by), kind: "superseded" } : null].filter((x) => x?.uuid);
 function friendUnits(g) {
   // friends of one family are one unit: the Ids cited in any of its repositories together
   const units = new Map();
-  (g.friends || []).forEach((f) => {
+  const add = (f, via) => {
     const r = FRIENDS.loaded[fkey(f.canonical)];
     if (!r?.state || onPath(f.canonical)) return;
     const members = r.members || [r];
     const k = unitKey(members);
-    if (!units.has(k)) units.set(k, { k, r, members, uuids: new Set() });
-    for (const u of f.uuids) units.get(k).uuids.add(u);
-  });
+    if (!units.has(k)) units.set(k, { k, r, members, uuids: new Set(), via });
+    const u = units.get(k); if (via === "friend") u.via = "friend";
+    for (const x of f.uuids) u.uuids.add(x);
+  };
+  if (FRIENDS.on) (g.friends || []).forEach((f) => add(f, "friend"));
+  for (const f of CHAIN.extra.values()) add(f, "chain"); // reached by following a thought
   return [...units.values()];
 }
 function addFriendLayer(g, prev) {
@@ -1013,8 +1025,8 @@ function addFriendLayer(g, prev) {
     hub: () => moveTo(t, "#graph"), entry: () => (e) => moveTo(t, entryHref(e)), topic: () => (file) => moveTo(t, `#topic/${file}`),
     next: i + 1 < trail.length ? `trail:${trail[i + 1].key}` : null,
   }));
-  if (FRIENDS.on) friendUnits(g).forEach((u, i) => items.push({
-    k: u.k, kind: "friend", color: friendColor(i), cited: FRIENDS.expanded.has(u.k) ? null : u.uuids, members: u.members,
+  friendUnits(g).forEach((u, i) => items.push({
+    k: u.k, kind: "friend", chain: u.via === "chain", color: friendColor(i), cited: FRIENDS.expanded.has(u.k) ? null : u.uuids, members: u.members,
     hub: () => toggleFriend(u.k),
     entry: (m) => (m.centre ? (e) => moveTo({ centre: m.centre, state: m.state }, entryHref(e)) : null),
     topic: (m) => (m.centre ? (file) => moveTo({ centre: m.centre, state: m.state }, `#topic/${file}`) : null),
@@ -1029,8 +1041,9 @@ function addLinkedLayer(g, prev, items) {
     else { n.x = (near?.x || 0) + (Math.random() - 0.5) * 120; n.y = (near?.y || 0) + (Math.random() - 0.5) * 120; n.vx = n.vy = 0; }
     index[n.id] = nodes.length; nodes.push(n); return n;
   };
-  const refsOf = (e) => [...(e.see || []).map((x) => x && { uuid: x.uuid, remote: x.remote, kind: "see" }), e.superseded_by ? { ...parseSupersededBy(e.superseded_by), kind: "superseded" } : null].filter((x) => x?.uuid);
+  const refsOf = entryRefs;
   const ours = nodes.filter((n) => n.kind === "entry");
+  const ourUuids = new Set(ours.map((n) => n.entry.uuid).filter(Boolean));
   const pool = new Set(ours.map((n) => n.entry.uuid).filter(Boolean));
   for (const it of items) for (const m of it.members) for (const e of m.state.entries || []) if (e.uuid) pool.add(e.uuid);
   const R = 440 + 30 * items.length;
@@ -1039,13 +1052,22 @@ function addLinkedLayer(g, prev, items) {
     const col = it.color;
     const canons = new Set(it.members.map((m) => fkey(m.canonical)).filter(Boolean));
     const unitUuids = new Set(it.members.flatMap((m) => (m.state.entries || []).map((e) => e.uuid).filter(Boolean)));
-    // the path's steps show what links to the rest: the graph's entries, the friends', the other steps'
-    let cited = it.cited;
-    if (cited === "linked") {
-      cited = new Set();
-      for (const m of it.members) for (const e of m.state.entries || []) if (e.uuid && refsOf(e).some((x) => pool.has(x.uuid) && !unitUuids.has(x.uuid))) cited.add(e.uuid);
-      for (const n of ours) for (const x of refsOf(n.entry)) if (unitUuids.has(x.uuid) && (!x.remote || canons.has(fkey(x.remote)))) cited.add(x.uuid);
-      for (const o of items) if (o !== it) for (const m of o.members) for (const e of m.state.entries || []) for (const x of refsOf(e)) if (unitUuids.has(x.uuid) && x.remote && canons.has(fkey(x.remote))) cited.add(x.uuid);
+    let cited = it.cited; // null: all of the unit (an expanded friend)
+    if (cited !== null) {
+      const seeds = new Set(cited === "linked" ? [] : cited);
+      if (cited === "linked") { // a path's step: what links to the rest — the graph's entries, the friends', the other steps'
+        for (const m of it.members) for (const e of m.state.entries || []) if (e.uuid && refsOf(e).some((x) => pool.has(x.uuid) && !unitUuids.has(x.uuid))) seeds.add(e.uuid);
+        for (const n of ours) for (const x of refsOf(n.entry)) if (unitUuids.has(x.uuid) && (!x.remote || canons.has(fkey(x.remote)))) seeds.add(x.uuid);
+        for (const o of items) if (o !== it) for (const m of o.members) for (const e of m.state.entries || []) for (const x of refsOf(e)) if (unitUuids.has(x.uuid) && x.remote && canons.has(fkey(x.remote))) seeds.add(x.uuid);
+      }
+      // the unit's entries that cite the graph belong to it too
+      for (const m of it.members) for (const e of m.state.entries || []) if (e.uuid && refsOf(e).some((x) => x.remote && ourUuids.has(x.uuid))) seeds.add(e.uuid);
+      // and everything a See or Superseded by chain inside the unit connects to them, so a thought runs through the unit whole
+      const adj = new Map(); const tie = (a, b) => { if (!adj.has(a)) adj.set(a, new Set()); if (!adj.has(b)) adj.set(b, new Set()); adj.get(a).add(b); adj.get(b).add(a); };
+      for (const m of it.members) for (const e of m.state.entries || []) if (e.uuid) for (const x of refsOf(e)) if (unitUuids.has(x.uuid) && (!x.remote || canons.has(fkey(x.remote)))) tie(e.uuid, x.uuid);
+      const stack = [...seeds];
+      while (stack.length) { const u = stack.pop(); for (const v of adj.get(u) || []) if (!seeds.has(v)) { seeds.add(v); stack.push(v); } }
+      cited = seeds;
     }
     const ang = (2 * Math.PI * i) / items.length + Math.PI / 5;
     const centre = { x: R * Math.cos(ang), y: R * Math.sin(ang) };
@@ -1054,7 +1076,7 @@ function addLinkedLayer(g, prev, items) {
     const entriesShown = [];
     it.members.forEach((m, j) => {
       const off = it.members.length > 1 ? { x: centre.x + 130 * Math.cos((2 * Math.PI * j) / it.members.length), y: centre.y + 130 * Math.sin((2 * Math.PI * j) / it.members.length) } : centre;
-      const hub = add({ id: `f:${it.k}:${m.key}`, kind: "project", friend: it.kind === "friend", trail: it.kind === "trail", label: m.name, r: j === 0 ? 13 : 10, color: col, href: m.open || "#graph", action: it.hub }, off);
+      const hub = add({ id: `f:${it.k}:${m.key}`, kind: "project", friend: it.kind === "friend", chain: !!it.chain, trail: it.kind === "trail", label: m.name, r: j === 0 ? 13 : 10, color: col, href: m.open || "#graph", action: it.hub }, off);
       hubs[m.key] = index[hub.id];
       const own = (m.state.entries || []).filter((e) => !cited || (e.uuid && cited.has(e.uuid)));
       const files = new Set(own.map((e) => e.file));
@@ -1148,7 +1170,7 @@ function remember(c, state) {
 function setCentre(c, state) {
   MODE = c.mode; PUBLIC = c.mode === "public" ? c.canonical : null; PUBLIC_ROOT = c.mode === "public" ? c.root || "" : ""; PROJECT = c.mode === "live" ? c.project || null : null;
   graph = null; fgraph = null; TREE = null; TREE_AT = 0; TREE_ASKED = false; PUBLIC_TREE = null; LAST_POOL = null;
-  FRIENDS.on = false; FRIENDS.expanded.clear(); THOUGHT_PIN = null; MINI = null;
+  FRIENDS.on = false; FRIENDS.expanded.clear(); THOUGHT_PIN = null; MINI = null; CHAIN.extra.clear(); CHAIN.tried.clear();
   if (MODE === "public") state.exported = true;
   connectLive();
   const sel = $("#project-select");
@@ -1237,7 +1259,14 @@ function miniFriends(g) {
 // holds it and lists its steps in reading order, origin first. A chain made
 // only of Superseded by is how one decision changed over time: an evolution.
 let THOUGHT_MIN = (() => { try { return Number(localStorage.getItem("ktw-thought-min")) || 4; } catch { return 4; } })(); // entries a thought has at least, kept per browser
-function graphThoughts(g) {
+// Every chain in the graph, at least two entries long: the entry-to-entry
+// edges in reading order (later → earlier), plus an edge to a placeholder for
+// every reference into an entry the page has not loaded — a chain that ends
+// in a placeholder goes on beyond this page, before its origin (a See into
+// an unloaded repository) or after its newest entry (a Superseded by naming a
+// successor there). What cites a chain's newest entry from a repository that
+// is not loaded cannot be known; there is no index of the web, by design.
+function graphChains(g) {
   const kind = {};
   const edges = [];
   for (const l of g.links) {
@@ -1248,12 +1277,76 @@ function graphThoughts(g) {
     const [later, earlier] = l.kind === "see" ? [a, b] : [b, a];
     edges.push([later.id, earlier.id]); kind[`${later.id}|${earlier.id}`] = l.kind;
   }
+  const present = new Set(g.nodes.filter((n) => n.kind === "entry" && n.entry.uuid).map((n) => n.entry.uuid));
+  for (const n of g.nodes) {
+    if (n.kind !== "entry") continue;
+    for (const x of entryRefs(n.entry)) {
+      if (!x.remote || present.has(x.uuid)) continue;
+      const v = `?${x.remote}|${x.uuid}`;
+      edges.push(x.kind === "see" ? [n.id, v] : [v, n.id]);
+    }
+  }
   const byId = Object.fromEntries(g.nodes.map((n) => [n.id, n]));
-  return thoughtsOf(edges, THOUGHT_MIN).map((ids) => {
-    const steps = ids.map((id) => byId[id]);
-    const kinds = ids.slice(1).map((id, i) => kind[`${id}|${ids[i]}`]);
-    return { ids, steps, evolution: kinds.every((k) => k === "superseded") };
-  });
+  const merged = new Map(); // one chain per run of real entries, its open ends together
+  for (const ids of thoughtsOf(edges, 2)) {
+    const real = ids.filter((id) => !id.startsWith("?"));
+    if (real.length < 2) continue;
+    const ends = ids.filter((id) => id.startsWith("?")).map((v) => { const cut = v.lastIndexOf("|"); return { canonical: v.slice(1, cut), uuid: v.slice(cut + 1) }; });
+    const key = real.join("|");
+    if (!merged.has(key)) {
+      const steps = real.map((id) => byId[id]);
+      const kinds = real.slice(1).map((id, i) => kind[`${id}|${real[i]}`]);
+      merged.set(key, { ids: real, steps, evolution: kinds.every((k) => k === "superseded"), ends: [] });
+    }
+    const t = merged.get(key);
+    for (const e of ends) if (!t.ends.some((x) => x.uuid === e.uuid && x.canonical === e.canonical)) t.ends.push(e);
+  }
+  return [...merged.values()].sort((a, b) => b.steps.length - a.steps.length || a.ids.join().localeCompare(b.ids.join()));
+}
+// the thoughts (at least THOUGHT_MIN entries), and the shorter chains that go on beyond this page
+function graphThoughts(g) {
+  const all = graphChains(g);
+  return { thoughts: all.filter((t) => t.steps.length >= THOUGHT_MIN), open: all.filter((t) => t.ends.length && t.steps.length < THOUGHT_MIN) };
+}
+// Following a chain: a click loads exactly the repositories a chain goes on
+// into, each as a unit, and again from there, until the chain ends, reaches a
+// repository without a published export, or eight hops. Only what lies on the
+// chain is loaded, not its friends; it is drawn like a friend, marked as
+// reached through a thought.
+const CHAIN = { extra: new Map(), tried: new Set(), busy: false }; // canonical key -> { canonical, uuids }
+const graphNow = async () => (scope() === "family" ? buildFamilyGraph() : buildGraph());
+async function loadEnds(ends) {
+  const own = new Set([fkey(canonicalOf(SELF?.project)), ...((fgraph?.groups || []).map((G) => fkey(G.canonical)))]);
+  const fresh = [];
+  for (const x of ends) {
+    const k = fkey(x.canonical);
+    if (own.has(k) || CHAIN.tried.has(`${k}|${x.uuid}`)) continue;
+    CHAIN.tried.add(`${k}|${x.uuid}`);
+    if (!CHAIN.extra.has(k)) CHAIN.extra.set(k, { canonical: x.canonical, uuids: [] });
+    const f = CHAIN.extra.get(k); if (!f.uuids.includes(x.uuid)) f.uuids.push(x.uuid);
+    if (!fresh.includes(f)) fresh.push(f);
+  }
+  await Promise.all(fresh.map(loadFriend));
+  return fresh.length;
+}
+async function followChains(pick) {
+  if (CHAIN.busy) return;
+  CHAIN.busy = true; render();
+  try {
+    for (let hop = 0; hop < 8; hop++) {
+      if (fgraph) fgraph.at = 0;
+      const ends = pick(await graphNow());
+      if (!ends.length || !(await loadEnds(ends))) break;
+    }
+  } finally { CHAIN.busy = false; if (fgraph) fgraph.at = 0; render(); }
+}
+const followAll = () => followChains((g) => { const t = graphThoughts(g); return [...t.thoughts, ...t.open].flatMap((c) => c.ends); });
+// one chain, found again after each hop by its newest entry's Id
+function followThought(t, then) {
+  const anchor = t.anchor || t.steps[t.steps.length - 1].entry.uuid;
+  let last = null;
+  return followChains((g) => { last = graphChains(g).filter((c) => c.steps.some((n) => n.entry.uuid === anchor)).sort((a, b) => b.steps.length - a.steps.length)[0] || null; return last ? last.ends : []; })
+    .then(() => then?.(last));
 }
 let THOUGHT_PIN = null; // the ids of the held thought, joined
 function lightThought(g, t) {
@@ -1263,31 +1356,40 @@ function lightThought(g, t) {
 function renderThoughts(g) {
   const box = $("#thoughts");
   if (!box || !g) return;
-  const list = graphThoughts(g);
+  const { thoughts: list, open } = graphThoughts(g);
   const short = (n) => { const t = (n?.label || "").replace(/`/g, ""); return t.length > 34 ? t.slice(0, 32) + "…" : t; };
-  const held = list.find((t) => t.ids.join("|") === THOUGHT_PIN) || null;
+  const held = [...list, ...open].find((t) => t.ids.join("|") === THOUGHT_PIN) || null;
   lightThought(g, held);
   const minSeg = el("span", { class: "thought-min", title: "entries a thought has at least" }, "from ", ...[3, 4, 5].map((m) => el("button", { type: "button", class: m === THOUGHT_MIN ? "on" : "", onclick: () => { THOUGHT_MIN = m; try { localStorage.setItem("ktw-thought-min", String(m)); } catch {} THOUGHT_PIN = null; renderThoughts(g); } }, String(m))));
-  if (!list.length) return setKids(box, el("h3", {}, "Thoughts ", minSeg), el("p", { class: "note" }, `No line of reasoning in this graph is ${THOUGHT_MIN} or more entries long yet — a thought is a chain of See or Superseded by, each entry citing the one before.`));
-  setKids(box, el("h3", {}, `Thoughts (${list.length}) `, minSeg), el("p", { class: "note" }, "Chains of See and Superseded by, origin first. Point at one to light its path, click to hold it."),
-    ...list.map((t) => {
-      const key = t.ids.join("|"); const on = key === THOUGHT_PIN;
-      const row = el("div", { class: `thought ${on ? "on" : ""}` },
-        el("button", { type: "button", class: "thought-head", title: t.steps.map((n) => n.label).join("\n→ "),
-          onmouseenter: () => { if (!THOUGHT_PIN) lightThought(g, t); }, onmouseleave: () => { if (!THOUGHT_PIN) lightThought(g, null); },
-          onclick: () => { THOUGHT_PIN = on ? null : key; renderThoughts(g); } },
-          el("span", { class: "count" }, String(t.steps.length)), `${short(t.steps[0])} → ${short(t.steps[t.steps.length - 1])}`, t.evolution ? el("span", { class: "pill" }, "evolution") : null),
-        el("a", { class: "thought-read", href: thoughtHref(t), title: "read the whole thought — every entry in order, in full" }, "read ›"),
-        on ? el("ol", { class: "thought-steps" }, t.steps.map((n) => el("li", {}, el("a", { href: n.href }, n.label.replace(/`/g, ""))))) : null);
-      return row;
-    }));
+  const repos = (ends) => [...new Set(ends.map((e) => repoLabel(e.canonical)))];
+  const row = (t) => {
+    const key = t.ids.join("|"); const on = key === THOUGHT_PIN;
+    return el("div", { class: `thought ${on ? "on" : ""} ${t.ends.length ? "open" : ""}` },
+      el("button", { type: "button", class: "thought-head", title: t.steps.map((n) => n.label).join("\n→ ") + (t.ends.length ? `\n… goes on in ${repos(t.ends).join(", ")}` : ""),
+        onmouseenter: () => { if (!THOUGHT_PIN) lightThought(g, t); }, onmouseleave: () => { if (!THOUGHT_PIN) lightThought(g, null); },
+        onclick: () => { THOUGHT_PIN = on ? null : key; renderThoughts(g); } },
+        el("span", { class: "count" }, String(t.steps.length)), `${short(t.steps[0])} → ${short(t.steps[t.steps.length - 1])}`, t.evolution ? el("span", { class: "pill" }, "evolution") : null),
+      el("a", { class: "thought-read", href: thoughtHref(t), title: "read the whole thought — every entry in order, in full" }, "read ›"),
+      t.ends.length ? el("button", { type: "button", class: "thought-follow link-btn", disabled: CHAIN.busy, title: `load the repositories this chain goes on into — ${repos(t.ends).join(", ")} — hop by hop, until it ends`, onclick: () => followThought(t) }, `continues ↗ ${repos(t.ends).join(", ")}`) : null,
+      on ? el("ol", { class: "thought-steps" }, t.steps.map((n) => el("li", {}, el("a", { href: n.href }, n.label.replace(/`/g, ""))))) : null);
+  };
+  const openEnds = [...list, ...open].flatMap((t) => t.ends);
+  const followBtn = openEnds.length ? el("button", { type: "button", class: "link-btn thought-follow-all", disabled: CHAIN.busy, title: "load every repository the chains here go on into, hop by hop — nothing else", onclick: followAll }, CHAIN.busy ? "loading the chains…" : `load the whole chains (${repos(openEnds).length} ${repos(openEnds).length === 1 ? "repository" : "repositories"})`) : null;
+  const head = list.length
+    ? [el("h3", {}, `Thoughts (${list.length}) `, minSeg), el("p", { class: "note" }, "Chains of See and Superseded by, origin first. Point at one to light its path, click to hold it.")]
+    : [el("h3", {}, "Thoughts ", minSeg), el("p", { class: "note" }, `No line of reasoning in this graph is ${THOUGHT_MIN} or more entries long yet — a thought is a chain of See or Superseded by, each entry citing the one before.`)];
+  setKids(box, ...head, followBtn, ...list.map(row),
+    open.length ? el("h3", { class: "thought-open-head" }, `Going on beyond this page (${open.length})`) : null,
+    open.length ? el("p", { class: "note" }, "Shorter chains that continue in a repository this page has not loaded — loading it may make them thoughts.") : null,
+    ...open.map(row));
 }
 function friendsLegend(g) {
-  if (!FRIENDS.on) return [];
+  if (!FRIENDS.on && !CHAIN.extra.size) return [];
   const out = friendUnits(g).map((u, i) => el("span", { class: "friend", title: `friend: ${u.r.canonical}${u.members.length > 1 ? ` — a family of ${u.members.length}, shown whole` : ""} — its hub shows the entries cited there; a click on a hub shows all of it, a click on the name goes there` },
     el("i", { class: "dot", style: `background:transparent;border:2px dashed ${friendColor(i)};width:10px;height:10px` }),
     el("a", { href: u.r.open, onclick: (ev) => { if (!u.r.centre) return; ev.preventDefault(); moveTo({ centre: u.r.centre, state: u.r.state }, "#graph"); } }, u.r.name),
-    u.members.length > 1 ? el("span", { class: "note" }, ` · family of ${u.members.length}`) : null));
+    u.members.length > 1 ? el("span", { class: "note" }, ` · family of ${u.members.length}`) : null,
+    u.via === "chain" ? el("span", { class: "note" }, " · via a thought") : null));
   for (const f of g.friends || []) { const r = FRIENDS.loaded[fkey(f.canonical)]; if (r && !r.state) out.push(el("span", { class: "warn", title: r.error }, `${repoLabel(r.canonical)} not loaded`)); }
   return out;
 }
@@ -1443,7 +1545,7 @@ function runGraph(canvas, g, opts = {}) {
       const faded = ((focus || th) && !neigh.has(n)) || dim(n);
       ctx.globalAlpha = faded ? 0.18 : 1;
       ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-      if (n.kind === "project") { ctx.fillStyle = color("--bg"); ctx.fill(); ctx.lineWidth = 3.5 / g.scale; ctx.strokeStyle = n.color; if (n.friend) ctx.setLineDash([5 / g.scale, 3 / g.scale]); else if (n.trail) ctx.setLineDash([1.5 / g.scale, 3 / g.scale]); ctx.stroke(); ctx.setLineDash([]); ctx.beginPath(); ctx.arc(n.x, n.y, n.r * 0.38, 0, Math.PI * 2); ctx.fillStyle = n.color; ctx.fill(); }
+      if (n.kind === "project") { ctx.fillStyle = color("--bg"); ctx.fill(); ctx.lineWidth = 3.5 / g.scale; ctx.strokeStyle = n.color; if (n.chain) ctx.setLineDash([8 / g.scale, 3 / g.scale, 2 / g.scale, 3 / g.scale]); else if (n.friend) ctx.setLineDash([5 / g.scale, 3 / g.scale]); else if (n.trail) ctx.setLineDash([1.5 / g.scale, 3 / g.scale]); ctx.stroke(); ctx.setLineDash([]); ctx.beginPath(); ctx.arc(n.x, n.y, n.r * 0.38, 0, Math.PI * 2); ctx.fillStyle = n.color; ctx.fill(); }
       else if (n.kind === "topic") { ctx.fillStyle = n.color || color("--accent"); ctx.fill(); }
       else { const sup = n.entry.status === "superseded"; ctx.fillStyle = sup ? color("--bg") : evColor[ev(n)] || color("--muted"); ctx.fill(); if (sup) { ctx.lineWidth = 1.2 / g.scale; ctx.strokeStyle = evColor[ev(n)] || color("--fg3"); ctx.stroke(); } if (n.entry.status === "open" || n.entry.status === "needs-review" || n.entry.status === "pending-confirmation") { ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 2.5 / g.scale, 0, Math.PI * 2); ctx.lineWidth = 1.2 / g.scale; ctx.strokeStyle = color(`--${n.entry.status}`); ctx.stroke(); } }
       if (n === focus) { ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 4 / g.scale, 0, Math.PI * 2); ctx.lineWidth = 1.5 / g.scale; ctx.strokeStyle = color("--fg"); ctx.stroke(); }

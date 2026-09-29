@@ -26,6 +26,7 @@ const config = (id, lines) => `<!-- keep-the-why:config -->\n- id: ${id}\n${line
 const entry = (title, text, extra = {}) => ({ title, file: "design.md", line: 3, end_line: 9, type: ["decision"], status: "active", evidence: "confirmed", body: { text, reason: "" }, ...extra });
 const SUITE_ID = "5a1e5a1e-0000-4000-8000-000000000001";
 const NOTES_ID = "5a1e5a1e-0000-4000-8000-000000000003";
+const FAR_ID = "5a1e5a1e-0000-4000-8000-0000000000f1", FARTHER_ID = "5a1e5a1e-0000-4000-8000-0000000000f2";
 const state = (id, project, entries) => ({ generated: "2026-09-28 10:00", dashboard: "0.2.0", linter: "0.18.0.0", project: { id, name: id, context: "context/", schema: "0.18.0", ...project }, topics: [{ file: "design.md", title: "Design", entries: entries.length }], entries, authors: [], findings: { errors: 0, warnings: 0, items: [] } });
 const FILES = {
   "https://raw.githubusercontent.com/acme/suite/HEAD/.keep-the-why": config("acme---suite", ["- dashboard-state: https://acme.github.io/suite/state.json"]),
@@ -39,7 +40,12 @@ const FILES = {
   "https://raw.githubusercontent.com/acme/cli/HEAD/.keep-the-why": config("acme---cli", []),
   // outside the family: no parent, no children — reached only through a See
   "https://raw.githubusercontent.com/acme/notes/HEAD/.keep-the-why": config("acme---notes", ["- dashboard-state: https://acme.github.io/notes/state.json"]),
-  "https://acme.github.io/notes/state.json": state("acme---notes", { canonical: `${GH}/notes` }, [entry('Notes are <img src=x onerror="window.__pwned=1"> plain text', "No needle here either.", { uuid: NOTES_ID }), entry("Notes are kept short", "Short.", { uuid: "5a1e5a1e-0000-4000-8000-000000000005" })]),
+  "https://acme.github.io/notes/state.json": state("acme---notes", { canonical: `${GH}/notes` }, [entry('Notes are <img src=x onerror="window.__pwned=1"> plain text', "No needle here either.", { uuid: NOTES_ID, see: [{ remote: `${GH}/far`, uuid: FAR_ID, date: "2026-09-29" }] }), entry("Notes are kept short", "Short.", { uuid: "5a1e5a1e-0000-4000-8000-000000000005" })]),
+  // a chain beyond the friends: notes cites far, far cites farther — reached only by following a thought
+  "https://raw.githubusercontent.com/acme/far/HEAD/.keep-the-why": config("acme---far", ["- dashboard-state: https://acme.github.io/far/state.json"]),
+  "https://acme.github.io/far/state.json": state("acme---far", { canonical: `${GH}/far` }, [entry("Far away", "Cited from notes.", { uuid: FAR_ID, see: [{ remote: `${GH}/farther`, uuid: FARTHER_ID, date: "2026-09-29" }] })]),
+  "https://raw.githubusercontent.com/acme/farther/HEAD/.keep-the-why": config("acme---farther", ["- dashboard-state: https://acme.github.io/farther/state.json"]),
+  "https://acme.github.io/farther/state.json": state("acme---farther", { canonical: `${GH}/farther` }, [entry("The origin", "Where it started.", { uuid: FARTHER_ID })]),
   // an export that claims to be another repository's
   "https://raw.githubusercontent.com/acme/impostor/HEAD/.keep-the-why": config("acme---impostor", ["- dashboard-state: https://acme.github.io/impostor/state.json"]),
   "https://acme.github.io/impostor/state.json": state("acme---impostor", { canonical: `${GH}/suite` }, [entry("Release together", "A copy.", { uuid: NOTES_ID })]),
@@ -259,7 +265,8 @@ const report = {};
   if (hubs.join() !== "acme/notes,acme/suite,docs,plugin,web") errors.push("friends: wrong friend hubs " + hubs.join());
   const fam = g.links.filter((l) => l.kind === "family").map((l) => `${g.nodes[l.s].label}>${g.nodes[l.t].label}`).sort().join();
   if (fam !== "docs>acme/suite,plugin>web,web>acme/suite") errors.push("friends: the family's own parent lines are missing: " + fam);
-  if (see.join() !== "Cites elsewhere>Notes are <img s,Cites elsewhere>Release together") errors.push("friends: See lines to the friends missing: " + see.join());
+  // the plugin's See to the suite comes along: a unit shows what its citation chains connect to the cited entries
+  if (see.join() !== "Cites elsewhere>Notes are <img s,Cites elsewhere>Release together,Plugins load lazily>Release together") errors.push("friends: See lines to the friends missing: " + see.join());
   const notesEntries = () => window.__g().nodes.filter((n) => n.kind === "entry" && n.id.startsWith("fe:P:https://github.com/acme/notes|")).length;
   if (notesEntries() !== 1) errors.push("friends: a hub should show only the cited entries, got " + notesEntries());
   if (!/^1 entries/.test(d.getElementById("counts")?.textContent || "1 entries")) errors.push("friends: merged into the counts: " + d.getElementById("counts")?.textContent);
@@ -334,6 +341,39 @@ const report = {};
   if (last?.textContent !== "reset") errors.push("graph controls: reset is not the last one: " + last?.textContent);
   window.close();
   }
+}
+{
+  // a chain that goes on beyond the page: marked, and followed hop by hop on a click — only the repositories on it
+  const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/refs`)}#graph`);
+  await tick(600);
+  const d = window.document;
+  const before = fetched.length;
+  const follow = [...d.querySelectorAll("#thoughts .thought.open .thought-follow")].map((b) => b.textContent);
+  report.chainOpen = follow;
+  if (!follow.some((t) => t === "continues ↗ acme/far")) errors.push("chains: the chain into acme/far is not marked as going on: " + follow.join(" | "));
+  if (fetched.slice(before).some((u) => /acme\/far|acme\.github\.io\/far/.test(u))) errors.push("chains: acme/far was fetched before the click");
+  d.querySelector("#thoughts .thought-follow-all")?.click(); await tick(1500);
+  const g = window.__g();
+  const chainHubs = g.nodes.filter((n) => n.chain).map((n) => n.label).sort().join();
+  const heads = [...d.querySelectorAll("#thoughts .thought:not(.open) .thought-head")].map((h) => h.textContent);
+  report.chainFollowed = { chainHubs, heads, open: d.querySelectorAll("#thoughts .thought.open").length, fetched: fetched.slice(before).filter((u) => /state\.json$/.test(u)) };
+  if (chainHubs !== "acme/far,acme/farther") errors.push("chains: the repositories on the chain are not drawn: " + chainHubs);
+  if (!heads.some((h) => /^4The origin/.test(h))) errors.push("chains: after following, no thought of four from the origin: " + heads.join(" | "));
+  if (report.chainFollowed.open) errors.push("chains: still going on after following it to its end");
+  if (!/via a thought/.test(d.querySelector(".graph-legend")?.textContent || "")) errors.push("chains: the legend does not say the repositories came via a thought");
+  window.close();
+}
+{
+  // the reader: a thought that goes on before its origin says where, and follows it on a click
+  const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/refs`)}#thought/${NOTES_ID},5a1e5a1e-0000-4000-8000-000000000004`);
+  await tick(600);
+  const d = window.document;
+  const beyond = d.querySelector(".thought-beyond")?.textContent || "";
+  if (!/Before its origin, it goes on in acme\/far/.test(beyond)) errors.push("thought view: no note that the chain goes on in acme/far: " + beyond);
+  d.querySelector(".thought-beyond button")?.click(); await tick(1500);
+  report.chainView = window.location.hash;
+  if (!window.location.hash.startsWith(`#thought/${FARTHER_ID},${FAR_ID},${NOTES_ID},`)) errors.push("thought view: following did not lead to the whole chain: " + window.location.hash);
+  window.close();
 }
 console.log(JSON.stringify(report, null, 1));
 console.log("ERRORS:", errors.length); for (const e of errors) console.log("  " + e);
