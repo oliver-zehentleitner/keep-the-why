@@ -243,7 +243,7 @@ const report = {};
   btn = d.querySelector(".graph-ui .friends-load"); btn?.click(); await tick(400);
   const legend = d.querySelector(".graph-legend")?.textContent || "";
   report.friendsLegend = legend;
-  for (const name of ["acme/notes", "acme/suite"]) if (![...d.querySelectorAll(".graph-legend .friend")].some((x) => x.textContent === name)) errors.push(`friends: ${name} not in the legend`);
+  for (const name of ["acme/notes", "acme/suite"]) if (![...d.querySelectorAll(".graph-legend .friend a")].some((x) => x.textContent === name)) errors.push(`friends: ${name} not in the legend`);
   // the walk stays in the graph: a friend's name opens that project's graph
   const notesLink = [...d.querySelectorAll(".graph-legend .friend a")].find((a) => a.textContent === "acme/notes")?.getAttribute("href") || "";
   if (!notesLink.endsWith(`?public=${encodeURIComponent(`${GH}/notes`)}#graph`)) errors.push("friends: the legend link does not open the friend's graph: " + notesLink);
@@ -255,9 +255,12 @@ const report = {};
   const hubs = g.nodes.filter((n) => n.kind === "project" && n.friend).map((n) => n.label).sort();
   const see = g.links.filter((l) => l.kind === "see").map((l) => `${g.nodes[l.s].label}>${g.nodes[l.t].label.slice(0, 16)}`).sort();
   report.friendsGraph = { hubs, see };
-  if (hubs.join() !== "acme/notes,acme/suite") errors.push("friends: wrong friend hubs " + hubs.join());
+  // a friend in a family comes as the whole family, one unit like a repository (cli has no export)
+  if (hubs.join() !== "acme/notes,acme/suite,docs,plugin,web") errors.push("friends: wrong friend hubs " + hubs.join());
+  const fam = g.links.filter((l) => l.kind === "family").map((l) => `${g.nodes[l.s].label}>${g.nodes[l.t].label}`).sort().join();
+  if (fam !== "docs>acme/suite,plugin>web,web>acme/suite") errors.push("friends: the family's own parent lines are missing: " + fam);
   if (see.join() !== "Cites elsewhere>Notes are <img s,Cites elsewhere>Release together") errors.push("friends: See lines to the friends missing: " + see.join());
-  const notesEntries = () => window.__g().nodes.filter((n) => n.kind === "entry" && n.id.startsWith("fe:https://github.com/acme/notes:")).length;
+  const notesEntries = () => window.__g().nodes.filter((n) => n.kind === "entry" && n.id.startsWith("fe:P:https://github.com/acme/notes|")).length;
   if (notesEntries() !== 1) errors.push("friends: a hub should show only the cited entries, got " + notesEntries());
   if (!/^1 entries/.test(d.getElementById("counts")?.textContent || "1 entries")) errors.push("friends: merged into the counts: " + d.getElementById("counts")?.textContent);
   g.nodes.find((n) => n.friend && n.label === "acme/notes").action(); await tick(100);
@@ -316,7 +319,7 @@ const report = {};
   await tick(500);
   const d = window.document;
   const hubs = () => window.__g().nodes.filter((n) => n.friend).map((n) => n.label).sort().join();
-  if (hubs() !== "acme/notes,acme/suite") errors.push("friends by default: not loaded with the graph: " + hubs());
+  if (hubs() !== "acme/notes,acme/suite,docs,plugin,web") errors.push("friends by default: not loaded with the graph: " + hubs());
   report.friendsDefault = { hubs: hubs(), ui: d.querySelector(".graph-ui")?.textContent, legend: d.querySelector(".graph-legend")?.textContent };
   const box = d.querySelector(".graph-ui .friends-toggle input");
   if (!box) { errors.push("friends by default: no friends box: " + JSON.stringify(report.friendsDefault)); window.close(); }

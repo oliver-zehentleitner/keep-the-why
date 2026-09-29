@@ -452,7 +452,7 @@ function findEntry(ref) {
   const here = entryOf(ref);
   if (here) return { e: here, href: entryHref(here), where: here.project || null, own: true };
   const pools = [
-    ...Object.values(FRIENDS.loaded).filter((r) => r?.state).map((r) => ({ state: r.state, name: r.name, href: r.href })),
+    ...Object.values(FRIENDS.loaded).filter((r) => r?.state).flatMap((r) => (r.members || [r]).map((m) => ({ state: m.state, name: m.name, href: m.href }))),
     ...TRAIL.map((t) => ({ state: t.state, name: t.name, href: (e) => t.url + entryHref(e) })),
   ];
   for (const p of pools) { const e = (p.state.entries || []).find((x) => x.uuid === ref || x.id === ref); if (e) return { e, href: p.href ? p.href(e) : "#graph", where: p.name, own: false }; }
@@ -924,21 +924,51 @@ function loadFriend(f) {
         const res = await fetch(`/api/entry?uuid=${encodeURIComponent(f.uuids[0])}${PROJECT ? `&project=${encodeURIComponent(PROJECT)}` : ""}`, { cache: "no-store" });
         if (res.ok) {
           const hit = await res.json(); const m = await memberState(hit.project);
-          const at = (hash) => `${location.pathname}?project=${encodeURIComponent(hit.project)}${hash}`;
-          if (m.state) r = { state: m.state, name: m.state.project?.id || repoLabel(f.canonical), href: (e) => at(entryHref(e)), topicHref: (file) => at(`#topic/${file}`), open: at("#graph"), centre: { mode: "live", project: hit.project } };
+          if (m.state) r = { ...liveMember({ key: hit.project, name: m.state.project?.id, role: "self" }, m.state), name: m.state.project?.id || repoLabel(f.canonical) };
         }
       } catch { /* not known here: the published export */ }
     }
     if (!r) {
       const p = await fetchPublicState(f.canonical, "");
-      r = p.state
-        ? { state: p.state, name: repoLabel(f.canonical), href: (e) => publicHref(f.canonical, "", entryHref(e)), topicHref: (file) => publicHref(f.canonical, "", `#topic/${file}`), open: publicHref(f.canonical, "", "#graph"), centre: { mode: "public", canonical: f.canonical, root: "" } }
-        : { error: p.error };
+      r = p.state ? { ...publicMember({ canonical: f.canonical, root: "", name: repoLabel(f.canonical), role: "self" }, p.state) } : { error: p.error };
     }
     r.canonical = f.canonical;
+    // a family is one unit, like a repository: a friend that has one comes with all of it
+    if (r.state) r.members = await friendUnit(r);
     return (FRIENDS.loaded[k] = r);
   })());
 }
+// One member of a friend's unit, however it was found
+function liveMember(m, state) {
+  const at = (hash) => `${location.pathname}?project=${encodeURIComponent(m.key)}${hash}`;
+  return { key: `L:${m.key}`, name: m.name || state.project?.id || m.key, role: m.role, state, canonical: canonicalOf(state.project) || m.canonical || "", root: state.project?.root || "",
+    href: (e) => at(entryHref(e)), topicHref: (file) => at(`#topic/${file}`), open: at("#graph"), centre: { mode: "live", project: m.key } };
+}
+function publicMember(m, state) {
+  return { key: `P:${fkey(m.canonical)}|${m.root || ""}`, name: m.name, role: m.role, state, canonical: m.canonical, root: m.root || "",
+    href: (e) => publicHref(m.canonical, m.root || "", entryHref(e)), topicHref: (file) => publicHref(m.canonical, m.root || "", `#topic/${file}`), open: publicHref(m.canonical, m.root || "", "#graph"), centre: { mode: "public", canonical: m.canonical, root: m.root || "" } };
+}
+// The friend's whole family tree — on the live server what it knows about that
+// project, else the members' published exports; members that cannot be read
+// are left out of the unit (the friend itself is always in it).
+async function friendUnit(r) {
+  const p = r.state.project || {};
+  const self = { ...r };
+  if (!p.parent && !(p.children || []).length) return [self];
+  const out = [self];
+  if (r.centre?.mode === "live") {
+    try {
+      const members = ((await (await fetch(`/api/family?project=${encodeURIComponent(r.centre.project)}&tree=1`, { cache: "no-store" })).json()).members || []).filter((m) => m.role !== "self" && m.key);
+      const states = await Promise.all(members.map((m) => memberState(m.key)));
+      members.forEach((m, i) => { if (states[i].state) out.push(liveMember(m, states[i].state)); });
+      return out;
+    } catch { /* fall back to the published exports */ }
+  }
+  const t = await publicTreeFrom({ state: r.state, canonical: r.canonical, root: p.root || "", name: r.name, href: r.href });
+  for (const g of t.groups) if (g.member.role !== "self") out.push(publicMember(g.member, g.state));
+  return out;
+}
+
 async function loadFriends(list) {
   if (LIVE()) await fetchTree(); // the whole family is known before anything counts as a friend
   FRIENDS.on = true; FRIENDS.loading = true;
@@ -952,29 +982,43 @@ function toggleFriend(k) {
   if (fgraph) fgraph.at = 0;
   render();
 }
-// Linked projects in the graph: friends (loaded on a click) and the path
-// (the projects walked through to get here). Each is a hub with some of its
-// entries — the ones that link to what the graph shows, or all of them once a
-// friend's hub is expanded — joined by See and Superseded by, both ways, a
-// reference counting only when it names that repository and an Id there.
-// Called by buildGraph and buildFamilyGraph after their own nodes.
+// Linked projects in the graph: friends and the path. Each item is a unit —
+// one repository, or a whole family, which is one unit like a repository —
+// drawn as a hub per project (joined by their parent lines) with some of its
+// entries: the ones that link to what the graph shows, or all of them once a
+// friend's hub is expanded. See and Superseded by join them to the graph and
+// to each other, both ways, a reference counting only when it names one of
+// the unit's repositories and an Id there. Called by buildGraph and
+// buildFamilyGraph after their own nodes.
+const unitKey = (members) => members.map((m) => m.key).sort().join(" ");
+function friendUnits(g) {
+  // friends of one family are one unit: the Ids cited in any of its repositories together
+  const units = new Map();
+  (g.friends || []).forEach((f) => {
+    const r = FRIENDS.loaded[fkey(f.canonical)];
+    if (!r?.state || onPath(f.canonical)) return;
+    const members = r.members || [r];
+    const k = unitKey(members);
+    if (!units.has(k)) units.set(k, { k, r, members, uuids: new Set() });
+    for (const u of f.uuids) units.get(k).uuids.add(u);
+  });
+  return [...units.values()];
+}
 function addFriendLayer(g, prev) {
   const items = [];
   const trail = pathShown() ? TRAIL.filter((t) => !sameCentreAsGraph(g, t)) : [];
   trail.forEach((t, i) => items.push({
-    k: `trail:${t.key}`, kind: "trail", r: t, label: `${i + 1} · ${t.name}`, color: PALETTE[(i + 2) % PALETTE.length], cited: "linked",
-    hub: () => moveTo(t, "#graph"), entry: (e) => moveTo(t, entryHref(e)), topic: (file) => moveTo(t, `#topic/${file}`),
+    k: `trail:${t.key}`, kind: "trail", color: PALETTE[(i + 2) % PALETTE.length], cited: "linked",
+    members: [{ key: t.key, name: `${i + 1} · ${t.name}`, state: t.state, canonical: t.canonical, root: t.state.project?.root || "", href: (e) => t.url + entryHref(e), topicHref: (file) => `${t.url}#topic/${file}`, open: `${t.url}#graph` }],
+    hub: () => moveTo(t, "#graph"), entry: () => (e) => moveTo(t, entryHref(e)), topic: () => (file) => moveTo(t, `#topic/${file}`),
     next: i + 1 < trail.length ? `trail:${trail[i + 1].key}` : null,
   }));
-  if (FRIENDS.on) (g.friends || []).forEach((f, i) => {
-    const k = fkey(f.canonical); const r = FRIENDS.loaded[k];
-    if (!r?.state || onPath(f.canonical)) return;
-    const expanded = FRIENDS.expanded.has(k);
-    items.push({
-      k, kind: "friend", r, label: r.name, color: friendColor(i), cited: expanded ? null : new Set(f.uuids), canonical: f.canonical,
-      hub: () => toggleFriend(k), entry: r.centre ? (e) => moveTo({ centre: r.centre, state: r.state }, entryHref(e)) : null, topic: r.centre ? (file) => moveTo({ centre: r.centre, state: r.state }, `#topic/${file}`) : null,
-    });
-  });
+  if (FRIENDS.on) friendUnits(g).forEach((u, i) => items.push({
+    k: u.k, kind: "friend", color: friendColor(i), cited: FRIENDS.expanded.has(u.k) ? null : u.uuids, members: u.members,
+    hub: () => toggleFriend(u.k),
+    entry: (m) => (m.centre ? (e) => moveTo({ centre: m.centre, state: m.state }, entryHref(e)) : null),
+    topic: (m) => (m.centre ? (file) => moveTo({ centre: m.centre, state: m.state }, `#topic/${file}`) : null),
+  }));
   if (items.length) addLinkedLayer(g, prev, items);
 }
 function addLinkedLayer(g, prev, items) {
@@ -986,41 +1030,58 @@ function addLinkedLayer(g, prev, items) {
     index[n.id] = nodes.length; nodes.push(n); return n;
   };
   const refsOf = (e) => [...(e.see || []).map((x) => x && { uuid: x.uuid, remote: x.remote, kind: "see" }), e.superseded_by ? { ...parseSupersededBy(e.superseded_by), kind: "superseded" } : null].filter((x) => x?.uuid);
-  // the path's hubs show what links to the rest: the graph's own entries, the friends', the other steps'
-  const graphUuids = new Set(nodes.filter((n) => n.kind === "entry" && n.entry.uuid).map((n) => n.entry.uuid));
-  const pool = new Set(graphUuids);
-  for (const it of items) for (const e of it.r.state.entries || []) if (e.uuid) pool.add(e.uuid);
-  const R = 420 + 30 * items.length;
+  const ours = nodes.filter((n) => n.kind === "entry");
+  const pool = new Set(ours.map((n) => n.entry.uuid).filter(Boolean));
+  for (const it of items) for (const m of it.members) for (const e of m.state.entries || []) if (e.uuid) pool.add(e.uuid);
+  const R = 440 + 30 * items.length;
   const placed = [];
   items.forEach((it, i) => {
-    const r = it.r; const col = it.color; const canon = fkey(it.canonical || r.canonical || canonicalOf(r.state.project));
+    const col = it.color;
+    const canons = new Set(it.members.map((m) => fkey(m.canonical)).filter(Boolean));
+    const unitUuids = new Set(it.members.flatMap((m) => (m.state.entries || []).map((e) => e.uuid).filter(Boolean)));
+    // the path's steps show what links to the rest: the graph's entries, the friends', the other steps'
+    let cited = it.cited;
+    if (cited === "linked") {
+      cited = new Set();
+      for (const m of it.members) for (const e of m.state.entries || []) if (e.uuid && refsOf(e).some((x) => pool.has(x.uuid) && !unitUuids.has(x.uuid))) cited.add(e.uuid);
+      for (const n of ours) for (const x of refsOf(n.entry)) if (unitUuids.has(x.uuid) && (!x.remote || canons.has(fkey(x.remote)))) cited.add(x.uuid);
+      for (const o of items) if (o !== it) for (const m of o.members) for (const e of m.state.entries || []) for (const x of refsOf(e)) if (unitUuids.has(x.uuid) && x.remote && canons.has(fkey(x.remote))) cited.add(x.uuid);
+    }
     const ang = (2 * Math.PI * i) / items.length + Math.PI / 5;
-    const hub = add({ id: `f:${it.k}`, kind: "project", friend: it.kind === "friend", trail: it.kind === "trail", label: it.label, r: 13, color: col, href: r.open || "#graph", action: it.hub }, { x: R * Math.cos(ang), y: R * Math.sin(ang) });
-    const own = r.state.entries || [];
-    const ownUuids = new Set(own.map((e) => e.uuid).filter(Boolean));
-    const cited = it.cited === "linked"
-      ? new Set(own.filter((e) => e.uuid && (refsOf(e).some((x) => pool.has(x.uuid) && !ownUuids.has(x.uuid)))).map((e) => e.uuid))
-      : it.cited;
-    if (it.cited === "linked") for (const n of nodes) if (n.kind === "entry" && n.entry) for (const x of refsOf(n.entry)) if (ownUuids.has(x.uuid) && (!x.remote || fkey(x.remote) === canon)) cited.add(x.uuid);
-    if (it.cited === "linked") for (const o of items) if (o !== it) for (const e of o.r.state.entries || []) for (const x of refsOf(e)) if (ownUuids.has(x.uuid) && x.remote && fkey(x.remote) === canon) cited.add(x.uuid);
-    const entries = own.filter((e) => !cited || (e.uuid && cited.has(e.uuid)));
-    const files = new Set(entries.map((e) => e.file));
-    const tIdx = {};
-    for (const t of r.state.topics || []) {
-      if (cited && !files.has(t.file)) continue;
-      const n = add({ id: `ft:${it.k}:${t.file}`, kind: "topic", label: t.title, file: t.file, color: col, r: 7 + Math.sqrt(t.entries || 0) * 2.4, href: r.topicHref ? r.topicHref(t.file) : "#graph", action: it.topic ? () => it.topic(t.file) : null }, hub);
-      tIdx[t.file] = index[n.id];
-      links.push({ s: index[hub.id], t: tIdx[t.file], kind: "hub", len: 70 });
+    const centre = { x: R * Math.cos(ang), y: R * Math.sin(ang) };
+    const idx = {}; // uuid -> node index, across the unit
+    const hubs = {};
+    const entriesShown = [];
+    it.members.forEach((m, j) => {
+      const off = it.members.length > 1 ? { x: centre.x + 130 * Math.cos((2 * Math.PI * j) / it.members.length), y: centre.y + 130 * Math.sin((2 * Math.PI * j) / it.members.length) } : centre;
+      const hub = add({ id: `f:${it.k}:${m.key}`, kind: "project", friend: it.kind === "friend", trail: it.kind === "trail", label: m.name, r: j === 0 ? 13 : 10, color: col, href: m.open || "#graph", action: it.hub }, off);
+      hubs[m.key] = index[hub.id];
+      const own = (m.state.entries || []).filter((e) => !cited || (e.uuid && cited.has(e.uuid)));
+      const files = new Set(own.map((e) => e.file));
+      const tIdx = {};
+      for (const t of m.state.topics || []) {
+        if (cited && !files.has(t.file)) continue;
+        const act = it.topic(m);
+        const n = add({ id: `ft:${it.k}:${m.key}:${t.file}`, kind: "topic", label: t.title, file: t.file, color: col, r: 7 + Math.sqrt(t.entries || 0) * 2.4, href: m.topicHref ? m.topicHref(t.file) : "#graph", action: act ? () => act(t.file) : null }, hub);
+        tIdx[t.file] = index[n.id];
+        links.push({ s: index[hub.id], t: tIdx[t.file], kind: "hub", len: 70 });
+      }
+      for (const e of own) {
+        const act = it.entry(m);
+        const n = add({ id: `fe:${it.k}:${m.key}:${e.id}`, kind: "entry", label: e.title, file: e.file, entry: e, r: 4.2, href: m.href ? m.href(e) : "#graph", action: act ? () => act(e) : null }, nodes[tIdx[e.file]] || hub);
+        if (e.uuid) idx[e.uuid] = index[n.id];
+        if (tIdx[e.file] != null) links.push({ s: index[n.id], t: tIdx[e.file], kind: "member", len: 40 });
+        entriesShown.push(e);
+      }
+    });
+    // the unit's own shape: each project joined to its parent, as in the family graph
+    if (it.members.length > 1) {
+      const { parentOf } = linkFamily(it.members.map((m) => ({ key: m.key, role: m.role === "self" ? "self" : m.role || "relative", canonical: m.canonical, root: m.root, state: m.state })));
+      for (const [child, parent] of Object.entries(parentOf)) if (hubs[child] != null && hubs[parent] != null) links.push({ s: hubs[child], t: hubs[parent], kind: "family", len: 200 });
     }
-    const fIdx = {};
-    for (const e of entries) {
-      const n = add({ id: `fe:${it.k}:${e.id}`, kind: "entry", label: e.title, file: e.file, entry: e, r: 4.2, href: r.href ? r.href(e) : "#graph", action: it.entry ? () => it.entry(e) : null }, nodes[tIdx[e.file]] || hub);
-      if (e.uuid) fIdx[e.uuid] = index[n.id];
-      if (tIdx[e.file] != null) links.push({ s: index[n.id], t: tIdx[e.file], kind: "member", len: 40 });
-    }
-    placed.push({ it, canon, fIdx, tIdx, col, entries });
+    placed.push({ it, canons, idx, col, entries: entriesShown, firstHub: hubs[it.members[0].key] });
   });
-  // See and Superseded by between any two placed groups and the graph, both ways; between their topics while entries are hidden
+  // See and Superseded by between any two placed units and the graph, both ways; between their topics while entries are hidden
   const topicOfNode = {}; for (const l of links) if (l.kind === "member") topicOfNode[l.s] = l.t;
   const joined = new Set(); const pairs = new Set();
   const join = (s, t, kind, col) => {
@@ -1030,21 +1091,20 @@ function addLinkedLayer(g, prev, items) {
     const ts = topicOfNode[s], tt = topicOfNode[t];
     if (ts != null && tt != null && ts !== tt && !pairs.has(`${ts}|${tt}`)) { pairs.add(`${ts}|${tt}`); links.push({ s: ts, t: tt, kind: "xtopic", len: 240, color: col }); }
   };
-  const ours = nodes.filter((n) => n.kind === "entry" && !String(n.id).startsWith("fe:"));
   const byUuid = {}; for (const n of ours) if (n.entry.uuid) byUuid[n.entry.uuid] = index[n.id];
   for (const P of placed) {
-    // the graph's entries citing this group
-    for (const n of ours) for (const x of refsOf(n.entry)) if (fkey(x.remote) === P.canon && P.fIdx[x.uuid] != null) join(index[n.id], P.fIdx[x.uuid], x.kind, P.col);
+    for (const n of ours) for (const x of refsOf(n.entry)) if (x.remote && P.canons.has(fkey(x.remote)) && P.idx[x.uuid] != null) join(index[n.id], P.idx[x.uuid], x.kind, P.col);
     for (const e of P.entries) {
-      const s = P.fIdx[e.uuid]; if (s == null) continue;
+      const s = P.idx[e.uuid]; if (s == null) continue;
       for (const x of refsOf(e)) {
-        if (!x.remote) continue;
-        if (byUuid[x.uuid] != null) join(s, byUuid[x.uuid], x.kind, P.col); // this group citing the graph
-        for (const Q of placed) if (Q !== P && fkey(x.remote) === Q.canon && Q.fIdx[x.uuid] != null) join(s, Q.fIdx[x.uuid], x.kind, P.col); // citing another group
+        if (!x.remote) { if (P.idx[x.uuid] != null) join(s, P.idx[x.uuid], x.kind, P.col); continue; } // within the unit's repository
+        if (P.canons.has(fkey(x.remote)) && P.idx[x.uuid] != null) { join(s, P.idx[x.uuid], x.kind, P.col); continue; } // across the unit
+        if (byUuid[x.uuid] != null) join(s, byUuid[x.uuid], x.kind, P.col); // citing the graph
+        for (const Q of placed) if (Q !== P && Q.canons.has(fkey(x.remote)) && Q.idx[x.uuid] != null) join(s, Q.idx[x.uuid], x.kind, P.col); // citing another unit
       }
     }
     // the walk's order: one step's hub to the next
-    if (P.it.next && index[`f:${P.it.next}`] != null) links.push({ s: index[`f:${P.it.k}`], t: index[`f:${P.it.next}`], kind: "trail", len: 360 });
+    if (P.it.next) { const Q = placed.find((q) => q.it.k === P.it.next); if (Q) links.push({ s: P.firstHub, t: Q.firstHub, kind: "trail", len: 360 }); }
   }
 }
 
@@ -1123,7 +1183,7 @@ function onPopState() {
 function stateForUrl(url) {
   const key = centreKey(centreFromUrl(url));
   if (VISITED.has(key)) return VISITED.get(key);
-  for (const r of Object.values(FRIENDS.loaded)) if (r?.state && r.centre && centreKey(r.centre) === key) return { centre: r.centre, state: r.state };
+  for (const r of Object.values(FRIENDS.loaded)) for (const m of (r?.state ? r.members || [r] : [])) if (m.centre && centreKey(m.centre) === key) return { centre: m.centre, state: m.state };
   return null;
 }
 function onLinkClick(ev) {
@@ -1224,10 +1284,12 @@ function renderThoughts(g) {
 }
 function friendsLegend(g) {
   if (!FRIENDS.on) return [];
-  let i = -1;
-  return (g.friends || []).filter((f) => !onPath(f.canonical)).map((f) => FRIENDS.loaded[fkey(f.canonical)]).filter(Boolean).map((r) => r.state
-    ? (i++, el("span", { class: "friend", title: `friend: ${r.canonical} — its hub shows the entries cited there; a click on the hub shows all of it, a click on the name goes there` }, el("i", { class: "dot", style: `background:transparent;border:2px dashed ${friendColor(i)};width:10px;height:10px` }), el("a", { href: r.open, onclick: (ev) => { if (!r.centre) return; ev.preventDefault(); moveTo({ centre: r.centre, state: r.state }, "#graph"); } }, r.name)))
-    : el("span", { class: "warn", title: r.error }, `${repoLabel(r.canonical)} not loaded`));
+  const out = friendUnits(g).map((u, i) => el("span", { class: "friend", title: `friend: ${u.r.canonical}${u.members.length > 1 ? ` — a family of ${u.members.length}, shown whole` : ""} — its hub shows the entries cited there; a click on a hub shows all of it, a click on the name goes there` },
+    el("i", { class: "dot", style: `background:transparent;border:2px dashed ${friendColor(i)};width:10px;height:10px` }),
+    el("a", { href: u.r.open, onclick: (ev) => { if (!u.r.centre) return; ev.preventDefault(); moveTo({ centre: u.r.centre, state: u.r.state }, "#graph"); } }, u.r.name),
+    u.members.length > 1 ? el("span", { class: "note" }, ` · family of ${u.members.length}`) : null));
+  for (const f of g.friends || []) { const r = FRIENDS.loaded[fkey(f.canonical)]; if (r && !r.state) out.push(el("span", { class: "warn", title: r.error }, `${repoLabel(r.canonical)} not loaded`)); }
+  return out;
 }
 let TREE_ASKED = false;
 function viewGraph(main) {
@@ -1474,14 +1536,20 @@ function memberState(key) {
 let PUBLIC_TREE = null; // the tree read from published exports, public mode
 async function publicTree() {
   if (PUBLIC_TREE) return PUBLIC_TREE;
-  const canon = canonicalOf(S.project); const myRoot = MY_ROOT();
+  PUBLIC_TREE = await publicTreeFrom({ state: SELF, canonical: canonicalOf(S.project), root: MY_ROOT(), name: S.project.id || S.project.name, href: (e) => entryHref(e) });
+  return PUBLIC_TREE;
+}
+// The family tree around one published project, read from the members'
+// published exports: this page's own (publicTree), or a friend's.
+async function publicTreeFrom(start) {
+  const canon = start.canonical; const myRoot = start.root || "";
   const keyOf = (c, r) => `${c}|${r}`;
-  const self = { member: { role: "self", name: S.project.id || S.project.name, canonical: canon, root: myRoot, node: keyOf(canon, myRoot), up: null }, state: SELF, href: (e) => entryHref(e) };
+  const self = { member: { role: "self", name: start.name, canonical: canon, root: myRoot, node: keyOf(canon, myRoot), up: null }, state: start.state, href: start.href };
   const groups = [self]; const missing = []; const seen = new Set([keyOf(canon, myRoot)]);
   const label = (loc) => loc.root ? `${loc.canonical.replace(/^https:\/\//, "")}/${loc.root}` : loc.canonical.replace(/^https:\/\//, "");
   const add = (m, r) => { if (r.state) groups.push({ member: m, state: r.state, href: (e) => publicHref(m.canonical, m.root, entryHref(e)) }); else missing.push({ member: m, reason: r.error }); return r.state; };
   // up: the parent chain, as far as each level is published
-  let cur = { state: SELF, canonical: canon, root: myRoot }; let depth = 1; let parentKey = null; let below = self.member;
+  let cur = { state: start.state, canonical: canon, root: myRoot }; let depth = 1; let parentKey = null; let below = self.member;
   while (cur.state?.project?.parent && depth < 12) {
     const loc = resolveLocation(cur.state.project.parent, cur.canonical, cur.root);
     if (!loc || seen.has(keyOf(loc.canonical, loc.root))) break;
@@ -1508,8 +1576,7 @@ async function publicTree() {
     level = next;
   }
   groups.sort((a, b) => familyRank(a.member) - familyRank(b.member));
-  PUBLIC_TREE = { groups, missing };
-  return PUBLIC_TREE;
+  return { groups, missing };
 }
 // { groups: [{ member, state, href(e) }], missing: [{ member, reason }] } — this project first
 async function searchPool(scope) {

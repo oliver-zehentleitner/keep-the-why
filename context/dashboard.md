@@ -233,6 +233,8 @@ The graph offers the repositories its entries cite by a cross-project `See` or `
 
 **Consequence (2026-09-29, maintainer decision, dashboard 0.3.0):** the default is turned around: friends load as soon as a graph shows them. Few projects have friends yet, so the cost is a handful of fetches, and a web that needs a click before it appears is not seen. The alternative rejected above is what the default now does; the click stays as the way back — unchecking *friends* turns loading off for this browser (kept), and *friends (N)* loads them on a click again. The rest of the decision stands: linked, never merged; one hop; a friend's hub expands on a click.
 
+**Consequence (2026-09-29, maintainer decision, dashboard 0.3.1):** a friend that is part of a family comes as the whole family — "a family is one unit, like a repository". Loading it reads the family tree around it (on the live server what it knows about that project, else the members' published exports), draws a hub per member joined by their parent lines, and shows the cited entries in whichever member holds them; friends of one family are one unit. One hop still holds: the hop reaches a unit, and the unit's own friends are not followed.
+
 **Rejected alternative:** merge friends into the page like the family scope does (search, counts, queues). Rejected — a friend is not part of this project's knowledge, and counting its open questions here would misstate what this project owes.
 
 **Rejected alternative:** show each friend whole from the start. Rejected for readability — a large friend would bury the project's own graph; the cited entries come first, the hub expands on a click.

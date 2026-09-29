@@ -209,6 +209,7 @@ the two optional packages.
 **Evidence:** confirmed
 **Source:** maintainer design discussion, 2026-09-26/27, with two rounds of external review
 **Revisit when:** a real family needs a member to belong to two parents, or a project asks for a relation that is neither parent nor child and cannot be expressed as a `See` line
+**See:** https://github.com/oliver-zehentleitner/unicorn-binance-suite — 11b118c1-3205-498d-807d-9ac4cbc7a186 — as of 2026-09-29
 
 A project belongs to at most one parent, declared by one `parent` line;
 the parent lists its children in a `children` block, one line each with a
