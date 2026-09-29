@@ -2114,13 +2114,13 @@ function connectLive() {
   };
   open();
 }
-// The side pane's width: 1× (the default), 2×, 3×, or half the page beside
+// The side pane's width: 1×, 2× (the default), 3×, or half the page beside
 // the text — kept per browser, ignored on a narrow screen. Two widths: one
 // where the pane is the graph (the overview, the Friends and Thoughts pages,
 // the reader), one where it holds something else (an entry's or a topic's
 // details, the graph view's legend).
 const SIDE_WIDTHS = ["1", "2", "3", "half"];
-const readSide = (key, fallback = "1") => { try { const v = localStorage.getItem(key); return SIDE_WIDTHS.includes(v) ? v : fallback; } catch { return fallback; } };
+const readSide = (key, fallback = "2") => { try { const v = localStorage.getItem(key); return SIDE_WIDTHS.includes(v) ? v : fallback; } catch { return fallback; } };
 const SIDE = { graph: readSide("ktw-side-graph", readSide("ktw-side")), other: readSide("ktw-side-other") };
 const paneKind = () => ($("#details")?.dataset.pane === "graph" ? "graph" : "other");
 const sideLabel = (v) => (v === "half" ? "½" : `${v}×`);

@@ -432,10 +432,10 @@ const report = {};
   if (d.getElementById("app").dataset.side !== "half" || window.localStorage.getItem("ktw-side-graph") !== "half") errors.push("side width: ½ did not take or was not kept");
   // an entry's details have a width of their own: the graph's ½ does not follow there, and 2× there does not come back
   window.location.hash = "#entry/5a1e5a1e-0000-4000-8000-000000000004"; window.dispatchEvent(new window.Event("hashchange")); await tick(200);
-  if (d.getElementById("app").dataset.side !== "1") errors.push("side width: the graph's width followed into an entry's details: " + d.getElementById("app").dataset.side);
-  [...d.querySelectorAll("#details .mini-width button")].find((b) => b.textContent === "2×")?.click(); await tick(50);
+  if (d.getElementById("app").dataset.side !== "2") errors.push("side width: the graph's width followed into an entry's details (default 2×): " + d.getElementById("app").dataset.side);
+  [...d.querySelectorAll("#details .mini-width button")].find((b) => b.textContent === "3×")?.click(); await tick(50);
   window.location.hash = "#graph"; window.dispatchEvent(new window.Event("hashchange")); await tick(200);
-  if (d.getElementById("app").dataset.side !== "2") errors.push("side width: the graph view does not share the details' width: " + d.getElementById("app").dataset.side);
+  if (d.getElementById("app").dataset.side !== "3") errors.push("side width: the graph view does not share the details' width: " + d.getElementById("app").dataset.side);
   window.location.hash = "#overview"; window.dispatchEvent(new window.Event("hashchange")); await tick(200);
   if (d.getElementById("app").dataset.side !== "half") errors.push("side width: back on the overview, the graph's width is gone: " + d.getElementById("app").dataset.side);
   window.close();

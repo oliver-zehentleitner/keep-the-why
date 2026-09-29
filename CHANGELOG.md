@@ -6,7 +6,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Changed
 
-- `keep-the-why-dashboard` 0.3.6: the menu puts what the reasoning is first — Overview, Graph, Queues, Family, Friends, Thoughts — and Timeline and Authors after it.
+- `keep-the-why-dashboard` 0.3.6: the menu puts what the reasoning is first — Overview, Graph, Queues, Family, Friends, Thoughts — and Timeline and Authors after it. The side pane starts at 2× (both widths); a width already chosen stays.
 - `keep-the-why-dashboard` 0.3.5: the side pane's width is chosen at the top of the pane, on every page — no longer only inside a loaded graph, at its bottom.
 - `keep-the-why-dashboard` 0.3.4: the graph's controls in groups, each set off by a line — what is drawn (*entries*, *labels*), friends (*friends*, *all their entries*), walking and motion (*path*, *motion*), *reset*; on a phone they wrap.
 
