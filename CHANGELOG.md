@@ -21,6 +21,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Changed
 
+- README: the three small dashboard screenshots take a third of the width each, so they stay in one row — at 290 px each GitHub wrapped the third to a line of its own.
 - Dashboard screenshots on the site: under the big one on the landing page and in the README a row of three — friends in the graph, the UNICORN Binance Suite's family, a thought read whole — each linked to the live view; on the Dashboard page one under each of family, friends and thoughts.
 - Landing page, *Capture* card: *Install* and *Autostart* links, as on the *Use* card.
 - `references/continuous-capture.md`: "the skill" in the opening line links to the installation page.

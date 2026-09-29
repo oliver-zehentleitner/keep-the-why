@@ -230,9 +230,9 @@ Reading it back has a tool too: [keep-the-why-dashboard](https://pypi.org/projec
 </p>
 
 <p align="center">
-  <a href="https://keepthewhy.com/dashboard/live/#graph"><img src="https://keepthewhy.com/assets/dashboard-graph-screenschot.png" alt="Friends in the graph: Keep the Why with repo-native project memory and the UNICORN Binance Suite" width="290"></a>
-  <a href="https://oliver-zehentleitner.github.io/unicorn-binance-suite/keep-the-why-dashboard/#family"><img src="https://keepthewhy.com/assets/dashboard-family-screenschot.png" alt="The UNICORN Binance Suite's family of eight repositories" width="290"></a>
-  <a href="https://keepthewhy.com/dashboard/live/#thoughts"><img src="https://keepthewhy.com/assets/dashboard-thoughts-screenschot.png" alt="A thought read whole: linked entries across repositories" width="290"></a>
+  <a href="https://keepthewhy.com/dashboard/live/#graph"><img src="https://keepthewhy.com/assets/dashboard-graph-screenschot.png" alt="Friends in the graph: Keep the Why with repo-native project memory and the UNICORN Binance Suite" width="32%"></a>
+  <a href="https://oliver-zehentleitner.github.io/unicorn-binance-suite/keep-the-why-dashboard/#family"><img src="https://keepthewhy.com/assets/dashboard-family-screenschot.png" alt="The UNICORN Binance Suite's family of eight repositories" width="32%"></a>
+  <a href="https://keepthewhy.com/dashboard/live/#thoughts"><img src="https://keepthewhy.com/assets/dashboard-thoughts-screenschot.png" alt="A thought read whole: linked entries across repositories" width="32%"></a>
 </p>
 
 <p align="center"><sub>The dashboard on this repository's own <code>context/</code> — <a href="https://keepthewhy.com/dashboard/live/">the live example</a>, a static export rebuilt with every docs deploy. Run locally, it updates as the project changes.</sub></p>
