@@ -4,6 +4,17 @@ What changed in each version that an existing project may need to know about or 
 
 Entries below assume 0.2.0 as the starting point — nothing before it tracked a `context-schema` at all, and 0.2.0 itself introduced no `context/` entry format change.
 
+## 0.18.1 — the `context/README.md` names `Id`, `See` and `Superseded by`; a cross-project locator is exactly a `canonical` (one mechanical step)
+
+**What changed:** the `context/README.md` the wizard writes lists `Id` under "Reading the entries" — the entry's permanent address, which `See` and `Superseded by` point at. The 0.18.0 migration added the fields to the entries but left the README's list as it was, so a project set up or migrated before this version still explains only `Type`, `Status` and `Evidence`. `keep-the-why-lint` checks the locator of a `See` or `Superseded by` into another project for the exact form of a `canonical` — the repository URL, no file path, anchor, query, `.git` suffix or trailing slash (`E117`); before, anything starting with `https://` passed. A `canonical` field and a family location with a query or fragment are `E003`. The skill's references were corrected against the linter and the recorded decisions without changing behaviour (`CHANGELOG.md`).
+
+**Existing projects:**
+
+1. Project-wide, once: if `context/README.md`'s "Reading the entries" list doesn't mention `Id`, add the line from `references/setup.md`'s current template.
+2. If the linter reports `E117` on a cross-project `See` or `Superseded by`, replace the locator with the target project's `canonical` as its `.keep-the-why` records it; the Id and the date stay.
+
+Advance `context-schema` to 0.18.1 as usual.
+
 ## 0.18.0 — entry identity (`Id`, `See`, `Superseded by`) and which project, and where it lives (one mechanical step)
 
 **What changed, entries:** every entry carries `**Id:**`, a UUID version 4 as its first header line — made by an OS command (`uuidgen`, `cat /proc/sys/kernel/random/uuid`, PowerShell's `[guid]::NewGuid()`), never composed from memory, never changed. Two fields build on it: `**See:**` cites another entry as `<locator> — <uuid> — as of <date>` (inside the project `<file>.md#<anchor>`, in another project that project's `canonical` alone), and `**Superseded by:**`, required on every `Status: superseded` entry, names the successor's Id, a cross-project reference, or `none — <why nothing replaced it>`. `specification.md` §9.1 has the grammar. The linter: from `context-schema` 0.18.0 on, a missing `Id` is `E114`, a malformed one `E115`, a duplicate `E116`, a `See`/`Superseded by` outside its shape `E117`, an Id no entry carries `E118`, a stale local `See` locator `E119`, `superseded` without a successor `E120`, `Superseded by` elsewhere `E121`. Below 0.18.0 the three fields are ignored, so a project can add them before it advances.
