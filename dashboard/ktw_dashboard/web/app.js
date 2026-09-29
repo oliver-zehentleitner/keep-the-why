@@ -93,7 +93,9 @@ let filter = { status: "", evidence: "", author: "" };
 let selected = null; // entry id shown in the details pane
 const byId = () => Object.fromEntries(S.entries.map((e) => [e.id, e]));
 const byUuid = () => Object.fromEntries(S.entries.filter((e) => e.uuid).map((e) => [e.uuid, e]));
+// an entry's address is its Id, so a copied link survives a renamed heading or a moved entry; file#anchor only without one
 const entryHref = (e) => `#entry/${encodeURIComponent(e.uuid || e.id)}`;
+const entryOf = (ref) => byId()[ref] || (isUuid(ref) ? byUuid()[ref] : null);
 const topicOf = (file) => S.topics.find((t) => t.file === file);
 const entriesOf = (file) => S.entries.filter((e) => e.file === file);
 const authorOf = (e) => e.git?.created?.author || e.git?.last_touched?.author || "";
@@ -196,12 +198,12 @@ const count = (list, key) => list.reduce((m, e) => ((m[e[key] || ""] = (m[e[key]
 const typeCounts = (list) => list.reduce((m, e) => { for (const t of e.type?.length ? e.type.map(typeName) : ["(none)"]) m[t] = (m[t] || 0) + 1; return m; }, {});
 const STATUS_ORDER = ["active", "open", "needs-review", "pending-confirmation", "superseded"];
 const EV_ORDER = ["confirmed", "inferred", "unknown"];
-const entryLink = (e, extra = "") => el("a", { href: `#entry/${encodeURIComponent(e.id)}`, class: extra }, e.title);
+const entryLink = (e, extra = "") => el("a", { href: entryHref(e), class: extra }, e.title);
 const projectOf = (x) => (x?.project ? x.project : null); // a merged family member's name, null for this project
 function entryRow(e) {
   const snippet = e.body.reason || e.body.text.split("\n")[0] || "";
   const g = e.git;
-  return el("a", { href: `#entry/${encodeURIComponent(e.id)}`, class: `row ${matches(e) ? "" : "dim"}` },
+  return el("a", { href: entryHref(e), class: `row ${matches(e) ? "" : "dim"}` },
     el("div", { class: "rt" }, el("span", { html: inline(e.title) }), ...entryPills(e)),
     el("div", { class: "rs" }, snippet.replace(/\*\*|`/g, "")),
     el("div", { class: "rm" }, [projectOf(e), topicOf(e.file)?.title || e.file, g?.created?.author ? `${g.created.author} · ${g.created.date}` : null, g?.last_touched?.date && g.last_touched.date !== g?.created?.date ? `touched ${g.last_touched.date}` : null].filter(Boolean).join("  ·  ")));
@@ -232,7 +234,7 @@ function viewFindings(main) {
     el("tbody", {}, f.items.map((x) => {
       const entry = S.entries.find((e) => (e.project || null) === (x.project || null) && `${(e.origin?.state?.project || S.project).context}${e.localFile || e.file}` === (x.localPath || x.path) && e.line <= x.line && x.line <= e.end_line + 1);
       return el("tr", {}, el("td", {}, pill(x.severity, `sev-${x.severity}`)), el("td", { class: "mono" }, x.code),
-        el("td", { class: "mono" }, entry ? el("a", { href: `#entry/${encodeURIComponent(entry.id)}` }, `${x.path}:${x.line}`) : `${x.path}${x.line ? ":" + x.line : ""}`), el("td", {}, x.message));
+        el("td", { class: "mono" }, entry ? el("a", { href: entryHref(entry) }, `${x.path}:${x.line}`) : `${x.path}${x.line ? ":" + x.line : ""}`), el("td", {}, x.message));
     })))));
 }
 
@@ -249,7 +251,7 @@ function renderSidebar() {
     d.addEventListener("toggle", () => { openState[t.file] = d.open; sessionStorage.setItem("ktw-tree", JSON.stringify(openState)); });
     d.append(el("summary", { "data-file": t.file, onclick: (ev) => { if (ev.target.closest(".tw")) return; ev.preventDefault(); location.hash = `#topic/${t.file}`; d.open = true; } },
       el("span", { class: "tw" }, "▶"), el("span", { class: "tt" }, t.title), el("span", { class: "count" }, list.length)));
-    for (const e of list) d.append(el("a", { href: `#entry/${encodeURIComponent(e.id)}`, class: `leaf ${matches(e) ? "" : "dim"}`, "data-id": e.id, title: e.title },
+    for (const e of list) d.append(el("a", { href: entryHref(e), class: `leaf ${matches(e) ? "" : "dim"}`, "data-id": e.id, title: e.title },
       el("i", { class: `dot ${e.evidence} ${e.status}` }), el("span", {}, e.title.replace(/`/g, ""))));
     tree.append(d);
   }
@@ -272,9 +274,10 @@ function renderSidebar() {
 function markActive() {
   const route = location.hash.slice(1) || "overview";
   for (const a of document.querySelectorAll(".nav a")) a.classList.toggle("active", route.startsWith(a.dataset.route));
-  const file = route.startsWith("topic/") ? route.slice(6) : route.startsWith("entry/") ? decodeURIComponent(route.slice(6)).split("#")[0] : null;
+  const entry = route.startsWith("entry/") ? entryOf(decodeURIComponent(route.slice(6))) : null;
+  const file = route.startsWith("topic/") ? route.slice(6) : entry?.file || null;
   for (const s of document.querySelectorAll(".tree summary")) s.classList.toggle("active", s.dataset.file === file && route.startsWith("topic/"));
-  for (const a of document.querySelectorAll(".tree .leaf")) a.classList.toggle("active", route.startsWith("entry/") && a.dataset.id === decodeURIComponent(route.slice(6)));
+  for (const a of document.querySelectorAll(".tree .leaf")) a.classList.toggle("active", !!entry && a.dataset.id === entry.id);
   if (file) { const d = document.querySelector(`.tree summary[data-file="${CSS.escape(file)}"]`)?.parentElement; if (d) d.open = true; }
   document.querySelector(".tree .leaf.active")?.scrollIntoView?.({ block: "nearest" });
 }
@@ -413,10 +416,10 @@ function refLine(ref, label) {
   return el("div", { class: "ref" }, label ? el("b", {}, label) : null, ref.text || "");
 }
 function viewEntry(main, id) {
-  let e = byId()[id];
-  if (!e && isUuid(id)) e = byUuid()[id];
+  const e = entryOf(id);
   if (!e && isUuid(id) && (LIVE() || (PUBLISHED() && canonicalOf(S.project)))) return viewEntryElsewhere(main, id);
   if (!e) return main.append(el("p", { class: "center" }, "No such entry"));
+  if (location.hash !== entryHref(e)) history.replaceState(null, "", entryHref(e)); // an old file#anchor link shows the Id address from here on
   const list = entriesOf(e.file); const idx = list.indexOf(e);
   const t = topicOf(e.file);
   INLINE_PROJECT = e.project || null;
@@ -428,8 +431,8 @@ function viewEntry(main, id) {
     e.revisit_when ? el("div", { class: "body" }, el("div", { class: "label", html: `<b>Revisit when</b><p>${inline(e.revisit_when)}</p>` })) : null,
     refsBox(e),
     el("div", { class: "pager" },
-      idx > 0 ? el("a", { href: `#entry/${encodeURIComponent(list[idx - 1].id)}` }, `← ${list[idx - 1].title}`) : el("span"),
-      idx < list.length - 1 ? el("a", { href: `#entry/${encodeURIComponent(list[idx + 1].id)}` }, `${list[idx + 1].title} →`) : el("span")),
+      idx > 0 ? el("a", { href: entryHref(list[idx - 1]) }, `← ${list[idx - 1].title}`) : el("span"),
+      idx < list.length - 1 ? el("a", { href: entryHref(list[idx + 1]) }, `${list[idx + 1].title} →`) : el("span")),
   );
   INLINE_PROJECT = null;
   main.append(r);
@@ -631,7 +634,7 @@ function renderDetailsEntry(e) {
     if (g.status_history?.length) d.append(el("h3", {}, "Status history"), el("ul", { class: "hist" }, g.status_history.map((h) => el("li", { class: h.status }, `${h.status}`, el("div", { class: "d" }, authorLink(h.author, h.commit, P), ` · ${h.date} · ${h.commit}`)))));
   }
   const back = S.entries.filter((x) => x.id !== e.id && x.refs.includes(e.file));
-  d.append(el("h3", {}, `Backlinks (${back.length})`), ...(back.length ? back.map((x) => el("a", { class: "backlink", href: `#entry/${encodeURIComponent(x.id)}` }, x.title, el("div", { class: "note" }, topicOf(x.file)?.title || x.file))) : [el("p", { class: "empty" }, `nothing references ${e.file}`)]));
+  d.append(el("h3", {}, `Backlinks (${back.length})`), ...(back.length ? back.map((x) => el("a", { class: "backlink", href: entryHref(x) }, x.title, el("div", { class: "note" }, topicOf(x.file)?.title || x.file))) : [el("p", { class: "empty" }, `nothing references ${e.file}`)]));
   if (e.refs.length) d.append(el("h3", {}, "References"), ...e.refs.map((f) => el("a", { class: "backlink", href: `#topic/${f}` }, topicOf(f)?.title || f)));
   if (e.findings.length) d.append(el("h3", {}, "Linter"), ...e.findings.map((f) => el("div", { class: "finding" }, pill(f.code, `sev-${f.severity}`), ` line ${f.line}: ${f.message}`)));
   renderDetailsNeighbourhood(e);
@@ -697,7 +700,7 @@ function assemble(topics, entries, prev = {}) {
   const nodes = []; const links = []; const index = {};
   const add = (n) => { index[n.id] = nodes.length; nodes.push(seedNode(n, prev)); };
   for (const t of topics) add({ id: `t:${t.file}`, kind: "topic", label: t.title, file: t.file, r: 10 + Math.sqrt(t.entries) * 3.2, href: `#topic/${t.file}` });
-  for (const e of entries) add({ id: `e:${e.id}`, kind: "entry", label: e.title, file: e.file, entry: e, r: 4.2, href: `#entry/${encodeURIComponent(e.id)}` });
+  for (const e of entries) add({ id: `e:${e.id}`, kind: "entry", label: e.title, file: e.file, entry: e, r: 4.2, href: entryHref(e) });
   for (const e of entries) {
     if (index[`t:${e.file}`] != null) links.push({ s: index[`e:${e.id}`], t: index[`t:${e.file}`], kind: "member", len: 46 });
     for (const f of e.refs) if (index[`t:${f}`] != null) links.push({ s: index[`e:${e.id}`], t: index[`t:${f}`], kind: "ref", len: 120 });
@@ -779,7 +782,7 @@ async function buildFamilyGraph() {
     }
     for (const e of G.state.entries || []) {
       const t = nodes[index[tid(G, e.file)]];
-      add({ id: eid(G, e.id), kind: "entry", label: e.title, file: e.file, entry: e, r: 4.2, href: G.key === "self" ? `#entry/${encodeURIComponent(e.id)}` : G.g.href(e) }, t || hub);
+      add({ id: eid(G, e.id), kind: "entry", label: e.title, file: e.file, entry: e, r: 4.2, href: G.key === "self" ? entryHref(e) : G.g.href(e) }, t || hub);
     }
     for (const e of G.state.entries || []) {
       const me = index[eid(G, e.id)];

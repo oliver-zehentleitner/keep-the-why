@@ -84,6 +84,19 @@ if (withUuid) {
   if (!main.querySelector("h1")) errors.push("entry by uuid: no reader rendered");
   const idCell = [...window.document.querySelectorAll("#details .kv .v")].some((n) => n.textContent === withUuid.uuid);
   if (!idCell) errors.push("entry by uuid: the details pane does not show the Id");
+  // every link to an entry that has an Id carries the Id, not file#anchor — tree, rows, pager, backlinks
+  const anchorForm = new Set(S.entries.filter((e) => e.uuid).map((e) => `#entry/${encodeURIComponent(e.id)}`));
+  const stale = new Set();
+  for (const r of [`#topic/${withUuid.file}`, `#entry/${withUuid.uuid}`]) {
+    await go(r);
+    for (const a of window.document.querySelectorAll('a[href^="#entry/"]')) if (anchorForm.has(a.getAttribute("href"))) stale.add(a.getAttribute("href"));
+  }
+  if (stale.size) errors.push(`entry links by file#anchor instead of Id: ${[...stale].slice(0, 3).join(", ")}`);
+  if (!window.document.querySelector(".tree .leaf.active")) errors.push("entry by uuid: the tree does not mark the entry");
+  // an old file#anchor link still opens the entry and the address bar shows the Id from then on
+  await go(`#entry/${encodeURIComponent(withUuid.id)}`);
+  if (window.location.hash !== `#entry/${withUuid.uuid}`) errors.push("old file#anchor link: not rewritten to the Id address, hash is " + window.location.hash);
+  if (!main.querySelector("h1")) errors.push("old file#anchor link: no reader rendered");
 }
 if (withSee) {
   await go(`#entry/${withSee.uuid || encodeURIComponent(withSee.id)}`);

@@ -412,7 +412,7 @@ badge service renders on request — the idea that had been parked in
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
-**Source:** maintainer design discussion, 2026-09-26/27; implementation call on the menu, 2026-09-27
+**Source:** maintainer design discussion, 2026-09-26/27; implementation call on the menu, 2026-09-27; maintainer statement on the page's entry links, 2026-09-29
 **Revisit when:** a browser control lets a native `<select>` carry a per-row action, or the family view is asked to fetch a member itself
 
 The family surfaces on the page as a **Family** view (parent, siblings,
@@ -448,6 +448,15 @@ Rejected with the `See` design: the locator across projects is the
 canonical alone, and the dashboard computes the host form from what it
 knows — canonical, branch, context directory, file and heading — the one
 place that knowledge is allowed to live.
+
+**Consequence (2026-09-29, maintainer decision):** every link the page
+makes to an entry uses the Id address — tree, lists, pager, backlinks,
+findings, graph — not only the `See` and `Superseded by` rows, so a URL
+copied from the address bar can be passed on and keeps working. A
+`file.md#anchor` address breaks when the heading is reworded or the entry
+moves to another topic file; the Id never changes. An entry without an Id
+keeps the anchor form, and an old anchor link still opens the entry and
+is rewritten to the Id address in place.
 
 ## Public mode is the browser reading published exports, bootstrapped from a raw `.keep-the-why` at `HEAD`
 
