@@ -875,7 +875,15 @@ function miniGraph(d, ctx) {
   const box = el("div", { class: `mini ${focusId ? "tall" : "fill"}` });
   const seg = el("span", { class: "mini-seg" }, modes.length > 1 ? modes.map((m) => el("button", { type: "button", class: m === mode ? "on" : "", title: { near: "this entry's or topic's neighbourhood", project: "the whole project", family: "the whole family tree" }[m], onclick: () => { MINI = m; const keep = d.querySelector(".mini"); const h = keep?.previousElementSibling?.tagName === "H3" ? keep.previousElementSibling : null; h?.remove(); keep?.remove(); miniGraph(d, ctx); } }, m)) : el("span", { class: "mini-title" }, "graph"));
   const canvas = el("canvas");
-  box.append(canvas, seg, el("span", { class: "mini-hint" }, mode === "near" ? "click to open" : "hover · click · g for the full view"));
+  // one click to the full graph: the same level, centred on the entry or topic shown
+  const full = el("button", { type: "button", class: "mini-open", title: "open the full graph — the same level, centred on what is shown here",
+    onclick: () => {
+      if (mode === "family") setScope("family", { rerender: false });
+      GRAPH_CENTER = ctx.entry ? { entry: ctx.entry } : ctx.topic ? { topic: ctx.topic } : null;
+      if (ctx.entry?.uuid) { focusStep(ctx.entry.uuid); setTimeout(() => { if (STEP_FOCUS === ctx.entry.uuid) focusStep(null); }, 4000); }
+      location.hash = "#graph";
+    } }, "⤢ full graph");
+  box.append(canvas, seg, el("span", { class: "mini-hint" }, mode === "near" ? "click to open" : "hover · click"), full);
   if (focusId) d.append(el("h3", {}, "Graph"));
   d.append(box);
   const opts = { mini: true, focusId };
@@ -896,6 +904,7 @@ function miniGraph(d, ctx) {
 }
 // ---------------------------------------------------------------- graph (canvas force layout, no library)
 let graph = null; // the full graph persists across re-renders so positions survive live updates
+let GRAPH_CENTER = null; // { entry } or { topic }: centre the full graph there once, coming from the side pane
 function seedNode(n, prev) {
   const p = prev[n.id];
   if (p) Object.assign(n, { x: p.x, y: p.y, vx: 0, vy: 0, fixed: p.fixed });
@@ -1583,6 +1592,12 @@ function viewGraph(main) {
         el("span", {}, el("i", { class: "dot", style: "background:transparent;border:1.5px solid var(--fg3)" }), "superseded"),
         el("span", {}, "— reference · ··· membership"), ...friendsLegend(g));
     wrap.replaceChildren(canvas, ui, legend, ...[pathBar()].filter(Boolean), el("div", { class: "graph-hint" }, family ? "family — a project opens its overview · drag nodes · wheel zoom · drag background to pan" : "drag nodes · wheel zoom · drag background to pan · click to open"));
+    // arriving from the side pane's graph: centred on the entry or topic it showed
+    if (GRAPH_CENTER) {
+      const c = GRAPH_CENTER; GRAPH_CENTER = null;
+      const n = g.nodes.find((x) => (c.entry && x.entry && (x.entry === c.entry || (c.entry.uuid && x.entry.uuid === c.entry.uuid))) || (c.topic && x.kind === "topic" && x.file === c.topic.file));
+      if (n) { g.ox = -n.x * g.scale; g.oy = -n.y * g.scale; g.userMoved = true; }
+    }
     runGraph(canvas, g, { fit: family });
     renderThoughts(g);
   };

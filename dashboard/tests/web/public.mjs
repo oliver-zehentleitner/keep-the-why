@@ -440,6 +440,19 @@ const report = {};
   if (d.getElementById("app").dataset.side !== "half") errors.push("side width: back on the overview, the graph's width is gone: " + d.getElementById("app").dataset.side);
   window.close();
 }
+{
+  // from the side pane's graph to the full one in one click, centred on the entry it showed
+  const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/refs`)}#entry/5a1e5a1e-0000-4000-8000-000000000004`);
+  await tick(300);
+  const d = window.document;
+  const b = d.querySelector("#details .mini-open");
+  if (!b) errors.push("mini graph: no way to the full graph");
+  b?.click(); window.dispatchEvent(new window.Event("hashchange")); await tick(300);
+  if (window.location.hash !== "#graph" || !d.querySelector("#main .graph-wrap canvas")) errors.push("mini graph: the click did not open the full graph: " + window.location.hash);
+  const g = window.__g(); const n = g?.nodes.find((x) => x.entry?.uuid === "5a1e5a1e-0000-4000-8000-000000000004");
+  if (!n || !g.userMoved) errors.push("mini graph: the full graph is not centred on the entry");
+  window.close();
+}
 console.log(JSON.stringify(report, null, 1));
 console.log("ERRORS:", errors.length); for (const e of errors) console.log("  " + e);
 process.exit(errors.length ? 1 : 0);

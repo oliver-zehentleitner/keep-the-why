@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- `keep-the-why-dashboard` 0.3.7: *⤢ full graph* in the side pane's graph opens the full graph in one click — at the same level (the family's with the family scope), centred on the entry or topic it showed, the entry marked for a moment.
+
 ### Changed
 
 - Docs: family, friends and thoughts explained where the dashboard is described — a section on the Dashboard page, a short one in the dashboard's README, the README's and `llms.txt`'s dashboard paragraphs, a sentence on the landing page; the Friends and Thoughts views in the dashboard README's table, the details pane's thoughts and width in both tables.
