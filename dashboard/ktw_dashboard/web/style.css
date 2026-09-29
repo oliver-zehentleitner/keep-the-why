@@ -428,7 +428,12 @@ a.author:hover { color: var(--accent2); }
 .graph-ui .friends-ctl { display: inline-flex; gap: 10px; align-items: center; }
 
 /* the side pane's width, chosen in the corner of its graph */
-.details .mini .mini-width { top: auto; bottom: 6px; left: 6px; }
+.details .pane-width { position: sticky; top: -16px; z-index: 2; flex: none; display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin: -16px -16px 12px; padding: 8px 16px; background: var(--bg2); border-bottom: 1px solid var(--line); font-size: 11px; color: var(--fg3); }
+.details .pane-width .label { text-transform: uppercase; letter-spacing: .06em; font-size: 10px; }
+.details .pane-width .mini-width { display: inline-flex; gap: 2px; border: 1px solid var(--line); border-radius: 5px; padding: 1px; background: var(--bg2); }
+.details .pane-width button { background: transparent; border: 0; color: var(--fg3); font-size: 11px; padding: 2px 7px; border-radius: 3px; cursor: pointer; }
+.details .pane-width button.on { background: var(--accent); color: #fff; }
+@media (max-width: 900px) { .details .pane-width { display: none; } }
 @media (min-width: 901px) {
   .app[data-side="2"] { grid-template-columns: 280px minmax(0, 1fr) min(680px, 45vw); }
   .app[data-side="3"] { grid-template-columns: 280px minmax(0, 1fr) min(1020px, 60vw); }

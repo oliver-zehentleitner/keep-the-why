@@ -875,7 +875,7 @@ function miniGraph(d, ctx) {
   const box = el("div", { class: `mini ${focusId ? "tall" : "fill"}` });
   const seg = el("span", { class: "mini-seg" }, modes.length > 1 ? modes.map((m) => el("button", { type: "button", class: m === mode ? "on" : "", title: { near: "this entry's or topic's neighbourhood", project: "the whole project", family: "the whole family tree" }[m], onclick: () => { MINI = m; const keep = d.querySelector(".mini"); const h = keep?.previousElementSibling?.tagName === "H3" ? keep.previousElementSibling : null; h?.remove(); keep?.remove(); miniGraph(d, ctx); } }, m)) : el("span", { class: "mini-title" }, "graph"));
   const canvas = el("canvas");
-  box.append(canvas, seg, sideControl(), el("span", { class: "mini-hint" }, mode === "near" ? "click to open" : "hover · click · g for the full view"));
+  box.append(canvas, seg, el("span", { class: "mini-hint" }, mode === "near" ? "click to open" : "hover · click · g for the full view"));
   if (focusId) d.append(el("h3", {}, "Graph"));
   d.append(box);
   const opts = { mini: true, focusId };
@@ -2127,12 +2127,18 @@ const sideLabel = (v) => (v === "half" ? "½" : `${v}×`);
 function applySide() {
   const v = SIDE[paneKind()];
   $("#app").dataset.side = v;
+  const d = $("#details");
+  if (d && !d.querySelector(":scope > .pane-width")) d.prepend(paneWidthBar());
   for (const b of document.querySelectorAll(".mini-width button")) b.classList.toggle("on", b.textContent === sideLabel(v));
   for (const G of ACTIVE_GRAPHS) G.wake?.();
 }
 function setSide(v) { const k = paneKind(); SIDE[k] = v; try { localStorage.setItem(`ktw-side-${k}`, v); } catch {} applySide(); }
-const sideControl = () => el("span", { class: "mini-seg mini-width", title: "the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details" },
-  ...SIDE_WIDTHS.map((v) => el("button", { type: "button", class: v === SIDE[paneKind()] ? "on" : "", onclick: () => setSide(v) }, sideLabel(v))));
+// the choice sits at the top of the pane, above whatever it holds, on every page
+function paneWidthBar() {
+  return el("div", { class: "pane-width", title: "the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details" },
+    el("span", { class: "label" }, "Width"),
+    el("span", { class: "mini-width" }, ...SIDE_WIDTHS.map((v) => el("button", { type: "button", class: v === SIDE[paneKind()] ? "on" : "", onclick: () => setSide(v) }, sideLabel(v)))));
+}
 function setupSideToggle() {
   const btn = $("#side-toggle"); const app = $("#app");
   btn.onclick = () => { const open = app.classList.toggle("side-open"); btn.setAttribute("aria-expanded", String(open)); btn.textContent = open ? "Topics ▴" : "Topics ▾"; };

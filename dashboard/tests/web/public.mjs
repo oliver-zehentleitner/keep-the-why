@@ -420,12 +420,14 @@ const report = {};
   window.close();
 }
 {
-  // the side pane's width, from the corner of its graph: kept per browser
+  // the side pane's width, from the top of the pane: kept per browser
   const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/refs`)}#overview`);
   await tick(300);
   const d = window.document;
   const btns = [...d.querySelectorAll("#details .mini-width button")].map((b) => b.textContent);
-  if (btns.join() !== "1×,2×,3×,½") errors.push("side width: no 1×/2×/3×/½ control on the side pane's graph: " + btns.join());
+  if (btns.join() !== "1×,2×,3×,½") errors.push("side width: no 1×/2×/3×/½ control at the top of the side pane: " + btns.join());
+  if (!d.querySelector("#details > .pane-width:first-child")) errors.push("side width: the control is not the first thing in the pane");
+  if (d.querySelector("#details .mini .mini-width")) errors.push("side width: the control is still inside the graph");
   [...d.querySelectorAll("#details .mini-width button")].find((b) => b.textContent === "½")?.click(); await tick(50);
   if (d.getElementById("app").dataset.side !== "half" || window.localStorage.getItem("ktw-side-graph") !== "half") errors.push("side width: ½ did not take or was not kept");
   // an entry's details have a width of their own: the graph's ½ does not follow there, and 2× there does not come back
