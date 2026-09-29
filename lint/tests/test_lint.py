@@ -669,6 +669,8 @@ class ConfigFileIntegrity(_ProjectFixture):
             "../elsewhere",
             "/srv/git/widget-service",
             "https://github.com/acme/widget\x01service",
+            "https://github.com/acme/widget-service#readme",
+            "https://github.com/acme/widget-service?tab=readme",
         ):
             with self.subTest(canonical=value):
                 self.base_project(config=self.config_with(f"- canonical: {value}"))
@@ -927,6 +929,38 @@ class EntryIdentity(_ProjectFixture):
         self.project_0_18(sync_extra=see)
         findings, _ = self.run_lint()
         self.assertEqual([], self.codes(findings))
+
+    def test_remote_see_locator_is_the_canonical_and_nothing_more(self):
+        for locator in (
+            "https://github.com/acme/other/blob/main/context/sync.md#token-cache",
+            "https://github.com/acme/other#token-cache",
+            "https://github.com/acme/other/",
+            "https://github.com/acme/other.git",
+            "https://github.com/acme/other?tab=readme",
+            "https://github.com",
+        ):
+            with self.subTest(locator=locator):
+                see = f"**See:** {locator} — {ID_C} — as of 2026-09-27\n"
+                self.project_0_18(sync_extra=see)
+                findings, _ = self.run_lint()
+                self.assertIn("E117", self.codes(findings), msg=locator)
+
+    def test_remote_superseded_by_locator_is_the_canonical_and_nothing_more(self):
+        for locator in (
+            "https://github.com/acme/other#new",
+            "https://github.com/acme/other.git",
+        ):
+            with self.subTest(locator=locator):
+                value = f"{locator} — {ID_C} — as of 2026-09-27"
+                topic = "# Sync\n\n" + entry(
+                    "Old",
+                    ID_A,
+                    status="superseded",
+                    extra=f"**Superseded by:** {value}\n",
+                )
+                self.base_project(config=CONFIG_0_18, topic=topic)
+                findings, _ = self.run_lint()
+                self.assertIn("E117", self.codes(findings), msg=locator)
 
     def test_malformed_see_is_e117(self):
         for bad in (

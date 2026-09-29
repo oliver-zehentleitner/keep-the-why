@@ -71,8 +71,9 @@ This names the skill and its purpose directly — not a task that happens to mat
     Each entry separates:
 
     - **Type** — what kind of thing it is: decision, workaround, incident, or constraint (or undefined, with a reason, if none fit)
-    - **Status** — whether a decision is active, superseded, open, or needs review
+    - **Status** — whether a decision is active, superseded, open, needs review, or still waits for a first confirmation
     - **Evidence** — whether its rationale is confirmed, inferred, or unknown
+    - **Id** — the entry's permanent address; **See** and **Superseded by** point at other entries by it
 
     Old reasoning is retained when it remains useful for understanding how the
     project evolved.

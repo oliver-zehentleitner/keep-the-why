@@ -127,8 +127,22 @@ _SOURCE_RE = re.compile(
 _ID_RE = re.compile(r"^[A-Za-z0-9._-]+$")
 _CONTROL_RE = re.compile(r"[\x00-\x1f\x7f]")
 # `canonical`: the normalized repository URL — https, a host, a path, no
-# whitespace; a trailing slash or a `.git` suffix is the un-normalized form.
-_CANONICAL_RE = re.compile(r"^https://[^\s/]+/[^\s]+$")
+# whitespace; a trailing slash or a `.git` suffix is the un-normalized form,
+# and a query or fragment points into the repository, not at it.
+_CANONICAL_RE = re.compile(r"^https://[^\s/]+/[^\s?#]+$")
+
+
+def _is_canonical(value: str) -> bool:
+    """The one shape rule for a repository URL — the `canonical` field, a
+    family location, and the locator of a cross-project `See` or
+    `Superseded by`, which is that project's `canonical` and nothing more."""
+    return bool(
+        _CANONICAL_RE.match(value)
+        and not value.endswith("/")
+        and not value.endswith(".git")
+        and not _CONTROL_RE.search(value)
+    )
+
 
 NON_TOPIC_FILES = ("README.md", "AGENTS.md", "CLAUDE.md", "index.md")
 
@@ -455,12 +469,7 @@ class Linter:
             value = canonical[1]
             if not value:
                 self.add(ERROR, "E003", path, canonical[0], "canonical is empty")
-            elif (
-                not _CANONICAL_RE.match(value)
-                or _CONTROL_RE.search(value)
-                or value.endswith("/")
-                or value.endswith(".git")
-            ):
+            elif not _is_canonical(value):
                 self.add(
                     ERROR,
                     "E003",
@@ -468,7 +477,7 @@ class Linter:
                     canonical[0],
                     f"canonical {value!r} is not a normalized repository URL — "
                     "https://<host>/<path>, no trailing slash, no '.git' suffix, "
-                    "no whitespace",
+                    "no query or fragment, no whitespace",
                 )
 
         root = block.first("root")
@@ -600,12 +609,7 @@ class Linter:
         """Shape of a family location: a normalized repository URL, or a
         relative path (the git-toplevel boundary is checked separately)."""
         if self._is_url(value):
-            return bool(
-                _CANONICAL_RE.match(value)
-                and not value.endswith("/")
-                and not value.endswith(".git")
-                and not _CONTROL_RE.search(value)
-            )
+            return _is_canonical(value)
         # a relative path: no scheme, no `user@host:` — a colon is a URL that
         # is not the normalized https form, never a path
         return (
@@ -1197,10 +1201,15 @@ class Linter:
             if not bad:
                 locator = parts[0]
                 if locator.startswith("https://"):
-                    continue  # another project: shape only, never resolved here
-                match = _LOCAL_LOCATOR_RE.match(locator)
-                if match is None or ".." in locator:
+                    # another project: its canonical and nothing more — shape
+                    # only, never resolved here
+                    if _is_canonical(locator):
+                        continue
                     bad = True
+                else:
+                    match = _LOCAL_LOCATOR_RE.match(locator)
+                    if match is None or ".." in locator:
+                        bad = True
             if bad:
                 self.add(
                     ERROR,
@@ -1208,7 +1217,7 @@ class Linter:
                     path,
                     fld.line,
                     f"See {fld.value!r} is not '<file>.md[#<anchor>] — <uuid> — as of "
-                    "YYYY-MM-DD' (an entry here) or 'https://<canonical> — <uuid> — as of "
+                    "YYYY-MM-DD' (an entry here) or '<canonical> — <uuid> — as of "
                     "YYYY-MM-DD' (an entry in another project)",
                 )
                 continue
@@ -1227,7 +1236,7 @@ class Linter:
                 path,
                 entry.line,
                 f"'{entry.title}': Status is superseded but there is no **Superseded by:** "
-                "line — name the successor's Id, a 'https://<canonical> — <uuid> — as of "
+                "line — name the successor's Id, a '<canonical> — <uuid> — as of "
                 "YYYY-MM-DD' reference, or 'none — <why nothing replaced it>'",
             )
             return
@@ -1271,7 +1280,7 @@ class Linter:
         parts = self._split_reference(value)
         if (
             parts is None
-            or not parts[0].startswith("https://")
+            or not _is_canonical(parts[0])
             or not _UUID_RE.match(parts[1])
             or not _AS_OF_RE.match(parts[2])
         ):
@@ -1280,7 +1289,7 @@ class Linter:
                 "E117",
                 path,
                 line,
-                f"Superseded by {value!r} is not an Id, a 'https://<canonical> — <uuid> — "
+                f"Superseded by {value!r} is not an Id, a '<canonical> — <uuid> — "
                 "as of YYYY-MM-DD' reference, or 'none — <reason>'",
             )
 

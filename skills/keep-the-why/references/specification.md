@@ -1,6 +1,6 @@
 # Specification
 
-The normative definition of everything Keep the Why reads and writes: the two config files, the machine-wide policy file, the `context/` directory, and the entry format. This file defines *what is valid*, with an example under each artifact; `SKILL.md` and `setup.md` define *what the skill does with it*; `repository-structure.md` says where things go — layout, routing, adoption. Where prose elsewhere and this file disagree, this file wins.
+The normative definition of everything Keep the Why reads and writes: the project config file, the personal file, the machine-wide policy file, a context cache's settings file, the `context/` directory, and the entry format. This file defines *what is valid*, with an example under each artifact; `SKILL.md` and `setup.md` define *what the skill does with it*; `repository-structure.md` says where things go — layout, routing, adoption. Where prose elsewhere and this file disagree, this file wins.
 
 The specification is versioned with the skill: its version is the `metadata.version` in `SKILL.md`'s frontmatter, a project records the version it was last checked against in `context-schema`, and every change that affects an existing project is listed in `migrations.md`. `keep-the-why-lint` is the reference implementation of the mechanically checkable part; its finding codes are named below where they apply.
 
@@ -30,7 +30,7 @@ Three boundaries hold for every path a config file names. `context` and `pinned-
 
 ## 2. Config blocks
 
-All three config files share one block syntax:
+All four config files share one block syntax:
 
 ```markdown
 <!-- keep-the-why:<kind> -->
@@ -44,20 +44,20 @@ All three config files share one block syntax:
 - Text outside the markers is prose for humans. The skill neither reads nor depends on it.
 - Multi-part values use ` — ` (space, em dash, space) as the separator, e.g. `every 14 days — last: 2026-07-21`.
 
-Kinds: `config` and `personal-defaults` in `.keep-the-why`; `personal` in `~/.keep-the-why/<id>.md`; `global` in `~/.keep-the-why/config`.
+Kinds: `config`, `personal-defaults` and `children` in `.keep-the-why`; `personal` in `~/.keep-the-why/<id>.md`; `global` in `~/.keep-the-why/config`; `cache` in `~/.keep-the-why/cache/<id>.md`.
 
 ## 3. `.keep-the-why`
 
 ### 3.1 `keep-the-why:config`
 
-Every field but the two pin fields is required in the file (`E002` when missing, except `context-schema`, which is a warning). The "default" column is what the skill backfills — and writes into the file — when it meets a file from before the field existed; a present field with a value outside its set is an error (`E003`) and, for the skill, a question, never a guess.
+Required in the file: `id`, `context`, `init`, `capture-confirmation`, `source-reference` (`E002` when missing) and `context-schema` (a warning, `W001`). The rest — `canonical`, `parent`, `dashboard-state`, `root` and the two pin fields — are optional. The "default" column is what the skill backfills — and writes into the file — when it meets a file from before the field existed; a present field with a value outside its set is an error (`E003`) and, for the skill, a question, never a guess.
 
 | Key | Values | Default | Meaning |
 |---|---|---|---|
 | `id` | file-name token: `[A-Za-z0-9._-]+`, not all dots | — (required, `E002`) | the project's identity across clones, machines and worktrees; keys the personal file. Written once at init: `<owner>---<repo>` from the published remote (`upstream` in a fork checkout, else `origin`) of the nearest `.git` above the file, or `<uuid>---<folder-name>` without one; `/` and every other filesystem-unsafe character normalized to `-`. A `.keep-the-why` below the Git toplevel (an isolated-context mono repo) appends its `root` as a slug: `<owner>---<repo>---<sub-path>`. Never re-derived. |
-| `canonical` | `https://<host>/<path>`, no trailing slash, no `.git` suffix | absent when the project has no remote; backfilled from the published remote otherwise (`upstream` in a fork checkout, else `origin`) | the repository's stored locator: the normalized URL of the published remote, SSH forms rewritten to `https`. Written once at init and changed only deliberately, when the repository is renamed, transferred or moved; not re-derived (`E003` when malformed). |
-| `parent` | `https://<host>/<path>` (another repository) or a relative directory path inside the Git toplevel | absent (no parent) | the project this one belongs to, when it is part of a larger one: the parent's `canonical`, or its path relative to this `.keep-the-why` in an isolated-context mono repo (`..` for a sub-project whose parent is the repository root). At most one. The parent lists this project back in its `children` block (§3.3); when both sides are in the checkout the linter checks the link both ways (`E015`), a URL is checked for shape only (`E003`, `E009`). |
-| `dashboard-state` | `https://<site>/<path>/state.json` | absent (no published export) | where this project's dashboard export is published — the `state.json` that `ktw-dashboard --export` writes next to `index.html` and `badge.svg`. Read by another dashboard in *public* mode to browse this project's family member without a checkout; `E003` when malformed. |
+| `canonical` | `https://<host>/<path>`, no trailing slash, no `.git` suffix, no query or fragment | absent when the project has no remote; backfilled from the published remote otherwise (`upstream` in a fork checkout, else `origin`) | the repository's stored locator: the normalized URL of the published remote, SSH forms rewritten to `https`. Written once at init and changed only deliberately, when the repository is renamed, transferred or moved; not re-derived (`E003` when malformed). |
+| `parent` | `https://<host>/<path>` (another repository) or a relative directory path inside the Git toplevel | absent (no parent) | the project this one belongs to, when it is part of a larger one: the parent's `canonical`, or its path relative to this `.keep-the-why` in an isolated-context mono repo (`..` for a sub-project whose parent is the repository root). At most one. The parent lists this project back in its `children` block (§3.3); when both sides are in the checkout the linter checks the link both ways (`E015`); a URL is checked for shape only (`E003`), a path for its boundary (`E009`). |
+| `dashboard-state` | `https://<site>/<path>.json`, normally `…/state.json` | absent (no published export) | where this project's dashboard export is published — the `state.json` that `ktw-dashboard --export` writes next to `index.html` and `badge.svg`. Read by another dashboard in *public* mode to browse this project's family member without a checkout; `E003` when malformed. |
 | `root` | relative directory path inside the Git toplevel | absent (the file is at the toplevel) | the path of this `.keep-the-why` relative to the Git toplevel, for a project below it (an isolated-context mono repo). Tooling keys such a project by `(canonical, root)`. Not set on a toplevel (`E003`); never `..` or absolute (`E009`). |
 | `context` | relative directory path inside the project | — (required) | where the why-knowledge lives; `context/` is what the wizard proposes |
 | `init` | `complete` | — (required) | the project has been set up. A file carrying any other value is a leftover to fix; `init: declined` was retired in 0.12.0. |
@@ -87,7 +87,7 @@ README, for what Keep the Why actually is.
 
 ### 3.2 `keep-the-why:personal-defaults` (optional)
 
-The values a project offers to a developer who has no personal file for it yet. Same keys as §4 with two exclusions: no `last:` timestamps (`E008`) and no `session`. What happens when a developer meets an offered block is governed by `personal-defaults-policy` (§5).
+The values a project offers to a developer who has no personal file for it yet. The six keys below — §4 without `session`, `migration-prompt` and `source`, and without `last:` timestamps (`E008`). What happens when a developer meets an offered block is governed by `personal-defaults-policy` (§5).
 
 | Key | Values |
 |---|---|
@@ -243,11 +243,12 @@ Every convention below that says "since <version>" is enforced by the linter onl
 | 0.9.0 | more than one `Type` line per entry |
 | 0.10.0 | dedicated `.keep-the-why` with `id`; `index.md` sorted; guard files |
 | 0.13.0 | `Status: pending-confirmation`; `index.md` heading skeleton; `pending-confirmation-check` |
+| 0.18.0 | `Id` per entry, mandatory and unique; `See` and `Superseded by` (`E114`–`E121`) |
 
 ## 8. The context directory
 
 - **Flat.** Topic files sit directly in `<context>/`; no subdirectories. A large project namespaces filenames (`auth-tokens.md`, `auth-oauth.md`) instead of nesting.
-- **Topic files** are `<name>.md`, one per recurring theme, named for the theme. Lowercase kebab-case is the convention; the first character decides the index heading (§8.1).
+- **Topic files** are `<name>.md`, one per recurring theme, named for the theme. Lowercase kebab-case is the convention; the first character decides the index heading (§8.1). A topic file carries no `Id`: its file name is its address, in the index and in `See` locators. A file that grows unwieldy is split into narrower topics (`SKILL.md`, rule 6).
 - **`README.md`** explains, for a reader landing cold, what the directory is and how to read an entry. Not a topic file; not listed in the index.
 - **`AGENTS.md`** contains the guard instruction; **`CLAUDE.md`** contains `@AGENTS.md`. Neither carries a config block. Both are warnings when missing (`W201`), since an equivalent doing the same job is fine. The two files in full:
 
@@ -328,15 +329,15 @@ Header fields are lines of the form `**<Field>:** <value>` directly after the he
 
 | Field | Required | Values |
 |---|---|---|
-| `Id` | yes, exactly one line, since 0.18.0 (`E114`, `E112`) | a UUID version 4, lowercase, `8-4-4-4-12` hex (`E115`); unique in the project (`E116`). Assigned when the entry is written, by an OS command — `uuidgen`, `cat /proc/sys/kernel/random/uuid`, PowerShell's `[guid]::NewGuid()` — never composed by hand or from memory; never changed afterwards |
+| `Id` | yes, exactly one line, since 0.18.0 (`E114`, `E112`) | a UUID version 4, lowercase, `8-4-4-4-12` hex (`E115` checks the shape); unique in the project (`E116`). Assigned when the entry is written, by an OS command — `uuidgen`, `cat /proc/sys/kernel/random/uuid`, PowerShell's `[guid]::NewGuid()` — never composed by hand or from memory; never changed afterwards |
 | `Type` | no — fill in when a value fits, at the latest when the entry is next touched (`W101`) | `decision` \| `workaround` \| `incident` \| `constraint` — one line per value that applies (since 0.9.0), no value twice (`E109`); or a single `undefined — <short reason>` line (since 0.8.0), which combines with nothing (`E107`, `E108`) |
 | `Status` | yes, exactly one line (`E101`, `E112`) | `active` \| `superseded` \| `open` \| `needs-review` \| `pending-confirmation` (since 0.13.0, `E113` below it) |
 | `Evidence` | yes, exactly one line (`E102`, `E112`) | `confirmed` \| `inferred` \| `unknown` |
 | `Source` | no | free text: where the rationale came from (interview, issue, commit, post-mortem, "none — no tracked issue") — a kind of source, never a person's name, handle or e-mail address (rule 7) |
 | `Verification` | no | `corroborated` \| `uncorroborated` \| `contradicted`, optionally followed by an explanation after any separator; `contradicted` must carry one (`E111`) |
 | `Revisit when` | no | free text, non-empty (`W105`): a concrete trigger that makes the entry worth re-checking |
-| `See` | no; one line per cited entry, since 0.18.0 | `<locator> — <uuid> — as of <YYYY-MM-DD>` (`E117`). Inside the project the locator is `<file>.md` or `<file>.md#<anchor>`, the anchor being the target heading as the host renders it (lowercase, punctuation dropped, spaces to `-`); the `<uuid>` must name an entry here (`E118`) and the locator must still point at it (`E119`). In another project the locator is that project's `canonical` and nothing more — no path, no anchor — and is checked for shape only |
-| `Superseded by` | yes when `Status` is `superseded` (`E120`), forbidden otherwise (`E121`); exactly one line (`E112`); since 0.18.0 | the successor: an `<uuid>` of an entry here (`E118`), a `https://<canonical> — <uuid> — as of <YYYY-MM-DD>` reference to one in another project, or `none — <why nothing replaced it>` (`E117`) |
+| `See` | no; one line per cited entry, since 0.18.0 | `<locator> — <uuid> — as of <YYYY-MM-DD>` (`E117`). Inside the project the locator is `<file>.md` or `<file>.md#<anchor>`, the anchor being the target heading as the host renders it (lowercase, punctuation dropped, spaces to `-`); the `<uuid>` must name an entry here (`E118`) and the locator must still point at it (`E119`). In another project the locator is that project's `canonical` and nothing more — no path, no anchor — and is checked for shape only: the form of a `canonical` value (§3.1), no query, no fragment (`E117`) |
+| `Superseded by` | yes when `Status` is `superseded` (`E120`), forbidden otherwise (`E121`); exactly one line (`E112`); since 0.18.0 | the successor: an `<uuid>` of an entry here (`E118`), a `<canonical> — <uuid> — as of <YYYY-MM-DD>` reference to one in another project (the locator checked as for `See`), or `none — <why nothing replaced it>` (`E117`) |
 
 Meanings:
 
@@ -345,7 +346,7 @@ Meanings:
 - **`Type`** is what kind of thing the entry is, for selecting entries without opening files: `^\*\*Type:\*\* incident` finds every incident.
 - **`Verification`** is whether something concrete was checked against the claim, and what came of it.
 - **`Revisit when`** is the condition under which the entry should be re-checked. Age alone is not a condition.
-- **`Id`** is the entry's address. Headings are reworded and topic files are split (§8), and a link built on a heading breaks silently when they are; the UUID does not move. It is the truth behind every `See` and `Superseded by` line: a tool that finds the Id somewhere else than the locator says reports the locator, not the Id.
+- **`Id`** is the entry's address. Headings are reworded and topic files are split (§8, §9.4), and a link built on a heading breaks silently when they are; the UUID does not move. It is the truth behind every `See` and `Superseded by` line: a tool that finds the Id somewhere else than the locator says reports the locator, not the Id.
 - **`See`** names the place of a related entry — the decision this one follows from, the incident it answers, the entry in the parent project that constrains it. The date is a historical hint, the day the link was written; it narrows the target's history to a day and does not name a revision. The locator is what a person clicks; the Id is what a tool resolves. `Source` still names the *kind* of evidence; an entry that exists because another project decided something carries both.
 - **`Superseded by`** makes the replacement checkable: a superseded entry points at what replaced it, and a chain of them (the successor itself superseded) is the history a reader follows. `none — <reason>` is for a supersession that was an event, not a decision — an upstream fix removed a workaround's reason, a constraint vanished — and the reason says so; it is not for a successor that simply was not written yet.
 
