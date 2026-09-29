@@ -2,46 +2,34 @@
 
 Open work that is not a bug and not a design question — those go to
 [issues](https://github.com/oliver-zehentleitner/keep-the-why/issues).
-Last reviewed: 2026-09-18.
+Last reviewed: 2026-09-29.
 
 ## In progress
 
 ### Active
 
-0.17.1 (skill + linter 0.17.1.0) is prepared: the Claude Code plugin route and the
-"what using it takes" docs; 0.17.0 is released and measured (87/88/87 of 88,
-`docs/evals.md`). The 0.17.1 measurement follows the tag.
+0.18.0 (skill + linter 0.18.0.0) is released: project families and entry
+Ids. `keep-the-why-dashboard` is at 0.2.7. The 0.18.0 eval series is not yet
+recorded in `docs/evals.md`; the latest published series is 0.17.1.
 The skill is considered complete: no wording or eval work is planned, changes
 follow user feedback.
 
 ### Pending
 
 - [ ] **Marketplace reviews, all external.** Cursor plugin: submitted
-  2026-09-10, every release is reviewed again, so the pending review is now
-  for 0.16.3. Claude Community Marketplace: submitted 2026-09-08. Nothing to
-  do on our side but answer.
+  2026-09-10, every release is reviewed again. Claude Community Marketplace:
+  submitted 2026-09-08. Nothing to do on our side but answer.
 - [ ] **awesome-copilot**
-  ([github/awesome-copilot#2998](https://github.com/github/awesome-copilot/pull/2998)),
-  bumped to 0.16.3 on 2026-09-14, waits on their review; #2984 (0.15.0) is
-  merged. Every release gets its own bump PR there.
-- [ ] **Agent & model matrix rebuild** (`docs/agent-matrix.md`). The tooling
-  (`tools/evals/run.py --matrix`) is ready; the matrix was last built against
-  0.9.x. Waits on two decisions: whether `chestertons-fence-guard` is still
-  the representative case, and whether the Mistral column stays given its
-  per-run cost. Before the rebuild, add a Gemini CLI driver under
-  `tools/evals/ktw_evals/drivers/` (the matrix has a column for it, the runner
-  has no driver) and verify it on one case; a new driver uses
-  `common.fake_home_env` like the others.
+  ([github/awesome-copilot#3478](https://github.com/github/awesome-copilot/pull/3478)),
+  the bump to 0.18.0, waits on their review. Every release gets its own bump
+  PR there.
 
 ## Ideas
 
-- **HOL badges** — parked with the other HOL follow-ups until the registry's
-  re-measurement (around 2026-09-14).
+- **HOL badges** — parked with the other HOL follow-ups.
 - **Dashboard, next:** diff two states (two commits, or an export against
-  the working tree); a `badge.json` endpoint in the export for a shields.io
-  badge ("42 entries · 3 open"); `Revisit when` triggers grouped by the file
-  they point at; the reference graph with entry-to-entry edges once bodies
-  cite headings, not only files.
+  the working tree); `Revisit when` triggers grouped by the file they point
+  at.
 - **ai-memory, consolidation with source path.** Part 4 of
   [akitaonrails/ai-memory#700](https://github.com/akitaonrails/ai-memory/issues/700):
   consolidation carrying a file read's source path and refusing

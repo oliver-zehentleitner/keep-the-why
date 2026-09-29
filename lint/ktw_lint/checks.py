@@ -13,6 +13,7 @@ big-bang backfill the methodology explicitly rejects).
     0.10.0  dedicated .keep-the-why (id field), sorted index, guard files
     0.13.0  Status value `pending-confirmation`; personal-defaults field
             pending-confirmation-check; index.md letter skeleton
+    0.18.0  entry Id (mandatory, unique), See and Superseded by
 """
 
 from __future__ import annotations

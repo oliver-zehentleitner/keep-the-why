@@ -1,4 +1,4 @@
-/* Keep the Why dashboard — one module, no dependencies.
+/* Keep the Why dashboard — plain modules (this and lib.js), no dependencies.
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
@@ -655,7 +655,7 @@ function renderDetailsDefault() {
       el("span", {}, el("i", { class: "dot", style: "background:transparent;border:1.5px solid var(--fg3)" }), "superseded — hollow"),
       el("span", {}, el("i", { class: "dot", style: "background:var(--bg);border:1.5px solid var(--open)" }), "ring — open, needs review, pending"),
       el("span", {}, "solid line — a reference between topics; dotted — membership")),
-      el("h3", {}, "Keys"), el("p", { class: "note" }, el("kbd", {}, "/"), " search · ", el("kbd", {}, "g"), " graph · ", el("kbd", {}, "o"), " overview · ", el("kbd", {}, "q"), " queues · ", el("kbd", {}, "t"), " timeline · ", el("kbd", {}, "a"), " authors"));
+      el("h3", {}, "Keys"), el("p", { class: "note" }, el("kbd", {}, "/"), " search · ", el("kbd", {}, "g"), " graph · ", el("kbd", {}, "o"), " overview · ", el("kbd", {}, "q"), " queues · ", el("kbd", {}, "t"), " timeline · ", el("kbd", {}, "a"), " authors · ", el("kbd", {}, "l"), " findings"));
     return;
   }
   miniGraph(d, {});

@@ -33,9 +33,9 @@ Documentation: [Linting](https://keepthewhy.com/linting/) · [CI linting setup](
 
 `ktw-lint` reads `.keep-the-why`, finds the configured context directory, and validates the machine-checkable half of the schema:
 
-- **Entries** — every entry carries `Status` and `Evidence`, values come from the documented sets, `Type` is valid, `Verification: contradicted` says what contradicts it
-- **`index.md`** — exists, every link resolves, every topic file is listed, sorted alphabetically
-- **`.keep-the-why`** — required fields present, no field recorded twice, no unknown fields, pinned versions consistent, the configured `context/` location exists
+- **Entries** — every entry carries `Status` and `Evidence`, values come from the documented sets, `Type` is valid, `Verification: contradicted` says what contradicts it; from schema 0.18.0 every entry has a unique `Id`, and `See` / `Superseded by` resolve to one
+- **`index.md`** — exists, every link resolves, every topic file is listed, sorted alphabetically, under the fixed `## 0`–`## 9`, `## A`–`## Z` heading skeleton
+- **`.keep-the-why`** — required fields present, no field recorded twice, no unknown fields, pinned versions consistent, the configured `context/` location exists; the family and locator fields (`canonical`, `root`, `parent`, `children`, `dashboard-state`) well-formed and inside the repository
 - **Hidden content** — invisible or directional Unicode is an error, base64-looking blobs a warning: the one mechanically checkable slice of the [trust model](https://keepthewhy.com/trust-model/)
 - **The developer's setup** — with `--setup` only: the personal file `~/.keep-the-why/<id>.md` and the machine-wide `~/.keep-the-why/config` get the same field and value checks. Local use, after a settings change; the default run never reads outside the project, and a CI runner has no home files
 
@@ -58,7 +58,7 @@ ktw-lint . --setup         # also check ~/.keep-the-why/<id>.md and ~/.keep-the-
 
 The Keep the Why [project init wizard](https://keepthewhy.com/setup/) offers to wire the linter into your CI during setup — detected from the repository, never guessed — and [CI linting setup](https://keepthewhy.com/ci-linting/) has the full detection rules. By hand, these are the same snippets:
 
-**GitHub Actions** — `.github/workflows/ktw-lint.yml`. The root of the `keep-the-why` repository is a composite action ([on the GitHub Marketplace](https://github.com/marketplace/actions/keep-the-why-lint)) that installs the latest linter from PyPI; the `lint-latest` tag moves with every linter publish, so there's nothing to pin on your side (pin `@lint-v<version>` if you want a fixed action revision):
+**GitHub Actions** — `.github/workflows/ktw-lint.yml`. The root of the `keep-the-why` repository is a composite action ([on the GitHub Marketplace](https://github.com/marketplace/actions/keep-the-why-lint)) that installs the linter its ref belongs to: `@lint-latest` moves with every linter publish, so there's nothing to pin on your side; `@lint-v<version>` or a commit SHA pins action and linter together, and the `version:` input is only for mixing the two ([Versions and pinning](https://keepthewhy.com/linting/#versions-and-pinning)):
 
 ```yaml
 name: ktw-lint

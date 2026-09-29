@@ -274,14 +274,21 @@ it, when its Status changed and by whom. `pip install keep-the-why-dashboard && 
 a project serves it on localhost and keeps it current over Server-Sent Events (a `git pull` or an
 entry an agent just wrote shows up within seconds; uncommitted entries carry the author
 `working tree`). Views: overview, force-directed graph (topics as hubs, entries colored by
-Evidence, references as edges), topics and an entry reader with backlinks, queues of what needs
-a person (open, needs-review, pending-confirmation, unknown evidence, Revisit-when triggers),
-timeline by month and author, authors. `ktw-dashboard --export DIR` writes one self-contained
-HTML page (state embedded, no server, no CDN). It writes nothing into any project; the one file
-it keeps is `~/.keep-the-why/dashboard-history.json` (recently opened projects with their
-paths, for the project menu). Standard library plus keep-the-why-lint as the parser; the page is
-one plain JavaScript module. Versioned independently of the skill (`dashboard-v<version>`
-tags). Docs: https://keepthewhy.com/dashboard/
+Evidence, references and `See` / `Superseded by` lines as edges), topics and an entry reader with
+backlinks, queues of what needs a person (open, needs-review, pending-confirmation, unknown
+evidence, Revisit-when triggers), timeline by month and author, authors, the linter's findings,
+the project's family tree, and every project known on the machine. Search covers the project
+or, with the family scope, the whole family tree. `#entry/<uuid>` is an entry's address and
+every entry link on the page uses it, so a copied URL survives a reworded heading or a moved
+entry. `ktw-dashboard --export DIR` writes a self-contained `index.html` (state embedded, no
+server, no CDN) plus `state.json` and `badge.svg`, the project's numbers for a README badge;
+another dashboard reads a published `state.json` in its public mode, through the project's
+`dashboard-state` line. It writes nothing into any project; the one file it keeps is
+`~/.keep-the-why/projects.json`, the project mapping the skill keeps too. The server checks
+pypi.org for newer dashboard and linter versions at start and once a day (`--no-update-check`
+turns it off). Standard library plus keep-the-why-lint as the parser; the page is plain
+JavaScript. Versioned independently of the skill (`dashboard-v<version>` tags). Docs:
+https://keepthewhy.com/dashboard/
 
 ## Related Work
 
@@ -307,7 +314,8 @@ external service (no database, no MCP server).
   the Why in this project" is a sentence said to the agent once per project.
 - The only executables are optional and separate: `keep-the-why-lint` (structural checks for
   context/, locally and in CI) and `keep-the-why-dashboard` (read-only viewer). Nothing runs in
-  the background; nothing phones home; the update check is a GitHub API call the agent makes.
+  the background. The skill's update check is a GitHub API call the agent makes; the dashboard's
+  server checks pypi.org once a day, off with `--no-update-check`.
 - The context/ folder is visible and committed on purpose: repo-native means available where
   the work happens, like README.md and docs/. Its location is chosen at setup (`context/` by
   default, or an existing decision folder) and recorded in `.keep-the-why`.
@@ -376,6 +384,9 @@ Show that a project uses Keep the Why:
 ```markdown
 [![Keep the Why](https://keepthewhy.com/assets/badge.svg)](https://keepthewhy.com)
 ```
+
+A project that publishes its dashboard export can add a live badge with its own numbers,
+`[![Keep the Why · live](<site>/dashboard/live/badge.svg)](<site>/dashboard/live/)`.
 
 HTML equivalent and details: https://keepthewhy.com/badge/
 

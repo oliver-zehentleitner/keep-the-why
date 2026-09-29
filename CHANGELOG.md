@@ -6,11 +6,14 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Fixed
 
+- `keep-the-why-dashboard`: the scope switch's tooltip says it sets what every view shows, not only search and graph, and the keys legend lists `l` for findings.
+- Docs brought up to date with 0.18.0 and dashboard 0.2.7: the linter's 0.18.0 gate and family checks (linting page, linter README, whose Action paragraph now says the ref pins action and linter together), the eval case counts, the dashboard page and README against the code (what an export fetches, public mode, the Family view in an export, keys, fingerprint), `llms.txt`'s dashboard section, and a *Live badge* section on the badge page.
 - `keep-the-why-dashboard` 0.2.7: every link to an entry carries its Id (`#entry/<uuid>`) — the tree, topic and queue lists, pager, backlinks, findings and graph had linked by `file.md#anchor`, so a URL copied from the address bar broke once the heading was reworded or the entry moved. An old anchor link still opens the entry and the address bar switches to the Id; entries without an Id keep the anchor form. The sidebar tree now also marks the entry when it is opened by Id.
 - `keep-the-why-dashboard` 0.2.6: a `Type: undefined — <reason>` is counted and shown as *undefined*; the reason moves to the pill's tooltip and stays in the details pane. The overview's Type card had used the whole line as its label and pushed the card past the screen on a phone (found on UNICORN Binance Trailing Stop Loss). The bar labels also wrap now instead of widening their column.
 - `keep-the-why-dashboard` 0.2.3: *unknown evidence* counts every entry still in force whose origin is `unknown`, open questions included — before, the strip showed 0 while the queues page listed three open questions with unknown evidence under *open*. Evidence and Status are separate axes; an entry can wait in two queues, and the count next to *Queues* counts it once.
 - `keep-the-why-dashboard` 0.2.2: a static export has no *export / public* switch any more — a published page is public by nature, and the switch only made the family scope wait behind *public*. The *this project / family* scope works right on the page: the project from its embedded snapshot, the family from the members' published exports, fetched only once someone chooses the family. The live server keeps *local / public*. Old `?public=` links keep working.
 - `keep-the-why-dashboard` 0.2.2: the side pane's graph follows the scope — with *family*, the overview and every page without an entry shows the family graph, not the project's; *near* stays the start on an entry or topic, and a click in its corner holds until the scope changes instead of being stored for good. The family graph shows entries by default, as the project graph does.
+- `keep-the-why-dashboard` 0.2.1: a static export no longer calls itself *local* — its half of the switch reads *export*, with the time it was generated, and the tooltip says it reads no machine; an export of a project without a family shows no switch. The live server keeps *local*: it reads the clones on the machine it runs on, whatever device the browser is on. Found opening the site's live example on a phone. A smoke check for both cases.
 - The context-cache commands in `references/setup.md` are fenced ` ```sh `, as every shell snippet in the skill package is: fenced ` ```bash ` in 0.18.0, they were asm's only shell-command match at install time. `validate-skill.yml` now fails on asm's pattern (`bash`, `sh -c`) anywhere under `skills/keep-the-why/`, so the recorded rule is checked instead of remembered.
 
 ### Changed
@@ -21,10 +24,6 @@ All notable changes to this project are documented here. Format follows [Keep a 
 - Landing page, live dashboard section: two named examples — single / mono repository, Keep the Why's own `context/`, and multi repository, the UNICORN Binance Suite, a family of eight repositories.
 - Landing page, *Check* card: the linter runs "locally, in CI, or both", and the card says it is optional — the skill works without it.
 - Landing page: "How it works" follows the hero, then "What it leaves behind" and the live dashboard, right before "One repository or many"; the *Use* card links "Audit the data" to the dashboard, and the *Multi repository* card links the UNICORN Binance Suite's published dashboard as an example of a family.
-
-### Fixed
-
-- `keep-the-why-dashboard` 0.2.1: a static export no longer calls itself *local* — its half of the switch reads *export*, with the time it was generated, and the tooltip says it reads no machine; an export of a project without a family shows no switch. The live server keeps *local*: it reads the clones on the machine it runs on, whatever device the browser is on. Found opening the site's live example on a phone. A smoke check for both cases.
 
 ### Added
 

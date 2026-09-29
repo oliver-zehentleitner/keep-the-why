@@ -21,3 +21,13 @@ For anywhere Markdown isn't an option (a plain HTML page, a platform that strips
 ```html
 <a href="https://keepthewhy.com"><img alt="Keep the Why" src="https://keepthewhy.com/assets/badge.svg"></a>
 ```
+
+## Live badge
+
+A project that publishes its dashboard with its docs can add a second badge next to this one, with its own numbers — "42 entries · 3 open" — linking to its own dashboard:
+
+```markdown
+[![Keep the Why · live](https://example.org/dashboard/live/badge.svg)](https://example.org/dashboard/live/)
+```
+
+`https://example.org/dashboard/live/` is wherever the docs build puts the export. `ktw-dashboard --export` writes `badge.svg` beside `index.html` and `state.json`, rendered at export time, so no badge service sits in between. The build step, and the `dashboard-state` line that goes with it: [CI linting setup, "The dashboard export"](ci-linting.md#the-dashboard-export). The project wizard offers both when a docs build exists.
