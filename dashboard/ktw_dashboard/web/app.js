@@ -856,6 +856,7 @@ function renderDetailsDefault() {
       el("h3", {}, "Keys"), el("p", { class: "note" }, el("kbd", {}, "/"), " search · ", el("kbd", {}, "g"), " graph · ", el("kbd", {}, "o"), " overview · ", el("kbd", {}, "q"), " queues · ", el("kbd", {}, "t"), " timeline · ", el("kbd", {}, "a"), " authors · ", el("kbd", {}, "l"), " findings"));
     return;
   }
+  d.dataset.pane = "graph";
   miniGraph(d, {});
 }
 function renderDetailsNeighbourhood(e) { miniGraph($("#details"), { entry: e }); }
@@ -1996,6 +1997,7 @@ function render() {
   const main = $("#main"); main.replaceChildren();
   const route = location.hash.slice(1) || "overview";
   selected = null;
+  $("#details").dataset.pane = "other";
   if (!route.startsWith("graph")) { const bar = pathBar(); if (bar) main.append(bar); } // the graph carries it as an overlay
   if (route === "overview") { viewOverview(main); renderDetailsDefault(); }
   else if (route === "graph/family") { setScope("family", { rerender: false }); history.replaceState(null, "", "#graph"); viewGraph(main); renderDetailsDefault(); }
@@ -2014,7 +2016,7 @@ function render() {
   else if (route.startsWith("ref/")) { const cut = route.lastIndexOf("/"); viewRemoteEntry(main, decodeURIComponent(route.slice(4, cut)), route.slice(cut + 1)); renderDetailsDefault(); }
   else if (route.startsWith("search/")) { const [, scope, ...q] = route.split("/"); viewSearch(main, scope, decodeURIComponent(q.join("/"))); renderDetailsDefault(); }
   else { viewOverview(main); renderDetailsDefault(); }
-  markActive();
+  markActive(); applySide();
   if (!route.startsWith("graph")) { main.scrollTop = 0; if (narrow()) { const stuck = $("#sidebar").getBoundingClientRect().height; window.scrollTo(0, Math.max(0, main.getBoundingClientRect().top + window.scrollY - stuck - 8)); } }
 }
 function rerender() { renderSidebar(); renderStrip(); renderCounts(); render(); }
@@ -2113,12 +2115,24 @@ function connectLive() {
   open();
 }
 // The side pane's width: 1× (the default), 2×, 3×, or half the page beside
-// the text — for a wider graph; kept per browser, ignored on a narrow screen.
+// the text — kept per browser, ignored on a narrow screen. Two widths: one
+// where the pane is the graph (the overview, the Friends and Thoughts pages,
+// the reader), one where it holds something else (an entry's or a topic's
+// details, the graph view's legend).
 const SIDE_WIDTHS = ["1", "2", "3", "half"];
-let SIDE = (() => { try { const v = localStorage.getItem("ktw-side"); return SIDE_WIDTHS.includes(v) ? v : "1"; } catch { return "1"; } })();
-function setSide(v) { SIDE = v; $("#app").dataset.side = v; try { localStorage.setItem("ktw-side", v); } catch {} for (const G of ACTIVE_GRAPHS) G.wake?.(); }
-const sideControl = () => el("span", { class: "mini-seg mini-width", title: "the width of this pane: 1×, 2×, 3×, or half the page" },
-  ...SIDE_WIDTHS.map((v) => el("button", { type: "button", class: v === SIDE ? "on" : "", onclick: () => { setSide(v); for (const b of document.querySelectorAll(".mini-width button")) b.classList.toggle("on", b.textContent === (v === "half" ? "½" : `${v}×`)); } }, v === "half" ? "½" : `${v}×`)));
+const readSide = (key, fallback = "1") => { try { const v = localStorage.getItem(key); return SIDE_WIDTHS.includes(v) ? v : fallback; } catch { return fallback; } };
+const SIDE = { graph: readSide("ktw-side-graph", readSide("ktw-side")), other: readSide("ktw-side-other") };
+const paneKind = () => ($("#details")?.dataset.pane === "graph" ? "graph" : "other");
+const sideLabel = (v) => (v === "half" ? "½" : `${v}×`);
+function applySide() {
+  const v = SIDE[paneKind()];
+  $("#app").dataset.side = v;
+  for (const b of document.querySelectorAll(".mini-width button")) b.classList.toggle("on", b.textContent === sideLabel(v));
+  for (const G of ACTIVE_GRAPHS) G.wake?.();
+}
+function setSide(v) { const k = paneKind(); SIDE[k] = v; try { localStorage.setItem(`ktw-side-${k}`, v); } catch {} applySide(); }
+const sideControl = () => el("span", { class: "mini-seg mini-width", title: "the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details" },
+  ...SIDE_WIDTHS.map((v) => el("button", { type: "button", class: v === SIDE[paneKind()] ? "on" : "", onclick: () => setSide(v) }, sideLabel(v))));
 function setupSideToggle() {
   const btn = $("#side-toggle"); const app = $("#app");
   btn.onclick = () => { const open = app.classList.toggle("side-open"); btn.setAttribute("aria-expanded", String(open)); btn.textContent = open ? "Topics ▴" : "Topics ▾"; };
@@ -2180,7 +2194,7 @@ function setupMode() {
   $("#mode-note").textContent = MODE === "public" ? `generated ${S.generated}` : "";
 }
 async function boot() {
-  setupTheme(); setupSearch(); setupScope(); setupSideToggle(); $("#app").dataset.side = SIDE;
+  setupTheme(); setupSearch(); setupScope(); setupSideToggle();
   window.addEventListener("hashchange", () => { RESTORE_SCROLL = 0; render(); });
   window.addEventListener("popstate", onPopState);
   document.addEventListener("click", onLinkClick);
