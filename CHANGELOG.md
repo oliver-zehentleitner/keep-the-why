@@ -6,9 +6,18 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Fixed
 
-- `keep-the-why-lint`: the locator of a cross-project `See` or `Superseded by` is checked for the exact form of a `canonical` — the repository URL and nothing more. Before, anything starting with `https://` passed, so a host link into a file (`…/blob/main/context/sync.md#token-cache`) or a URL with `.git` or a trailing slash went through, though the specification says the locator is that project's `canonical`. `canonical` itself, and a family location, now also reject a query or a fragment (`E117`, `E003`).
-- Specification and references, corrected against the linter and the recorded decisions: the required config fields (`canonical`, `parent`, `root`, `dashboard-state` are optional; a missing `context-schema` is `W001`), the 0.18.0 row in the `context-schema` gate table, all six block kinds and four config files, the keys `personal-defaults` takes, `canonical` from the published remote (`upstream` in a fork checkout) in `SKILL.md` and the 0.18.0 migration, the GitHub Action pinning action and linter together (`ci-linting.md`), a family write reaching the whole family tree (`trust-model.md`), what makes a family member local now that the mapping exists (`setup.md`), a `dashboard-state` paragraph in `setup.md`, and stale cross-references. §8 says a topic file carries no `Id` — its file name is its address. The `context/README.md` template names `Id`, `See` and `Superseded by`.
 - `keep-the-why-dashboard`: the scope switch's tooltip says it sets what every view shows, not only search and graph, and the keys legend lists `l` for findings.
+
+## [0.18.1] - 2026-09-29
+
+### Added
+
+- Migration 0.18.1 (`references/migrations.md`): one project-wide step adds the `Id` line to `context/README.md`'s "Reading the entries" list — the 0.18.0 migration added `Id`, `See` and `Superseded by` to the entries but never to that list, and the README is only touched when a migration step asks for it — and an `E117` on a cross-project locator is repaired to the target's `canonical`. This repository's own `.keep-the-why` is at `context-schema` 0.18.1.
+
+### Fixed
+
+- `keep-the-why-lint` 0.18.1.0: knows schema 0.18.1 (no new gate). The locator of a cross-project `See` or `Superseded by` is checked for the exact form of a `canonical` — the repository URL and nothing more. Before, anything starting with `https://` passed, so a host link into a file (`…/blob/main/context/sync.md#token-cache`) or a URL with `.git` or a trailing slash went through, though the specification says the locator is that project's `canonical`. `canonical` itself, and a family location, now also reject a query or a fragment (`E117`, `E003`).
+- Specification and references, corrected against the linter and the recorded decisions: the required config fields (`canonical`, `parent`, `root`, `dashboard-state` are optional; a missing `context-schema` is `W001`), the 0.18.0 row in the `context-schema` gate table, all six block kinds and four config files, the keys `personal-defaults` takes, `canonical` from the published remote (`upstream` in a fork checkout) in `SKILL.md` and the 0.18.0 migration, the GitHub Action pinning action and linter together (`ci-linting.md`), a family write reaching the whole family tree (`trust-model.md`), what makes a family member local now that the mapping exists (`setup.md`), a `dashboard-state` paragraph in `setup.md`, and stale cross-references. §8 says a topic file carries no `Id` — its file name is its address. The `context/README.md` template names `Id`, `See` and `Superseded by`.
 - Docs brought up to date with 0.18.0 and dashboard 0.2.7: the linter's 0.18.0 gate and family checks (linting page, linter README, whose Action paragraph now says the ref pins action and linter together), the eval case counts, the dashboard page and README against the code (what an export fetches, public mode, the Family view in an export, keys, fingerprint), `llms.txt`'s dashboard section, and a *Live badge* section on the badge page.
 - `keep-the-why-dashboard` 0.2.7: every link to an entry carries its Id (`#entry/<uuid>`) — the tree, topic and queue lists, pager, backlinks, findings and graph had linked by `file.md#anchor`, so a URL copied from the address bar broke once the heading was reworded or the entry moved. An old anchor link still opens the entry and the address bar switches to the Id; entries without an Id keep the anchor form. The sidebar tree now also marks the entry when it is opened by Id.
 - `keep-the-why-dashboard` 0.2.6: a `Type: undefined — <reason>` is counted and shown as *undefined*; the reason moves to the pill's tooltip and stays in the details pane. The overview's Type card had used the whole line as its label and pushed the card past the screen on a phone (found on UNICORN Binance Trailing Stop Loss). The bar labels also wrap now instead of widening their column.
@@ -825,7 +834,8 @@ Initial release.
 - Logo, wordmark, and favicon.
 - `context/repo-conventions.md`, dogfooding the skill on its own repository from day one.
 
-[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.18.0...HEAD
+[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.18.1...HEAD
+[0.18.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.18.0...v0.18.1
 [0.18.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.17.1...v0.18.0
 [0.17.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.17.0...v0.17.1
 [0.17.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.16.3...v0.17.0
