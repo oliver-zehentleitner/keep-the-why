@@ -233,4 +233,4 @@ The graph offers the repositories its entries cite by a cross-project `See` or `
 
 **Rejected alternative:** show each friend whole from the start. Rejected for readability — a large friend would bury the project's own graph; the cited entries come first, the hub expands on a click.
 
-**Rejected alternative:** follow friends of friends. Rejected — the web would grow without a bound the reader chose; one level is what this project cites.
+**Rejected alternative:** follow friends of friends. Rejected — the web would grow without a bound the reader chose. One hop is enough because the reader can move the centre: a friend's name in the legend opens that project's own dashboard, which again shows one hop from there. The web is walked from centre to centre, each view bounded, rather than loaded as a whole.
