@@ -1,6 +1,6 @@
 # Continuous capture
 
-Applying the skill during normal, ongoing development.
+Applying [the skill](https://keepthewhy.com/installation/) during normal, ongoing development.
 
 ## What's worth capturing
 
