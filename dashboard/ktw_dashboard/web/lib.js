@@ -178,7 +178,7 @@ export function friendsOf(entries, exclude = []) {
   return [...out.values()].sort((a, b) => a.canonical.localeCompare(b.canonical));
 }
 
-// Thoughts: lines of reasoning through the graph. `edges` are [from, to]
+// Thoughts: chains of linked entries through the graph. `edges` are [from, to]
 // pairs of entry ids, one per See or Superseded by: `from` cites `to`, so
 // `to` came first. A thought is a
 // longest chain of such citations with at least `min` entries, returned in
@@ -205,15 +205,16 @@ export function thoughtsOf(edges, min = 4, cap = 2000) {
   return uniq.sort((a, b) => b.length - a.length || a.join().localeCompare(b.join()));
 }
 
-// What a thought rests on and how it grew. `steps` are its entries in reading
+// A chain's first entry, its steps in question, and how it grew. `steps` are its entries in reading
 // order (origin first), `kinds[i]` the link from step i to step i + 1 ("see":
 // the later cites the earlier; "superseded": the later replaced it).
-// - weakOrigin: the origin's Evidence when it is `inferred` or `unknown` — the
-//   whole line rests on a reason nobody confirmed;
-// - shaky: steps a later one builds on although they are in question — open,
+// - weakOrigin: the first entry's Evidence when it is `inferred` or `unknown`
+//   — where later entries depend on it, they depend on an unconfirmed reason;
+// - shaky: steps in question that later ones are linked after — open,
 //   needs-review, pending-confirmation — or superseded yet still cited (a See
 //   to a replaced decision; a Superseded by is how an evolution goes on);
-// - affected: every step after the first shaky one, which rests on it;
+// - affected: every step after the first shaky one — linked after it, not
+//   necessarily depending on it (a See says related, not always follows from);
 // - from, to: the first and last day a step was created (Git), when known.
 export const SHAKY = ["open", "needs-review", "pending-confirmation"];
 export function thoughtInsights(steps, kinds = []) {

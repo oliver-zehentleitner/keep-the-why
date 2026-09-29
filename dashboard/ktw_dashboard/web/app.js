@@ -488,10 +488,10 @@ function viewThought(main, refs) {
   const r = el("div", { class: "reader thought-reader" },
     el("div", { class: "crumbs" }, el("a", { href: "#graph" }, "Graph"), " / thought"),
     el("h1", {}, evolution ? `An evolution in ${refs.length} entries` : `A thought in ${refs.length} entries`),
-    el("p", { class: "sub" }, evolution ? "One decision, replaced step by step — from the first version to the one in force." : "A chain of entries, each citing the one before — read from the origin to where it led."),
+    el("p", { class: "sub" }, evolution ? "One decision, replaced step by step — from the first version to the one in force." : "A chain of linked entries, each citing the one before — read from the first to the last. A link says two entries are related: often that one follows from the other, not always."),
     before.length ? goOn(before.map((x) => ({ ...x })), "↑ Before its origin, it") : null,
     thoughtTimeline(steps, ins),
-    ins.weakOrigin ? el("div", { class: "thought-warn" }, `It starts from an origin whose Evidence is ${ins.weakOrigin}: every step below builds on a reason nobody confirmed.`) : null);
+    ins.weakOrigin ? el("div", { class: "thought-warn" }, `Its first entry's Evidence is ${ins.weakOrigin}. Where a later step depends on it, it depends on a reason nobody confirmed.`) : null);
   steps.forEach((f, i) => {
     if (i) r.append(el("div", { class: "thought-link" }, `↓ ${links[i]}`));
     if (!f) { r.append(el("section", { class: "thought-step missing" }, el("div", { class: "crumbs" }, `${i + 1} / ${refs.length}`), el("p", { class: "note" }, `Entry ${refs[i]} is not loaded on this page — it lives in a project outside it (a friend, or a step of a path); load the friends in the graph, or walk there.`))); return; }
@@ -499,8 +499,8 @@ function viewThought(main, refs) {
     INLINE_PROJECT = f.own ? e.project || null : "\u0000"; // a foreign entry's file names are not this page's topics
     r.append(el("section", { class: `thought-step ${e.status}`, ...stepHover(e.uuid || `e:${e.id}`) },
       el("div", { class: "crumbs" }, `${i + 1} / ${refs.length}`, f.where ? ` · ${f.where}` : "", f.own && topicOf(e.file) ? [" · ", el("a", { href: `#topic/${e.file}` }, topicOf(e.file).title)] : null, e.git?.created?.date ? ` · ${e.git.created.date}` : ""),
-      ins.shaky.some((x) => x.i === i) ? el("div", { class: "thought-warn" }, `In question — ${ins.shaky.find((x) => x.i === i).why}. ${plural(steps.length - 1 - i, "later step")} below ${steps.length - 1 - i === 1 ? "rests" : "rest"} on it.`) : null,
-      ins.affected.includes(i) && !ins.shaky.some((x) => x.i === i) ? el("div", { class: "thought-affected" }, `Rests on step ${ins.shaky[0].i + 1}, which is in question.`) : null,
+      ins.shaky.some((x) => x.i === i) ? el("div", { class: "thought-warn" }, `In question — ${ins.shaky.find((x) => x.i === i).why}. ${plural(steps.length - 1 - i, "later step")} ${steps.length - 1 - i === 1 ? "is" : "are"} linked after it — worth checking whether they depend on it.`) : null,
+      ins.affected.includes(i) && !ins.shaky.some((x) => x.i === i) ? el("div", { class: "thought-affected" }, `Linked after step ${ins.shaky[0].i + 1}, which is in question.`) : null,
       el("h2", {}, el("a", { href: f.href, html: inline(e.title) })),
       el("div", { class: "fields" }, ...entryPills(e)),
       el("div", { class: "body", html: renderMarkdown(e.body?.text || "_(no body)_") }),
@@ -558,14 +558,14 @@ async function viewFriends(main) {
 }
 async function viewThoughtsPage(main) {
   const minSeg = el("span", { class: "thought-min", title: "entries a thought has at least" }, "from ", ...[3, 4, 5].map((m) => el("button", { type: "button", class: m === THOUGHT_MIN ? "on" : "", onclick: () => { THOUGHT_MIN = m; try { localStorage.setItem("ktw-thought-min", String(m)); } catch {} render(); } }, String(m))));
-  main.append(el("h1", {}, "Thoughts ", minSeg), el("p", { class: "sub" }, "Lines of reasoning: chains of See and Superseded by, each entry citing the one before — in this graph, with its family, friends and path. Point at a line to light it in the graph beside."));
+  main.append(el("h1", {}, "Thoughts ", minSeg), el("p", { class: "sub" }, "Chains of linked entries: each cites the one before (See) or replaced it (Superseded by) — in this graph, with its family, friends and path. A link says two entries are related; often one follows from the other, not always. Point at a chain to light it in the graph beside."));
   const box = el("div", { class: "thoughts-page" }, el("p", { class: "center" }, "Loading…")); main.append(box);
   const g = await graphForScope();
   if (!box.isConnected) return;
   const all = graphChains(g);
   const thoughts = all.filter((t) => t.steps.length >= THOUGHT_MIN);
   const open = all.filter((t) => t.ends.length);
-  if (!thoughts.length && !open.length) return setKids(box, el("p", { class: "empty" }, `No line of reasoning here is ${THOUGHT_MIN} or more entries long yet.`));
+  if (!thoughts.length && !open.length) return setKids(box, el("p", { class: "empty" }, `No chain of linked entries here is ${THOUGHT_MIN} or more entries long yet.`));
   const across = (t) => new Set(t.steps.map(projOf)).size > 1;
   const tags = (t) => [t.evolution ? el("span", { class: "pill" }, "evolution") : null, across(t) ? el("span", { class: "pill" }, "across projects") : null, t.ends.length ? el("span", { class: "pill" }, "continues ↗") : null, ...insightPills(t), span(t) ? el("span", { class: "note" }, span(t)) : null];
   const row = (t) => el("div", { class: "thought-row", onmouseenter: () => lightAll(t), onmouseleave: () => lightAll(null) },
@@ -582,16 +582,16 @@ async function viewThoughtsPage(main) {
   const stat = (n, label) => el("div", { class: "stat" }, el("b", {}, String(n)), el("span", {}, label));
   const kids = [
     el("div", { class: "stats" }, stat(thoughts.length, "thoughts"), stat(thoughts.filter((t) => t.evolution).length, "evolutions"), stat(thoughts.filter(across).length, "across projects"), stat(open.length, "going on beyond"), stat(thoughts[0]?.steps.length || 0, "longest"),
-      stat(thoughts.filter((t) => t.ins.weakOrigin).length, "unconfirmed origins"), stat(thoughts.filter((t) => t.ins.shaky.length).length, "on shaky ground")),
+      stat(thoughts.filter((t) => t.ins.weakOrigin).length, "start unconfirmed"), stat(thoughts.filter((t) => t.ins.shaky.length).length, "pass a step in question")),
   ];
-  // foundations: lines whose origin nobody confirmed, grouped by that origin
+  // chains whose first entry nobody confirmed, grouped by that entry
   const weak = thoughts.filter((t) => t.ins.weakOrigin);
   if (weak.length) {
     const byOrigin = new Map(); for (const t of weak) { if (!byOrigin.has(t.steps[0])) byOrigin.set(t.steps[0], []); byOrigin.get(t.steps[0]).push(t); }
-    kids.push(el("h2", {}, "Resting on unconfirmed origins"), el("p", { class: "note" }, "Lines of reasoning whose first entry has Evidence inferred or unknown — everything after it builds on a reason nobody confirmed. The origin is the place to ask."),
-      ...[...byOrigin.entries()].map(([n, ts]) => el("div", { class: "fan" }, entryLink(n, `Evidence ${n.entry.evidence} · ${plural(ts.length, "thought")} build on it`), el("div", { class: "fan-rows" }, ...ts.map(row)))));
+    kids.push(el("h2", {}, "Starting from an unconfirmed entry"), el("p", { class: "note" }, "Chains whose first entry has Evidence inferred or unknown. Where later entries depend on it, they depend on a reason nobody confirmed — the first entry is the place to ask."),
+      ...[...byOrigin.entries()].map(([n, ts]) => el("div", { class: "fan" }, entryLink(n, `Evidence ${n.entry.evidence} · ${plural(ts.length, "thought")} start here`), el("div", { class: "fan-rows" }, ...ts.map(row)))));
   }
-  // impact: entries in question that later entries build on — what else is affected if they change
+  // entries in question and the later entries linked after them — what to check if they change
   const impact = new Map();
   for (const t of thoughts.concat(open.filter((t) => t.steps.length < THOUGHT_MIN))) for (const x of t.ins.shaky) {
     const n = t.steps[x.i];
@@ -599,15 +599,15 @@ async function viewThoughtsPage(main) {
     const m = impact.get(n); m.thoughts.add(t);
     for (const j of t.steps.slice(x.i + 1)) { m.later.add(j); m.projects.add(projOf(j)); }
   }
-  if (impact.size) kids.push(el("h2", {}, "Standing on shaky ground"), el("p", { class: "note" }, "Entries in question — open, needing review, waiting for confirmation, or replaced yet still cited — and the later entries that build on them. If one of these changes, this is what to look at again."),
+  if (impact.size) kids.push(el("h2", {}, "Chains through a step in question"), el("p", { class: "note" }, "Entries in question — open, needing review, waiting for confirmation, or replaced yet still cited — and the later entries linked after them. If one of these changes, these are the entries to check: whether they depend on it is for a person to say."),
     ...[...impact.entries()].sort((a, b) => b[1].later.size - a[1].later.size).map(([n, m]) => el("div", { class: "fan" },
-      entryLink(n, `${m.why} · ${m.later.size} later ${m.later.size === 1 ? "entry rests" : "entries rest"} on it${m.projects.size > 1 ? `, in ${m.projects.size} projects` : ""}`),
+      entryLink(n, `${m.why} · ${m.later.size} later ${m.later.size === 1 ? "entry" : "entries"} linked after it${m.projects.size > 1 ? `, in ${m.projects.size} projects` : ""}`),
       el("div", { class: "fan-rows" }, ...[...m.later].map((j) => entryLink(j, j.entry.status))))));
-  if (fansTo.length) kids.push(el("h2", {}, "Where many lines lead"), el("p", { class: "note" }, "Entries at the end of several thoughts — where reasoning from different origins arrives."),
-    ...fansTo.map(([n, c]) => el("div", { class: "fan" }, entryLink(n, `${c} origins`), el("div", { class: "fan-rows" }, ...thoughts.filter((t) => t.steps[t.steps.length - 1] === n).map(row)))));
-  if (fansFrom.length) kids.push(el("h2", {}, "Where many lines start"), el("p", { class: "note" }, "Origins of several thoughts — a decision much else builds on."),
+  if (fansTo.length) kids.push(el("h2", {}, "Where many lines lead"), el("p", { class: "note" }, "Entries at the end of several chains — where chains from different starts arrive."),
+    ...fansTo.map(([n, c]) => el("div", { class: "fan" }, entryLink(n, `${c} starts`), el("div", { class: "fan-rows" }, ...thoughts.filter((t) => t.steps[t.steps.length - 1] === n).map(row)))));
+  if (fansFrom.length) kids.push(el("h2", {}, "Where many lines start"), el("p", { class: "note" }, "Entries several chains start from — often a decision much else refers to."),
     ...fansFrom.map(([n, c]) => el("div", { class: "fan" }, entryLink(n, `${c} thoughts`), el("div", { class: "fan-rows" }, ...thoughts.filter((t) => t.steps[0] === n).map(row)))));
-  if (bridges.length) kids.push(el("h2", {}, "Bridges"), el("p", { class: "note" }, "Entries in the middle of several thoughts — the backbone the reasoning passes through."), ...bridges.slice(0, 12).map(([n, c]) => entryLink(n, `in ${c} thoughts`)));
+  if (bridges.length) kids.push(el("h2", {}, "Bridges"), el("p", { class: "note" }, "Entries in the middle of several chains — where many links pass through."), ...bridges.slice(0, 12).map(([n, c]) => entryLink(n, `in ${c} thoughts`)));
   if (projects.size > 1) kids.push(el("h2", {}, "By project"), el("div", { class: "table-wrap" }, el("table", { class: "t" }, el("thead", {}, el("tr", {}, ["Project", "Starts", "Passes through", "Ends"].map((h) => el("th", {}, h)))),
     el("tbody", {}, [...projects.entries()].sort((a, b) => (b[1].starts + b[1].ends + b[1].through) - (a[1].starts + a[1].ends + a[1].through)).map(([p, c]) => el("tr", {}, el("td", {}, p), el("td", {}, String(c.starts)), el("td", {}, String(c.through)), el("td", {}, String(c.ends))))))));
   // time: when lines grew last, from the day each step was created
@@ -825,10 +825,10 @@ function renderDetailsEntry(e) {
   // the thoughts this entry is a step of — in the graph of the scope, friends and path included
   const mine = entryThoughts(e);
   const resting = new Set(); for (const { t, i } of mine) if (t.ins.shaky.some((x) => x.i === i)) for (const j of t.steps.slice(i + 1)) resting.add(j);
-  if (resting.size) d.append(el("h3", {}, `Resting on this (${resting.size})`), el("p", { class: "note" }, `This entry is in question (${e.status}); these later entries build on it.`), ...[...resting].map((n) => el("a", { class: "backlink", href: n.href }, n.label, el("div", { class: "note" }, projOf(n)))));
+  if (resting.size) d.append(el("h3", {}, `Linked after this (${resting.size})`), el("p", { class: "note" }, `This entry is in question (${e.status}); these later entries are linked after it — check whether they depend on it.`), ...[...resting].map((n) => el("a", { class: "backlink", href: n.href }, n.label, el("div", { class: "note" }, projOf(n)))));
   if (mine.length) d.append(el("h3", {}, `In thoughts (${mine.length})`), ...mine.map(({ t, i }) => el("a", { class: "backlink", href: thoughtHref(t), title: t.steps.map((n) => n.label).join("\n→ ") },
     `${shortLabel(t.steps[0])} → ${shortLabel(t.steps[t.steps.length - 1])}`,
-    el("div", { class: "note" }, `step ${i + 1} of ${t.steps.length}${t.evolution ? " · evolution" : ""}${t.ends.length ? " · continues ↗" : ""}${t.ins.weakOrigin ? ` · origin ${t.ins.weakOrigin}` : ""}${t.ins.affected.includes(i) ? " · rests on a step in question" : ""}`))));
+    el("div", { class: "note" }, `step ${i + 1} of ${t.steps.length}${t.evolution ? " · evolution" : ""}${t.ends.length ? " · continues ↗" : ""}${t.ins.weakOrigin ? ` · starts ${t.ins.weakOrigin}` : ""}${t.ins.affected.includes(i) ? " · after a step in question" : ""}`))));
   if (e.refs.length) d.append(el("h3", {}, "References"), ...e.refs.map((f) => el("a", { class: "backlink", href: `#topic/${f}` }, topicOf(f)?.title || f)));
   if (e.findings.length) d.append(el("h3", {}, "Linter"), ...e.findings.map((f) => el("div", { class: "finding" }, pill(f.code, `sev-${f.severity}`), ` line ${f.line}: ${f.message}`)));
   renderDetailsNeighbourhood(e);
@@ -1404,7 +1404,7 @@ function miniFriends(g) {
   return el("span", { class: "mini-seg mini-friends" }, b);
 }
 // ---------------------------------------------------------------- thoughts
-// Thoughts: lines of reasoning through the graph — the longest chains of See
+// Thoughts: chains of linked entries through the graph — the longest chains of See
 // and Superseded by between entries (each one cites the one before), at least
 // four entries long, across projects where the graph spans them (family,
 // friends). Listed beside the graph; pointing at one lights its path, a click
@@ -1455,10 +1455,10 @@ function graphChains(g) {
   }
   return [...merged.values()].sort((a, b) => b.steps.length - a.steps.length || a.ids.join().localeCompare(b.ids.join()));
 }
-// what a thought rests on, as marks for a list row
+// a chain's first entry and steps in question, as marks for a list row
 const insightPills = (t) => [
-  t.ins?.weakOrigin ? el("span", { class: "pill warn-pill", title: `its origin's Evidence is ${t.ins.weakOrigin}: the whole line rests on a reason nobody confirmed` }, `origin ${t.ins.weakOrigin}`) : null,
-  t.ins?.shaky.length ? el("span", { class: "pill warn-pill", title: t.ins.shaky.map((x) => `step ${x.i + 1}: ${x.why}`).join("\n") + `\n${t.ins.affected.length} later ${t.ins.affected.length === 1 ? "step rests" : "steps rest"} on it` }, "on shaky ground") : null,
+  t.ins?.weakOrigin ? el("span", { class: "pill warn-pill", title: `its first entry's Evidence is ${t.ins.weakOrigin}: where later entries depend on it, they depend on a reason nobody confirmed` }, `starts ${t.ins.weakOrigin}`) : null,
+  t.ins?.shaky.length ? el("span", { class: "pill warn-pill", title: t.ins.shaky.map((x) => `step ${x.i + 1}: ${x.why}`).join("\n") + `\n${t.ins.affected.length} later ${t.ins.affected.length === 1 ? "step is" : "steps are"} linked after it` }, "step in question") : null,
 ];
 const span = (t) => (t.ins?.from ? (t.ins.from === t.ins.to ? t.ins.from : `${t.ins.from} → ${t.ins.to}`) : "");
 const shortLabel = (n) => { const t = (n?.label || "").replace(/`/g, ""); return t.length > 34 ? t.slice(0, 32) + "…" : t; };
@@ -1547,8 +1547,8 @@ function renderThoughts(g) {
   const openEnds = [...list, ...open].flatMap((t) => t.ends);
   const followBtn = openEnds.length ? el("button", { type: "button", class: "link-btn thought-follow-all", disabled: CHAIN.busy, title: "load every repository the chains here go on into, hop by hop — nothing else", onclick: followAll }, CHAIN.busy ? "loading the chains…" : `load the whole chains (${repos(openEnds).length} ${repos(openEnds).length === 1 ? "repository" : "repositories"})`) : null;
   const head = list.length
-    ? [el("h3", {}, `Thoughts (${list.length}) `, minSeg), el("p", { class: "note" }, "Chains of See and Superseded by, origin first. Point at one to light its path, click to hold it.")]
-    : [el("h3", {}, "Thoughts ", minSeg), el("p", { class: "note" }, `No line of reasoning in this graph is ${THOUGHT_MIN} or more entries long yet — a thought is a chain of See or Superseded by, each entry citing the one before.`)];
+    ? [el("h3", {}, `Thoughts (${list.length}) `, minSeg), el("p", { class: "note" }, "Chains of linked entries — See and Superseded by — first entry first. Point at one to light its path, click to hold it.")]
+    : [el("h3", {}, "Thoughts ", minSeg), el("p", { class: "note" }, `No chain of linked entries in this graph is ${THOUGHT_MIN} or more entries long yet — a thought is a chain of See or Superseded by, each entry citing the one before.`)];
   setKids(box, ...head, followBtn, ...list.map(row),
     open.length ? el("h3", { class: "thought-open-head" }, `Going on beyond this page (${open.length})`) : null,
     open.length ? el("p", { class: "note" }, "Shorter chains that continue in a repository this page has not loaded — loading it may make them thoughts.") : null,

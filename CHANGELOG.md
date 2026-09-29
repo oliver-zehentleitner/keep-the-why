@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Changed
+
+- `keep-the-why-dashboard` 0.3.8, docs, specification §9.7: the wording follows what a link records. A `See` names a related entry — often one it follows from, not always — so a thought is a *chain of linked entries*, not a line of argument: *first entry* instead of *origin*, *linked after* instead of *rests on*; *Starting from an unconfirmed entry* and *Chains through a step in question* name entries to check, not what depends on them.
+
 ### Added
 
 - Family, friends and thoughts explained as concepts, not only as dashboard features: three FAQ answers (what a family is and when it is needed; how projects outside a family refer to each other; what a thought is, with an example from this repository), a README paragraph on citing across repositories, one more sentence on the landing page, and an informative §9.7 in the specification — the reading direction of `See` and `Superseded by`, and the terms family, friend, thought, evolution and what a thought rests on, so that tools reading the links agree. The specification part reaches users with the next skill release.
