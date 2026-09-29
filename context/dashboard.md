@@ -106,7 +106,7 @@ The author layer comes from three Git calls per entry: `blame` on the heading fo
 **Evidence:** confirmed
 **Source:** maintainer request, 2026-09-11
 **Verification:** corroborated — re-checked 2026-09-27 when public mode arrived (`project-families.md`): the Python server still makes the one call, and the *page* now fetches a family member's raw `.keep-the-why` and its published `state.json` when a person switches it to public — on request, in the browser, never from the server and never from the skill; an exported page left in local mode still makes none; re-checked 2026-09-28 when author profile links arrived: the page also asks a host's API for one commit, on a click on an author's name — again a request the person makes, from the browser; re-checked 2026-09-28 when a `See` into another repository learned to open its entry: the page fetches that repository's raw `.keep-the-why` and its published `state.json` on the click on *open*, never before, and an export that nobody clicks in still makes none
-**Revisit when:** the server is asked for a second call, the page is asked to fetch anything that is not part of what the person opened, or the check is asked to do anything but compare two version strings
+**Revisit when:** the server is asked for a second call, the page is asked to fetch anything beyond what the person opened and the friends of a graph it shows, or the check is asked to do anything but compare two version strings
 **See:** project-families.md#public-mode-is-the-browser-reading-published-exports-bootstrapped-from-a-raw-keep-the-why-at-head — cae2d3bf-9ca6-42a8-98f4-6da2ca1904d3 — as of 2026-09-28
 
 At start and once every 24 hours the server asks `pypi.org/pypi/<name>/json` for the newest `keep-the-why-dashboard` and `keep-the-why-lint`; a newer release makes the package's entry in the status bar shimmer, with the version and the `pip install -U` line in its tooltip. `--no-update-check` turns it off. The exported page never checks.
@@ -118,6 +118,8 @@ At start and once every 24 hours the server asks `pypi.org/pypi/<name>/json` for
 **Consequence:** the README's "no network calls" sentence became "one network call, named, with an off switch"; the check compares version strings and nothing else, sends nothing but the request, and a failed lookup shows nothing rather than a warning.
 
 **Consequence (2026-09-29, maintainer decision):** "the exported page makes none" became "the page asks other hosts only for what a person opens". Opening an entry that cites an entry in another repository now fetches that repository's `.keep-the-why` and published `state.json` to show the target's title — before, only a click did. The trigger is still the person: an export that opens on its overview, or on an entry without such references, fetches nothing. What the page fetches from another project goes out without referrer or credentials, with a timeout and a size limit, since that project's owner chose the URL (the entry on resolving references across repositories, below).
+
+**Consequence (2026-09-29, maintainer decision, dashboard 0.3.0):** with friends loading by default, a page that shows a graph — the graph view, or the small graph beside the overview — fetches the published `.keep-the-why` and `state.json` of each repository its entries cite outside the family, without a click. The *friends* checkbox in the graph turns that off for the browser. The trigger is no longer only a person's action for these fetches; it is the page showing a graph that has friends. What is fetched, and how (no referrer or credentials, timeout, size limit, one fetch per project), is unchanged.
 
 ## The dashboard reads only what the linter would; the boundary check is its own copy of the linter's rule, not a linter API
 
@@ -212,14 +214,14 @@ When the reader shows an entry, every cross-project `See` or `Superseded by` in 
 
 **Consequence:** only a project at its repository's top level can be reached this way, because a `See` locator carries the canonical and nothing more; a project below the top level (an isolated-context mono repo) is found only when it is in the family, or checked out here.
 
-## Friends — repositories cited outside the family — load into the graph on a click, linked and never merged
+## Friends — repositories cited outside the family — load into the graph, linked and never merged
 
 **Id:** b1b36585-edb2-416c-95fe-126ed4b4b788
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
-**Source:** maintainer design discussion, 2026-09-29
-**Revisit when:** friends are asked for outside the graph (search, a view of their own), or a project's friends grow numerous enough that one click loading all of them is slow
+**Source:** maintainer design discussion, 2026-09-29; the default reversed by the maintainer the same day
+**Revisit when:** projects grow enough friends that loading them with every graph is slow or noisy — then the default goes back to a click; or friends are asked for outside the graph (search, a view of their own)
 **See:** dashboard.md#a-see-into-another-repository-is-resolved-when-the-entry-is-shown-family-or-not-through-that-repositorys-published-export — ffdb33a5-3d9c-43b8-951b-a95a90ac2a74 — as of 2026-09-29
 **See:** dashboard.md#the-update-check-is-the-servers-one-network-call-the-page-asks-other-hosts-only-for-what-a-person-opens — 5b7a6c2d-8218-4987-b912-0fe7bb15cc1a — as of 2026-09-29
 
@@ -228,6 +230,8 @@ The graph offers the repositories its entries cite by a cross-project `See` or `
 **Reason:** a family is a routing relation — entries are written into the member whose scope fits — and projects that only cite each other must not become one to be seen together, which is why a `See` into any repository already resolves on display. The graph is where such links are read as a web, so that is where friends appear. "Friends" names the difference from the family: connected, nothing routed between them.
 
 **Rejected alternative:** load friends when the page opens. Rejected by the maintainer — never as a default; the page asks other hosts only for what a person opens, and a click on *friends* is that request.
+
+**Consequence (2026-09-29, maintainer decision, dashboard 0.3.0):** the default is turned around: friends load as soon as a graph shows them. Few projects have friends yet, so the cost is a handful of fetches, and a web that needs a click before it appears is not seen. The alternative rejected above is what the default now does; the click stays as the way back — unchecking *friends* turns loading off for this browser (kept), and *friends (N)* loads them on a click again. The rest of the decision stands: linked, never merged; one hop; a friend's hub expands on a click.
 
 **Rejected alternative:** merge friends into the page like the family scope does (search, counts, queues). Rejected — a friend is not part of this project's knowledge, and counting its open questions here would misstate what this project owes.
 
@@ -275,7 +279,7 @@ The graph turns in its plane, one turn in about six minutes, rotating the node p
 **Evidence:** confirmed
 **Source:** maintainer design discussion, 2026-09-29
 **Revisit when:** a path is asked to survive a reload or to be shared, or walks get long enough that the states held in memory become a cost
-**See:** dashboard.md#friends--repositories-cited-outside-the-family--load-into-the-graph-on-a-click-linked-and-never-merged — b1b36585-edb2-416c-95fe-126ed4b4b788 — as of 2026-09-29
+**See:** dashboard.md#friends--repositories-cited-outside-the-family--load-into-the-graph-linked-and-never-merged — b1b36585-edb2-416c-95fe-126ed4b4b788 — as of 2026-09-29
 
 Going to a friend — its name in the legend, its hub's entries, a link to it anywhere on the page — changes the page's centre in place, without a reload: the friend's state is already loaded, the address becomes that project's (`?public=` or `?project=`, a link like any other), and the project left joins the *path*. The path is the projects walked through to get here, kept in memory for this page: a bar above every view (an overlay on the graph) names them in order, each a way back that shortens the path; the graph shows them as numbered hubs with a dotted ring, joined in the order walked, with the entries that link them. Back and forward walk it in place. *Discard* clears it, *in graph* hides it, *path* in the graph turns keeping it off (kept per browser, on by default). A reload, or a link opened anew, starts without a path.
 

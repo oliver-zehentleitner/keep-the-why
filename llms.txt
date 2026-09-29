@@ -275,7 +275,7 @@ a project serves it on localhost and keeps it current over Server-Sent Events (a
 entry an agent just wrote shows up within seconds; uncommitted entries carry the author
 `working tree`). Views: overview, force-directed graph (topics as hubs, entries colored by
 Evidence, references and `See` / `Superseded by` lines as edges; *friends*, the repositories
-cited outside the family, load into it on a click and are linked, never merged; going to a friend
+cited outside the family, load into it by default (a checkbox turns that off) and are linked, never merged; going to a friend
 moves the page there and keeps the path walked, in memory only), topics and an entry reader with
 backlinks, queues of what needs a person (open, needs-review, pending-confirmation, unknown
 evidence, Revisit-when triggers), timeline by month and author, authors, the linter's findings,

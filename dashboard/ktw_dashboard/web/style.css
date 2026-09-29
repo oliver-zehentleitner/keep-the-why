@@ -391,3 +391,4 @@ a.author:hover { color: var(--accent2); }
 .path-bar label { display: inline-flex; align-items: center; gap: 4px; color: var(--fg3); }
 .graph-wrap .path-bar { position: absolute; top: 58px; left: 18px; margin: 0; max-width: calc(100% - 36px); background: color-mix(in srgb, var(--bg2) 85%, transparent); z-index: 1; }
 @media (max-width: 900px) { .graph-wrap .path-bar { top: 50px; left: 10px; max-width: calc(100% - 20px); } }
+.graph-ui .graph-reset { margin-left: 6px; padding-left: 10px; border-left: 1px solid var(--line); }

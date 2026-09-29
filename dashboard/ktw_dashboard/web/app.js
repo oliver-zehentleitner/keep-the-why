@@ -692,8 +692,8 @@ function miniGraph(d, ctx) {
     // friends live at the project level: the control switches there (the family level with the family scope) and loads them
     const n = friendCandidates(S.entries.filter((e) => (e.project || null) === (ctx.entry?.project || ctx.topic?.project || null))).length;
     const up = modes.includes("family") && scope() === "family" ? "family" : "project";
-    if (n || hasFamily()) box.append(el("span", { class: "mini-seg mini-friends" }, el("button", { type: "button", title: `show the friends — switches to the ${up} level; nothing is fetched before this click`,
-      onclick: () => { MINI = up; FRIENDS.load = true; render(); } }, n ? `friends (${n})` : "friends")));
+    if (n || hasFamily()) box.append(el("span", { class: "mini-seg mini-friends" }, el("button", { type: "button", title: `show the friends — switches to the ${up} level`,
+      onclick: () => { MINI = up; FRIENDS.load = true; setFriendsAuto(true); render(); } }, n ? `friends (${n})` : "friends")));
     return requestAnimationFrame(() => runGraph(canvas, ctx.entry ? buildSubgraph(ctx.entry) : buildTopicSubgraph(ctx.topic), opts));
   }
   if (mode === "project") { const g = buildGraph(ctx.entry?.project || ctx.topic?.project || null); const f = miniFriends(g); if (f) box.append(f); return requestAnimationFrame(() => runGraph(canvas, g, opts)); }
@@ -742,6 +742,7 @@ function buildGraph(project = null) {
   const entries = S.entries.filter((e) => (e.project || null) === project);
   graph = Object.assign(graph || { scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true, alpha: 1 }, assemble(S.topics.filter((t) => (t.project || null) === project), entries, prev));
   graph.friends = project ? [] : friendCandidates(entries);
+  autoFriends(graph);
   addFriendLayer(graph, prev);
   graph.alpha = Math.max(graph.alpha, 0.6);
   return graph;
@@ -828,6 +829,7 @@ async function buildFamilyGraph() {
   }
   fgraph = Object.assign(fgraph || { scale: 0.7, ox: 0, oy: 0, showEntries: true, showLabels: true, alpha: 1 }, { nodes, links, index, groups, missing: pool.missing, across, at: Date.now() });
   fgraph.friends = friendCandidates(groups.flatMap((G) => G.state.entries || []), [...groups.map((G) => G.canonical), ...pool.missing.map(({ member: m }) => m.canonical)]);
+  autoFriends(fgraph);
   addFriendLayer(fgraph, prev);
   fgraph.alpha = Math.max(fgraph.alpha, 0.6);
   return fgraph;
@@ -842,7 +844,20 @@ const color0 = () => getComputedStyle(document.documentElement).getPropertyValue
 // friends are not followed. A friend is linked into the graph, never merged:
 // search, queues, counts and the other views stay with the project or family.
 // Its hub shows the entries cited there; a click on the hub shows all of it.
-const FRIENDS = { on: false, loaded: {}, pending: {}, expanded: new Set(), load: false }; // loaded: key -> {state, name, href(e), topicHref(file), open} | {error}
+const FRIENDS = { on: false, loaded: {}, pending: {}, expanded: new Set(), load: false, loading: false };
+// Loaded as soon as a graph shows them, by default (few projects have many
+// friends yet); *friends* unchecked turns that off, kept per browser — then a
+// click on *friends (N)* loads them.
+let FRIENDS_AUTO = (() => { try { return localStorage.getItem("ktw-friends") !== "off"; } catch { return true; } })();
+function setFriendsAuto(on) { FRIENDS_AUTO = on; try { localStorage.setItem("ktw-friends", on ? "on" : "off"); } catch {} }
+function autoFriends(g) {
+  if (!FRIENDS_AUTO || FRIENDS.loading) return;
+  const list = g.friends || []; if (!list.length) return;
+  const waiting = list.filter((f) => !FRIENDS.loaded[fkey(f.canonical)]);
+  if (FRIENDS.on && !waiting.length) return;
+  FRIENDS.loading = true;
+  setTimeout(() => loadFriends(FRIENDS.on ? waiting : list).finally(() => { FRIENDS.loading = false; }), 0); // after the graph that asked is drawn
+} // loaded: key -> {state, name, href(e), topicHref(file), open} | {error}
 const fkey = (c) => String(c || "").replace(/\/+$/, "").toLowerCase();
 const friendColor = (i) => PALETTE[(i + 5) % PALETTE.length];
 function friendCandidates(entries, family = []) {
@@ -877,8 +892,9 @@ function loadFriend(f) {
 }
 async function loadFriends(list) {
   if (LIVE()) await fetchTree(); // the whole family is known before anything counts as a friend
-  FRIENDS.on = true;
+  FRIENDS.on = true; FRIENDS.loading = true;
   await Promise.all(list.map(loadFriend));
+  FRIENDS.loading = false; // before the render, so the controls show the result
   if (fgraph) fgraph.at = 0;
   render();
 }
@@ -1083,11 +1099,12 @@ function friendsUi(g) {
   const list = g.friends || [];
   if (!list.length) return null;
   const waiting = list.filter((f) => !FRIENDS.loaded[fkey(f.canonical)]);
+  if (FRIENDS.loading) return el("span", { class: "friends-load note" }, "loading friends…");
   if (!FRIENDS.on || waiting.length) {
-    const b = el("button", { class: "link-btn friends-load", title: "load the repositories these entries cite outside the family — nothing is fetched before this click", onclick: () => { b.disabled = true; b.textContent = "loading friends…"; loadFriends(FRIENDS.on ? waiting : list); } }, `friends (${FRIENDS.on ? waiting.length : list.length})`);
+    const b = el("button", { class: "link-btn friends-load", title: "load the repositories these entries cite outside the family, now and from here on", onclick: () => { b.disabled = true; b.textContent = "loading friends…"; setFriendsAuto(true); loadFriends(FRIENDS.on ? waiting : list); } }, `friends (${FRIENDS.on ? waiting.length : list.length})`);
     return b;
   }
-  return el("label", { title: "the repositories these entries cite outside the family" }, el("input", { type: "checkbox", checked: true, onchange: () => { FRIENDS.on = false; if (fgraph) fgraph.at = 0; render(); } }), "friends");
+  return el("label", { class: "friends-toggle", title: "the repositories these entries cite outside the family — unchecked, they are no longer loaded on their own" }, el("input", { type: "checkbox", checked: true, onchange: () => { FRIENDS.on = false; setFriendsAuto(false); if (fgraph) fgraph.at = 0; render(); } }), "friends");
 }
 // the same control, small, in the corner of the side pane's graph
 function miniFriends(g) {
@@ -1097,8 +1114,9 @@ function miniFriends(g) {
   const waiting = list.filter((f) => !FRIENDS.loaded[fkey(f.canonical)]);
   if (want) { if (!FRIENDS.on || waiting.length) { loadFriends(FRIENDS.on ? waiting : list); return el("span", { class: "mini-seg mini-friends" }, el("button", { type: "button", disabled: true }, "loading…")); } }
   const on = FRIENDS.on && !waiting.length;
-  const b = el("button", { type: "button", class: on ? "on" : "", title: on ? "hide the friends" : "load the repositories these entries cite outside the family — nothing is fetched before this click",
-    onclick: () => { if (on) { FRIENDS.on = false; if (fgraph) fgraph.at = 0; render(); } else { b.disabled = true; b.textContent = "loading…"; loadFriends(FRIENDS.on ? waiting : list); } } },
+  if (FRIENDS.loading && !want) return el("span", { class: "mini-seg mini-friends" }, el("button", { type: "button", disabled: true }, "loading…"));
+  const b = el("button", { type: "button", class: on ? "on" : "", title: on ? "hide the friends — they are no longer loaded on their own" : "load the repositories these entries cite outside the family, now and from here on",
+    onclick: () => { if (on) { FRIENDS.on = false; setFriendsAuto(false); if (fgraph) fgraph.at = 0; render(); } else { b.disabled = true; b.textContent = "loading…"; setFriendsAuto(true); loadFriends(FRIENDS.on ? waiting : list); } } },
     on ? "friends" : `friends (${FRIENDS.on ? waiting.length : list.length})`);
   return el("span", { class: "mini-seg mini-friends" }, b);
 }
@@ -1173,10 +1191,10 @@ function viewGraph(main) {
     const ui = el("div", { class: "graph-ui" },
       el("label", {}, el("input", { type: "checkbox", checked: g.showEntries, onchange: (ev) => { g.showEntries = ev.target.checked; g.alpha = 0.5; g.wake?.(); } }), "entries"),
       el("label", {}, el("input", { type: "checkbox", checked: g.showLabels, onchange: (ev) => { g.showLabels = ev.target.checked; g.wake?.(); } }), "labels"),
-      el("button", { class: "link-btn", onclick: () => { g.scale = family ? 0.7 : 1; g.ox = 0; g.oy = 0; g.userMoved = false; for (const n of g.nodes) { n.fixed = false; } g.alpha = 1; g.wake?.(); } }, "reset"),
       friendsUi(g),
       el("label", { title: "keep the path while you walk from project to project — the projects you came through stay in the graph" }, el("input", { type: "checkbox", checked: keepPath(), onchange: (ev) => { setKeepPath(ev.target.checked); render(); } }), "path"),
       el("label", { title: "the graph turns very slowly; it stops while you point at it" }, el("input", { type: "checkbox", checked: driftOn(), onchange: (ev) => { setDrift(ev.target.checked); g.wake?.(); } }), "motion"),
+      el("button", { class: "link-btn graph-reset", title: "fit the graph and let go of every node you placed", onclick: () => { g.scale = family ? 0.7 : 1; g.ox = 0; g.oy = 0; g.userMoved = false; for (const n of g.nodes) { n.fixed = false; } g.alpha = 1; g.wake?.(); } }, "reset"),
     );
     const legend = family
       ? el("div", { class: "graph-legend" },

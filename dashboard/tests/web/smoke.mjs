@@ -102,15 +102,16 @@ if (withSee) {
   await go(`#entry/${withSee.uuid || encodeURIComponent(withSee.id)}`);
   if (![...main.querySelectorAll(".refs-box h3")].some((h) => h.textContent === "See")) errors.push("entry with See lines: no See section in the reader");
 }
-// friends: an export offers the repositories its entries cite outside the family, and loads none of them on its own
+// friends: an export offers the repositories its entries cite outside the family
 {
   const cited = new Set(); const own = (S.project.canonical || "").toLowerCase();
   for (const e of S.entries) for (const r of e.see || []) if (r?.remote && r.remote.toLowerCase() !== own) cited.add(r.remote.toLowerCase());
   await go("#graph");
-  const btn = window.document.querySelector(".graph-ui .friends-load");
+  await tick(200); // by default the friends load with the graph; with nothing to fetch here they end as "not loaded"
+  const btn = window.document.querySelector(".graph-ui .friends-load, .graph-ui .friends-toggle");
   report.friends = btn?.textContent || "none";
-  if (cited.size && !btn) errors.push(`graph: entries cite ${cited.size} other repositories, but there is no friends button`);
-  if (!cited.size && btn) errors.push("graph: a friends button without a cross-project reference");
+  if (cited.size && !btn) errors.push(`graph: entries cite ${cited.size} other repositories, but there is no friends control`);
+  if (!cited.size && btn) errors.push("graph: a friends control without a cross-project reference");
 }
 // thoughts: the chains of See and Superseded by beside the graph; a click holds one and lists its steps
 {
