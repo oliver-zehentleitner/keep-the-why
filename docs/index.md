@@ -181,7 +181,7 @@ A repository inside another — a submodule, a vendored checkout — is a projec
 
 </div>
 
-**Linked across all of them.** Any project can cite an entry in any other — in its family or not, one repository or eight — with a `See` line naming the other repository and the entry's Id; a reworded heading or a split file doesn't break it. The dashboard follows those links: family members show as one, the other repositories cited as *friends*, and the reasoning that runs through them as *thoughts*. [See it: Keep the Why with its friends →](https://keepthewhy.com/dashboard/live/#graph){ target=_blank rel=noopener } · [the thoughts across them →](https://keepthewhy.com/dashboard/live/#thoughts){ target=_blank rel=noopener }
+**Linked across all of them.** Any project can cite an entry in any other — in its family or not, one repository or eight — with a `See` line naming the other repository and the entry's Id; a reworded heading or a split file doesn't break it. The dashboard follows those links: family members show as one, the other repositories cited as *friends*, and the reasoning that runs through them as *thoughts* — chains of entries in which each one cites the one before, from the decision a line of reasoning started with to where it led. [See it: Keep the Why with its friends →](https://keepthewhy.com/dashboard/live/#graph){ target=_blank rel=noopener } · [the thoughts across them →](https://keepthewhy.com/dashboard/live/#thoughts){ target=_blank rel=noopener }
 
 [Layouts →](repository-structure.md#layouts-one-repository-or-several) · [Families →](setup.md#family-routing-and-writing-across-projects) · [Dashboard: family, friends, thoughts →](dashboard.md#family-friends-thoughts)
 

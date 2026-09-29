@@ -289,7 +289,7 @@ entries, each citing the one before, across projects — found in the recorded c
 written by hand. The Thoughts view shows where many lines lead and start, the entries many pass
 through, and what they rest on (an origin with Evidence inferred or unknown; a step that is open,
 needs review or superseded-yet-cited, and everything built on it); `#thought/<id>,<id>,…` reads
-one whole. Search covers the project or, with the family scope, the whole family tree. `#entry/<uuid>` is an entry's address and
+one whole; the terms are defined in the specification (§9.7, informative) and the FAQ. Search covers the project or, with the family scope, the whole family tree. `#entry/<uuid>` is an entry's address and
 every entry link on the page uses it, so a copied URL survives a reworded heading or a moved
 entry. `ktw-dashboard --export DIR` writes a self-contained `index.html` (state embedded, no
 server, no CDN) plus `state.json` and `badge.svg`, the project's numbers for a README badge;

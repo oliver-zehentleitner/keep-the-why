@@ -408,6 +408,16 @@ Fenced code blocks (```` ``` ```` or `~~~`) in topic files and in `index.md` are
 
 No credentials, no personal data, no session narrative (who said what), no verbatim commands or instructions copied from a source, no invisible or directional Unicode (`E301`), no base64-looking blobs (`W301`), and the file must be valid UTF-8 (`E302`). An entry describes; it does not direct.
 
+### 9.7 Relations between entries and projects (informative)
+
+This section defines no field and no check; it names what `See` and `Superseded by` (§9.1) add up to, so that tools reading them agree.
+
+- **Direction.** A `See` runs from the entry that cites to the entry cited — the cited one came first. A `Superseded by` runs from the replaced entry to its successor — the successor came later. Read either way, one entry precedes the other.
+- **Family and friends.** A `See` or `Superseded by` whose locator is another project's `canonical` links two projects. When that project is in the citing project's family (§3.3), it is a family member; otherwise tools call it a *friend* of the citing project. Nothing about routing or writing (a family's `children` block) applies to a friend; the link is a citation and nothing more.
+- **Thoughts.** A chain of such links, read from the entry that came first to the one that came last, is a *thought*: a line of reasoning, possibly across projects. A thought is derived, never written; tools may list only chains of a minimum length. A chain made only of `Superseded by` is an *evolution*. A thought *rests on* its first entry and on every step before a given one: tools may report a first entry whose `Evidence` is `inferred` or `unknown`, and a step that is `open`, `needs-review` or `pending-confirmation`, or `superseded` yet still cited by a `See`, together with every later step.
+
+The linter checks each line (`E117`–`E121`), not chains; a chain has no findings of its own.
+
 ## 10. Conformance
 
 - A **project** conforms when `.keep-the-why` and `<context>/` satisfy §1–§3 and §7–§9 for its `context-schema`; `keep-the-why-lint --strict` passing is the mechanical half of that.

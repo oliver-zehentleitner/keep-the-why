@@ -6,6 +6,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Added
 
+- Family, friends and thoughts explained as concepts, not only as dashboard features: three FAQ answers (what a family is and when it is needed; how projects outside a family refer to each other; what a thought is, with an example from this repository), a README paragraph on citing across repositories, one more sentence on the landing page, and an informative §9.7 in the specification — the reading direction of `See` and `Superseded by`, and the terms family, friend, thought, evolution and what a thought rests on, so that tools reading the links agree. The specification part reaches users with the next skill release.
 - `keep-the-why-dashboard` 0.3.7: *⤢ full graph* in the side pane's graph opens the full graph in one click — at the same level (the family's with the family scope), centred on the entry or topic it showed, the entry marked for a moment.
 
 ### Changed
