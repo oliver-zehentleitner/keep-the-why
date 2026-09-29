@@ -68,13 +68,13 @@ if (S.project.git?.available && /^github\.com\//.test(S.project.git.remote || ""
 }
 // the side-pane graph: near and project in an export (no family), and the switch works
 await go(`#entry/${encodeURIComponent(S.entries[0].id)}`);
-const modes = [...window.document.querySelectorAll("#details .mini-seg:not(.mini-friends) button")].map((b) => b.textContent);
+const modes = [...window.document.querySelectorAll("#details .mini-seg:not(.mini-friends):not(.mini-width) button")].map((b) => b.textContent);
 const wantModes = exportFamily ? "near,project,family" : "near,project";
 if (modes.join() !== wantModes) errors.push(`side-pane graph in an export: expected ${wantModes}, got ` + modes.join());
-[...window.document.querySelectorAll("#details .mini-seg:not(.mini-friends) button")].find((b) => b.textContent === "project")?.click();
+[...window.document.querySelectorAll("#details .mini-seg:not(.mini-friends):not(.mini-width) button")].find((b) => b.textContent === "project")?.click();
 await tick(50);
-if (window.document.querySelector("#details .mini-seg:not(.mini-friends) button.on")?.textContent !== "project" || !window.document.querySelector("#details .mini canvas")) errors.push("side-pane graph: the project switch did not take");
-[...window.document.querySelectorAll("#details .mini-seg:not(.mini-friends) button")].find((b) => b.textContent === "near")?.click();
+if (window.document.querySelector("#details .mini-seg:not(.mini-friends):not(.mini-width) button.on")?.textContent !== "project" || !window.document.querySelector("#details .mini canvas")) errors.push("side-pane graph: the project switch did not take");
+[...window.document.querySelectorAll("#details .mini-seg:not(.mini-friends):not(.mini-width) button")].find((b) => b.textContent === "near")?.click();
 await tick(50);
 await go("#family");
 const inFamily = !!(S.project.parent || (S.project.children || []).length);

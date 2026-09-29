@@ -831,7 +831,7 @@ function miniGraph(d, ctx) {
   const box = el("div", { class: `mini ${focusId ? "tall" : "fill"}` });
   const seg = el("span", { class: "mini-seg" }, modes.length > 1 ? modes.map((m) => el("button", { type: "button", class: m === mode ? "on" : "", title: { near: "this entry's or topic's neighbourhood", project: "the whole project", family: "the whole family tree" }[m], onclick: () => { MINI = m; const keep = d.querySelector(".mini"); const h = keep?.previousElementSibling?.tagName === "H3" ? keep.previousElementSibling : null; h?.remove(); keep?.remove(); miniGraph(d, ctx); } }, m)) : el("span", { class: "mini-title" }, "graph"));
   const canvas = el("canvas");
-  box.append(canvas, seg, el("span", { class: "mini-hint" }, mode === "near" ? "click to open" : "hover · click · g for the full view"));
+  box.append(canvas, seg, sideControl(), el("span", { class: "mini-hint" }, mode === "near" ? "click to open" : "hover · click · g for the full view"));
   if (focusId) d.append(el("h3", {}, "Graph"));
   d.append(box);
   const opts = { mini: true, focusId };
@@ -2063,6 +2063,13 @@ function connectLive() {
   };
   open();
 }
+// The side pane's width: 1× (the default), 2×, 3×, or half the page beside
+// the text — for a wider graph; kept per browser, ignored on a narrow screen.
+const SIDE_WIDTHS = ["1", "2", "3", "half"];
+let SIDE = (() => { try { const v = localStorage.getItem("ktw-side"); return SIDE_WIDTHS.includes(v) ? v : "1"; } catch { return "1"; } })();
+function setSide(v) { SIDE = v; $("#app").dataset.side = v; try { localStorage.setItem("ktw-side", v); } catch {} for (const G of ACTIVE_GRAPHS) G.wake?.(); }
+const sideControl = () => el("span", { class: "mini-seg mini-width", title: "the width of this pane: 1×, 2×, 3×, or half the page" },
+  ...SIDE_WIDTHS.map((v) => el("button", { type: "button", class: v === SIDE ? "on" : "", onclick: () => { setSide(v); for (const b of document.querySelectorAll(".mini-width button")) b.classList.toggle("on", b.textContent === (v === "half" ? "½" : `${v}×`)); } }, v === "half" ? "½" : `${v}×`)));
 function setupSideToggle() {
   const btn = $("#side-toggle"); const app = $("#app");
   btn.onclick = () => { const open = app.classList.toggle("side-open"); btn.setAttribute("aria-expanded", String(open)); btn.textContent = open ? "Topics ▴" : "Topics ▾"; };
@@ -2124,7 +2131,7 @@ function setupMode() {
   $("#mode-note").textContent = MODE === "public" ? `generated ${S.generated}` : "";
 }
 async function boot() {
-  setupTheme(); setupSearch(); setupScope(); setupSideToggle();
+  setupTheme(); setupSearch(); setupScope(); setupSideToggle(); $("#app").dataset.side = SIDE;
   window.addEventListener("hashchange", () => { RESTORE_SCROLL = 0; render(); });
   window.addEventListener("popstate", onPopState);
   document.addEventListener("click", onLinkClick);

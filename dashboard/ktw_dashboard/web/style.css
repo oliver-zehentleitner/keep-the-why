@@ -425,3 +425,11 @@ a.author:hover { color: var(--accent2); }
 .thoughts-page .fan { margin: 0 0 12px; }
 .thoughts-page .fan-rows { margin-left: 18px; border-left: 2px solid var(--line); padding-left: 8px; }
 .graph-ui .friends-ctl { display: inline-flex; gap: 10px; align-items: center; }
+
+/* the side pane's width, chosen in the corner of its graph */
+.details .mini .mini-width { top: auto; bottom: 6px; left: 6px; }
+@media (min-width: 901px) {
+  .app[data-side="2"] { grid-template-columns: 280px minmax(0, 1fr) min(680px, 45vw); }
+  .app[data-side="3"] { grid-template-columns: 280px minmax(0, 1fr) min(1020px, 60vw); }
+  .app[data-side="half"] { grid-template-columns: 280px minmax(0, 1fr) minmax(0, 1fr); }
+}
