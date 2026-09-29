@@ -156,6 +156,28 @@ export function resolveLocation(location, canonical, root = "") {
   return { canonical, root: parts.join("/") };
 }
 
+// Friends: the repositories that `entries` cite by a cross-project See or
+// Superseded by, minus the canonicals in `exclude` (this project, its
+// family). One row per repository with the Ids cited there, sorted by
+// canonical. Derived from the entries alone — nothing is fetched here.
+export function friendsOf(entries, exclude = []) {
+  const norm = (c) => String(c || "").replace(/\/+$/, "").toLowerCase();
+  const skip = new Set(exclude.filter(Boolean).map(norm));
+  const out = new Map();
+  const add = (canonical, uuid) => {
+    if (!canonical || !uuid || skip.has(norm(canonical))) return;
+    const k = norm(canonical);
+    if (!out.has(k)) out.set(k, { canonical: String(canonical).replace(/\/+$/, ""), uuids: [] });
+    const f = out.get(k); if (!f.uuids.includes(uuid)) f.uuids.push(uuid);
+  };
+  for (const e of entries || []) {
+    for (const r of e.see || []) if (r?.remote) add(r.remote, r.uuid);
+    const s = e.superseded_by ? parseSupersededBy(e.superseded_by) : null;
+    if (s?.remote) add(s.remote, s.uuid);
+  }
+  return [...out.values()].sort((a, b) => a.canonical.localeCompare(b.canonical));
+}
+
 // The family graph's structure. `groups` are the projects in it, each
 // { key, canonical, root, role, state }. Returns
 //   parentOf: key -> the key of the project its parent line names (when that

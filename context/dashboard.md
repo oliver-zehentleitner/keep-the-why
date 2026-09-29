@@ -211,3 +211,26 @@ When the reader shows an entry, every cross-project `See` or `Superseded by` in 
 **Rejected alternative:** leave references outside the family as text (canonical plus Id, found by grep in a clone). Rejected — that is what the page did, and it is the case the maintainer asked to fix.
 
 **Consequence:** only a project at its repository's top level can be reached this way, because a `See` locator carries the canonical and nothing more; a project below the top level (an isolated-context mono repo) is found only when it is in the family, or checked out here.
+
+## Friends — repositories cited outside the family — load into the graph on a click, linked and never merged
+
+**Id:** b1b36585-edb2-416c-95fe-126ed4b4b788
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer design discussion, 2026-09-29
+**Revisit when:** friends are asked for outside the graph (search, a view of their own), or a project's friends grow numerous enough that one click loading all of them is slow
+**See:** dashboard.md#a-see-into-another-repository-is-resolved-when-the-entry-is-shown-family-or-not-through-that-repositorys-published-export — ffdb33a5-3d9c-43b8-951b-a95a90ac2a74 — as of 2026-09-29
+**See:** dashboard.md#the-update-check-is-the-servers-one-network-call-the-page-asks-other-hosts-only-for-what-a-person-opens — 5b7a6c2d-8218-4987-b912-0fe7bb15cc1a — as of 2026-09-29
+
+The graph offers the repositories its entries cite by a cross-project `See` or `Superseded by` outside the family as *friends*. They are loaded only when a person clicks *friends (N)* in the graph, in every mode — the count comes from the entries already on the page — and each is loaded the way a reference row resolves it: a project known to the live server, else the repository's published export. One level deep: a friend's own friends are not followed. A friend is a hub with a dashed ring and the entries cited there, joined by their `See` lines; a click on the hub shows the whole friend. Friends are linked into the graph, never merged into search, queues, counts or the other views.
+
+**Reason:** a family is a routing relation — entries are written into the member whose scope fits — and projects that only cite each other must not become one to be seen together, which is why a `See` into any repository already resolves on display. The graph is where such links are read as a web, so that is where friends appear. "Friends" names the difference from the family: connected, nothing routed between them.
+
+**Rejected alternative:** load friends when the page opens. Rejected by the maintainer — never as a default; the page asks other hosts only for what a person opens, and a click on *friends* is that request.
+
+**Rejected alternative:** merge friends into the page like the family scope does (search, counts, queues). Rejected — a friend is not part of this project's knowledge, and counting its open questions here would misstate what this project owes.
+
+**Rejected alternative:** show each friend whole from the start. Rejected for readability — a large friend would bury the project's own graph; the cited entries come first, the hub expands on a click.
+
+**Rejected alternative:** follow friends of friends. Rejected — the web would grow without a bound the reader chose; one level is what this project cites.

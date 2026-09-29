@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- `keep-the-why-dashboard` 0.2.9: *friends* in the graph — the repositories the graph's entries cite by a cross-project `See` or `Superseded by` outside the family. Never loaded on their own: a *friends (N)* button loads them on a click, in every mode, as a reference row resolves them (a project known to the live server, else the published export), one level deep. Each friend is a hub with a dashed ring and the entries cited there, joined by their `See` lines; a click on the hub shows all of it. Linked, never merged: search, queues and counts stay with the project or family. `friendsOf` in `web/lib.js` with a unit test; the public-mode test checks that nothing is fetched before the click, the hubs, the See lines, the expansion and the counts.
+
 ### Fixed
 
 - `keep-the-why-dashboard` 0.2.8: the scope switch's tooltip says it sets what every view shows, not only search and graph, and the keys legend lists `l` for findings.

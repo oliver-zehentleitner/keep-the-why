@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-import { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, searchTerms, searchHit, compareHits, snippetAt, highlight, resolveLocation, linkFamily, authorLookup, mergeStates } from "./lib.js";
+import { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, searchTerms, searchHit, compareHits, snippetAt, highlight, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf } from "./lib.js";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const narrow = () => !!window.matchMedia?.("(max-width: 900px)").matches;
@@ -724,7 +724,10 @@ const pointsAt = (e) => [...(e.see || []).map((r) => r?.uuid), e.superseded_by ?
 const linkedTo = (e, list) => list.filter((x) => x !== e && ((e.uuid && pointsAt(x).includes(e.uuid)) || (x.uuid && pointsAt(e).includes(x.uuid))));
 function buildGraph(project = null) {
   const prev = graph ? Object.fromEntries(graph.nodes.map((n) => [n.id, n])) : {};
-  graph = Object.assign(graph || { scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true, alpha: 1 }, assemble(S.topics.filter((t) => (t.project || null) === project), S.entries.filter((e) => (e.project || null) === project), prev));
+  const entries = S.entries.filter((e) => (e.project || null) === project);
+  graph = Object.assign(graph || { scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true, alpha: 1 }, assemble(S.topics.filter((t) => (t.project || null) === project), entries, prev));
+  graph.friends = project ? [] : friendCandidates(entries);
+  addFriendLayer(graph, prev);
   graph.alpha = Math.max(graph.alpha, 0.6);
   return graph;
 }
@@ -809,11 +812,145 @@ async function buildFamilyGraph() {
     if (ts != null && tt != null && !topicPairs.has(k)) { topicPairs.add(k); links.push({ s: ts, t: tt, kind: "xtopic", len: 220, color: A.color }); }
   }
   fgraph = Object.assign(fgraph || { scale: 0.7, ox: 0, oy: 0, showEntries: true, showLabels: true, alpha: 1 }, { nodes, links, index, groups, missing: pool.missing, across, at: Date.now() });
+  fgraph.friends = friendCandidates(groups.flatMap((G) => G.state.entries || []), [...groups.map((G) => G.canonical), ...pool.missing.map(({ member: m }) => m.canonical)]);
+  addFriendLayer(fgraph, prev);
   fgraph.alpha = Math.max(fgraph.alpha, 0.6);
   return fgraph;
 }
 const color0 = () => getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#835bec";
+// ---------------------------------------------------------------- friends
+// Friends: repositories outside the family that the entries in the graph
+// cite by a cross-project See or Superseded by. Nothing is loaded until a
+// person clicks *friends* in the graph, in every mode; then each is loaded
+// the way a reference row resolves it (a project known to the live server,
+// else the repository's published export), one level deep — a friend's own
+// friends are not followed. A friend is linked into the graph, never merged:
+// search, queues, counts and the other views stay with the project or family.
+// Its hub shows the entries cited there; a click on the hub shows all of it.
+const FRIENDS = { on: false, loaded: {}, pending: {}, expanded: new Set() }; // loaded: key -> {state, name, href(e), topicHref(file), open} | {error}
+const fkey = (c) => String(c || "").replace(/\/+$/, "").toLowerCase();
+const friendColor = (i) => PALETTE[(i + 5) % PALETTE.length];
+function friendCandidates(entries, family = []) {
+  const p = SELF?.project || {}; const base = canonicalOf(p); const root = MY_ROOT();
+  const declared = [p.parent, ...(p.children || []).map((c) => c.location)].map((l) => resolveLocation(l, base, root)?.canonical);
+  return friendsOf(entries, [base, ...declared, ...(TREE || []).map((m) => m.canonical), ...family]);
+}
+function loadFriend(f) {
+  const k = fkey(f.canonical);
+  if (FRIENDS.loaded[k]) return Promise.resolve(FRIENDS.loaded[k]);
+  return (FRIENDS.pending[k] ||= (async () => {
+    let r = null;
+    if (LIVE()) {
+      try {
+        const res = await fetch(`/api/entry?uuid=${encodeURIComponent(f.uuids[0])}${PROJECT ? `&project=${encodeURIComponent(PROJECT)}` : ""}`, { cache: "no-store" });
+        if (res.ok) {
+          const hit = await res.json(); const m = await memberState(hit.project);
+          const at = (hash) => `${location.pathname}?project=${encodeURIComponent(hit.project)}${hash}`;
+          if (m.state) r = { state: m.state, name: m.state.project?.id || repoLabel(f.canonical), href: (e) => at(entryHref(e)), topicHref: (file) => at(`#topic/${file}`), open: at("#overview") };
+        }
+      } catch { /* not known here: the published export */ }
+    }
+    if (!r) {
+      const p = await fetchPublicState(f.canonical, "");
+      r = p.state
+        ? { state: p.state, name: repoLabel(f.canonical), href: (e) => publicHref(f.canonical, "", entryHref(e)), topicHref: (file) => publicHref(f.canonical, "", `#topic/${file}`), open: publicHref(f.canonical, "", "#overview") }
+        : { error: p.error };
+    }
+    r.canonical = f.canonical;
+    return (FRIENDS.loaded[k] = r);
+  })());
+}
+async function loadFriends(list) {
+  if (LIVE()) await fetchTree(); // the whole family is known before anything counts as a friend
+  FRIENDS.on = true;
+  await Promise.all(list.map(loadFriend));
+  if (fgraph) fgraph.at = 0;
+  render();
+}
+function toggleFriend(k) {
+  if (FRIENDS.expanded.has(k)) FRIENDS.expanded.delete(k); else FRIENDS.expanded.add(k);
+  if (fgraph) fgraph.at = 0;
+  render();
+}
+// The loaded friends of `g.friends` as hubs with the entries cited there (all
+// of them once the hub is expanded), joined by See and Superseded by to the
+// entries of the graph, both ways.
+function addFriendLayer(g, prev) {
+  if (!FRIENDS.on) return;
+  const { nodes, links, index } = g;
+  const add = (n, near) => {
+    const p = prev[n.id];
+    if (p) Object.assign(n, { x: p.x, y: p.y, vx: 0, vy: 0, fixed: p.fixed });
+    else { n.x = (near?.x || 0) + (Math.random() - 0.5) * 120; n.y = (near?.y || 0) + (Math.random() - 0.5) * 120; n.vx = n.vy = 0; }
+    index[n.id] = nodes.length; nodes.push(n); return n;
+  };
+  const ours = nodes.filter((n) => n.kind === "entry");
+  const topicOfNode = {}; for (const l of links) if (l.kind === "member") topicOfNode[l.s] = l.t;
+  const byUuid = {}; for (const n of ours) if (n.entry.uuid) byUuid[n.entry.uuid] = index[n.id];
+  const shown = (g.friends || []).filter((f) => FRIENDS.loaded[fkey(f.canonical)]?.state);
+  const R = 420 + 30 * shown.length;
+  shown.forEach((f, i) => {
+    const k = fkey(f.canonical); const r = FRIENDS.loaded[k]; const col = friendColor(i);
+    const ang = (2 * Math.PI * i) / shown.length + Math.PI / 5;
+    const expanded = FRIENDS.expanded.has(k);
+    const hub = add({ id: `f:${k}`, kind: "project", friend: true, label: r.name, r: 13, color: col, href: r.open, action: () => toggleFriend(k) }, { x: R * Math.cos(ang), y: R * Math.sin(ang) });
+    const cited = new Set(f.uuids);
+    const entries = (r.state.entries || []).filter((e) => expanded || (e.uuid && cited.has(e.uuid)));
+    const files = new Set(entries.map((e) => e.file));
+    const tIdx = {};
+    for (const t of r.state.topics || []) {
+      if (!expanded && !files.has(t.file)) continue;
+      const n = add({ id: `ft:${k}:${t.file}`, kind: "topic", label: t.title, file: t.file, color: col, r: 7 + Math.sqrt(t.entries || 0) * 2.4, href: r.topicHref(t.file) }, hub);
+      tIdx[t.file] = index[n.id];
+      links.push({ s: index[hub.id], t: tIdx[t.file], kind: "hub", len: 70 });
+    }
+    const fIdx = {};
+    for (const e of entries) {
+      const n = add({ id: `fe:${k}:${e.id}`, kind: "entry", label: e.title, file: e.file, entry: e, r: 4.2, href: r.href(e) }, nodes[tIdx[e.file]] || hub);
+      if (e.uuid) fIdx[e.uuid] = index[n.id];
+      if (tIdx[e.file] != null) links.push({ s: index[n.id], t: tIdx[e.file], kind: "member", len: 40 });
+    }
+    const pairs = new Set(); const joined = new Set();
+    const join = (s, t, kind) => {
+      if (joined.has(`${s}|${t}|${kind}`)) return; joined.add(`${s}|${t}|${kind}`);
+      links.push({ s, t, kind, len: 190, color: col });
+      const ts = topicOfNode[s] ?? tIdx[nodes[s].file], tt = topicOfNode[t] ?? tIdx[nodes[t].file];
+      const key = `${ts}|${tt}`;
+      if (ts != null && tt != null && ts !== tt && !pairs.has(key)) { pairs.add(key); links.push({ s: ts, t: tt, kind: "xtopic", len: 240, color: col }); }
+    };
+    for (const n of ours) {
+      // a reference counts for this friend only when it names this repository and an Id there
+      for (const x of n.entry.see || []) if (x?.uuid && fkey(x.remote) === k && fIdx[x.uuid] != null) join(index[n.id], fIdx[x.uuid], "see");
+      const sup = n.entry.superseded_by ? parseSupersededBy(n.entry.superseded_by) : null;
+      if (sup?.uuid && fkey(sup.remote) === k && fIdx[sup.uuid] != null) join(index[n.id], fIdx[sup.uuid], "superseded");
+    }
+    for (const e of entries) {
+      const s = fIdx[e.uuid]; if (s == null) continue;
+      for (const x of e.see || []) if (x?.uuid && x.remote && byUuid[x.uuid] != null) join(s, byUuid[x.uuid], "see");
+    }
+  });
+}
+function friendsUi(g) {
+  const list = g.friends || [];
+  if (!list.length) return null;
+  const waiting = list.filter((f) => !FRIENDS.loaded[fkey(f.canonical)]);
+  if (!FRIENDS.on || waiting.length) {
+    const b = el("button", { class: "link-btn friends-load", title: "load the repositories these entries cite outside the family — nothing is fetched before this click", onclick: () => { b.disabled = true; b.textContent = "loading friends…"; loadFriends(FRIENDS.on ? waiting : list); } }, `friends (${FRIENDS.on ? waiting.length : list.length})`);
+    return b;
+  }
+  return el("label", { title: "the repositories these entries cite outside the family" }, el("input", { type: "checkbox", checked: true, onchange: () => { FRIENDS.on = false; if (fgraph) fgraph.at = 0; render(); } }), "friends");
+}
+function friendsLegend(g) {
+  if (!FRIENDS.on) return [];
+  let i = -1;
+  return (g.friends || []).map((f) => FRIENDS.loaded[fkey(f.canonical)]).filter(Boolean).map((r) => r.state
+    ? (i++, el("span", { class: "friend", title: `friend: ${r.canonical} — its hub shows the entries cited there; a click on the hub shows all of it` }, el("i", { class: "dot", style: `background:transparent;border:2px dashed ${friendColor(i)};width:10px;height:10px` }), el("a", { href: r.open }, r.name)))
+    : el("span", { class: "warn", title: r.error }, `${repoLabel(r.canonical)} not loaded`));
+}
+let TREE_ASKED = false;
 function viewGraph(main) {
+  // live: the whole family tree is known before anything counts as a friend — the server's own API, no other host
+  if (LIVE() && !TREE && !TREE_ASKED) { TREE_ASKED = true; fetchTree().then((t) => { if (t && location.hash === "#graph") render(); }); }
   const family = scope() === "family";
   const wrap = el("div", { class: "graph-wrap" });
   main.append(wrap);
@@ -823,17 +960,18 @@ function viewGraph(main) {
       el("label", {}, el("input", { type: "checkbox", checked: g.showEntries, onchange: (ev) => { g.showEntries = ev.target.checked; g.alpha = 0.5; g.wake?.(); } }), "entries"),
       el("label", {}, el("input", { type: "checkbox", checked: g.showLabels, onchange: (ev) => { g.showLabels = ev.target.checked; g.wake?.(); } }), "labels"),
       el("button", { class: "link-btn", onclick: () => { g.scale = family ? 0.7 : 1; g.ox = 0; g.oy = 0; g.userMoved = false; for (const n of g.nodes) { n.fixed = false; } g.alpha = 1; g.wake?.(); } }, "reset"),
+      friendsUi(g),
     );
     const legend = family
       ? el("div", { class: "graph-legend" },
         g.groups.map((G) => el("span", {}, el("i", { class: "dot", style: `background:${G.color};width:10px;height:10px` }), G.g.member.name)),
         el("span", {}, `${plural(g.across, "reference")} across projects`),
-        g.missing.length ? el("span", { class: "warn", title: g.missing.map(({ member: m, reason }) => `${m.name}: ${reason}`).join("\n") }, `${plural(g.missing.length, "member")} not available here`) : null)
+        g.missing.length ? el("span", { class: "warn", title: g.missing.map(({ member: m, reason }) => `${m.name}: ${reason}`).join("\n") }, `${plural(g.missing.length, "member")} not available here`) : null, ...friendsLegend(g))
       : el("div", { class: "graph-legend" },
         el("span", {}, el("i", { class: "dot", style: "background:var(--accent);width:12px;height:12px" }), "topic (size = entries)"),
         el("span", {}, el("i", { class: "dot confirmed" }), "confirmed"), el("span", {}, el("i", { class: "dot inferred" }), "inferred"), el("span", {}, el("i", { class: "dot unknown" }), "unknown"),
         el("span", {}, el("i", { class: "dot", style: "background:transparent;border:1.5px solid var(--fg3)" }), "superseded"),
-        el("span", {}, "— reference · ··· membership"));
+        el("span", {}, "— reference · ··· membership"), ...friendsLegend(g));
     wrap.replaceChildren(canvas, ui, legend, el("div", { class: "graph-hint" }, family ? "family — a project opens its overview · drag nodes · wheel zoom · drag background to pan" : "drag nodes · wheel zoom · drag background to pan · click to open"));
     runGraph(canvas, g, { fit: family });
   };
@@ -866,7 +1004,8 @@ function runGraph(canvas, g, opts = {}) {
     hover = pick(px, py); canvas.style.cursor = hover ? "pointer" : "grab";
   };
   canvas.onmousedown = (ev) => { const r = canvas.getBoundingClientRect(); const px = ev.clientX - r.left, py = ev.clientY - r.top; moved = false; g.userMoved = true; const n = pick(px, py); if (n) drag = n; else pan = { px, py, ox: g.ox, oy: g.oy }; canvas.classList.add("grabbing"); };
-  window.addEventListener("mouseup", () => { if (drag && !moved) go(drag.href); drag = null; pan = null; canvas.classList.remove("grabbing"); });
+  const open = (n) => (n.action ? n.action() : go(n.href));
+  window.addEventListener("mouseup", () => { if (drag && !moved) open(drag); drag = null; pan = null; canvas.classList.remove("grabbing"); });
   canvas.onmouseleave = () => { hover = null; };
   canvas.onwheel = (ev) => { ev.preventDefault(); g.userMoved = true; const r = canvas.getBoundingClientRect(); const px = ev.clientX - r.left - W / 2, py = ev.clientY - r.top - H / 2; const f = Math.exp(-ev.deltaY * 0.0012); const ns = Math.min(6, Math.max(0.15, g.scale * f)); const k = ns / g.scale; g.ox = px - (px - g.ox) * k; g.oy = py - (py - g.oy) * k; g.scale = ns; };
   canvas.ondblclick = (ev) => { const r = canvas.getBoundingClientRect(); const n = pick(ev.clientX - r.left, ev.clientY - r.top); if (n) { n.fixed = false; g.alpha = 0.4; } };
@@ -889,7 +1028,7 @@ function runGraph(canvas, g, opts = {}) {
   }, { passive: false });
   canvas.addEventListener("touchend", (ev) => {
     if (pinch) { if (!ev.touches.length) pinch = null; return; }
-    if (drag && !moved) go(drag.href);
+    if (drag && !moved) open(drag);
     drag = null; pan = null;
   });
   const ev = (n) => n.entry.evidence;
@@ -940,7 +1079,7 @@ function runGraph(canvas, g, opts = {}) {
       const faded = (focus && !neigh.has(n)) || dim(n);
       ctx.globalAlpha = faded ? 0.18 : 1;
       ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-      if (n.kind === "project") { ctx.fillStyle = color("--bg"); ctx.fill(); ctx.lineWidth = 3.5 / g.scale; ctx.strokeStyle = n.color; ctx.stroke(); ctx.beginPath(); ctx.arc(n.x, n.y, n.r * 0.38, 0, Math.PI * 2); ctx.fillStyle = n.color; ctx.fill(); }
+      if (n.kind === "project") { ctx.fillStyle = color("--bg"); ctx.fill(); ctx.lineWidth = 3.5 / g.scale; ctx.strokeStyle = n.color; if (n.friend) ctx.setLineDash([5 / g.scale, 3 / g.scale]); ctx.stroke(); ctx.setLineDash([]); ctx.beginPath(); ctx.arc(n.x, n.y, n.r * 0.38, 0, Math.PI * 2); ctx.fillStyle = n.color; ctx.fill(); }
       else if (n.kind === "topic") { ctx.fillStyle = n.color || color("--accent"); ctx.fill(); }
       else { const sup = n.entry.status === "superseded"; ctx.fillStyle = sup ? color("--bg") : evColor[ev(n)] || color("--muted"); ctx.fill(); if (sup) { ctx.lineWidth = 1.2 / g.scale; ctx.strokeStyle = evColor[ev(n)] || color("--fg3"); ctx.stroke(); } if (n.entry.status === "open" || n.entry.status === "needs-review" || n.entry.status === "pending-confirmation") { ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 2.5 / g.scale, 0, Math.PI * 2); ctx.lineWidth = 1.2 / g.scale; ctx.strokeStyle = color(`--${n.entry.status}`); ctx.stroke(); } }
       if (n === focus) { ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 4 / g.scale, 0, Math.PI * 2); ctx.lineWidth = 1.5 / g.scale; ctx.strokeStyle = color("--fg"); ctx.stroke(); }

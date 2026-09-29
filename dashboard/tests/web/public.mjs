@@ -19,7 +19,7 @@ const app = fs.readFileSync(W + "app.js", "utf8").replace(/^import \{[^}]*\} fro
 // jsdom runs no module scripts: lib and app go into the page as one classic
 // script, which jsdom runs itself (as in smoke.mjs; this file runs no code
 // strings). split/join, not replace: the sources contain `$&`-like sequences.
-const html = fs.readFileSync(W + "index.html", "utf8").split('<script type="module" src="/static/app.js"></script>').join("<script>" + lib + "\n" + app + "\nwindow.__fg = () => fgraph; // test hook</script>");
+const html = fs.readFileSync(W + "index.html", "utf8").split('<script type="module" src="/static/app.js"></script>').join("<script>" + lib + "\n" + app + "\nwindow.__fg = () => fgraph; window.__g = () => graph; // test hooks</script>");
 
 const GH = "https://github.com/acme";
 const config = (id, lines) => `<!-- keep-the-why:config -->\n- id: ${id}\n${lines.join("\n")}\n<!-- /keep-the-why:config -->\n`;
@@ -39,7 +39,7 @@ const FILES = {
   "https://raw.githubusercontent.com/acme/cli/HEAD/.keep-the-why": config("acme---cli", []),
   // outside the family: no parent, no children — reached only through a See
   "https://raw.githubusercontent.com/acme/notes/HEAD/.keep-the-why": config("acme---notes", ["- dashboard-state: https://acme.github.io/notes/state.json"]),
-  "https://acme.github.io/notes/state.json": state("acme---notes", { canonical: `${GH}/notes` }, [entry('Notes are <img src=x onerror="window.__pwned=1"> plain text', "No needle here either.", { uuid: NOTES_ID })]),
+  "https://acme.github.io/notes/state.json": state("acme---notes", { canonical: `${GH}/notes` }, [entry('Notes are <img src=x onerror="window.__pwned=1"> plain text', "No needle here either.", { uuid: NOTES_ID }), entry("Notes are kept short", "Short.", { uuid: "5a1e5a1e-0000-4000-8000-000000000005" })]),
   // an export that claims to be another repository's
   "https://raw.githubusercontent.com/acme/impostor/HEAD/.keep-the-why": config("acme---impostor", ["- dashboard-state: https://acme.github.io/impostor/state.json"]),
   "https://acme.github.io/impostor/state.json": state("acme---impostor", { canonical: `${GH}/suite` }, [entry("Release together", "A copy.", { uuid: NOTES_ID })]),
@@ -220,6 +220,36 @@ const report = {};
   if (navigations.length <= nav) errors.push("#ref route: the page did not go to the entry in the target's export");
   window.location.hash = `#ref/${encodeURIComponent(`${GH}/cli`)}/${NOTES_ID}`; window.dispatchEvent(new window.Event("hashchange")); await tick(300);
   if (!/Cannot open .* no dashboard-state line/.test(d.getElementById("main").textContent)) errors.push("#ref route, target without export: the reason is not shown");
+  window.close();
+}
+{
+  // friends: the repositories an entry cites outside the family — nothing fetched before the click, then
+  // linked into the graph (the cited entries only, all of them once a hub is expanded), never merged
+  const before = fetched.length;
+  const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/refs`)}#graph`);
+  await tick(200);
+  const d = window.document;
+  const btn = d.querySelector(".graph-ui .friends-load");
+  report.friendsButton = btn?.textContent;
+  if (btn?.textContent !== "friends (4)") errors.push("friends: no 'friends (4)' button in the graph: " + btn?.textContent);
+  const early = fetched.slice(before).filter((u) => /acme\/(notes|suite|cli|impostor)|acme\.github\.io\/(notes|suite|impostor)/.test(u));
+  if (early.length) errors.push("friends: fetched before the click: " + early.join(", "));
+  btn?.click(); await tick(400);
+  const legend = d.querySelector(".graph-legend")?.textContent || "";
+  report.friendsLegend = legend;
+  for (const name of ["acme/notes", "acme/suite"]) if (![...d.querySelectorAll(".graph-legend .friend")].some((x) => x.textContent === name)) errors.push(`friends: ${name} not in the legend`);
+  for (const name of ["acme/cli not loaded", "acme/impostor not loaded"]) if (!legend.includes(name)) errors.push(`friends: '${name}' missing from the legend`);
+  const g = window.__g();
+  const hubs = g.nodes.filter((n) => n.kind === "project" && n.friend).map((n) => n.label).sort();
+  const see = g.links.filter((l) => l.kind === "see").map((l) => `${g.nodes[l.s].label}>${g.nodes[l.t].label.slice(0, 16)}`).sort();
+  report.friendsGraph = { hubs, see };
+  if (hubs.join() !== "acme/notes,acme/suite") errors.push("friends: wrong friend hubs " + hubs.join());
+  if (see.join() !== "Cites elsewhere>Notes are <img s,Cites elsewhere>Release together") errors.push("friends: See lines to the friends missing: " + see.join());
+  const notesEntries = () => window.__g().nodes.filter((n) => n.kind === "entry" && n.id.startsWith("fe:https://github.com/acme/notes:")).length;
+  if (notesEntries() !== 1) errors.push("friends: a hub should show only the cited entries, got " + notesEntries());
+  if (!/^1 entries/.test(d.getElementById("counts")?.textContent || "1 entries")) errors.push("friends: merged into the counts: " + d.getElementById("counts")?.textContent);
+  g.nodes.find((n) => n.friend && n.label === "acme/notes").action(); await tick(100);
+  if (notesEntries() !== 2) errors.push("friends: an expanded hub should show all of the friend's entries, got " + notesEntries());
   window.close();
 }
 console.log(JSON.stringify(report, null, 1));
