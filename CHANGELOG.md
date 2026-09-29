@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- `keep-the-why-dashboard` 0.3.9: a project's name under its hub is always drawn in the graph — *labels* on or off, in the full graph and the side pane's — and it is a link: pointed at, it is underlined; clicked, it goes to that project — a friend's graph in place, keeping the path, a step of the path back, a family member's graph. A click on the hub itself still expands a friend.
+
 ### Changed
 
 - `keep-the-why-dashboard` 0.3.8, docs, specification §9.7: the wording follows what a link records. A `See` names a related entry — often one it follows from, not always — so a thought is a *chain of linked entries*, not a line of argument: *first entry* instead of *origin*, *linked after* instead of *rests on*; *Starting from an unconfirmed entry* and *Chains through a step in question* name entries to check, not what depends on them.

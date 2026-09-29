@@ -994,7 +994,7 @@ async function buildFamilyGraph() {
   const R = groups.length > 1 ? 220 + 45 * groups.length : 0;
   groups.forEach((G, i) => {
     const ang = (2 * Math.PI * i) / groups.length;
-    const hub = add({ id: `p:${G.key}`, kind: "project", label: G.g.member.name, r: 15, color: G.color, href: memberLink(G.g.member, "#overview") }, { x: R * Math.cos(ang), y: R * Math.sin(ang) });
+    const hub = add({ id: `p:${G.key}`, kind: "project", label: G.g.member.name, r: 15, color: G.color, href: memberLink(G.g.member, "#overview"), walk: () => go(memberLink(G.g.member, G.key === "self" ? "#overview" : "#graph")) }, { x: R * Math.cos(ang), y: R * Math.sin(ang) });
     for (const t of G.state.topics || []) {
       const n = add({ id: tid(G, t.file), kind: "topic", label: t.title, file: t.file, color: G.color, r: 8 + Math.sqrt(t.entries || 0) * 2.8, href: memberLink(G.g.member, `#topic/${t.file}`) }, hub);
       links.push({ s: index[hub.id], t: index[n.id], kind: "hub", len: 80 });
@@ -1226,7 +1226,9 @@ function addLinkedLayer(g, prev, items) {
     const entriesShown = [];
     it.members.forEach((m, j) => {
       const off = it.members.length > 1 ? { x: centre.x + 110 * Math.cos((2 * Math.PI * j) / it.members.length), y: centre.y + 110 * Math.sin((2 * Math.PI * j) / it.members.length) } : centre;
-      const hub = add({ id: `f:${it.k}:${m.key}`, kind: "project", friend: it.kind === "friend", chain: !!it.chain, trail: it.kind === "trail", label: m.name, r: j === 0 ? 13 : 10, color: col, href: m.open || "#graph", action: it.hub }, off);
+      // the hub expands a friend (or goes back along the path); its name goes to that project
+      const walk = it.kind === "trail" ? it.hub : m.centre ? () => moveTo({ centre: m.centre, state: m.state }, "#graph") : m.open ? () => go(m.open) : null;
+      const hub = add({ id: `f:${it.k}:${m.key}`, kind: "project", friend: it.kind === "friend", chain: !!it.chain, trail: it.kind === "trail", label: m.name, r: j === 0 ? 13 : 10, color: col, href: m.open || "#graph", action: it.hub, walk }, off);
       hubs[m.key] = index[hub.id];
       const own = (m.state.entries || []).filter((e) => !cited || (e.uuid && cited.has(e.uuid)));
       const files = new Set(own.map((e) => e.file));
@@ -1631,16 +1633,21 @@ function runGraph(canvas, g, opts = {}) {
   const linkOn = (l) => visible(g.nodes[l.s]) && visible(g.nodes[l.t]) && (l.kind !== "xtopic" || !g.showEntries);
   const dim = (n) => n.kind === "entry" && filterActive() && !matches(n.entry);
   const pick = (px, py) => { const [x, y] = toWorld(px, py); let best = null, bd = 1e9; for (const n of g.nodes) { if (!visible(n)) continue; const d = Math.hypot(n.x - x, n.y - y); if (d < Math.max(n.r + 4, 8) / Math.min(g.scale, 1) && d < bd) { best = n; bd = d; } } return best; };
+  // a project's name under its hub is a link: pointed at, underlined; clicked, it goes there
+  let hoverName = null, nameDown = null;
+  const pickName = (px, py) => { const [x, y] = toWorld(px, py); for (const b of g.nameBoxes || []) if (x >= b.x0 && x <= b.x1 && y >= b.y0 && y <= b.y1) return b.n; return null; };
   canvas.onmousemove = (ev) => {
     const r = canvas.getBoundingClientRect(); const px = ev.clientX - r.left, py = ev.clientY - r.top;
+    if (!drag && !pan) { hoverName = pickName(px, py); if (hoverName) { hover = hoverName; canvas.style.cursor = "pointer"; return; } }
     if (drag) { const [x, y] = toWorld(px, py); drag.x = x; drag.y = y; drag.vx = drag.vy = 0; drag.fixed = true; g.alpha = Math.max(g.alpha, 0.3); moved = true; return; }
     if (pan) { g.ox = pan.ox + (px - pan.px); g.oy = pan.oy + (py - pan.py); moved = true; return; }
     hover = pick(px, py); canvas.style.cursor = hover ? "pointer" : "grab";
   };
-  canvas.onmousedown = (ev) => { const r = canvas.getBoundingClientRect(); const px = ev.clientX - r.left, py = ev.clientY - r.top; moved = false; g.userMoved = true; const n = pick(px, py); if (n) drag = n; else pan = { px, py, ox: g.ox, oy: g.oy }; canvas.classList.add("grabbing"); };
+  canvas.onmousedown = (ev) => { const r = canvas.getBoundingClientRect(); const px = ev.clientX - r.left, py = ev.clientY - r.top; moved = false; g.userMoved = true; nameDown = pickName(px, py); if (nameDown) return; const n = pick(px, py); if (n) drag = n; else pan = { px, py, ox: g.ox, oy: g.oy }; canvas.classList.add("grabbing"); };
   const open = (n) => (n.action ? n.action() : go(n.href));
-  window.addEventListener("mouseup", () => { if (drag && !moved) open(drag); drag = null; pan = null; canvas.classList.remove("grabbing"); });
-  canvas.onmouseleave = () => { hover = null; };
+  const walkTo = (n) => (n.walk ? n.walk() : go(n.href));
+  window.addEventListener("mouseup", () => { if (nameDown) { const n = nameDown; nameDown = null; walkTo(n); return; } if (drag && !moved) open(drag); drag = null; pan = null; canvas.classList.remove("grabbing"); });
+  canvas.onmouseleave = () => { hover = null; hoverName = null; };
   canvas.onwheel = (ev) => { ev.preventDefault(); g.userMoved = true; const r = canvas.getBoundingClientRect(); const px = ev.clientX - r.left - W / 2, py = ev.clientY - r.top - H / 2; const f = Math.exp(-ev.deltaY * 0.0012); const ns = Math.min(6, Math.max(0.15, g.scale * f)); const k = ns / g.scale; g.ox = px - (px - g.ox) * k; g.oy = py - (py - g.oy) * k; g.scale = ns; };
   canvas.ondblclick = (ev) => { const r = canvas.getBoundingClientRect(); const n = pick(ev.clientX - r.left, ev.clientY - r.top); if (n) { n.fixed = false; g.alpha = 0.4; } };
   // touch: one finger drags a node or pans (full view only), two fingers pinch-zoom, a tap opens
@@ -1650,7 +1657,7 @@ function runGraph(canvas, g, opts = {}) {
   canvas.addEventListener("touchstart", (ev) => {
     g.userMoved = true;
     if (ev.touches.length === 2) { pinch = { d: tdist(ev.touches), scale: g.scale, ox: g.ox, oy: g.oy }; drag = null; pan = null; return; }
-    const [px, py] = tpos(ev.touches[0]); moved = false; const n = pick(px, py);
+    const [px, py] = tpos(ev.touches[0]); moved = false; nameDown = pickName(px, py); if (nameDown) return; const n = pick(px, py);
     if (n) drag = n; else if (!mini) pan = { px, py, ox: g.ox, oy: g.oy };
   }, { passive: true });
   canvas.addEventListener("touchmove", (ev) => {
@@ -1662,6 +1669,7 @@ function runGraph(canvas, g, opts = {}) {
   }, { passive: false });
   canvas.addEventListener("touchend", (ev) => {
     if (pinch) { if (!ev.touches.length) pinch = null; return; }
+    if (nameDown) { const n = nameDown; nameDown = null; if (!moved) walkTo(n); return; }
     if (drag && !moved) open(drag);
     drag = null; pan = null;
   });
@@ -1733,18 +1741,27 @@ function runGraph(canvas, g, opts = {}) {
       if (n === stepNode) { ctx.globalAlpha = 1; ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 7 / g.scale, 0, Math.PI * 2); ctx.lineWidth = 3 / g.scale; ctx.strokeStyle = color("--accent2"); ctx.stroke(); ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 12 / g.scale, 0, Math.PI * 2); ctx.lineWidth = 1 / g.scale; ctx.stroke(); }
     }
     ctx.globalAlpha = 1;
-    if (g.showLabels || focus || th || stepNode) {
+    const anyLabels = g.showLabels || focus || th || stepNode;
+    g.nameBoxes = [];
+    {
       ctx.font = `${(mini ? 11 : 12) / g.scale}px ${color("--font") || "sans-serif"}`; ctx.textAlign = "center"; ctx.textBaseline = "top";
       for (const n of ns) {
-        const show = n === stepNode || (th && th.nodes.has(n)) ? true : n.kind === "project" ? true : n.kind === "topic" ? (mini ? neigh.has(n) || n === focus || g.nodes.filter((x) => x.kind === "topic").length <= 12 : g.showLabels || neigh.has(n)) : (focus && (neigh.has(n) || n === focus)) || (!mini && g.showLabels && g.scale > 1.6);
+        const hubName = n.kind === "project";
+        if (!hubName && !anyLabels) continue;
+        const show = n === stepNode || (th && th.nodes.has(n)) ? true : hubName ? true : n.kind === "topic" ? (mini ? neigh.has(n) || n === focus || g.nodes.filter((x) => x.kind === "topic").length <= 12 : g.showLabels || neigh.has(n)) : (focus && (neigh.has(n) || n === focus)) || (!mini && g.showLabels && g.scale > 1.6);
         if (!show) continue;
-        const faded = (focus || th) && !neigh.has(n) && n !== focus; if (faded) continue;
+        const faded = (focus || th) && !neigh.has(n) && n !== focus; if (faded && !hubName) continue;
         const lbl = n.label.replace(/`/g, ""); const txt = lbl.length > 48 ? lbl.slice(0, 46) + "…" : lbl;
+        if (hubName) ctx.font = `600 ${(mini ? 12 : 13) / g.scale}px ${color("--font") || "sans-serif"}`;
         const tw = ctx.measureText(txt).width; const y = n.y + n.r + 3 / g.scale;
-        ctx.fillStyle = color("--bg"); ctx.globalAlpha = 0.75; ctx.fillRect(n.x - tw / 2 - 3 / g.scale, y - 1 / g.scale, tw + 6 / g.scale, 15 / g.scale); ctx.globalAlpha = 1;
-        if (n.kind === "project") ctx.font = `600 ${13 / g.scale}px ${color("--font") || "sans-serif"}`;
-        ctx.fillStyle = n.kind === "entry" ? color("--fg2") : color("--fg"); ctx.fillText(txt, n.x, y);
-        if (n.kind === "project") ctx.font = `${(mini ? 11 : 12) / g.scale}px ${color("--font") || "sans-serif"}`;
+        ctx.fillStyle = color("--bg"); ctx.globalAlpha = faded ? 0.4 : 0.75; ctx.fillRect(n.x - tw / 2 - 3 / g.scale, y - 1 / g.scale, tw + 6 / g.scale, 15 / g.scale); ctx.globalAlpha = faded ? 0.5 : 1;
+        ctx.fillStyle = n.kind === "entry" ? color("--fg2") : hubName && n === hoverName ? color("--accent2") : color("--fg"); ctx.fillText(txt, n.x, y);
+        if (hubName) {
+          g.nameBoxes.push({ n, x0: n.x - tw / 2 - 3 / g.scale, y0: y - 1 / g.scale, x1: n.x + tw / 2 + 3 / g.scale, y1: y + 15 / g.scale });
+          if (n === hoverName) { ctx.fillRect(n.x - tw / 2, y + 14 / g.scale, tw, 1 / g.scale); }
+          ctx.font = `${(mini ? 11 : 12) / g.scale}px ${color("--font") || "sans-serif"}`;
+        }
+        ctx.globalAlpha = 1;
       }
     }
     ctx.restore();

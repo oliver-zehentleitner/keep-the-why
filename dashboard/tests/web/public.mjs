@@ -453,6 +453,28 @@ const report = {};
   if (!n || !g.userMoved) errors.push("mini graph: the full graph is not centred on the entry");
   window.close();
 }
+{
+  // a project's name under its hub: always drawn, labels on or off, and a click on it goes there
+  const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/refs`)}#graph`);
+  await tick(600);
+  const d = window.document;
+  const labels = [...d.querySelectorAll(".graph-ui label")].find((l) => l.textContent === "labels")?.querySelector("input");
+  labels.checked = false; labels.dispatchEvent(new window.Event("change")); await tick(200);
+  const g = window.__g();
+  const names = (g.nameBoxes || []).map((b) => b.n.label).sort();
+  report.hubNames = names;
+  if (!names.includes("acme/notes") || !names.includes("acme/suite")) errors.push("hub names: not drawn with labels off: " + names.join());
+  const box = g.nameBoxes.find((b) => b.n.label === "acme/notes");
+  const canvas = d.querySelector("#main .graph-wrap canvas");
+  const cx = ((box.x0 + box.x1) / 2) * g.scale + g.ox, cy = ((box.y0 + box.y1) / 2) * g.scale + g.oy;
+  const nav = navigations.length;
+  canvas.dispatchEvent(new window.MouseEvent("mousedown", { clientX: cx, clientY: cy, bubbles: true }));
+  window.dispatchEvent(new window.MouseEvent("mouseup", { clientX: cx, clientY: cy }));
+  await tick(300);
+  if (window.location.search !== `?public=${encodeURIComponent(`${GH}/notes`)}` || !/acme---notes/.test(d.title)) errors.push("hub names: a click on the friend's name did not go there: " + window.location.search);
+  if (navigations.length !== nav) errors.push("hub names: the walk loaded a page instead of moving in place");
+  window.close();
+}
 console.log(JSON.stringify(report, null, 1));
 console.log("ERRORS:", errors.length); for (const e of errors) console.log("  " + e);
 process.exit(errors.length ? 1 : 0);
