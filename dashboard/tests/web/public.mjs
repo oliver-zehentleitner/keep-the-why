@@ -375,6 +375,36 @@ const report = {};
   if (!window.location.hash.startsWith(`#thought/${FARTHER_ID},${FAR_ID},${NOTES_ID},`)) errors.push("thought view: following did not lead to the whole chain: " + window.location.hash);
   window.close();
 }
+{
+  // all their entries: every entry of every friend on one switch, off by default
+  const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/refs`)}#graph`);
+  await tick(600);
+  const d = window.document;
+  const notes = () => window.__g().nodes.filter((n) => n.kind === "entry" && n.id.startsWith("fe:P:https://github.com/acme/notes|")).length;
+  const box = d.querySelector(".graph-ui .friend-entries input");
+  if (!box || box.checked) errors.push("friend entries: no switch, or on by default");
+  const shown = notes();
+  box.checked = true; box.dispatchEvent(new window.Event("change")); await tick(150);
+  if (!(notes() > shown)) errors.push(`friend entries: switching on did not show more of notes (${shown} → ${notes()})`);
+  if (window.localStorage.getItem("ktw-friend-entries") !== "all") errors.push("friend entries: not kept for this browser");
+  // the Friends page: a card per friend, what cites what
+  window.location.hash = "#friends"; window.dispatchEvent(new window.Event("hashchange")); await tick(400);
+  const cards = [...d.querySelectorAll(".friend-card h2")].map((h) => h.textContent);
+  report.friendsPage = cards;
+  if (!cards.some((c) => c.startsWith("acme/notes")) || !cards.some((c) => c.startsWith("acme/suite"))) errors.push("friends page: no card for notes and suite: " + cards.join(" | "));
+  if (!/A family of 4/.test(d.querySelector("#main").textContent)) errors.push("friends page: the suite's family is not named");
+  if (!/Cited from here \(1\)/.test(d.querySelector("#main").textContent)) errors.push("friends page: what this project cites there is not listed");
+  if (!/Not loaded/.test(d.querySelector("#main").textContent)) errors.push("friends page: the friends that could not be loaded are not listed");
+  // the Thoughts page: numbers, and every thought
+  window.location.hash = "#thoughts"; window.dispatchEvent(new window.Event("hashchange")); await tick(400);
+  const main = d.querySelector("#main");
+  report.thoughtsPage = [...main.querySelectorAll(".stat")].map((x) => x.textContent);
+  if (!main.querySelector(".stats") || !/Going on beyond this page/.test(main.textContent)) errors.push("thoughts page: no numbers, or no chains going on beyond");
+  const r = main.querySelector(".thought-row"); r?.dispatchEvent(new window.Event("mouseenter")); r?.dispatchEvent(new window.Event("mouseleave"));
+  // pointing at a step marks it in the graph beside (no error while doing so)
+  main.querySelector(".backlink, .thought-row a") && [...main.querySelectorAll(".backlink")].slice(0, 1).forEach((a) => { a.dispatchEvent(new window.Event("mouseenter")); a.dispatchEvent(new window.Event("mouseleave")); });
+  window.close();
+}
 console.log(JSON.stringify(report, null, 1));
 console.log("ERRORS:", errors.length); for (const e of errors) console.log("  " + e);
 process.exit(errors.length ? 1 : 0);

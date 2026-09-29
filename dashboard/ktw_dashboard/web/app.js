@@ -486,7 +486,7 @@ function viewThought(main, refs) {
     if (!f) { r.append(el("section", { class: "thought-step missing" }, el("div", { class: "crumbs" }, `${i + 1} / ${refs.length}`), el("p", { class: "note" }, `Entry ${refs[i]} is not loaded on this page — it lives in a project outside it (a friend, or a step of a path); load the friends in the graph, or walk there.`))); return; }
     const e = f.e;
     INLINE_PROJECT = f.own ? e.project || null : "\u0000"; // a foreign entry's file names are not this page's topics
-    r.append(el("section", { class: `thought-step ${e.status}` },
+    r.append(el("section", { class: `thought-step ${e.status}`, ...stepHover(e.uuid || `e:${e.id}`) },
       el("div", { class: "crumbs" }, `${i + 1} / ${refs.length}`, f.where ? ` · ${f.where}` : "", f.own && topicOf(e.file) ? [" · ", el("a", { href: `#topic/${e.file}` }, topicOf(e.file).title)] : null),
       el("h2", {}, el("a", { href: f.href, html: inline(e.title) })),
       el("div", { class: "fields" }, ...entryPills(e)),
@@ -497,6 +497,92 @@ function viewThought(main, refs) {
   if (after.length) r.append(goOn(after, "↓ After its newest entry, it"));
   main.append(r);
   renderDetailsDefault();
+}
+// ---------------------------------------------------------------- friends and thoughts pages
+// Both read the graph of the scope (this project, or the family), with the
+// friends, the path and the followed chains it has — the same data the Graph
+// view shows, laid out as lists.
+const graphForScope = async () => (scope() === "family" ? buildFamilyGraph() : buildGraph());
+const projOf = (n) => n.proj || n.entry?.project || SELF?.project?.id || SELF?.project?.name || "";
+const lightAll = (t) => { for (const G of ACTIVE_GRAPHS) lightThought(G, t); };
+async function viewFriends(main) {
+  main.append(el("h1", {}, "Friends"), el("p", { class: "sub" }, "Repositories the entries here cite outside the family — linked into the graph, never merged into search, queues or counts. A friend in a family comes as the whole family. One hop: a friend's own friends are not loaded; walk there to see them."));
+  const box = el("div", { class: "friends-page" }, el("p", { class: "center" }, "Loading…")); main.append(box);
+  const g = await graphForScope();
+  if (!box.isConnected) return;
+  const list = g.friends || [];
+  const units = friendUnits(g);
+  const failed = list.map((f) => FRIENDS.loaded[fkey(f.canonical)]).filter((r) => r && !r.state);
+  const waiting = list.filter((f) => !FRIENDS.loaded[fkey(f.canonical)]);
+  const kids = [];
+  if (!list.length && !units.length) kids.push(el("p", { class: "empty" }, "No entry here cites a repository outside the family yet. A See line into another project — its canonical and an entry's Id — makes it a friend."));
+  if (list.length && (!FRIENDS.on || waiting.length)) kids.push(el("p", {}, FRIENDS.loading ? "Loading friends…" : el("button", { type: "button", class: "link-btn", onclick: () => { setFriendsAuto(true); loadFriends(FRIENDS.on ? waiting : list); } }, `load the ${plural(FRIENDS.on ? waiting.length : list.length, "friend")}`)));
+  const ours = g.nodes.filter((n) => n.kind === "entry" && !n.ext);
+  const ourByUuid = Object.fromEntries(ours.filter((n) => n.entry.uuid).map((n) => [n.entry.uuid, n]));
+  const card = (u, i) => {
+    const canons = new Set(u.members.map((m) => fkey(m.canonical)));
+    const theirs = new Map(); for (const m of u.members) for (const e of m.state.entries || []) if (e.uuid) theirs.set(e.uuid, { e, m });
+    const out = []; // our entries citing into the unit
+    for (const n of ours) for (const x of entryRefs(n.entry)) if (x.remote && canons.has(fkey(x.remote)) && theirs.has(x.uuid)) out.push({ from: n, to: theirs.get(x.uuid), kind: x.kind });
+    const back = []; // the unit's entries citing ours
+    for (const [, t] of theirs) for (const x of entryRefs(t.e)) if (x.remote && ourByUuid[x.uuid]) back.push({ from: t, to: ourByUuid[x.uuid], kind: x.kind });
+    const src = u.r.centre?.mode === "live" ? "a checkout on this machine" : `the published export${u.r.state.generated ? `, generated ${u.r.state.generated}` : ""}`;
+    const rel = (a, b, kind) => el("div", { class: "ref" }, a, el("span", { class: "note" }, kind === "superseded" ? " — superseded by — " : " — cites — "), b);
+    return el("section", { class: "friend-card" },
+      el("h2", {}, el("i", { class: "dot", style: `background:transparent;border:2px dashed ${friendColor(i)};width:11px;height:11px;margin-right:8px` }), el("a", { href: u.r.open || "#graph" }, u.r.name),
+        u.via === "chain" ? el("span", { class: "pill" }, "via a thought") : null),
+      el("p", { class: "note" }, `${u.members.length > 1 ? `A family of ${u.members.length}: ${u.members.map((m) => m.name).join(", ")}. ` : ""}Read from ${src}. ${u.r.canonical}`),
+      el("h3", {}, `Cited from here (${out.length})`),
+      ...(out.length ? out.map((x) => rel(el("a", { href: x.from.href }, x.from.label), el("a", { href: x.to.m.href ? x.to.m.href(x.to.e) : "#graph" }, x.to.e.title, u.members.length > 1 ? el("span", { class: "note" }, ` · ${x.to.m.name}`) : null), x.kind)) : [el("p", { class: "empty" }, u.via === "chain" ? "Nothing here cites it directly — it was reached by following a thought." : "—")]),
+      el("h3", {}, `Citing this project (${back.length})`),
+      ...(back.length ? back.map((x) => rel(el("a", { href: x.from.m.href ? x.from.m.href(x.from.e) : "#graph" }, x.from.e.title), el("a", { href: x.to.href }, x.to.label), x.kind)) : [el("p", { class: "empty" }, "None of its entries cites an entry here.")]));
+  };
+  const friends = units.filter((u) => u.via !== "chain"), chained = units.filter((u) => u.via === "chain");
+  kids.push(...friends.map((u) => card(u, units.indexOf(u))));
+  if (chained.length) kids.push(el("h2", { class: "section" }, "Reached by following a thought"), ...chained.map((u) => card(u, units.indexOf(u))));
+  if (failed.length) kids.push(el("h2", { class: "section" }, "Not loaded"), ...failed.map((r) => el("div", { class: "ref" }, el("a", { href: r.canonical, target: "_blank", rel: "noopener" }, repoLabel(r.canonical)), el("span", { class: "note warn" }, ` · ${r.error}`))));
+  setKids(box, ...kids);
+}
+async function viewThoughtsPage(main) {
+  const minSeg = el("span", { class: "thought-min", title: "entries a thought has at least" }, "from ", ...[3, 4, 5].map((m) => el("button", { type: "button", class: m === THOUGHT_MIN ? "on" : "", onclick: () => { THOUGHT_MIN = m; try { localStorage.setItem("ktw-thought-min", String(m)); } catch {} render(); } }, String(m))));
+  main.append(el("h1", {}, "Thoughts ", minSeg), el("p", { class: "sub" }, "Lines of reasoning: chains of See and Superseded by, each entry citing the one before — in this graph, with its family, friends and path. Point at a line to light it in the graph beside."));
+  const box = el("div", { class: "thoughts-page" }, el("p", { class: "center" }, "Loading…")); main.append(box);
+  const g = await graphForScope();
+  if (!box.isConnected) return;
+  const all = graphChains(g);
+  const thoughts = all.filter((t) => t.steps.length >= THOUGHT_MIN);
+  const open = all.filter((t) => t.ends.length);
+  if (!thoughts.length && !open.length) return setKids(box, el("p", { class: "empty" }, `No line of reasoning here is ${THOUGHT_MIN} or more entries long yet.`));
+  const across = (t) => new Set(t.steps.map(projOf)).size > 1;
+  const tags = (t) => [t.evolution ? el("span", { class: "pill" }, "evolution") : null, across(t) ? el("span", { class: "pill" }, "across projects") : null, t.ends.length ? el("span", { class: "pill" }, "continues ↗") : null];
+  const row = (t) => el("div", { class: "thought-row", onmouseenter: () => lightAll(t), onmouseleave: () => lightAll(null) },
+    el("span", { class: "count" }, String(t.steps.length)),
+    el("a", { href: thoughtHref(t), title: t.steps.map((n) => n.label).join("\n→ ") }, `${shortLabel(t.steps[0])} → ${shortLabel(t.steps[t.steps.length - 1])}`), ...tags(t));
+  const entryLink = (n, extra) => el("a", { class: "backlink", href: n.href, ...stepHover(n.entry?.uuid || n.id) }, n.label.replace(/`/g, ""), el("div", { class: "note" }, [projOf(n), extra].filter(Boolean).join(" · ")));
+  // counts
+  const count = (pick) => { const m = new Map(); for (const t of thoughts) for (const n of pick(t)) m.set(n, (m.get(n) || 0) + 1); return [...m.entries()].sort((a, b) => b[1] - a[1]); };
+  const starts = count((t) => [t.steps[0]]), ends = count((t) => [t.steps[t.steps.length - 1]]);
+  const bridges = count((t) => t.steps.slice(1, -1)).filter(([, c]) => c > 1);
+  const fansTo = ends.filter(([, c]) => c > 1), fansFrom = starts.filter(([, c]) => c > 1);
+  const projects = new Map(); const bump = (p, k) => { if (!projects.has(p)) projects.set(p, { starts: 0, ends: 0, through: 0 }); projects.get(p)[k]++; };
+  for (const t of thoughts) { bump(projOf(t.steps[0]), "starts"); bump(projOf(t.steps[t.steps.length - 1]), "ends"); for (const p of new Set(t.steps.slice(1, -1).map(projOf))) bump(p, "through"); }
+  const stat = (n, label) => el("div", { class: "stat" }, el("b", {}, String(n)), el("span", {}, label));
+  const kids = [
+    el("div", { class: "stats" }, stat(thoughts.length, "thoughts"), stat(thoughts.filter((t) => t.evolution).length, "evolutions"), stat(thoughts.filter(across).length, "across projects"), stat(open.length, "going on beyond"), stat(thoughts[0]?.steps.length || 0, "longest")),
+  ];
+  if (fansTo.length) kids.push(el("h2", {}, "Where many lines lead"), el("p", { class: "note" }, "Entries at the end of several thoughts — where reasoning from different origins arrives."),
+    ...fansTo.map(([n, c]) => el("div", { class: "fan" }, entryLink(n, `${c} origins`), el("div", { class: "fan-rows" }, ...thoughts.filter((t) => t.steps[t.steps.length - 1] === n).map(row)))));
+  if (fansFrom.length) kids.push(el("h2", {}, "Where many lines start"), el("p", { class: "note" }, "Origins of several thoughts — a decision much else builds on."),
+    ...fansFrom.map(([n, c]) => el("div", { class: "fan" }, entryLink(n, `${c} thoughts`), el("div", { class: "fan-rows" }, ...thoughts.filter((t) => t.steps[0] === n).map(row)))));
+  if (bridges.length) kids.push(el("h2", {}, "Bridges"), el("p", { class: "note" }, "Entries in the middle of several thoughts — the backbone the reasoning passes through."), ...bridges.slice(0, 12).map(([n, c]) => entryLink(n, `in ${c} thoughts`)));
+  if (projects.size > 1) kids.push(el("h2", {}, "By project"), el("div", { class: "table-wrap" }, el("table", { class: "t" }, el("thead", {}, el("tr", {}, ["Project", "Starts", "Passes through", "Ends"].map((h) => el("th", {}, h)))),
+    el("tbody", {}, [...projects.entries()].sort((a, b) => (b[1].starts + b[1].ends + b[1].through) - (a[1].starts + a[1].ends + a[1].through)).map(([p, c]) => el("tr", {}, el("td", {}, p), el("td", {}, String(c.starts)), el("td", {}, String(c.through)), el("td", {}, String(c.ends))))))));
+  kids.push(el("h2", {}, `All thoughts (${thoughts.length})`), ...thoughts.map(row));
+  const evo = thoughts.filter((t) => t.evolution);
+  if (evo.length) kids.push(el("h2", {}, `Evolutions (${evo.length})`), el("p", { class: "note" }, "One decision, replaced step by step."), ...evo.map(row));
+  if (open.length) kids.push(el("h2", {}, `Going on beyond this page (${open.length})`), el("p", { class: "note" }, "Chains that continue in a repository this page has not loaded."),
+    el("button", { type: "button", class: "link-btn", disabled: CHAIN.busy, onclick: followAll }, CHAIN.busy ? "loading the chains…" : "load the whole chains"), ...open.map(row));
+  setKids(box, ...kids);
 }
 function viewQueues(main) {
   const q = queues();
@@ -862,7 +948,7 @@ async function buildFamilyGraph() {
     }
     for (const e of G.state.entries || []) {
       const t = nodes[index[tid(G, e.file)]];
-      add({ id: eid(G, e.id), kind: "entry", label: e.title, file: e.file, entry: e, r: 4.2, href: G.key === "self" ? entryHref(e) : G.g.href(e) }, t || hub);
+      add({ id: eid(G, e.id), kind: "entry", proj: G.g.member.name, label: e.title, file: e.file, entry: e, r: 4.2, href: G.key === "self" ? entryHref(e) : G.g.href(e) }, t || hub);
     }
     for (const e of G.state.entries || []) {
       const me = index[eid(G, e.id)];
@@ -910,6 +996,9 @@ const FRIENDS = { on: false, loaded: {}, pending: {}, expanded: new Set(), load:
 // friends yet); *friends* unchecked turns that off, kept per browser — then a
 // click on *friends (N)* loads them.
 let FRIENDS_AUTO = (() => { try { return localStorage.getItem("ktw-friends") !== "off"; } catch { return true; } })();
+// every entry of every friend, not only what links to this graph — off by default, kept per browser
+let FRIEND_ENTRIES = (() => { try { return localStorage.getItem("ktw-friend-entries") === "all"; } catch { return false; } })();
+function setFriendEntries(on) { FRIEND_ENTRIES = on; try { localStorage.setItem("ktw-friend-entries", on ? "all" : "linked"); } catch {} }
 function setFriendsAuto(on) { FRIENDS_AUTO = on; try { localStorage.setItem("ktw-friends", on ? "on" : "off"); } catch {} }
 function autoFriends(g) {
   if (!FRIENDS_AUTO || FRIENDS.loading) return;
@@ -1031,7 +1120,7 @@ function addFriendLayer(g, prev) {
     next: i + 1 < trail.length ? `trail:${trail[i + 1].key}` : null,
   }));
   friendUnits(g).forEach((u, i) => items.push({
-    k: u.k, kind: "friend", chain: u.via === "chain", color: friendColor(i), cited: FRIENDS.expanded.has(u.k) ? null : u.uuids, members: u.members,
+    k: u.k, kind: "friend", chain: u.via === "chain", color: friendColor(i), cited: FRIEND_ENTRIES || FRIENDS.expanded.has(u.k) ? null : u.uuids, members: u.members,
     hub: () => toggleFriend(u.k),
     entry: (m) => (m.centre ? (e) => moveTo({ centre: m.centre, state: m.state }, entryHref(e)) : null),
     topic: (m) => (m.centre ? (file) => moveTo({ centre: m.centre, state: m.state }, `#topic/${file}`) : null),
@@ -1098,7 +1187,7 @@ function addLinkedLayer(g, prev, items) {
       }
       for (const e of own) {
         const act = it.entry(m);
-        const n = add({ id: `fe:${it.k}:${m.key}:${e.id}`, kind: "entry", label: e.title, file: e.file, entry: e, r: 4.2, href: m.href ? m.href(e) : "#graph", action: act ? () => act(e) : null }, nodes[tIdx[e.file]] || hub);
+        const n = add({ id: `fe:${it.k}:${m.key}:${e.id}`, kind: "entry", proj: m.name, label: e.title, file: e.file, entry: e, r: 4.2, href: m.href ? m.href(e) : "#graph", action: act ? () => act(e) : null }, nodes[tIdx[e.file]] || hub);
         if (e.uuid) idx[e.uuid] = index[n.id];
         if (tIdx[e.file] != null) links.push({ s: index[n.id], t: tIdx[e.file], kind: "member", len: 40 });
         entriesShown.push(e);
@@ -1243,7 +1332,9 @@ function friendsUi(g) {
     const b = el("button", { class: "link-btn friends-load", title: "load the repositories these entries cite outside the family, now and from here on", onclick: () => { b.disabled = true; b.textContent = "loading friends…"; setFriendsAuto(true); loadFriends(FRIENDS.on ? waiting : list); } }, `friends (${FRIENDS.on ? waiting.length : list.length})`);
     return b;
   }
-  return el("label", { class: "friends-toggle", title: "the repositories these entries cite outside the family — unchecked, they are no longer loaded on their own" }, el("input", { type: "checkbox", checked: true, onchange: () => { FRIENDS.on = false; setFriendsAuto(false); if (fgraph) fgraph.at = 0; render(); } }), "friends");
+  return el("span", { class: "friends-ctl" },
+    el("label", { class: "friends-toggle", title: "the repositories these entries cite outside the family — unchecked, they are no longer loaded on their own" }, el("input", { type: "checkbox", checked: true, onchange: () => { FRIENDS.on = false; setFriendsAuto(false); if (fgraph) fgraph.at = 0; render(); } }), "friends"),
+    el("label", { class: "friend-entries", title: "every entry of every friend, not only the ones that link to this graph" }, el("input", { type: "checkbox", checked: FRIEND_ENTRIES, onchange: (ev) => { setFriendEntries(ev.target.checked); if (fgraph) fgraph.at = 0; render(); } }), "all their entries"));
 }
 // the same control, small, in the corner of the side pane's graph
 function miniFriends(g) {
@@ -1364,6 +1455,12 @@ function followThought(t, then) {
     .then(() => then?.(last));
 }
 let THOUGHT_PIN = null; // the ids of the held thought, joined
+// One step pointed at — in a thought's list of steps, in the reader, on the
+// Thoughts page — is marked in every graph on the page.
+let STEP_FOCUS = null; // an entry's Id (or node id)
+const ACTIVE_GRAPHS = new Set();
+function focusStep(ref) { STEP_FOCUS = ref || null; for (const g of ACTIVE_GRAPHS) g.wake?.(); }
+const stepHover = (ref) => ({ onmouseenter: () => focusStep(ref), onmouseleave: () => focusStep(null) });
 function lightThought(g, t) {
   g.thought = t ? { nodes: new Set(t.steps), pairs: new Set(t.ids.slice(1).map((id, i) => `${id}|${t.ids[i]}`)) } : null;
   g.alpha = Math.max(g.alpha, 0.02); g.wake?.();
@@ -1386,7 +1483,7 @@ function renderThoughts(g) {
         el("span", { class: "count" }, String(t.steps.length)), `${short(t.steps[0])} → ${short(t.steps[t.steps.length - 1])}`, t.evolution ? el("span", { class: "pill" }, "evolution") : null),
       el("a", { class: "thought-read", href: thoughtHref(t), title: "read the whole thought — every entry in order, in full" }, "read ›"),
       t.ends.length ? el("button", { type: "button", class: "thought-follow link-btn", disabled: CHAIN.busy, title: `load the repositories this chain goes on into — ${repos(t.ends).join(", ")} — hop by hop, until it ends`, onclick: () => followThought(t) }, `continues ↗ ${repos(t.ends).join(", ")}`) : null,
-      on ? el("ol", { class: "thought-steps" }, t.steps.map((n) => el("li", {}, el("a", { href: n.href }, n.label.replace(/`/g, ""))))) : null);
+      on ? el("ol", { class: "thought-steps" }, t.steps.map((n) => el("li", stepHover(n.entry?.uuid || n.id), el("a", { href: n.href }, n.label.replace(/`/g, ""))))) : null);
   };
   const openEnds = [...list, ...open].flatMap((t) => t.ends);
   const followBtn = openEnds.length ? el("button", { type: "button", class: "link-btn thought-follow-all", disabled: CHAIN.busy, title: "load every repository the chains here go on into, hop by hop — nothing else", onclick: followAll }, CHAIN.busy ? "loading the chains…" : `load the whole chains (${repos(openEnds).length} ${repos(openEnds).length === 1 ? "repository" : "repositories"})`) : null;
@@ -1546,6 +1643,8 @@ function runGraph(canvas, g, opts = {}) {
     const focus = th ? null : hover || (opts.focusId && g.index[opts.focusId] != null ? g.nodes[g.index[opts.focusId]] : null) || (!mini && selected ? g.nodes[g.index[`e:${selected}`]] : null);
     const neigh = new Set(); if (focus) { neigh.add(focus); for (const l of g.links) { if (!linkOn(l)) continue; if (g.nodes[l.s] === focus) neigh.add(g.nodes[l.t]); if (g.nodes[l.t] === focus) neigh.add(g.nodes[l.s]); } }
     if (th) for (const n of th.nodes) neigh.add(n);
+    const stepNode = STEP_FOCUS ? ns.find((n) => n.kind === "entry" && (n.entry?.uuid === STEP_FOCUS || n.id === STEP_FOCUS)) : null;
+    if (stepNode) neigh.add(stepNode);
     const onThought = (l) => !!th && (l.kind === "see" || l.kind === "superseded") && (th.pairs.has(`${g.nodes[l.s].id}|${g.nodes[l.t].id}`) || th.pairs.has(`${g.nodes[l.t].id}|${g.nodes[l.s].id}`));
     const LW = { topic: 1.6, ref: 1, family: 2.6, see: 1.5, xtopic: 1.5, superseded: 1.3, trail: 2.2 };
     const DASH = { member: [2, 3], hub: [2, 3], family: [9, 6], superseded: [5, 4], trail: [2, 6] };
@@ -1566,12 +1665,13 @@ function runGraph(canvas, g, opts = {}) {
       else if (n.kind === "topic") { ctx.fillStyle = n.color || color("--accent"); ctx.fill(); }
       else { const sup = n.entry.status === "superseded"; ctx.fillStyle = sup ? color("--bg") : evColor[ev(n)] || color("--muted"); ctx.fill(); if (sup) { ctx.lineWidth = 1.2 / g.scale; ctx.strokeStyle = evColor[ev(n)] || color("--fg3"); ctx.stroke(); } if (n.entry.status === "open" || n.entry.status === "needs-review" || n.entry.status === "pending-confirmation") { ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 2.5 / g.scale, 0, Math.PI * 2); ctx.lineWidth = 1.2 / g.scale; ctx.strokeStyle = color(`--${n.entry.status}`); ctx.stroke(); } }
       if (n === focus) { ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 4 / g.scale, 0, Math.PI * 2); ctx.lineWidth = 1.5 / g.scale; ctx.strokeStyle = color("--fg"); ctx.stroke(); }
+      if (n === stepNode) { ctx.globalAlpha = 1; ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 7 / g.scale, 0, Math.PI * 2); ctx.lineWidth = 3 / g.scale; ctx.strokeStyle = color("--accent2"); ctx.stroke(); ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 12 / g.scale, 0, Math.PI * 2); ctx.lineWidth = 1 / g.scale; ctx.stroke(); }
     }
     ctx.globalAlpha = 1;
-    if (g.showLabels || focus || th) {
+    if (g.showLabels || focus || th || stepNode) {
       ctx.font = `${(mini ? 11 : 12) / g.scale}px ${color("--font") || "sans-serif"}`; ctx.textAlign = "center"; ctx.textBaseline = "top";
       for (const n of ns) {
-        const show = th && th.nodes.has(n) ? true : n.kind === "project" ? true : n.kind === "topic" ? (mini ? neigh.has(n) || n === focus || g.nodes.filter((x) => x.kind === "topic").length <= 12 : g.showLabels || neigh.has(n)) : (focus && (neigh.has(n) || n === focus)) || (!mini && g.showLabels && g.scale > 1.6);
+        const show = n === stepNode || (th && th.nodes.has(n)) ? true : n.kind === "project" ? true : n.kind === "topic" ? (mini ? neigh.has(n) || n === focus || g.nodes.filter((x) => x.kind === "topic").length <= 12 : g.showLabels || neigh.has(n)) : (focus && (neigh.has(n) || n === focus)) || (!mini && g.showLabels && g.scale > 1.6);
         if (!show) continue;
         const faded = (focus || th) && !neigh.has(n) && n !== focus; if (faded) continue;
         const lbl = n.label.replace(/`/g, ""); const txt = lbl.length > 48 ? lbl.slice(0, 46) + "…" : lbl;
@@ -1583,11 +1683,12 @@ function runGraph(canvas, g, opts = {}) {
       }
     }
     ctx.restore();
-    if (!canvas.isConnected) { ro.disconnect(); g.raf = null; return; }
+    if (!canvas.isConnected) { ro.disconnect(); g.raf = null; ACTIVE_GRAPHS.delete(g); return; }
     const busy = g.alpha > 0.003 || drag || pan || pinch || hover || driftOn();
     g.raf = busy ? requestAnimationFrame(step) : null; // idle: no frames until something happens
   }
   const wake = () => { if (!g.raf && canvas.isConnected) g.raf = requestAnimationFrame(step); };
+  ACTIVE_GRAPHS.add(g);
   for (const evn of ["mousemove", "mousedown", "wheel", "dblclick", "touchstart", "touchmove", "mouseleave"]) canvas.addEventListener(evn, wake, { passive: true });
   window.addEventListener("mouseup", wake);
   g.wake = wake;
@@ -1856,6 +1957,8 @@ function render() {
   else if (route === "findings") { viewFindings(main); renderDetailsDefault(); }
   else if (route === "family") { viewFamily(main); renderDetailsDefault(); }
   else if (route === "projects") { viewProjects(main); renderDetailsDefault(); }
+  else if (route === "friends") { viewFriends(main); renderDetailsDefault(); }
+  else if (route === "thoughts") { viewThoughtsPage(main); renderDetailsDefault(); }
   else if (route.startsWith("topic/")) viewTopic(main, route.slice(6));
   else if (route.startsWith("entry/")) viewEntry(main, decodeURIComponent(route.slice(6)));
   else if (route.startsWith("thought/")) viewThought(main, route.slice(8).split(",").filter(Boolean).map(decodeURIComponent));

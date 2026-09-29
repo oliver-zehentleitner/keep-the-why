@@ -409,3 +409,19 @@ a.author:hover { color: var(--accent2); }
 .details .thought-follow-all { display: block; font-size: 12px; margin: 0 0 8px; }
 .details .thought-open-head { margin-top: 16px; }
 .thought-reader .thought-beyond { border: 1px dashed var(--line); border-radius: var(--radius); padding: 8px 12px; margin: 8px 0; font-size: 12px; color: var(--fg2); }
+
+/* friends and thoughts pages */
+.friends-page .friend-card { border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg2); padding: 12px 18px; margin: 0 0 16px; }
+.friends-page .friend-card h2 { font-size: 17px; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; }
+.friends-page .friend-card h3 { font-size: 12px; margin: 14px 0 6px; }
+.friends-page h2.section, .thoughts-page h2 { font-size: 16px; margin: 26px 0 8px; }
+.thoughts-page .stats { display: flex; flex-wrap: wrap; gap: 10px; margin: 6px 0 12px; }
+.thoughts-page .stat { border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg2); padding: 10px 14px; min-width: 110px; }
+.thoughts-page .stat b { display: block; font-size: 22px; }
+.thoughts-page .stat span { font-size: 12px; color: var(--fg3); }
+.thoughts-page .thought-row { display: flex; align-items: baseline; gap: 8px; padding: 4px 6px; border-radius: 5px; font-size: 13px; }
+.thoughts-page .thought-row:hover { background: var(--bg2); }
+.thoughts-page .thought-row .count { color: var(--accent); font-weight: 600; min-width: 1.4em; font-variant-numeric: tabular-nums; }
+.thoughts-page .fan { margin: 0 0 12px; }
+.thoughts-page .fan-rows { margin-left: 18px; border-left: 2px solid var(--line); padding-left: 8px; }
+.graph-ui .friends-ctl { display: inline-flex; gap: 10px; align-items: center; }
