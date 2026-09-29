@@ -135,7 +135,7 @@ None of this is specific to Keep the Why; it is the same set of settings any tea
 | E114 | error | entry has no `Id` (since 0.18.0) |
 | E115 | error | `Id` is not a lowercase UUID |
 | E116 | error | the same `Id` on two entries of the project |
-| E117 | error | `See` or `Superseded by` value not in its documented shape |
+| E117 | error | `See` or `Superseded by` value not in its documented shape — for another project, the locator must be exactly that project's `canonical` (the repository URL — no file path, anchor, query or `.git` suffix) |
 | E118 | error | `See` / `Superseded by` names an `Id` no entry in this project carries |
 | E119 | error | a local `See` locator (`<file>.md#<anchor>`) no longer matches the entry its `Id` names — repair the locator, keep the `Id` |
 | E120 | error | `Status: superseded` without a `Superseded by` line |
