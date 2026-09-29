@@ -521,6 +521,8 @@ class EntryIdentityTest(StateTest):
         self.assertEqual(e["see"][0]["anchor"], "2025-11-duplicate-state")
         self.assertEqual(e["see"][1]["remote"], "https://github.com/acme/other")
         self.assertIn("incidents.md", e["refs"])  # the See line is an edge
+        # the body starts after every header field — Id, See and Superseded by included
+        self.assertEqual(e["body"]["text"], "The sync step waits.")
         sync = next(t for t in state["topics"] if t["file"] == "sync.md")
         self.assertIn("incidents.md", sync["refs_out"])
         self.assertEqual(badge_text(state), "2 entries · 1 open")

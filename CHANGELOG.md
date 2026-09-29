@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Fixed
+
+- `keep-the-why-dashboard` 0.3.10: an entry's body no longer starts with its header. The body parser knew the fields from before 0.18.0 only, so since every entry opens with `**Id:**` the whole header block — Id, Type, Status, Evidence, Source, Revisit when, See — was shown as prose in the reader and the thought view, and list and search snippets showed `**Id:** …` instead of the first sentence. The parser now takes its field list from the linter.
+
 ### Added
 
 - `keep-the-why-dashboard` 0.3.9: a project's name under its hub is always drawn in the graph — *labels* on or off, in the full graph and the side pane's — and it is a link: pointed at, it is underlined; clicked, it goes to that project — a friend's graph in place, keeping the path, a step of the path back, a family member's graph. A click on the hub itself still expands a friend.

@@ -21,7 +21,7 @@ from datetime import datetime, timezone
 from ktw_lint import __version__ as LINT_VERSION
 from ktw_lint.checks import Linter
 from ktw_lint.cli import _load_config
-from ktw_lint.entries import parse_topic_text
+from ktw_lint.entries import KNOWN_FIELDS, parse_topic_text
 from ktw_lint.findings import ERROR
 
 from . import __version__, gitinfo
@@ -29,8 +29,9 @@ from . import __version__, gitinfo
 GUARD_FILES = {"index.md", "README.md", "AGENTS.md", "CLAUDE.md"}
 _H1_RE = re.compile(r"^#\s+(.*?)\s*$")
 _INDEX_LINE_RE = re.compile(r"^\s*-\s*\[[^\]]+\]\(([^)]+)\)\s*(?:—|-|–)?\s*(.*)$")
+# the header fields, as the linter knows them — the body starts after the last one
 _FIELD_RE = re.compile(
-    r"^\*\*(Type|Status|Evidence|Source|Verification|Revisit when):\*\*\s*(.*?)\s*$"
+    r"^\*\*(" + "|".join(re.escape(f) for f in KNOWN_FIELDS) + r"):\*\*\s*(.*?)\s*$"
 )
 _LABEL_RE = re.compile(
     r"^\*\*(Reason|Rejected alternative|Consequence|Considered|Why this needs an answer):\*\*\s*(.*)$"
