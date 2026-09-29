@@ -391,7 +391,8 @@ a.author:hover { color: var(--accent2); }
 .path-bar label { display: inline-flex; align-items: center; gap: 4px; color: var(--fg3); }
 .graph-wrap .path-bar { position: absolute; top: 58px; left: 18px; margin: 0; max-width: calc(100% - 36px); background: color-mix(in srgb, var(--bg2) 85%, transparent); z-index: 1; }
 @media (max-width: 900px) { .graph-wrap .path-bar { top: 50px; left: 10px; max-width: calc(100% - 20px); } }
-.graph-ui .graph-reset { margin-left: 6px; padding-left: 10px; border-left: 1px solid var(--line); }
+.graph-ui .ui-group { display: inline-flex; gap: 10px; align-items: center; }
+.graph-ui .ui-group + .ui-group { padding-left: 10px; border-left: 1px solid var(--line); }
 
 /* a whole thought in one view */
 .details .thought { position: relative; }
@@ -441,3 +442,4 @@ a.author:hover { color: var(--accent2); }
 .thought-reader .thought-timeline { margin: 10px 0 18px; }
 .thought-reader .timeline-bar { position: relative; height: 22px; margin: 6px 12px 0; border-bottom: 2px solid var(--line); }
 .thought-reader .timeline-bar .tick { position: absolute; bottom: -9px; transform: translateX(-50%); width: 16px; height: 16px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 9px; line-height: 16px; text-align: center; cursor: default; }
+@media (max-width: 900px) { .graph-ui { flex-wrap: wrap; right: 10px; row-gap: 6px; } }

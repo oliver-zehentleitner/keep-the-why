@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Changed
+
+- `keep-the-why-dashboard` 0.3.4: the graph's controls in groups, each set off by a line — what is drawn (*entries*, *labels*), friends (*friends*, *all their entries*), walking and motion (*path*, *motion*), *reset*; on a phone they wrap.
+
 ### Added
 
 - `keep-the-why-dashboard` 0.3.3: what a thought rests on, and how it grew. *Unconfirmed origins*: a thought whose first entry has Evidence `inferred` or `unknown` is marked (*origin inferred*), and the Thoughts page lists them by origin — every step after it builds on a reason nobody confirmed. *On shaky ground*: an entry in question — open, needs-review, pending-confirmation, or superseded yet still cited by a See — is marked with the later entries that build on it; the Thoughts page lists each with how many later entries, in how many projects, rest on it, and an entry in question shows *Resting on this* beside it. *Time*: the reader dates every step and draws them on a line (*grew over N days*); the Thoughts page lists the lines grown most recently and those resting longest. `thoughtInsights` in `web/lib.js` with a unit test; the public-mode test checks all three on a chain across two repositories.
