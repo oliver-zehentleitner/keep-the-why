@@ -129,7 +129,7 @@ Decisions that shipped, alternatives that lost, workarounds, constraints — Kee
 
 </div>
 
-The dashboard — a read-only view over `context/` and its Git history: who recorded what, when a status changed, what still needs a person. It follows the reasoning beyond one repository: the project's family, its [*friends*](https://keepthewhy.com/dashboard/live/#friends){ target=_blank rel=noopener } — the repositories its entries cite — and the [*thoughts*](https://keepthewhy.com/dashboard/live/#thoughts){ target=_blank rel=noopener } running through them, lines of decisions each citing the one before. Run locally, it updates as the project changes. Two static exports, each rebuilt with its project's docs deploy: Keep the Why's own `context/` — one repository, the export behind the screenshot — and the UNICORN Binance Suite, a family of eight repositories. [Dashboard →](dashboard.md) · [Single / mono repository example: Keep the Why →](https://keepthewhy.com/dashboard/live/) · [Multi repository example: unicorn-binance-suite →](https://oliver-zehentleitner.github.io/unicorn-binance-suite/keep-the-why-dashboard/){ target=_blank rel=noopener }
+The dashboard — a read-only view over `context/` and its Git history: who recorded what, when a status changed, what still needs a person. It follows the reasoning beyond one repository: the project's family, its [*friends*](https://keepthewhy.com/dashboard/live/#friends){ target=_blank rel=noopener } — the repositories its entries cite — and the [*thoughts*](https://keepthewhy.com/dashboard/live/#thoughts){ target=_blank rel=noopener } running through them, lines of decisions each citing the one before. Run locally, it updates as the project changes. Static exports, each rebuilt with its project's docs deploy: Keep the Why's own `context/` — a mono repository, the export behind the screenshot — repo-native project memory, a single repository, and the UNICORN Binance Suite, a family of eight repositories. [Dashboard →](dashboard.md) · [Mono repository example: Keep the Why →](https://keepthewhy.com/dashboard/live/) · [Single repository example: repo-native project memory →](https://oliver-zehentleitner.github.io/repo-native-project-memory/dashboard/live/){ target=_blank rel=noopener } · [Multi repository example: unicorn-binance-suite →](https://oliver-zehentleitner.github.io/unicorn-binance-suite/keep-the-why-dashboard/){ target=_blank rel=noopener }
 
 </div>
 
@@ -147,7 +147,7 @@ The dashboard — a read-only view over `context/` and its Git history: who reco
 
 One `.keep-the-why`, one `context/`. The common case — nothing to configure.
 
-[Example: Keep the Why's own dashboard →](https://keepthewhy.com/dashboard/live/){ target=_blank rel=noopener }
+[Example: repo-native project memory's dashboard →](https://oliver-zehentleitner.github.io/repo-native-project-memory/dashboard/live/){ target=_blank rel=noopener }
 
 </div>
 
@@ -157,7 +157,7 @@ One `.keep-the-why`, one `context/`. The common case — nothing to configure.
 
 One `context/` for the whole tree, or one per sub-project — each with its own settings, and still one family under the repository's root.
 
-[How the two mono layouts look →](repository-structure.md#layouts-one-repository-or-several)
+[Example: Keep the Why — skill, linter and dashboard, one `context/` →](https://keepthewhy.com/dashboard/live/){ target=_blank rel=noopener } · [both mono layouts →](repository-structure.md#layouts-one-repository-or-several)
 
 </div>
 
