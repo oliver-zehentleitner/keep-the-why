@@ -88,7 +88,7 @@ codex plugin marketplace add oliver-zehentleitner/keep-the-why
 codex plugin add keep-the-why@keep-the-why
 ```
 
-Add `--ref v0.18.1` (any [release tag](https://github.com/oliver-zehentleitner/keep-the-why/releases)) to the first command to pin a version; without it Codex snapshots the default branch, and `codex plugin marketplace upgrade` refreshes it. The plugin lands under `~/.codex/plugins/cache/keep-the-why/`, and a new session lists the skill as `keep-the-why:keep-the-why`. Verified 2026-09-08 with Codex CLI 0.149.0, from a local path and from GitHub. `codex plugin remove keep-the-why@keep-the-why` uninstalls it; the skill-directory route below works for Codex too, and does not copy the whole repository.
+Add `--ref v0.18.2` (any [release tag](https://github.com/oliver-zehentleitner/keep-the-why/releases)) to the first command to pin a version; without it Codex snapshots the default branch, and `codex plugin marketplace upgrade` refreshes it. The plugin lands under `~/.codex/plugins/cache/keep-the-why/`, and a new session lists the skill as `keep-the-why:keep-the-why`. Verified 2026-09-08 with Codex CLI 0.149.0, from a local path and from GitHub. `codex plugin remove keep-the-why@keep-the-why` uninstalls it; the skill-directory route below works for Codex too, and does not copy the whole repository.
 
 ## Also installable: Pi package
 
@@ -98,7 +98,7 @@ Add `--ref v0.18.1` (any [release tag](https://github.com/oliver-zehentleitner/k
 pi install npm:keep-the-why
 ```
 
-`pi install npm:keep-the-why@0.18.1` pins a version (any [release](https://github.com/oliver-zehentleitner/keep-the-why/releases) — the npm version is the skill's); `-l` installs into the project (`.pi/settings.json`) instead of your home; `pi update` refreshes it. The package is listed in the [Pi package catalog](https://pi.dev/packages?name=keep-the-why). Verified with Pi 0.87.1 from the packed tarball: the skill is discovered and listed, no extension, no prompt, no theme comes with it. `pi install git:github.com/oliver-zehentleitner/keep-the-why` reaches the same skill from the repository. The skill-directory route below (`.pi/skills/keep-the-why`) works without the package.
+`pi install npm:keep-the-why@0.18.2` pins a version (any [release](https://github.com/oliver-zehentleitner/keep-the-why/releases) — the npm version is the skill's); `-l` installs into the project (`.pi/settings.json`) instead of your home; `pi update` refreshes it. The package is listed in the [Pi package catalog](https://pi.dev/packages?name=keep-the-why). Verified with Pi 0.87.1 from the packed tarball: the skill is discovered and listed, no extension, no prompt, no theme comes with it. `pi install git:github.com/oliver-zehentleitner/keep-the-why` reaches the same skill from the repository. The skill-directory route below (`.pi/skills/keep-the-why`) works without the package.
 
 ## Also installable: Cursor plugin
 

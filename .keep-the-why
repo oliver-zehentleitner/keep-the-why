@@ -8,7 +8,7 @@ README, for what Keep the Why actually is.
 - dashboard-state: https://keepthewhy.com/dashboard/live/state.json
 - context: `context/`
 - init: complete
-- context-schema: 0.18.1
+- context-schema: 0.18.2
 - capture-confirmation: automatic
 - source-reference: never
 <!-- /keep-the-why:config -->
