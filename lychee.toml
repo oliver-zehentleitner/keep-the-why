@@ -25,7 +25,10 @@ exclude_path = ["tools/evals/fixtures", "experiments/rejected-change/results", "
 # hol.org/registry times out on them (both since 2026-09-29, red on every push
 # and PR); both open fine in a browser and hol.org is known to be flaky —
 # rate limiting and slow hosts on their side, not dead links.
+# www.npmjs.com answers non-browser clients with 403 (bot protection); the
+# package page exists, `npm view keep-the-why` is the check that works.
 exclude = [
+  "^https://www\\.npmjs\\.com/",
   "^https://deepwiki\\.com/",
   "^https://hol\\.org/",
   "^https://mcpmarket\\.com/",
