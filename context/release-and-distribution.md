@@ -186,6 +186,8 @@ A root `package.json` named `keep-the-why`, `files` limited to `skills/keep-the-
 
 **Rejected alternative:** a long-lived npm token as a repository secret. Rejected for the reason the linter uses trusted publishing on PyPI: no credential to leak, and the publish carries provenance for the tag's commit. The first version has to be published by hand, because npm lets a trusted publisher be configured only on a package that exists.
 
+**Rejected alternative:** letting the trusted publisher publish directly (npm's *allow npm publish* switch). Rejected: the workflow stages the version (`npm stage publish`) and the maintainer approves it with 2FA — one click per release, and a workflow run nobody asked for (a compromised account, a tampered action) cannot put a version in front of installs. The version gates check consistency, not intent; the approval is the intent.
+
 ## The `[x.y.z]` CHANGELOG compare link always 404s on the release PR's own merge-to-main push
 
 **Id:** 276ec57b-0ef3-4bcc-b025-efdd5c19389b

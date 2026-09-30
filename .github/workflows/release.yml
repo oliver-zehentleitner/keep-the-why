@@ -104,7 +104,11 @@ jobs:
     # `pi install npm:keep-the-why` and the pi.dev package catalog (the
     # `pi-package` keyword). Trusted publishing: npm trusts this workflow
     # file through the OIDC token, no npm token is stored anywhere; the
-    # publish also carries provenance for the tag's commit.
+    # publish also carries provenance for the tag's commit. The version is
+    # *staged*, not released: it goes live only once the maintainer approves
+    # it with 2FA (`npm stage approve`, or on npmjs.com) — the trusted
+    # publisher is deliberately not allowed to publish directly, so a run
+    # nobody asked for cannot put a version in front of installs.
     needs: release
     runs-on: ubuntu-latest
     permissions:
@@ -120,8 +124,11 @@ jobs:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
 
-      - name: Publish to npm
-        # Trusted publishing needs npm 11.5.1 or newer; Node 24 ships one.
+      - name: Stage on npm
+        # `npm stage` needs a current npm; the runner's Node 24 may ship an
+        # older one, so npm updates itself first (npm's own trusted-publishing
+        # recipe does the same).
         run: |
+          npm install -g npm@latest
           npm --version
-          npm publish --access public --provenance
+          npm stage publish . --access public --provenance
