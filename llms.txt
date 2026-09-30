@@ -296,7 +296,11 @@ entry. `ktw-dashboard --export DIR` writes a self-contained `index.html` (state 
 server, no CDN) plus `state.json` and two live badges — `badge-entries.svg` in Keep the Why's style,
 `badge-entries-flat.svg` in the flat style — with the project's numbers for a README;
 another dashboard reads a published `state.json` in its public mode, through the project's
-`dashboard-state` line. It writes nothing into any project; the one file it keeps is
+`dashboard-state` line. The same export shows a `context/` that exists only in a pull request
+before anyone merges or installs anything: exported from the branch with `--anonymize` and
+published on the fork's GitHub Pages, linked from the pull request — a snapshot to re-export as
+the pull request changes (https://keepthewhy.com/dashboard/#show-a-proposal-before-it-is-merged).
+It writes nothing into any project; the one file it keeps is
 `~/.keep-the-why/projects.json`, the project mapping the skill keeps too. The server checks
 pypi.org for newer dashboard and linter versions at start and once a day (`--no-update-check`
 turns it off). Standard library plus keep-the-why-lint as the parser; the page is plain
