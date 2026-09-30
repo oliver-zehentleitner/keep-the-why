@@ -1,0 +1,34 @@
+{
+  "name": "keep-the-why",
+  "version": "0.18.1",
+  "description": "Project memory for coding agents and humans: the reasoning behind a codebase as Markdown in the repo, versioned by Git, so nothing rejected is proposed twice. Agent skill, instructions only.",
+  "keywords": [
+    "pi-package",
+    "agent-skills",
+    "skill",
+    "documentation",
+    "context",
+    "decision-log",
+    "knowledge-management",
+    "onboarding",
+    "agents"
+  ],
+  "homepage": "https://keepthewhy.com",
+  "bugs": "https://github.com/oliver-zehentleitner/keep-the-why/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oliver-zehentleitner/keep-the-why.git"
+  },
+  "license": "MIT",
+  "author": "Oliver Zehentleitner",
+  "files": [
+    "skills/keep-the-why"
+  ],
+  "pi": {
+    "skills": ["./skills"]
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

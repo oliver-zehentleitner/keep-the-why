@@ -90,6 +90,16 @@ codex plugin add keep-the-why@keep-the-why
 
 Add `--ref v0.18.1` (any [release tag](https://github.com/oliver-zehentleitner/keep-the-why/releases)) to the first command to pin a version; without it Codex snapshots the default branch, and `codex plugin marketplace upgrade` refreshes it. The plugin lands under `~/.codex/plugins/cache/keep-the-why/`, and a new session lists the skill as `keep-the-why:keep-the-why`. Verified 2026-09-08 with Codex CLI 0.149.0, from a local path and from GitHub. `codex plugin remove keep-the-why@keep-the-why` uninstalls it; the skill-directory route below works for Codex too, and does not copy the whole repository.
 
+## Also installable: Pi package
+
+[Pi](https://pi.dev) installs packages from npm or git, and the skill directory is published to npm as [`keep-the-why`](https://www.npmjs.com/package/keep-the-why) — `package.json` at the root of this repository, `files` limited to `skills/keep-the-why/`, so the package is the skill and nothing else:
+
+```bash
+pi install npm:keep-the-why
+```
+
+`pi install npm:keep-the-why@0.18.1` pins a version (any [release](https://github.com/oliver-zehentleitner/keep-the-why/releases) — the npm version is the skill's); `-l` installs into the project (`.pi/settings.json`) instead of your home; `pi update` refreshes it. The package is listed in the [Pi package catalog](https://pi.dev/packages?name=keep-the-why). Verified with Pi 0.87.1 from the packed tarball: the skill is discovered and listed, no extension, no prompt, no theme comes with it. `pi install git:github.com/oliver-zehentleitner/keep-the-why` reaches the same skill from the repository. The skill-directory route below (`.pi/skills/keep-the-why`) works without the package.
+
 ## Also installable: Cursor plugin
 
 The repository is a [Cursor Plugin](https://cursor.com/docs/plugins): `.cursor-plugin/plugin.json` at the root, the skill under `skills/`, and one rule, `rules/keep-the-why.mdc`. The rule is always on once the plugin is installed and does one thing: in a workspace whose root carries a `.keep-the-why` file it loads the skill before anything else, the way the session hook does for Claude Code (see [autostart](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/skills/keep-the-why/references/autostart.md)); in any other workspace it does nothing, and it never sets Keep the Why up unasked. Marketplace submission is pending Cursor's review; until the listing exists, install from a clone: `git clone --depth 1 https://github.com/oliver-zehentleitner/keep-the-why ~/.cursor/plugins/local/keep-the-why`, restart Cursor, then **Customize → Install**, project or user scope. A real directory, not a symlink — Cursor's docs suggest the symlink, but a symlinked local plugin is not loaded ([cursor/plugins#35](https://github.com/cursor/plugins/issues/35), open since March 2026). The skill-directory route below (`.cursor/skills/keep-the-why`) works without the plugin and without the rule. Verified 2026-09-10 in Cursor 3.19.19: with `.keep-the-why` the skill loads before the first answer, without it nothing happens; what was run is in [autostart](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/skills/keep-the-why/references/autostart.md).
@@ -160,6 +170,7 @@ None of that substitutes for actually reading `SKILL.md` yourself before install
 | [GitHub Copilot plugin marketplace](https://awesome-copilot.github.com/plugin/keep-the-why/) | Installable via `copilot plugin install keep-the-why@awesome-copilot` |
 | [HOL AI plugin registry](https://hol.org/registry/plugins/oliver-zehentleitner%2Fkeep-the-why) | Owner-verified listing; the registry's scanner is the one this repository runs itself, see [Security](security.md) |
 | [MCP Market](https://mcpmarket.com/tools/skills/keep-the-why) | Skill marketplace listing |
+| [Pi package catalog](https://pi.dev/packages?name=keep-the-why) | The npm package `keep-the-why`, installable via `pi install npm:keep-the-why` |
 | [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why) | Backs the `npx skills add` install method above |
 | [SkillsLLM](https://skillsllm.com/skill/keep-the-why) | Verified, passed [SkillsLLM's security scan](https://skillsllm.com/security-check/IPmNycVdbOyq) |
 

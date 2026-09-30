@@ -168,6 +168,24 @@ A fourth manifest, `.cursor-plugin/plugin.json` (Cursor's own format, the same f
 
 **Rejected alternative:** adding `$schema` to the root `plugin.json` so Cursor reads it as an Agent Plugin (the open format Cursor also accepts). Rejected because that file is the Copilot CLI manifest and the per-vendor-manifest decision above stands; whether Copilot tolerates the extra field is unknown and not worth finding out for one field.
 
+## `package.json` publishes the skill directory to npm, for Pi and its package catalog
+
+**Id:** b97f59d8-0f14-4263-82e8-80757fabef56
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Verification:** corroborated — Pi 0.87.1, 2026-09-30: `pi install` of the packed tarball discovers the skill and lists it, nothing else in the package
+**Source:** maintainer decision, 2026-09-30, after looking at the Pi package catalog
+**Revisit when:** Pi changes how packages declare skills, or npm's trusted publishing requirements change
+
+A root `package.json` named `keep-the-why`, `files` limited to `skills/keep-the-why/` (so the tarball is the skill, the license and this repository's README — no linter, no dashboard, no evals), a `pi` manifest pointing at `./skills`, and the `pi-package` keyword. `release.yml` publishes it as a second job after the GitHub release, through npm trusted publishing with provenance; the version gates (`validate-skill.yml`, `release.yml`) check its version like the four plugin manifests. Same version counter as the skill.
+
+**Reason:** Pi's package catalog (pi.dev/packages) lists npm packages carrying the `pi-package` keyword and nothing else — a git-installable repository is not listed. Pi discovers `skills/` in a package by convention, so the same directory that every other route installs becomes a Pi package by adding one manifest; and `pi install npm:keep-the-why` is a one-line install for an agent whose skill directory otherwise has to be found in the table.
+
+**Rejected alternative:** a separate npm package that ships only the skill from its own repository or a subdirectory build. Rejected because `files` already limits the tarball to the skill directory; a second source of truth for the same files would drift.
+
+**Rejected alternative:** a long-lived npm token as a repository secret. Rejected for the reason the linter uses trusted publishing on PyPI: no credential to leak, and the publish carries provenance for the tag's commit. The first version has to be published by hand, because npm lets a trusted publisher be configured only on a package that exists.
+
 ## The `[x.y.z]` CHANGELOG compare link always 404s on the release PR's own merge-to-main push
 
 **Id:** 276ec57b-0ef3-4bcc-b025-efdd5c19389b

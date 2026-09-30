@@ -139,6 +139,8 @@ also works; `explicit-only` is an option for whoever wants only that, not the no
   keep-the-why@awesome-copilot` — https://awesome-copilot.github.com/plugin/keep-the-why/
 - HOL AI plugin registry: owner-verified listing — https://hol.org/registry/plugins/oliver-zehentleitner%2Fkeep-the-why
 - MCP Market: skill marketplace listing — https://mcpmarket.com/tools/skills/keep-the-why
+- Pi package catalog: the skill as the npm package `keep-the-why`, installed with
+  `pi install npm:keep-the-why` — https://pi.dev/packages?name=keep-the-why
 - skills.sh: https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why — backs
   the `npx skills add` method above
 - SkillsLLM: verified, passed security scan — https://skillsllm.com/skill/keep-the-why

@@ -144,6 +144,7 @@ Full install detail for every method, including tools without a skill runtime at
 - [GitHub Copilot plugin marketplace](https://awesome-copilot.github.com/plugin/keep-the-why/)
 - [HOL AI plugin registry](https://hol.org/registry/plugins/oliver-zehentleitner%2Fkeep-the-why)
 - [MCP Market](https://mcpmarket.com/tools/skills/keep-the-why)
+- [Pi package catalog](https://pi.dev/packages?name=keep-the-why) — `pi install npm:keep-the-why`
 - [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why)
 - [SkillsLLM](https://skillsllm.com/skill/keep-the-why)
 
