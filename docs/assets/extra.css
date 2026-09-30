@@ -167,6 +167,7 @@
   line-height: 1.5;
 }
 .ktw-switch__label {
+  margin-left: .5rem;
   margin-right: .35rem;
   font-size: .6rem;
   font-weight: 700;

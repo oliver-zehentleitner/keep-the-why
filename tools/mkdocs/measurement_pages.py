@@ -10,10 +10,12 @@ build time from the files that exist:
   round or a run summary is open, the entry of the page it belongs to is
   the marked one ("Full suite", "Agent & model matrix");
 - a switcher under the title of the home page and of every page of the
-  collection - one pill per page, the open one marked;
+  collection - an "Overview" pill for the home page, then one pill per
+  page, the open one marked: the same row in the same place on all of them,
+  so the way in is also the way back;
 - an older / all / newer pager at the foot of every page of the collection;
-- on a run summary (``docs/evals/runs/<version>/``): the way back to its
-  series and the other runs of it;
+- on a run summary (``docs/evals/runs/<version>/``): the way back to the
+  overview and to its series, and the other runs of it;
 - on ``docs/evals.md``: the table of all series, in place of
   ``<!-- series:index -->``, from each series page's front matter
   (``series.measured``, ``series.passed``).
@@ -38,6 +40,7 @@ from mkdocs.structure.pages import Page
 from mkdocs.utils import get_relative_url, meta
 
 INDEX_MARKER = "<!-- series:index -->"
+HOME_LABEL = "Overview"  # the switcher's pill for a collection's home page
 RUNS_DIR = "evals/runs"
 
 # nav entries marked active for the page being rendered, unmarked after it
@@ -155,10 +158,13 @@ def pill(label: str, href: str, *, current: bool = False, note: str = "") -> str
     )
 
 
-def switcher(title: str, pills: list[str]) -> str:
+def switcher(title: str, pills: list[str], lead: list[str]) -> str:
+    """``lead`` are the pills that lead out of the row - the overview, a run's
+    series - and stand before its label; ``pills`` are the row itself."""
     return (
         f'<nav class="ktw-switch" aria-label="{escape(title)}">\n'
-        f'<span class="ktw-switch__label">{escape(title)}</span>\n'
+        + "\n".join(lead)
+        + f'\n<span class="ktw-switch__label">{escape(title)}</span>\n'
         + "\n".join(pills)
         + "\n</nav>"
     )
@@ -229,7 +235,8 @@ def on_page_markdown(
             )
             for at, stem in enumerate(ordered)
         ]
-        markdown = under_title(markdown, switcher(collection.group, pills))
+        overview = pill(HOME_LABEL, href(collection.home), current=is_home)
+        markdown = under_title(markdown, switcher(collection.group, pills, [overview]))
         if is_home and INDEX_MARKER in markdown:
             markdown = markdown.replace(
                 INDEX_MARKER, series_index(docs_dir, collection, ordered)
@@ -263,7 +270,11 @@ def on_page_markdown(
             (path.stem for path in (docs_dir / RUNS_DIR / version).glob("*.md")),
             key=run_order,
         )
-        pills = [pill(f"← Series {version}", href(f"evals/{version}.md"))]
+        lead = [
+            pill(HOME_LABEL, href("evals.md")),
+            pill(f"Series {version}", href(f"evals/{version}.md")),
+        ]
+        pills = []
         for stem in siblings:
             title = str(
                 front_matter(docs_dir / RUNS_DIR / version / f"{stem}.md").get("title")
@@ -276,6 +287,6 @@ def on_page_markdown(
                     current=stem == own,
                 )
             )
-        return under_title(markdown, switcher("Runs", pills))
+        return under_title(markdown, switcher("Runs", pills, lead))
 
     return markdown

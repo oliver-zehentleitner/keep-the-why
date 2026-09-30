@@ -16,7 +16,9 @@ from measurement_pages import (  # noqa: E402
     home_of,
     neighbours,
     run_order,
+    pill,
     stems,
+    switcher,
     under_title,
 )
 
@@ -91,6 +93,17 @@ class Placement(unittest.TestCase):
             under_title(page, "<nav></nav>"),
             "# Evals\n\n<nav></nav>\n\nIntro.\n\n# Not a title, further down\n",
         )
+
+    def test_the_way_out_stands_before_the_row_and_its_label(self):
+        row = switcher(
+            "Series",
+            [pill("0.18.0", "0.18.0/"), pill("0.17.1", "./", current=True)],
+            [pill("Overview", "../")],
+        )
+        self.assertLess(row.index(">Overview<"), row.index(">Series<"))
+        self.assertLess(row.index(">Series<"), row.index(">0.18.0<"))
+        self.assertEqual(row.count('aria-current="page"'), 1)
+        self.assertIn('href="./" aria-current="page">0.17.1<', row)
 
     def test_a_page_without_heading_gets_it_on_top(self):
         self.assertEqual(
