@@ -14,9 +14,8 @@ the expected behavior.
 The current series is [0.18.0](evals/0.18.0.md), measured 2026-09-28. What
 follows is that page's results block, included as it is. Every earlier
 series has a page of its own, as it was published: pick one from the row
-under the title, from "Series" in the navigation, or from the table in the
-[run history](#run-history). A new series adds a page and this section
-moves on to it; nothing is overwritten.
+under the title or from the table in the [run history](#run-history). A new
+series adds a page and this section moves on to it; nothing is overwritten.
 
 {% include-markdown "evals/0.18.0.md" start="<!-- series:start -->" end="<!-- series:end -->" %}
 

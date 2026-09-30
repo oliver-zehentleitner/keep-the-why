@@ -6,8 +6,9 @@ measurement adds a page and touches no earlier one - so nothing that links
 the pages to each other may live *in* them. This hook derives all of it at
 build time from the files that exist:
 
-- a group in the navigation under the collection's home page ("Series"
-  under *Full suite*, "Rounds" under *Agent & model matrix*), newest first;
+- the navigation keeps its two entries and gains none: while a series, a
+  round or a run summary is open, the entry of the page it belongs to is
+  the marked one ("Full suite", "Agent & model matrix");
 - a switcher under the title of the home page and of every page of the
   collection - one pill per page, the open one marked;
 - an older / all / newer pager at the foot of every page of the collection;
@@ -32,11 +33,15 @@ from typing import Callable
 from mkdocs.config.defaults import MkDocsConfig
 from mkdocs.exceptions import PluginError
 from mkdocs.structure.files import Files
+from mkdocs.structure.nav import Navigation
 from mkdocs.structure.pages import Page
 from mkdocs.utils import get_relative_url, meta
 
 INDEX_MARKER = "<!-- series:index -->"
 RUNS_DIR = "evals/runs"
+
+# nav entries marked active for the page being rendered, unmarked after it
+_MARKED: list[Page] = []
 
 
 @dataclass(frozen=True)
@@ -46,7 +51,7 @@ class Collection:
     home: str  # src uri of the living page
     directory: str  # src directory of the measurement pages
     stem: re.Pattern  # what a measurement page's file name looks like
-    group: str  # title of the navigation group and of the switcher
+    group: str  # what the switcher calls the pages
     all_label: str  # the pager's middle link
     anchor: str  # where on the home page that link lands
     key: Callable[[str], tuple]  # sort key of a stem; the newest sorts last
@@ -113,41 +118,32 @@ def front_matter(path: Path) -> dict:
     return meta.get_data(path.read_text(encoding="utf-8"))[1]
 
 
-def insert_nav_group(nav: list, collection: Collection, ordered: list[str]) -> bool:
-    """Put the collection's group right after its home page, wherever in the
-    navigation tree that page is. True when it was found."""
-    for at, entry in enumerate(nav):
-        if not isinstance(entry, dict):
-            continue
-        ((title, target),) = entry.items()
-        if target == collection.home:
-            group = {
-                collection.group: [
-                    {collection.label(stem): collection.src(stem)} for stem in ordered
-                ]
-            }
-            nav.insert(at + 1, group)
-            return True
-        if isinstance(target, list) and insert_nav_group(target, collection, ordered):
-            return True
-    return False
-
-
-def on_config(config: MkDocsConfig) -> MkDocsConfig:
-    docs_dir = Path(config.docs_dir)
+def home_of(src: str) -> str | None:
+    """The living page a measurement page or a run summary belongs to."""
+    directory, stem = posixpath.split(posixpath.splitext(src)[0])
     for collection in COLLECTIONS:
-        ordered = stems(docs_dir, collection)
-        if not ordered:
-            raise PluginError(
-                f"no measurement pages under docs/{collection.directory}/ - "
-                "tools/mkdocs/measurement_pages.py has nothing to link"
-            )
-        if not insert_nav_group(config.nav, collection, ordered):
-            raise PluginError(
-                f"{collection.home} is not in mkdocs.yml's nav - "
-                f'the "{collection.group}" group has no place to go'
-            )
-    return config
+        if directory == collection.directory and collection.stem.fullmatch(stem):
+            return collection.home
+    if posixpath.dirname(directory) == RUNS_DIR:
+        return "evals.md"
+    return None
+
+
+def on_page_context(context: dict, page: Page, config: MkDocsConfig, nav: Navigation):
+    """A page outside the navigation leaves the menu without a marked entry;
+    mark the one it belongs to for as long as this page is rendered."""
+    home = home_of(page.file.src_uri)
+    for candidate in nav.pages if home else ():
+        if candidate.file.src_uri == home:
+            candidate.active = True
+            _MARKED.append(candidate)
+    return context
+
+
+def on_post_page(output: str, page: Page, config: MkDocsConfig) -> str:
+    while _MARKED:
+        _MARKED.pop().active = False
+    return output
 
 
 def pill(label: str, href: str, *, current: bool = False, note: str = "") -> str:

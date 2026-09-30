@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from measurement_pages import (  # noqa: E402
     COLLECTIONS,
-    insert_nav_group,
+    home_of,
     neighbours,
     run_order,
     stems,
@@ -73,31 +73,15 @@ class Ordering(unittest.TestCase):
         )
 
 
-class Navigation(unittest.TestCase):
-    def test_group_lands_right_after_its_home_page_in_a_nested_section(self):
-        nav = [
-            {"Overview": "index.md"},
-            {"Evals": [{"Full suite": "evals.md"}, {"Matrix": "agent-matrix.md"}]},
-        ]
-        self.assertTrue(insert_nav_group(nav, SERIES, ["0.18.0", "0.17.1"]))
-        self.assertEqual(
-            nav[1]["Evals"],
-            [
-                {"Full suite": "evals.md"},
-                {
-                    "Series": [
-                        {"0.18.0": "evals/0.18.0.md"},
-                        {"0.17.1": "evals/0.17.1.md"},
-                    ]
-                },
-                {"Matrix": "agent-matrix.md"},
-            ],
-        )
+class Belonging(unittest.TestCase):
+    def test_series_round_and_run_pages_name_their_home(self):
+        self.assertEqual(home_of("evals/0.18.0.md"), "evals.md")
+        self.assertEqual(home_of("agent-matrix/round-2.md"), "agent-matrix.md")
+        self.assertEqual(home_of("evals/runs/0.18.0/run-1.md"), "evals.md")
 
-    def test_a_home_page_missing_from_the_nav_is_reported(self):
-        self.assertFalse(
-            insert_nav_group([{"Overview": "index.md"}], SERIES, ["0.18.0"])
-        )
+    def test_every_other_page_has_none(self):
+        for src in ("evals.md", "agent-matrix.md", "index.md", "evals/notes.md"):
+            self.assertIsNone(home_of(src), src)
 
 
 class Placement(unittest.TestCase):

@@ -214,3 +214,10 @@
 .ktw-pager__all a {
   color: var(--md-default-fg-color--light);
 }
+
+/* A series, round or run page is not in the navigation; the hook marks the
+   entry it belongs to. Material colors only the open page's own link, so
+   give the marked entry the same color. */
+.md-nav__item--active:not(.md-nav__item--nested):not(.md-nav__item--section) > a.md-nav__link {
+  color: var(--md-typeset-a-color);
+}

@@ -45,15 +45,16 @@ hooks:
 
 copyright: '<a href="/imprint/">Imprint</a> · <a href="/license/">License</a>'
 
-# The eval series (evals/<version>.md) and the matrix rounds
-# (agent-matrix/round-N.md) are not listed under nav below: the hook
-# tools/mkdocs/measurement_pages.py adds them as the groups "Series" and
-# "Rounds", from the files that exist. The per-run summaries stay out of
-# the navigation; their series page links them.
+# The eval series (evals/<version>.md), their run summaries and the matrix
+# rounds (agent-matrix/round-N.md) stay out of the navigation: the menu
+# keeps "Full suite" and "Agent & model matrix", and
+# tools/mkdocs/measurement_pages.py links the pages from there - a row of
+# all of them under each title - and marks the entry they belong to.
 not_in_nav: |
   imprint.md
   license.md
-  evals/runs/**
+  evals/**
+  agent-matrix/**
 
 extra_css:
   - assets/extra.css
