@@ -1,5 +1,5 @@
 ---
-title: "0.11.0 · calibration 2026 09 05"
+title: "0.11.0 · calibration run, 2026-09-05"
 search:
   exclude: true
 ---

@@ -151,3 +151,66 @@
 .md-typeset .ktw-shots figcaption, .md-typeset .ktw-shot-small figcaption { font-size: .72rem; opacity: .85; margin: .4rem 0 0; text-align: left; max-width: none; }
 @media screen and (max-width: 44.9375em) { .ktw-shots { grid-template-columns: 1fr; } }
 .md-typeset .ktw-shots figure > p, .md-typeset .ktw-shot-small > p { margin: 0; }
+
+/* ---- Eval series and matrix rounds (tools/mkdocs/measurement_pages.py) ----
+   The switcher under a page's title - one pill per series or round, the
+   open one filled - and the older / all / newer pager at its foot. */
+.md-typeset .ktw-switch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .3rem;
+  margin: -.2rem 0 1.4rem;
+  padding-bottom: .9rem;
+  border-bottom: 1px solid var(--md-default-fg-color--lightest);
+  font-size: .68rem;
+  line-height: 1.5;
+}
+.ktw-switch__label {
+  margin-right: .35rem;
+  font-size: .6rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--md-default-fg-color--light);
+}
+.md-typeset .ktw-switch__item {
+  padding: .05rem .6rem;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 1rem;
+  color: var(--md-default-fg-color--light);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.md-typeset .ktw-switch__item:hover {
+  border-color: #845bed;
+  color: #845bed;
+}
+.md-typeset .ktw-switch__item--current,
+.md-typeset .ktw-switch__item--current:hover {
+  border-color: #845bed;
+  background: #845bed;
+  color: #fff;
+  font-weight: 700;
+}
+.ktw-switch__item small {
+  margin-left: .15rem;
+  font-size: .85em;
+  opacity: .75;
+}
+.md-typeset .ktw-pager {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2.4rem;
+  padding-top: .9rem;
+  border-top: 1px solid var(--md-default-fg-color--lightest);
+  font-size: .72rem;
+}
+.ktw-pager__newer {
+  text-align: right;
+}
+.ktw-pager__all a {
+  color: var(--md-default-fg-color--light);
+}

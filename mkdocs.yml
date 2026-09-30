@@ -41,17 +41,19 @@ markdown_extensions:
 
 hooks:
   - tools/mkdocs/context_pages.py
+  - tools/mkdocs/measurement_pages.py
 
 copyright: '<a href="/imprint/">Imprint</a> · <a href="/license/">License</a>'
 
-# evals/ and agent-matrix/ hold one page per measured series or round; the
-# run history on evals.md and the rounds table on agent-matrix.md are their
-# index, so they stay out of the navigation.
+# The eval series (evals/<version>.md) and the matrix rounds
+# (agent-matrix/round-N.md) are not listed under nav below: the hook
+# tools/mkdocs/measurement_pages.py adds them as the groups "Series" and
+# "Rounds", from the files that exist. The per-run summaries stay out of
+# the navigation; their series page links them.
 not_in_nav: |
   imprint.md
   license.md
-  evals/**
-  agent-matrix/**
+  evals/runs/**
 
 extra_css:
   - assets/extra.css

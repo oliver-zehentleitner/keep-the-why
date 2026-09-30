@@ -1,5 +1,5 @@
 ---
-title: "0.9.0 · config relocation check"
+title: "0.9.0 · config-relocation check"
 search:
   exclude: true
 ---

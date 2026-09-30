@@ -13,8 +13,9 @@ the expected behavior.
 
 The current series is [0.18.0](evals/0.18.0.md), measured 2026-09-28. What
 follows is that page's results block, included as it is. Every earlier
-series has a page of its own, as it was published, linked from the
-[run history](#run-history) — a new series adds a page and this section
+series has a page of its own, as it was published: pick one from the row
+under the title, from "Series" in the navigation, or from the table in the
+[run history](#run-history). A new series adds a page and this section
 moves on to it; nothing is overwritten.
 
 {% include-markdown "evals/0.18.0.md" start="<!-- series:start -->" end="<!-- series:end -->" %}
@@ -177,12 +178,21 @@ the cases easier, I would be glad to see that pull request.
 
 ## Run history
 
-One row per measurement, newest first. The version links to that series'
-page — results, per-case table and caveats as they were published, and the
-runner's own per-run summaries where they still exist. A series page is the
-page of its day: the suite had fewer cases, the series rule exists only
-since 0.17.0, and the instrument is named only since 0.17.1. The judge has
-so far always been the same model as the agent under test.
+Every series at a glance. The version opens that series' page — results,
+per-case table and caveats as they were published, and the runner's own
+per-run summaries where they still exist:
+
+<!-- series:index -->
+
+A series page is the page of its day: the suite had fewer cases, the series
+rule exists only since 0.17.0, and the instrument is named only since
+0.17.1.
+
+### Every measurement, with its notes
+
+One row per measurement, newest first — the series above with what stood
+out in each, and the runs in between that were not a release series. The
+judge has so far always been the same model as the agent under test.
 
 | Date | Skill | Agent | Model | Result | Note |
 |---|---|---|---|---|---|

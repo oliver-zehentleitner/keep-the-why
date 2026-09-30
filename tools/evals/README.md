@@ -531,8 +531,9 @@ normal model variance; re-run a surprising case before concluding anything.
 Current numbers, per-case results and the stated caveats: `docs/evals.md`,
 updated with every release (release checklist, "Measure the release"). Each
 measured series has a page of its own under `docs/evals/`, kept as
-published, with the `summary.md` of its runs under `docs/evals/runs/`; the
-run history on `docs/evals.md` links them.
+published, with the `summary.md` of its runs under `docs/evals/runs/`. The
+site links them on its own — navigation, the row of series under each title
+and the table in the run history come from `tools/mkdocs/measurement_pages.py`.
 What changed and why: `CHANGELOG.md`. Open problems and ideas, one issue
 each: the [issue tracker](https://github.com/oliver-zehentleitner/keep-the-why/issues)
 — including the missing Gemini CLI driver ([#262](https://github.com/oliver-zehentleitner/keep-the-why/issues/262)),
