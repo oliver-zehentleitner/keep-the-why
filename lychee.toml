@@ -8,7 +8,10 @@
 # article, not documentation; URLs in them are whatever the agent printed.
 # dashboard/ktw_dashboard/web/ is the dashboard's page, served by its own
 # server (root-relative /static/... links resolve there, not in the repo).
-exclude_path = ["tools/evals/fixtures", "experiments/rejected-change/results", "dashboard/ktw_dashboard/web"]
+# docs/evals/runs/ are the runner's per-run summaries, published as written:
+# a URL in them is whatever the judge quoted, often cut off mid-way by the
+# runner's column limit.
+exclude_path = ["tools/evals/fixtures", "experiments/rejected-change/results", "dashboard/ktw_dashboard/web", "docs/evals/runs"]
 
 # mcpmarket.com rate-limits lychee's request bursts with 429s (seen repeatedly
 # on the "Also listed on" link across README.md/llms.txt/docs/installation.md,

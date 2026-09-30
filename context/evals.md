@@ -73,7 +73,7 @@ The eval runner's per-case fake `$HOME` isolates the agent from the operator's r
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
-**Source:** 19 consecutive full runs on 2026-09-16/17 (`docs/evals.md`, "How a series is judged"); maintainer decision, 2026-09-17
+**Source:** 19 consecutive full runs on 2026-09-16/17 (`docs/evals.md`, "How a series is judged"); maintainer decision, 2026-09-17; maintainer decision on a series measured after its release, 2026-09-30
 **Revisit when:** a newer agent model moves the per-case pass rate far enough that a series misses neither line for several releases — then the lines can be tightened
 
 Three consecutive full runs are judged together by `tools/evals/series.py`: per case, at least 2 of 3 passes; per run, at most one failed case. A case that fails once is reported with the judge's reason and treated as variance until it comes back.
@@ -87,6 +87,8 @@ Three consecutive full runs are judged together by `tools/evals/series.py`: per 
 **Per-case history, added 2026-09-21** from the same round of feedback: `tools/evals/history.json` records each released series (passes per case) and `series.py` prints a flipped case's record next to it. Deliberately a reading aid and not a fourth line — a sliding window across releases would mix different skill texts — and deliberately starting at 0.17.0: earlier series measured other wording under no rule, and the project tests forward from here.
 
 **The instrument is named, added 2026-09-21**, same round of feedback: agent and judge run through the `sonnet` alias, which the vendor can move to a newer model without a trace here, and nothing in a result said which judge prompt had graded it. Every record now carries the resolved model ids and a hash of the judge prompt. Pinning an exact model id in the runner was the alternative; rejected because the suite should follow the model its users get, and recording makes the moment it changes visible instead of preventing it.
+
+**Measured after the release, added 2026-09-30:** the 0.18.0 series (100 · 100 · 98 of 101) missed all three lines on a tag that was already out. The rule is a gate for a release that has not gone out yet; a series taken afterwards has nothing left to hold back and is documented as measured, not re-taken until it passes — and nothing more: no issues are opened from it. The suite is run again on the current `main`, and what that measurement finds becomes the issues that are worked on before the next release. `series.py --record` recorded it; it refuses only an incomplete series. The checklist takes the measurement on the tag (step 14, after the tag in step 11), so in that order the rule can only ever act on the release after; whether the measurement moves ahead of the tag is open.
 
 **Consequence:** `series.py` exits non-zero when any of the three lines is missed, and the release checklist names it. The per-run line fails by chance more often than the per-case one at today's rate; when it does, the run's failures are read before anything is re-measured, which is the point of having it.
 
@@ -128,3 +130,23 @@ Four days after the 0.17.0 series (87/88/87), the same skill text (three explana
 **Resolution (2026-09-22):** the next morning the same model id read 11.5–12 turns per case again and the same tag measured 87 · 87 · 88 — the series rule passed, 86 cases 3/3, guards held. The drift lasted one evening. Both series stay in the run history; `history.json` carries the one measured under the instrument the rules were calibrated on. Nothing in the skill was changed for the evening's failures, which is what the twice-seen rule prescribes.
 
 **Consequence:** `summary.json` carries `cli_version`, `median_turns`, `median_tool_calls`; release checklist step 14 compares instruments before it compares pass counts; the operator's `~/.local/bin` is shadowed without the linter launchers in every session (a reinstalled host linter cost two cases that evening); `docs/evals.md` names the 0.17.0 series' CLI as 2.1.274, not 2.1.273 as it had said.
+
+## A measured series gets a page of its own and is never overwritten; `docs/evals.md` includes the current one
+
+**Id:** a788c308-32cc-406a-8038-aa49067fdb71
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer decision, 2026-09-30; the Git history of `docs/evals.md` and `docs/agent-matrix.md`
+**See:** evals.md#the-instrument-moved-under-the-same-model-id-a-run-now-records-cli-version-and-session-shape-and-stored-runs-can-be-re-graded — 3cd6ee21-a3e4-4e0c-9605-a902a762c038 — as of 2026-09-30
+**Revisit when:** the run history grows too long to serve as the index of the series pages, or writing a series page by hand becomes the step that delays a measurement
+
+Each release measurement is a page, `docs/evals/<version>.md` — the results block, the four numbers, the per-case table. `docs/evals.md` keeps its address and its sections and pulls the current series in with `include-markdown`, between two markers in the series page; its run history links every version to its page. The `summary.md` the runner wrote for each run is published beside it under `docs/evals/runs/<version>/`; the per-case JSON with the transcripts stays uncommitted, as before. The agent & model matrix does the same by round (`docs/agent-matrix/round-N.md`), not by version: a pass over the grid is not tied to one skill release — round 1 spans 0.9.0 and 0.9.2.
+
+**Reason:** until 0.18.0 the "Latest full-suite results" block and the per-case table were replaced with every release, and what was left of a series was its row in the run history. The rest was in Git — there for someone who knows to look, not for a reader of the site, and this project of all projects should not answer "what did the 0.16.1 series look like" with "check out an old commit". Overwriting also left residue: two releases on, the caveats still described the 0.16.3 series' flips, and a sentence pointed at a table that had not been on the page since 0.12.0. A page per series settles both — what is true of one series travels with it, and the living page keeps what holds for all of them. The include turns a release into an addition: a new file, one changed line, one new row. There is no copy step to forget, and the living page cannot say something else than the series page.
+
+The fourteen earlier series, 0.6.2 to 0.17.1, were restored from the file's history as published, not re-worded: a rewritten archive would be a second account of a measurement, written without the runs in front of it. Each page names the commit it was taken from and says that "above" and "below" mean the page of its day. The same holds for a series that went badly (the entry cited above): it keeps its page.
+
+**Rejected alternative:** a copy of the whole page per release. The methodology sections would then exist fourteen times, each frozen at a different state, and nothing would say which one is in force. Also rejected: leaving it to Git history — the state this replaces.
+
+**Consequence:** release checklist step 14 writes a new page instead of editing a block. Series pages, round pages and run summaries are out of the navigation (`not_in_nav`) and out of the site search (front matter), so a search finds the current state and the run history is the way in. `docs/evals/runs/` is out of the link check: the runner cuts a quoted URL off at its column limit.

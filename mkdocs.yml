@@ -44,9 +44,14 @@ hooks:
 
 copyright: '<a href="/imprint/">Imprint</a> · <a href="/license/">License</a>'
 
+# evals/ and agent-matrix/ hold one page per measured series or round; the
+# run history on evals.md and the rounds table on agent-matrix.md are their
+# index, so they stay out of the navigation.
 not_in_nav: |
   imprint.md
   license.md
+  evals/**
+  agent-matrix/**
 
 extra_css:
   - assets/extra.css

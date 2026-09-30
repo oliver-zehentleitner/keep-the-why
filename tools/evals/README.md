@@ -343,9 +343,11 @@ per-case resumability), just many of them at once — a re-run against the same
 `--results-dir` only retries combinations that didn't fully resolve last
 time, same as re-running a single-driver command. Prints and saves a
 ready-to-paste `docs/agent-matrix.md`-style table
-(`<results-dir>/matrix-summary.md` and `.json`) — that page's prose sections
-are hand-curated and this doesn't touch them, so pasting rows in is still a
-manual step. A cell names its instruments: verdict and judge score, the
+(`<results-dir>/matrix-summary.md` and `.json`) — a pass over the whole grid
+is a new round and goes into a page of its own, `docs/agent-matrix/round-N.md`,
+which `docs/agent-matrix.md` includes and lists under "Rounds"; the earlier
+round's page stays as it is. The prose sections are hand-curated and this
+doesn't touch them, so pasting rows in is still a manual step. A cell names its instruments: verdict and judge score, the
 mechanical restraint code, then the agent CLI and its version, the model as
 resolved (the vendor's canonical id where the CLI reports one, else the id
 asked for), the skill version and the date — one item per line inside the
@@ -527,7 +529,10 @@ normal model variance; re-run a surprising case before concluding anything.
 ## Ongoing status
 
 Current numbers, per-case results and the stated caveats: `docs/evals.md`,
-updated with every release (release checklist, "Measure the release").
+updated with every release (release checklist, "Measure the release"). Each
+measured series has a page of its own under `docs/evals/`, kept as
+published, with the `summary.md` of its runs under `docs/evals/runs/`; the
+run history on `docs/evals.md` links them.
 What changed and why: `CHANGELOG.md`. Open problems and ideas, one issue
 each: the [issue tracker](https://github.com/oliver-zehentleitner/keep-the-why/issues)
 — including the missing Gemini CLI driver ([#262](https://github.com/oliver-zehentleitner/keep-the-why/issues/262)),
