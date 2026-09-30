@@ -21,6 +21,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Changed
 
+- One badge is enough: the badge page and the wizard's dashboard step say the live badge stands in for the static one or joins it — the person's choice, default in place of it. The UNICORN Binance Suite's READMEs keep the live badge only.
 - `keep-the-why-dashboard` 0.4.0: the export writes two live badges with speaking names instead of `badge.svg` — `badge-entries.svg` in Keep the Why's own style (the static badge's wordmark, extended by the project's numbers) and `badge-entries-flat.svg` in the flat style badge services draw, now in the project's purple. `badge.svg` is gone, no alias: a README that still names it shows a broken image until it names one of the two. The badge page shows all three and gives each as Markdown and HTML; the wizard, the CI snippet and the docs name the new files.
 - README: the three small dashboard screenshots take a third of the width each, so they stay in one row — at 290 px each GitHub wrapped the third to a line of its own.
 - Dashboard screenshots on the site: under the big one on the landing page and in the README a row of three — friends in the graph, the UNICORN Binance Suite's family, a thought read whole — each linked to the live view; on the Dashboard page one under each of family, friends and thoughts.

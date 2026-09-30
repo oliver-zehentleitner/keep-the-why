@@ -1,12 +1,12 @@
 # Badges
 
-Three badges, one static and two live: plain SVG files at fixed URLs, nothing fetched from a badge service when a README is viewed. The two live ones are rendered by [the dashboard export](dashboard.md) on every docs build with the project's own numbers — *entries* and *open*, where open counts every entry that still needs a person.
+Three badges, one static and two live — take the one that fits, or two; one is enough. Plain SVG files at fixed URLs, nothing fetched from a badge service when a README is viewed. The project wizard offers the static one when a project starts with Keep the Why, and the live one once the dashboard is published with the docs — in place of the static one or next to it, your call. The two live ones are rendered by [the dashboard export](dashboard.md) on every docs build with the project's own numbers — *entries* and *open*, where open counts every entry that still needs a person.
 
 ## The static badge
 
 [![Keep the Why](https://keepthewhy.com/assets/badge.svg)](https://keepthewhy.com)
 
-Says that a project uses Keep the Why. The snippet is the same for every project — copy it as-is, and paste it near the top of `README.md`, as the *last* badge if there are others already (it carries less load-bearing information than build status, license or version).
+Says that a project uses Keep the Why — for any project, with or without a published dashboard. The snippet is the same for every project: copy it as-is, and paste it near the top of `README.md`, as the *last* badge if there are others already (it carries less load-bearing information than build status, license or version).
 
 === "Markdown"
 
@@ -24,7 +24,7 @@ Says that a project uses Keep the Why. The snippet is the same for every project
 
 [![Keep the Why · live](https://keepthewhy.com/dashboard/live/badge-entries.svg)](https://keepthewhy.com/dashboard/live/)
 
-A project that publishes its dashboard with its docs gets a badge with its own numbers, linking to its own dashboard — the one above is this repository's. `ktw-dashboard --export` writes it beside `index.html` and `state.json`, rendered at export time — the build step and the `dashboard-state` line that go with it: [CI linting setup, "The dashboard export"](ci-linting.md#the-dashboard-export); the project wizard offers both when a docs build exists. `https://example.org/dashboard/live/` below is wherever the build puts the export.
+A project that publishes its dashboard with its docs gets a badge with its own numbers, linking to its own dashboard — the one above is this repository's. It can stand in for the static badge (one badge is enough) or join it. `ktw-dashboard --export` writes it beside `index.html` and `state.json`, rendered at export time — the build step and the `dashboard-state` line that go with it: [CI linting setup, "The dashboard export"](ci-linting.md#the-dashboard-export); the project wizard offers both when a docs build exists. `https://example.org/dashboard/live/` below is wherever the build puts the export.
 
 In Keep the Why's style — the static badge's wordmark, extended by the numbers:
 
