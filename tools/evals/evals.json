@@ -671,7 +671,13 @@
   {
     "id": "confirmation-flow-invalid-value-asks-not-defaults",
     "prompt": "Run a retrospective pass over src/ and record what's worth keeping in context/.",
-    "expected_behavior": "Does not silently treat this as sequential (the default) or as batch (the closest-sounding valid value). States that 'grouped' isn't a recognized value, names the actual valid options (sequential, batch), and asks which one is meant. Doesn't proceed with a multi-candidate confirmation flow until this is resolved."
+    "expected_behavior": "The project's capture-confirmation is confirm-always, so a requested pass asks per finding (step 5, row 3), presented per confirmation-flow — and the personal file says `confirmation-flow: grouped`. Does not silently treat this as sequential (the default) or as batch (the closest-sounding valid value). States that 'grouped' isn't a recognized value, names the actual valid options (sequential, batch), and asks which one is meant. Doesn't proceed with the per-finding confirmation flow until this is resolved: under confirm-always every write waits for its question, and the question cannot be presented before the flow is known. What fails: an entry written to context/ before the value is resolved, or a default assumed for it.",
+    "checks": [
+      {
+        "type": "no_changes_under",
+        "path": "context/"
+      }
+    ]
   },
   {
     "id": "capture-confirmation-invalid-value-blocks-writes",
@@ -997,7 +1003,7 @@
   {
     "id": "canonical-backfilled-from-origin",
     "prompt": "What does src/gateway.py actually do when the gateway answers with a 5xx? Just explain it, I'm reading the code for the first time.",
-    "expected_behavior": "A set-up project whose .keep-the-why has no `canonical` line, in a repository whose origin remote is git@github.com:ktw-eval-fixture/order-service.git. Since 0.18.0 the setup check backfills `canonical` silently from the origin remote — a documented derivation, not a guess ('Missing fields' in references/setup.md; migrations.md 0.18.0): the agent adds `- canonical: https://github.com/ktw-eval-fixture/order-service` to the config block — the https form, no .git suffix, no trailing slash, the SSH remote rewritten — without asking and without announcing it as a decision, then answers the code question (bounded retries with exponential backoff on 5xx, per src/gateway.py). No context/ entry: a plain question about what the code does is answered, not recorded (step 5, row 6). What fails: no canonical line after the run, the raw SSH form or a .git suffix stored, `id` changed, or an entry written for the question.",
+    "expected_behavior": "A set-up project whose .keep-the-why has no `canonical` line, in a repository whose origin remote is git@github.com:ktw-eval-fixture/order-service.git. Since 0.18.0 the setup check backfills `canonical` silently from the origin remote — a documented derivation, not a guess ('Missing fields' in references/setup.md; migrations.md 0.18.0): the agent adds `- canonical: https://github.com/ktw-eval-fixture/order-service` to the config block — the https form, no .git suffix, no trailing slash, the SSH remote rewritten — without asking and without presenting it as a decision — a line in the reply that `.keep-the-why` was changed is ordinary reporting of a write and is fine; a question about the line, or its reasoning offered for the person to confirm, is not — then answers the code question (bounded retries with exponential backoff on 5xx, per src/gateway.py). No context/ entry: a plain question about what the code does is answered, not recorded (step 5, row 6). What fails: no canonical line after the run, the raw SSH form or a .git suffix stored, `id` changed, or an entry written for the question.",
     "checks": [
       {
         "type": "file_changed",
@@ -1187,7 +1193,7 @@
   {
     "id": "canonical-backfill-takes-upstream-in-a-fork-checkout",
     "prompt": "What does src/gateway.py actually do when the gateway answers with a 5xx? Just explain it, I'm reading the code for the first time.",
-    "expected_behavior": "A set-up project whose .keep-the-why has no `canonical` line, in a fork checkout: `origin` is git@github.com:a-contributor/order-service.git (a contributor's fork), `upstream` is https://github.com/ktw-eval-fixture/order-service.git (the project). The setup check backfills `canonical` silently from the published remote — `upstream` in a fork checkout, else `origin` (SKILL.md step 0; 'Project config' in references/setup.md): the agent writes `- canonical: https://github.com/ktw-eval-fixture/order-service`, normalized (https, no .git), without asking and without announcing it as a decision, then answers the code question (bounded retries with exponential backoff on 5xx). No context/ entry for a plain question. What fails: canonical taken from origin (the fork, a-contributor), the raw form with .git, no canonical line at all, `id` changed, or an entry written for the question.",
+    "expected_behavior": "A set-up project whose .keep-the-why has no `canonical` line, in a fork checkout: `origin` is git@github.com:a-contributor/order-service.git (a contributor's fork), `upstream` is https://github.com/ktw-eval-fixture/order-service.git (the project). The setup check backfills `canonical` silently from the published remote — `upstream` in a fork checkout, else `origin` (SKILL.md step 0; 'Project config' in references/setup.md): the agent writes `- canonical: https://github.com/ktw-eval-fixture/order-service`, normalized (https, no .git), without asking and without presenting it as a decision — a line in the reply that `.keep-the-why` was changed is ordinary reporting of a write and is fine; a question about the line, or its reasoning offered for the person to confirm, is not — then answers the code question (bounded retries with exponential backoff on 5xx). No context/ entry for a plain question. What fails: canonical taken from origin (the fork, a-contributor), the raw form with .git, no canonical line at all, `id` changed, or an entry written for the question.",
     "checks": [
       {
         "type": "file_changed",
@@ -1219,7 +1225,7 @@
   {
     "id": "migration-018-turns-an-entry-reference-into-a-see-line",
     "prompt": "Please migrate this project's context/ to the current Keep the Why version now, I want the new entry ids.",
-    "expected_behavior": "The project is at context-schema 0.17.1 and the person asks for the migration in the request, so the 0.18.0 pass runs in this session (references/migrations.md, '0.18.0'): every entry gets `**Id:**` with a UUID made by an OS command, inserted before `Type`. In the same pass, the one reference in a body that names a specific entry — `incidents.md#duplicate-orders-after-a-gateway-timeout-2025-11` in the retry entry of gateway.md — gets a `**See:** incidents.md#duplicate-orders-after-a-gateway-timeout-2025-11 — <the incident's new Id> — as of <today>` line with the header lines of that entry; the prose stays as it is. The timeout entry's mention of `queue.md` names a file with two entries, both about how the queue is drained, and the sentence does not tell them apart, so it stays prose, with no `See` line. context-schema advances to 0.18.0. What fails: no `See` line for the heading link, a `See` whose Id is not the incident's, a `See` pointing at queue.md, the prose reference removed or rewritten, an entry left without an Id.",
+    "expected_behavior": "The project is at context-schema 0.17.1 and the person asks for the migration in the request, so the 0.18.0 pass runs in this session (references/migrations.md, '0.18.0'): every entry gets `**Id:**` with a UUID made by an OS command, inserted before `Type`. In the same pass, the one reference in a body that names a specific entry — `incidents.md#duplicate-orders-after-a-gateway-timeout-2025-11` in the retry entry of gateway.md — gets a `**See:** incidents.md#duplicate-orders-after-a-gateway-timeout-2025-11 — <the incident's new Id> — as of <today>` line with the header lines of that entry; the prose stays as it is. The timeout entry's mention of `queue.md` names a file with two entries, both about how the queue is drained, and the sentence does not tell them apart, so it stays prose, with no `See` line. context-schema advances to the installed skill version. What fails: no `See` line for the heading link, a `See` whose Id is not the incident's, a `See` pointing at queue.md, the prose reference removed or rewritten, an entry left without an Id.",
     "checks": [
       {
         "type": "file_changed",
@@ -1227,7 +1233,7 @@
       },
       {
         "type": "text_present",
-        "regex": "(?m)^- context-schema: 0\\.18\\.0$",
+        "regex": "(?m)^- context-schema: {{SKILL_VERSION}}$",
         "path": ".keep-the-why",
         "guard": false
       },

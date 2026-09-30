@@ -22,6 +22,9 @@ so `~/.keep-the-why/*.md` is the personal config) and a `text` or `regex`:
                      [, path]
   skill_loaded                   a tool call in the transcript loaded the skill
 
+`{{SKILL_VERSION}}` in a `text` or `regex` stands for the version of the
+skill under test, as in fixture files.
+
 Everything here is on purpose blunt. A check that needs interpretation
 belongs in the expected_behavior text for the judge, not in this list.
 
@@ -40,7 +43,7 @@ import fnmatch
 import re
 
 from .analysis import skill_load_position
-from .common import sh
+from .common import sh, skill_version
 
 
 class _State:
@@ -135,10 +138,15 @@ def _display(state, p):
 
 
 def _matcher(check):
+    # `{{SKILL_VERSION}}` in a text or regex is the skill under test, the way
+    # fixture files use it — a check that names the version a migration
+    # advances to must not go stale with the next release.
+    version = skill_version()
     if "regex" in check:
-        rx = re.compile(check["regex"])
-        return rx.search, f"/{check['regex']}/"
-    text = check["text"]
+        pattern = check["regex"].replace("{{SKILL_VERSION}}", re.escape(version))
+        rx = re.compile(pattern)
+        return rx.search, f"/{pattern}/"
+    text = check["text"].replace("{{SKILL_VERSION}}", version)
     return (lambda s: text in s), repr(text)
 
 

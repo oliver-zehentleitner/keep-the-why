@@ -4,6 +4,11 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Changed
+
+- `SKILL.md` wording, measured before and after in isolation (three runs per case) after the 0.18.2 series ran on a new agent model (`claude-sonnet-5-5`, which the `sonnet` alias now resolves to): two sources that disagree are not a correction until someone confirms which one is stale — both are recorded and the conflict stays open (rule 4; `negative-conflicting-sources` had gone 0/3 with the document overwritten from the code); a shortcut a maintainer names as known and unresolved — a hardcoded credential, a disabled check — earns a `workaround` entry, never with the value (rule 10; `negative-secret-in-interview-answer` had gone 1/3 with nothing recorded); the `canonical` backfill is not asked about and not presented as a decision, but that the file was changed may be reported the way any write is (step 0 — the agent wrote the right line every time and mentioned it in a closing sentence, which the expectation had read as announcing).
+- Eval suite: `{{SKILL_VERSION}}` is substituted in check texts and regexes the way it is in fixture files, and `migration-018-turns-an-entry-reference-into-a-see-line` checks that `context-schema` advanced to the installed version instead of the literal `0.18.0` it had failed on since the first later release; `confirmation-flow-invalid-value-asks-not-defaults` runs under `capture-confirmation: confirm-always`, where the per-finding flow is actually needed and an invalid `confirmation-flow` blocks the writes — under `confirm-when-unsure` the pass wrote without any flow, correctly, and the judge split on it — with a `no_changes_under context/` guard; the two `canonical` cases accept a line reporting the write.
+
 ## [0.18.2] - 2026-09-30
 
 ### Added

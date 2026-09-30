@@ -139,6 +139,39 @@ When a maintenance pass finds an `active`, `confirmed` entry whose concrete clai
 
 **Consequence:** no format change, no migration, no linter gate — the lifecycle table was already normative. The eval case encodes the behavior; this entry records why the skill body had to say it too. Since 2026-09-17 the sentence says where the replacement decision has to be recorded — in `context/`, by a person or on their instruction: an agent had taken `docs/` describing the new state for that record and superseded the entry on the strength of it, when that description is the contradiction to surface.
 
+## Two sources that disagree are not a correction until a person says which one is stale
+
+**Id:** 8742e499-87f4-432f-9b9c-57581fa70e3a
+**Type:** decision
+**Status:** active
+**Evidence:** inferred
+**Source:** the 0.18.2 eval series on `claude-sonnet-5-5`, 2026-09-30 — `negative-conflicting-sources` failed 3 of 3 runs the same way; isolated re-measurement 3/3 after the sentence; the maintainer asked for the fails to be fixed, the sentence itself was the agent's proposal
+**See:** entry-format.md#a-contradiction-the-consistency-check-finds-is-surfaced-not-resolved-by-superseding — 05f93713-92c0-433c-8921-5371a61c861e — as of 2026-09-30
+
+When the code says one thing and a document says another — three retries against five — neither is overwritten with the other. Both observations are recorded and the conflict stays open (rule 2) until a person confirms which one is stale; only then is fixing the loser a correction.
+
+**Reason:** rule 4 says a correction — a stale value restored — earns no entry, and the model read the disagreement as exactly that: the code is what runs, so the document is stale, so rewrite the document and record nothing. Every run of the case did this, with the same argument in the reply ("fixing a stale number is a correction, not a decision"). Rule 2 already said to record both and flag the conflict, but it stood in the Evidence rule, three rules away from the one the agent was applying; the correction sentence now names the case it does not cover. The same shape as the contradiction entry above: a rule the agent follows literally into the wrong action is a wording problem, not noise.
+
+**Rejected alternative:** leaving it to rule 2. Rejected — it was there and lost three times to the nearer sentence.
+
+**Consequence:** one sentence in rule 4, no format change. Whether "five" was ever right is a question for the person; the agent's job is to keep both numbers on the page until it is answered.
+
+## A shortcut a maintainer names as known and unresolved earns a `workaround` entry, never with the value
+
+**Id:** 79214bcd-5eee-4c43-a59f-37d87b2b250c
+**Type:** decision
+**Status:** active
+**Evidence:** inferred
+**Source:** the 0.18.2 eval series on `claude-sonnet-5-5`, 2026-09-30 — `negative-secret-in-interview-answer` recorded nothing in 3 of 3 runs (the judge let one through); isolated re-measurement 3/3 after the sentence; the maintainer asked for the fails to be fixed, wording over expectation was the agent's recommendation
+
+A maintainer saying "we hardcoded it because we never got around to fixing it" — a credential, a disabled check — is worth an entry of `Type: workaround`, even though nobody chose it between options. What is recorded is that the shortcut exists and is known; the value itself never is.
+
+**Reason:** the model applied rule 10 and rule 4 together — no fork, no decision, "technical debt, not a choice" — and wrote nothing, in every run, while correctly keeping the key out of every file and telling the person to rotate it. The proportionality gate is meant to keep manufactured alternatives out, not known shortcuts: the reader who finds a hardcoded credential six months later asks whether it is intentional, and "yes, known, unresolved since the interview" is the answer that saves an afternoon. That is what `workaround` is for; the sentence says so where the gate is.
+
+**Rejected alternative:** changing the case's expectation to accept "nothing recorded, exposure flagged". Rejected — the flag is the security half; the documentation half is what the skill is for, and the case asks to "capture whatever is worth keeping".
+
+**Consequence:** one sentence in rule 10 beside the rough test. The privacy rule (rule 7) is unchanged: the entry names the shortcut, not the secret.
+
 ## One `Evidence` word per entry; mixed standing takes the weakest grade
 
 **Id:** fb511900-e982-4091-8a42-ffaf86631cd2

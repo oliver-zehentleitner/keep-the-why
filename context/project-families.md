@@ -604,6 +604,18 @@ reason above — it is right only for the maintainer's own clone.
 case: one remote, or `origin` plus `upstream`, is unambiguous; the question
 is kept for the case that is not.
 
+**Reporting the write, added 2026-09-30:** "silently" means not asked
+about and not presented as a decision — it does not mean the reply hides
+that `.keep-the-why` changed. The 0.18.2 series on `claude-sonnet-5-5`
+wrote the right line in every run of the fork-checkout case and mentioned
+it in a closing sentence, the way that model reports every write; the
+expectation had read that as announcing and the case went 0/3. Writing
+against the model's habit of reporting its writes would have cost more
+words than it is worth and hidden a change the person may want to commit
+or revert. Skill and expectation now say the same: a line that the file
+was changed is ordinary reporting; a question, or reasoning offered for
+the person to confirm, is not.
+
 ## The migration pass turns an existing reference to one entry into a `See` line
 
 **Id:** 65d62e60-9b8c-41b1-8439-17bc38886ad2
