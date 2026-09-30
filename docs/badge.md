@@ -1,33 +1,61 @@
-# Badge
+# Badges
 
-Show that a project uses Keep the Why with a badge in its README:
+Three badges, one static and two live: plain SVG files at fixed URLs, nothing fetched from a badge service when a README is viewed. The two live ones are rendered by [the dashboard export](dashboard.md) on every docs build with the project's own numbers — *entries* and *open*, where open counts every entry that still needs a person.
+
+## The static badge
 
 [![Keep the Why](https://keepthewhy.com/assets/badge.svg)](https://keepthewhy.com)
 
-The snippet is the same for every project — copy it as-is.
+Says that a project uses Keep the Why. The snippet is the same for every project — copy it as-is, and paste it near the top of `README.md`, as the *last* badge if there are others already (it carries less load-bearing information than build status, license or version).
 
-## Markdown
+=== "Markdown"
 
-```markdown
-[![Keep the Why](https://keepthewhy.com/assets/badge.svg)](https://keepthewhy.com)
-```
+    ```markdown
+    [![Keep the Why](https://keepthewhy.com/assets/badge.svg)](https://keepthewhy.com)
+    ```
 
-Paste it near the top of `README.md`, as the *last* badge if there are others already — keeps it out of the way of badges that carry more load-bearing information (build status, license, version).
+=== "HTML"
 
-## HTML
+    ```html
+    <a href="https://keepthewhy.com"><img alt="Keep the Why" src="https://keepthewhy.com/assets/badge.svg"></a>
+    ```
 
-For anywhere Markdown isn't an option (a plain HTML page, a platform that strips Markdown, or a spot where you need more control over layout):
+## The live badge: `badge-entries.svg`
 
-```html
-<a href="https://keepthewhy.com"><img alt="Keep the Why" src="https://keepthewhy.com/assets/badge.svg"></a>
-```
+[![Keep the Why · live](https://keepthewhy.com/dashboard/live/badge-entries.svg)](https://keepthewhy.com/dashboard/live/)
 
-## Live badge
+A project that publishes its dashboard with its docs gets a badge with its own numbers, linking to its own dashboard — the one above is this repository's. `ktw-dashboard --export` writes it beside `index.html` and `state.json`, rendered at export time — the build step and the `dashboard-state` line that go with it: [CI linting setup, "The dashboard export"](ci-linting.md#the-dashboard-export); the project wizard offers both when a docs build exists. `https://example.org/dashboard/live/` below is wherever the build puts the export.
 
-A project that publishes its dashboard with its docs can add a second badge next to this one, with its own numbers — "42 entries · 3 open" — linking to its own dashboard:
+In Keep the Why's style — the static badge's wordmark, extended by the numbers:
 
-```markdown
-[![Keep the Why · live](https://example.org/dashboard/live/badge.svg)](https://example.org/dashboard/live/)
-```
+=== "Markdown"
 
-`https://example.org/dashboard/live/` is wherever the docs build puts the export. `ktw-dashboard --export` writes `badge.svg` beside `index.html` and `state.json`, rendered at export time, so no badge service sits in between. The build step, and the `dashboard-state` line that goes with it: [CI linting setup, "The dashboard export"](ci-linting.md#the-dashboard-export). The project wizard offers both when a docs build exists.
+    ```markdown
+    [![Keep the Why · live](https://example.org/dashboard/live/badge-entries.svg)](https://example.org/dashboard/live/)
+    ```
+
+=== "HTML"
+
+    ```html
+    <a href="https://example.org/dashboard/live/"><img alt="Keep the Why · live" src="https://example.org/dashboard/live/badge-entries.svg"></a>
+    ```
+
+## The same numbers, flat: `badge-entries-flat.svg`
+
+[![keep the why: entries · open](https://keepthewhy.com/dashboard/live/badge-entries-flat.svg)](https://keepthewhy.com/dashboard/live/)
+
+For a badge row in the flat style the badge services draw, where the styled one would stand out:
+
+=== "Markdown"
+
+    ```markdown
+    [![keep the why](https://example.org/dashboard/live/badge-entries-flat.svg)](https://example.org/dashboard/live/)
+    ```
+
+=== "HTML"
+
+    ```html
+    <a href="https://example.org/dashboard/live/"><img alt="keep the why" src="https://example.org/dashboard/live/badge-entries-flat.svg"></a>
+    ```
+
+Both live badges are static SVG written by the export: as current as the docs build, no request to any service when a README is viewed. Before dashboard 0.4.0 the export wrote one badge, `badge.svg`, in the flat style; it is gone — a README that still names it shows a broken image until the line names one of the two above.

@@ -499,7 +499,12 @@ class EntryIdentityTest(StateTest):
     """Id, See and Superseded by reach the state, and See lines are edges."""
 
     def test_uuid_see_and_edges(self):
-        from ktw_dashboard.export import badge_text, render_badge
+        from ktw_dashboard.export import (
+            BADGES,
+            badge_text,
+            render_badge_flat,
+            render_badge_ktw,
+        )
 
         uid = "550e8400-e29b-41d4-a716-446655440000"
         inc = "9b2d4f60-7c1e-4a8b-b3d5-6e7f8a9b0c1d"
@@ -526,9 +531,16 @@ class EntryIdentityTest(StateTest):
         sync = next(t for t in state["topics"] if t["file"] == "sync.md")
         self.assertIn("incidents.md", sync["refs_out"])
         self.assertEqual(badge_text(state), "2 entries · 1 open")
-        svg = render_badge(state)
-        self.assertTrue(svg.startswith("<svg "))
-        self.assertIn("2 entries · 1 open", svg)
+        for render in (render_badge_ktw, render_badge_flat):
+            svg = render(state)
+            self.assertTrue(svg.startswith("<svg "))
+            self.assertIn("2 entries · 1 open", svg)
+            self.assertIn('height="20"', svg)
+        # the two live badges under their own names; no badge.svg any more
+        self.assertEqual(
+            sorted(BADGES), ["badge-entries-flat.svg", "badge-entries.svg"]
+        )
+        self.assertNotIn("badge.svg", BADGES)
 
 
 class FamilyTest(unittest.TestCase):

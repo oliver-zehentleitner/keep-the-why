@@ -436,6 +436,8 @@ dashboard behind the link.
 badge service renders on request — the idea that had been parked in
 `TODO.md`. Rejected on review: a service in between, for a picture.
 
+**Consequence (2026-09-30, maintainer decision, dashboard 0.4.0):** the one `badge.svg` became two, with speaking names: `badge-entries.svg` in Keep the Why's own style — the static badge's wordmark extended by the numbers, so the static and the live badge read as one family — and `badge-entries-flat.svg` in the flat style badge services draw, for a badge row where the styled one would stand out. `badge.svg` is not written any more, no alias: a clean cut, every README that carried it switched in the same rollout. The name carries the metric, so a further badge — a ratio of code to context was considered and parked — gets a name of its own instead of a second meaning for `badge.svg`.
+
 ## The dashboard shows the family as a view and a grouped menu, keeps *forget* out of the dropdown, and makes the Id an address
 
 **Id:** 55247232-1368-40b4-a955-3c929b7f7b6b

@@ -89,7 +89,8 @@ Offered by the project wizard when a docs build exists (a GitHub Pages workflow,
 
 ```yaml
       # Keep the Why: the project's own dashboard on /dashboard/live/ — index.html,
-      # state.json and badge.svg, exported from this checkout. Needs the full
+      # state.json and the live badges (badge-entries.svg, badge-entries-flat.svg),
+      # exported from this checkout. Needs the full
       # history (fetch-depth: 0 on the checkout step) to date entries by commit.
       - run: |
           pip install --quiet keep-the-why-dashboard
@@ -99,10 +100,10 @@ Offered by the project wizard when a docs build exists (a GitHub Pages workflow,
 `site/` is whatever directory the build uploads (`site/` for MkDocs, `_site/` for Jekyll, `build/` for Sphinx — match the project's own). `--anonymize` replaces Git author names with `author-1`, `author-2`, … for a repository whose contributors did not ask to be listed on a web page. The live badge in the README then points at the project's own export:
 
 ```markdown
-[![Keep the Why · live](https://example.org/dashboard/live/badge.svg)](https://example.org/dashboard/live/)
+[![Keep the Why · live](https://example.org/dashboard/live/badge-entries.svg)](https://example.org/dashboard/live/)
 ```
 
-with the site's real URL, and `dashboard-state: https://example.org/dashboard/live/state.json` in `.keep-the-why` — the line another dashboard reads, in its *public* mode, to show this project's export in place of a checkout (the family web across repositories, `docs/dashboard.md`). `badge.svg` is rendered at export time with the project's numbers ("42 entries · 3 open" — open, needs-review and pending-confirmation count as open), so README → the project's own SVG → the project's own dashboard, and no badge service in between. Staged, not committed, like everything else setup writes.
+with the site's real URL, and `dashboard-state: https://example.org/dashboard/live/state.json` in `.keep-the-why` — the line another dashboard reads, in its *public* mode, to show this project's export in place of a checkout (the family web across repositories, `docs/dashboard.md`). `badge-entries.svg` is rendered at export time with the project's numbers (and `badge-entries-flat.svg` shows the same in the flat style badge services draw) ("42 entries · 3 open" — open, needs-review and pending-confirmation count as open), so README → the project's own SVG → the project's own dashboard, and no badge service in between. Staged, not committed, like everything else setup writes.
 
 ## The local run is a different setting
 

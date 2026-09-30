@@ -291,7 +291,8 @@ through, and where a chain starts from an entry with Evidence inferred or unknow
 one whole; the terms are defined in the specification (§9.7, informative) and the FAQ. Search covers the project or, with the family scope, the whole family tree. `#entry/<uuid>` is an entry's address and
 every entry link on the page uses it, so a copied URL survives a reworded heading or a moved
 entry. `ktw-dashboard --export DIR` writes a self-contained `index.html` (state embedded, no
-server, no CDN) plus `state.json` and `badge.svg`, the project's numbers for a README badge;
+server, no CDN) plus `state.json` and two live badges — `badge-entries.svg` in Keep the Why's style,
+`badge-entries-flat.svg` in the flat style — with the project's numbers for a README;
 another dashboard reads a published `state.json` in its public mode, through the project's
 `dashboard-state` line. It writes nothing into any project; the one file it keeps is
 `~/.keep-the-why/projects.json`, the project mapping the skill keeps too. The server checks
@@ -396,7 +397,8 @@ Show that a project uses Keep the Why:
 ```
 
 A project that publishes its dashboard export can add a live badge with its own numbers,
-`[![Keep the Why · live](<site>/dashboard/live/badge.svg)](<site>/dashboard/live/)`.
+`[![Keep the Why · live](<site>/dashboard/live/badge-entries.svg)](<site>/dashboard/live/)` — or
+`badge-entries-flat.svg` for the flat style.
 
 HTML equivalent and details: https://keepthewhy.com/badge/
 
