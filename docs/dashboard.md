@@ -66,6 +66,21 @@ ktw-dashboard [PATH] [--host 127.0.0.1] [--port 8765] [--no-browser] [--interval
 | `--no-update-check` | don't ask pypi.org for newer versions of the dashboard and the linter — the check runs at start and once every 24 hours and is the server's only network call; a found update makes the package's entry in the status bar shimmer, with the version and the `pip install -U` line in its tooltip. The exported page never checks |
 | `--host 0.0.0.0` | exposes the page on the network; the CLI warns. Everything shown is the project's `context/` — treat the port like the repository |
 
+## Show a proposal before it is merged
+
+A `context/` that exists only in a pull request — a retrospective pass for a project that never had one, or a migration — can be shown rendered before the maintainer merges or installs anything: export the page from the branch and publish the export on the fork's own GitHub Pages.
+
+```bash
+git checkout <the branch>                                     # in the fork's checkout
+ktw-dashboard --export out --anonymize --no-browser --no-history --no-update-check .
+```
+
+Publish `out/` as the fork's `gh-pages` branch — an orphan branch holding the four exported files and an empty `.nojekyll` — and switch Pages on once for that branch (`gh api -X POST repos/<owner>/<repo>/pages -f build_type=legacy -f "source[branch]=gh-pages" -f "source[path]=/"`, or the repository's settings). A minute later `https://<owner>.github.io/<repo>/` shows the whole page: overview, graph with every `See` line, friends where the branch cites other repositories, the queues — from one static file, nothing installed, nothing cloned, nothing merged. Link it from the pull request.
+
+Three things to know. The page is a snapshot of the branch: re-export and push `gh-pages` again after the pull request changes. `--anonymize` because it is someone else's repository — the contributors did not ask to be listed on a page of yours. And a `See` line *into* the branch from another project resolves only once the branch is merged (the other page reads the repository's published export at `HEAD`), while the branch's own `See` lines *out* to projects that publish their export resolve right away — a proposal that cites a friend already shows the friendship, the friend shows it back after the merge.
+
+First used for [tarasko/picows#111](https://github.com/tarasko/picows/pull/111), rendered at [oliver-zehentleitner-aigent.github.io/picows](https://oliver-zehentleitner-aigent.github.io/picows/).
+
 ## Several projects
 
 Started inside a project, the dashboard shows that one. The project menu shows families grouped — a parent, its children indented below it — and each project's type, repository or cache; the **Projects** view is the same list with the details and the *forget* control. The project menu in the top bar lists the ten most recently opened projects (one project id can appear at several paths — clones, worktrees), projects found near the start directory, and ids that have a personal file in `~/.keep-the-why/` but no known location yet; opening a project moves it to the top of the history.
