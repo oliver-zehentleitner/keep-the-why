@@ -133,7 +133,7 @@ None of this is specific to Keep the Why; it is the same set of settings any tea
 | E112 | error | more than one `Status`/`Evidence`/`Id`/`Superseded by` line |
 | E113 | error | `Status: pending-confirmation` below `context-schema` 0.13.0 |
 | E114 | error | entry has no `Id` (since 0.18.0) |
-| E115 | error | `Id` is not a lowercase UUID |
+| E115 | error | `Id` is not a lowercase UUID — one written in capitals (macOS's `uuidgen` prints them) is reported with its lowercase form: lowercase it in place, it stays the same Id |
 | E116 | error | the same `Id` on two entries of the project |
 | E117 | error | `See` or `Superseded by` value not in its documented shape — for another project, the locator must be exactly that project's `canonical` (the repository URL — no file path, anchor, query or `.git` suffix) |
 | E118 | error | `See` / `Superseded by` names an `Id` no entry in this project carries |

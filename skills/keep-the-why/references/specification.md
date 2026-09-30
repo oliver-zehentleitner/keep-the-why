@@ -329,7 +329,7 @@ Header fields are lines of the form `**<Field>:** <value>` directly after the he
 
 | Field | Required | Values |
 |---|---|---|
-| `Id` | yes, exactly one line, since 0.18.0 (`E114`, `E112`) | a UUID version 4, lowercase, `8-4-4-4-12` hex (`E115` checks the shape); unique in the project (`E116`). Assigned when the entry is written, by an OS command — `uuidgen`, `cat /proc/sys/kernel/random/uuid`, PowerShell's `[guid]::NewGuid()` — never composed by hand or from memory; never changed afterwards |
+| `Id` | yes, exactly one line, since 0.18.0 (`E114`, `E112`) | a UUID version 4, lowercase, `8-4-4-4-12` hex (`E115` checks the shape); unique in the project (`E116`). Assigned when the entry is written, by an OS command — `uuidgen`, `cat /proc/sys/kernel/random/uuid`, PowerShell's `[guid]::NewGuid()` — never composed by hand or from memory; never changed afterwards. Lowercase whatever the command prints: macOS's `uuidgen` prints capitals, its output goes through `tr 'A-F' 'a-f'`. An Id found in capitals is lowercased in place, together with the `See` and `Superseded by` lines citing it — a spelling correction, the same Id (`E115` and `E117` name the case) |
 | `Type` | no — fill in when a value fits, at the latest when the entry is next touched (`W101`) | `decision` \| `workaround` \| `incident` \| `constraint` — one line per value that applies (since 0.9.0), no value twice (`E109`); or a single `undefined — <short reason>` line (since 0.8.0), which combines with nothing (`E107`, `E108`) |
 | `Status` | yes, exactly one line (`E101`, `E112`) | `active` \| `superseded` \| `open` \| `needs-review` \| `pending-confirmation` (since 0.13.0, `E113` below it) |
 | `Evidence` | yes, exactly one line (`E102`, `E112`) | `confirmed` \| `inferred` \| `unknown` |

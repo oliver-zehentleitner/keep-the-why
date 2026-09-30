@@ -894,6 +894,55 @@ class EntryIdentity(_ProjectFixture):
                 findings, _ = self.run_lint()
                 self.assertIn("E115", self.codes(findings))
 
+    def test_capitals_id_is_e115_and_says_lowercase_not_regenerate(self):
+        # macOS's `uuidgen` prints capitals: the UUID is right, the spelling is
+        # not, and the finding has to say so — "uuidgen makes one" would send
+        # the agent round the same loop
+        upper = ID_A.upper()
+        self.base_project(config=CONFIG_0_18, topic="# Sync\n\n" + entry("X", upper))
+        findings, _ = self.run_lint()
+        msgs = [f.message for f in findings if f.code == "E115"]
+        self.assertEqual(len(msgs), 1)
+        self.assertIn("capitals", msgs[0])
+        self.assertIn(ID_A, msgs[0])  # the lowercase form, ready to paste
+        self.assertIn("not a new", msgs[0])
+
+    def test_malformed_id_message_does_not_claim_capitals(self):
+        self.base_project(
+            config=CONFIG_0_18, topic="# Sync\n\n" + entry("X", "a1b2c3d4")
+        )
+        findings, _ = self.run_lint()
+        msgs = [f.message for f in findings if f.code == "E115"]
+        self.assertEqual(len(msgs), 1)
+        self.assertNotIn("written in capitals", msgs[0])
+
+    def test_capitals_uuid_in_see_and_superseded_by_is_e117_with_the_hint(self):
+        for extra, status in (
+            (f"**See:** auth.md — {ID_B.upper()} — as of 2026-09-27\n", "active"),
+            (f"**Superseded by:** {ID_B.upper()}\n", "superseded"),
+            (
+                f"**Superseded by:** https://github.com/acme/suite — {ID_B.upper()}"
+                " — as of 2026-09-27\n",
+                "superseded",
+            ),
+        ):
+            with self.subTest(extra=extra):
+                self.base_project(
+                    config=CONFIG_0_18,
+                    topic="# Sync\n\n" + entry("X", ID_A, status=status, extra=extra),
+                )
+                findings, _ = self.run_lint()
+                msgs = [f.message for f in findings if f.code == "E117"]
+                self.assertEqual(len(msgs), 1, findings)
+                self.assertIn("lowercase it", msgs[0])
+
+    def test_malformed_see_has_no_lowercase_hint(self):
+        self.project_0_18(sync_extra="**See:** auth.md — nope — as of 2026-09-27\n")
+        findings, _ = self.run_lint()
+        msgs = [f.message for f in findings if f.code == "E117"]
+        self.assertEqual(len(msgs), 1)
+        self.assertNotIn("lowercase it", msgs[0])
+
     def test_duplicate_id_across_files_is_e116(self):
         self.project_0_18(
             more_files={"auth.md": "# Auth\n\n" + entry("Token cache", ID_A)}

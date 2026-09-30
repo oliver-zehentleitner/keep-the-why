@@ -176,3 +176,22 @@ A topic is addressed by its file name — in `index.md`, in `See` locators and i
 **Rejected alternative:** an `**Id:**` line under the topic file's title, UUID v4, like an entry's. Rejected as above — the cost of a format change for a rare case that it only partly covers.
 
 **Deferred alternative:** if renamed topics do cause broken links, the dashboard resolves the old name instead of the format changing: in live mode it follows the rename in the Git history (`git log --follow` / `--diff-filter=R`) and forwards `#topic/<old>.md` to the new file; without a hit, and in a static export, it says the topic is gone and offers a search for the old name. No format element, and it covers the one case a topic `Id` would. Not built until a real problem shows up.
+
+
+## An `Id` is lowercase only; the linter names a capitals Id instead of accepting it
+
+**Id:** 2ce08331-21e9-4001-8ac6-6a843876281f
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer conversation, 2026-09-30, after the first report from a project set up on macOS, where every entry failed `E115`
+**Revisit when:** Ids are regularly written by something other than the skill — a person, another tool — so that capitals keep coming back, or a second consumer needs to find an Id without being able to rely on its spelling
+**See:** project-families.md#entries-carry-a-uuid-as-their-id-and-see-and-superseded-by-resolve-to-it — 6cae3bbb-10ce-46d5-914b-f884da584532 — as of 2026-09-30
+
+An entry's `Id` and the UUID in a `See` or `Superseded by` line are lowercase, and `keep-the-why-lint` rejects any other spelling (`E115`, `E117`) — as it has since 0.18.0. What 0.18.2 changes is the two ends around that rule: the skill says to lowercase what the OS command prints, and the linter recognises a UUID in capitals and reports it as one, with its lowercase form and the statement that lowercasing corrects the spelling and leaves the Id the same.
+
+**Reason:** macOS's `uuidgen` prints capitals; util-linux's `uuidgen`, `/proc/sys/kernel/random/uuid` and PowerShell's `[guid]::NewGuid()` print lowercase. The skill named `uuidgen` without saying so, the linter rejected the result, and its message pointed back at `uuidgen`; with "never changed afterwards" beside it, an agent on macOS had no way out that the text allowed. The defect was in the instruction, not in the rule. An Id is an address that is compared byte for byte: by the linter's duplicate and resolution checks, by the dashboard's `See` parser and its `#entry/<uuid>` links, and by a plain text search for the UUID, which is how a reference into another repository is followed without any tool. One spelling keeps all of those exact.
+
+**Rejected alternative:** the linter accepts either case and compares without regard to it — the way RFC 4122 reads a UUID, lowercase on output and either case on input. Rejected because every consumer would then have to fold case (`E116`, `E118`, the dashboard's parser and links), and the one that cannot is the text search; two spellings of one address would be in circulation for no gain, since it is the skill that writes the Ids.
+
+**Consequence:** the entry that introduced the Id fixed its form and said nothing about case; this one is where the case rule has its reason. Lowercasing an Id written in capitals is stated in the skill, the specification and the 0.18.2 migration as a correction of its spelling, so "never changed" still holds for the UUID itself.

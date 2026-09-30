@@ -4,6 +4,17 @@ What changed in each version that an existing project may need to know about or 
 
 Entries below assume 0.2.0 as the starting point — nothing before it tracked a `context-schema` at all, and 0.2.0 itself introduced no `context/` entry format change.
 
+## 0.18.2 — an `Id` is lowercase, whatever the OS command printed; the live badge is `badge-entries.svg` (two mechanical checks)
+
+**What changed:** the format has asked for a lowercase UUID since 0.18.0 and `keep-the-why-lint` has enforced it (`E115`), but the skill named `uuidgen` without saying that macOS's prints capitals — an agent on macOS wrote Ids the linter then rejected, and the finding pointed back at `uuidgen`. The skill now says to lowercase what the command prints, and that lowercasing an Id already written in capitals corrects its spelling without changing the Id. `keep-the-why-lint` 0.18.2.0 tells the two cases apart: a UUID in capitals is reported as one, with its lowercase form, in an `Id` (`E115`) and in a `See` or `Superseded by` (`E117`). Nothing that passed before fails now, and nothing that failed passes. Apart from that: `keep-the-why-dashboard` 0.4.0 writes the live badge as `badge-entries.svg` (Keep the Why's style) and `badge-entries-flat.svg` (the flat style) and no `badge.svg` any more, and the wizard and the CI snippet name the new files; the skill directory is also published to npm as `keep-the-why` (`pi install npm:keep-the-why`), one more install route and nothing to act on.
+
+**Existing projects:**
+
+1. If the linter reports `E115` for an Id written in capitals, lowercase it in place, and with it every `See` and `Superseded by` line that cites it; a project that cites it from another repository corrects its own line the same way. No new Id is generated. A project whose Ids are lowercase has nothing to do.
+2. If the README carries the live badge as `<site>/dashboard/live/badge.svg`, name `badge-entries.svg` (or `badge-entries-flat.svg`) instead — from `keep-the-why-dashboard` 0.4.0 on the export no longer writes `badge.svg`, and the old address shows a broken image.
+
+Advance `context-schema` to 0.18.2 as usual.
+
 ## 0.18.1 — the `context/README.md` names `Id`, `See` and `Superseded by`; a cross-project locator is exactly a `canonical` (one mechanical step)
 
 **What changed:** the `context/README.md` the wizard writes lists `Id` under "Reading the entries" — the entry's permanent address, which `See` and `Superseded by` point at. The 0.18.0 migration added the fields to the entries but left the README's list as it was, so a project set up or migrated before this version still explains only `Type`, `Status` and `Evidence`. `keep-the-why-lint` checks the locator of a `See` or `Superseded by` into another project for the exact form of a `canonical` — the repository URL, no file path, anchor, query, `.git` suffix or trailing slash (`E117`); before, anything starting with `https://` passed. A `canonical` field and a family location with a query or fragment are `E003`. The skill's references were corrected against the linter and the recorded decisions without changing behaviour (`CHANGELOG.md`).

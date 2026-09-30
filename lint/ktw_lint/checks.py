@@ -153,6 +153,13 @@ _DASH_SPLIT_RE = re.compile(r"\s+[—–-]\s+")
 # specification asks for version 4; the linter checks the shape, not the
 # version nibble — an id is an address, and any UUID addresses.
 _UUID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
+# The same shape in any case — never accepted, only recognised, so the finding
+# can say "lowercase it" instead of "make a new one": macOS's `uuidgen` prints
+# capitals, and an Id written that way is the right UUID in the wrong spelling.
+_UUID_ANYCASE_RE = re.compile(_UUID_RE.pattern, re.IGNORECASE)
+_LOWERCASE_HINT = (
+    " — the UUID in it is written in capitals; lowercase it, it stays the same Id"
+)
 _AS_OF_RE = re.compile(rf"^as of {_DATE}$")
 # A local See locator: `<file>.md` or `<file>.md#<anchor>`, a bare topic
 # file name — no directory part, since context/ is flat.
@@ -1138,15 +1145,28 @@ class Linter:
                 f"'{entry.title}': more than one **Id:** line",
             )
         value = fields[0].value.strip()
-        if not _UUID_RE.match(value):
+        if _UUID_RE.match(value):
+            return
+        if _UUID_ANYCASE_RE.match(value):
             self.add(
                 ERROR,
                 "E115",
                 path,
                 fields[0].line,
-                f"Id {value!r} is not a UUID (lowercase, 8-4-4-4-12 hex; "
-                "`uuidgen` or /proc/sys/kernel/random/uuid makes one)",
+                f"Id {value!r} is written in capitals — an Id is lowercase. "
+                f"Lowercase it in place ({value.lower()}): the same UUID, not a new "
+                "Id (macOS's `uuidgen` prints capitals)",
             )
+            return
+        self.add(
+            ERROR,
+            "E115",
+            path,
+            fields[0].line,
+            f"Id {value!r} is not a UUID (lowercase, 8-4-4-4-12 hex; "
+            "`uuidgen` — lowercased, macOS prints capitals — or "
+            "/proc/sys/kernel/random/uuid makes one)",
+        )
 
     def _resolve_local_reference(self, path, line, field, uuid, locator=None):
         """E118 when `uuid` names no entry in this project; with a local
@@ -1180,6 +1200,13 @@ class Linter:
                 f"Id {uuid} names: '{found_entry.title}' in {want_file} "
                 f"(#{anchor(found_entry.title)}) — repair the locator, keep the Id",
             )
+
+    @staticmethod
+    def _lowercase_hint(uuid):
+        """The E117 suffix for a reference whose UUID is only spelled wrong."""
+        if _UUID_ANYCASE_RE.match(uuid) and not _UUID_RE.match(uuid):
+            return _LOWERCASE_HINT
+        return ""
 
     @staticmethod
     def _split_reference(value):
@@ -1218,7 +1245,8 @@ class Linter:
                     fld.line,
                     f"See {fld.value!r} is not '<file>.md[#<anchor>] — <uuid> — as of "
                     "YYYY-MM-DD' (an entry here) or '<canonical> — <uuid> — as of "
-                    "YYYY-MM-DD' (an entry in another project)",
+                    "YYYY-MM-DD' (an entry in another project)"
+                    + self._lowercase_hint(parts[1] if parts else ""),
                 )
                 continue
             self._resolve_local_reference(
@@ -1290,7 +1318,8 @@ class Linter:
                 path,
                 line,
                 f"Superseded by {value!r} is not an Id, a '<canonical> — <uuid> — "
-                "as of YYYY-MM-DD' reference, or 'none — <reason>'",
+                "as of YYYY-MM-DD' reference, or 'none — <reason>'"
+                + self._lowercase_hint(parts[1] if parts else value),
             )
 
     def _check_single_valued(
