@@ -569,6 +569,7 @@ const report = {};
   const sel = ctl?.querySelector("select");
   if (!sel || sel.options.length !== 11 || sel.value !== "1") errors.push("globe: the hops choice is not off…10 with 1 chosen: " + sel?.options.length + " " + sel?.value);
   const before = fetched.length;
+  window.__g().userMoved = true; // as if the reader had panned or zoomed
   [...ctl.querySelectorAll("button")].find((b) => b.textContent === "go")?.click(); await tick(300);
   const dialog = d.querySelector(".globe-dialog");
   if (!dialog) errors.push("globe: no dialog before the first wave");
@@ -581,6 +582,7 @@ const report = {};
   let hubs = g.nodes.filter((n) => n.kind === "project" && n.hop != null).map((n) => `${n.label}:${n.hop}`);
   if (hubs.join() !== "acme/far:1") errors.push("globe: after hop 1 the graph should hold acme/far at hop 1: " + hubs.join());
   if (!/acme\/far · hop 1/.test(d.querySelector(".graph-legend")?.textContent.replace(/\s+/g, " ") || "")) errors.push("globe: the legend does not say hop 1 for acme/far");
+  if (g.userMoved) errors.push("globe: after a wave the view is not framed again (userMoved still set)");
   // the second wave, asked for again, finds farther; a no leaves hop 1 standing
   const sel2 = d.querySelector(".graph-ui .globe-ctl select"); sel2.value = "2"; sel2.dispatchEvent(new window.Event("change")); await tick(300);
   [...d.querySelectorAll(".graph-ui .globe-ctl button")].find((b) => /^go on/.test(b.textContent))?.click(); await tick(300);

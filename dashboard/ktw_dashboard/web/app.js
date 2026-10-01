@@ -1788,6 +1788,7 @@ async function globeRun(hops) {
       await Promise.all(cands.map(loadFriend));
       let ok = 0; for (const c of cands) { const k = fkey(c.canonical); const r = FRIENDS.loaded[k]; if (r?.state) { GLOBE.extra.set(k, { ...c, hop }); GLOBE.failed.delete(k); ok++; } else GLOBE.failed.set(k, { canonical: c.canonical, error: r?.error || "could not be loaded", hop }); }
       GLOBE.done = hop; GLOBE.log.push(`hop ${hop}: ${ok} of ${cands.length} loaded`);
+      globeRefit();
       if (fgraph) fgraph.at = 0; render();
     }
   } finally { GLOBE.busy = false; if (fgraph) fgraph.at = 0; render(); }
@@ -1808,6 +1809,7 @@ async function globeRegistry() {
     await Promise.all(cands.map(loadFriend));
     let ok = 0; for (const c of cands) { const k = fkey(c.canonical); const r = FRIENDS.loaded[k]; if (r?.state) { GLOBE.extra.set(k, { ...c, hop: 0, registry: true }); GLOBE.failed.delete(k); ok++; } else GLOBE.failed.set(k, { canonical: c.canonical, error: r?.error || "could not be loaded", hop: "registry" }); }
     GLOBE.registry = true; GLOBE.log.push(`registry: ${ok} of ${list.length} loaded`);
+    globeRefit();
   } catch (err) { GLOBE.log.push(`registry: could not be read (${err?.message || "network"})`); }
   finally { GLOBE.busy = false; if (fgraph) fgraph.at = 0; render(); }
 }
@@ -1830,7 +1832,9 @@ function globeIntro() {
     el("div", { class: "globe-actions" }, el("label", { class: "note", style: "margin-right:auto" }, never, " don't show this again"), el("button", { type: "button", class: "primary", onclick: close }, "got it"))));
   document.body.append(box);
 }
-function globeClear() { GLOBE.extra.clear(); GLOBE.failed.clear(); GLOBE.done = 0; GLOBE.registry = false; GLOBE.log = []; if (fgraph) fgraph.at = 0; render(); }
+// what a wave brought in may lie outside the view: frame the whole graph again, whatever the reader had moved
+function globeRefit() { for (const x of [graph, fgraph]) if (x) { x.userMoved = false; x.alpha = Math.max(x.alpha, 0.5); } }
+function globeClear() { globeRefit(); GLOBE.extra.clear(); GLOBE.failed.clear(); GLOBE.done = 0; GLOBE.registry = false; GLOBE.log = []; if (fgraph) fgraph.at = 0; render(); }
 function globeUi(g) {
   if (!GLOBE.view) return null;
   const sel = el("select", { title: "how many hops out from what is loaded — each wave is asked for with its count", onchange: (ev) => { GLOBE.hops = Number(ev.target.value); if (GLOBE.hops === 0) globeClear(); else render(); } }, ...Array.from({ length: 11 }, (_, i) => el("option", { value: String(i), selected: i === GLOBE.hops }, i === 0 ? "off" : `${i} hop${i === 1 ? "" : "s"}`)));
@@ -2014,7 +2018,7 @@ function viewGraph(main) {
       const n = g.nodes.find((x) => (c.entry && x.entry && (x.entry === c.entry || (c.entry.uuid && x.entry.uuid === c.entry.uuid))) || (c.topic && x.kind === "topic" && x.file === c.topic.file));
       if (n) { g.ox = -n.x * g.scale; g.oy = -n.y * g.scale; g.userMoved = true; }
     }
-    runGraph(canvas, g, { fit: family });
+    runGraph(canvas, g, { fit: family || GLOBE.view }); // the family graph and the globe keep everything in view
     renderThoughts(g);
   };
   if (!family) return fill(buildGraph());
