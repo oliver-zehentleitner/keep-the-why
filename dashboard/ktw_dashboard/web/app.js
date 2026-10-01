@@ -1124,7 +1124,8 @@ function selectAll(g, on) {
   for (const k of Object.keys(LABELS)) setLabels(k, on);
   setFamilyNeighbours(on); setFamilyEntries(on);
   setFriendEntries(on); setFriendFamilies(on); setFriendFamEntries(on); setPathEntries(on);
-  if (on) { setFriendsAuto(true); setKeepPath(true); autoFamily(); autoFriends(g); } else { FRIENDS.on = false; setFriendsAuto(false); setKeepPath(false); }
+  setTrailShow(on); // the path is hidden or shown, never discarded here
+  if (on) { setFriendsAuto(true); setKeepPath(true); autoFamily(); autoFriends(g); } else { FRIENDS.on = false; setFriendsAuto(false); }
   if (fgraph) fgraph.at = 0;
   render();
 }
@@ -1421,7 +1422,8 @@ function addLinkedLayer(g, prev, items) {
 // the graph, joined in the order walked, with the entries that link them.
 let TRAIL = []; // [{ key, centre, state, name, canonical, url }], oldest first; the centre shown is not in it
 const VISITED = new Map(); // key -> the same, every centre of this page, for back and forward
-let TRAIL_SHOW = true;
+let TRAIL_SHOW = (() => { try { return localStorage.getItem("ktw-path-show") !== "off"; } catch { return true; } })(); // the path drawn in the graph; off hides it, the path itself stays
+function setTrailShow(on) { TRAIL_SHOW = on; try { localStorage.setItem("ktw-path-show", on ? "on" : "off"); } catch {} }
 let KEEP_PATH = (() => { try { return localStorage.getItem("ktw-path") !== "off"; } catch { return true; } })();
 const keepPath = () => KEEP_PATH;
 function setKeepPath(on) { KEEP_PATH = on; if (!on) TRAIL = []; try { localStorage.setItem("ktw-path", on ? "on" : "off"); } catch {} }
@@ -1504,7 +1506,7 @@ function pathBar() {
   const steps = TRAIL.map((t, i) => [el("a", { href: t.url + "#graph", title: `back to ${t.name} — the path shortens to here`, onclick: (ev) => { ev.preventDefault(); moveTo(t, "#graph"); } }, `${i + 1} · ${t.name}`), el("span", { class: "sep" }, " › ")]).flat();
   return el("div", { class: "path-bar" }, el("span", { class: "label" }, "Path "), ...steps, el("b", {}, here),
     el("span", { class: "grow" }),
-    el("label", { title: "show the path's projects in the graph" }, el("input", { type: "checkbox", checked: TRAIL_SHOW, onchange: (ev) => { TRAIL_SHOW = ev.target.checked; if (fgraph) fgraph.at = 0; render(); } }), "in graph"),
+    el("label", { title: "show the path's projects in the graph" }, el("input", { type: "checkbox", checked: TRAIL_SHOW, onchange: (ev) => { setTrailShow(ev.target.checked); if (fgraph) fgraph.at = 0; render(); } }), "in graph"),
     el("button", { type: "button", class: "link-btn", title: "forget the path; this project becomes the start", onclick: () => { TRAIL = []; if (fgraph) fgraph.at = 0; render(); } }, "discard"));
 }
 function friendsUi(g) {
@@ -1787,7 +1789,7 @@ function viewGraph(main) {
       el("span", { class: "ui-group" }, el("label", {}, el("input", { type: "checkbox", checked: g.showEntries, onchange: (ev) => { g.showEntries = ev.target.checked; setShowEntries(ev.target.checked); g.alpha = 0.5; g.wake?.(); } }), "entries"), labelsUi(g, "project", "this project's topics and entries")),
       famUi ? el("span", { class: "ui-group" }, famUi, FAMILY_NB_ON ? labelsUi(g, "family", "the family's projects") : null) : null,
       fui ? el("span", { class: "ui-group" }, fui) : null,
-      el("span", { class: "ui-group" }, el("label", { title: "keep the path while you walk from project to project — the projects you came through stay in the graph" }, el("input", { type: "checkbox", checked: keepPath(), onchange: (ev) => { setKeepPath(ev.target.checked); render(); } }), "path"),
+      el("span", { class: "ui-group" }, el("label", { title: "the path's projects in the graph — the projects you came through; unchecked they are hidden, not forgotten (the path bar discards)" }, el("input", { type: "checkbox", checked: keepPath() && TRAIL_SHOW, onchange: (ev) => { if (ev.target.checked && !keepPath()) setKeepPath(true); setTrailShow(ev.target.checked); if (fgraph) fgraph.at = 0; render(); } }), "path"),
         ...(pathShown() && TRAIL.some((t) => !sameCentreAsGraph(g, t)) ? [allEntriesUi("path", PATH_ENTRIES, setPathEntries, "every step of the path"), labelsUi(g, "path", "the path's projects")] : [])),
       el("span", { class: "ui-group" }, el("label", { title: "the graph turns very slowly; it stops while you point at it" }, el("input", { type: "checkbox", checked: driftOn(), onchange: (ev) => { setDrift(ev.target.checked); g.wake?.(); } }), "motion")),
       el("span", { class: "ui-group" },
