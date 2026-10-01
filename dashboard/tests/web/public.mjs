@@ -426,17 +426,18 @@ const report = {};
   window.close();
 }
 {
-  // all their entries: every entry of every friend on one switch, off by default
+  // friends entries: every entry of every friend, on by default; off leaves the entries that link here
   const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/refs`)}#graph`);
   await tick(600);
   const d = window.document;
   const notes = () => window.__g().nodes.filter((n) => n.kind === "entry" && n.id.startsWith("fe:P:https://github.com/acme/notes|")).length;
   const box = d.querySelector(".graph-ui .friends-ctl .friend-entries input");
-  if (!box || box.checked) errors.push("friend entries: no switch in the friends group, or on by default");
-  const shown = notes();
+  if (!box || !box.checked) errors.push("friend entries: no switch in the friends group, or off by default");
+  const whole = notes();
+  box.checked = false; box.dispatchEvent(new window.Event("change")); await tick(150);
+  if (!(notes() < whole)) errors.push(`friend entries: switching off did not reduce notes to the linked ones (${whole} → ${notes()})`);
+  if (window.localStorage.getItem("ktw-friend-entries") !== "linked") errors.push("friend entries: not kept for this browser");
   box.checked = true; box.dispatchEvent(new window.Event("change")); await tick(150);
-  if (!(notes() > shown)) errors.push(`friend entries: switching on did not show more of notes (${shown} → ${notes()})`);
-  if (window.localStorage.getItem("ktw-friend-entries") !== "all") errors.push("friend entries: not kept for this browser");
   // friends families: a friend's family beside it, on by default; off leaves the cited repository alone
   const famSwitch = d.querySelector(".graph-ui .friends-ctl .friend-families input");
   if (!famSwitch || !famSwitch.checked) errors.push("friends families: no switch, or off by default");

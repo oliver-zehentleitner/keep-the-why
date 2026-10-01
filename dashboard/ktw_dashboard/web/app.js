@@ -1063,8 +1063,8 @@ const FRIENDS = { on: false, loaded: {}, pending: {}, expanded: new Set(), load:
 let FRIENDS_AUTO = (() => { try { return localStorage.getItem("ktw-friends") !== "off"; } catch { return true; } })();
 // every entry of every friend, not only what links to this graph — off by default, kept per browser
 // "all their entries" per kind of neighbour — friends, the path's steps, the family — each kept per browser
-const readEntriesSetting = (key) => { try { return localStorage.getItem(key) === "all"; } catch { return false; } };
-let FRIEND_ENTRIES = readEntriesSetting("ktw-friend-entries");
+const readEntriesSetting = (key, dflt = false) => { try { const v = localStorage.getItem(key); return v == null ? dflt : v === "all"; } catch { return dflt; } };
+let FRIEND_ENTRIES = readEntriesSetting("ktw-friend-entries", true); // a friend comes whole by default; the family's and the path's steps come linked
 // a friend that has a family comes with it — the members beside the cited repository — unless this is off; their entries and labels have switches of their own
 let FRIEND_FAMILIES = (() => { try { return localStorage.getItem("ktw-friend-families") !== "off"; } catch { return true; } })();
 function setFriendFamilies(on) { FRIEND_FAMILIES = on; try { localStorage.setItem("ktw-friend-families", on ? "on" : "off"); } catch {} }
