@@ -5,8 +5,9 @@ Every line is a repository's canonical URL. The build reads that repository's
 ``.keep-the-why`` at HEAD, follows its ``dashboard-state`` line to the
 published export, and checks that the export names this repository
 (``project.canonical``) — the state's URL is read, never listed, so an export
-that moves is followed on the next build. A family is listed by its root;
-its children come with it from its own ``children`` block. A line that never
+that moves is followed on the next build. A family is listed by its root
+(the topmost project); its members come with it through the parent/children
+relation. A line that never
 loaded fails the build (a new line in a pull request, a typo); a listed
 repository whose export stops answering stays as last seen, marked ``error``
 and ``failed_since``, for GRACE_DAYS before it is dropped — much of that is

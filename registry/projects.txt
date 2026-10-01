@@ -6,8 +6,11 @@
 # `dashboard-state` line to the export, and checks that the export names this
 # repository — then writes docs/registry/index.json, which the dashboard's globe
 # reads. Move your export and the listing follows: only `dashboard-state` changes.
-# A family is listed by its root: the children come with it, from its own
-# `children` block. Nothing here is required for the dashboard to work; the
+# A family is listed by its root (the topmost project): its members come with
+# it through the family relation — each parent's `children` block, each child's
+# `parent` line — whether they are separate repositories or isolated
+# sub-projects of a mono repository. Listing members as well works, the root
+# alone is simpler. Nothing here is required for the dashboard to work; the
 # globe finds repositories by their citations without it. A listing is an
 # invitation to be found from anywhere, including from projects that cite
 # nothing of yours.

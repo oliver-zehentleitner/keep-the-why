@@ -12,7 +12,9 @@ A list of repositories with a published Keep the Why dashboard export, kept in [
 
 ## To be listed
 
-Open a pull request that adds one line to `registry/projects.txt`: your repository's canonical URL — the `canonical` line of its `.keep-the-why`, e.g. `https://github.com/owner/repo`. Nothing else: the `registry` workflow reads the repository's `.keep-the-why` at `HEAD`, follows its `dashboard-state` line to the export (the [dashboard page](../dashboard.md#show-a-proposal-before-it-is-merged) says how an export is published), and checks that the export names this repository. Move the export later and the listing follows — only `dashboard-state` changes. A family is listed by its root: the children come with it, from its own `children` block.
+Open a pull request that adds one line to `registry/projects.txt`: your repository's canonical URL — the `canonical` line of its `.keep-the-why`, e.g. `https://github.com/owner/repo`. Nothing else: the `registry` workflow reads the repository's `.keep-the-why` at `HEAD`, follows its `dashboard-state` line to the export (the [dashboard page](../dashboard.md#show-a-proposal-before-it-is-merged) says how an export is published), and checks that the export names this repository. Move the export later and the listing follows — only `dashboard-state` changes.
+
+**A family is listed by its root** — the topmost project, for a nested family the parent of the parents. Its members come with it through the family relation itself: the `children` block of each parent and the `parent` line of each child, whether the members are separate repositories or isolated sub-projects of one mono repository (a `.keep-the-why` with its own `root`). That relation has to be there; a listing does not make one. Listing members on their own as well works too — duplicates are merged — but the root alone is simpler. In the globe the members come along while *friends families* is on (the default); with it off, a registry wave brings the listed repository alone. And a listed project brings what it cites: its friends are the next hop of the globe.
 
 ## When an export stops answering
 
