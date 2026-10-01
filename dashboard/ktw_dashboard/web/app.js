@@ -1321,10 +1321,11 @@ function addLinkedLayer(g, prev, items) {
   for (const it of items) for (const m of it.members) for (const e of m.state.entries || []) if (e.uuid) pool.add(e.uuid);
   const R = 680 + 40 * items.length;
   const placed = [];
-  // with the family beside it, the project is a hub too — its topics on spokes, as in the family graph — so the
-  // parent and child lines have something to join, and the family reads as one shape instead of islands
+  // with anything beside it — the family, a friend, the path — the project is a hub too, its topics on spokes, as in
+  // the family graph: the parent and child lines, and the path's last step, have something to join, and the centre
+  // reads as one project among the others instead of a loose cloud of topics
   let selfHub = null;
-  if (items.some((it) => it.kind === "family") && !nodes.some((n) => n.kind === "project" && !n.ext)) {
+  if (items.length && !nodes.some((n) => n.kind === "project" && !n.ext)) {
     const p = SELF?.project || S.project || {};
     selfHub = add({ id: "p:self", kind: "project", self: true, label: p.id || p.name || "this project", canonical: canonicalOf(p), r: 15, color: color0(), href: "#overview" }, { x: 0, y: 0 });
     selfHub.ext = false; selfHub.unit = null;
@@ -1418,6 +1419,7 @@ function addLinkedLayer(g, prev, items) {
     }
     // the walk's order: one step's hub to the next
     if (P.it.next) { const Q = placed.find((q) => q.it.k === P.it.next); if (Q) links.push({ s: P.firstHub, t: Q.firstHub, kind: "trail", len: 360 }); }
+    else if (P.it.kind === "trail" && selfHub) links.push({ s: P.firstHub, t: index[selfHub.id], kind: "trail", len: 360 }); // the last step walked from leads here
   }
 }
 
