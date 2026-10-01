@@ -476,6 +476,11 @@ a.author:hover { color: var(--accent2); }
 .statusbar .globe-egg { margin-left: 14px; font-size: 12px; opacity: .55; text-decoration: none; } .statusbar .globe-egg:hover { opacity: 1; }
 .graph-ui .globe-ctl select { font-size: 11px; background: var(--bg2); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 1px 4px; }
 .graph-ui .globe-mark { font-size: 13px; }
+.graph-ui .globe-info { position: relative; color: var(--fg3); cursor: help; font-size: 13px; line-height: 1; margin-left: -4px; }
+.graph-ui .globe-info:hover, .graph-ui .globe-info:focus { color: var(--fg); outline: none; }
+.graph-ui .globe-info-box { display: none; position: absolute; top: 20px; left: -120px; z-index: 6; width: 360px; background: var(--bg2); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; font-size: 11px; line-height: 1.45; color: var(--fg2); box-shadow: 0 8px 28px rgba(0,0,0,.4); cursor: auto; white-space: normal; }
+.graph-ui .globe-info:hover .globe-info-box, .graph-ui .globe-info:focus-within .globe-info-box { display: block; }
+.graph-ui .globe-info-box p { margin: 6px 0 0; } .graph-ui .globe-info-box b { color: var(--fg); } .graph-ui .globe-info-box code { font-size: 10px; } .graph-ui .globe-info-box a { color: var(--accent2); }
 .globe-dialog { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; }
 .globe-card { background: var(--bg2); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; max-width: 560px; width: calc(100% - 40px); max-height: 80vh; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 12px 40px rgba(0,0,0,.45); }
 .globe-card h3 { margin: 0; }

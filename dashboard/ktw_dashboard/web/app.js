@@ -1787,8 +1787,15 @@ function globeUi(g) {
   const sel = el("select", { title: "how many hops out from what is loaded — each wave is asked for with its count", onchange: (ev) => { GLOBE.hops = Number(ev.target.value); if (GLOBE.hops === 0) globeClear(); else render(); } }, ...Array.from({ length: 11 }, (_, i) => el("option", { value: String(i), selected: i === GLOBE.hops }, i === 0 ? "off" : `${i} hop${i === 1 ? "" : "s"}`)));
   const go = el("button", { type: "button", class: "link-btn", disabled: GLOBE.busy || GLOBE.hops <= GLOBE.done, title: "load the next waves, one asked after the other", onclick: () => globeRun(GLOBE.hops) }, GLOBE.busy ? "loading…" : GLOBE.done ? `go on (${GLOBE.done} done)` : "go");
   const reg = el("label", { title: `every project listed in the registry — ${GLOBE.registryUrl}` }, el("input", { type: "checkbox", checked: GLOBE.registry, disabled: GLOBE.busy, onchange: (ev) => { if (ev.target.checked) globeRegistry(); else { for (const [k, f] of GLOBE.extra) if (f.registry) GLOBE.extra.delete(k); GLOBE.registry = false; render(); } } }), "registry");
+  // an ⓘ beside the switch: what the registry is, and that one line in a pull request puts a project on it
+  const info = el("span", { class: "globe-info", tabindex: "0" }, "ⓘ",
+    el("span", { class: "globe-info-box" },
+      el("b", {}, "The registry"),
+      el("p", {}, "A list of published Keep the Why dashboard exports — one state.json per repository — kept in the keep-the-why repository and built into an index the globe can load as a wave of its own. Nothing needs it: the globe finds repositories by their citations. The registry is for being found from a project that cites nothing of yours — and for seeing who cites you."),
+      el("p", {}, "To be listed, open a pull request that adds one line to ", el("code", {}, "registry/states.txt"), ": the URL your repository's ", el("code", {}, ".keep-the-why"), " names in its ", el("code", {}, "dashboard-state"), " line. A workflow checks that the export loads and that your repository names this very URL — nobody can list an export that is not theirs."),
+      el("p", {}, el("a", { href: "https://keepthewhy.com/registry/", target: "_blank", rel: "noopener" }, "keepthewhy.com/registry"), " · ", el("a", { href: "https://github.com/oliver-zehentleitner/keep-the-why/blob/main/registry/states.txt", target: "_blank", rel: "noopener" }, "registry/states.txt on GitHub"))));
   const clear = GLOBE.extra.size ? el("button", { type: "button", class: "link-btn", title: "drop everything the globe loaded; friends, family and path stay", onclick: globeClear }, "clear") : null;
-  return el("span", { class: "ui-group globe-ctl" }, el("span", { class: "globe-mark" }, "🌐"), sel, go, reg, clear);
+  return el("span", { class: "ui-group globe-ctl" }, el("span", { class: "globe-mark" }, "🌐"), sel, go, reg, info, clear);
 }
 const followAll = () => followChains((g) => { const t = graphThoughts(g); return [...t.thoughts, ...t.open].flatMap((c) => c.ends); });
 // one chain, found again after each hop by its newest entry's Id
