@@ -69,7 +69,7 @@ def main(argv=None) -> int:
     parser.add_argument(
         "--export",
         metavar="DIR",
-        help="write DIR/index.html + DIR/state.json + DIR/badge-entries.svg + DIR/badge-entries-flat.svg and exit",
+        help="write DIR/index.html + DIR/state.json + DIR/state.body.json + DIR/badge-entries.svg + DIR/badge-entries-flat.svg and exit",
     )
     parser.add_argument(
         "--json", action="store_true", help="print the state as JSON and exit"

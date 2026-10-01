@@ -227,6 +227,29 @@ class StateTest(unittest.TestCase):
         self.assertNotIn("</script>", payload)
         self.assertIn("<\\/script>", payload)
 
+    def test_export_keeps_the_bodies_beside_a_lean_state(self):
+        from ktw_dashboard.export import BODIES_FILE, export, split_bodies
+
+        state = StateBuilder(self.root).build()
+        lean, bodies = split_bodies(state)
+        self.assertEqual(lean["bodies"], BODIES_FILE)
+        self.assertTrue(all("body" not in e for e in lean["entries"]))
+        self.assertEqual(len(bodies["bodies"]), len(state["entries"]))
+        for e in state["entries"]:
+            self.assertEqual(bodies["bodies"][e["id"]], e["body"])
+        self.assertEqual(
+            lean["project"], state["project"]
+        )  # everything but the bodies stays
+        out = tempfile.TemporaryDirectory(prefix="ktw-dash-export-")
+        self.addCleanup(out.cleanup)
+        export(StateBuilder(self.root), out.name)
+        with open(os.path.join(out.name, "state.json"), encoding="utf-8") as fh:
+            written = json.load(fh)
+        self.assertEqual(written["bodies"], BODIES_FILE)
+        self.assertTrue(os.path.exists(os.path.join(out.name, BODIES_FILE)))
+        with open(os.path.join(out.name, "index.html"), encoding="utf-8") as fh:
+            self.assertIn('"body":', fh.read())  # the page itself embeds the full state
+
     # -- the tree is the boundary (the linter's E009, applied to reads) ----
 
     def _outside(self):
@@ -543,7 +566,7 @@ class EntryIdentityTest(StateTest):
                 "The sync step waits.\n"
             )
         state = StateBuilder(self.root).build()
-        self.assertEqual(state["state-json"], 1)
+        self.assertEqual(state["state-json"], 2)
         self.assertEqual(state["project"]["dashboard_state"], "")
         e = next(x for x in state["entries"] if x["file"] == "sync.md")
         self.assertEqual(e["uuid"], uid)

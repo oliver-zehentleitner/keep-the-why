@@ -318,6 +318,24 @@ The globe (`#globe`, the 🌐 at the end of the status bar) is the graph alone, 
 
 **Consequence:** `GLOBE.extra` beside `CHAIN.extra`, the units marked with their hop; `loadFriend` skips the live lookup when no Id is cited (a registry entry cites nothing); `tools/registry/build.py` is standard library only, like the linter, and the workflow is the only writer of `docs/registry/index.json`.
 
+## An export's state.json carries no bodies; they sit beside it in state.body.json
+
+**Id:** 1b401b10-9a0d-4828-afaa-a346a1faedf2
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer decision, 2026-10-01 — "leave the head in state.json: either it is whole, or from version X on state.body.json lies beside it; that keeps us compatible" — after the assisting agent measured the file and proposed a separate head file
+**Revisit when:** a reader of foreign exports needs the bodies for something other than showing an entry (full-text search across the globe), or the git blocks grow to where they are the next three quarters
+**See:** dashboard.md#the-globe-loads-the-web-in-waves-each-asked-for-with-its-count-the-registry-is-an-invitation-never-a-requirement — 64f88b63-67b6-4a87-990c-e0258e7b63b0 — as of 2026-10-01
+
+Since dashboard 0.6.0 an export's `state.json` carries everything but the entries' bodies — project, topics, every entry's header fields, `see`, `superseded_by`, its git block — and names `state.body.json` beside it, which holds the bodies by entry id. The page fetches that file when it shows an entry of that project: on a move there, for the merged family's search and lists, in the thought reader; never for a graph. The export's own `index.html` still embeds the full state. `dashboard-state` keeps naming `state.json`.
+
+**Reason:** measured on this repository's export the day the globe arrived: 520 KB, of which 383 KB are bodies and 37 KB git blocks; what the graph, the globe, the registry and a friend's hub need is the remaining tenth. Loading foreign projects by the dozen — the globe's waves, the registry's list, a family of eight beside the project — was about to be priced by prose nobody reads at that moment. Taking the bodies out moves the loading threshold the maintainer wanted to find by roughly a factor of three on this repository and more on prose-heavy ones, and the git blocks stay in, because thoughts across projects date their steps by them.
+
+**Rejected alternative:** a second, lean file (`state.head.json`) beside an unchanged `state.json`, derived by convention. The assisting agent's first proposal; rejected by the maintainer for the simpler compatibility story: one `state.json` that is either whole (older exports, no `bodies` field) or lean and naming its bodies — a reader checks one field, and nothing has to guess a second URL. The one cost: a dashboard older than 0.6.0 reading a 0.6.0 export as a friend shows that friend's entries without text, since it does not know the field. Accepted — the friend's own page is unaffected, and the dashboards in use are the maintainer's.
+
+**Consequence:** `state-json` 2; `split_bodies()` in `export.py`; `ensureBodies()` in the page, keyed on the `bodies` field and the state's own URL; the status bar's list counts a bodies file as its own kind and marks a lean state. The registry's check reads `state.json` as before — it needs nothing from the bodies.
+
 ## The graph turns very slowly in its plane
 
 **Id:** 5f097cf0-af55-47cf-8b23-4125855a8b1a

@@ -62,12 +62,12 @@ const LOADED = new Map(); // url -> { bytes, kind, at }
 const bytesOf = (text) => { try { return new TextEncoder().encode(text).length; } catch { return String(text).length; } };
 const fmtBytes = (b) => (b >= 1024 * 1024 ? `${(b / 1024 / 1024).toFixed(2)} MB` : b >= 1024 ? `${(b / 1024).toFixed(1)} KB` : `${b} B`);
 function noteLoaded(url, text, kind) {
-  kind = kind || (/state\.json/.test(url) ? "state" : /\.keep-the-why/.test(url) ? "config" : "other");
+  kind = kind || (/state\.body\.json/.test(url) ? "bodies" : /state\.json/.test(url) ? "state" : /\.keep-the-why/.test(url) ? "config" : "other");
   const r = { bytes: bytesOf(text), kind, at: Date.now() };
   // a state says which versions made it: the project's context-schema (the Keep the Why version it is on),
   // the dashboard that exported it, the linter that parsed it; a .keep-the-why names its context-schema
   try {
-    if (kind === "state") { const s = JSON.parse(text); r.project = s.project?.id || ""; r.schema = s.project?.schema || ""; r.dashboard = s.dashboard || ""; r.linter = s.linter || ""; }
+    if (kind === "state") { const s = JSON.parse(text); r.project = s.project?.id || ""; r.schema = s.project?.schema || ""; r.dashboard = s.dashboard || ""; r.linter = s.linter || ""; r.lean = typeof s.bodies === "string"; }
     else if (kind === "config") { r.schema = configLine(text, "context-schema") || ""; r.project = configLine(text, "id") || ""; }
   } catch { /* not JSON, or not a state: the size and address still count */ }
   LOADED.set(String(url), r);
@@ -83,7 +83,7 @@ function renderLoaded() {
 function fillLoadedPop(pop) {
   const rows = [...LOADED.entries()].sort((a, b) => b[1].bytes - a[1].bytes);
   const { bytes, states, files } = loadedTotals();
-  const versions = (r) => (r.kind === "state" ? [r.schema ? `ktw ${r.schema}` : null, r.dashboard ? `dashboard ${r.dashboard}` : null, r.linter ? `lint ${r.linter}` : null] : [r.schema ? `ktw ${r.schema}` : null]).filter(Boolean).join(" · ");
+  const versions = (r) => (r.kind === "state" ? [r.schema ? `ktw ${r.schema}` : null, r.dashboard ? `dashboard ${r.dashboard}` : null, r.linter ? `lint ${r.linter}` : null, r.lean ? "bodies beside it" : null] : [r.schema ? `ktw ${r.schema}` : null]).filter(Boolean).join(" · ");
   setKids(pop, el("div", { class: "loaded-head" }, `${plural(files, "file")} loaded — ${plural(states, "state.json")} — ${fmtBytes(bytes)}`),
     ...rows.map(([url, r]) => el("div", { class: "loaded-row" }, el("span", { class: "size" }, fmtBytes(r.bytes)), el("span", { class: "kind" }, r.kind),
       el("span", { class: "what" }, r.project ? el("b", {}, r.project) : null, versions(r) ? [el("br"), el("span", { class: "note" }, versions(r))] : null, el("br"), el("a", { href: url, target: "_blank", rel: "noopener", title: url }, url)))));
@@ -122,6 +122,7 @@ async function loadPublicState(canonical, root) {
     else if (!/^https:\/\//.test(url)) result = { error: `dashboard-state is not an https URL: ${url}`, raw };
     else {
       const state = normalizeState(JSON.parse(await fetchForeign(url)));
+      state.__url = url; // where it came from: its bodies, if kept beside it, resolve against this
       // an export names the project it was made from; one that claims another repository is not shown as this one
       const claimed = state.project?.canonical;
       // a fork's export: made in a checkout whose origin is the cited repository, declaring the repository it was
@@ -133,6 +134,23 @@ async function loadPublicState(canonical, root) {
     }
   } catch (err) { result = { error: `could not fetch the export (${err?.message || "network or CORS refused"})`, raw }; }
   return result;
+}
+// An export since dashboard 0.6.0 keeps its entries' bodies in state.body.json beside state.json (`bodies` names
+// it) — three quarters of the file, read only when an entry is shown. The graph, the globe and the registry
+// never need them; the centre, the merged family's search and the thought reader do, and ask here first.
+// An older export carries its bodies inline and has no `bodies` field; nothing to fetch then.
+const BODIES = new Map(); // state -> Promise
+function ensureBodies(state) {
+  if (!state || typeof state.bodies !== "string" || !state.__url) return Promise.resolve(state);
+  if (state.__bodies) return state.__bodies;
+  const url = new URL(state.bodies, state.__url).href;
+  state.__bodies = fetchForeign(url).then((text) => {
+    const got = JSON.parse(text).bodies || {};
+    for (const e of state.entries) { const b = got[e.id]; if (b != null) e.body = b && typeof b === "object" ? b : { text: String(b || ""), reason: "" }; }
+    state.bodiesLoaded = true;
+    return state;
+  }).catch((err) => { state.bodiesError = err?.message || "could not fetch the bodies"; return state; });
+  return state.__bodies;
 }
 const publicHref = (canonical, root = "", hash = "#overview") => `${location.pathname}?public=${encodeURIComponent(canonical)}${root ? `&root=${encodeURIComponent(root)}` : ""}${hash}`;
 
@@ -504,7 +522,7 @@ function findEntry(ref) {
     ...Object.values(FRIENDS.loaded).filter((r) => r?.state).flatMap((r) => (r.members || [r]).map((m) => ({ state: m.state, name: m.name, href: m.href }))),
     ...TRAIL.map((t) => ({ state: t.state, name: t.name, href: (e) => t.url + entryHref(e) })),
   ];
-  for (const p of pools) { const e = (p.state.entries || []).find((x) => x.uuid === ref || x.id === ref); if (e) return { e, href: p.href ? p.href(e) : "#graph", where: p.name, own: false }; }
+  for (const p of pools) { const e = (p.state.entries || []).find((x) => x.uuid === ref || x.id === ref); if (e) return { e, href: p.href ? p.href(e) : "#graph", where: p.name, own: false, origin: p }; }
   return null;
 }
 function thoughtLink(a, b) {
@@ -524,6 +542,9 @@ function thoughtTimeline(steps, ins) {
 }
 function viewThought(main, refs) {
   const steps = refs.map(findEntry);
+  // a step from another project may come from a lean export: its body is fetched, and the view renders again
+  const lean = steps.filter((f) => f?.origin?.state && typeof f.origin.state.bodies === "string" && !f.origin.state.bodiesLoaded && !f.origin.state.bodiesError);
+  if (lean.length) Promise.all(lean.map((f) => ensureBodies(f.origin.state))).then(() => { if (location.hash.startsWith("#thought/")) render(); });
   // an entry of a friend is found once the friends are in: they load with a graph, and the view renders again
   if (steps.some((f) => !f) && FRIENDS_AUTO && !FRIENDS.on && !FRIENDS.loading) buildGraph();
   const links = steps.map((f, i) => (i ? thoughtLink(steps[i - 1], f) : null));
@@ -1494,7 +1515,7 @@ function moveTo(t, hash = "#graph", { push = true } = {}) {
   else if (KEEP_PATH) { TRAIL = TRAIL.filter((x) => x.key !== here.key); TRAIL.push(here); }
   else TRAIL = [];
   if (push) history.pushState({ ktw: target.key }, "", target.url + hash);
-  setCentre(target.centre, target.state);
+  ensureBodies(target.state).then(() => setCentre(target.centre, target.state));
 }
 // Back and forward: a step inside this centre is a hash change (rendered
 // there); a step to another centre goes there in place when its state is in
@@ -2180,6 +2201,7 @@ let PUBLIC_TREE = null; // the tree read from published exports, public mode
 async function publicTree() {
   if (PUBLIC_TREE) return PUBLIC_TREE;
   PUBLIC_TREE = await publicTreeFrom({ state: SELF, canonical: canonicalOf(S.project), root: MY_ROOT(), name: S.project.id || S.project.name, href: (e) => entryHref(e) });
+  await Promise.all(PUBLIC_TREE.groups.map((g) => ensureBodies(g.state))); // merged into search and lists: the bodies are needed
   return PUBLIC_TREE;
 }
 // The family tree around one published project, read from the members'

@@ -149,7 +149,9 @@ def _body(lines: list[str], start: int, end: int) -> dict:
     }
 
 
-STATE_JSON_VERSION = 1
+STATE_JSON_VERSION = (
+    2  # 2: an export keeps the bodies in state.body.json beside state.json
+)
 
 
 def _config_dict(block) -> dict:

@@ -28,6 +28,8 @@ const SUITE_ID = "5a1e5a1e-0000-4000-8000-000000000001";
 const NOTES_ID = "5a1e5a1e-0000-4000-8000-000000000003";
 const FAR_ID = "5a1e5a1e-0000-4000-8000-0000000000f1", FARTHER_ID = "5a1e5a1e-0000-4000-8000-0000000000f2";
 const state = (id, project, entries) => ({ generated: "2026-09-28 10:00", dashboard: "0.2.0", linter: "0.18.0.0", project: { id, name: id, context: "context/", schema: "0.18.0", ...project }, topics: [{ file: "design.md", title: "Design", entries: entries.length }], entries, authors: [], findings: { errors: 0, warnings: 0, items: [] } });
+// a lean export: state.json without bodies, naming state.body.json beside it, which holds them by entry id
+const lean = (base, s) => ({ [`${base}state.json`]: { ...s, entries: s.entries.map(({ body, ...e }) => e), bodies: "state.body.json" }, [`${base}state.body.json`]: JSON.stringify({ bodies: Object.fromEntries(s.entries.map((e) => [e.id, e.body])) }) });
 const FILES = {
   "https://raw.githubusercontent.com/acme/suite/HEAD/.keep-the-why": config("acme---suite", ["- dashboard-state: https://acme.github.io/suite/state.json"]),
   "https://acme.github.io/suite/state.json": state("acme---suite", { canonical: `${GH}/suite`, children: [{ name: "web", location: `${GH}/web`, scope: "the web UI" }, { name: "docs", location: "docs", scope: "the manual" }, { name: "cli", location: `${GH}/cli`, scope: "the command line" }] }, [entry("Release together", "Every package ships with the same needle version.", { uuid: SUITE_ID })]),
@@ -40,7 +42,8 @@ const FILES = {
   "https://raw.githubusercontent.com/acme/cli/HEAD/.keep-the-why": config("acme---cli", []),
   // outside the family: no parent, no children — reached only through a See
   "https://raw.githubusercontent.com/acme/notes/HEAD/.keep-the-why": config("acme---notes", ["- dashboard-state: https://acme.github.io/notes/state.json"]),
-  "https://acme.github.io/notes/state.json": state("acme---notes", { canonical: `${GH}/notes` }, [entry('Notes are <img src=x onerror="window.__pwned=1"> plain text', "No needle here either.", { uuid: NOTES_ID, see: [{ remote: `${GH}/far`, uuid: FAR_ID, date: "2026-09-29" }] }), entry("Notes are kept short", "Short.", { uuid: "5a1e5a1e-0000-4000-8000-000000000005" })]),
+  // notes is a lean export (dashboard 0.6.0): its state.json carries no bodies and names state.body.json beside it
+  ...lean("https://acme.github.io/notes/", state("acme---notes", { canonical: `${GH}/notes` }, [entry('Notes are <img src=x onerror="window.__pwned=1"> plain text', "No needle here either.", { id: "n1", uuid: NOTES_ID, see: [{ remote: `${GH}/far`, uuid: FAR_ID, date: "2026-09-29" }] }), entry("Notes are kept short", "Short.", { id: "n2", uuid: "5a1e5a1e-0000-4000-8000-000000000005" })])),
   // a chain beyond the friends: notes cites far, far cites farther — reached only by following a thought
   "https://raw.githubusercontent.com/acme/far/HEAD/.keep-the-why": config("acme---far", ["- dashboard-state: https://acme.github.io/far/state.json"]),
   "https://acme.github.io/far/state.json": state("acme---far", { canonical: `${GH}/far` }, [entry("Far away", "Cited from notes.", { uuid: FAR_ID, status: "needs-review", git: { created: { date: "2026-08-10" } }, see: [{ remote: `${GH}/farther`, uuid: FARTHER_ID, date: "2026-09-29" }] })]),
@@ -520,6 +523,7 @@ const report = {};
 }
 {
   // a project's name under its hub: always drawn, labels on or off, and a click on it goes there
+  const open0 = fetched.length;
   const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/refs`)}#graph`);
   await tick(600);
   const d = window.document;
@@ -532,10 +536,14 @@ const report = {};
   const box = g.nameBoxes.find((b) => b.n.label === "acme/notes");
   const canvas = d.querySelector("#main .graph-wrap canvas");
   const cx = ((box.x0 + box.x1) / 2) * g.scale + g.ox, cy = ((box.y0 + box.y1) / 2) * g.scale + g.oy;
-  const nav = navigations.length;
+  const nav = navigations.length; const nav0 = fetched.length;
   canvas.dispatchEvent(new window.MouseEvent("mousedown", { clientX: cx, clientY: cy, bubbles: true }));
   window.dispatchEvent(new window.MouseEvent("mouseup", { clientX: cx, clientY: cy }));
   await tick(300);
+  if (!fetched.slice(nav0).some((u) => /notes\/state\.body\.json/.test(u))) errors.push("lean export: the walk to notes did not fetch its bodies");
+  if (fetched.slice(open0, nav0).some((u) => /notes\/state\.body\.json/.test(u))) errors.push("lean export: notes' bodies were fetched for the graph, before the walk");
+  window.location.hash = `#entry/${NOTES_ID}`; window.dispatchEvent(new window.Event("hashchange")); await tick(300);
+  if (!/No needle here either\./.test(d.getElementById("main").textContent)) errors.push("lean export: the entry's body is not shown after the walk");
   if (window.location.search !== `?public=${encodeURIComponent(`${GH}/notes`)}` || !/acme---notes/.test(d.title)) errors.push("hub names: a click on the friend's name did not go there: " + window.location.search);
   if (navigations.length !== nav) errors.push("hub names: the walk loaded a page instead of moving in place");
   window.close();

@@ -1,5 +1,6 @@
 """Static export: one self-contained index.html with the state embedded,
-state.json next to it, and two badges with the project's numbers — a static SVG each, in the project's
+state.json next to it (without the entries' bodies, which go to
+state.body.json beside it — see split_bodies), and two badges with the project's numbers — a static SVG each, in the project's
 numbers, for a README to link to this export. No server, no external
 requests, no badge service in between."""
 
@@ -136,6 +137,34 @@ BADGES = {
 }
 
 
+BODIES_FILE = "state.body.json"
+
+
+def split_bodies(state: dict) -> tuple[dict, dict]:
+    """The state without its entries' bodies, and the bodies on their own.
+
+    A reader of another project's export — a friend in the graph, a family
+    member beside it, a wave of the globe, the registry — needs the project,
+    the topics and the entries' header fields; the bodies are three quarters
+    of the file and are read only when an entry is opened. So `state.json`
+    carries everything but the bodies and names the file beside it that has
+    them (`bodies`); the page fetches that file when it shows an entry. The
+    export's own page still embeds the full state. A state without the
+    `bodies` field — an older export — carries its bodies inline, and a
+    dashboard reads either."""
+    lean = dict(state)
+    lean["entries"] = [
+        {k: v for k, v in e.items() if k != "body"} for e in state["entries"]
+    ]
+    lean["bodies"] = BODIES_FILE
+    bodies = {
+        "state-json": state.get("state-json"),
+        "generated": state.get("generated"),
+        "bodies": {e["id"]: e.get("body") for e in state["entries"]},
+    }
+    return lean, bodies
+
+
 def export(builder, out_dir: str) -> str:
     state = builder.build()
     state["exported"] = True
@@ -143,8 +172,11 @@ def export(builder, out_dir: str) -> str:
     index = os.path.join(out_dir, "index.html")
     with open(index, "w", encoding="utf-8") as fh:
         fh.write(render_page(state))
+    lean, bodies = split_bodies(state)
     with open(os.path.join(out_dir, "state.json"), "w", encoding="utf-8") as fh:
-        json.dump(state, fh, ensure_ascii=False, indent=1)
+        json.dump(lean, fh, ensure_ascii=False, indent=1)
+    with open(os.path.join(out_dir, BODIES_FILE), "w", encoding="utf-8") as fh:
+        json.dump(bodies, fh, ensure_ascii=False, indent=1)
     for name, render in BADGES.items():
         with open(os.path.join(out_dir, name), "w", encoding="utf-8") as fh:
             fh.write(render(state))
