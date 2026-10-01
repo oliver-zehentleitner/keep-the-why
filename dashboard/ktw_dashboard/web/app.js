@@ -946,7 +946,7 @@ const linkedTo = (e, list) => list.filter((x) => x !== e && ((e.uuid && pointsAt
 function buildGraph(project = null) {
   const prev = graph ? Object.fromEntries(graph.nodes.map((n) => [n.id, n])) : {};
   const entries = S.entries.filter((e) => (e.project || null) === project);
-  graph = Object.assign(graph || { scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true, alpha: 1 }, assemble(S.topics.filter((t) => (t.project || null) === project), entries, prev));
+  graph = Object.assign(graph || { scale: 1, ox: 0, oy: 0, showEntries: SHOW_ENTRIES, showLabels: true, alpha: 1 }, assemble(S.topics.filter((t) => (t.project || null) === project), entries, prev));
   graph.friends = project ? [] : friendCandidates(entries);
   autoFriends(graph);
   if (!project) autoFamily();
@@ -1039,7 +1039,7 @@ async function buildFamilyGraph() {
     const k = `${ts}|${tt}`;
     if (ts != null && tt != null && !topicPairs.has(k)) { topicPairs.add(k); links.push({ s: ts, t: tt, kind: "xtopic", len: 220, color: A.color }); }
   }
-  fgraph = Object.assign(fgraph || { scale: 0.7, ox: 0, oy: 0, showEntries: true, showLabels: true, alpha: 1 }, { nodes, links, index, groups, missing: pool.missing, across, at: Date.now() });
+  fgraph = Object.assign(fgraph || { scale: 0.7, ox: 0, oy: 0, showEntries: SHOW_ENTRIES, showLabels: true, alpha: 1 }, { nodes, links, index, groups, missing: pool.missing, across, at: Date.now() });
   fgraph.friends = friendCandidates(groups.flatMap((G) => G.state.entries || []), [...groups.map((G) => G.canonical), ...pool.missing.map(({ member: m }) => m.canonical)]);
   autoFriends(fgraph);
   addFriendLayer(fgraph, prev);
@@ -1075,6 +1075,9 @@ let FAMILY_ENTRIES = readEntriesSetting("ktw-family-entries");
 function setFriendEntries(on) { FRIEND_ENTRIES = on; try { localStorage.setItem("ktw-friend-entries", on ? "all" : "linked"); } catch {} }
 function setPathEntries(on) { PATH_ENTRIES = on; try { localStorage.setItem("ktw-path-entries", on ? "all" : "linked"); } catch {} }
 function setFamilyEntries(on) { FAMILY_ENTRIES = on; try { localStorage.setItem("ktw-family-entries", on ? "all" : "linked"); } catch {} }
+// "entries" of the main graph, kept per browser like every other switch in the bar — a move to another centre builds a new graph and must not reset it
+let SHOW_ENTRIES = (() => { try { return localStorage.getItem("ktw-entries") !== "off"; } catch { return true; } })();
+function setShowEntries(on) { SHOW_ENTRIES = on; try { localStorage.setItem("ktw-entries", on ? "on" : "off"); } catch {} }
 // labels per group too — the project's own nodes, the family, the friends, the path — kept per browser, all on by default
 let LABELS = (() => { try { return { project: true, family: true, friends: true, friendsFamilies: true, path: true, ...JSON.parse(localStorage.getItem("ktw-labels") || "{}") }; } catch { return { project: true, family: true, friends: true, friendsFamilies: true, path: true }; } })();
 function setLabels(group, on) { LABELS = { ...LABELS, [group]: on }; try { localStorage.setItem("ktw-labels", JSON.stringify(LABELS)); } catch {} }
@@ -1085,7 +1088,7 @@ const labelsUi = (g, group, what) => el("label", { title: `the names of ${what} 
 const allEntriesUi = (group, checked, set, what) => el("label", { class: "friend-entries", title: `every entry of ${what}, not only the ones that link to this graph` }, el("input", { type: "checkbox", checked, onchange: (ev) => { set(ev.target.checked); if (fgraph) fgraph.at = 0; render(); } }), group === "friendsFamilies" ? "friends families entries" : `${group} entries`);
 // every switch in the bar at once — motion is not a filter and stays
 function selectAll(g, on) {
-  g.showEntries = on;
+  g.showEntries = on; setShowEntries(on);
   for (const x of [graph, fgraph]) if (x) x.showEntries = on; // the bar may switch to the other graph on the way (family entries)
   for (const k of Object.keys(LABELS)) setLabels(k, on);
   setFamilyNeighbours(on); setFamilyEntries(on);
@@ -1717,7 +1720,7 @@ function viewGraph(main) {
     const famUi = familyUi(g);
     // the controls in groups: what is drawn · friends · walking and motion · reset
     const ui = el("div", { class: "graph-ui" },
-      el("span", { class: "ui-group" }, el("label", {}, el("input", { type: "checkbox", checked: g.showEntries, onchange: (ev) => { g.showEntries = ev.target.checked; g.alpha = 0.5; g.wake?.(); } }), "entries"), labelsUi(g, "project", "this project's topics and entries")),
+      el("span", { class: "ui-group" }, el("label", {}, el("input", { type: "checkbox", checked: g.showEntries, onchange: (ev) => { g.showEntries = ev.target.checked; setShowEntries(ev.target.checked); g.alpha = 0.5; g.wake?.(); } }), "entries"), labelsUi(g, "project", "this project's topics and entries")),
       famUi ? el("span", { class: "ui-group" }, famUi, FAMILY_NB_ON ? labelsUi(g, "family", "the family's projects") : null) : null,
       fui ? el("span", { class: "ui-group" }, fui) : null,
       el("span", { class: "ui-group" }, el("label", { title: "keep the path while you walk from project to project — the projects you came through stay in the graph" }, el("input", { type: "checkbox", checked: keepPath(), onchange: (ev) => { setKeepPath(ev.target.checked); render(); } }), "path"),
