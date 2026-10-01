@@ -364,6 +364,7 @@ const report = {};
   const g = window.__g();
   const trailHub = g?.nodes.find((n) => n.trail);
   if (trailHub?.label !== "1 · acme---refs") errors.push("path: the project walked from is not a hub in the graph: " + trailHub?.label);
+  if (!/the path — the way you walked here, not a citation/.test(d.querySelector(".graph-legend")?.textContent || "")) errors.push("path: the legend does not explain the path's line");
   if (!g?.links.some((l) => l.kind === "see" && g.nodes[l.s].label === "Cites elsewhere")) errors.push("path: the See from the path's project to this one is not drawn");
   if (!/acme---notes/.test(d.title)) errors.push("path: the page did not switch to the friend: " + d.title);
   // back along the path: in place, and the path shortens
