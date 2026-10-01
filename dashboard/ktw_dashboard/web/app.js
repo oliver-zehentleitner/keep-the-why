@@ -55,6 +55,36 @@ const PUBLIC_STATES = {}; // `${canonical}|${root}` -> Promise<{state, url} | {e
 // URL, so no referrer and no credentials go with the request, a slow host
 // times out, and an oversized answer is refused before it is parsed.
 const FOREIGN_TIMEOUT_MS = 10000, FOREIGN_MAX_BYTES = 20 * 1024 * 1024;
+// What the page has loaded: every state.json and .keep-the-why, by address, with its size — this project's
+// own state, the family's, the friends', what a See into another repository resolved. The status bar
+// counts the states and sums the bytes; a click lists them. Measured as bytes of the text received.
+const LOADED = new Map(); // url -> { bytes, kind, at }
+const bytesOf = (text) => { try { return new TextEncoder().encode(text).length; } catch { return String(text).length; } };
+const fmtBytes = (b) => (b >= 1024 * 1024 ? `${(b / 1024 / 1024).toFixed(2)} MB` : b >= 1024 ? `${(b / 1024).toFixed(1)} KB` : `${b} B`);
+function noteLoaded(url, text, kind) {
+  LOADED.set(String(url), { bytes: bytesOf(text), kind: kind || (/state\.json/.test(url) ? "state" : /\.keep-the-why/.test(url) ? "config" : "other"), at: Date.now() });
+  renderLoaded();
+}
+const loadedTotals = () => { let bytes = 0, states = 0; for (const r of LOADED.values()) { bytes += r.bytes; if (r.kind === "state") states++; } return { bytes, states, files: LOADED.size }; };
+function renderLoaded() {
+  const box = $("#loaded"); if (!box) return;
+  const { bytes, states } = loadedTotals();
+  const a = box.querySelector("a"); if (a) a.textContent = `${plural(states, "state")} · ${fmtBytes(bytes)}`;
+  const pop = box.querySelector(".loaded-pop"); if (pop) fillLoadedPop(pop);
+}
+function fillLoadedPop(pop) {
+  const rows = [...LOADED.entries()].sort((a, b) => b[1].bytes - a[1].bytes);
+  const { bytes, states, files } = loadedTotals();
+  setKids(pop, el("div", { class: "loaded-head" }, `${plural(files, "file")} loaded — ${plural(states, "state.json")} — ${fmtBytes(bytes)}`),
+    ...rows.map(([url, r]) => el("div", { class: "loaded-row" }, el("span", { class: "size" }, fmtBytes(r.bytes)), el("span", { class: "kind" }, r.kind), el("a", { href: url, target: "_blank", rel: "noopener", title: url }, url))));
+}
+function loadedUi() {
+  const box = el("span", { id: "loaded" });
+  const pop = el("div", { class: "loaded-pop", hidden: true });
+  const a = el("a", { href: "#", title: "what this page has loaded: every state.json and .keep-the-why, with its size and address", onclick: (ev) => { ev.preventDefault(); pop.hidden = !pop.hidden; if (!pop.hidden) fillLoadedPop(pop); } }, "");
+  box.append(a, pop);
+  return box;
+}
 async function fetchForeign(url) {
   const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), FOREIGN_TIMEOUT_MS);
   try {
@@ -63,6 +93,7 @@ async function fetchForeign(url) {
     if (Number(res.headers?.get?.("content-length") || 0) > FOREIGN_MAX_BYTES) throw new Error(`${url} is larger than ${FOREIGN_MAX_BYTES / 1024 / 1024} MB`);
     const text = await res.text();
     if (text.length > FOREIGN_MAX_BYTES) throw new Error(`${url} is larger than ${FOREIGN_MAX_BYTES / 1024 / 1024} MB`);
+    noteLoaded(url, text);
     return text;
   } catch (err) { throw err?.name === "AbortError" ? new Error(`${url} did not answer within ${FOREIGN_TIMEOUT_MS / 1000} s`) : err; }
   finally { clearTimeout(timer); }
@@ -2015,8 +2046,9 @@ const MEMBER_STATES = {}; // project key -> { at, p: Promise<{state}|{error}> },
 function memberState(key) {
   const c = MEMBER_STATES[key];
   if (c && Date.now() - c.at < 30000) return c.p;
-  const p = fetch(`/api/state.json?project=${encodeURIComponent(key)}`, { cache: "no-store" })
-    .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+  const url = `/api/state.json?project=${encodeURIComponent(key)}`;
+  const p = fetch(url, { cache: "no-store" })
+    .then(async (r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); const text = await r.text(); noteLoaded(new URL(url, location.href).href, text, "state"); return JSON.parse(text); })
     .then((st) => ({ state: normalizeState(st) }), (err) => ({ error: `could not load its state (${err?.message || "server gone"})` }));
   MEMBER_STATES[key] = { at: Date.now(), p };
   return p;
@@ -2290,7 +2322,9 @@ function applyState(state) {
     el("span", { id: "pkg-lint" }, el("a", { href: "https://pypi.org/project/keep-the-why-lint/", target: "_blank", rel: "noopener", title: "keep-the-why-lint on PyPI" }, `keep-the-why-lint ${S.linter}`)),
     el("span", {}, MODE === "public" ? `public export · generated ${S.generated}` : S.exported ? `exported ${S.generated}` : `state ${S.generated}`),
     el("span", { id: "counts" }, `${S.entries.length} entries · ${S.topics.length} topics · ${S.authors.length} authors`),
+    loadedUi(),
     el("span", { class: "grow" }, el("a", { href: "https://keepthewhy.com", target: "_blank", rel: "noopener" }, "keepthewhy.com")));
+  renderLoaded();
   FAMILY = null;
   if (LIVE()) $("#nav-projects").hidden = false;
   setupMode(); markScope();
@@ -2443,9 +2477,9 @@ async function boot() {
     return;
   }
   setupProjects();
-  if (window.__KTW_STATE__) applyState(normalizeState(window.__KTW_STATE__));
+  if (window.__KTW_STATE__) { noteLoaded(location.href.split("#")[0], JSON.stringify(window.__KTW_STATE__), "state"); applyState(normalizeState(window.__KTW_STATE__)); }
   else {
-    try { applyState(normalizeState(await (await fetch(api("/api/state.json"), { cache: "no-store" })).json())); }
+    try { const text = await (await fetch(api("/api/state.json"), { cache: "no-store" })).text(); noteLoaded(new URL(api("/api/state.json"), location.href).href, text, "state"); applyState(normalizeState(JSON.parse(text))); }
     catch (err) { $("#main").append(el("p", { class: "center" }, PROJECT ? `No state for project "${PROJECT}" — unknown id or unknown location.` : "Could not load the state — is the server running?")); }
   }
   connectLive();
