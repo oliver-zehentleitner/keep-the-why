@@ -1099,7 +1099,7 @@ let FRIEND_ENTRIES = readEntriesSetting("ktw-friend-entries", true); // a friend
 // a friend that has a family comes with it — the members beside the cited repository — unless this is off; their entries and labels have switches of their own
 let FRIEND_FAMILIES = (() => { try { return localStorage.getItem("ktw-friend-families") !== "off"; } catch { return true; } })();
 function setFriendFamilies(on) { FRIEND_FAMILIES = on; try { localStorage.setItem("ktw-friend-families", on ? "on" : "off"); } catch {} }
-let FRIEND_FAM_ENTRIES = readEntriesSetting("ktw-friend-family-entries");
+let FRIEND_FAM_ENTRIES = readEntriesSetting("ktw-friend-family-entries", true); // a friend's family comes whole too; the project's own family and the path's steps come linked
 function setFriendFamEntries(on) { FRIEND_FAM_ENTRIES = on; try { localStorage.setItem("ktw-friend-family-entries", on ? "all" : "linked"); } catch {} }
 let PATH_ENTRIES = readEntriesSetting("ktw-path-entries");
 let FAMILY_ENTRIES = readEntriesSetting("ktw-family-entries");
