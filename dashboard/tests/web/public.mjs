@@ -437,6 +437,19 @@ const report = {};
   box.checked = true; box.dispatchEvent(new window.Event("change")); await tick(150);
   if (!(notes() > shown)) errors.push(`friend entries: switching on did not show more of notes (${shown} → ${notes()})`);
   if (window.localStorage.getItem("ktw-friend-entries") !== "all") errors.push("friend entries: not kept for this browser");
+  // friends families: a friend's family beside it, on by default; off leaves the cited repository alone
+  const famSwitch = d.querySelector(".graph-ui .friends-ctl .friend-families input");
+  if (!famSwitch || !famSwitch.checked) errors.push("friends families: no switch, or off by default");
+  const suiteHubs = () => window.__g().nodes.filter((n) => n.kind === "project" && n.friend && /acme\/suite|acme---web|plugin|docs/.test(n.label)).length;
+  const withFamilies = suiteHubs();
+  if (!d.querySelector(".graph-ui .friends-ctl .friend-entries + .friend-families, .graph-ui .friends-ctl .friend-families")) errors.push("friends families: the switch is not in the friends group");
+  if (![...d.querySelectorAll(".graph-ui .friends-ctl label")].some((l) => l.textContent === "friends families entries")) errors.push("friends families: no 'friends families entries'");
+  if (![...d.querySelectorAll(".graph-ui .friends-ctl label")].some((l) => l.textContent === "friends families labels")) errors.push("friends families: no 'friends families labels'");
+  famSwitch.checked = false; famSwitch.dispatchEvent(new window.Event("change")); await tick(200);
+  if (!(suiteHubs() < withFamilies) || suiteHubs() !== 1) errors.push(`friends families off: the family is still beside the friend (${withFamilies} → ${suiteHubs()} hubs)`);
+  if (!/family of 4, not shown/.test(d.querySelector(".graph-legend")?.textContent || "")) errors.push("friends families off: the legend does not say the family is not shown");
+  if ([...d.querySelectorAll(".graph-ui .friends-ctl label")].some((l) => l.textContent === "friends families entries")) errors.push("friends families off: 'friends families entries' is still offered");
+  famSwitch.checked = true; famSwitch.dispatchEvent(new window.Event("change")); await tick(200);
   // the Friends page: a card per friend, what cites what
   window.location.hash = "#friends"; window.dispatchEvent(new window.Event("hashchange")); await tick(400);
   const cards = [...d.querySelectorAll(".friend-card h2")].map((h) => h.textContent);

@@ -1065,26 +1065,31 @@ let FRIENDS_AUTO = (() => { try { return localStorage.getItem("ktw-friends") !==
 // "all their entries" per kind of neighbour — friends, the path's steps, the family — each kept per browser
 const readEntriesSetting = (key) => { try { return localStorage.getItem(key) === "all"; } catch { return false; } };
 let FRIEND_ENTRIES = readEntriesSetting("ktw-friend-entries");
+// a friend that has a family comes with it — the members beside the cited repository — unless this is off; their entries and labels have switches of their own
+let FRIEND_FAMILIES = (() => { try { return localStorage.getItem("ktw-friend-families") !== "off"; } catch { return true; } })();
+function setFriendFamilies(on) { FRIEND_FAMILIES = on; try { localStorage.setItem("ktw-friend-families", on ? "on" : "off"); } catch {} }
+let FRIEND_FAM_ENTRIES = readEntriesSetting("ktw-friend-family-entries");
+function setFriendFamEntries(on) { FRIEND_FAM_ENTRIES = on; try { localStorage.setItem("ktw-friend-family-entries", on ? "all" : "linked"); } catch {} }
 let PATH_ENTRIES = readEntriesSetting("ktw-path-entries");
 let FAMILY_ENTRIES = readEntriesSetting("ktw-family-entries");
 function setFriendEntries(on) { FRIEND_ENTRIES = on; try { localStorage.setItem("ktw-friend-entries", on ? "all" : "linked"); } catch {} }
 function setPathEntries(on) { PATH_ENTRIES = on; try { localStorage.setItem("ktw-path-entries", on ? "all" : "linked"); } catch {} }
 function setFamilyEntries(on) { FAMILY_ENTRIES = on; try { localStorage.setItem("ktw-family-entries", on ? "all" : "linked"); } catch {} }
 // labels per group too — the project's own nodes, the family, the friends, the path — kept per browser, all on by default
-let LABELS = (() => { try { return { project: true, family: true, friends: true, path: true, ...JSON.parse(localStorage.getItem("ktw-labels") || "{}") }; } catch { return { project: true, family: true, friends: true, path: true }; } })();
+let LABELS = (() => { try { return { project: true, family: true, friends: true, friendsFamilies: true, path: true, ...JSON.parse(localStorage.getItem("ktw-labels") || "{}") }; } catch { return { project: true, family: true, friends: true, friendsFamilies: true, path: true }; } })();
 function setLabels(group, on) { LABELS = { ...LABELS, [group]: on }; try { localStorage.setItem("ktw-labels", JSON.stringify(LABELS)); } catch {} }
-const labelGroupOf = (n) => (n.ext ? (n.unit === "family" ? "family" : String(n.unit || "").startsWith("trail:") ? "path" : "friends") : n.fam ? "family" : "project");
+const labelGroupOf = (n) => (n.ext ? (n.unit === "family" ? "family" : String(n.unit || "").startsWith("trail:") ? "path" : n.kin ? "friendsFamilies" : "friends") : n.fam ? "family" : "project");
 const labelsOn = (n) => LABELS[labelGroupOf(n)] !== false;
-const labelsUi = (g, group, what) => el("label", { title: `the names of ${what} — topics, and entries when zoomed in` }, el("input", { type: "checkbox", checked: LABELS[group] !== false, onchange: (ev) => { setLabels(group, ev.target.checked); g.wake?.(); } }), group === "project" ? "labels" : `${group} labels`);
+const labelsUi = (g, group, what) => el("label", { title: `the names of ${what} — topics, and entries when zoomed in` }, el("input", { type: "checkbox", checked: LABELS[group] !== false, onchange: (ev) => { setLabels(group, ev.target.checked); g.wake?.(); } }), group === "project" ? "labels" : group === "friendsFamilies" ? "friends families labels" : `${group} labels`);
 // the "<group> entries" checkbox, the same for the three groups
-const allEntriesUi = (group, checked, set, what) => el("label", { class: "friend-entries", title: `every entry of ${what}, not only the ones that link to this graph` }, el("input", { type: "checkbox", checked, onchange: (ev) => { set(ev.target.checked); if (fgraph) fgraph.at = 0; render(); } }), `${group} entries`);
+const allEntriesUi = (group, checked, set, what) => el("label", { class: "friend-entries", title: `every entry of ${what}, not only the ones that link to this graph` }, el("input", { type: "checkbox", checked, onchange: (ev) => { set(ev.target.checked); if (fgraph) fgraph.at = 0; render(); } }), group === "friendsFamilies" ? "friends families entries" : `${group} entries`);
 // every switch in the bar at once — motion is not a filter and stays
 function selectAll(g, on) {
   g.showEntries = on;
   for (const x of [graph, fgraph]) if (x) x.showEntries = on; // the bar may switch to the other graph on the way (family entries)
   for (const k of Object.keys(LABELS)) setLabels(k, on);
   setFamilyNeighbours(on); setFamilyEntries(on);
-  setFriendEntries(on); setPathEntries(on);
+  setFriendEntries(on); setFriendFamilies(on); setFriendFamEntries(on); setPathEntries(on);
   if (on) { setFriendsAuto(true); setKeepPath(true); autoFamily(); autoFriends(g); } else { FRIENDS.on = false; setFriendsAuto(false); setKeepPath(false); }
   if (fgraph) fgraph.at = 0;
   render();
@@ -1220,7 +1225,7 @@ function friendUnits(g) {
   const add = (f, via) => {
     const r = FRIENDS.loaded[fkey(f.canonical)];
     if (!r?.state || onPath(f.canonical)) return;
-    const members = r.members || [r];
+    const members = FRIEND_FAMILIES ? r.members || [r] : [r];
     const k = unitKey(members);
     if (!units.has(k)) units.set(k, { k, r, members, uuids: new Set(), via });
     const u = units.get(k); if (via === "friend") u.via = "friend";
@@ -1247,7 +1252,8 @@ function addFriendLayer(g, prev) {
     topic: (m) => (m.centre ? (file) => moveTo({ centre: m.centre, state: m.state }, `#topic/${file}`) : null),
   });
   friendUnits(g).forEach((u, i) => items.push({
-    k: u.k, kind: "friend", chain: u.via === "chain", color: friendColor(i), cited: FRIEND_ENTRIES || FRIENDS.expanded.has(u.k) ? null : u.uuids, members: u.members,
+    k: u.k, kind: "friend", chain: u.via === "chain", color: friendColor(i), cited: (FRIEND_ENTRIES && (FRIEND_FAM_ENTRIES || u.members.length === 1)) || FRIENDS.expanded.has(u.k) ? null : u.uuids, members: u.members,
+    allFor: (m) => (m === u.members[0] ? FRIEND_ENTRIES : FRIEND_FAM_ENTRIES), kin: (m) => m !== u.members[0], // the cited repository first, then its family
     hub: () => toggleFriend(u.k),
     entry: (m) => (m.centre ? (e) => moveTo({ centre: m.centre, state: m.state }, entryHref(e)) : null),
     topic: (m) => (m.centre ? (file) => moveTo({ centre: m.centre, state: m.state }, `#topic/${file}`) : null),
@@ -1315,19 +1321,22 @@ function addLinkedLayer(g, prev, items) {
       const hub = add({ id: `f:${it.k}:${m.key}`, kind: "project", friend: it.kind === "friend", chain: !!it.chain, trail: it.kind === "trail", family: it.kind === "family", label: m.name, r: it.kind === "family" ? 13 : j === 0 ? 13 : 10, color: mcol, href: m.open || "#graph", action: it.hub, walk }, off);
       if (selfHub && it.kind === "family" && (m.role === "child" || m.role === "parent")) links.push({ s: index[hub.id], t: index[selfHub.id], kind: "family", len: 260 });
       hubs[m.key] = index[hub.id];
-      const own = (m.state.entries || []).filter((e) => !cited || (e.uuid && cited.has(e.uuid)));
+      const allOfM = !cited || !!it.allFor?.(m);
+      const own = (m.state.entries || []).filter((e) => allOfM || (e.uuid && cited.has(e.uuid)));
       const files = new Set(own.map((e) => e.file));
+      const kin = !!it.kin?.(m);
+      hub.kin = kin;
       const tIdx = {};
       for (const t of m.state.topics || []) {
-        if (cited && !files.has(t.file)) continue;
+        if (!allOfM && !files.has(t.file)) continue;
         const act = it.topic(m);
-        const n = add({ id: `ft:${it.k}:${m.key}:${t.file}`, kind: "topic", label: t.title, file: t.file, color: mcol, r: 7 + Math.sqrt(t.entries || 0) * 2.4, href: m.topicHref ? m.topicHref(t.file) : "#graph", action: act ? () => act(t.file) : null }, hub);
+        const n = add({ id: `ft:${it.k}:${m.key}:${t.file}`, kind: "topic", kin, label: t.title, file: t.file, color: mcol, r: 7 + Math.sqrt(t.entries || 0) * 2.4, href: m.topicHref ? m.topicHref(t.file) : "#graph", action: act ? () => act(t.file) : null }, hub);
         tIdx[t.file] = index[n.id];
         links.push({ s: index[hub.id], t: tIdx[t.file], kind: "hub", len: 70 });
       }
       for (const e of own) {
         const act = it.entry(m);
-        const n = add({ id: `fe:${it.k}:${m.key}:${e.id}`, kind: "entry", proj: m.name, label: e.title, file: e.file, entry: e, r: 4.2, href: m.href ? m.href(e) : "#graph", action: act ? () => act(e) : null }, nodes[tIdx[e.file]] || hub);
+        const n = add({ id: `fe:${it.k}:${m.key}:${e.id}`, kind: "entry", kin, proj: m.name, label: e.title, file: e.file, entry: e, r: 4.2, href: m.href ? m.href(e) : "#graph", action: act ? () => act(e) : null }, nodes[tIdx[e.file]] || hub);
         if (e.uuid) idx[e.uuid] = index[n.id];
         if (tIdx[e.file] != null) links.push({ s: index[n.id], t: tIdx[e.file], kind: "member", len: 40 });
         entriesShown.push(e);
@@ -1480,7 +1489,12 @@ function friendsUi(g) {
   return el("span", { class: "friends-ctl" },
     el("label", { class: "friends-toggle", title: "the repositories these entries cite outside the family — unchecked, they are no longer loaded on their own" }, el("input", { type: "checkbox", checked: true, onchange: () => { FRIENDS.on = false; setFriendsAuto(false); if (fgraph) fgraph.at = 0; render(); } }), "friends"),
     failed.length ? el("a", { class: "friends-failed warn", href: "#friends", title: failed.map((f) => `${repoLabel(f.canonical)} — ${FRIENDS.loaded[fkey(f.canonical)].error}`).join("\n") }, `${shown ? `${failed.length} of ${list.length}` : failed.length === 1 ? "the one friend" : `all ${failed.length}`} not loaded ↗`) : null,
-    shown ? allEntriesUi("friends", FRIEND_ENTRIES, setFriendEntries, "every friend") : null);
+    shown ? allEntriesUi("friends", FRIEND_ENTRIES, setFriendEntries, "every friend") : null,
+    shown ? labelsUi(g, "friends", "the friends") : null,
+    ...(shown && list.some((f) => (FRIENDS.loaded[fkey(f.canonical)]?.members || []).length > 1) ? [
+      el("label", { class: "friend-families", title: FRIEND_FAMILIES ? "a friend's family beside it — unchecked, the cited repository alone" : "show a friend's family beside it" }, el("input", { type: "checkbox", checked: FRIEND_FAMILIES, onchange: (ev) => { setFriendFamilies(ev.target.checked); if (fgraph) fgraph.at = 0; render(); } }), "friends families"),
+      ...(FRIEND_FAMILIES ? [allEntriesUi("friendsFamilies", FRIEND_FAM_ENTRIES, setFriendFamEntries, "every member of a friend's family"), labelsUi(g, "friendsFamilies", "the friends' families")] : []),
+    ] : []));
 }
 // the family beside the project graph: on by default, off per browser (and then not loaded either)
 function familyUi(g) {
@@ -1674,7 +1688,7 @@ function friendsLegend(g) {
   const out = friendUnits(g).map((u, i) => el("span", { class: "friend", title: `friend: ${u.r.canonical}${u.members.length > 1 ? ` — a family of ${u.members.length}, shown whole` : ""} — its hub shows the entries cited there; a click on a hub shows all of it, a click on the name goes there` },
     el("i", { class: "dot", style: `background:transparent;border:2px dashed ${friendColor(i)};width:10px;height:10px` }),
     el("a", { href: u.r.open, onclick: (ev) => { if (!u.r.centre) return; ev.preventDefault(); moveTo({ centre: u.r.centre, state: u.r.state }, "#graph"); } }, u.r.name),
-    u.members.length > 1 ? el("span", { class: "note" }, ` · family of ${u.members.length}`) : null,
+    u.members.length > 1 ? el("span", { class: "note" }, ` · family of ${u.members.length}`) : (u.r.members || []).length > 1 ? el("span", { class: "note" }, ` · family of ${u.r.members.length}, not shown`) : null,
     u.via === "chain" ? el("span", { class: "note" }, " · via a thought") : null));
   for (const f of g.friends || []) { const r = FRIENDS.loaded[fkey(f.canonical)]; if (r && !r.state) out.push(el("span", { class: "warn", title: r.error }, `${repoLabel(r.canonical)} not loaded`)); }
   return out;
@@ -1705,7 +1719,7 @@ function viewGraph(main) {
     const ui = el("div", { class: "graph-ui" },
       el("span", { class: "ui-group" }, el("label", {}, el("input", { type: "checkbox", checked: g.showEntries, onchange: (ev) => { g.showEntries = ev.target.checked; g.alpha = 0.5; g.wake?.(); } }), "entries"), labelsUi(g, "project", "this project's topics and entries")),
       famUi ? el("span", { class: "ui-group" }, famUi, FAMILY_NB_ON ? labelsUi(g, "family", "the family's projects") : null) : null,
-      fui ? el("span", { class: "ui-group" }, fui, FRIENDS.on ? labelsUi(g, "friends", "the friends") : null) : null,
+      fui ? el("span", { class: "ui-group" }, fui) : null,
       el("span", { class: "ui-group" }, el("label", { title: "keep the path while you walk from project to project — the projects you came through stay in the graph" }, el("input", { type: "checkbox", checked: keepPath(), onchange: (ev) => { setKeepPath(ev.target.checked); render(); } }), "path"),
         ...(pathShown() && TRAIL.some((t) => !sameCentreAsGraph(g, t)) ? [allEntriesUi("path", PATH_ENTRIES, setPathEntries, "every step of the path"), labelsUi(g, "path", "the path's projects")] : [])),
       el("span", { class: "ui-group" }, el("label", { title: "the graph turns very slowly; it stops while you point at it" }, el("input", { type: "checkbox", checked: driftOn(), onchange: (ev) => { setDrift(ev.target.checked); g.wake?.(); } }), "motion")),
