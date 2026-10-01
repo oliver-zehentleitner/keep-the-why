@@ -281,7 +281,9 @@ const report = {};
   const to = async (h) => { window.location.hash = h; window.dispatchEvent(new window.Event("hashchange")); await tick(150); };
   if (!/friend — a repository cited outside the family/.test(d.getElementById("details").textContent)) errors.push("friends: not in the graph page's legend");
   await to("#overview");
-  if (mini()?.textContent !== "friends (4)") errors.push("friends: no 'friends (4)' button on the side pane's graph: " + mini()?.textContent);
+  d.querySelector("#details .mini-gear")?.click(); await tick(50);
+  if (!/friends \(4\)/.test(d.querySelector("#details .mini-filters")?.textContent || "")) errors.push("friends: no 'friends (4)' in the side pane graph's switches: " + d.querySelector("#details .mini-filters")?.textContent);
+  if (mini()) errors.push("friends: the side pane's project graph still has the friends button beside the gear");
   await to("#graph");
   const early = fetched.slice(before).filter((u) => /acme\/(notes|suite|cli|impostor)|acme\.github\.io\/(notes|suite|impostor)/.test(u));
   if (early.length) errors.push("friends: fetched before the click: " + early.join(", "));
@@ -293,7 +295,7 @@ const report = {};
   const notesLink = [...d.querySelectorAll(".graph-legend .friend a")].find((a) => a.textContent === "acme/notes")?.getAttribute("href") || "";
   if (!notesLink.endsWith(`?public=${encodeURIComponent(`${GH}/notes`)}#graph`)) errors.push("friends: the legend link does not open the friend's graph: " + notesLink);
   await to("#overview");
-  if (!mini()?.classList.contains("on")) errors.push("friends: the side pane's graph does not show the friends as on");
+  if (!d.querySelector("#details .mini-filters .friends-ctl input")?.checked) errors.push("friends: the side pane graph's switches do not show the friends as on");
   await to("#graph");
   for (const name of ["acme/cli not loaded", "acme/impostor not loaded"]) if (!legend.includes(name)) errors.push(`friends: '${name}' missing from the legend`);
   // the graph's own control says it too, and leads to the Friends view, which names the reason
@@ -332,7 +334,7 @@ const report = {};
   b?.click(); await tick(400);
   const mode = d.querySelector("#details .mini-seg:not(.mini-friends):not(.mini-width) button.on")?.textContent;
   if (mode !== "project") errors.push("friends, near: did not switch to the project level: " + mode);
-  if (!d.querySelector("#details .mini-friends button")?.classList.contains("on")) errors.push("friends, near: the friends were not loaded at the project level");
+  if (!d.querySelector("#details .mini-filters .friends-ctl input")?.checked) errors.push("friends, near: the friends were not loaded at the project level");
   window.close();
 }
 {

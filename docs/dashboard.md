@@ -125,7 +125,7 @@ Groups, left to right: **project** (`entries`, `labels`) · **family** · **frie
 - **select all / unselect all** flip every switch in the bar at once (motion is not a filter and stays); **reset** fits the graph and lets go of every node that was placed by hand — the filters are untouched.
 - **motion** — the graph turns very slowly in its plane, one turn in about six minutes; it stops while pointed at or dragged, stays still with the system's reduced-motion setting, and the switch turns it off.
 
-The side pane's graph has the same switches behind its ⚙, and the small *friends* control in its corner; in its *near* view the control switches to the project level and loads them there.
+The side pane's graph has the same switches behind its ⚙; its *near* view has a small *friends* button instead, which switches to the project level and loads them there.
 
 ### The legend
 
