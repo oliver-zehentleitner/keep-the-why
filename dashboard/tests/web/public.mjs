@@ -317,7 +317,7 @@ const report = {};
   if (fam !== "docs>acme/suite,plugin>web,web>acme/suite") errors.push("friends: the family's own parent lines are missing: " + fam);
   // the plugin's See to the suite comes along: a unit shows what its citation chains connect to the cited entries
   if (see.join() !== "Cites elsewhere>Notes are <img s,Cites elsewhere>Release together,Plugins load lazily>Release together") errors.push("friends: See lines to the friends missing: " + see.join());
-  const notesEntries = () => window.__g().nodes.filter((n) => n.kind === "entry" && n.id.startsWith("fe:P:https://github.com/acme/notes|")).length;
+  const notesEntries = () => window.__g().nodes.filter((n) => n.kind === "entry" && n.ext && n.proj === "acme/notes").length;
   // friends entries is on by default: the friend comes whole; off, a hub shows the cited entries, and a click on it expands it again
   if (notesEntries() !== 2) errors.push("friends: a friend should come whole by default, got " + notesEntries());
   if (!/^1 entries/.test(d.getElementById("counts")?.textContent || "1 entries")) errors.push("friends: merged into the counts: " + d.getElementById("counts")?.textContent);
@@ -454,7 +454,7 @@ const report = {};
   const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/refs`)}#graph`);
   await tick(600);
   const d = window.document;
-  const notes = () => window.__g().nodes.filter((n) => n.kind === "entry" && n.id.startsWith("fe:P:https://github.com/acme/notes|")).length;
+  const notes = () => window.__g().nodes.filter((n) => n.kind === "entry" && n.ext && n.proj === "acme/notes").length;
   const box = d.querySelector(".graph-ui .friends-ctl .friend-entries input");
   if (!box || !box.checked) errors.push("friend entries: no switch in the friends group, or off by default");
   const whole = notes();

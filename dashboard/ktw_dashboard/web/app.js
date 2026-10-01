@@ -1313,7 +1313,9 @@ function toggleFriend(k) {
 // to each other, both ways, a reference counting only when it names one of
 // the unit's repositories and an Id there. Called by buildGraph and
 // buildFamilyGraph after their own nodes.
-const unitKey = (members) => members.map((m) => m.key).sort().join(" ");
+// a unit is the repositories it holds — by canonical and root, not by how they were loaded: the same family
+// read once from this machine (live keys) and once from published exports (public keys) is one unit
+const unitKey = (members) => members.map((m) => `${fkey(m.canonical)}|${m.root || ""}`).sort().join(" ");
 // an entry's See and Superseded by, each { uuid, remote, kind }
 const entryRefs = (e) => [...(e.see || []).map((x) => x && { uuid: x.uuid, remote: x.remote, kind: "see" }), e.superseded_by ? { ...parseSupersededBy(e.superseded_by), kind: "superseded" } : null].filter((x) => x?.uuid);
 function friendUnits(g) {
@@ -1763,8 +1765,11 @@ function loadedCanonicals() {
 function globeCandidates() {
   const have = loadedCanonicals(); const out = new Map();
   const scan = (entries) => { for (const e of entries || []) for (const x of entryRefs(e)) { if (!x.remote) continue; const k = fkey(x.remote); if (have.has(k) || FRIENDS.loaded[k]?.error) continue; if (!out.has(k)) out.set(k, { canonical: x.remote.replace(/\/+$/, ""), uuids: new Set() }); out.get(k).uuids.add(x.uuid); } };
+  // from what is drawn — the project, its family, the path's steps, the units beside it — not from everything
+  // ever fetched: a project walked away from is not where the next hop starts
   scan(S?.entries); for (const m of familyMembers()) scan(m.state?.entries);
-  for (const r of Object.values(FRIENDS.loaded)) if (r?.state) { scan(r.state.entries); for (const m of r.members || []) if (m !== r) scan(m.state?.entries); }
+  if (pathShown()) for (const t of TRAIL) scan(t.state?.entries);
+  if (graph) for (const u of friendUnits(graph)) for (const m of u.members) scan(m.state?.entries);
   return [...out.values()].map((c) => ({ ...c, uuids: [...c.uuids] }));
 }
 // a small dialog in the page: what would load, how many files, yes or no
