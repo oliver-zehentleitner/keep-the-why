@@ -1100,6 +1100,8 @@ function autoFamily() {
   setTimeout(() => searchPool("family").then((pool) => { FAMILY_NB.groups = pool.groups.filter((x) => x.member.role !== "self"); FAMILY_NB.missing = pool.missing || []; }).catch(() => { FAMILY_NB.groups = []; })
     .finally(() => { FAMILY_NB.loading = false; if (graph) graph.alpha = Math.max(graph.alpha, 0.6); if (fgraph) fgraph.at = 0; render(); }), 0); // after the graph that asked is drawn
 }
+// the members beside this project: the loaded ones and the ones not available here; before the load, what the config declares
+const familyCount = () => (FAMILY_NB.groups ? FAMILY_NB.groups.length + (FAMILY_NB.missing?.length || 0) : (S?.project?.parent ? 1 : 0) + (S?.project?.children || []).length);
 function familyMembers() {
   if (!FAMILY_NB_ON || !canFamily() || !FAMILY_NB.groups?.length) return [];
   return FAMILY_NB.groups.map((x) => (PUBLISHED() ? publicMember(x.member, x.state) : liveMember(x.member, x.state))).filter((m) => m.state && !onPath(m.canonical));
@@ -1450,7 +1452,7 @@ function familyUi(g) {
   const merged = g !== graph; // the family graph: every member whole
   return el("span", { class: "family-ctl" },
     el("label", { class: "family-toggle", title: FAMILY_NB_ON ? "the family's projects in the graph — unchecked, the project alone, with its friends and path" : "show the family's projects in the graph, with the entries linked here" },
-      el("input", { type: "checkbox", checked: FAMILY_NB_ON, onchange: (ev) => { setFamilyNeighbours(ev.target.checked); if (ev.target.checked) autoFamily(); render(); } }), FAMILY_NB.loading ? "family (loading…)" : "family"),
+      el("input", { type: "checkbox", checked: FAMILY_NB_ON, onchange: (ev) => { setFamilyNeighbours(ev.target.checked); if (ev.target.checked) autoFamily(); render(); } }), FAMILY_NB.loading ? "family (loading…)" : `family (${familyCount()})`),
     FAMILY_NB_ON && (merged || familyMembers().length) ? allEntriesUi(FAMILY_ENTRIES, setFamilyEntries, "every member of the family — the family graph, every member whole") : null);
 }
 // the same control, small, in the corner of the side pane's graph
