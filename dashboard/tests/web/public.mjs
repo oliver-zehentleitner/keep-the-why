@@ -619,6 +619,8 @@ const report = {};
   [...(dialog4?.querySelectorAll("button") || [])].find((b) => b.textContent === "load them")?.click(); await tick(400);
   g = window.__g();
   if (!g.nodes.some((n) => n.kind === "project" && n.hop === "registry")) errors.push("globe: the registry switched on again did not bring its project back");
+  // one path bar on the globe, as on the graph — the overlay, not a second one above it
+  if (d.querySelectorAll(".path-bar").length > 1) errors.push("globe: " + d.querySelectorAll(".path-bar").length + " path bars");
   // a move to a project the globe brought in: it is the centre now, drawn once — not again as a neighbour
   {
     const farHub = window.__g().nodes.find((n) => n.kind === "project" && n.label === "acme/far");
@@ -628,6 +630,10 @@ const report = {};
       if (!/acme---far/.test(d.title)) errors.push("globe: the move to acme/far did not happen: " + d.title);
       window.history.back(); await tick(500);
       if (!/acme---refs/.test(d.title)) errors.push("globe: back did not return to refs: " + d.title);
+      window.history.forward(); await tick(500);
+      window.location.hash = "#globe"; window.dispatchEvent(new window.Event("hashchange")); await tick(300);
+      if (d.querySelectorAll(".path-bar").length !== 1) errors.push("globe with a path: expected one path bar, got " + d.querySelectorAll(".path-bar").length);
+      window.history.back(); await tick(500);
       window.location.hash = "#globe"; window.dispatchEvent(new window.Event("hashchange")); await tick(300);
     } else errors.push("globe: no walkable acme/far hub");
   }
