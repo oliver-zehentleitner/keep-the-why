@@ -561,15 +561,17 @@ async function viewFriends(main) {
   setKids(box, ...kids);
 }
 async function viewThoughtsPage(main) {
-  const minSeg = el("span", { class: "thought-min", title: "entries a thought has at least" }, "from ", ...[3, 4, 5].map((m) => el("button", { type: "button", class: m === THOUGHT_MIN ? "on" : "", onclick: () => { THOUGHT_MIN = m; try { localStorage.setItem("ktw-thought-min", String(m)); } catch {} render(); } }, String(m))));
+  const minSeg = el("span", { class: "thought-min" });
   main.append(el("h1", {}, "Thoughts ", minSeg), el("p", { class: "sub" }, "Chains of linked entries: each cites the one before (See) or replaced it (Superseded by) — in this graph, with its family, friends and path. A link says two entries are related; often one follows from the other, not always. Point at a chain to light it in the graph beside."));
   const box = el("div", { class: "thoughts-page" }, el("p", { class: "center" }, "Loading…")); main.append(box);
   const g = await graphForScope();
   if (!box.isConnected) return;
   const all = graphChains(g);
-  const thoughts = all.filter((t) => t.steps.length >= THOUGHT_MIN);
+  minSeg.replaceWith(thoughtMinSeg(all));
+  const min = thoughtMin(all);
+  const thoughts = all.filter((t) => t.steps.length >= min);
   const open = all.filter((t) => t.ends.length);
-  if (!thoughts.length && !open.length) return setKids(box, el("p", { class: "empty" }, `No chain of linked entries here is ${THOUGHT_MIN} or more entries long yet.`));
+  if (!thoughts.length && !open.length) return setKids(box, el("p", { class: "empty" }, "No chain of linked entries here yet — a thought is a chain of See or Superseded by, each entry citing the one before."));
   const across = (t) => new Set(t.steps.map(projOf)).size > 1;
   const tags = (t) => [t.evolution ? el("span", { class: "pill" }, "evolution") : null, across(t) ? el("span", { class: "pill" }, "across projects") : null, t.ends.length ? el("span", { class: "pill" }, "continues ↗") : null, ...insightPills(t), span(t) ? el("span", { class: "note" }, span(t)) : null];
   const row = (t) => el("div", { class: "thought-row", onmouseenter: () => lightAll(t), onmouseleave: () => lightAll(null) },
@@ -597,7 +599,7 @@ async function viewThoughtsPage(main) {
   }
   // entries in question and the later entries linked after them — what to check if they change
   const impact = new Map();
-  for (const t of thoughts.concat(open.filter((t) => t.steps.length < THOUGHT_MIN))) for (const x of t.ins.shaky) {
+  for (const t of thoughts.concat(open.filter((t) => t.steps.length < min))) for (const x of t.ins.shaky) {
     const n = t.steps[x.i];
     if (!impact.has(n)) impact.set(n, { why: x.why, later: new Set(), thoughts: new Set(), projects: new Set() });
     const m = impact.get(n); m.thoughts.add(t);
@@ -1417,6 +1419,16 @@ function miniFriends(g) {
 // holds it and lists its steps in reading order, origin first. A chain made
 // only of Superseded by is how one decision changed over time: an evolution.
 let THOUGHT_MIN = (() => { try { return Number(localStorage.getItem("ktw-thought-min")) || 4; } catch { return 4; } })(); // entries a thought has at least, kept per browser
+// the choices go from 2 (one link) up to the longest chain in the graph on the page, and grow with
+// it when a friend or a path brings a longer one; a kept choice above the longest here is drawn
+// down to it, so a sparse project shows its chains instead of an empty list
+const longestChain = (all) => Math.max(2, ...all.map((t) => t.steps.length));
+const thoughtMin = (all) => Math.min(THOUGHT_MIN, longestChain(all));
+function thoughtMinSeg(all, onpick = render) {
+  const top = longestChain(all), cur = thoughtMin(all);
+  return el("span", { class: "thought-min", title: "entries a thought has at least — from one link up to the longest chain here" }, "from ",
+    ...Array.from({ length: top - 1 }, (_, i) => i + 2).map((m) => el("button", { type: "button", class: m === cur ? "on" : "", onclick: () => { THOUGHT_MIN = m; try { localStorage.setItem("ktw-thought-min", String(m)); } catch {} onpick(); } }, String(m))));
+}
 // Every chain in the graph, at least two entries long: the entry-to-entry
 // edges in reading order (later → earlier), plus an edge to a placeholder for
 // every reference into an entry the page has not loaded — a chain that ends
@@ -1472,12 +1484,14 @@ const shortLabel = (n) => { const t = (n?.label || "").replace(/`/g, ""); return
 function entryThoughts(e) {
   const g = scope() === "family" && fgraph && Date.now() - fgraph.at < 30000 ? fgraph : graph && !e.project ? graph : buildGraph(e.project || null);
   const same = (n) => n.entry === e || (e.uuid && n.entry?.uuid === e.uuid);
-  return graphChains(g).filter((t) => t.steps.length >= THOUGHT_MIN || t.ends.length).map((t) => ({ t, i: t.steps.findIndex(same) })).filter((x) => x.i >= 0);
+  const all = graphChains(g), min = thoughtMin(all);
+  return all.filter((t) => t.steps.length >= min || t.ends.length).map((t) => ({ t, i: t.steps.findIndex(same) })).filter((x) => x.i >= 0);
 }
-// the thoughts (at least THOUGHT_MIN entries), and the shorter chains that go on beyond this page
+// the thoughts (at least the chosen number of entries, drawn down to the longest chain here), and
+// the shorter chains that go on beyond this page
 function graphThoughts(g) {
-  const all = graphChains(g);
-  return { thoughts: all.filter((t) => t.steps.length >= THOUGHT_MIN), open: all.filter((t) => t.ends.length && t.steps.length < THOUGHT_MIN) };
+  const all = graphChains(g), min = thoughtMin(all);
+  return { all, thoughts: all.filter((t) => t.steps.length >= min), open: all.filter((t) => t.ends.length && t.steps.length < min) };
 }
 // Following a chain: a click loads exactly the repositories a chain goes on
 // into, each as a unit, and again from there, until the chain ends, reaches a
@@ -1533,11 +1547,11 @@ function lightThought(g, t) {
 function renderThoughts(g) {
   const box = $("#thoughts");
   if (!box || !g) return;
-  const { thoughts: list, open } = graphThoughts(g);
+  const { all, thoughts: list, open } = graphThoughts(g);
   const short = (n) => { const t = (n?.label || "").replace(/`/g, ""); return t.length > 34 ? t.slice(0, 32) + "…" : t; };
   const held = [...list, ...open].find((t) => t.ids.join("|") === THOUGHT_PIN) || null;
   lightThought(g, held);
-  const minSeg = el("span", { class: "thought-min", title: "entries a thought has at least" }, "from ", ...[3, 4, 5].map((m) => el("button", { type: "button", class: m === THOUGHT_MIN ? "on" : "", onclick: () => { THOUGHT_MIN = m; try { localStorage.setItem("ktw-thought-min", String(m)); } catch {} THOUGHT_PIN = null; renderThoughts(g); } }, String(m))));
+  const minSeg = thoughtMinSeg(all, () => { THOUGHT_PIN = null; renderThoughts(g); });
   const repos = (ends) => [...new Set(ends.map((e) => repoLabel(e.canonical)))];
   const row = (t) => {
     const key = t.ids.join("|"); const on = key === THOUGHT_PIN;
@@ -1554,7 +1568,7 @@ function renderThoughts(g) {
   const followBtn = openEnds.length ? el("button", { type: "button", class: "link-btn thought-follow-all", disabled: CHAIN.busy, title: "load every repository the chains here go on into, hop by hop — nothing else", onclick: followAll }, CHAIN.busy ? "loading the chains…" : `load the whole chains (${repos(openEnds).length} ${repos(openEnds).length === 1 ? "repository" : "repositories"})`) : null;
   const head = list.length
     ? [el("h3", {}, `Thoughts (${list.length}) `, minSeg), el("p", { class: "note" }, "Chains of linked entries — See and Superseded by — first entry first. Point at one to light its path, click to hold it.")]
-    : [el("h3", {}, "Thoughts ", minSeg), el("p", { class: "note" }, `No chain of linked entries in this graph is ${THOUGHT_MIN} or more entries long yet — a thought is a chain of See or Superseded by, each entry citing the one before.`)];
+    : [el("h3", {}, "Thoughts ", minSeg), el("p", { class: "note" }, "No chain of linked entries in this graph yet — a thought is a chain of See or Superseded by, each entry citing the one before.")];
   setKids(box, ...head, followBtn, ...list.map(row),
     open.length ? el("h3", { class: "thought-open-head" }, `Going on beyond this page (${open.length})`) : null,
     open.length ? el("p", { class: "note" }, "Shorter chains that continue in a repository this page has not loaded — loading it may make them thoughts.") : null,
