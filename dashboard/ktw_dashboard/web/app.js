@@ -325,7 +325,7 @@ function renderSidebar() {
       el("i", { class: `dot ${e.evidence} ${e.status}` }), el("span", {}, e.title.replace(/`/g, ""))));
     tree.append(d);
   }
-  $("#tree-count").textContent = `${S.topics.length} · ${plural(S.entries.length, "entry").replace("entrys", "entries")}`;
+  $("#tree-count").textContent = `${S.topics.length} · ${plural(S.entries.length, "entry")}`;
   $("#queue-count").textContent = queueTotal() || "";
   // filters
   const fill = (id, key, values, label) => {
@@ -378,7 +378,7 @@ function viewOverview(main) {
 }
 function topicCard(t) {
   return el("a", { class: "topic-card", href: `#topic/${t.file}` },
-    el("div", { class: "tt" }, t.title, el("span", { class: "count" }, plural(t.entries, "entry").replace("entrys", "entries"))),
+    el("div", { class: "tt" }, t.title, el("span", { class: "count" }, plural(t.entries, "entry"))),
     t.project ? el("div", { class: "note" }, t.project) : null,
     el("div", { class: "td" }, t.index_line || el("span", { class: "note" }, "not described in index.md")),
     stack(t.evidence, EV_ORDER),
@@ -1722,7 +1722,7 @@ async function followChains(pick) {
 // in keepthewhy.com's registry, loaded as a wave of its own. Nothing of this is kept per browser: every load
 // from another host is a click, and a reload starts without it.
 const REGISTRY_URL = "https://keepthewhy.com/registry/index.json";
-const GLOBE = { view: false, hops: 1, extra: new Map(), busy: false, registry: false, registryUrl: REGISTRY_URL, done: 0, log: [] };
+const GLOBE = { view: false, hops: 1, extra: new Map(), failed: new Map(), busy: false, registry: false, registryUrl: REGISTRY_URL, done: 0, log: [] }; // failed: canonical key -> { canonical, error, hop }
 function loadedCanonicals() {
   // what the page shows beside the project — not everything it ever fetched: a repository dropped from the
   // globe (clear, the registry switched off) is offered again, its state coming from memory
@@ -1764,7 +1764,7 @@ async function globeRun(hops) {
       const yes = await globeDialog({ title: `Hop ${hop}: ${plural(cands.length, "repository")}`, note: `${plural(cands.length * 2, "file")} — a .keep-the-why and a state.json each${FRIEND_FAMILIES ? ", plus their families, if any (friends families is on)" : ""} — from their hosts, in the browser.`, lines: cands.map((c) => `${repoLabel(c.canonical)} — cited by ${plural(c.uuids.length, "entry")}`) });
       if (!yes) break;
       await Promise.all(cands.map(loadFriend));
-      let ok = 0; for (const c of cands) { const r = FRIENDS.loaded[fkey(c.canonical)]; if (r?.state) { GLOBE.extra.set(fkey(c.canonical), { ...c, hop }); ok++; } }
+      let ok = 0; for (const c of cands) { const k = fkey(c.canonical); const r = FRIENDS.loaded[k]; if (r?.state) { GLOBE.extra.set(k, { ...c, hop }); GLOBE.failed.delete(k); ok++; } else GLOBE.failed.set(k, { canonical: c.canonical, error: r?.error || "could not be loaded", hop }); }
       GLOBE.done = hop; GLOBE.log.push(`hop ${hop}: ${ok} of ${cands.length} loaded`);
       if (fgraph) fgraph.at = 0; render();
     }
@@ -1776,18 +1776,20 @@ async function globeRegistry() {
   try {
     const idx = JSON.parse(await fetchForeign(GLOBE.registryUrl));
     const have = loadedCanonicals();
-    const list = (idx.projects || []).filter((p) => p.canonical && !have.has(fkey(p.canonical)) && !FRIENDS.loaded[fkey(p.canonical)]?.error);
+    // a project that failed before is offered again — much of that is temporary; its old error is forgotten for the try
+    const list = (idx.projects || []).filter((p) => p.canonical && !have.has(fkey(p.canonical)));
+    for (const p of list) { const k = fkey(p.canonical); if (FRIENDS.loaded[k]?.error) { delete FRIENDS.loaded[k]; delete FRIENDS.pending[k]; delete PUBLIC_STATES[`${p.canonical}|`]; } }
     if (!list.length) { GLOBE.log.push("registry: everything listed is already here"); GLOBE.registry = true; return; }
-    const yes = await globeDialog({ title: `The registry: ${plural(list.length, "project")}`, note: `${plural(list.length * 2, "file")} — a .keep-the-why and a state.json each${FRIEND_FAMILIES ? ", plus their families, if any" : ""} — from their hosts, in the browser. The registry is ${GLOBE.registryUrl}, checked ${idx.checked || "—"}.`, lines: list.map((p) => `${repoLabel(p.canonical)}${p.id ? ` — ${p.id}` : ""}${p.entries != null ? ` · ${plural(p.entries, "entry")}` : ""}`) });
+    const yes = await globeDialog({ title: `The registry: ${plural(list.length, "project")}`, note: `${plural(list.length * 2, "file")} — a .keep-the-why and a state.json each${FRIEND_FAMILIES ? ", plus their families, if any" : ""} — from their hosts, in the browser. The registry is ${GLOBE.registryUrl}, checked ${idx.checked || "—"}.`, lines: list.map((p) => `${repoLabel(p.canonical)}${p.id ? ` — ${p.id}` : ""}${p.entries != null ? ` · ${plural(p.entries, "entry")}` : ""}${p.failed_since ? ` · not answering since ${p.failed_since}, tried anyway` : ""}`) });
     if (!yes) return;
     const cands = list.map((p) => ({ canonical: p.canonical, uuids: [] }));
     await Promise.all(cands.map(loadFriend));
-    let ok = 0; for (const c of cands) { const r = FRIENDS.loaded[fkey(c.canonical)]; if (r?.state) { GLOBE.extra.set(fkey(c.canonical), { ...c, hop: 0, registry: true }); ok++; } }
+    let ok = 0; for (const c of cands) { const k = fkey(c.canonical); const r = FRIENDS.loaded[k]; if (r?.state) { GLOBE.extra.set(k, { ...c, hop: 0, registry: true }); GLOBE.failed.delete(k); ok++; } else GLOBE.failed.set(k, { canonical: c.canonical, error: r?.error || "could not be loaded", hop: "registry" }); }
     GLOBE.registry = true; GLOBE.log.push(`registry: ${ok} of ${list.length} loaded`);
   } catch (err) { GLOBE.log.push(`registry: could not be read (${err?.message || "network"})`); }
   finally { GLOBE.busy = false; if (fgraph) fgraph.at = 0; render(); }
 }
-function globeClear() { GLOBE.extra.clear(); GLOBE.done = 0; GLOBE.registry = false; GLOBE.log = []; if (fgraph) fgraph.at = 0; render(); }
+function globeClear() { GLOBE.extra.clear(); GLOBE.failed.clear(); GLOBE.done = 0; GLOBE.registry = false; GLOBE.log = []; if (fgraph) fgraph.at = 0; render(); }
 function globeUi(g) {
   if (!GLOBE.view) return null;
   const sel = el("select", { title: "how many hops out from what is loaded — each wave is asked for with its count", onchange: (ev) => { GLOBE.hops = Number(ev.target.value); if (GLOBE.hops === 0) globeClear(); else render(); } }, ...Array.from({ length: 11 }, (_, i) => el("option", { value: String(i), selected: i === GLOBE.hops }, i === 0 ? "off" : `${i} hop${i === 1 ? "" : "s"}`)));
@@ -1853,13 +1855,15 @@ function renderThoughts(g) {
     ...open.map(row));
 }
 function friendsLegend(g) {
-  if (!FRIENDS.on && !CHAIN.extra.size) return [];
+  if (!FRIENDS.on && !CHAIN.extra.size && !GLOBE.extra.size && !GLOBE.failed.size) return [];
   const out = friendUnits(g).map((u, i) => el("span", { class: "friend", title: `friend: ${u.r.canonical}${u.members.length > 1 ? ` — a family of ${u.members.length}, shown whole` : ""} — its hub shows the entries cited there; a click on a hub shows all of it, a click on the name goes there` },
     el("i", { class: "dot", style: `background:transparent;border:2px dashed ${friendColor(i)};width:10px;height:10px` }),
     el("a", { href: u.r.open, onclick: (ev) => { if (!u.r.centre) return; ev.preventDefault(); moveTo({ centre: u.r.centre, state: u.r.state }, "#graph"); } }, u.r.name),
     u.members.length > 1 ? el("span", { class: "note" }, ` · family of ${u.members.length}`) : (u.r.members || []).length > 1 ? el("span", { class: "note" }, ` · family of ${u.r.members.length}, not shown`) : null,
     u.via === "chain" ? el("span", { class: "note" }, " · via a thought") : null));
   for (const f of g.friends || []) { const r = FRIENDS.loaded[fkey(f.canonical)]; if (r && !r.state) out.push(el("span", { class: "warn", title: r.error }, `${repoLabel(r.canonical)} not loaded`)); }
+  // the globe's waves and the registry: what could not be loaded is named, not dropped — often it is back tomorrow
+  if (GLOBE.view) for (const f of GLOBE.failed.values()) out.push(el("span", { class: "warn", title: f.error }, `${repoLabel(f.canonical)} not loaded · ${f.hop === "registry" ? "registry" : `hop ${f.hop}`}`));
   return out;
 }
 // Every project the graph holds, one line each, from its hub nodes: this project first, then the path's
@@ -2324,7 +2328,7 @@ async function viewSearch(main, linkScope, q) {
   const rows = searchRows(pool, q);
   const shown = rows.filter(({ e }) => matches(e)).length;
   const projectsHit = new Set(rows.map((r) => r.g)).size;
-  sub.textContent = `${plural(rows.length, "entry").replace("entrys", "entries")} in ${plural(projectsHit, "project")}` +
+  sub.textContent = `${plural(rows.length, "entry")} in ${plural(projectsHit, "project")}` +
     (scope === "family" ? ` · ${plural(pool.groups.length, "project")} searched` : "") +
     (terms.length > 1 ? ` · all of: ${terms.join(", ")}` : "") +
     (filterActive() ? ` · ${shown} match the sidebar filters, the rest dimmed` : "") +

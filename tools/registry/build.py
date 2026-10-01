@@ -5,8 +5,10 @@ Every line that is a URL must be a published Keep the Why dashboard export:
 the state.json loads, names its repository (``project.canonical``), and that
 repository's ``.keep-the-why`` at HEAD names this very URL in its
 ``dashboard-state`` line — so nobody can list another project's export, and
-a listing goes stale visibly when the export moves. One failure fails the
-build; the index is written only when every line passes. Standard library
+a listing goes stale visibly when the export moves. A line that never
+loaded fails the build (a new line in a pull request, a typo); a listed export
+that stops answering stays as last seen, marked ``error`` and ``failed_since``,
+for GRACE_DAYS before it is dropped — much of that is temporary. Standard library
 only; ``--check`` validates without writing.
 """
 
@@ -75,10 +77,24 @@ def check(url):
     }
 
 
+GRACE_DAYS = 30  # a listed export that stops answering stays, marked, this long before it is dropped
+
+
+def previous():
+    """The index as last written: what a failing line is allowed to keep."""
+    try:
+        data = json.loads(TARGET.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return {p["state"]: p for p in data.get("projects", [])}
+
+
 def main(argv):
     lines = [l.strip() for l in SOURCE.read_text(encoding="utf-8").splitlines()]
     urls = [l for l in lines if l and not l.startswith("#")]
-    projects, failed = [], []
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    before = previous()
+    projects, failed, stale = [], [], []
     for url in urls:
         try:
             projects.append(check(url))
@@ -89,16 +105,39 @@ def main(argv):
             json.JSONDecodeError,
             OSError,
         ) as err:
-            failed.append((url, str(err)))
-            print(f"FAIL  {url} — {err}")
+            old = before.get(url)
+            if old is None:
+                # never loaded, so it cannot be listed: a new line in a pull request, or a typo
+                failed.append((url, str(err)))
+                print(f"FAIL  {url} — {err}")
+                continue
+            # a known export that stopped answering — much of that is temporary: it stays as
+            # last seen, marked, and is dropped only after GRACE_DAYS of failing in a row
+            since = old.get("failed_since") or today
+            days = (
+                datetime.strptime(today, "%Y-%m-%d")
+                - datetime.strptime(since, "%Y-%m-%d")
+            ).days
+            if days > GRACE_DAYS:
+                failed.append((url, f"not answering since {since}: {err}"))
+                print(f"DROP  {url} — not answering since {since}: {err}")
+                continue
+            kept = dict(old, error=str(err), failed_since=since)
+            projects.append(kept)
+            stale.append((url, since, str(err)))
+            print(f"STALE {url} — since {since}: {err}")
     seen = {}
     for p in projects:
         if p["canonical"] in seen:
             failed.append((p["state"], f"{p['canonical']} is listed twice"))
         seen[p["canonical"]] = p
+    for url, since, err in stale:
+        print(f"::warning title=registry, not answering since {since}::{url} — {err}")
     if failed:
+        for url, err in failed:
+            print(f"::error title=registry::{url} — {err}")
         print(
-            f"\n{len(failed)} of {len(urls)} failed; the index is not written.",
+            f"\n{len(failed)} of {len(urls)} cannot be listed; the index is not written.",
             file=sys.stderr,
         )
         return 1

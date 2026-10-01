@@ -223,3 +223,6 @@
 .md-nav__item--active:not(.md-nav__item--nested):not(.md-nav__item--section) > a.md-nav__link {
   color: var(--md-typeset-a-color);
 }
+
+.md-typeset .ktw-globe-link { font-size: .9rem; margin-top: -.4rem; }
+.md-typeset .ktw-globe-link a:first-child { font-size: 1.6rem; text-decoration: none; vertical-align: middle; margin-right: .2rem; }
