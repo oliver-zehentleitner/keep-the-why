@@ -1696,6 +1696,28 @@ function friendsLegend(g) {
   for (const f of g.friends || []) { const r = FRIENDS.loaded[fkey(f.canonical)]; if (r && !r.state) out.push(el("span", { class: "warn", title: r.error }, `${repoLabel(r.canonical)} not loaded`)); }
   return out;
 }
+// Every project the graph holds, one line each, from its hub nodes: this project first, then the path's
+// steps, the family, the friends with their families — each with the ring the canvas draws for it, the
+// name a link that goes there in place. The hubs carry what the legend needs, so what is listed is
+// exactly what is drawn.
+function projectsLegend(g) {
+  const p = S?.project || {};
+  const hubs = g.nodes.filter((n) => n.kind === "project");
+  const out = [];
+  if (!hubs.some((n) => n.self)) out.push(el("span", { class: "family" }, el("i", { class: "dot", style: "background:var(--accent);width:10px;height:10px" }), el("b", {}, p.id || p.name || "this project")));
+  const kind = (n) => (n.self ? "this project" : n.trail ? "a step of the path" : n.chain ? "reached by a thought" : n.friend ? (n.kin ? "a friend's family member" : "a friend") : "family");
+  const ring = (n) => (n.self ? `background:${n.color};` : `background:transparent;border:2px ${n.chain ? "dashed" : n.friend ? "dashed" : n.trail ? "dotted" : "solid"} ${n.color};`);
+  const units = new Map(friendUnits(g).map((u) => [u.k, u]));
+  for (const n of hubs) {
+    const name = n.self ? el("b", {}, n.label) : el("a", { href: n.href || "#graph", title: `${kind(n)} — go there`, onclick: (ev) => { if (!n.walk) return; ev.preventDefault(); n.walk(); } }, n.label);
+    const u = n.friend && !n.kin ? units.get(n.unit) : null;
+    const notShown = u && u.members.length === 1 && (u.r.members || []).length > 1 ? u.r.members.length : 0;
+    out.push(el("span", { class: n.friend ? "friend" : "family", title: kind(n) }, el("i", { class: "dot", style: `${ring(n)}width:10px;height:10px` }), name,
+      notShown ? el("span", { class: "note" }, ` · family of ${notShown}, not shown`) : null,
+      n.chain ? el("span", { class: "note" }, " · via a thought") : null));
+  }
+  return out;
+}
 function familyLegend(g) {
   if (g !== graph) return [];
   const fam = familyMembers();
@@ -1733,15 +1755,14 @@ function viewGraph(main) {
     );
     const legend = family
       ? el("div", { class: "graph-legend" },
-        g.groups.map((G) => el("span", { class: "family" }, el("i", { class: "dot", style: `background:${G.color};width:10px;height:10px` }),
-          G.key === "self" ? el("b", {}, G.g.member.name) : el("a", { href: memberLink(G.g.member, "#graph"), title: "go there — the family graph centres on it", onclick: (ev) => { ev.preventDefault(); moveTo({ centre: memberCentre(G.g.member), state: G.state }, "#graph"); } }, G.g.member.name))),
+        ...projectsLegend(g),
         el("span", {}, `${plural(g.across, "reference")} across projects`),
-        g.missing.length ? el("span", { class: "warn", title: g.missing.map(({ member: m, reason }) => `${m.name}: ${reason}`).join("\n") }, `${plural(g.missing.length, "member")} not available here`) : null, ...friendsLegend(g))
+        g.missing.length ? el("span", { class: "warn", title: g.missing.map(({ member: m, reason }) => `${m.name}: ${reason}`).join("\n") }, `${plural(g.missing.length, "member")} not available here`) : null, ...friendsLegend(g).filter((x) => x.classList.contains("warn")))
       : el("div", { class: "graph-legend" },
         el("span", {}, el("i", { class: "dot", style: "background:var(--accent);width:12px;height:12px" }), "topic (size = entries)"),
         el("span", {}, el("i", { class: "dot confirmed" }), "confirmed"), el("span", {}, el("i", { class: "dot inferred" }), "inferred"), el("span", {}, el("i", { class: "dot unknown" }), "unknown"),
         el("span", {}, el("i", { class: "dot", style: "background:transparent;border:1.5px solid var(--fg3)" }), "superseded"),
-        el("span", {}, "— reference · ··· membership"), ...familyLegend(g), ...friendsLegend(g));
+        el("span", {}, "— reference · ··· membership"), ...projectsLegend(g), ...familyLegend(g).filter((x) => x.classList.contains("warn") || x.classList.contains("note")), ...friendsLegend(g).filter((x) => x.classList.contains("warn")));
     wrap.replaceChildren(canvas, ui, legend, ...[pathBar()].filter(Boolean), el("div", { class: "graph-hint" }, family ? "family — a project opens its overview · drag nodes · wheel zoom · drag background to pan" : "drag nodes · wheel zoom · drag background to pan · click to open"));
     // arriving from the side pane's graph: centred on the entry or topic it showed
     if (GRAPH_CENTER) {
