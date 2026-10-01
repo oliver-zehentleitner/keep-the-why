@@ -613,6 +613,23 @@ const report = {};
   if (!g.nodes.some((n) => n.kind === "topic" && !n.ext)) errors.push("globe: at off the project's own topics are gone");
   window.close();
 }
+{
+  // copy link: on a published page the page's own address; on a local one the project's published dashboard
+  const suite = { ...FILES["https://acme.github.io/suite/state.json"], exported: true };
+  const embed = (s) => html.replace("<script>", `<script>window.__KTW_STATE__ = ${JSON.stringify(s).replace(/</g, "\\u003c")};</script><script>`);
+  let window = await open(`https://acme.github.io/suite/keep-the-why-dashboard/#entry/${SUITE_ID}`, embed(suite));
+  await tick(300);
+  let b = window.document.querySelector(".reader .share-btn");
+  report.shareOnPages = b?.title.split("\n")[1];
+  if (report.shareOnPages !== `https://acme.github.io/suite/keep-the-why-dashboard/#entry/${SUITE_ID}`) errors.push("copy link: on a published page it should be the page's address: " + b?.title);
+  window.close();
+  window = await open(`http://localhost:8765/#entry/${SUITE_ID}`, embed({ ...suite, project: { ...suite.project, dashboard_state: "https://acme.github.io/suite/keep-the-why-dashboard/state.json" } }));
+  await tick(300);
+  b = window.document.querySelector(".reader .share-btn");
+  report.shareOnLocal = b?.title.split("\n")[1];
+  if (report.shareOnLocal !== `https://acme.github.io/suite/keep-the-why-dashboard/#entry/${SUITE_ID}`) errors.push("copy link: on a local page it should be the published dashboard's address: " + b?.title);
+  window.close();
+}
 console.log(JSON.stringify(report, null, 1));
 console.log("ERRORS:", errors.length); for (const e of errors) console.log("  " + e);
 process.exit(errors.length ? 1 : 0);

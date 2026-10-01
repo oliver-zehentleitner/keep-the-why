@@ -485,6 +485,28 @@ function refLine(ref, label) {
   if (ref.file) return el("div", { class: "ref" }, label ? el("b", {}, label) : null, topicOf(ref.file) ? el("a", { href: `#topic/${ref.file}` }, ref.locator) : ref.locator, el("span", { class: "note mono" }, ` · ${ref.uuid || ""}`), el("span", { class: "note warn" }, " · Id not found here — the locator may be stale"), date);
   return el("div", { class: "ref" }, label ? el("b", {}, label) : null, ref.text || "");
 }
+// The address to share an entry by: on a published page (an export, public mode) the page's own address; on
+// the live server — a local address nobody else can open — the project's published dashboard, from its
+// dashboard-state line, when it has one; the local address only as a last resort, and then said so.
+function shareUrlOf(e) {
+  const local = /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|\[?::1\]?$)/.test(location.hostname) || location.protocol === "file:";
+  const here = location.href.split("#")[0] + entryHref(e);
+  if (PUBLISHED() && !local) return { url: here, where: "this page" };
+  const st = e.project ? null : (SELF?.project?.dashboard_state || S?.project?.dashboard_state || "");
+  if (st && /^https:\/\//.test(st)) return { url: st.replace(/state\.json$/, "") + entryHref(e), where: "the project's published dashboard" };
+  return { url: here, where: local ? "this machine only — the project publishes no dashboard" : "this page" };
+}
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch { /* no clipboard API: the old way */ }
+  const ta = el("textarea", { style: "position:fixed;opacity:0" }); ta.value = text; document.body.append(ta); ta.select();
+  let ok = false; try { ok = document.execCommand("copy"); } catch {} ta.remove(); return ok;
+}
+function shareButton(e) {
+  const s = shareUrlOf(e);
+  const b = el("button", { type: "button", class: "share-btn", title: `copy a link to this entry — ${s.where}:\n${s.url}`,
+    onclick: async () => { const ok = await copyText(s.url); b.textContent = ok ? "✓ copied" : "copy failed"; b.classList.toggle("done", ok); setTimeout(() => { b.textContent = "⧉ copy link"; b.classList.remove("done"); }, 1800); } }, "⧉ copy link");
+  return b;
+}
 function viewEntry(main, id) {
   const e = entryOf(id);
   if (!e && isUuid(id) && (LIVE() || (PUBLISHED() && canonicalOf(S.project)))) return viewEntryElsewhere(main, id);
@@ -494,7 +516,7 @@ function viewEntry(main, id) {
   const t = topicOf(e.file);
   INLINE_PROJECT = e.project || null;
   const r = el("div", { class: `reader ${e.status}` },
-    el("div", { class: "crumbs" }, el("a", { href: "#overview" }, "Overview"), " / ", el("a", { href: `#topic/${e.file}` }, t?.title || e.file), ` / line ${e.line}`),
+    el("div", { class: "crumbs" }, el("a", { href: "#overview" }, "Overview"), " / ", el("a", { href: `#topic/${e.file}` }, t?.title || e.file), ` / line ${e.line}`, shareButton(e)),
     el("h1", { html: inline(e.title) }),
     el("div", { class: "fields" }, ...entryPills(e), e.source ? pill(`Source: ${e.source}`, "") : null, e.verification ? pill(`Verification: ${e.verification.split(/\s[—-]\s/)[0]}`, "") : null),
     el("div", { class: "body", html: renderMarkdown(e.body.text || "_(no body)_") }),
