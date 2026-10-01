@@ -475,7 +475,7 @@ a.author:hover { color: var(--accent2); }
 .app.globe .graph-wrap { margin-left: -32px; margin-right: -32px; }
 .statusbar .globe-egg { margin-left: 14px; font-size: 12px; opacity: .55; text-decoration: none; } .statusbar .globe-egg:hover { opacity: 1; }
 .graph-ui .globe-ctl select { font-size: 11px; background: var(--bg2); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 1px 4px; }
-.graph-ui .globe-mark { font-size: 13px; }
+.graph-ui .globe-mark { font-size: 13px; text-decoration: none; }
 .graph-ui .globe-info { position: relative; color: var(--fg3); cursor: help; font-size: 13px; line-height: 1; margin-left: -4px; }
 .graph-ui .globe-info:hover, .graph-ui .globe-info:focus { color: var(--fg); outline: none; }
 .graph-ui .globe-info-box { display: none; position: absolute; top: 20px; left: -120px; z-index: 6; width: 360px; background: var(--bg2); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; font-size: 11px; line-height: 1.45; color: var(--fg2); box-shadow: 0 8px 28px rgba(0,0,0,.4); cursor: auto; white-space: normal; }
