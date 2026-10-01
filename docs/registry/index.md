@@ -26,4 +26,4 @@ Per project: the canonical repository URL, the state's URL as `dashboard-state` 
 
 ## In the dashboard
 
-The globe — the 🌐 at the end of the status bar — opens the graph alone, full width, and loads repositories in waves: hop 1 is what the loaded entries cite outside the page, hop 2 what those cite, up to ten, each wave asked for with its count and its list before anything is fetched. *registry* loads every listed project as a wave of its own, asked for the same way. Nothing of it is kept per browser: every load from another host is a click, and a reload starts without it.
+The globe — the [🌐](https://keepthewhy.com/dashboard/live/#globe) at the end of the status bar — opens the graph alone, full width, and loads repositories in waves: hop 1 is what the loaded entries cite outside the page, hop 2 what those cite, up to ten, each wave asked for with its count and its list before anything is fetched. *registry* loads every listed project as a wave of its own, asked for the same way. Nothing of it is kept per browser: every load from another host is a click, and a reload starts without it.
