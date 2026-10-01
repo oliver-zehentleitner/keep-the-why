@@ -6,6 +6,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Added
 
+- `keep-the-why-dashboard` 0.4.8: in the loaded list the versions stand on a line of their own under the project's id, the address under them — the id and the versions had shared a line and wrapped where it hurt.
 - `keep-the-why-dashboard` 0.4.7: the list of what the page loaded names each state's project and versions — the Keep the Why version it is on (its `context-schema`), the dashboard that exported it, the linter that parsed it — and a `.keep-the-why`'s id and schema, beside the size and the address.
 - `keep-the-why-dashboard` 0.4.6: the side pane graph's *friends* button is gone from the *project* and *family* views — it sat on top of the ⚙, and the gear's groups carry the same switch; the *near* view keeps its button, which is the way from a neighbourhood to the project level.
 - `keep-the-why-dashboard` 0.4.5: the centred project is a hub whenever anything is beside it — the family, a friend, the path — with its topics on spokes, and the path's last step leads to that hub; before, the hub appeared only with the family, so a walk ended beside a loose cloud of topics and the last step hung in the air.

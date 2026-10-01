@@ -86,7 +86,7 @@ function fillLoadedPop(pop) {
   const versions = (r) => (r.kind === "state" ? [r.schema ? `ktw ${r.schema}` : null, r.dashboard ? `dashboard ${r.dashboard}` : null, r.linter ? `lint ${r.linter}` : null] : [r.schema ? `ktw ${r.schema}` : null]).filter(Boolean).join(" · ");
   setKids(pop, el("div", { class: "loaded-head" }, `${plural(files, "file")} loaded — ${plural(states, "state.json")} — ${fmtBytes(bytes)}`),
     ...rows.map(([url, r]) => el("div", { class: "loaded-row" }, el("span", { class: "size" }, fmtBytes(r.bytes)), el("span", { class: "kind" }, r.kind),
-      el("span", { class: "what" }, r.project ? el("b", {}, r.project) : null, versions(r) ? el("span", { class: "note" }, ` ${versions(r)}`) : null, el("br"), el("a", { href: url, target: "_blank", rel: "noopener", title: url }, url)))));
+      el("span", { class: "what" }, r.project ? el("b", {}, r.project) : null, versions(r) ? [el("br"), el("span", { class: "note" }, versions(r))] : null, el("br"), el("a", { href: url, target: "_blank", rel: "noopener", title: url }, url)))));
 }
 function loadedUi() {
   const box = el("span", { id: "loaded" });
