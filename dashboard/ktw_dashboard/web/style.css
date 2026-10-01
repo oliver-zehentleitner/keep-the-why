@@ -117,6 +117,8 @@ h3 { font-size: 13px; margin: 18px 0 8px; text-transform: uppercase; letter-spac
 .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; line-height: 18px; background: var(--bg3); color: var(--fg2); border: 1px solid var(--line); white-space: nowrap; }
 .pill.type { border-color: transparent; background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent2); }
 .pill.status-active { color: var(--active); border-color: var(--active); }
+.pill.fork { border-style: dashed; }
+.pill.fork a { color: inherit; }
 .pill.status-superseded { color: var(--superseded); text-decoration: line-through; }
 .pill.status-open { color: var(--open); border-color: var(--open); }
 .pill.status-needs-review { color: var(--needs-review); border-color: var(--needs-review); }

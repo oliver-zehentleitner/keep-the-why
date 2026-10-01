@@ -6,6 +6,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Added
 
+- `keep-the-why-dashboard` 0.4.1: a fork checkout says so — a dashed *fork of host/owner/repo* pill beside the branch and the repository on the overview and in the title row, linking the repository the checkout was forked from. Two signals, no host API: an `upstream` remote (origin is the fork; what Git itself says), or an `origin` that is not the project's `canonical` (what the project says its published repository is) — the tooltip names which; a mirror reads as a fork by the second signal. The state carries `git.upstream` and `git.fork = {of, by}`, so an export made from a fork — the proposal preview before a merge — shows whose repository it is.
 - Landing page: a "Git does the rest" section — six cards on what Git and the host already do for `context/` because it is files in the repository: permissions (the code's branch protection and `CODEOWNERS`; the skill never commits on its own), distribution (`git clone` ships the whole why to every checkout and runner), review (the reasoning in the same pull request as the change), forks (the why travels with a fork, citations stay on the published repository via `canonical`), branches (entries merge like code, the index skeleton keeps parallel additions apart), blame and history (`git blame`, `git log`, `git log -S <Id>` as the audit trail the dashboard reads). The README's "Keep & Share" paragraph and `llms.txt` say it in two sentences.
 
 ### Changed

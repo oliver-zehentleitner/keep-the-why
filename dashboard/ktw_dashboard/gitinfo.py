@@ -51,10 +51,24 @@ class Repo:
     branch: str
     remote: str  # host/path, credentials and scheme stripped; "" when none
     head_full: str = ""
+    upstream: str = ""  # the `upstream` remote in the same form; "" when none
     shallow: bool = False  # a shallow clone: first-seen dates are the clone's edge
 
     def rel(self, path: str) -> str:
         return os.path.relpath(path, self.root)
+
+
+def normalize_remote(url: str) -> str:
+    """A remote URL as `host/path`: credentials, scheme, the SSH `git@host:`
+    form, a `.git` suffix and a trailing slash stripped — the form in which
+    two URLs for one repository compare equal, and in which `canonical`
+    is stored once its `https://` is dropped."""
+    url = url.strip()
+    url = _CRED_RE.sub("//", url)
+    url = re.sub(r"^[a-z+]+://", "", url)
+    url = re.sub(r"^git@([^:]+):", r"\1/", url)
+    url = re.sub(r"\.git$", "", url.rstrip("/"))
+    return url.rstrip("/")
 
 
 def open_repo(project_root: str) -> Repo | None:
@@ -65,11 +79,10 @@ def open_repo(project_root: str) -> Repo | None:
     head = (_run(["rev-parse", "--short", "HEAD"], top) or "").strip()
     head_full = (_run(["rev-parse", "HEAD"], top) or "").strip()
     branch = (_run(["rev-parse", "--abbrev-ref", "HEAD"], top) or "").strip()
-    remote = (_run(["remote", "get-url", "origin"], top) or "").strip()
-    remote = _CRED_RE.sub("//", remote)
-    remote = re.sub(r"^[a-z+]+://", "", remote)
-    remote = re.sub(r"^git@([^:]+):", r"\1/", remote)
-    remote = re.sub(r"\.git$", "", remote)
+    remote = normalize_remote(_run(["remote", "get-url", "origin"], top) or "")
+    # a fork checkout, the way the skill reads one: `origin` is the fork,
+    # `upstream` the repository it was forked from
+    upstream = normalize_remote(_run(["remote", "get-url", "upstream"], top) or "")
     shallow = (
         _run(["rev-parse", "--is-shallow-repository"], top) or ""
     ).strip() == "true"
@@ -79,6 +92,7 @@ def open_repo(project_root: str) -> Repo | None:
         branch=branch,
         remote=remote,
         head_full=head_full,
+        upstream=upstream,
         shallow=shallow,
     )
 

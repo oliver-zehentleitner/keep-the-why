@@ -300,3 +300,20 @@ Going to a friend — its name in the legend, its hub's entries, a link to it an
 **Rejected alternative:** keep the path across a reload in the tab's session storage. Rejected by the maintainer: a reload starts fresh, which is the simplest thing to understand.
 
 **Rejected alternative:** keep the page loads (every move a new page) and carry the path along. Rejected — every step would load again what is already in memory, and the path would have to be rebuilt from storage on each page.
+
+## A fork checkout is shown from the remotes and `canonical`, not from the host's API
+
+**Id:** 5230467d-0d33-478a-acdb-2c9226c4f578
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer request, 2026-10-01 ("if a repo is a fork, show it and the upstream URL"); the two-signal form was the assisting agent's proposal, accepted
+**Revisit when:** a mirror is mistaken for a fork often enough to matter, or the page gains a host lookup it makes without a click anyway
+
+The page marks a checkout as a fork — *fork of host/owner/repo*, linking the repository — from two signals the machine already has: an `upstream` remote, which is how `gh repo fork` and most contributor guides lay a fork checkout out and how the skill reads one (`origin` the fork, `upstream` the published repository); or an `origin` that differs, as a normalized `host/path`, from the project's `canonical` in `.keep-the-why`. The tooltip names the signal. The state carries `git.upstream` and `git.fork = {of, by}`.
+
+**Reason:** both signals are local and cost nothing, and together they cover the two situations that occur — a contributor's clone with `upstream` set, and a fork's own CI export where there is no `upstream` remote but `canonical` still names the published repository (the proposal preview before a merge). The second is the one that needed it most: an export from a fork looked exactly like the project's own.
+
+**Rejected alternative:** ask the host — GitHub's repository API says `fork: true` and names `parent`. Authoritative, but one request per project at every build, and the page asks a host only on a click (the author lookup). The API can be added as an opt-in confirmation later; the local signals stay the default.
+
+**Consequence:** a mirror — `origin` points at a copy, `canonical` at the original — is marked a fork by the second signal; the tooltip says "fork or mirror" for that one. Comparison is case-insensitive on the normalized form, so `git@github.com:Acme/widget.git` and `https://github.com/acme/widget/` are one repository.

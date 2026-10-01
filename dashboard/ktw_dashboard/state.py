@@ -161,6 +161,21 @@ def _config_dict(block) -> dict:
 _CHILD_SPLIT_RE = re.compile(r"\s+[—–-]\s+")
 
 
+def _fork_of(repo, canonical: str):
+    """{of, by} when this checkout is a fork of another repository, else
+    None. Two signals, no host API: an `upstream` remote (the convention
+    `gh repo fork` and most contributor guides set up — what Git itself
+    says), or an `origin` that is not the project's `canonical` (what the
+    project says its published repository is). A mirror looks the same as
+    a fork by the second signal; the page says which signal it was."""
+    if repo.upstream and repo.upstream.lower() != (repo.remote or "").lower():
+        return {"of": repo.upstream, "by": "upstream"}
+    canon = gitinfo.normalize_remote(canonical or "")
+    if canon and repo.remote and canon.lower() != repo.remote.lower():
+        return {"of": canon, "by": "canonical"}
+    return None
+
+
 def _children_list(block) -> list[dict]:
     """The parent's children block as [{name, location, scope}]."""
     if block is None:
@@ -240,7 +255,12 @@ class StateBuilder:
                     "dashboard-state", ""
                 ),
                 "children": _children_list(parsed.children if parsed else None),
-                "git": self._repo_dict(repo),
+                "git": self._repo_dict(
+                    repo,
+                    _config_dict(parsed.config if parsed else None).get(
+                        "canonical", ""
+                    ),
+                ),
             },
             "topics": topics,
             "entries": entries,
@@ -281,7 +301,7 @@ class StateBuilder:
 
     # -- internals ----------------------------------------------------------
 
-    def _repo_dict(self, repo):
+    def _repo_dict(self, repo, canonical=""):
         if repo is None:
             return {"available": False}
         return {
@@ -290,6 +310,8 @@ class StateBuilder:
             "head_full": repo.head_full,
             "branch": repo.branch,
             "remote": repo.remote,
+            "upstream": repo.upstream,
+            "fork": _fork_of(repo, canonical),
             "project_subdir": (
                 os.path.relpath(self.root, repo.root) if self.root != repo.root else ""
             ),

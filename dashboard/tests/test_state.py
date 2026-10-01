@@ -301,6 +301,32 @@ class StateTest(unittest.TestCase):
         )
         self.assertTrue(StateBuilder(dest).build()["project"]["git"]["shallow"])
 
+    def test_fork_from_upstream_remote(self):
+        git(self.root, "remote", "add", "origin", "git@github.com:bob/widget.git")
+        self.assertIsNone(StateBuilder(self.root).build()["project"]["git"]["fork"])
+        git(
+            self.root, "remote", "add", "upstream", "https://github.com/acme/widget.git"
+        )
+        g = StateBuilder(self.root).build()["project"]["git"]
+        self.assertEqual(g["remote"], "github.com/bob/widget")
+        self.assertEqual(g["upstream"], "github.com/acme/widget")
+        self.assertEqual(g["fork"], {"of": "github.com/acme/widget", "by": "upstream"})
+
+    def test_fork_from_canonical_differing_from_origin(self):
+        git(self.root, "remote", "add", "origin", "git@github.com:bob/widget.git")
+        with open(os.path.join(self.root, ".keep-the-why"), "w") as fh:
+            fh.write(
+                CONFIG.replace(
+                    "- id: acme---widget\n",
+                    "- id: acme---widget\n- canonical: https://github.com/acme/widget\n",
+                )
+            )
+        g = StateBuilder(self.root).build()["project"]["git"]
+        self.assertEqual(g["fork"], {"of": "github.com/acme/widget", "by": "canonical"})
+        # the same repository under another URL form is not a fork
+        git(self.root, "remote", "set-url", "origin", "https://GitHub.com/Acme/widget/")
+        self.assertIsNone(StateBuilder(self.root).build()["project"]["git"]["fork"])
+
     def test_slugify(self):
         self.assertEqual(
             slugify("`WSUpgradeRequest` / `WSUpgradeResponse` keep a shape"),
