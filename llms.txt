@@ -11,7 +11,8 @@ decisions, rejected alternatives, workarounds, incident learnings, operational c
 the code alone can't explain — in the repo.
 That memory is plain Markdown in `context/`, committed with the code, so Git already provides the
 storage, the history and the distribution: it travels with every clone, branch and fork, and a pull
-request shows the reasoning diff beside the code diff. It captures that reasoning as a byproduct of
+request shows the reasoning diff beside the code diff; permissions and review are the code's, and
+git blame and git log are the audit trail of every entry. It captures that reasoning as a byproduct of
 working with your agent, so every later session can use it. Your agent, and every other agent that
 works in the repository, understands not just the code but everything around it: why it is the way
 it is, what was tried and rejected, which constraints the source doesn't show. So does the next

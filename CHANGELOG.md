@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- Landing page: a "Git does the rest" section — six cards on what Git and the host already do for `context/` because it is files in the repository: permissions (the code's branch protection and `CODEOWNERS`; the skill never commits on its own), distribution (`git clone` ships the whole why to every checkout and runner), review (the reasoning in the same pull request as the change), forks (the why travels with a fork, citations stay on the published repository via `canonical`), branches (entries merge like code, the index skeleton keeps parallel additions apart), blame and history (`git blame`, `git log`, `git log -S <Id>` as the audit trail the dashboard reads). The README's "Keep & Share" paragraph and `llms.txt` say it in two sentences.
+
 ### Changed
 
 - `SKILL.md` wording, measured before and after in isolation (three runs per case) after the 0.18.2 series ran on a new agent model (`claude-sonnet-5-5`, which the `sonnet` alias now resolves to): two sources that disagree are not a correction until someone confirms which one is stale — both are recorded and the conflict stays open (rule 4; `negative-conflicting-sources` had gone 0/3 with the document overwritten from the code); a shortcut a maintainer names as known and unresolved — a hardcoded credential, a disabled check — earns a `workaround` entry, never with the value (rule 10; `negative-secret-in-interview-answer` had gone 1/3 with nothing recorded); the `canonical` backfill is not asked about and not presented as a decision, but that the file was changed may be reported the way any write is (step 0 — the agent wrote the right line every time and mentioned it in a closing sentence, which the expectation had read as announcing).

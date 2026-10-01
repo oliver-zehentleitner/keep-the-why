@@ -121,6 +121,74 @@ Decisions that shipped, alternatives that lost, workarounds, constraints — Kee
 
 <div class="ktw-section" markdown>
 
+## Git does the rest
+
+**`context/` is files in the repository, so everything Git and your host already do for code, they do for the why — nothing to set up, nothing to run, no second system to keep in sync.**
+
+<div class="ktw-cards ktw-cards--git" markdown>
+
+<div class="ktw-card" markdown>
+
+### Permissions
+
+Who may write the why is who may write the code: branch protection, required reviews, `CODEOWNERS` on `context/` if you want a named owner — the same rules, no second access list. The skill never commits on its own; an entry reaches the history the way code does, through a commit a person made.
+
+</div>
+
+<div class="ktw-card" markdown>
+
+### Distribution
+
+`git clone` ships it. Every checkout, every CI runner, every agent on every machine has the whole why, offline, at the commit it is working on. No sync, no account, nothing to install to read it.
+
+</div>
+
+<div class="ktw-card" markdown>
+
+### Review
+
+A reason enters the record in the same pull request as the change it explains; the reviewer reads the diff and the why side by side. The linter checks the shape, review checks the truth — the one part no tool can.
+
+[Linting →](linting.md)
+
+</div>
+
+<div class="ktw-card" markdown>
+
+### Forks
+
+A fork carries the why with it and keeps writing its own. Citations still point at the published repository, not the fork — `canonical` is taken from `upstream` in a fork checkout — so a contributor's branch brings the reasoning back with the code, and a fork that diverges on purpose records why.
+
+[Families and citations →](setup.md#family-routing-and-writing-across-projects)
+
+</div>
+
+<div class="ktw-card" markdown>
+
+### Branches
+
+Two branches that add entries merge like code. The index has a fixed `0`–`9`, `A`–`Z` heading skeleton for exactly that: parallel additions land under different headings instead of in the same line, and a merge conflict in `context/` is the ordinary kind, resolved the ordinary way.
+
+[Repository structure →](repository-structure.md)
+
+</div>
+
+<div class="ktw-card" markdown>
+
+### Blame & history
+
+`git blame` on an entry says who recorded it and when; `git log` says when its Status changed; `git log -S <Id>` finds every place an entry is cited. Every entry has an audit trail, and nobody had to build one. The dashboard's Authors and Timeline views read exactly that.
+
+[Dashboard →](dashboard.md)
+
+</div>
+
+</div>
+
+</div>
+
+<div class="ktw-section" markdown>
+
 ## Live Dashboard
 
 <div class="ktw-shot" markdown>

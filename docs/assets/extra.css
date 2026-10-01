@@ -101,7 +101,8 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
 }
-.ktw-cards--not {
+.ktw-cards--not,
+.ktw-cards--git {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 .ktw-card {
