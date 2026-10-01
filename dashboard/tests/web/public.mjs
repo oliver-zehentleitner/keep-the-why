@@ -304,10 +304,14 @@ const report = {};
   // the plugin's See to the suite comes along: a unit shows what its citation chains connect to the cited entries
   if (see.join() !== "Cites elsewhere>Notes are <img s,Cites elsewhere>Release together,Plugins load lazily>Release together") errors.push("friends: See lines to the friends missing: " + see.join());
   const notesEntries = () => window.__g().nodes.filter((n) => n.kind === "entry" && n.id.startsWith("fe:P:https://github.com/acme/notes|")).length;
-  if (notesEntries() !== 1) errors.push("friends: a hub should show only the cited entries, got " + notesEntries());
+  // friends entries is on by default: the friend comes whole; off, a hub shows the cited entries, and a click on it expands it again
+  if (notesEntries() !== 2) errors.push("friends: a friend should come whole by default, got " + notesEntries());
   if (!/^1 entries/.test(d.getElementById("counts")?.textContent || "1 entries")) errors.push("friends: merged into the counts: " + d.getElementById("counts")?.textContent);
-  g.nodes.find((n) => n.friend && n.label === "acme/notes").action(); await tick(100);
+  const fe = d.querySelector(".graph-ui .friends-ctl .friend-entries input"); fe.checked = false; fe.dispatchEvent(new window.Event("change")); await tick(150);
+  if (notesEntries() !== 1) errors.push("friends entries off: a hub should show only the cited entries, got " + notesEntries());
+  window.__g().nodes.find((n) => n.friend && n.label === "acme/notes").action(); await tick(100);
   if (notesEntries() !== 2) errors.push("friends: an expanded hub should show all of the friend's entries, got " + notesEntries());
+  fe.checked = true; fe.dispatchEvent(new window.Event("change")); await tick(150);
   window.close();
 }
 {
