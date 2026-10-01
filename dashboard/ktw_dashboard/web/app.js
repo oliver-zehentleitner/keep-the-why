@@ -62,7 +62,15 @@ const LOADED = new Map(); // url -> { bytes, kind, at }
 const bytesOf = (text) => { try { return new TextEncoder().encode(text).length; } catch { return String(text).length; } };
 const fmtBytes = (b) => (b >= 1024 * 1024 ? `${(b / 1024 / 1024).toFixed(2)} MB` : b >= 1024 ? `${(b / 1024).toFixed(1)} KB` : `${b} B`);
 function noteLoaded(url, text, kind) {
-  LOADED.set(String(url), { bytes: bytesOf(text), kind: kind || (/state\.json/.test(url) ? "state" : /\.keep-the-why/.test(url) ? "config" : "other"), at: Date.now() });
+  kind = kind || (/state\.json/.test(url) ? "state" : /\.keep-the-why/.test(url) ? "config" : "other");
+  const r = { bytes: bytesOf(text), kind, at: Date.now() };
+  // a state says which versions made it: the project's context-schema (the Keep the Why version it is on),
+  // the dashboard that exported it, the linter that parsed it; a .keep-the-why names its context-schema
+  try {
+    if (kind === "state") { const s = JSON.parse(text); r.project = s.project?.id || ""; r.schema = s.project?.schema || ""; r.dashboard = s.dashboard || ""; r.linter = s.linter || ""; }
+    else if (kind === "config") { r.schema = configLine(text, "context-schema") || ""; r.project = configLine(text, "id") || ""; }
+  } catch { /* not JSON, or not a state: the size and address still count */ }
+  LOADED.set(String(url), r);
   renderLoaded();
 }
 const loadedTotals = () => { let bytes = 0, states = 0; for (const r of LOADED.values()) { bytes += r.bytes; if (r.kind === "state") states++; } return { bytes, states, files: LOADED.size }; };
@@ -75,8 +83,10 @@ function renderLoaded() {
 function fillLoadedPop(pop) {
   const rows = [...LOADED.entries()].sort((a, b) => b[1].bytes - a[1].bytes);
   const { bytes, states, files } = loadedTotals();
+  const versions = (r) => (r.kind === "state" ? [r.schema ? `ktw ${r.schema}` : null, r.dashboard ? `dashboard ${r.dashboard}` : null, r.linter ? `lint ${r.linter}` : null] : [r.schema ? `ktw ${r.schema}` : null]).filter(Boolean).join(" · ");
   setKids(pop, el("div", { class: "loaded-head" }, `${plural(files, "file")} loaded — ${plural(states, "state.json")} — ${fmtBytes(bytes)}`),
-    ...rows.map(([url, r]) => el("div", { class: "loaded-row" }, el("span", { class: "size" }, fmtBytes(r.bytes)), el("span", { class: "kind" }, r.kind), el("a", { href: url, target: "_blank", rel: "noopener", title: url }, url))));
+    ...rows.map(([url, r]) => el("div", { class: "loaded-row" }, el("span", { class: "size" }, fmtBytes(r.bytes)), el("span", { class: "kind" }, r.kind),
+      el("span", { class: "what" }, r.project ? el("b", {}, r.project) : null, versions(r) ? el("span", { class: "note" }, ` ${versions(r)}`) : null, el("br"), el("a", { href: url, target: "_blank", rel: "noopener", title: url }, url)))));
 }
 function loadedUi() {
   const box = el("span", { id: "loaded" });
