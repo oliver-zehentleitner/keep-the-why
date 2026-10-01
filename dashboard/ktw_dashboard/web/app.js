@@ -1913,7 +1913,8 @@ function runGraph(canvas, g, opts = {}) {
       ctx.strokeStyle = hi ? (l.kind === "see" || l.kind === "xtopic" ? color("--fg") : color("--accent2")) : base; ctx.globalAlpha = (focus || th || sp) && !hi ? (th ? 0.12 : 0.25) : l.kind === "see" || l.kind === "xtopic" ? 0.85 : 1; if (onThought(l)) ctx.lineWidth = 3 / g.scale; ctx.stroke();
     }
     ctx.setLineDash([]);
-    for (const n of ns) {
+    const drawOrder = sp ? [...ns.filter((n) => !sp.has(n)), ...ns.filter((n) => sp.has(n))] : ns; // the spotted project on top
+    for (const n of drawOrder) {
       const faded = ((focus || th || sp) && !neigh.has(n)) || dim(n);
       ctx.globalAlpha = faded ? 0.18 : 1;
       ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
@@ -1930,9 +1931,10 @@ function runGraph(canvas, g, opts = {}) {
       ctx.font = `${(mini ? 11 : 12) / g.scale}px ${color("--font") || "sans-serif"}`; ctx.textAlign = "center"; ctx.textBaseline = "top";
       for (const n of ns) {
         const hubName = n.kind === "project";
-        if (!hubName && !anyLabels) continue;
-        const lab = g.showLabels && labelsOn(n);
-        const show = n === stepNode || (th && th.nodes.has(n)) ? true : hubName ? true : n.kind === "topic" ? (mini ? neigh.has(n) || n === focus || g.nodes.filter((x) => x.kind === "topic").length <= 12 : lab || neigh.has(n)) : (focus && (neigh.has(n) || n === focus)) || (!mini && lab && g.scale > 1.6);
+        if (sp) { if (!sp.has(n)) continue; if (!hubName && n.kind !== "topic" && !(g.scale > 1.6)) continue; } // a spotted project: its names alone
+        if (!hubName && !anyLabels && !sp) continue;
+        const lab = sp ? true : g.showLabels && labelsOn(n);
+        const show = sp || n === stepNode || (th && th.nodes.has(n)) ? true : hubName ? true : n.kind === "topic" ? (mini ? neigh.has(n) || n === focus || g.nodes.filter((x) => x.kind === "topic").length <= 12 : lab || neigh.has(n)) : (focus && (neigh.has(n) || n === focus)) || (!mini && lab && g.scale > 1.6);
         if (!show) continue;
         const faded = (focus || th) && !neigh.has(n) && n !== focus; if (faded && !hubName) continue;
         const lbl = n.label.replace(/`/g, ""); const txt = lbl.length > 48 ? lbl.slice(0, 46) + "…" : lbl;
