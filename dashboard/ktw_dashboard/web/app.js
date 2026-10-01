@@ -977,6 +977,8 @@ function buildSubgraph(e) {
 // its topics and entries around it, parent and child projects joined, and
 // the See and Superseded by lines between entries drawn across projects.
 let fgraph = null; // kept across re-renders so positions survive live updates
+// where a family member is, for a move in place (the path grows, nothing reloads)
+const memberCentre = (m) => (m.role === "self" ? currentCentre() : PUBLISHED() ? { mode: "public", canonical: m.canonical, root: m.root || "" } : { mode: "live", project: m.key });
 const memberLink = (m, hash) => m.role === "self" ? hash : PUBLISHED() ? publicHref(m.canonical, m.root || "", hash) : `${location.pathname}?project=${encodeURIComponent(m.key)}${hash}`;
 async function buildFamilyGraph() {
   const pool = await searchPool("family");
@@ -998,10 +1000,13 @@ async function buildFamilyGraph() {
   // this project keeps the local graph's ids, so the selected entry and the positions carry over
   const tid = (G, file) => (G.key === "self" ? `t:${file}` : `t:${G.key}:${file}`);
   const eid = (G, id) => (G.key === "self" ? `e:${id}` : `e:${G.key}:${id}`);
+  // this project in the middle, the rest of the family around it — after a move to a member, that one is the middle
   const R = groups.length > 1 ? 220 + 45 * groups.length : 0;
   groups.forEach((G, i) => {
-    const ang = (2 * Math.PI * i) / groups.length;
-    const hub = add({ id: `p:${G.key}`, kind: "project", label: G.g.member.name, r: 15, color: G.color, href: memberLink(G.g.member, "#overview"), walk: () => go(memberLink(G.g.member, G.key === "self" ? "#overview" : "#graph")) }, { x: R * Math.cos(ang), y: R * Math.sin(ang) });
+    const ang = (2 * Math.PI * (i - 1)) / Math.max(1, groups.length - 1);
+    const at = G.key === "self" ? { x: 0, y: 0 } : { x: R * Math.cos(ang), y: R * Math.sin(ang) };
+    const hub = add({ id: `p:${G.key}`, kind: "project", self: G.key === "self", label: G.g.member.name, r: 15, color: G.color, href: memberLink(G.g.member, "#overview"),
+      walk: () => (G.key === "self" ? go("#overview") : moveTo({ centre: memberCentre(G.g.member), state: G.state }, "#graph")) }, at);
     for (const t of G.state.topics || []) {
       const n = add({ id: tid(G, t.file), kind: "topic", fam: G.key !== "self", label: t.title, file: t.file, color: G.color, r: 8 + Math.sqrt(t.entries || 0) * 2.8, href: memberLink(G.g.member, `#topic/${t.file}`) }, hub);
       links.push({ s: index[hub.id], t: index[n.id], kind: "hub", len: 80 });
@@ -1695,7 +1700,8 @@ function viewGraph(main) {
     );
     const legend = family
       ? el("div", { class: "graph-legend" },
-        g.groups.map((G) => el("span", {}, el("i", { class: "dot", style: `background:${G.color};width:10px;height:10px` }), G.g.member.name)),
+        g.groups.map((G) => el("span", { class: "family" }, el("i", { class: "dot", style: `background:${G.color};width:10px;height:10px` }),
+          G.key === "self" ? el("b", {}, G.g.member.name) : el("a", { href: memberLink(G.g.member, "#graph"), title: "go there — the family graph centres on it", onclick: (ev) => { ev.preventDefault(); moveTo({ centre: memberCentre(G.g.member), state: G.state }, "#graph"); } }, G.g.member.name))),
         el("span", {}, `${plural(g.across, "reference")} across projects`),
         g.missing.length ? el("span", { class: "warn", title: g.missing.map(({ member: m, reason }) => `${m.name}: ${reason}`).join("\n") }, `${plural(g.missing.length, "member")} not available here`) : null, ...friendsLegend(g))
       : el("div", { class: "graph-legend" },
