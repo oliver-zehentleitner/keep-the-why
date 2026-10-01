@@ -1110,7 +1110,7 @@ function autoFamily() {
 const familyCount = () => (FAMILY_NB.groups ? FAMILY_NB.groups.length + (FAMILY_NB.missing?.length || 0) : (S?.project?.parent ? 1 : 0) + (S?.project?.children || []).length);
 function familyMembers() {
   if (!FAMILY_NB_ON || !canFamily() || !FAMILY_NB.groups?.length) return [];
-  return FAMILY_NB.groups.map((x) => (PUBLISHED() ? publicMember(x.member, x.state) : liveMember(x.member, x.state))).filter((m) => m.state && !onPath(m.canonical));
+  return FAMILY_NB.groups.map((x, i) => ({ ...(PUBLISHED() ? publicMember(x.member, x.state) : liveMember(x.member, x.state)), color: PALETTE[(i + 1) % PALETTE.length] })).filter((m) => m.state && !onPath(m.canonical));
 }
 function friendCandidates(entries, family = []) {
   const p = SELF?.project || {}; const base = canonicalOf(p); const root = MY_ROOT();
@@ -1253,6 +1253,15 @@ function addLinkedLayer(g, prev, items) {
   for (const it of items) for (const m of it.members) for (const e of m.state.entries || []) if (e.uuid) pool.add(e.uuid);
   const R = 680 + 40 * items.length;
   const placed = [];
+  // with the family beside it, the project is a hub too — its topics on spokes, as in the family graph — so the
+  // parent and child lines have something to join, and the family reads as one shape instead of islands
+  let selfHub = null;
+  if (items.some((it) => it.kind === "family") && !nodes.some((n) => n.kind === "project" && !n.ext)) {
+    const p = SELF?.project || S.project || {};
+    selfHub = add({ id: "p:self", kind: "project", self: true, label: p.id || p.name || "this project", r: 15, color: color0(), href: "#overview" }, { x: 0, y: 0 });
+    selfHub.ext = false; selfHub.unit = null;
+    for (const n of nodes) if (n.kind === "topic" && !n.ext) links.push({ s: index[selfHub.id], t: index[n.id], kind: "hub", len: 90 });
+  }
   items.forEach((it, i) => {
     const col = it.color;
     const canons = new Set(it.members.map((m) => fkey(m.canonical)).filter(Boolean));
@@ -1281,10 +1290,12 @@ function addLinkedLayer(g, prev, items) {
     const hubs = {};
     const entriesShown = [];
     it.members.forEach((m, j) => {
+      const mcol = m.color || col;
       const off = it.members.length > 1 ? { x: centre.x + 110 * Math.cos((2 * Math.PI * j) / it.members.length), y: centre.y + 110 * Math.sin((2 * Math.PI * j) / it.members.length) } : centre;
       // the hub expands a friend (or goes back along the path); its name goes to that project
       const walk = it.kind === "trail" ? it.hub : m.centre ? () => moveTo({ centre: m.centre, state: m.state }, "#graph") : m.open ? () => go(m.open) : null;
-      const hub = add({ id: `f:${it.k}:${m.key}`, kind: "project", friend: it.kind === "friend", chain: !!it.chain, trail: it.kind === "trail", family: it.kind === "family", label: m.name, r: j === 0 ? 13 : 10, color: col, href: m.open || "#graph", action: it.hub, walk }, off);
+      const hub = add({ id: `f:${it.k}:${m.key}`, kind: "project", friend: it.kind === "friend", chain: !!it.chain, trail: it.kind === "trail", family: it.kind === "family", label: m.name, r: it.kind === "family" ? 13 : j === 0 ? 13 : 10, color: mcol, href: m.open || "#graph", action: it.hub, walk }, off);
+      if (selfHub && it.kind === "family" && (m.role === "child" || m.role === "parent")) links.push({ s: index[hub.id], t: index[selfHub.id], kind: "family", len: 260 });
       hubs[m.key] = index[hub.id];
       const own = (m.state.entries || []).filter((e) => !cited || (e.uuid && cited.has(e.uuid)));
       const files = new Set(own.map((e) => e.file));
@@ -1292,7 +1303,7 @@ function addLinkedLayer(g, prev, items) {
       for (const t of m.state.topics || []) {
         if (cited && !files.has(t.file)) continue;
         const act = it.topic(m);
-        const n = add({ id: `ft:${it.k}:${m.key}:${t.file}`, kind: "topic", label: t.title, file: t.file, color: col, r: 7 + Math.sqrt(t.entries || 0) * 2.4, href: m.topicHref ? m.topicHref(t.file) : "#graph", action: act ? () => act(t.file) : null }, hub);
+        const n = add({ id: `ft:${it.k}:${m.key}:${t.file}`, kind: "topic", label: t.title, file: t.file, color: mcol, r: 7 + Math.sqrt(t.entries || 0) * 2.4, href: m.topicHref ? m.topicHref(t.file) : "#graph", action: act ? () => act(t.file) : null }, hub);
         tIdx[t.file] = index[n.id];
         links.push({ s: index[hub.id], t: tIdx[t.file], kind: "hub", len: 70 });
       }
@@ -1652,8 +1663,10 @@ function friendsLegend(g) {
 function familyLegend(g) {
   if (g !== graph) return [];
   const fam = familyMembers();
-  const out = fam.length ? [el("span", { class: "family", title: `family: ${plural(fam.length, "member")} beside this project — each hub shows the entries linked to this project; a click on a hub or a name goes there` },
-    el("i", { class: "dot", style: `background:transparent;border:2px solid ${familyColor()};width:10px;height:10px` }), `family of ${fam.length + 1}`)] : [];
+  // each member with its ring colour, as the family graph's legend has it; the name goes there
+  const out = fam.map((m) => el("span", { class: "family", title: `family: ${m.role || "member"} — its hub shows the entries linked to this project; a click on the name goes there` },
+    el("i", { class: "dot", style: `background:transparent;border:2px solid ${m.color || familyColor()};width:10px;height:10px` }),
+    el("a", { href: m.open || "#graph", onclick: (ev) => { if (!m.centre) return; ev.preventDefault(); moveTo({ centre: m.centre, state: m.state }, "#graph"); } }, m.name)));
   if (FAMILY_NB.loading) out.push(el("span", { class: "note" }, "loading the family…"));
   if (FAMILY_NB.missing?.length && canFamily()) out.push(el("span", { class: "warn", title: FAMILY_NB.missing.map(({ member: m, reason }) => `${m.name}: ${reason}`).join("\n") }, `${plural(FAMILY_NB.missing.length, "member")} not available here`));
   return out;
