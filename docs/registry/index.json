@@ -1,6 +1,6 @@
 {
  "registry": "https://keepthewhy.com/registry/",
- "source": "https://github.com/oliver-zehentleitner/keep-the-why/blob/main/registry/states.txt",
+ "source": "https://github.com/oliver-zehentleitner/keep-the-why/blob/main/registry/projects.txt",
  "checked": "2026-10-01",
  "projects": [
   {
@@ -9,13 +9,13 @@
    "id": "oliver-zehentleitner---keep-the-why",
    "name": "keep-the-why",
    "schema": "0.18.2",
-   "dashboard": "0.6.1",
+   "dashboard": "0.6.2",
    "linter": "0.18.2.0",
    "entries": 115,
    "topics": 10,
    "parent": "",
    "children": 0,
-   "generated": "2026-10-01T11:44:54Z"
+   "generated": "2026-10-01T12:06:14Z"
   },
   {
    "canonical": "https://github.com/oliver-zehentleitner/repo-native-project-memory",
@@ -37,13 +37,13 @@
    "id": "oliver-zehentleitner---ubdcc-dashboard",
    "name": "ubdcc-dashboard",
    "schema": "0.18.2",
-   "dashboard": "0.6.0",
+   "dashboard": "0.6.2",
    "linter": "0.18.2.0",
    "entries": 3,
    "topics": 2,
    "parent": "https://github.com/oliver-zehentleitner/unicorn-binance-depth-cache-cluster",
    "children": 0,
-   "generated": "2026-10-01T11:34:00Z"
+   "generated": "2026-10-01T12:06:14Z"
   },
   {
    "canonical": "https://github.com/oliver-zehentleitner/unicorn-binance-depth-cache-cluster",
@@ -93,13 +93,13 @@
    "id": "oliver-zehentleitner---unicorn-binance-suite",
    "name": "unicorn-binance-suite",
    "schema": "0.18.2",
-   "dashboard": "0.6.0",
+   "dashboard": "0.6.2",
    "linter": "0.18.2.0",
    "entries": 10,
    "topics": 4,
    "parent": "",
    "children": 6,
-   "generated": "2026-10-01T11:33:50Z"
+   "generated": "2026-10-01T12:06:07Z"
   },
   {
    "canonical": "https://github.com/oliver-zehentleitner/unicorn-binance-trailing-stop-loss",
@@ -107,13 +107,13 @@
    "id": "oliver-zehentleitner---unicorn-binance-trailing-stop-loss",
    "name": "unicorn-binance-trailing-stop-loss",
    "schema": "0.18.2",
-   "dashboard": "0.6.0",
+   "dashboard": "0.6.2",
    "linter": "0.18.2.0",
    "entries": 6,
    "topics": 4,
    "parent": "https://github.com/oliver-zehentleitner/unicorn-binance-suite",
    "children": 0,
-   "generated": "2026-10-01T11:34:07Z"
+   "generated": "2026-10-01T12:06:18Z"
   },
   {
    "canonical": "https://github.com/oliver-zehentleitner/unicorn-binance-websocket-api",
@@ -121,13 +121,13 @@
    "id": "oliver-zehentleitner---unicorn-binance-websocket-api",
    "name": "unicorn-binance-websocket-api",
    "schema": "0.18.2",
-   "dashboard": "0.6.0",
+   "dashboard": "0.6.2",
    "linter": "0.18.2.0",
    "entries": 21,
    "topics": 4,
    "parent": "https://github.com/oliver-zehentleitner/unicorn-binance-suite",
    "children": 0,
-   "generated": "2026-10-01T11:34:12Z"
+   "generated": "2026-10-01T12:06:15Z"
   },
   {
    "canonical": "https://github.com/oliver-zehentleitner/unicorn-fy",

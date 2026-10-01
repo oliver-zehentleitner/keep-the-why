@@ -1,9 +1,9 @@
 name: registry
 
-# The Keep the Why registry: registry/states.txt lists published dashboard
-# exports, one state.json URL per line; tools/registry/build.py checks every
-# line (the state loads, it names its repository, and that repository's
-# .keep-the-why at HEAD names this very URL) and writes docs/registry/index.json,
+# The Keep the Why registry: registry/projects.txt lists repositories with a
+# published dashboard export, one canonical URL per line; tools/registry/build.py
+# follows each repository's .keep-the-why at HEAD to its dashboard-state, checks
+# that the export names the repository, and writes docs/registry/index.json,
 # which the dashboard's globe reads from keepthewhy.com/registry/index.json.
 # A pull request that touches the list is checked, not written; a push to
 # main that touches it, a weekly run and a manual run write the index and
@@ -11,10 +11,10 @@ name: registry
 
 on:
   pull_request:
-    paths: [registry/states.txt, tools/registry/build.py]
+    paths: [registry/projects.txt, tools/registry/build.py]
   push:
     branches: [main]
-    paths: [registry/states.txt, tools/registry/build.py]
+    paths: [registry/projects.txt, tools/registry/build.py]
   schedule:
     - cron: "17 5 * * 1"
   workflow_dispatch:

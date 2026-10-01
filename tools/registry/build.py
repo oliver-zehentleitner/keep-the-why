@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-"""Build docs/registry/index.json from registry/states.txt.
+"""Build docs/registry/index.json from registry/projects.txt.
 
-Every line that is a URL must be a published Keep the Why dashboard export:
-the state.json loads, names its repository (``project.canonical``), and that
-repository's ``.keep-the-why`` at HEAD names this very URL in its
-``dashboard-state`` line — so nobody can list another project's export, and
-a listing goes stale visibly when the export moves. A line that never
-loaded fails the build (a new line in a pull request, a typo); a listed export
-that stops answering stays as last seen, marked ``error`` and ``failed_since``,
-for GRACE_DAYS before it is dropped — much of that is temporary. Standard library
-only; ``--check`` validates without writing.
+Every line is a repository's canonical URL. The build reads that repository's
+``.keep-the-why`` at HEAD, follows its ``dashboard-state`` line to the
+published export, and checks that the export names this repository
+(``project.canonical``) — the state's URL is read, never listed, so an export
+that moves is followed on the next build. A family is listed by its root;
+its children come with it from its own ``children`` block. A line that never
+loaded fails the build (a new line in a pull request, a typo); a listed
+repository whose export stops answering stays as last seen, marked ``error``
+and ``failed_since``, for GRACE_DAYS before it is dropped — much of that is
+temporary. Standard library only; ``--check`` validates without writing.
 """
 
 import json
@@ -21,7 +22,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "registry" / "states.txt"
+SOURCE = ROOT / "registry" / "projects.txt"
 TARGET = ROOT / "docs" / "registry" / "index.json"
 TIMEOUT = 30
 MAX_BYTES = 20 * 1024 * 1024
@@ -49,17 +50,32 @@ def config_line(text, key):
     return m.group(1).strip("`") if m else ""
 
 
-def check(url):
+def normalize(canonical):
+    """`https://host/owner/repo`, no trailing slash, no `.git` — the form `canonical` takes in `.keep-the-why`."""
+    c = canonical.strip().rstrip("/")
+    return c[:-4] if c.endswith(".git") else c
+
+
+def check(canonical):
+    """A listed repository: its `.keep-the-why` at HEAD names a published export, and the export names this
+    repository. The state's URL is read, never listed — a moved export is followed on the next build.
+    """
+    if not canonical.startswith("https://"):
+        raise ValueError("not an https repository URL")
+    config = fetch(raw_url(canonical))
+    url = config_line(config, "dashboard-state")
+    if not url:
+        raise ValueError(
+            "its .keep-the-why at HEAD has no dashboard-state line — no published export"
+        )
+    if not url.startswith("https://"):
+        raise ValueError(f"its dashboard-state is not an https URL: {url}")
     state = json.loads(fetch(url))
     project = state.get("project") or {}
-    canonical = (project.get("canonical") or "").rstrip("/")
-    if not canonical.startswith("https://"):
-        raise ValueError("the state names no https canonical")
-    config = fetch(raw_url(canonical))
-    declared = config_line(config, "dashboard-state").rstrip("/")
-    if declared != url.rstrip("/"):
+    named = normalize(project.get("canonical") or "")
+    if named.lower() != canonical.lower():
         raise ValueError(
-            f"{canonical}'s .keep-the-why names {declared or 'no dashboard-state'}, not this URL"
+            f"the export at {url} names {named or 'no canonical'}, not this repository"
         )
     return {
         "canonical": canonical,
@@ -86,12 +102,12 @@ def previous():
         data = json.loads(TARGET.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return {}
-    return {p["state"]: p for p in data.get("projects", [])}
+    return {p["canonical"].lower(): p for p in data.get("projects", [])}
 
 
 def main(argv):
     lines = [l.strip() for l in SOURCE.read_text(encoding="utf-8").splitlines()]
-    urls = [l for l in lines if l and not l.startswith("#")]
+    urls = [normalize(l) for l in lines if l and not l.startswith("#")]
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     before = previous()
     projects, failed, stale = [], [], []
@@ -105,7 +121,7 @@ def main(argv):
             json.JSONDecodeError,
             OSError,
         ) as err:
-            old = before.get(url)
+            old = before.get(url.lower())
             if old is None:
                 # never loaded, so it cannot be listed: a new line in a pull request, or a typo
                 failed.append((url, str(err)))
@@ -126,11 +142,11 @@ def main(argv):
             projects.append(kept)
             stale.append((url, since, str(err)))
             print(f"STALE {url} — since {since}: {err}")
-    seen = {}
+    seen = set()
     for p in projects:
-        if p["canonical"] in seen:
-            failed.append((p["state"], f"{p['canonical']} is listed twice"))
-        seen[p["canonical"]] = p
+        if p["canonical"].lower() in seen:
+            failed.append((p["canonical"], "listed twice"))
+        seen.add(p["canonical"].lower())
     for url, since, err in stale:
         print(f"::warning title=registry, not answering since {since}::{url} — {err}")
     if failed:
@@ -143,7 +159,7 @@ def main(argv):
         return 1
     index = {
         "registry": "https://keepthewhy.com/registry/",
-        "source": "https://github.com/oliver-zehentleitner/keep-the-why/blob/main/registry/states.txt",
+        "source": "https://github.com/oliver-zehentleitner/keep-the-why/blob/main/registry/projects.txt",
         "checked": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         "projects": sorted(projects, key=lambda p: p["canonical"]),
     }

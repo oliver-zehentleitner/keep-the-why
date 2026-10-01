@@ -1,0 +1,24 @@
+# The Keep the Why registry: repositories with a published dashboard export,
+# one canonical repository URL per line (as in .keep-the-why's `canonical`).
+#
+# To be listed, open a pull request that adds your repository's canonical URL.
+# The registry workflow reads the repository's .keep-the-why at HEAD, follows its
+# `dashboard-state` line to the export, and checks that the export names this
+# repository — then writes docs/registry/index.json, which the dashboard's globe
+# reads. Move your export and the listing follows: only `dashboard-state` changes.
+# A family is listed by its root: the children come with it, from its own
+# `children` block. Nothing here is required for the dashboard to work; the
+# globe finds repositories by their citations without it. A listing is an
+# invitation to be found from anywhere, including from projects that cite
+# nothing of yours.
+https://github.com/oliver-zehentleitner/keep-the-why
+https://github.com/oliver-zehentleitner/repo-native-project-memory
+https://github.com/oliver-zehentleitner/unicorn-binance-suite
+https://github.com/oliver-zehentleitner/unicorn-binance-websocket-api
+https://github.com/oliver-zehentleitner/unicorn-binance-rest-api
+https://github.com/oliver-zehentleitner/unicorn-binance-local-depth-cache
+https://github.com/oliver-zehentleitner/unicorn-binance-trailing-stop-loss
+https://github.com/oliver-zehentleitner/unicorn-binance-depth-cache-cluster
+https://github.com/oliver-zehentleitner/unicorn-fy
+https://github.com/oliver-zehentleitner/ubdcc-dashboard
+https://github.com/zyvop/zyvop-cli
