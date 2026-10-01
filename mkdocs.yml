@@ -80,6 +80,7 @@ nav:
   - Specification: specification.md
   - Linting: linting.md
   - Dashboard: dashboard.md
+  - Registry: registry/index.md
   - Security: security.md
   - Badge: badge.md
   - FAQ: faq.md

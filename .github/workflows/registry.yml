@@ -1,0 +1,54 @@
+name: registry
+
+# The Keep the Why registry: registry/states.txt lists published dashboard
+# exports, one state.json URL per line; tools/registry/build.py checks every
+# line (the state loads, it names its repository, and that repository's
+# .keep-the-why at HEAD names this very URL) and writes docs/registry/index.json,
+# which the dashboard's globe reads from keepthewhy.com/registry/index.json.
+# A pull request that touches the list is checked, not written; a push to
+# main that touches it, a weekly run and a manual run write the index and
+# commit it — the only writer of that file.
+
+on:
+  pull_request:
+    paths: [registry/states.txt, tools/registry/build.py]
+  push:
+    branches: [main]
+    paths: [registry/states.txt, tools/registry/build.py]
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - run: python3 tools/registry/build.py --check
+
+  build:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - run: python3 tools/registry/build.py
+      - name: Commit the index when it changed
+        run: |
+          git add docs/registry/index.json
+          if git diff --cached --quiet; then echo "index unchanged"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "registry: index rebuilt $(date -u +%Y-%m-%d)"
+          git push

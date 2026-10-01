@@ -468,3 +468,18 @@ a.author:hover { color: var(--accent2); }
 .details .mini .mini-open { position: absolute; bottom: 5px; right: 6px; background: color-mix(in srgb, var(--bg2) 85%, transparent); border: 1px solid var(--line); border-radius: 5px; color: var(--fg2); font-size: 10.5px; padding: 2px 7px; cursor: pointer; }
 .details .mini .mini-open:hover { color: var(--fg); border-color: var(--accent); }
 .details .mini .mini-hint { right: auto; left: 8px; }
+
+/* the globe: the graph alone, full width; waves asked for in a dialog */
+.app.globe { grid-template-columns: 0 1fr 0; }
+.app.globe .side, .app.globe .details { display: none; }
+.app.globe .graph-wrap { margin-left: -32px; margin-right: -32px; }
+.statusbar .globe-egg { margin-left: 14px; font-size: 12px; opacity: .55; text-decoration: none; } .statusbar .globe-egg:hover { opacity: 1; }
+.graph-ui .globe-ctl select { font-size: 11px; background: var(--bg2); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 1px 4px; }
+.graph-ui .globe-mark { font-size: 13px; }
+.globe-dialog { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; }
+.globe-card { background: var(--bg2); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; max-width: 560px; width: calc(100% - 40px); max-height: 80vh; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 12px 40px rgba(0,0,0,.45); }
+.globe-card h3 { margin: 0; }
+.globe-list { overflow: auto; font-size: 12px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 6px 0; max-height: 45vh; }
+.globe-list div { padding: 2px 0; }
+.globe-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.globe-actions .primary { background: var(--accent); color: #fff; border: 0; border-radius: 5px; padding: 5px 12px; cursor: pointer; }

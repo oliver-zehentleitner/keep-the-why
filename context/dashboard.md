@@ -292,7 +292,31 @@ Beside the graph, *Thoughts* lists its lines of reasoning: the longest chains of
 
 **Consequence (2026-10-01, maintainer request, dashboard 0.4.2):** the lower bound is 2, and the upper bound is the data. "At least 3, 4 or 5" above was the longest chain of the day written into three buttons; the choice now runs from 2 — one link — up to the longest chain on the page, growing when a friend or a path brings a longer one, 4 still the default. The reason for 2 is not "more": an evolution of one `Superseded by` — a decision replaced once, the commonest shape of "how this changed" — has two entries and was never a thought; the first `See` in a young project is the beginning of one, and the view showed nothing until the third. The cost is a longer list at 2 (every maximal chain, single links included — on this repository 24 beside the graph instead of 1 at 4), which the sort by length keeps readable: the long ones on top, the single links at the bottom as what they are, beginnings. A kept choice above the longest chain here is drawn down to it, so a sparse project lists its chains instead of an empty page. Rejected: a fixed row that ends at 5 (stale the day a 6 appears) and a number field (fine for a 20-chain, which no project has; a row of 2 to about 8 reads at a glance — revisit when a chain outgrows it).
 
+**Consequence (2026-10-01, dashboard 0.5.0):** "there is no index of the web" gained a footnote: the registry (the globe entry below) lists exports whose owners asked to be listed, and the globe can load it as a wave — an invitation, not an index the page needs; what cites a chain's newest entry is still unknown unless that repository is loaded, from a hop or from the list.
+
 **Consequence (2026-09-29, maintainer decision, dashboard 0.3.1):** thoughts at the page's edge. A friend or a path step shows everything its own citation chains connect to the cited entries, so a thought runs through it whole instead of stopping at the first entry cited there. A chain that goes on into a repository the page has not loaded is marked as going on, and a click follows it: exactly the repositories on the chain, as units, hop by hop, up to eight — the click is the request for hops beyond one, and nothing else of those repositories is loaded. Only the direction toward the origin (and a `Superseded by` naming a successor) can be followed: what cites a chain's newest entry from an unloaded repository cannot be known, because there is no index of the web and none is wanted.
+
+## The globe loads the web in waves, each asked for with its count; the registry is an invitation, never a requirement
+
+**Id:** 64f88b63-67b6-4a87-990c-e0258e7b63b0
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer idea and design, 2026-10-01 ("an easter egg: a globe off to the side; hops to set, waves with a warning each; and a file in the repository listing state.json addresses, checked by an action — just for fun"); the form was the assisting agent's proposal, accepted
+**Revisit when:** a wave regularly offers more than the dialog can list, or a registry listing is asked to carry anything beyond what the export already says
+**See:** dashboard.md#thoughts-are-the-longest-chains-of-see-and-superseded-by-listed-beside-the-graph — cfe036bd-3264-411d-b26d-4214a22f6fe2 — as of 2026-10-01
+
+The globe (`#globe`, the 🌐 at the end of the status bar) is the graph alone, full width, loading repositories in waves out from what the page holds: hop 1 is what the loaded entries cite outside the page, hop 2 what those cite, up to ten. Each wave is asked for in a dialog naming the repositories and the files before anything is fetched, and a wave's count is only known once the previous one is in — so the pauses are not caution for its own sake but the only order the counting allows. The registry — `registry/states.txt`, one published `state.json` per line, added by pull request, checked and built into `docs/registry/index.json` by a workflow — is loaded the same way, as a wave of its own. The setting is not kept per browser.
+
+**Reason:** following a thought already loads repositories hop by hop, along one chain; the globe is the same mechanism in the breadth, and it reuses the layer that draws friends and chain-reached units, so nothing new is drawn, only more of it. The dialog with the list, rather than a browser `confirm`, is there so the reader sees *which* repositories would be fetched, not only how many — the page's rule is that it asks other hosts only for what a person opens, and a wave is that opening, made explicit. Not keeping the setting is the same rule: a remembered globe would fetch from other hosts on a reload without a click.
+
+**The registry and the sentence "there is no index of the web and none is wanted"** (the thoughts entry, cited above): that sentence stands — the dashboard needs no index to work, nobody has to be listed, and the globe finds repositories by their citations alone. The registry is the one thing citations cannot give: being found from a project that cites nothing of yours, and the reverse direction, who cites you. It is an invitation by pull request, not a requirement, and the workflow's check (the state names its repository, and that repository's `.keep-the-why` at `HEAD` names this very URL) keeps anyone from listing an export that is not theirs. Ten projects to start with, all the maintainer's; the first outside project with a published export was found the same day (a user's CLI), which is what made the list more than a demo.
+
+**Rejected alternative:** a page of its own for the globe, without thoughts and side pane. Rejected — a second legend, a second control bar and a second thoughts logic for the same graph; thoughts across three repositories are the interesting part, and the reader wants to walk on from the globe. The globe is the graph view with the side pane folded away.
+
+**Rejected alternative:** a browser `confirm` per wave. Rejected for the list — see the reason.
+
+**Consequence:** `GLOBE.extra` beside `CHAIN.extra`, the units marked with their hop; `loadFriend` skips the live lookup when no Id is cited (a registry entry cites nothing); `tools/registry/build.py` is standard library only, like the linter, and the workflow is the only writer of `docs/registry/index.json`.
 
 ## The graph turns very slowly in its plane
 

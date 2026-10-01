@@ -44,6 +44,8 @@ const FILES = {
   // a chain beyond the friends: notes cites far, far cites farther — reached only by following a thought
   "https://raw.githubusercontent.com/acme/far/HEAD/.keep-the-why": config("acme---far", ["- dashboard-state: https://acme.github.io/far/state.json"]),
   "https://acme.github.io/far/state.json": state("acme---far", { canonical: `${GH}/far` }, [entry("Far away", "Cited from notes.", { uuid: FAR_ID, status: "needs-review", git: { created: { date: "2026-08-10" } }, see: [{ remote: `${GH}/farther`, uuid: FARTHER_ID, date: "2026-09-29" }] })]),
+  // the registry: a list of published states, read by the globe
+  "https://keepthewhy.com/registry/index.json": JSON.stringify({ checked: "2026-10-01", projects: [{ canonical: `${GH}/farther`, state: "https://acme.github.io/farther/state.json", id: "acme---farther", entries: 1 }, { canonical: `${GH}/refs`, state: "https://acme.github.io/refs/state.json", id: "acme---refs", entries: 1 }] }),
   "https://raw.githubusercontent.com/acme/farther/HEAD/.keep-the-why": config("acme---farther", ["- dashboard-state: https://acme.github.io/farther/state.json"]),
   "https://acme.github.io/farther/state.json": state("acme---farther", { canonical: `${GH}/farther` }, [entry("The origin", "Where it started.", { uuid: FARTHER_ID, evidence: "inferred", git: { created: { date: "2026-08-01" } } })]),
   // an export that claims to be another repository's
@@ -536,6 +538,54 @@ const report = {};
   await tick(300);
   if (window.location.search !== `?public=${encodeURIComponent(`${GH}/notes`)}` || !/acme---notes/.test(d.title)) errors.push("hub names: a click on the friend's name did not go there: " + window.location.search);
   if (navigations.length !== nav) errors.push("hub names: the walk loaded a page instead of moving in place");
+  window.close();
+}
+{
+  // the globe: the graph alone, full width; waves out from what is loaded, each asked for with its count; the registry as a wave of its own
+  const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/refs`)}#globe`);
+  await tick(700);
+  const d = window.document;
+  if (!d.getElementById("app").classList.contains("globe")) errors.push("globe: the page is not in the globe layout");
+  if (!d.querySelector(".statusbar .globe-egg")) errors.push("globe: no globe in the status bar");
+  const ctl = d.querySelector(".graph-ui .globe-ctl");
+  if (!ctl) errors.push("globe: no globe group in the control bar");
+  const sel = ctl?.querySelector("select");
+  if (!sel || sel.options.length !== 11 || sel.value !== "1") errors.push("globe: the hops choice is not off…10 with 1 chosen: " + sel?.options.length + " " + sel?.value);
+  const before = fetched.length;
+  [...ctl.querySelectorAll("button")].find((b) => b.textContent === "go")?.click(); await tick(300);
+  const dialog = d.querySelector(".globe-dialog");
+  if (!dialog) errors.push("globe: no dialog before the first wave");
+  report.globeWave1 = dialog?.querySelector("h3")?.textContent;
+  if (!/^Hop 1: 1 repository/.test(report.globeWave1 || "")) errors.push("globe: hop 1 should offer acme/far alone: " + report.globeWave1);
+  if (!/acme\/far — cited by 1 entry/.test(dialog?.textContent || "")) errors.push("globe: the dialog does not list acme/far with its citation: " + dialog?.textContent?.slice(0, 200));
+  if (fetched.slice(before).some((u) => /acme\/far/.test(u))) errors.push("globe: acme/far was fetched before the yes");
+  [...dialog.querySelectorAll("button")].find((b) => b.textContent === "load them")?.click(); await tick(600);
+  let g = window.__g();
+  let hubs = g.nodes.filter((n) => n.kind === "project" && n.hop != null).map((n) => `${n.label}:${n.hop}`);
+  if (hubs.join() !== "acme/far:1") errors.push("globe: after hop 1 the graph should hold acme/far at hop 1: " + hubs.join());
+  if (!/acme\/far · hop 1/.test(d.querySelector(".graph-legend")?.textContent.replace(/\s+/g, " ") || "")) errors.push("globe: the legend does not say hop 1 for acme/far");
+  // the second wave, asked for again, finds farther; a no leaves hop 1 standing
+  const sel2 = d.querySelector(".graph-ui .globe-ctl select"); sel2.value = "2"; sel2.dispatchEvent(new window.Event("change")); await tick(300);
+  [...d.querySelectorAll(".graph-ui .globe-ctl button")].find((b) => /^go on/.test(b.textContent))?.click(); await tick(300);
+  const dialog2 = d.querySelector(".globe-dialog");
+  if (!/^Hop 2: 1 repository/.test(dialog2?.querySelector("h3")?.textContent || "")) errors.push("globe: hop 2 should offer acme/farther: " + dialog2?.querySelector("h3")?.textContent);
+  [...dialog2.querySelectorAll("button")].find((b) => b.textContent === "no, stop here")?.click(); await tick(300);
+  g = window.__g(); hubs = g.nodes.filter((n) => n.kind === "project" && n.hop != null).map((n) => `${n.label}:${n.hop}`);
+  if (hubs.join() !== "acme/far:1") errors.push("globe: a no at hop 2 should leave hop 1 as it was: " + hubs.join());
+  // the registry: what it lists and is not here yet — farther; refs is this project and is left out
+  d.querySelector(".graph-ui .globe-ctl input[type=checkbox]").click(); await tick(300);
+  const dialog3 = d.querySelector(".globe-dialog");
+  report.globeRegistry = dialog3?.querySelector("h3")?.textContent;
+  if (!/^The registry: 1 project/.test(report.globeRegistry || "")) errors.push("globe: the registry should offer acme/farther alone: " + report.globeRegistry);
+  [...dialog3.querySelectorAll("button")].find((b) => b.textContent === "load them")?.click(); await tick(600);
+  g = window.__g(); hubs = g.nodes.filter((n) => n.kind === "project" && n.hop != null).map((n) => `${n.label}:${n.hop}`).sort();
+  if (hubs.join() !== "acme/far:1,acme/farther:registry") errors.push("globe: after the registry the graph should hold far (hop 1) and farther (registry): " + hubs.join());
+  if (!/from the registry/.test(d.querySelector(".graph-legend")?.textContent || "")) errors.push("globe: the legend does not say 'from the registry'");
+  // clear drops the globe's repositories, friends stay
+  [...d.querySelectorAll(".graph-ui .globe-ctl button")].find((b) => b.textContent === "clear")?.click(); await tick(300);
+  g = window.__g();
+  if (g.nodes.some((n) => n.kind === "project" && n.hop != null)) errors.push("globe: clear left globe repositories in the graph");
+  if (!g.nodes.some((n) => n.kind === "project" && n.friend)) errors.push("globe: clear took the friends away too");
   window.close();
 }
 console.log(JSON.stringify(report, null, 1));
