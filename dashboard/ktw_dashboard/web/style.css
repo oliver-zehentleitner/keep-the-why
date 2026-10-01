@@ -491,3 +491,5 @@ a.author:hover { color: var(--accent2); }
 .reader .crumbs .share-btn { float: right; background: transparent; border: 1px solid var(--line); border-radius: 4px; color: var(--fg3); font-size: 11px; padding: 1px 8px; cursor: pointer; }
 .reader .crumbs .share-btn:hover { color: var(--fg); border-color: var(--accent); }
 .reader .crumbs .share-btn.done { color: var(--active); border-color: var(--active); }
+.globe-intro .globe-list p { margin: 4px 0 8px; line-height: 1.45; }
+.globe-intro .globe-actions label { display: flex; gap: 6px; align-items: center; cursor: pointer; }

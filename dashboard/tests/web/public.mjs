@@ -554,6 +554,15 @@ const report = {};
   await tick(700);
   const d = window.document;
   if (!d.getElementById("app").classList.contains("globe")) errors.push("globe: the page is not in the globe layout");
+  // the intro on the way in: what hops and registry do; "don't show this again" is kept
+  const intro = d.querySelector(".globe-intro");
+  if (!intro || !/Hops/.test(intro.textContent) || !/registry/.test(intro.textContent)) errors.push("globe: no intro explaining hops and registry on the way in");
+  intro?.querySelector("input[type=checkbox]")?.click(); [...(intro?.querySelectorAll("button") || [])].find((b) => b.textContent === "got it")?.click(); await tick(50);
+  if (d.querySelector(".globe-intro")) errors.push("globe: the intro did not close");
+  if (window.localStorage.getItem("ktw-globe-intro") !== "off") errors.push("globe: 'don't show this again' was not kept");
+  window.location.hash = "#graph"; window.dispatchEvent(new window.Event("hashchange")); await tick(150);
+  window.location.hash = "#globe"; window.dispatchEvent(new window.Event("hashchange")); await tick(150);
+  if (d.querySelector(".globe-intro")) errors.push("globe: the intro came back after 'don't show this again'");
   if (!d.querySelector(".statusbar .globe-egg")) errors.push("globe: no globe in the status bar");
   const ctl = d.querySelector(".graph-ui .globe-ctl");
   if (!ctl) errors.push("globe: no globe group in the control bar");

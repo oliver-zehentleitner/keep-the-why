@@ -1811,6 +1811,25 @@ async function globeRegistry() {
   } catch (err) { GLOBE.log.push(`registry: could not be read (${err?.message || "network"})`); }
   finally { GLOBE.busy = false; if (fgraph) fgraph.at = 0; render(); }
 }
+// The way into the globe: what it does, and that nothing loads by itself — the graph starts as the project
+// alone and grows only by a choice. "Don't show this again" is kept per browser, a convenience and nothing more.
+let GLOBE_INTRO_SHOWN = false;
+const globeIntroOff = () => { try { return localStorage.getItem("ktw-globe-intro") === "off"; } catch { return false; } };
+function globeIntro() {
+  if (GLOBE_INTRO_SHOWN || globeIntroOff() || !GLOBE.view) return;
+  GLOBE_INTRO_SHOWN = true;
+  const never = el("input", { type: "checkbox" });
+  const close = () => { if (never.checked) { try { localStorage.setItem("ktw-globe-intro", "off"); } catch {} } box.remove(); };
+  const box = el("div", { class: "globe-dialog globe-intro", onclick: (ev) => { if (ev.target === box) close(); } }, el("div", { class: "globe-card" },
+    el("h3", {}, "🌐 The globe"),
+    el("p", {}, "This project's graph, full width — and from here as far out as you choose. Nothing loads by itself: the graph grows only when you ask, with the controls at the top left."),
+    el("div", { class: "globe-list" },
+      el("p", {}, el("b", {}, "Hops"), " — choose 1 to 10, then ", el("i", {}, "go"), ". Hop 1 is every repository the loaded entries cite outside the page, hop 2 what those cite, and so on. Before each wave a dialog lists the repositories and files it would fetch; you load them or stop there. ", el("i", {}, "off"), " shows this project alone."),
+      el("p", {}, el("b", {}, "registry"), " — every project listed in the Keep the Why registry (keepthewhy.com/registry), loaded as a wave of its own, asked for the same way: projects that cite nothing of yours, and the ones that cite you. The ⓘ beside it says how a project gets listed."),
+      el("p", {}, el("b", {}, "clear"), " drops what the globe loaded; friends, family and path stay.")),
+    el("div", { class: "globe-actions" }, el("label", { class: "note", style: "margin-right:auto" }, never, " don't show this again"), el("button", { type: "button", class: "primary", onclick: close }, "got it"))));
+  document.body.append(box);
+}
 function globeClear() { GLOBE.extra.clear(); GLOBE.failed.clear(); GLOBE.done = 0; GLOBE.registry = false; GLOBE.log = []; if (fgraph) fgraph.at = 0; render(); }
 function globeUi(g) {
   if (!GLOBE.view) return null;
@@ -2432,6 +2451,7 @@ function render() {
   const route = location.hash.slice(1) || "overview";
   selected = null;
   GLOBE.view = route === "globe"; $("#app").classList.toggle("globe", GLOBE.view); // the globe: the graph alone, full width
+  if (GLOBE.view) setTimeout(globeIntro, 0); else GLOBE_INTRO_SHOWN = false; // explained on the way in, once per visit
   $("#details").dataset.pane = "other";
   if (!route.startsWith("graph")) { const bar = pathBar(); if (bar) main.append(bar); } // the graph carries it as an overlay
   if (route === "overview") { viewOverview(main); renderDetailsDefault(); }
