@@ -114,7 +114,11 @@ async function loadPublicState(canonical, root) {
       const state = normalizeState(JSON.parse(await fetchForeign(url)));
       // an export names the project it was made from; one that claims another repository is not shown as this one
       const claimed = state.project?.canonical;
-      if (claimed && !sameCanonical(claimed, canonical)) result = { error: `the export at ${url} belongs to ${claimed}, not to ${canonical}`, raw };
+      // a fork's export: made in a checkout whose origin is the cited repository, declaring the repository it was
+      // forked from as its canonical — shown as that fork, with what it says it is a fork of
+      const origin = state.project?.git?.remote ? `https://${state.project.git.remote}` : "";
+      if (claimed && !sameCanonical(claimed, canonical) && origin && sameCanonical(origin, canonical)) result = { state, url, canonical, root, raw, forkOf: claimed };
+      else if (claimed && !sameCanonical(claimed, canonical)) result = { error: `the export at ${url} belongs to ${claimed}, not to ${canonical}`, raw };
       else result = { state, url, canonical, root, raw };
     }
   } catch (err) { result = { error: `could not fetch the export (${err?.message || "network or CORS refused"})`, raw }; }
@@ -579,7 +583,7 @@ async function viewFriends(main) {
     return el("section", { class: "friend-card" },
       el("h2", {}, el("i", { class: "dot", style: `background:transparent;border:2px dashed ${friendColor(i)};width:11px;height:11px;margin-right:8px` }), el("a", { href: u.r.open || "#graph" }, u.r.name),
         u.via === "chain" ? el("span", { class: "pill" }, "via a thought") : null),
-      el("p", { class: "note" }, `${u.members.length > 1 ? `A family of ${u.members.length}: ${u.members.map((m) => m.name).join(", ")}. ` : ""}Read from ${src}. ${u.r.canonical}`),
+      el("p", { class: "note" }, `${u.members.length > 1 ? `A family of ${u.members.length}: ${u.members.map((m) => m.name).join(", ")}. ` : ""}Read from ${src}. ${u.r.canonical}${u.r.forkOf ? ` — a fork of ${u.r.forkOf}, by its own export` : ""}`),
       el("h3", {}, `Cited from here (${out.length})`),
       ...(out.length ? out.map((x) => rel(el("a", { href: x.from.href }, x.from.label), el("a", { href: x.to.m.href ? x.to.m.href(x.to.e) : "#graph" }, x.to.e.title, u.members.length > 1 ? el("span", { class: "note" }, ` · ${x.to.m.name}`) : null), x.kind)) : [el("p", { class: "empty" }, u.via === "chain" ? "Nothing here cites it directly — it was reached by following a thought." : "—")]),
       el("h3", {}, `Citing this project (${back.length})`),
@@ -736,7 +740,7 @@ function familyDeclared() {
 function publicMemberRow(m, r) {
   const st = r?.state;
   const title = st ? el("a", { href: publicHref(m.canonical, m.root || "") }, m.name) : el("b", {}, m.name);
-  return el("div", { class: `member ${m.role} ${st ? "public" : "none"}` },
+  return el("div", { class: `member ${m.role} ${st ? "public" : "none"}`, onmouseenter: () => spotProject(m.canonical), onmouseleave: () => spotProject(null) },
     el("div", { class: "mr" }, el("span", { class: "role" }, m.role), title, el("span", { class: `pill kind-${st ? "public" : "none"}` }, st ? "published export" : "no public export"),
       st ? el("span", { class: "pill" }, `generated ${st.generated || "?"}`) : null),
     m.scope ? el("div", { class: "ms" }, m.scope) : (m.role === "parent" ? el("div", { class: "ms note" }, "holds what is family-wide") : null),
@@ -745,7 +749,7 @@ function publicMemberRow(m, r) {
 function memberRow(m) {
   const here = m.role === "self";
   const title = m.key && !here ? el("a", { href: `${location.pathname}?project=${encodeURIComponent(m.key)}#overview` }, m.name) : el("b", {}, m.name);
-  return el("div", { class: `member ${m.role} ${m.available}` },
+  return el("div", { class: `member ${m.role} ${m.available}`, onmouseenter: () => spotProject(m.canonical), onmouseleave: () => spotProject(null) },
     el("div", { class: "mr" }, el("span", { class: "role" }, m.role), title, el("span", { class: `pill kind-${m.available}` }, here ? "this project" : kindLabel(m.available))),
     m.scope ? el("div", { class: "ms" }, m.scope) : (m.role === "parent" ? el("div", { class: "ms note" }, "holds what is family-wide") : null),
     el("div", { class: "mm mono" }, m.canonical || m.location || "", m.path && !here ? ` · ${m.path}` : ""),
@@ -920,7 +924,11 @@ function miniGraph(d, ctx) {
       if (ctx.entry?.uuid) { focusStep(ctx.entry.uuid); setTimeout(() => { if (STEP_FOCUS === ctx.entry.uuid) focusStep(null); }, 4000); }
       location.hash = "#graph";
     } }, "⤢ full graph");
-  box.append(canvas, seg, el("span", { class: "mini-hint" }, mode === "near" ? "click to open" : "hover · click"), full);
+  // the full graph's switches, folded into the small one: a ⚙ opens the same groups
+  const filters = el("div", { class: "mini-filters graph-ui", hidden: !MINI_FILTERS });
+  const gear = el("button", { type: "button", class: "mini-gear", title: "the graph's switches — the same as in the full graph", onclick: () => { MINI_FILTERS = !MINI_FILTERS; filters.hidden = !MINI_FILTERS; } }, "⚙");
+  const fillFilters = (g) => { if (mode !== "near") setKids(filters, ...graphControlGroups(g, mode === "family")); };
+  box.append(canvas, seg, el("span", { class: "mini-hint" }, mode === "near" ? "click to open" : "hover · click"), full, mode !== "near" ? gear : null, filters);
   if (focusId) d.append(el("h3", {}, "Graph"));
   d.append(box);
   const opts = { mini: true, focusId };
@@ -932,14 +940,15 @@ function miniGraph(d, ctx) {
       onclick: () => { MINI = up; FRIENDS.load = true; setFriendsAuto(true); render(); } }, n ? `friends (${n})` : "friends")));
     return requestAnimationFrame(() => runGraph(canvas, ctx.entry ? buildSubgraph(ctx.entry) : buildTopicSubgraph(ctx.topic), opts));
   }
-  if (mode === "project") { const g = buildGraph(ctx.entry?.project || ctx.topic?.project || null); const f = miniFriends(g); if (f) box.append(f); return requestAnimationFrame(() => runGraph(canvas, g, opts)); }
+  if (mode === "project") { const g = buildGraph(ctx.entry?.project || ctx.topic?.project || null); const f = miniFriends(g); if (f) box.append(f); fillFilters(g); return requestAnimationFrame(() => runGraph(canvas, g, opts)); }
   // family: the family graph's nodes, in a view of its own (its own zoom, entries shown)
   const note = el("span", { class: "mini-hint", style: "top:28px;bottom:auto" }, "loading the family…"); box.append(note);
-  const show = (fg) => { note.remove(); if (!canvas.isConnected) return; const f = miniFriends(fg); if (f) box.append(f); runGraph(canvas, { ...fg, scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true, raf: null, wake: null, alpha: Math.max(fg.alpha, 0.3) }, opts); };
+  const show = (fg) => { note.remove(); if (!canvas.isConnected) return; const f = miniFriends(fg); if (f) box.append(f); const mg = { ...fg, scale: 1, ox: 0, oy: 0, showEntries: SHOW_ENTRIES, showLabels: true, raf: null, wake: null, alpha: Math.max(fg.alpha, 0.3) }; fillFilters(mg); runGraph(canvas, mg, opts); };
   if (fgraph && Date.now() - fgraph.at < 30000) requestAnimationFrame(() => show(fgraph));
   else buildFamilyGraph().then(show);
 }
 // ---------------------------------------------------------------- graph (canvas force layout, no library)
+let MINI_FILTERS = false; // the side pane graph's switches, folded unless opened
 let graph = null; // the full graph persists across re-renders so positions survive live updates
 let GRAPH_CENTER = null; // { entry } or { topic }: centre the full graph there once, coming from the side pane
 function seedNode(n, prev) {
@@ -1036,7 +1045,7 @@ async function buildFamilyGraph() {
   groups.forEach((G, i) => {
     const ang = (2 * Math.PI * (i - 1)) / Math.max(1, groups.length - 1);
     const at = G.key === "self" ? { x: 0, y: 0 } : { x: R * Math.cos(ang), y: R * Math.sin(ang) };
-    const hub = add({ id: `p:${G.key}`, kind: "project", self: G.key === "self", label: G.g.member.name, r: 15, color: G.color, href: memberLink(G.g.member, "#overview"),
+    const hub = add({ id: `p:${G.key}`, kind: "project", self: G.key === "self", label: G.g.member.name, canonical: G.canonical, r: 15, color: G.color, href: memberLink(G.g.member, "#overview"),
       walk: () => (G.key === "self" ? go("#overview") : moveTo({ centre: memberCentre(G.g.member), state: G.state }, "#graph")) }, at);
     for (const t of G.state.topics || []) {
       const n = add({ id: tid(G, t.file), kind: "topic", fam: G.key !== "self", label: t.title, file: t.file, color: G.color, r: 8 + Math.sqrt(t.entries || 0) * 2.8, href: memberLink(G.g.member, `#topic/${t.file}`) }, hub);
@@ -1191,7 +1200,7 @@ function loadFriend(f) {
     }
     if (!r) {
       const p = await fetchPublicState(f.canonical, "");
-      r = p.state ? { ...publicMember({ canonical: f.canonical, root: "", name: repoLabel(f.canonical), role: "self" }, p.state) } : { error: p.error };
+      r = p.state ? { ...publicMember({ canonical: f.canonical, root: "", name: repoLabel(f.canonical), role: "self" }, p.state), forkOf: p.forkOf || null } : { error: p.error };
     }
     r.canonical = f.canonical;
     // a family is one unit, like a repository: a friend that has one comes with all of it
@@ -1317,7 +1326,7 @@ function addLinkedLayer(g, prev, items) {
   let selfHub = null;
   if (items.some((it) => it.kind === "family") && !nodes.some((n) => n.kind === "project" && !n.ext)) {
     const p = SELF?.project || S.project || {};
-    selfHub = add({ id: "p:self", kind: "project", self: true, label: p.id || p.name || "this project", r: 15, color: color0(), href: "#overview" }, { x: 0, y: 0 });
+    selfHub = add({ id: "p:self", kind: "project", self: true, label: p.id || p.name || "this project", canonical: canonicalOf(p), r: 15, color: color0(), href: "#overview" }, { x: 0, y: 0 });
     selfHub.ext = false; selfHub.unit = null;
     for (const n of nodes) if (n.kind === "topic" && !n.ext) links.push({ s: index[selfHub.id], t: index[n.id], kind: "hub", len: 90 });
   }
@@ -1353,8 +1362,9 @@ function addLinkedLayer(g, prev, items) {
       const off = it.members.length > 1 ? { x: centre.x + 110 * Math.cos((2 * Math.PI * j) / it.members.length), y: centre.y + 110 * Math.sin((2 * Math.PI * j) / it.members.length) } : centre;
       // the hub expands a friend (or goes back along the path); its name goes to that project
       const walk = it.kind === "trail" ? it.hub : m.centre ? () => moveTo({ centre: m.centre, state: m.state }, "#graph") : m.open ? () => go(m.open) : null;
-      const hub = add({ id: `f:${it.k}:${m.key}`, kind: "project", friend: it.kind === "friend", chain: !!it.chain, trail: it.kind === "trail", family: it.kind === "family", label: m.name, r: it.kind === "family" ? 13 : j === 0 ? 13 : 10, color: mcol, href: m.open || "#graph", action: it.hub, walk }, off);
-      if (selfHub && it.kind === "family" && (m.role === "child" || m.role === "parent")) links.push({ s: index[hub.id], t: index[selfHub.id], kind: "family", len: 260 });
+      const hub = add({ id: `f:${it.k}:${m.key}`, kind: "project", friend: it.kind === "friend", chain: !!it.chain, trail: it.kind === "trail", family: it.kind === "family", label: m.name, canonical: m.canonical, r: it.kind === "family" ? 13 : j === 0 ? 13 : 10, color: mcol, href: m.open || "#graph", action: it.hub, walk }, off);
+      if (selfHub && it.kind === "family" && m.role === "child") links.push({ s: index[hub.id], t: index[selfHub.id], kind: "family", len: 260 });
+      if (selfHub && it.kind === "family" && m.role === "parent") links.push({ s: index[selfHub.id], t: index[hub.id], kind: "family", len: 260 });
       hubs[m.key] = index[hub.id];
       const allOfM = !cited || !!it.allFor?.(m);
       const own = (m.state.entries || []).filter((e) => allOfM || (e.uuid && cited.has(e.uuid)));
@@ -1503,7 +1513,7 @@ function onLinkClick(ev) {
 function pathBar() {
   if (!KEEP_PATH || !TRAIL.length) return null;
   const here = SELF?.project?.id || SELF?.project?.name || "";
-  const steps = TRAIL.map((t, i) => [el("a", { href: t.url + "#graph", title: `back to ${t.name} — the path shortens to here`, onclick: (ev) => { ev.preventDefault(); moveTo(t, "#graph"); } }, `${i + 1} · ${t.name}`), el("span", { class: "sep" }, " › ")]).flat();
+  const steps = TRAIL.map((t, i) => [el("a", { href: t.url + "#graph", title: `back to ${t.name} — the path shortens to here`, onclick: (ev) => { ev.preventDefault(); moveTo(t, "#graph"); }, onmouseenter: () => spotProject(t.canonical), onmouseleave: () => spotProject(null) }, `${i + 1} · ${t.name}`), el("span", { class: "sep" }, " › ")]).flat();
   return el("div", { class: "path-bar" }, el("span", { class: "label" }, "Path "), ...steps, el("b", {}, here),
     el("span", { class: "grow" }),
     el("label", { title: "show the path's projects in the graph" }, el("input", { type: "checkbox", checked: TRAIL_SHOW, onchange: (ev) => { setTrailShow(ev.target.checked); if (fgraph) fgraph.at = 0; render(); } }), "in graph"),
@@ -1744,6 +1754,13 @@ function projectNodes(g, hub) {
   }
   return out;
 }
+// light a project in every graph on the page — the path bar and the Family view point at projects the way the legend does
+function spotProject(canonical) {
+  for (const G of ACTIVE_GRAPHS) {
+    const hub = canonical ? G.nodes.find((n) => n.kind === "project" && n.canonical && fkey(n.canonical) === fkey(canonical)) : null;
+    G.spot = hub ? projectNodes(G, hub) : null; G.alpha = Math.max(G.alpha, 0.02); G.wake?.();
+  }
+}
 function projectsLegend(g) {
   const p = S?.project || {};
   const hubs = g.nodes.filter((n) => n.kind === "project");
@@ -1752,12 +1769,21 @@ function projectsLegend(g) {
   const kind = (n) => (n.self ? "this project" : n.trail ? "a step of the path" : n.chain ? "reached by a thought" : n.friend ? (n.kin ? "a friend's family member" : "a friend") : "family");
   const ring = (n) => (n.self ? `background:${n.color};` : `background:transparent;border:2px ${n.chain ? "dashed" : n.friend ? "dashed" : n.trail ? "dotted" : "solid"} ${n.color};`);
   const units = new Map(friendUnits(g).map((u) => [u.k, u]));
-  for (const n of hubs) {
+  // the family's shape, from the parent lines the graph draws (child → parent): roots first, children indented
+  const parentOf = new Map();
+  for (const l of g.links) if (l.kind === "family") { const a = g.nodes[l.s], b = g.nodes[l.t]; if (a?.kind === "project" && b?.kind === "project") parentOf.set(a, b); }
+  const ordered = []; const seen = new Set();
+  const walk = (n, depth) => { if (seen.has(n)) return; seen.add(n); ordered.push([n, depth]); for (const c of hubs) if (parentOf.get(c) === n) walk(c, depth + 1); };
+  for (const n of hubs) if (!parentOf.has(n) || !hubs.includes(parentOf.get(n))) walk(n, 0);
+  for (const n of hubs) walk(n, 0); // anything left (a cycle, a parent not drawn)
+  for (const [n, depth] of ordered) {
     const name = n.self ? el("b", {}, n.label) : el("a", { href: n.href || "#graph", title: `${kind(n)} — go there`, onclick: (ev) => { if (!n.walk) return; ev.preventDefault(); n.walk(); } }, n.label);
     const u = n.friend && !n.kin ? units.get(n.unit) : null;
     const notShown = u && u.members.length === 1 && (u.r.members || []).length > 1 ? u.r.members.length : 0;
-    out.push(el("span", { class: n.friend ? "friend" : "family", title: kind(n), onmouseenter: () => { g.spot = projectNodes(g, n); g.alpha = Math.max(g.alpha, 0.02); g.wake?.(); }, onmouseleave: () => { g.spot = null; g.alpha = Math.max(g.alpha, 0.02); g.wake?.(); } }, el("i", { class: "dot", style: `${ring(n)}width:10px;height:10px` }), name,
+    const forkOf = u?.r.forkOf || null;
+    out.push(el("span", { class: n.friend ? "friend" : "family", style: depth ? `padding-left:${depth * 14}px` : "", title: kind(n), onmouseenter: () => { g.spot = projectNodes(g, n); g.alpha = Math.max(g.alpha, 0.02); g.wake?.(); }, onmouseleave: () => { g.spot = null; g.alpha = Math.max(g.alpha, 0.02); g.wake?.(); } }, el("i", { class: "dot", style: `${ring(n)}width:10px;height:10px` }), name,
       notShown ? el("span", { class: "note" }, ` · family of ${notShown}, not shown`) : null,
+      forkOf ? el("span", { class: "note", title: `the export names ${forkOf} as its canonical and was made in a checkout of ${u.r.canonical}` }, " · fork of ", el("a", { href: forkOf, target: "_blank", rel: "noopener" }, repoLabel(forkOf))) : null,
       n.chain ? el("span", { class: "note" }, " · via a thought") : null));
   }
   return out;
@@ -1773,6 +1799,24 @@ function familyLegend(g) {
   if (FAMILY_NB.missing?.length && canFamily()) out.push(el("span", { class: "warn", title: FAMILY_NB.missing.map(({ member: m, reason }) => `${m.name}: ${reason}`).join("\n") }, `${plural(FAMILY_NB.missing.length, "member")} not available here`));
   return out;
 }
+// the graph's control bar, in groups: this project (entries · labels) · family · friends · path · motion · select / unselect all · reset.
+// The same groups serve the side pane's small graph, so every switch is reachable from both.
+function graphControlGroups(g, family) {
+  const fui = friendsUi(g);
+  const famUi = familyUi(g);
+  return [
+    el("span", { class: "ui-group" }, el("label", {}, el("input", { type: "checkbox", checked: g.showEntries, onchange: (ev) => { g.showEntries = ev.target.checked; setShowEntries(ev.target.checked); g.alpha = 0.5; g.wake?.(); } }), "entries"), labelsUi(g, "project", "this project's topics and entries")),
+    famUi ? el("span", { class: "ui-group" }, famUi, FAMILY_NB_ON ? labelsUi(g, "family", "the family's projects") : null) : null,
+    fui ? el("span", { class: "ui-group" }, fui) : null,
+    el("span", { class: "ui-group" }, el("label", { title: "the path's projects in the graph — the projects you came through; unchecked they are hidden, not forgotten (the path bar discards)" }, el("input", { type: "checkbox", checked: keepPath() && TRAIL_SHOW, onchange: (ev) => { if (ev.target.checked && !keepPath()) setKeepPath(true); setTrailShow(ev.target.checked); if (fgraph) fgraph.at = 0; render(); } }), "path"),
+      ...(pathShown() && TRAIL.some((t) => !sameCentreAsGraph(g, t)) ? [allEntriesUi("path", PATH_ENTRIES, setPathEntries, "every step of the path"), labelsUi(g, "path", "the path's projects")] : [])),
+    el("span", { class: "ui-group" }, el("label", { title: "the graph turns very slowly; it stops while you point at it" }, el("input", { type: "checkbox", checked: driftOn(), onchange: (ev) => { setDrift(ev.target.checked); g.wake?.(); } }), "motion")),
+    el("span", { class: "ui-group" },
+      el("button", { class: "link-btn", title: "every switch in this bar on", onclick: () => selectAll(g, true) }, "select all"),
+      el("button", { class: "link-btn", title: "every switch in this bar off — the project's topics alone", onclick: () => selectAll(g, false) }, "unselect all")),
+    el("span", { class: "ui-group" }, el("button", { class: "link-btn graph-reset", title: "fit the graph and let go of every node you placed", onclick: () => { g.scale = family ? 0.7 : 1; g.ox = 0; g.oy = 0; g.userMoved = false; for (const n of g.nodes) { n.fixed = false; } g.alpha = 1; g.wake?.(); } }, "reset")),
+  ].filter(Boolean);
+}
 let TREE_ASKED = false;
 function viewGraph(main) {
   // live: the whole family tree is known before anything counts as a friend — the server's own API, no other host
@@ -1782,21 +1826,7 @@ function viewGraph(main) {
   main.append(wrap);
   const fill = (g) => {
     const canvas = el("canvas");
-    const fui = friendsUi(g);
-    const famUi = familyUi(g);
-    // the controls in groups: what is drawn · friends · walking and motion · reset
-    const ui = el("div", { class: "graph-ui" },
-      el("span", { class: "ui-group" }, el("label", {}, el("input", { type: "checkbox", checked: g.showEntries, onchange: (ev) => { g.showEntries = ev.target.checked; setShowEntries(ev.target.checked); g.alpha = 0.5; g.wake?.(); } }), "entries"), labelsUi(g, "project", "this project's topics and entries")),
-      famUi ? el("span", { class: "ui-group" }, famUi, FAMILY_NB_ON ? labelsUi(g, "family", "the family's projects") : null) : null,
-      fui ? el("span", { class: "ui-group" }, fui) : null,
-      el("span", { class: "ui-group" }, el("label", { title: "the path's projects in the graph — the projects you came through; unchecked they are hidden, not forgotten (the path bar discards)" }, el("input", { type: "checkbox", checked: keepPath() && TRAIL_SHOW, onchange: (ev) => { if (ev.target.checked && !keepPath()) setKeepPath(true); setTrailShow(ev.target.checked); if (fgraph) fgraph.at = 0; render(); } }), "path"),
-        ...(pathShown() && TRAIL.some((t) => !sameCentreAsGraph(g, t)) ? [allEntriesUi("path", PATH_ENTRIES, setPathEntries, "every step of the path"), labelsUi(g, "path", "the path's projects")] : [])),
-      el("span", { class: "ui-group" }, el("label", { title: "the graph turns very slowly; it stops while you point at it" }, el("input", { type: "checkbox", checked: driftOn(), onchange: (ev) => { setDrift(ev.target.checked); g.wake?.(); } }), "motion")),
-      el("span", { class: "ui-group" },
-        el("button", { class: "link-btn", title: "every switch in this bar on", onclick: () => selectAll(g, true) }, "select all"),
-        el("button", { class: "link-btn", title: "every switch in this bar off — the project's topics alone", onclick: () => selectAll(g, false) }, "unselect all")),
-      el("span", { class: "ui-group" }, el("button", { class: "link-btn graph-reset", title: "fit the graph and let go of every node you placed", onclick: () => { g.scale = family ? 0.7 : 1; g.ox = 0; g.oy = 0; g.userMoved = false; for (const n of g.nodes) { n.fixed = false; } g.alpha = 1; g.wake?.(); } }, "reset")),
-    );
+    const ui = el("div", { class: "graph-ui" }, ...graphControlGroups(g, family));
     const legend = family
       ? el("div", { class: "graph-legend" },
         ...projectsLegend(g),

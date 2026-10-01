@@ -131,8 +131,9 @@ const report = {};
     const famAll = window.document.querySelector(".graph-ui .family-ctl .friend-entries input");
     famAll.checked = false; famAll.dispatchEvent(new window.Event("change")); await tick(200);
     if (!/topic \(size = entries\)/.test(window.document.querySelector(".graph-legend")?.textContent || "")) errors.push("family 'all their entries' off: the graph did not switch to the project graph");
-    const famLegend = [...window.document.querySelectorAll(".graph-legend .family a")].map((a) => a.textContent);
-    if (famLegend.join() !== "github.com/acme/suite,docs,plugin") errors.push("family 'all their entries' off: the members are not listed beside the project graph: " + famLegend.join());
+    // the legend is the family's tree: suite ▸ web (this project) ▸ plugin, suite ▸ docs — children indented under their parent
+    const famLegend = [...window.document.querySelectorAll(".graph-legend .family")].map((s) => `${(parseInt(s.style.paddingLeft || "0", 10) / 14)}:${s.textContent.trim()}`);
+    if (famLegend.join() !== "0:github.com/acme/suite,1:acme---web,2:plugin,1:docs") errors.push("family 'all their entries' off: the legend is not the family's tree: " + famLegend.join());
     const pg = window.__g();
     if (!pg.nodes.some((n) => n.kind === "project" && n.self)) errors.push("family beside the project: the project has no hub of its own");
     if (!pg.links.some((l) => l.kind === "family" && (pg.nodes[l.s].self || pg.nodes[l.t].self))) errors.push("family beside the project: no parent or child line joins the project's hub");
