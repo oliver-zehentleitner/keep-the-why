@@ -12,3 +12,12 @@ README, for what Keep the Why actually is.
 - capture-confirmation: automatic
 - source-reference: never
 <!-- /keep-the-why:config -->
+
+<!-- keep-the-why:personal-defaults -->
+- capture-mode: proactive
+- confirmation-flow: batch
+- update-check: every 14 days
+- consistency-check: every 30 days
+- pending-confirmation-check: no
+- local-lint: auto
+<!-- /keep-the-why:personal-defaults -->
