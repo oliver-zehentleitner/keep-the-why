@@ -18,3 +18,5 @@ https://oliver-zehentleitner.github.io/unicorn-binance-trailing-stop-loss/keep-t
 https://oliver-zehentleitner.github.io/unicorn-binance-depth-cache-cluster/keep-the-why-dashboard/state.json
 https://oliver-zehentleitner.github.io/unicorn-fy/keep-the-why-dashboard/state.json
 https://oliver-zehentleitner.github.io/ubdcc-dashboard/keep-the-why-dashboard/state.json
+https://zyvop.github.io/zyvop-cli/dashboard/live/state.json
+https://zyvop.github.io/zyvop-cli/dashboard/live/state.json

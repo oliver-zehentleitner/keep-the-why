@@ -9,13 +9,13 @@
    "id": "oliver-zehentleitner---keep-the-why",
    "name": "keep-the-why",
    "schema": "0.18.2",
-   "dashboard": "0.4.8",
+   "dashboard": "0.5.0",
    "linter": "0.18.2.0",
-   "entries": 113,
+   "entries": 114,
    "topics": 10,
    "parent": "",
    "children": 0,
-   "generated": "2026-10-01T10:45:39Z"
+   "generated": "2026-10-01T11:17:00Z"
   },
   {
    "canonical": "https://github.com/oliver-zehentleitner/repo-native-project-memory",
@@ -142,6 +142,20 @@
    "parent": "https://github.com/oliver-zehentleitner/unicorn-binance-suite",
    "children": 0,
    "generated": "2026-10-01T10:23:07Z"
+  },
+  {
+   "canonical": "https://github.com/zyvop/zyvop-cli",
+   "state": "https://zyvop.github.io/zyvop-cli/dashboard/live/state.json",
+   "id": "zyvop---zyvop-cli",
+   "name": "zyvop-cli",
+   "schema": "0.18.1",
+   "dashboard": "0.4.0",
+   "linter": "0.18.1.0",
+   "entries": 10,
+   "topics": 3,
+   "parent": "",
+   "children": 0,
+   "generated": "2026-09-30T11:14:35Z"
   }
  ]
 }
