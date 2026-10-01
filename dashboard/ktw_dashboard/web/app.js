@@ -945,7 +945,7 @@ function renderDetailsDefault() {
       el("span", {}, el("i", { class: "dot", style: "background:transparent;border:1.5px solid var(--fg3)" }), "superseded — hollow"),
       el("span", {}, el("i", { class: "dot", style: "background:var(--bg);border:1.5px solid var(--open)" }), "ring — open, needs review, pending"),
       el("span", {}, "solid line — a reference between topics; dotted — membership"),
-      el("span", {}, el("i", { class: "dot", style: "background:transparent;border:2px dashed var(--fg3);width:10px;height:10px" }), "friend — a repository cited outside the family, loaded with friends (N) in the graph; a click on its hub shows all of it"),
+      el("span", {}, el("i", { class: "dot", style: "background:transparent;border:2px dashed var(--fg3);width:10px;height:10px" }), "friend — a repository cited outside the family, loaded with the graph; a click on its hub or name goes there"),
       el("span", {}, el("i", { class: "dot", style: "background:transparent;border:2px dotted var(--fg3);width:10px;height:10px" }), "path — a project you walked through to get here, numbered in order; a click goes back there")),
       el("h3", {}, "Keys"), el("p", { class: "note" }, el("kbd", {}, "/"), " search · ", el("kbd", {}, "g"), " graph · ", el("kbd", {}, "o"), " overview · ", el("kbd", {}, "q"), " queues · ", el("kbd", {}, "t"), " timeline · ", el("kbd", {}, "a"), " authors · ", el("kbd", {}, "l"), " findings"));
     return;
@@ -1148,7 +1148,7 @@ const color0 = () => getComputedStyle(document.documentElement).getPropertyValue
 // else the repository's published export), one level deep — a friend's own
 // friends are not followed. A friend is linked into the graph, never merged:
 // search, queues, counts and the other views stay with the project or family.
-// Its hub shows the entries cited there; a click on the hub shows all of it.
+// Its hub shows the entries cited there; a click on the hub goes there, as its name does.
 const FRIENDS = { on: false, loaded: {}, pending: {}, expanded: new Set(), load: false, loading: false };
 // Loaded as soon as a graph shows them, by default (few projects have many
 // friends yet); *friends* unchecked turns that off, kept per browser — then a
@@ -1417,7 +1417,7 @@ function addLinkedLayer(g, prev, items) {
     it.members.forEach((m, j) => {
       const mcol = m.color || col;
       const off = it.members.length > 1 ? { x: centre.x + 110 * Math.cos((2 * Math.PI * j) / it.members.length), y: centre.y + 110 * Math.sin((2 * Math.PI * j) / it.members.length) } : centre;
-      // the hub expands a friend (or goes back along the path); its name goes to that project
+      // the hub and its name both go to that project (back along the path for a step of it)
       const walk = it.kind === "trail" ? it.hub : m.centre ? () => moveTo({ centre: m.centre, state: m.state }, "#graph") : m.open ? () => go(m.open) : null;
       const hub = add({ id: `f:${it.k}:${m.key}`, kind: "project", friend: it.kind === "friend", chain: !!it.chain, hop: it.hop ?? null, trail: it.kind === "trail", family: it.kind === "family", label: m.name, canonical: m.canonical, r: it.kind === "family" ? 13 : j === 0 ? 13 : 10, color: mcol, href: m.open || "#graph", action: it.hub, walk }, off);
       if (selfHub && it.kind === "family" && m.role === "child") links.push({ s: index[hub.id], t: index[selfHub.id], kind: "family", len: 260 });
@@ -1903,7 +1903,7 @@ function renderThoughts(g) {
 }
 function friendsLegend(g) {
   if (!FRIENDS.on && !CHAIN.extra.size && !GLOBE.extra.size && !GLOBE.failed.size) return [];
-  const out = friendUnits(g).map((u, i) => el("span", { class: "friend", title: `friend: ${u.r.canonical}${u.members.length > 1 ? ` — a family of ${u.members.length}, shown whole` : ""} — its hub shows the entries cited there; a click on a hub shows all of it, a click on the name goes there` },
+  const out = friendUnits(g).map((u, i) => el("span", { class: "friend", title: `friend: ${u.r.canonical}${u.members.length > 1 ? ` — a family of ${u.members.length}, shown whole` : ""} — its hub shows the entries cited there; a click on its hub or its name goes there` },
     el("i", { class: "dot", style: `background:transparent;border:2px dashed ${friendColor(i)};width:10px;height:10px` }),
     el("a", { href: u.r.open, onclick: (ev) => { if (!u.r.centre) return; ev.preventDefault(); moveTo({ centre: u.r.centre, state: u.r.state }, "#graph"); } }, u.r.name),
     u.members.length > 1 ? el("span", { class: "note" }, ` · family of ${u.members.length}`) : (u.r.members || []).length > 1 ? el("span", { class: "note" }, ` · family of ${u.r.members.length}, not shown`) : null,
@@ -2064,8 +2064,11 @@ function runGraph(canvas, g, opts = {}) {
     hover = pick(px, py); canvas.style.cursor = hover ? "pointer" : "grab";
   };
   canvas.onmousedown = (ev) => { const r = canvas.getBoundingClientRect(); const px = ev.clientX - r.left, py = ev.clientY - r.top; moved = false; g.userMoved = true; nameDown = pickName(px, py); if (nameDown) return; const n = pick(px, py); if (n) drag = n; else pan = { px, py, ox: g.ox, oy: g.oy }; canvas.classList.add("grabbing"); };
-  const open = (n) => (n.action ? n.action() : go(n.href));
-  const walkTo = (n) => (n.walk ? n.walk() : go(n.href));
+  // a project's hub and its name do the same: go there, in place — the circle used to expand a friend (now the
+  // switches' job) or open an overview, and a click on a foreign hub seemed to do nothing. This project's own
+  // hub is where the reader already is: a click on it does nothing.
+  const walkTo = (n) => (n.self ? null : n.walk ? n.walk() : go(n.href));
+  const open = (n) => (n.kind === "project" ? walkTo(n) : n.action ? n.action() : go(n.href));
   window.addEventListener("mouseup", () => { if (nameDown) { const n = nameDown; nameDown = null; walkTo(n); return; } if (drag && !moved) open(drag); drag = null; pan = null; canvas.classList.remove("grabbing"); });
   canvas.onmouseleave = () => { hover = null; hoverName = null; };
   canvas.onwheel = (ev) => { ev.preventDefault(); g.userMoved = true; const r = canvas.getBoundingClientRect(); const px = ev.clientX - r.left - W / 2, py = ev.clientY - r.top - H / 2; const f = Math.exp(-ev.deltaY * 0.0012); const ns = Math.min(6, Math.max(0.15, g.scale * f)); const k = ns / g.scale; g.ox = px - (px - g.ox) * k; g.oy = py - (py - g.oy) * k; g.scale = ns; };

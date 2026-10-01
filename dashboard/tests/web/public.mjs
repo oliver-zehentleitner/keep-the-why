@@ -323,9 +323,15 @@ const report = {};
   if (!/^1 entries/.test(d.getElementById("counts")?.textContent || "1 entries")) errors.push("friends: merged into the counts: " + d.getElementById("counts")?.textContent);
   const fe = d.querySelector(".graph-ui .friends-ctl .friend-entries input"); fe.checked = false; fe.dispatchEvent(new window.Event("change")); await tick(150);
   if (notesEntries() !== 1) errors.push("friends entries off: a hub should show only the cited entries, got " + notesEntries());
-  window.__g().nodes.find((n) => n.friend && n.label === "acme/notes").action(); await tick(100);
-  if (notesEntries() !== 2) errors.push("friends: an expanded hub should show all of the friend's entries, got " + notesEntries());
   fe.checked = true; fe.dispatchEvent(new window.Event("change")); await tick(150);
+  // a click on a hub's circle does what its name does: goes there, in place; the own hub does nothing
+  const gg = window.__g(); const cv = d.querySelector("#main .graph-wrap canvas");
+  const at = (n) => ({ clientX: n.x * gg.scale + gg.ox, clientY: n.y * gg.scale + gg.oy });
+  const clickNode = async (n) => { cv.dispatchEvent(new window.MouseEvent("mousedown", { ...at(n), bubbles: true })); window.dispatchEvent(new window.MouseEvent("mouseup", at(n))); await tick(300); };
+  const own = gg.nodes.find((n) => n.kind === "project" && n.self);
+  if (own) { const h = window.location.hash; await clickNode(own); if (window.location.hash !== h || !/acme---refs/.test(d.title)) errors.push("hub click: the own hub moved the page: " + window.location.hash + " " + d.title); }
+  await clickNode(gg.nodes.find((n) => n.friend && n.label === "acme/notes"));
+  if (window.location.search !== `?public=${encodeURIComponent(`${GH}/notes`)}` || !/acme---notes/.test(d.title)) errors.push("hub click: a click on the friend's circle did not go there: " + window.location.search + " " + d.title);
   window.close();
 }
 {
