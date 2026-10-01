@@ -123,10 +123,15 @@ const report = {};
     if (see.join() !== "Plugins load lazily>Release together") errors.push("family graph: the See from the plugin to the suite is missing");
     if (window.document.querySelector("#scope button.on")?.dataset.scope !== "family") errors.push("family graph: the scope switch does not show family");
     if (!/references? across projects/.test(window.document.querySelector(".graph-legend")?.textContent || "")) errors.push("family graph: no family legend");
-    // back to this project: the local graph, from the same switch
+    // the scope switch merges search, queues and counts; the graph has its own family setting — back to the
+    // project graph by the family's "all their entries", the scope untouched
     window.document.querySelector('#scope button[data-scope="project"]').click();
     await tick(100);
-    if (!/topic \(size = entries\)/.test(window.document.querySelector(".graph-legend")?.textContent || "")) errors.push("scope back to this project: the graph did not switch to the local one");
+    if (!window.__fg?.() || !/references? across projects/.test(window.document.querySelector(".graph-legend")?.textContent || "")) errors.push("scope back to this project: the graph changed with the scope, though it has its own family setting");
+    const famAll = window.document.querySelector(".graph-ui .family-ctl .friend-entries input");
+    famAll.checked = false; famAll.dispatchEvent(new window.Event("change")); await tick(200);
+    if (!/topic \(size = entries\)/.test(window.document.querySelector(".graph-legend")?.textContent || "")) errors.push("family 'all their entries' off: the graph did not switch to the project graph");
+    if (!/family of 4/.test(window.document.querySelector(".graph-legend")?.textContent || "")) errors.push("family 'all their entries' off: the family is not beside the project graph: " + window.document.querySelector(".graph-legend")?.textContent);
   }
   window.close();
 }
@@ -142,10 +147,19 @@ const report = {};
   if (!/Referenced by \(See\)\s*Plugins load lazily · plugin · Design/.test(report.referencedBy || "")) errors.push("entry, scope family: the plugin's See is not listed as a reference: " + report.referencedBy);
   const modes = [...d.querySelectorAll("#details .mini-seg:not(.mini-friends):not(.mini-width) button")].map((b) => b.textContent);
   if (modes.join() !== "near,project,family") errors.push("side-pane graph in public mode: expected near,project,family, got " + modes.join());
-  // on a page without an entry the side pane's graph follows the scope: family here
+  // on a page without an entry the side pane's graph follows the graph's own family setting, not the scope:
+  // the scope merges search, queues and counts; the graph shows the family beside the project (linked) until
+  // its "all their entries" is on — then it is the family graph, whole
   window.location.hash = "#overview"; window.dispatchEvent(new window.Event("hashchange")); await tick(300);
   report.miniOnOverview = d.querySelector("#details .mini-seg:not(.mini-friends):not(.mini-width) button.on")?.textContent;
-  if (report.miniOnOverview !== "family") errors.push("overview with the family scope: the side-pane graph shows " + report.miniOnOverview + ", not family");
+  if (report.miniOnOverview !== "project") errors.push("overview with the family scope: the side-pane graph shows " + report.miniOnOverview + ", not the project with the family beside it");
+  window.location.hash = "#graph"; window.dispatchEvent(new window.Event("hashchange")); await tick(300);
+  const famAll = d.querySelector(".graph-ui .family-ctl .friend-entries input");
+  if (!famAll || famAll.checked) errors.push("graph with the family scope: the family's 'all their entries' is missing or on by default");
+  famAll.checked = true; famAll.dispatchEvent(new window.Event("change")); await tick(400);
+  if (!window.__fg?.()) errors.push("graph: the family's 'all their entries' did not build the family graph");
+  if (!d.querySelector(".graph-ui .family-ctl .friend-entries input")?.checked) errors.push("family graph: the family's 'all their entries' is not shown as on");
+  window.location.hash = "#overview"; window.dispatchEvent(new window.Event("hashchange")); await tick(300);
   const fg = window.__fg?.();
   if (fg && fg.showEntries !== true) errors.push("family graph: entries are not shown by default");
   window.close();

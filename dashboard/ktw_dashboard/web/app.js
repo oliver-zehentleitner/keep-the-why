@@ -519,7 +519,7 @@ function viewThought(main, refs) {
 // Both read the graph of the scope (this project, or the family), with the
 // friends, the path and the followed chains it has — the same data the Graph
 // view shows, laid out as lists.
-const graphForScope = async () => (scope() === "family" ? buildFamilyGraph() : buildGraph());
+const graphForScope = async () => (familyGraphShown() ? buildFamilyGraph() : buildGraph());
 const projOf = (n) => n.proj || n.entry?.project || SELF?.project?.id || SELF?.project?.name || "";
 const lightAll = (t) => { for (const G of ACTIVE_GRAPHS) lightThought(G, t); };
 async function viewFriends(main) {
@@ -844,9 +844,9 @@ function renderDetailsDefault() {
   const route = location.hash.slice(1) || "overview";
   if (route === "graph" || route === "graph/family") {
     d.append(el("div", { id: "thoughts" }));
-    renderThoughts(scope() === "family" ? (fgraph && Date.now() - fgraph.at < 30000 ? fgraph : null) : graph);
+    renderThoughts(familyGraphShown() ? (fgraph && Date.now() - fgraph.at < 30000 ? fgraph : null) : graph);
     d.append(el("h3", {}, "Legend"), el("div", { class: "legend-list" },
-      scope() === "family" ? [
+      familyGraphShown() ? [
         el("span", {}, el("i", { class: "dot", style: "background:var(--bg);border:3px solid var(--accent);width:12px;height:12px" }), "project — a ring in its colour; its topics take the same colour"),
         el("span", {}, "thick dashed line — parent and child project"),
         el("span", {}, "coloured line — a See between two entries, within a project or across"),
@@ -877,7 +877,7 @@ function miniGraph(d, ctx) {
   const focusId = ctx.entry ? `e:${ctx.entry.id}` : ctx.topic ? `t:${ctx.topic.file}` : null;
   if (narrow()) { d.append(el("h3", {}, "Graph"), el("a", { class: "backlink", href: "#graph" }, "Open the project graph →")); return; }
   const modes = [...(focusId ? ["near"] : []), "project", ...(canFamily() ? ["family"] : [])];
-  const mode = MINI && modes.includes(MINI) ? MINI : focusId ? "near" : scope() === "family" && modes.includes("family") ? "family" : "project";
+  const mode = MINI && modes.includes(MINI) ? MINI : focusId ? "near" : familyGraphShown() && modes.includes("family") ? "family" : "project";
   const box = el("div", { class: `mini ${focusId ? "tall" : "fill"}` });
   const seg = el("span", { class: "mini-seg" }, modes.length > 1 ? modes.map((m) => el("button", { type: "button", class: m === mode ? "on" : "", title: { near: "this entry's or topic's neighbourhood", project: "the whole project", family: "the whole family tree" }[m], onclick: () => { MINI = m; const keep = d.querySelector(".mini"); const h = keep?.previousElementSibling?.tagName === "H3" ? keep.previousElementSibling : null; h?.remove(); keep?.remove(); miniGraph(d, ctx); } }, m)) : el("span", { class: "mini-title" }, "graph"));
   const canvas = el("canvas");
@@ -896,7 +896,7 @@ function miniGraph(d, ctx) {
   if (mode === "near") {
     // friends live at the project level: the control switches there (the family level with the family scope) and loads them
     const n = friendCandidates(S.entries.filter((e) => (e.project || null) === (ctx.entry?.project || ctx.topic?.project || null))).length;
-    const up = modes.includes("family") && scope() === "family" ? "family" : "project";
+    const up = modes.includes("family") && familyGraphShown() ? "family" : "project";
     if (n || hasFamily()) box.append(el("span", { class: "mini-seg mini-friends" }, el("button", { type: "button", title: `show the friends — switches to the ${up} level`,
       onclick: () => { MINI = up; FRIENDS.load = true; setFriendsAuto(true); render(); } }, n ? `friends (${n})` : "friends")));
     return requestAnimationFrame(() => runGraph(canvas, ctx.entry ? buildSubgraph(ctx.entry) : buildTopicSubgraph(ctx.topic), opts));
@@ -1089,6 +1089,11 @@ const familyColor = () => PALETTE[8];
 let FAMILY_NB = { groups: null, missing: [], loading: false };
 let FAMILY_NB_ON = (() => { try { return localStorage.getItem("ktw-family-neighbours") !== "off"; } catch { return true; } })(); // the family beside the graph; off per browser
 function setFamilyNeighbours(on) { FAMILY_NB_ON = on; try { localStorage.setItem("ktw-family-neighbours", on ? "on" : "off"); } catch {} }
+// How much of the family the graph shows — the graph's own setting, apart from the scope switch, which
+// merges search, queues and counts: "off" (the project alone, with friends and path), "linked" (the
+// members beside it with the entries linked here), "all" (the family graph, every member whole).
+const graphFamily = () => (!canFamily() ? "none" : !FAMILY_NB_ON ? "off" : FAMILY_ENTRIES ? "all" : "linked");
+const familyGraphShown = () => graphFamily() === "all";
 function autoFamily() {
   if (!FAMILY_NB_ON || !canFamily() || FAMILY_NB.groups || FAMILY_NB.loading) return;
   FAMILY_NB.loading = true;
@@ -1441,11 +1446,12 @@ function friendsUi(g) {
 }
 // the family beside the project graph: on by default, off per browser (and then not loaded either)
 function familyUi(g) {
-  if (g !== graph || !canFamily()) return null;
+  if (!canFamily()) return null;
+  const merged = g !== graph; // the family graph: every member whole
   return el("span", { class: "family-ctl" },
-    el("label", { class: "family-toggle", title: FAMILY_NB_ON ? "the family's projects beside this one, with the entries linked here — unchecked, they are not loaded" : "show the family's projects beside this one, with the entries linked here" },
+    el("label", { class: "family-toggle", title: FAMILY_NB_ON ? "the family's projects in the graph — unchecked, the project alone, with its friends and path" : "show the family's projects in the graph, with the entries linked here" },
       el("input", { type: "checkbox", checked: FAMILY_NB_ON, onchange: (ev) => { setFamilyNeighbours(ev.target.checked); if (ev.target.checked) autoFamily(); render(); } }), FAMILY_NB.loading ? "family (loading…)" : "family"),
-    FAMILY_NB_ON && familyMembers().length ? allEntriesUi(FAMILY_ENTRIES, setFamilyEntries, "every member of the family") : null);
+    FAMILY_NB_ON && (merged || familyMembers().length) ? allEntriesUi(FAMILY_ENTRIES, setFamilyEntries, "every member of the family — the family graph, every member whole") : null);
 }
 // the same control, small, in the corner of the side pane's graph
 function miniFriends(g) {
@@ -1533,7 +1539,7 @@ const span = (t) => (t.ins?.from ? (t.ins.from === t.ins.to ? t.ins.from : `${t.
 const shortLabel = (n) => { const t = (n?.label || "").replace(/`/g, ""); return t.length > 34 ? t.slice(0, 32) + "…" : t; };
 // the thoughts an entry is a step of, with its place in each
 function entryThoughts(e) {
-  const g = scope() === "family" && fgraph && Date.now() - fgraph.at < 30000 ? fgraph : graph && !e.project ? graph : buildGraph(e.project || null);
+  const g = familyGraphShown() && fgraph && Date.now() - fgraph.at < 30000 ? fgraph : graph && !e.project ? graph : buildGraph(e.project || null);
   const same = (n) => n.entry === e || (e.uuid && n.entry?.uuid === e.uuid);
   const all = graphChains(g), min = thoughtMin(all);
   return all.filter((t) => t.steps.length >= min || t.ends.length).map((t) => ({ t, i: t.steps.findIndex(same) })).filter((x) => x.i >= 0);
@@ -1550,7 +1556,7 @@ function graphThoughts(g) {
 // chain is loaded, not its friends; it is drawn like a friend, marked as
 // reached through a thought.
 const CHAIN = { extra: new Map(), tried: new Set(), busy: false }; // canonical key -> { canonical, uuids }
-const graphNow = async () => (scope() === "family" ? buildFamilyGraph() : buildGraph());
+const graphNow = async () => (familyGraphShown() ? buildFamilyGraph() : buildGraph());
 async function loadEnds(ends) {
   const own = new Set([fkey(canonicalOf(SELF?.project)), ...((fgraph?.groups || []).map((G) => fkey(G.canonical)))]);
   const fresh = [];
@@ -1648,7 +1654,7 @@ let TREE_ASKED = false;
 function viewGraph(main) {
   // live: the whole family tree is known before anything counts as a friend — the server's own API, no other host
   if (LIVE() && !TREE && !TREE_ASKED) { TREE_ASKED = true; fetchTree().then((t) => { if (t && location.hash === "#graph") render(); }); }
-  const family = scope() === "family";
+  const family = familyGraphShown();
   const wrap = el("div", { class: "graph-wrap" });
   main.append(wrap);
   const fill = (g) => {
@@ -1688,7 +1694,7 @@ function viewGraph(main) {
   if (!family) return fill(buildGraph());
   if (fgraph && Date.now() - fgraph.at < 30000) return fill(fgraph); // a live update re-renders: no refetch
   wrap.append(el("p", { class: "center" }, "Loading the family…"));
-  buildFamilyGraph().then((g) => { if (wrap.isConnected && location.hash === "#graph" && scope() === "family") fill(g); });
+  buildFamilyGraph().then((g) => { if (wrap.isConnected && location.hash === "#graph" && familyGraphShown()) fill(g); });
 }
 const go = (href) => { if (href.startsWith("#")) location.hash = href; else location.href = href; };
 // The graph turns very slowly in its plane — one turn in about six minutes —
@@ -2114,7 +2120,7 @@ function render() {
   $("#details").dataset.pane = "other";
   if (!route.startsWith("graph")) { const bar = pathBar(); if (bar) main.append(bar); } // the graph carries it as an overlay
   if (route === "overview") { viewOverview(main); renderDetailsDefault(); }
-  else if (route === "graph/family") { setScope("family", { rerender: false }); history.replaceState(null, "", "#graph"); viewGraph(main); renderDetailsDefault(); }
+  else if (route === "graph/family") { setScope("family", { rerender: false }); setFamilyNeighbours(true); setFamilyEntries(true); history.replaceState(null, "", "#graph"); viewGraph(main); renderDetailsDefault(); } // an old link to the family graph: the family whole, in the graph and in the scope
   else if (route === "graph") { viewGraph(main); renderDetailsDefault(); }
   else if (route === "timeline") { viewTimeline(main); renderDetailsDefault(); }
   else if (route === "authors") { viewAuthors(main); renderDetailsDefault(); }

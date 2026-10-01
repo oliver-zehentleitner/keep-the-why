@@ -247,6 +247,24 @@ The graph offers the repositories its entries cite by a cross-project `See` or `
 
 **Rejected alternative:** follow friends of friends. Rejected — the web would grow without a bound the reader chose. One hop is enough because the reader can move the centre: a friend's name in the legend opens that project's own dashboard, which again shows one hop from there. The web is walked from centre to centre, each view bounded, rather than loaded as a whole.
 
+## The graph's family display is its own setting, apart from the scope switch
+
+**Id:** b6d033c1-3013-41d5-a87e-3f126cddc4c3
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer decision while testing on the suite, 2026-10-01 ("the scope is for the general fusion; for the graph I want to control that separately")
+**Revisit when:** the scope switch is asked to carry a third value, or a view other than the graph wants a family display of its own
+**See:** dashboard.md#friends--repositories-cited-outside-the-family--load-into-the-graph-linked-and-never-merged — b1b36585-edb2-416c-95fe-126ed4b4b788 — as of 2026-10-01
+
+The *this project / family* switch merges search, queues, counts and the lists — the general fusion. How much of the family the graph shows is the graph's own setting, in its control bar beside *friends* and *path*: *family* off is the project alone with its friends and path; *family* on draws the members beside it with the entries linked here; *family* + *all their entries* is the family graph, every member whole. Kept per browser, and the same whichever scope is on; the side pane's graph follows it too.
+
+**Reason:** until 0.4.2 the graph followed the scope — *family* meant the merged family graph, *this project* meant the project alone — and with the family as a neighbour of the project graph (the friends entry) that coupling broke down: in the family scope there was nothing to switch, in the project scope the switch was there, and a reader who wanted the merged queues with a lean graph, or the whole family graph while reading one project's lists, had no way to say so. The graph is one view with three kinds of neighbour; each kind has its switch and its *all their entries*, and the family's pair now covers the whole range the two scopes used to split between them.
+
+**Rejected alternative:** keep the graph on the scope and show the family group only in the project scope. Rejected by the maintainer — the scope is about what is searched and counted, and a graph setting that appears and disappears with it is a second meaning hung on the same switch.
+
+**Consequence:** the old `#graph/family` link sets both — the family scope and the graph's *family* + *all their entries* — and lands on `#graph`, as before. The public-mode test no longer expects the graph to change with the scope; it switches the graph by its own control.
+
 ## Thoughts are the longest chains of See and Superseded by, listed beside the graph
 
 **Id:** cfe036bd-3264-411d-b26d-4214a22f6fe2
