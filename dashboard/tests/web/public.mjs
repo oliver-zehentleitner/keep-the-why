@@ -131,7 +131,13 @@ const report = {};
     const famAll = window.document.querySelector(".graph-ui .family-ctl .friend-entries input");
     famAll.checked = false; famAll.dispatchEvent(new window.Event("change")); await tick(200);
     if (!/topic \(size = entries\)/.test(window.document.querySelector(".graph-legend")?.textContent || "")) errors.push("family 'all their entries' off: the graph did not switch to the project graph");
-    if (!/family of 4/.test(window.document.querySelector(".graph-legend")?.textContent || "")) errors.push("family 'all their entries' off: the family is not beside the project graph: " + window.document.querySelector(".graph-legend")?.textContent);
+    const famLegend = [...window.document.querySelectorAll(".graph-legend .family a")].map((a) => a.textContent);
+    if (famLegend.join() !== "github.com/acme/suite,docs,plugin") errors.push("family 'all their entries' off: the members are not listed beside the project graph: " + famLegend.join());
+    const pg = window.__g();
+    if (!pg.nodes.some((n) => n.kind === "project" && n.self)) errors.push("family beside the project: the project has no hub of its own");
+    if (!pg.links.some((l) => l.kind === "family" && (pg.nodes[l.s].self || pg.nodes[l.t].self))) errors.push("family beside the project: no parent or child line joins the project's hub");
+    const famColours = new Set(pg.nodes.filter((n) => n.kind === "project" && n.ext).map((n) => n.color));
+    if (famColours.size < 2) errors.push("family beside the project: the members share one colour");
   }
   window.close();
 }

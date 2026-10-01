@@ -1390,6 +1390,7 @@ function setCentre(c, state) {
   MODE = c.mode; PUBLIC = c.mode === "public" ? c.canonical : null; PUBLIC_ROOT = c.mode === "public" ? c.root || "" : ""; PROJECT = c.mode === "live" ? c.project || null : null;
   graph = null; fgraph = null; TREE = null; TREE_AT = 0; TREE_ASKED = false; PUBLIC_TREE = null; LAST_POOL = null;
   FRIENDS.on = false; FRIENDS.expanded.clear(); THOUGHT_PIN = null; MINI = null; CHAIN.extra.clear(); CHAIN.tried.clear();
+  FAMILY_NB = { groups: null, missing: [], loading: false }; // the family beside the graph is the new centre's
   if (MODE === "public") state.exported = true;
   connectLive();
   const sel = $("#project-select");
