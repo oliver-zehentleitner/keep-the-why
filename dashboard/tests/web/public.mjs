@@ -154,17 +154,19 @@ const report = {};
   const modes = [...d.querySelectorAll("#details .mini-seg:not(.mini-friends):not(.mini-width) button")].map((b) => b.textContent);
   if (modes.join() !== "near,project,family") errors.push("side-pane graph in public mode: expected near,project,family, got " + modes.join());
   // on a page without an entry the side pane's graph follows the graph's own family setting, not the scope:
-  // the scope merges search, queues and counts; the graph shows the family beside the project (linked) until
-  // its "all their entries" is on — then it is the family graph, whole
+  // the scope merges search, queues and counts; "family entries" is on by default, so the graph is the family
+  // graph, whole — off, the family stands beside the project with the entries linked here
   window.location.hash = "#overview"; window.dispatchEvent(new window.Event("hashchange")); await tick(300);
   report.miniOnOverview = d.querySelector("#details .mini-seg:not(.mini-friends):not(.mini-width) button.on")?.textContent;
-  if (report.miniOnOverview !== "project") errors.push("overview with the family scope: the side-pane graph shows " + report.miniOnOverview + ", not the project with the family beside it");
+  if (report.miniOnOverview !== "family") errors.push("overview: the side-pane graph shows " + report.miniOnOverview + ", not the family graph that 'family entries' (on by default) asks for");
   window.location.hash = "#graph"; window.dispatchEvent(new window.Event("hashchange")); await tick(300);
   const famAll = d.querySelector(".graph-ui .family-ctl .friend-entries input");
-  if (!famAll || famAll.checked) errors.push("graph with the family scope: the family's 'all their entries' is missing or on by default");
+  if (!famAll || !famAll.checked) errors.push("graph: the family's 'family entries' is missing or off by default");
+  if (!window.__fg?.()) errors.push("graph: 'family entries' on did not build the family graph");
+  famAll.checked = false; famAll.dispatchEvent(new window.Event("change")); await tick(400);
+  if (!window.__g?.()?.nodes.some((n) => n.family)) errors.push("graph: 'family entries' off did not put the family beside the project graph");
   famAll.checked = true; famAll.dispatchEvent(new window.Event("change")); await tick(400);
-  if (!window.__fg?.()) errors.push("graph: the family's 'all their entries' did not build the family graph");
-  if (!d.querySelector(".graph-ui .family-ctl .friend-entries input")?.checked) errors.push("family graph: the family's 'all their entries' is not shown as on");
+  if (!d.querySelector(".graph-ui .family-ctl .friend-entries input")?.checked) errors.push("family graph: 'family entries' is not shown as on");
   window.location.hash = "#overview"; window.dispatchEvent(new window.Event("hashchange")); await tick(300);
   const fg = window.__fg?.();
   if (fg && fg.showEntries !== true) errors.push("family graph: entries are not shown by default");
@@ -202,9 +204,13 @@ const report = {};
   const stray = got.filter((u) => !familyHosts.test(u));
   if (stray.length) errors.push(`static export, scope this project: fetched beyond the family's members — ${stray.join(", ")}`);
   if (!got.some((u) => /acme\.github\.io\/suite\/state\.json/.test(u))) errors.push("static export, scope this project: the family was not loaded for the graph beside the overview");
+  // the family graph is the default ("family entries" on); the lean form, the family beside the project, with it off
+  window.localStorage.setItem("ktw-family-entries", "linked");
+  window.location.hash = "#graph"; window.dispatchEvent(new window.Event("hashchange")); await tick(300);
+  const fe0 = d.querySelector(".graph-ui .family-ctl .friend-entries input"); fe0.checked = false; fe0.dispatchEvent(new window.Event("change")); await tick(400);
   const famHubs = (window.__g?.()?.nodes || []).filter((n) => n.family).map((n) => n.label).sort();
   report.staticFamilyHubs = famHubs;
-  if (!famHubs.length) errors.push("static export, scope this project: no family hubs in the graph beside the overview");
+  if (!famHubs.length) errors.push("static export, 'family entries' off: no family hubs beside the project graph");
   window.location.hash = "#graph"; window.dispatchEvent(new window.Event("hashchange")); await tick(300);
   if (!d.querySelector(".graph-ui .family-toggle input")?.checked) errors.push("static export: no family switch in the graph view, or it is off");
   if (!d.querySelector(".graph-ui .family-ctl .friend-entries input")) errors.push("static export: the family group has no 'all their entries' in the graph view");

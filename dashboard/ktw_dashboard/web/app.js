@@ -1095,14 +1095,14 @@ let FRIENDS_AUTO = (() => { try { return localStorage.getItem("ktw-friends") !==
 // every entry of every friend, not only what links to this graph — off by default, kept per browser
 // "all their entries" per kind of neighbour — friends, the path's steps, the family — each kept per browser
 const readEntriesSetting = (key, dflt = false) => { try { const v = localStorage.getItem(key); return v == null ? dflt : v === "all"; } catch { return dflt; } };
-let FRIEND_ENTRIES = readEntriesSetting("ktw-friend-entries", true); // a friend comes whole by default; the family's and the path's steps come linked
+let FRIEND_ENTRIES = readEntriesSetting("ktw-friend-entries", true); // every "… entries" is on by default: neighbours come whole; each is kept per browser
 // a friend that has a family comes with it — the members beside the cited repository — unless this is off; their entries and labels have switches of their own
 let FRIEND_FAMILIES = (() => { try { return localStorage.getItem("ktw-friend-families") !== "off"; } catch { return true; } })();
 function setFriendFamilies(on) { FRIEND_FAMILIES = on; try { localStorage.setItem("ktw-friend-families", on ? "on" : "off"); } catch {} }
-let FRIEND_FAM_ENTRIES = readEntriesSetting("ktw-friend-family-entries", true); // a friend's family comes whole too; the project's own family and the path's steps come linked
+let FRIEND_FAM_ENTRIES = readEntriesSetting("ktw-friend-family-entries", true);
 function setFriendFamEntries(on) { FRIEND_FAM_ENTRIES = on; try { localStorage.setItem("ktw-friend-family-entries", on ? "all" : "linked"); } catch {} }
-let PATH_ENTRIES = readEntriesSetting("ktw-path-entries");
-let FAMILY_ENTRIES = readEntriesSetting("ktw-family-entries");
+let PATH_ENTRIES = readEntriesSetting("ktw-path-entries", true);
+let FAMILY_ENTRIES = readEntriesSetting("ktw-family-entries", true);
 function setFriendEntries(on) { FRIEND_ENTRIES = on; try { localStorage.setItem("ktw-friend-entries", on ? "all" : "linked"); } catch {} }
 function setPathEntries(on) { PATH_ENTRIES = on; try { localStorage.setItem("ktw-path-entries", on ? "all" : "linked"); } catch {} }
 function setFamilyEntries(on) { FAMILY_ENTRIES = on; try { localStorage.setItem("ktw-family-entries", on ? "all" : "linked"); } catch {} }
