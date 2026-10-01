@@ -1321,8 +1321,9 @@ function friendUnits(g) {
   const units = new Map();
   const add = (f, via) => {
     const r = FRIENDS.loaded[fkey(f.canonical)];
-    if (!r?.state || onPath(f.canonical)) return;
-    const members = FRIEND_FAMILIES ? r.members || [r] : [r];
+    const centre = fkey(canonicalOf(SELF?.project));
+    if (!r?.state || onPath(f.canonical) || fkey(f.canonical) === centre) return; // the centre is drawn as itself, never again as a neighbour
+    const members = (FRIEND_FAMILIES ? r.members || [r] : [r]).filter((m) => fkey(m.canonical) !== centre || m === r);
     const k = unitKey(members);
     if (!units.has(k)) units.set(k, { k, r, members, uuids: new Set(), via });
     const u = units.get(k); if (via === "friend") u.via = "friend";
@@ -1521,6 +1522,7 @@ function setCentre(c, state) {
   graph = null; fgraph = null; TREE = null; TREE_AT = 0; TREE_ASKED = false; PUBLIC_TREE = null; LAST_POOL = null;
   FRIENDS.on = false; FRIENDS.expanded.clear(); THOUGHT_PIN = null; MINI = null; CHAIN.extra.clear(); CHAIN.tried.clear();
   FAMILY_NB = { groups: null, missing: [], loading: false }; // the family beside the graph is the new centre's
+  GLOBE.extra.clear(); GLOBE.failed.clear(); GLOBE.done = 0; GLOBE.registry = false; // the globe's waves were counted from the old centre; what was fetched stays in memory
   if (MODE === "public") state.exported = true;
   connectLive();
   const sel = $("#project-select");

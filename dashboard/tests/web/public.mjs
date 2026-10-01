@@ -612,6 +612,18 @@ const report = {};
   [...(dialog4?.querySelectorAll("button") || [])].find((b) => b.textContent === "load them")?.click(); await tick(400);
   g = window.__g();
   if (!g.nodes.some((n) => n.kind === "project" && n.hop === "registry")) errors.push("globe: the registry switched on again did not bring its project back");
+  // a move to a project the globe brought in: it is the centre now, drawn once — not again as a neighbour
+  {
+    const farHub = window.__g().nodes.find((n) => n.kind === "project" && n.label === "acme/far");
+    if (farHub?.walk) { farHub.walk(); await tick(500);
+      const hubs2 = window.__g().nodes.filter((n) => n.kind === "project").map((n) => n.label);
+      if (hubs2.includes("acme/far")) errors.push("globe: after the move to acme/far it is drawn again as a neighbour of itself: " + hubs2.join());
+      if (!/acme---far/.test(d.title)) errors.push("globe: the move to acme/far did not happen: " + d.title);
+      window.history.back(); await tick(500);
+      if (!/acme---refs/.test(d.title)) errors.push("globe: back did not return to refs: " + d.title);
+      window.location.hash = "#globe"; window.dispatchEvent(new window.Event("hashchange")); await tick(300);
+    } else errors.push("globe: no walkable acme/far hub");
+  }
   // clear drops the globe's repositories, friends stay
   [...d.querySelectorAll(".graph-ui .globe-ctl button")].find((b) => b.textContent === "clear")?.click(); await tick(300);
   g = window.__g();
