@@ -169,7 +169,7 @@ A fork carries the why with it and keeps writing its own. Citations still point 
 
 Two branches that add entries merge like code. The index has a fixed `0`–`9`, `A`–`Z` heading skeleton for exactly that: parallel additions land under different headings instead of in the same line, and a merge conflict in `context/` is the ordinary kind, resolved the ordinary way.
 
-[Repository structure →](repository-structure.md)
+[One Index, Many Writers →](https://blog.technopathy.club/one-index-many-writers-avoiding-git-merge-conflicts-with-deterministic-write-areas) · [Repository structure →](repository-structure.md)
 
 </div>
 
