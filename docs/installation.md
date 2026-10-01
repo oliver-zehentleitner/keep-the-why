@@ -98,7 +98,7 @@ Add `--ref v0.18.2` (any [release tag](https://github.com/oliver-zehentleitner/k
 pi install npm:keep-the-why
 ```
 
-`pi install npm:keep-the-why@0.18.2` pins a version (any [release](https://github.com/oliver-zehentleitner/keep-the-why/releases) — the npm version is the skill's); `-l` installs into the project (`.pi/settings.json`) instead of your home; `pi update` refreshes it. The package is listed in the [Pi package catalog](https://pi.dev/packages?name=keep-the-why). Verified with Pi 0.87.1 from the packed tarball: the skill is discovered and listed, no extension, no prompt, no theme comes with it. `pi install git:github.com/oliver-zehentleitner/keep-the-why` reaches the same skill from the repository. The skill-directory route below (`.pi/skills/keep-the-why`) works without the package.
+`pi install npm:keep-the-why@0.18.2` pins a version (any [release](https://github.com/oliver-zehentleitner/keep-the-why/releases) — the npm version is the skill's); `-l` installs into the project (`.pi/settings.json`) instead of your home; `pi update` refreshes it. The package is listed in the [Pi package catalog](https://pi.dev/packages/keep-the-why). Verified with Pi 0.87.1 from the packed tarball: the skill is discovered and listed, no extension, no prompt, no theme comes with it. `pi install git:github.com/oliver-zehentleitner/keep-the-why` reaches the same skill from the repository. The skill-directory route below (`.pi/skills/keep-the-why`) works without the package.
 
 ## Also installable: Cursor plugin
 
@@ -170,7 +170,7 @@ None of that substitutes for actually reading `SKILL.md` yourself before install
 | [GitHub Copilot plugin marketplace](https://awesome-copilot.github.com/plugin/keep-the-why/) | Installable via `copilot plugin install keep-the-why@awesome-copilot` |
 | [HOL AI plugin registry](https://hol.org/registry/plugins/oliver-zehentleitner%2Fkeep-the-why) | Owner-verified listing; the registry's scanner is the one this repository runs itself, see [Security](security.md) |
 | [MCP Market](https://mcpmarket.com/tools/skills/keep-the-why) | Skill marketplace listing |
-| [Pi package catalog](https://pi.dev/packages?name=keep-the-why) | The npm package `keep-the-why`, installable via `pi install npm:keep-the-why` |
+| [Pi package catalog](https://pi.dev/packages/keep-the-why) | The npm package `keep-the-why`, installable via `pi install npm:keep-the-why` |
 | [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why) | Backs the `npx skills add` install method above |
 | [SkillsLLM](https://skillsllm.com/skill/keep-the-why) | Verified, passed [SkillsLLM's security scan](https://skillsllm.com/security-check/IPmNycVdbOyq) |
 
