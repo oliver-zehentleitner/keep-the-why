@@ -589,11 +589,26 @@ const report = {};
   g = window.__g(); hubs = g.nodes.filter((n) => n.kind === "project" && n.hop != null).map((n) => `${n.label}:${n.hop}`).sort();
   if (hubs.join() !== "acme/far:1,acme/farther:registry") errors.push("globe: after the registry the graph should hold far (hop 1) and farther (registry): " + hubs.join());
   if (!/from the registry/.test(d.querySelector(".graph-legend")?.textContent || "")) errors.push("globe: the legend does not say 'from the registry'");
+  // the registry switched off and on again offers its projects again (their states come from memory)
+  d.querySelector(".graph-ui .globe-ctl input[type=checkbox]").click(); await tick(300);
+  g = window.__g(); hubs = g.nodes.filter((n) => n.kind === "project" && n.hop === "registry").map((n) => n.label);
+  if (hubs.length) errors.push("globe: the registry switched off left its projects in the graph: " + hubs.join());
+  d.querySelector(".graph-ui .globe-ctl input[type=checkbox]").click(); await tick(300);
+  const dialog4 = d.querySelector(".globe-dialog");
+  if (!/^The registry: 1 project/.test(dialog4?.querySelector("h3")?.textContent || "")) errors.push("globe: the registry switched on again offers nothing: " + dialog4?.querySelector("h3")?.textContent);
+  [...(dialog4?.querySelectorAll("button") || [])].find((b) => b.textContent === "load them")?.click(); await tick(400);
+  g = window.__g();
+  if (!g.nodes.some((n) => n.kind === "project" && n.hop === "registry")) errors.push("globe: the registry switched on again did not bring its project back");
   // clear drops the globe's repositories, friends stay
   [...d.querySelectorAll(".graph-ui .globe-ctl button")].find((b) => b.textContent === "clear")?.click(); await tick(300);
   g = window.__g();
   if (g.nodes.some((n) => n.kind === "project" && n.hop != null)) errors.push("globe: clear left globe repositories in the graph");
   if (!g.nodes.some((n) => n.kind === "project" && n.friend)) errors.push("globe: clear took the friends away too");
+  // hops off: the project alone — no friends, no family, no path
+  const selOff = d.querySelector(".graph-ui .globe-ctl select"); selOff.value = "0"; selOff.dispatchEvent(new window.Event("change")); await tick(300);
+  g = window.__g();
+  if (g.nodes.some((n) => n.kind === "project")) errors.push("globe: at off the graph should hold the project alone, got hubs: " + g.nodes.filter((n) => n.kind === "project").map((n) => n.label).join());
+  if (!g.nodes.some((n) => n.kind === "topic" && !n.ext)) errors.push("globe: at off the project's own topics are gone");
   window.close();
 }
 console.log(JSON.stringify(report, null, 1));
