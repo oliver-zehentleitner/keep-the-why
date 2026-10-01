@@ -167,16 +167,28 @@ const report = {};
 }
 {
   // a static export of a family member, as a docs site serves it: no local/public switch, the family scope right there,
-  // and the family merged from the members' published exports — nothing fetched until the family is asked for
+  // and the family merged from the members' published exports. The graph beside the overview draws the family as
+  // neighbours, so the members' exports are fetched with it (0.4.3) — those, and nothing from any other host
   const embedded = JSON.stringify({ ...FILES["https://acme.github.io/web/state.json"], exported: true }).replace(/</g, "\\u003c");
   const page = html.replace("<script>", `<script>window.__KTW_STATE__ = ${embedded};</script><script>`);
   const before = fetched.length;
   const window = await open("http://localhost/web/keep-the-why-dashboard/#overview", page);
   const d = window.document;
-  report.staticFetchedBefore = fetched.length - before;
+  const got = fetched.slice(before);
+  report.staticFetchedBefore = got.length;
   report.staticMode = d.getElementById("mode").hidden ? "hidden" : "shown";
   report.staticScope = d.getElementById("scope").hidden ? "hidden" : "shown";
-  if (report.staticFetchedBefore !== 0) errors.push(`static export, scope this project: ${report.staticFetchedBefore} request(s) before the family was asked for`);
+  const familyHosts = /^https:\/\/(raw\.githubusercontent\.com\/acme\/(suite|plugin|cli)\/|acme\.github\.io\/(suite|plugin|cli)\/)/;
+  const stray = got.filter((u) => !familyHosts.test(u));
+  if (stray.length) errors.push(`static export, scope this project: fetched beyond the family's members — ${stray.join(", ")}`);
+  if (!got.some((u) => /acme\.github\.io\/suite\/state\.json/.test(u))) errors.push("static export, scope this project: the family was not loaded for the graph beside the overview");
+  const famHubs = (window.__g?.()?.nodes || []).filter((n) => n.family).map((n) => n.label).sort();
+  report.staticFamilyHubs = famHubs;
+  if (!famHubs.length) errors.push("static export, scope this project: no family hubs in the graph beside the overview");
+  window.location.hash = "#graph"; window.dispatchEvent(new window.Event("hashchange")); await tick(300);
+  if (!d.querySelector(".graph-ui .family-toggle input")?.checked) errors.push("static export: no family switch in the graph view, or it is off");
+  if (!d.querySelector(".graph-ui .friend-entries")) errors.push("static export: no 'all their entries' with family neighbours in the graph view");
+  window.location.hash = "#overview"; window.dispatchEvent(new window.Event("hashchange")); await tick(300);
   if (report.staticMode !== "hidden") errors.push("static export: a local/public switch is shown");
   if (report.staticScope !== "shown") errors.push("static export of a family member: no this-project/family switch");
   d.querySelector('#scope button[data-scope="family"]').click();
