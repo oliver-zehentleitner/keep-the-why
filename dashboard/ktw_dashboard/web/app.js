@@ -1700,6 +1700,17 @@ function friendsLegend(g) {
 // steps, the family, the friends with their families — each with the ring the canvas draws for it, the
 // name a link that goes there in place. The hubs carry what the legend needs, so what is listed is
 // exactly what is drawn.
+// the nodes a project hub stands for: its topics and entries, by the ids the layers give them
+function projectNodes(g, hub) {
+  const out = new Set([hub]);
+  const m = hub.id.match(/^f:(.+):([^:]+)$/); // a layer's hub: f:<unit>:<member key>
+  const pre = m ? [`ft:${m[1]}:${m[2]}:`, `fe:${m[1]}:${m[2]}:`] : hub.id.startsWith("p:") && hub.id !== "p:self" ? [`t:${hub.id.slice(2)}:`, `e:${hub.id.slice(2)}:`] : null;
+  for (const n of g.nodes) {
+    if (n.kind === "project") continue;
+    if (pre ? pre.some((x) => n.id.startsWith(x)) : !n.ext && !n.fam) out.add(n);
+  }
+  return out;
+}
 function projectsLegend(g) {
   const p = S?.project || {};
   const hubs = g.nodes.filter((n) => n.kind === "project");
@@ -1712,7 +1723,7 @@ function projectsLegend(g) {
     const name = n.self ? el("b", {}, n.label) : el("a", { href: n.href || "#graph", title: `${kind(n)} — go there`, onclick: (ev) => { if (!n.walk) return; ev.preventDefault(); n.walk(); } }, n.label);
     const u = n.friend && !n.kin ? units.get(n.unit) : null;
     const notShown = u && u.members.length === 1 && (u.r.members || []).length > 1 ? u.r.members.length : 0;
-    out.push(el("span", { class: n.friend ? "friend" : "family", title: kind(n) }, el("i", { class: "dot", style: `${ring(n)}width:10px;height:10px` }), name,
+    out.push(el("span", { class: n.friend ? "friend" : "family", title: kind(n), onmouseenter: () => { g.spot = projectNodes(g, n); g.alpha = Math.max(g.alpha, 0.02); g.wake?.(); }, onmouseleave: () => { g.spot = null; g.alpha = Math.max(g.alpha, 0.02); g.wake?.(); } }, el("i", { class: "dot", style: `${ring(n)}width:10px;height:10px` }), name,
       notShown ? el("span", { class: "note" }, ` · family of ${notShown}, not shown`) : null,
       n.chain ? el("span", { class: "note" }, " · via a thought") : null));
   }
@@ -1883,9 +1894,11 @@ function runGraph(canvas, g, opts = {}) {
     ctx.clearRect(0, 0, W, H);
     ctx.save(); ctx.translate(W / 2 + g.ox, H / 2 + g.oy); ctx.scale(g.scale, g.scale);
     const th = g.thought;
-    const focus = th ? null : hover || (opts.focusId && g.index[opts.focusId] != null ? g.nodes[g.index[opts.focusId]] : null) || (!mini && selected ? g.nodes[g.index[`e:${selected}`]] : null);
+    const sp = th ? null : g.spot; // a project pointed at in the legend: its nodes stay, the rest fades
+    const focus = th || sp ? null : hover || (opts.focusId && g.index[opts.focusId] != null ? g.nodes[g.index[opts.focusId]] : null) || (!mini && selected ? g.nodes[g.index[`e:${selected}`]] : null);
     const neigh = new Set(); if (focus) { neigh.add(focus); for (const l of g.links) { if (!linkOn(l)) continue; if (g.nodes[l.s] === focus) neigh.add(g.nodes[l.t]); if (g.nodes[l.t] === focus) neigh.add(g.nodes[l.s]); } }
     if (th) for (const n of th.nodes) neigh.add(n);
+    if (sp) for (const n of sp) neigh.add(n);
     const stepNode = STEP_FOCUS ? ns.find((n) => n.kind === "entry" && (n.entry?.uuid === STEP_FOCUS || n.id === STEP_FOCUS)) : null;
     if (stepNode) neigh.add(stepNode);
     const onThought = (l) => !!th && (l.kind === "see" || l.kind === "superseded") && (th.pairs.has(`${g.nodes[l.s].id}|${g.nodes[l.t].id}`) || th.pairs.has(`${g.nodes[l.t].id}|${g.nodes[l.s].id}`));
@@ -1893,15 +1906,15 @@ function runGraph(canvas, g, opts = {}) {
     const DASH = { member: [2, 3], hub: [2, 3], family: [9, 6], superseded: [5, 4], trail: [2, 6] };
     for (const l of g.links) {
       if (!linkOn(l)) continue;
-      const a = g.nodes[l.s], b = g.nodes[l.t]; const hi = (focus && (a === focus || b === focus)) || onThought(l);
+      const a = g.nodes[l.s], b = g.nodes[l.t]; const hi = (focus && (a === focus || b === focus)) || onThought(l) || (sp && sp.has(a) && sp.has(b));
       ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
       ctx.lineWidth = (LW[l.kind] || 0.6) / g.scale; ctx.setLineDash((DASH[l.kind] || []).map((v) => v / g.scale));
       const base = l.kind === "see" || l.kind === "xtopic" ? (l.color || color("--accent2")) : l.kind === "superseded" || l.kind === "family" || l.kind === "trail" ? color("--fg3") : color("--line");
-      ctx.strokeStyle = hi ? (l.kind === "see" || l.kind === "xtopic" ? color("--fg") : color("--accent2")) : base; ctx.globalAlpha = (focus || th) && !hi ? (th ? 0.12 : 0.25) : l.kind === "see" || l.kind === "xtopic" ? 0.85 : 1; if (onThought(l)) ctx.lineWidth = 3 / g.scale; ctx.stroke();
+      ctx.strokeStyle = hi ? (l.kind === "see" || l.kind === "xtopic" ? color("--fg") : color("--accent2")) : base; ctx.globalAlpha = (focus || th || sp) && !hi ? (th ? 0.12 : 0.25) : l.kind === "see" || l.kind === "xtopic" ? 0.85 : 1; if (onThought(l)) ctx.lineWidth = 3 / g.scale; ctx.stroke();
     }
     ctx.setLineDash([]);
     for (const n of ns) {
-      const faded = ((focus || th) && !neigh.has(n)) || dim(n);
+      const faded = ((focus || th || sp) && !neigh.has(n)) || dim(n);
       ctx.globalAlpha = faded ? 0.18 : 1;
       ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
       if (n.kind === "project") { ctx.fillStyle = color("--bg"); ctx.fill(); ctx.lineWidth = 3.5 / g.scale; ctx.strokeStyle = n.color; if (n.chain) ctx.setLineDash([8 / g.scale, 3 / g.scale, 2 / g.scale, 3 / g.scale]); else if (n.friend) ctx.setLineDash([5 / g.scale, 3 / g.scale]); else if (n.trail) ctx.setLineDash([1.5 / g.scale, 3 / g.scale]); ctx.stroke(); ctx.setLineDash([]); ctx.beginPath(); ctx.arc(n.x, n.y, n.r * 0.38, 0, Math.PI * 2); ctx.fillStyle = n.color; ctx.fill(); }
