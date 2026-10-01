@@ -1081,6 +1081,7 @@ const allEntriesUi = (group, checked, set, what) => el("label", { class: "friend
 // every switch in the bar at once — motion is not a filter and stays
 function selectAll(g, on) {
   g.showEntries = on;
+  for (const x of [graph, fgraph]) if (x) x.showEntries = on; // the bar may switch to the other graph on the way (family entries)
   for (const k of Object.keys(LABELS)) setLabels(k, on);
   setFamilyNeighbours(on); setFamilyEntries(on);
   setFriendEntries(on); setPathEntries(on);
