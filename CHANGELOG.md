@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Changed
+
+- Eval suite: two expectation texts said more than the skill does. `capture-confirmation-automatic-still-asks-substantive-question` now says that under `automatic` the entry is written and the factual question comes in the same reply — the order step 5's second modifier prescribes — and what Evidence may claim; `local-lint-ask-does-not-install-unasked` no longer requires an existing topic file updated in place (that is `continuous-capture-basic`'s measure) or the install command in the question. Re-graded on the stored fix-branch series: both cases 3/3, from 0/3 and 1/3.
+
 ### Added
 
 - `keep-the-why-dashboard` 0.6.5: a click on a project's hub does what a click on its name does — goes there, in place. The circle used to expand a friend (since 0.4.3 the *entries* switches' job, so on a foreign hub it seemed to do nothing) or open this project's overview; a click on this project's own hub now does nothing, the reader is already there. The globe drew a family twice when it had been read once from this machine and once from published exports — a unit is now the repositories it holds, however they were loaded — and a hop starts from what is drawn, not from everything ever fetched. The landing page links the globe under the dashboard screenshots. The path's line, which joins the last step to the centre since 0.4.5, read like a citation between the two projects: it is thinner now, carries an arrow pointing the way walked, and the legend says *the path — the way you walked here, not a citation*. The globe showed the path bar twice — the overlay and a copy above it.
