@@ -428,6 +428,7 @@ a.author:hover { color: var(--accent2); }
 .thoughts-page .fan { margin: 0 0 12px; }
 .thoughts-page .fan-rows { margin-left: 18px; border-left: 2px solid var(--line); padding-left: 8px; }
 .graph-ui .friends-ctl { display: inline-flex; gap: 10px; align-items: center; }
+.graph-ui .friends-failed { color: var(--warn); text-decoration: none; border-bottom: 1px dotted var(--warn); }
 
 /* the side pane's width, chosen in the corner of its graph */
 .details .pane-width { position: sticky; top: -16px; z-index: 2; flex: none; display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin: -16px -16px 12px; padding: 8px 16px; background: var(--bg2); border-bottom: 1px solid var(--line); font-size: 11px; color: var(--fg3); }

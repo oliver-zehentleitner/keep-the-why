@@ -1173,7 +1173,7 @@ function addFriendLayer(g, prev) {
   const items = [];
   const trail = pathShown() ? TRAIL.filter((t) => !sameCentreAsGraph(g, t)) : [];
   trail.forEach((t, i) => items.push({
-    k: `trail:${t.key}`, kind: "trail", color: PALETTE[(i + 2) % PALETTE.length], cited: "linked",
+    k: `trail:${t.key}`, kind: "trail", color: PALETTE[(i + 2) % PALETTE.length], cited: FRIEND_ENTRIES ? null : "linked", // a path step is a neighbour like a friend: "all their entries" opens it too
     members: [{ key: t.key, name: `${i + 1} · ${t.name}`, state: t.state, canonical: t.canonical, root: t.state.project?.root || "", href: (e) => t.url + entryHref(e), topicHref: (file) => `${t.url}#topic/${file}`, open: `${t.url}#graph` }],
     hub: () => moveTo(t, "#graph"), entry: () => (e) => moveTo(t, entryHref(e)), topic: () => (file) => moveTo(t, `#topic/${file}`),
     next: i + 1 < trail.length ? `trail:${trail[i + 1].key}` : null,
@@ -1393,9 +1393,14 @@ function friendsUi(g) {
     const b = el("button", { class: "link-btn friends-load", title: "load the repositories these entries cite outside the family, now and from here on", onclick: () => { b.disabled = true; b.textContent = "loading friends…"; setFriendsAuto(true); loadFriends(FRIENDS.on ? waiting : list); } }, `friends (${FRIENDS.on ? waiting.length : list.length})`);
     return b;
   }
+  // a friend whose export could not be fetched is loaded with an error and draws nothing — say so
+  // here, where the reader looks for it, and point at the Friends view, which names the reason
+  const failed = list.filter((f) => FRIENDS.loaded[fkey(f.canonical)]?.error);
+  const shown = list.length - failed.length;
   return el("span", { class: "friends-ctl" },
     el("label", { class: "friends-toggle", title: "the repositories these entries cite outside the family — unchecked, they are no longer loaded on their own" }, el("input", { type: "checkbox", checked: true, onchange: () => { FRIENDS.on = false; setFriendsAuto(false); if (fgraph) fgraph.at = 0; render(); } }), "friends"),
-    el("label", { class: "friend-entries", title: "every entry of every friend, not only the ones that link to this graph" }, el("input", { type: "checkbox", checked: FRIEND_ENTRIES, onchange: (ev) => { setFriendEntries(ev.target.checked); if (fgraph) fgraph.at = 0; render(); } }), "all their entries"));
+    failed.length ? el("a", { class: "friends-failed warn", href: "#friends", title: failed.map((f) => `${repoLabel(f.canonical)} — ${FRIENDS.loaded[fkey(f.canonical)].error}`).join("\n") }, `${shown ? `${failed.length} of ${list.length}` : failed.length === 1 ? "the one friend" : `all ${failed.length}`} not loaded ↗`) : null,
+    shown || pathShown() ? el("label", { class: "friend-entries", title: "every entry of every friend and path step, not only the ones that link to this graph" }, el("input", { type: "checkbox", checked: FRIEND_ENTRIES, onchange: (ev) => { setFriendEntries(ev.target.checked); if (fgraph) fgraph.at = 0; render(); } }), "all their entries") : null);
 }
 // the same control, small, in the corner of the side pane's graph
 function miniFriends(g) {
@@ -1406,9 +1411,10 @@ function miniFriends(g) {
   if (want) { if (!FRIENDS.on || waiting.length) { loadFriends(FRIENDS.on ? waiting : list); return el("span", { class: "mini-seg mini-friends" }, el("button", { type: "button", disabled: true }, "loading…")); } }
   const on = FRIENDS.on && !waiting.length;
   if (FRIENDS.loading && !want) return el("span", { class: "mini-seg mini-friends" }, el("button", { type: "button", disabled: true }, "loading…"));
-  const b = el("button", { type: "button", class: on ? "on" : "", title: on ? "hide the friends — they are no longer loaded on their own" : "load the repositories these entries cite outside the family, now and from here on",
+  const failed = on ? list.filter((f) => FRIENDS.loaded[fkey(f.canonical)]?.error) : [];
+  const b = el("button", { type: "button", class: on ? "on" : "", title: on ? (failed.length ? `${failed.length} of ${list.length} could not be loaded — the Friends view names the reason` : "hide the friends — they are no longer loaded on their own") : "load the repositories these entries cite outside the family, now and from here on",
     onclick: () => { if (on) { FRIENDS.on = false; setFriendsAuto(false); if (fgraph) fgraph.at = 0; render(); } else { b.disabled = true; b.textContent = "loading…"; setFriendsAuto(true); loadFriends(FRIENDS.on ? waiting : list); } } },
-    on ? "friends" : `friends (${FRIENDS.on ? waiting.length : list.length})`);
+    on ? (failed.length ? `friends (${failed.length} not loaded)` : "friends") : `friends (${FRIENDS.on ? waiting.length : list.length})`);
   return el("span", { class: "mini-seg mini-friends" }, b);
 }
 // ---------------------------------------------------------------- thoughts

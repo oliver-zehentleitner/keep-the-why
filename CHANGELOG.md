@@ -6,6 +6,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Added
 
+- `keep-the-why-dashboard` 0.4.3: *all their entries* opens a step of the path the way it opens a friend — a project walked from is a neighbour in the graph like any other, and the checkbox had left it at the entries that link. A friend whose export could not be fetched no longer looks loaded: the graph's control says *N of M not loaded ↗* (or *the one friend not loaded ↗*), its tooltip carries each reason, and it leads to the Friends view; the side pane's small control says *friends (N not loaded)*. Before, the checkbox and *all their entries* appeared as if everything were there, nothing was drawn, and the reason stood on the Friends view alone.
+
+### Added
+
 - `keep-the-why-dashboard` 0.4.2: a thought from two entries. The *from N* choice beside the thoughts — in the graph's side pane and on the Thoughts view — runs from 2 (one link: a decision replaced once is an evolution of two entries, which never showed before) up to the longest chain on the page, instead of the fixed 3 · 4 · 5; it grows when a friend or a path brings a longer chain, 4 stays the default, and a kept choice above the longest chain here is drawn down to it, so a sparse project lists what it has instead of "no chain is 4 or more entries long yet".
 - FAQ: what Git does for `context/` — permissions, distribution, review, forks, branches, blame — in one answer, with the one thing blame does not show.
 - `keep-the-why-dashboard` 0.4.1: a fork checkout says so — a dashed *fork of host/owner/repo* pill beside the branch and the repository on the overview and in the title row, linking the repository the checkout was forked from. Two signals, no host API: an `upstream` remote (origin is the fork; what Git itself says), or an `origin` that is not the project's `canonical` (what the project says its published repository is) — the tooltip names which; a mirror reads as a fork by the second signal. The state carries `git.upstream` and `git.fork = {of, by}`, so an export made from a fork — the proposal preview before a merge — shows whose repository it is.

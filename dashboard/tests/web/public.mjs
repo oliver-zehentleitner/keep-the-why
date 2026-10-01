@@ -257,6 +257,10 @@ const report = {};
   if (!mini()?.classList.contains("on")) errors.push("friends: the side pane's graph does not show the friends as on");
   await to("#graph");
   for (const name of ["acme/cli not loaded", "acme/impostor not loaded"]) if (!legend.includes(name)) errors.push(`friends: '${name}' missing from the legend`);
+  // the graph's own control says it too, and leads to the Friends view, which names the reason
+  const failedLink = d.querySelector(".friends-ctl .friends-failed");
+  if (!failedLink) errors.push("friends: the graph control does not say that two friends could not be loaded");
+  else if (!/^2 of \d+ not loaded/.test(failedLink.textContent) || failedLink.getAttribute("href") !== "#friends" || !/impostor/.test(failedLink.title)) errors.push(`friends: the not-loaded link reads wrong: '${failedLink.textContent}' → ${failedLink.getAttribute("href")} (${failedLink.title})`);
   const g = window.__g();
   const hubs = g.nodes.filter((n) => n.kind === "project" && n.friend).map((n) => n.label).sort();
   const see = g.links.filter((l) => l.kind === "see").map((l) => `${g.nodes[l.s].label}>${g.nodes[l.t].label.slice(0, 16)}`).sort();
