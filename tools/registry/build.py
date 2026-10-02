@@ -29,13 +29,30 @@ TIMEOUT = 30
 MAX_BYTES = 20 * 1024 * 1024
 
 
-def fetch(url):
-    req = urllib.request.Request(url, headers={"User-Agent": "keep-the-why-registry"})
+def fetch(url, want_headers=False):
+    # an Origin header, as a browser sends one: a host that answers cross-origin requests says so in the reply
+    req = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": "keep-the-why-registry",
+            "Origin": "https://keepthewhy.com",
+        },
+    )
     with urllib.request.urlopen(req, timeout=TIMEOUT) as res:
         data = res.read(MAX_BYTES + 1)
+        headers = res.headers
     if len(data) > MAX_BYTES:
         raise ValueError(f"larger than {MAX_BYTES // 1024 // 1024} MB")
-    return data.decode("utf-8", "replace")
+    text = data.decode("utf-8", "replace")
+    return (text, headers) if want_headers else text
+
+
+def cors_open(headers):
+    """Whether a browser on another site may read this reply: the dashboard fetches `.keep-the-why` and
+    `state.json` from the page, so both hosts must send Access-Control-Allow-Origin. The registry, a script,
+    is not bound by it — it can see the header, the browser only sees a refusal."""
+    allow = (headers.get("Access-Control-Allow-Origin") or "").strip()
+    return allow == "*" or allow == "https://keepthewhy.com"
 
 
 def raw_url(canonical):
@@ -63,7 +80,7 @@ def check(canonical):
     """
     if not canonical.startswith("https://"):
         raise ValueError("not an https repository URL")
-    config = fetch(raw_url(canonical))
+    config, config_headers = fetch(raw_url(canonical), want_headers=True)
     url = config_line(config, "dashboard-state")
     if not url:
         raise ValueError(
@@ -71,7 +88,8 @@ def check(canonical):
         )
     if not url.startswith("https://"):
         raise ValueError(f"its dashboard-state is not an https URL: {url}")
-    state = json.loads(fetch(url))
+    state_text, state_headers = fetch(url, want_headers=True)
+    state = json.loads(state_text)
     project = state.get("project") or {}
     named = normalize(project.get("canonical") or "")
     if named.lower() != canonical.lower():
@@ -91,6 +109,8 @@ def check(canonical):
         "parent": (project.get("parent") or "").strip("`"),
         "children": len(project.get("children") or []),
         "generated": state.get("generated") or "",
+        # readable from a browser on another site — the globe and other dashboards need both
+        "cors": cors_open(config_headers) and cors_open(state_headers),
     }
 
 
@@ -148,6 +168,12 @@ def main(argv):
         if p["canonical"].lower() in seen:
             failed.append((p["canonical"], "listed twice"))
         seen.add(p["canonical"].lower())
+    for p in projects:
+        if p.get("cors") is False:
+            print(
+                f"::warning title=registry, no CORS header::{p['canonical']} — {p['state']} or its .keep-the-why "
+                "is served without Access-Control-Allow-Origin; browsers on other sites cannot load it"
+            )
     for url, since, err in stale:
         print(f"::warning title=registry, not answering since {since}::{url} — {err}")
     if failed:

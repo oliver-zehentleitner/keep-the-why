@@ -149,7 +149,14 @@ async function fetchForeign(url) {
     if (text.length > FOREIGN_MAX_BYTES) throw new Error(`${url} is larger than ${FOREIGN_MAX_BYTES / 1024 / 1024} MB`);
     noteLoaded(url, text);
     return text;
-  } catch (err) { throw err?.name === "AbortError" ? new Error(`${url} did not answer within ${FOREIGN_TIMEOUT_MS / 1000} s`) : err; }
+  } catch (err) {
+    if (err?.name === "AbortError") throw new Error(`${url} did not answer within ${FOREIGN_TIMEOUT_MS / 1000} s`);
+    // A request the browser refuses to show the page — no CORS header on the host — and a host that is down
+    // reach the page as the same TypeError, by design: it may not learn why another origin said no. Name both,
+    // and the header a host serving exports needs, so "blocked" is not mistaken for "nothing there".
+    if (err?.name === "TypeError") throw new Error(`${url}: network error or blocked by CORS — the browser does not say which. A host serving Keep the Why exports must send Access-Control-Allow-Origin.`);
+    throw err;
+  }
   finally { clearTimeout(timer); }
 }
 const sameCanonical = (a, b) => String(a || "").replace(/\/+$/, "").toLowerCase() === String(b || "").replace(/\/+$/, "").toLowerCase();
@@ -176,7 +183,7 @@ async function loadPublicState(canonical, root) {
       else if (claimed && !sameCanonical(claimed, canonical)) result = { error: `the export at ${url} belongs to ${claimed}, not to ${canonical}`, raw };
       else result = { state, url, canonical, root, raw };
     }
-  } catch (err) { result = { error: `could not fetch the export (${err?.message || "network or CORS refused"})`, raw }; }
+  } catch (err) { result = { error: `could not fetch the export: ${err?.message || "network error or blocked by CORS"}`, raw }; }
   return result;
 }
 // An export since dashboard 0.6.0 keeps its entries' bodies in state.body.json beside state.json (`bodies` names
@@ -1854,7 +1861,7 @@ async function globeRegistry() {
     const list = (idx.projects || []).filter((p) => p.canonical && !have.has(fkey(p.canonical)));
     for (const p of list) { const k = fkey(p.canonical); if (FRIENDS.loaded[k]?.error) { delete FRIENDS.loaded[k]; delete FRIENDS.pending[k]; delete PUBLIC_STATES[`${p.canonical}|`]; } }
     if (!list.length) { GLOBE.log.push("registry: everything listed is already here"); GLOBE.registry = true; return; }
-    const yes = await globeDialog({ title: `The registry: ${plural(list.length, "project")}`, note: `${plural(list.length * 2, "file")} — a .keep-the-why and a state.json each${FRIEND_FAMILIES ? ", plus their families, if any" : ""} — from their hosts, in the browser. The registry is ${GLOBE.registryUrl}, checked ${idx.checked || "—"}.`, lines: list.map((p) => `${repoLabel(p.canonical)}${p.id ? ` — ${p.id}` : ""}${p.entries != null ? ` · ${plural(p.entries, "entry")}` : ""}${p.failed_since ? ` · not answering since ${p.failed_since}, tried anyway` : ""}`) });
+    const yes = await globeDialog({ title: `The registry: ${plural(list.length, "project")}`, note: `${plural(list.length * 2, "file")} — a .keep-the-why and a state.json each${FRIEND_FAMILIES ? ", plus their families, if any" : ""} — from their hosts, in the browser. The registry is ${GLOBE.registryUrl}, checked ${idx.checked || "—"}.`, lines: list.map((p) => `${repoLabel(p.canonical)}${p.id ? ` — ${p.id}` : ""}${p.entries != null ? ` · ${plural(p.entries, "entry")}` : ""}${p.failed_since ? ` · not answering since ${p.failed_since}, tried anyway` : ""}${p.cors === false ? " · served without a CORS header — a browser will likely be refused" : ""}`) });
     if (!yes) return;
     const cands = list.map((p) => ({ canonical: p.canonical, uuids: [] }));
     await Promise.all(cands.map(loadFriend));
