@@ -56,7 +56,9 @@ class _State:
         self.project_changed = set()
         # --untracked-files=all: a new directory is otherwise listed as one `?? dir/` line, which a
         # check on a deeper prefix (changes_under / no_changes_under .github/workflows/) never matches
-        status = sh(["git", "status", "--porcelain", "--untracked-files=all"], cwd=workdir).stdout
+        status = sh(
+            ["git", "status", "--porcelain", "--untracked-files=all"], cwd=workdir
+        ).stdout
         for line in status.splitlines():
             rel = line[3:].strip()
             if " -> " in rel:  # rename: both sides count as changed
