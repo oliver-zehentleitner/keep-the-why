@@ -27,8 +27,9 @@ This names the skill and its purpose directly — not a task that happens to mat
     > 4. Confirmation before something is written to `context/`: only when it's genuinely unclear (alternatives: automatic, always ask)
     > 5. Ask whether a related issue, ticket or post-mortem exists when recording: never (alternatives: always, only when a filter matches)
     > 6. Offer suggested personal defaults to future developers: no
-    > 7. Wire `keep-the-why-lint` into CI: yes — there's a `.github/` directory, I'd add `.github/workflows/ktw-lint.yml`; no `.pre-commit-config.yaml`, so no hook offered
-    > 8. How the skill gets loaded in future sessions: the project asks — a "Keep the Why" section in `AGENTS.md` (imported by `CLAUDE.md`), plus a project-scoped `SessionStart` hook in `.claude/settings.json`, which Claude Code has and `references/autostart.md` has verified (alternatives: every session machine-wide, which is your own setup; or only when you ask)
+    > 7. Wire `keep-the-why-lint` into CI: no — optional; there's a `.github/` directory, so a yes adds `.github/workflows/ktw-lint.yml`; no `.pre-commit-config.yaml`, so no hook offered
+    > 8. Publish the dashboard on the project's site: no — optional; the remote is on GitHub and there's no docs build, so a yes adds a Pages workflow of its own and you switch the repository's Pages source to GitHub Actions
+    > 9. How the skill gets loaded in future sessions: the project asks — a "Keep the Why" section in `AGENTS.md` (imported by `CLAUDE.md`), plus a project-scoped `SessionStart` hook in `.claude/settings.json`, which Claude Code has and `references/autostart.md` has verified (alternatives: every session machine-wide, which is your own setup; or only when you ask)
     >
     > Set it up like this, or change anything?
     >
@@ -121,9 +122,9 @@ This names the skill and its purpose directly — not a task that happens to mat
 
     Since the `personal-defaults` item was declined (its default), no `personal-defaults` block gets added.
 
-6. Writes `.github/workflows/ktw-lint.yml` — the GitHub Actions snippet from `references/ci-linting.md`, verbatim, after checking no existing workflow already runs the linter. Staged, not committed, like everything else setup writes. Nothing pre-commit-related, since the project doesn't use pre-commit.
+6. Writes no CI workflow and no Pages workflow — items 7 and 8 stayed at their default *no*. Had the developer answered "7 yes", it would write `.github/workflows/ktw-lint.yml` — the GitHub Actions snippet from `references/ci-linting.md`, verbatim, after checking no existing workflow already runs the linter — staged, not committed, like everything else setup writes.
 
-7. Item 8 was "the project asks", so it writes the "Keep the Why" section from `references/autostart.md` into `AGENTS.md` (the file exists here; `CLAUDE.md` already imports it with `@AGENTS.md`) with the `SKILL.md` path this project's agents use, and — because the current agent is Claude Code, for which `references/autostart.md` carries a verified project-scoped `SessionStart` hook — the hook into `.claude/settings.json`, merged into whatever hooks the file already has. On a platform with no verified hook, the section alone; nothing invented. The section is the one thing setup writes into `AGENTS.md`, and only because the wizard answer asked for it.
+7. Item 9 was "the project asks", so it writes the "Keep the Why" section from `references/autostart.md` into `AGENTS.md` (the file exists here; `CLAUDE.md` already imports it with `@AGENTS.md`) with the `SKILL.md` path this project's agents use, and — because the current agent is Claude Code, for which `references/autostart.md` carries a verified project-scoped `SessionStart` hook — the hook into `.claude/settings.json`, merged into whatever hooks the file already has. On a platform with no verified hook, the section alone; nothing invented. The section is the one thing setup writes into `AGENTS.md`, and only because the wizard answer asked for it.
 
 8. Runs the personal preferences wizard, separately, as its own list for the same reason:
 
@@ -153,7 +154,7 @@ This names the skill and its purpose directly — not a task that happens to mat
 
     Item 5 named the install, so the answer was the go-ahead: the agent installs the linter in this same turn and runs `ktw-lint . --setup` once over the two files it just wrote. Under `ask` the install would have been its own question first.
 
-10. Confirms setup is done and asks what to work on first — there's no pending question from this explicit-request turn to answer, unlike the earlier organic activation, which had already answered the retry-logic question directly without any of this running.
+10. Confirms setup is done, names in one sentence what it can set up on request later — the linter in CI, the dashboard on GitHub Pages — and asks what to work on first — there's no pending question from this explicit-request turn to answer, unlike the earlier organic activation, which had already answered the retry-logic question directly without any of this running.
 
 ## A second developer opens the same project later
 
@@ -162,6 +163,12 @@ The project config already says `init: complete` — that part isn't re-asked, i
 ## A later session, after a few weeks of no web access
 
 The update-check interval elapses, but this environment has no web access. The skill reports it can't check, asks whether to keep retrying next session or turn the check off, and the developer says "keep trying." The personal config block gets a third field: `- update-check: every 14 days — last: 2026-07-08 — on-failure: retry-quietly`. Because `last` didn't advance on the failed attempt, the very next session tries again automatically — and because `on-failure` is now `retry-quietly`, it does so without asking the same question again. Once a check actually succeeds, `last` advances and the normal interval takes back over.
+
+## The same setup, answered in the request
+
+**User:** "Initialize Keep the Why in this project with default settings."
+
+The answers came with the request, so neither list is shown: the skill writes what the "defaults" answer above wrote — no CI workflow, no Pages workflow, start mode capture from now on — runs the personal wizard's defaults the same way, and replies with every value it wrote, project and personal apart, plus the one sentence about the optional components. "Initialize Keep the Why with default settings, and set up the linter in CI" would add `ktw-lint.yml` as well: a component named in the request is a yes to its question. "Defaults" alone never is.
 
 ## What it doesn't do
 
@@ -172,6 +179,7 @@ The update-check interval elapses, but this environment has no web access. The s
 - Doesn't bundle personal preferences into the committed project config, and doesn't skip the personal wizard just because the project is already initialized.
 - Doesn't overwrite an existing `context/README.md`, `AGENTS.md`, or `CLAUDE.md` (or an equivalent) if the folder is being adopted rather than created fresh.
 - Doesn't put personal preferences anywhere inside the project at all — `~/.keep-the-why/<id>.md` lives outside it entirely, so there's no `.gitignore` entry to get wrong.
+- Doesn't set up an optional component — the linter in CI, the dashboard on the project's site, a registry listing — without a yes to it; "defaults" is not that yes.
 - Doesn't write CI config for a platform it can't verify from the repository — a Jenkinsfile-only project gets the generic `pip` snippet shown, not a guessed pipeline file — and doesn't introduce pre-commit into a project that doesn't already use it.
 - Doesn't write anything into `AGENTS.md` beyond the "Keep the Why" section the activation answer asked for — whether and how to mention Keep the Why anywhere a human reads it beyond that is this project's own call, not something setup adds unasked.
 - Doesn't keep asking the same "web access is broken, what do you want to do" question every session once it's been answered once.

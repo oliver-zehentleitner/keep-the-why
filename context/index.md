@@ -29,7 +29,7 @@ Why this project is built the way it is.
 ## C
 
 - [compatibility.md](compatibility.md) — findings from testing Keep the Why alongside other skills/frameworks, and design decisions about the skill's own activation/setup-triggering behavior
-- [config-format.md](config-format.md) — design of the skill's own setup/config mechanism (`.keep-the-why`/`~/.keep-the-why/` files, `context-schema`, confirmation settings, pinned versions)
+- [config-format.md](config-format.md) — design of the skill's own setup/config mechanism (`.keep-the-why`/`~/.keep-the-why/` files, `context-schema`, confirmation settings, pinned versions, optional components only on request)
 
 ## D
 
@@ -66,7 +66,7 @@ Why this project is built the way it is.
 
 ## P
 
-- [positioning.md](positioning.md) — editorial/positioning choices for README, `llms.txt`, and docs
+- [positioning.md](positioning.md) — editorial/positioning choices for README, `llms.txt`, and docs; the agent as the installation interface
 - [project-families.md](project-families.md) — a project that is larger than one repository: how the project is found from the working directory, the four layouts, `canonical` and `root` beside `id`; the series that answers #450
 
 ## Q

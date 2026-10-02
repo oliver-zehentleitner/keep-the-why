@@ -138,7 +138,7 @@
   {
     "id": "init-wizard-first-activation",
     "prompt": "Set up Keep the Why in this project, please.",
-    "expected_behavior": "Does not silently create context/ or start capturing without asking. Detects the absence of both the project config block and the personal config block, and runs both wizards separately: project wizard covers where why-knowledge should live, how to start (fresh / retrospective / interview), whether to add the README badge, how much confirmation is needed before writing to context/ (capture-confirmation), source-reference, personal-defaults, CI linting, and how the skill gets loaded in future sessions (default: the project asks); personal wizard covers capture-mode, confirmation-flow, update-check/consistency-check intervals, and local-lint (auto / ask / no, default auto - whether the agent runs keep-the-why-lint locally on what it writes; under auto the answer is itself the go-ahead to install, under ask installing is its own yes/no question). Since this developer has no stored confirmation-flow yet, each wizard is presented as ONE list with every question and its default filled in, closed by one question ('set it up like this, or change anything?') - batch, confirmation-flow's own default - and the turn ends on that question: the project list first, the personal list only after the project answer, never one merged list mixing project and personal settings, and not one question per message unless the developer asks for that. 'Defaults' as a one-word answer covers the whole list. Writes the project block (including capture-confirmation) to .keep-the-why and the personal block (including confirmation-flow) to ~/.keep-the-why/<id>.md, not mixed into one block. Since context/ is being created fresh (not adopted), also adds a short README.md inside it explaining what the folder is. What fails: writing anything before the answer, one question per message, or a single list that mixes the two wizards.",
+    "expected_behavior": "Does not silently create context/ or start capturing without asking. Detects the absence of both the project config block and the personal config block, and runs both wizards separately: project wizard covers where why-knowledge should live, how to start (fresh / retrospective / interview), whether to add the README badge, how much confirmation is needed before writing to context/ (capture-confirmation), source-reference, personal-defaults, CI linting (optional, default no - nothing is written for it unless the developer says yes), and how the skill gets loaded in future sessions (default: the project asks); personal wizard covers capture-mode, confirmation-flow, update-check/consistency-check intervals, and local-lint (auto / ask / no, default auto - whether the agent runs keep-the-why-lint locally on what it writes; under auto the answer is itself the go-ahead to install, under ask installing is its own yes/no question). Since this developer has no stored confirmation-flow yet, each wizard is presented as ONE list with every question and its default filled in, closed by one question ('set it up like this, or change anything?') - batch, confirmation-flow's own default - and the turn ends on that question: the project list first, the personal list only after the project answer, never one merged list mixing project and personal settings, and not one question per message unless the developer asks for that. 'Defaults' as a one-word answer covers the whole list. Writes the project block (including capture-confirmation) to .keep-the-why and the personal block (including confirmation-flow) to ~/.keep-the-why/<id>.md, not mixed into one block. Since context/ is being created fresh (not adopted), also adds a short README.md inside it explaining what the folder is. What fails: writing anything before the answer, one question per message, or a single list that mixes the two wizards.",
     "checks": [
       {
         "type": "file_absent",
@@ -147,6 +147,37 @@
       {
         "type": "file_absent",
         "path": "context"
+      }
+    ]
+  },
+  {
+    "id": "init-defaults-in-request-sets-up-without-a-list",
+    "prompt": "Set up Keep the Why in this project with default settings, including autostart.",
+    "expected_behavior": "First setup on a project that never opted in (no .keep-the-why, no personal file), on GitHub (origin is github.com, and a CI workflow already exists in .github/workflows/). The request already gives the answers - default settings, autostart included - so it is the answer to both wizards: no list is presented and no question asked about them; setup runs in this turn. Writes .keep-the-why with the project defaults (context location context/, init complete, capture-confirmation confirm-when-unsure, source-reference never, context-schema the installed version, canonical https://github.com/ktw-eval-fixture/tinysvc), the personal file ~/.keep-the-why/<id>.md with the personal defaults (proactive capture, confirmation-flow batch, the check intervals, local-lint auto), the context/ folder with its README.md, AGENTS.md and CLAUDE.md guard files and index, and the autostart the request asked for (the Keep the Why section in the entry-point file, plus the hook where the platform has a verified one). The optional components are not set up: no linter workflow and no Pages or dashboard workflow is written, because 'default settings' is not a yes to them - their defaults are no. The start mode is capture from now on: no retrospective pass. Nothing is committed. The reply lists the values it wrote, project and personal apart, and names the optional components (linter in CI, dashboard on the project's site) as something the developer can ask for. Running or installing the linter locally under local-lint auto is fine. What fails: showing the settings list and waiting for an answer, asking per setting, writing a ktw-lint or dashboard workflow, starting a retrospective pass, or committing.",
+    "checks": [
+      {
+        "type": "file_exists",
+        "path": ".keep-the-why"
+      },
+      {
+        "type": "file_exists",
+        "path": "~/.keep-the-why/*.md"
+      },
+      {
+        "type": "file_exists",
+        "path": "context/index.md"
+      },
+      {
+        "type": "file_absent",
+        "path": ".github/workflows/ktw-lint.yml"
+      },
+      {
+        "type": "file_absent",
+        "path": ".github/workflows/ktw-dashboard.yml"
+      },
+      {
+        "type": "file_unchanged",
+        "path": ".github/workflows/test.yml"
       }
     ]
   },
@@ -1258,6 +1289,31 @@
         "type": "text_absent",
         "regex": "\\n## [^\\n]*\\n\\n\\*\\*Type:\\*\\*",
         "path": "context/"
+      }
+    ]
+  },
+  {
+    "id": "dashboard-pages-on-request-names-the-setting-and-opens-nothing",
+    "prompt": "Publish our Keep the Why dashboard on GitHub Pages.",
+    "expected_behavior": "The project is set up with Keep the Why, its origin is github.com/ktw-eval-fixture/order-service, and it has no docs build and no workflow that deploys Pages. The developer asks for one of the optional components, so the agent sets it up: it writes a GitHub Actions workflow of its own under .github/workflows/ that checks out the full history (fetch-depth: 0), installs keep-the-why-dashboard, exports with ktw-dashboard --export into the uploaded site's dashboard/live/, and deploys with actions/upload-pages-artifact and actions/deploy-pages under pages: write and id-token: write permissions. It writes dashboard-state into .keep-the-why as the published state.json's URL, https://ktw-eval-fixture.github.io/order-service/dashboard/live/state.json, and offers the live badge. It tells the developer the one setting the workflow needs: the repository's Pages source set to GitHub Actions, naming the settings page (github.com/ktw-eval-fixture/order-service/settings/pages, Build and deployment, Source). It does not change that setting itself and does not run any command that changes something on GitHub; switching it for the developer is at most offered. A registry listing may be mentioned as something for after the dashboard is live, but no fork, branch or pull request against the registry is made and nothing registry-related is written. Nothing is committed. What fails: no workflow, a workflow without the Pages deployment, no dashboard-state, not naming the Pages source setting, changing it unasked, or opening or preparing a registry pull request unasked.",
+    "checks": [
+      {
+        "type": "changes_under",
+        "path": ".github/workflows/"
+      },
+      {
+        "type": "text_present",
+        "text": "deploy-pages",
+        "path": ".github/workflows/*"
+      },
+      {
+        "type": "text_present",
+        "text": "dashboard-state",
+        "path": ".keep-the-why"
+      },
+      {
+        "type": "no_changes_under",
+        "path": "registry/"
       }
     ]
   }

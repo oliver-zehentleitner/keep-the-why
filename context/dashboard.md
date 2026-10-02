@@ -96,6 +96,8 @@ The author layer comes from three Git calls per entry: `blame` on the heading fo
 
 **Reason:** a developer who has just set up Keep the Why, or who asks the agent how to see what has been recorded, should learn that a viewer exists — from the skill, not by chance. The trust statement in the installation docs is that the only install the skill may trigger is the linter, and it stays true: the dashboard is information, like the badge, and the developer installs it or not.
 
+**Consequence (2026-10-02):** "never installs or starts it" is about the developer's machine. Writing a CI workflow that installs the dashboard on a runner to publish the project's export is one of the optional components, set up on request — config-format.md#optional-components-default-to-no-the-agent-knows-them-offers-them-and-sets-them-up-only-on-request (7889e8b2-d2c3-458d-a19e-10638aca9ded).
+
 **Rejected alternative:** a wizard question "install the dashboard?" like the linter's `local-lint`. Rejected — the linter is the skill's own check on what it writes; the dashboard is a tool for a person, started when a person wants to look, and a wizard that installs a web server on a yes widens what the skill does on a machine.
 
 ## The update check is the server's one network call; the page asks other hosts only for what a person opens

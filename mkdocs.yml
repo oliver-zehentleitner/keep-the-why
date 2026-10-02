@@ -91,7 +91,7 @@ nav:
   - Reference:
       - Setup: setup.md
       - Autostart examples: autostart.md
-      - CI linting setup: ci-linting.md
+      - CI, dashboard and registry setup: ci-linting.md
       - Migrations: migrations.md
       - Methodology: methodology.md
       - Continuous capture: continuous-capture.md

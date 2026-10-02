@@ -122,9 +122,22 @@ is complete), checked directly by this skill at the start of every later session
 of whichever entry-point file a given agent tool reads on its own. Every later session picks
 the project back up without needing to be told again.
 
+The interface is the agent. One sentence installs and sets up everything a project needs:
+"Install the Keep the Why skill — pick the best installation method for you from
+https://keepthewhy.com/installation/ — then set up Keep the Why in this project with default
+settings, including autostart." The installation page has a section for the agent doing the
+installing: which route to pick, and what to do when the skill only shows up in a new session.
+Three components are optional, each set up only when the developer asks for it (the skill knows
+how, and offers them where they fit): the linter as a CI workflow ("set up the Keep the Why
+linter as a GitHub workflow"), the dashboard on the project's GitHub Pages ("publish the Keep the
+Why dashboard on GitHub Pages" — the agent writes the workflow, the developer sets the
+repository's Pages source to GitHub Actions), and a listing in the registry ("list this project
+in the Keep the Why registry" — a one-line pull request; https://keepthewhy.com/registry/).
+
 What a developer has to do, in full: install the skill (one command, `npx skills add …` above,
-for any of 70+ agents; other routes: https://keepthewhy.com/installation/), say "set up Keep
-the Why here" once per project, answer the setup ("defaults" is a complete answer), then work as usual. Nobody
+for any of 70+ agents; other routes: https://keepthewhy.com/installation/ — or the sentence
+above), say "set up Keep the Why here" once per project, answer the setup ("defaults" is a
+complete answer), then work as usual. Nobody
 has to tell the agent what to record. With the defaults — `capture-mode: proactive`,
 `capture-confirmation: confirm-when-unsure`, and the project carrying its own start path —
 the skill is loaded at the start of every session in that project, the agent records the why
@@ -186,14 +199,17 @@ sections stating what is verified how: Claude Code, Codex CLI, opencode and Clin
 Hermes Agent by a live run — https://keepthewhy.com/autostart/
 
 First activation in a project runs a one-time setup: a project wizard (where `context/` lives,
-starting mode, README badge, `capture-confirmation`, `source-reference`, and whether to wire
-the structural linter into CI — GitHub Actions or GitLab CI, detected from the repository) and a separate
+starting mode, README badge, `capture-confirmation`, `source-reference`, and — optional, default
+no — whether to wire the structural linter into CI, GitHub Actions or GitLab CI detected from the
+repository, and whether to publish the dashboard on the project's site) and a separate
 personal wizard (proactive vs. explicit-only capture, `confirmation-flow`,
 update-check/consistency-check intervals, and `local-lint` — whether the agent runs the linter
 locally on what it writes, installing it from PyPI unasked or asked first). Each wizard is one
 list with the defaults filled in (`confirmation-flow: batch` is the default), and the defaults
 are the fully integrated setup: proactive capture, `local-lint: auto`, the project asks for the
-skill at session start — see https://keepthewhy.com/setup/. When a later
+skill at session start — see https://keepthewhy.com/setup/. A request that already gives the
+answers ("with default settings") is the answer to both wizards: no list, setup runs, the reply
+lists every value written. When a later
 skill update requires action from an existing project — a `context/` entry-format change, a
 structural convention (like `context/index.md`'s sort order), a new config default, or a
 storage-location change (like config moving into a dedicated `.keep-the-why` file) — a

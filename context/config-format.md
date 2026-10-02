@@ -242,3 +242,22 @@ Three wizard defaults are the values on which the skill is fully integrated: `co
 
 **Rejected alternative:** `pending-confirmation-check: on-start` and a `personal-defaults` block by default. Rejected because both add output or committed content that a project may not want: a check line at session start where nothing is pending is noise, and a defaults block in `.keep-the-why` is a statement to future developers a first-time setup should not make on its own.
 
+## Optional components default to no: the agent knows them, offers them, and sets them up only on request
+
+**Id:** 7889e8b2-d2c3-458d-a19e-10638aca9ded
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer design discussion, 2026-10-02 — "the agent shouldn't just do it itself; it should only know how, be able to offer it to the user, and do it when the user calls for it"; "the skill has to be installed, the rest is optional"; autostart "should be done, yes — but only with the user's OK; you can ask"
+**Revisit when:** a fourth optional component appears, or measurement shows "defaults" setups missing the linter in CI in a way that costs projects malformed entries
+**See:** config-format.md#wizard-defaults-are-the-fully-integrated-values-a-default-is-what-a-new-setup-gets-not-what-an-absent-field-means — 426e2723-f526-4415-992f-e11d31e167ce — as of 2026-10-02
+
+Three components go beyond the skill: the linter in the project's CI, the dashboard on the project's site (into an existing docs build, or a GitHub Pages workflow of its own), and a listing in the registry. For each one the skill carries how it is set up (`references/ci-linting.md`, "Optional components"), offers it where it fits, and sets it up only on a yes or a request. The project wizard asks about the first two with the default *no* — the linter's CI question had defaulted to yes wherever GitHub or GitLab was detected — and the registry is offered once, after the dashboard is published, its pull request opened only when asked. A "defaults" answer, in the wizard or in the request, is not a yes to any of them. Autostart is not one of them: it is part of the skill getting loaded, stays the wizard's default (*the project asks*), and is written because the person accepted the list that shows it, or asked for it in the request.
+
+**Reason:** the skill is the one part a project needs; everything else is the project's choice, and the maintainer's line is that the agent knows it, offers it and does it on request — not as a side effect of accepting defaults. The earlier default of yes for the linter's CI made a "defaults" answer write a workflow file into the project's CI, which is exactly the side effect the line excludes.
+
+**Rejected alternative:** the skill does not carry the registry or the Pages workflow at all, and the person follows the docs. Rejected: the point of the change is that the person says one sentence to the agent and the agent knows the rest.
+
+**Rejected alternative:** the agent sets the components up as part of the default setup (the linter's CI as before, the dashboard where a remote is on GitHub). Rejected by the maintainer — see the reason.
+
+**Rejected alternative:** the registry pull request only on request, never offered. The assisting agent's first proposal; the maintainer wanted the agent able to offer it — once, after the dashboard is live, not repeated.

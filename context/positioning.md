@@ -123,3 +123,19 @@ Every self-description — landing hero, README intro, Philosophy, Installation,
 **Reason:** "Keep the Why is project memory" claimed the whole for a part and put the project in a line of tools that sell a new store; "the why layer of a memory the repository already is" is the smaller and truer claim, and the one the tool can actually back. It also gives the tool a clean role next to everything else in a repository instead of beside it. Keeping the thesis on a separate page keeps this site the practice — releases, measurements, docs — and lets the argument be read, and disagreed with, without adopting any of it.
 
 **Rejected alternative:** a "Philosophy" section here carrying the thesis. Rejected — the argument holds for other implementations too and should not read as this project's marketing; and a thesis page with its own `context/` is a better demonstration than a chapter.
+
+## The agent is the installation interface; the skill is the one required part
+
+**Id:** 2196306f-e2e1-4d07-ab12-41eacd335081
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer design discussion, 2026-10-02 — installation trips up developers, experienced ones included, while an agent can be told to pick the right route from the installation page itself
+**Revisit when:** agents gain a common way to install a skill from a URL on their own, or the installation page's agent section turns out to send agents down a route that fails
+**See:** config-format.md#optional-components-default-to-no-the-agent-knows-them-offers-them-and-sets-them-up-only-on-request — 7889e8b2-d2c3-458d-a19e-10638aca9ded — as of 2026-10-02
+
+README, landing page and installation page lead with one sentence for the agent — install the skill, choosing the route from https://keepthewhy.com/installation/, then set the project up with default settings including autostart — and with the three optional components as one sentence each. The installation page has a section addressed to the agent doing the installing: the order of routes to try, pinned to `latest`, and what to do when the skill only shows up in a new session. The commands for a human doing it by hand follow below it, unchanged. For the setup half to work as one sentence, the skill treats a request that already gives the answers ("with default settings") as the answer to both wizards.
+
+**Reason:** the many install routes — skills CLI, gh, asm, five plugin and package mechanisms, the manual copy — are a choice the person should not have to make; the agent knows which of them it supports. The person then talks to one interface for everything: the skill, and each optional component.
+
+**Rejected alternative:** a single recommended command for everyone, as before. Rejected: one command still leaves the person to know their agent's flags, scope and plugin mechanism, which is where installs failed.

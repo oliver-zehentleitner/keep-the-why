@@ -66,6 +66,10 @@ ktw-dashboard [PATH] [--host 127.0.0.1] [--port 8765] [--no-browser] [--interval
 | `--no-update-check` | don't ask pypi.org for newer versions of the dashboard and the linter — the check runs at start and once every 24 hours and is the server's only network call; a found update makes the package's entry in the status bar shimmer, with the version and the `pip install -U` line in its tooltip. The exported page never checks |
 | `--host 0.0.0.0` | exposes the page on the network; the CLI warns. Everything shown is the project's `context/` — treat the port like the repository |
 
+## Publish it on GitHub Pages
+
+Say to your agent: "publish the Keep the Why dashboard on GitHub Pages". With a docs build already deploying the site, it adds the export step to that build; without one, it writes a workflow of its own that exports the dashboard and deploys it to Pages — the exact steps are in [CI, dashboard and registry setup](ci-linting.md#the-dashboard-export). It writes `dashboard-state` into `.keep-the-why` and offers the live badge. One setting stays yours: the repository's *Settings → Pages → Build and deployment → Source* has to be *GitHub Actions* — the agent names the page, and switches it only when you ask it to. After the next push to the default branch the dashboard is at `https://<owner>.github.io/<repo>/dashboard/live/`. The agent offers the [registry](registry/index.md) listing once after that, and opens its pull request only if you say so.
+
 ## Show a proposal before it is merged
 
 A `context/` that exists only in a pull request — a retrospective pass for a project that never had one, or a migration — can be shown rendered before the maintainer merges or installs anything: export the page from the branch and publish the export on the fork's own GitHub Pages.

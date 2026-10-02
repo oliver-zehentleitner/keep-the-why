@@ -38,13 +38,11 @@ Open source under the [MIT license](https://keepthewhy.com/license/) — the ski
 
 ## How it works
 
-**Install it with one command. Say "set up Keep the Why here" once in a project and answer the setup — "defaults" is a complete answer. Then work as usual.**
+**Your agent is the interface. Tell it once, then work as usual:**
 
-```sh
-npx skills add https://github.com/oliver-zehentleitner/keep-the-why/tree/latest/skills/keep-the-why
-```
+> Install the Keep the Why skill — pick the best installation method for you from https://keepthewhy.com/installation/ — then set up Keep the Why in this project with default settings, including autostart.
 
-That line covers any of 70+ agents (Claude Code, Codex, OpenCode, Cursor, …); plugin marketplaces, a manual copy and a vendored, pinned install are on the [installation page](installation.md). The defaults include the start path, so from then on every session in that project loads the skill by itself. The agent records the why as it surfaces and asks only when it is genuinely unsure. You never have to tell it what to write down.
+The skill is the one part a project needs, and that sentence covers any of 70+ agents (Claude Code, Codex, OpenCode, Cursor, …). Three components are optional, one sentence each whenever you want them — the linter as a GitHub workflow, the dashboard on GitHub Pages, a listing in the registry: the agent knows how, offers them, and does it only when you say so. All of it, and the commands by hand: the [installation page](installation.md). The defaults include the start path, so from then on every session in that project loads the skill by itself. The agent records the why as it surfaces and asks only when it is genuinely unsure. You never have to tell it what to write down.
 
 <div class="ktw-cards" markdown>
 

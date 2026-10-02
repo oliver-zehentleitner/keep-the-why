@@ -30,7 +30,7 @@ PEP 440, not strict SemVer — PyPI rejects the build-metadata spelling SemVer w
 
 ## Setup snippets
 
-The project init wizard offers to write these for you (GitHub Actions or GitLab CI, detected from the repository; the pre-commit hook only if the project already uses pre-commit) — see [CI linting setup](ci-linting.md). By hand, they're the same files:
+The project init wizard offers to write these for you (GitHub Actions or GitLab CI, detected from the repository; the pre-commit hook only if the project already uses pre-commit), default *no* — and at any time later, "set up the linter workflow" to your agent does the same — see [CI linting setup](ci-linting.md). By hand, they're the same files:
 
 {% include-markdown "../skills/keep-the-why/references/ci-linting.md" start="<!-- snippets:start -->" end="<!-- snippets:end -->" %}
 
