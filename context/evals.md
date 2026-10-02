@@ -166,6 +166,8 @@ The skill's design leaned on reference files for detail: `SKILL.md` names the ru
 
 **Reason:** `claude-sonnet-5-5` works in about half the steps Sonnet 5 did (median 4 tool calls per case instead of 11, 6 turns instead of 13) and opens a referenced file far less often. In the baseline every failing `local-lint-auto` run installed into a virtual environment, which `references/setup.md` forbids; none of them had opened that section, and the one run that did passed. Without the reference, the agent falls back on its trained habit.
 
+**Consequence (same day, maintainer decision):** where a reference file holds a procedure that cannot be shortened into a clause — the wizards, the migration sections, local linting, the optional components, a retrospective pass, an interview — `SKILL.md`'s pointer is phrased as a read-before trigger at the point of action ("before presenting it, read …") instead of a "see …" an agent can take for optional. A pointer to background stays a pointer.
+
 **Rejected alternative:** an instruction to always read every reference file named in `SKILL.md`. Rejected because it multiplies the cost of every session for rules most sessions never touch; the point of reference files is loading on demand.
 
 **Rejected alternative:** moving the reference files' content into `SKILL.md`. Rejected because the skill would grow past what is cheap to load at every activation (`CONTRIBUTING.md`); only the clause that must not be missed moves.
