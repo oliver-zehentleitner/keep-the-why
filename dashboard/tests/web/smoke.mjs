@@ -144,7 +144,8 @@ const search = window.document.getElementById("search");
 search.value = S.entries[0].title.split(" ").slice(0, 2).join(" ");
 search.dispatchEvent(new window.Event("input"));
 await tick(200);
-if (window.document.getElementById("search-results").hidden || !window.document.querySelector("#search-results a")) errors.push("search: no result for a known title");
+if (window.document.getElementById("search-results").hidden || !window.document.querySelector("#search-results a")) errors.push("search: no result for a known title")
+if (/\bnull\b/.test(window.document.getElementById("search-results").textContent)) errors.push("search: the dropdown prints 'null'");
 // Enter without a selection: the results page, every hit with its topic
 search.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
 await tick(50); window.dispatchEvent(new window.Event("hashchange")); await tick(150);

@@ -2480,12 +2480,12 @@ function setupSearch() {
     // this project's hits first, then the rest; the page shows everything
     const rows = [...all.filter((r) => r.g.member.role === "self"), ...all.filter((r) => r.g.member.role !== "self")].slice(0, 12);
     const projects = new Set(all.map((r) => r.g)).size;
-    box.replaceChildren(...(rows.length ? rows.map(({ e, hit, g }) => el("a", { href: g.href(e), onclick: close },
+    box.replaceChildren(...[...(rows.length ? rows.map(({ e, hit, g }) => el("a", { href: g.href(e), onclick: close },
       el("div", { html: highlight(e.title.replace(/`/g, ""), hit.terms) }),
       el("div", { class: "sr-file" }, g.member.role === "self" ? "" : `${g.member.name} (${memberLabel(g.member)}) · `, topicTitle(g.state, e.file)),
       el("div", { class: "sr-snip", html: hitSnippet(hit) }))) : [el("div", { style: "padding:10px 12px;color:var(--fg3)" }, "no matches")]),
       pool.missing.length ? el("div", { class: "sr-missing" }, `${plural(pool.missing.length, "family member")} not available here — not searched.`) : null,
-      el("a", { class: "sr-all", href: searchHref(scope(), q), onclick: close }, all.length > rows.length ? `↵  all ${all.length} results in ${plural(projects, "project")}` : "↵  results page"));
+      el("a", { class: "sr-all", href: searchHref(scope(), q), onclick: close }, all.length > rows.length ? `↵  all ${all.length} results in ${plural(projects, "project")}` : "↵  results page")].filter(Boolean)); // replaceChildren writes a null as the text "null"
     box.hidden = false; sel = -1;
   };
   window.__ktwScopeChanged = () => { if (!box.hidden && input.value.trim().length >= 2) run(); };
