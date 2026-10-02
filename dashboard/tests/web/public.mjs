@@ -673,6 +673,13 @@ const report = {};
   await tick(300);
   b = window.document.querySelector(".reader .share-btn");
   report.shareOnLocal = b?.title.split("\n")[1];
+  // the badges beside the search: the static one and the two live ones from the published export, ready to paste
+  const items = [...window.document.querySelectorAll("#badges-pop .badge-item")];
+  const md = items.map((x) => x.querySelector(".badge-field input")?.value);
+  report.badges = md;
+  if (items.length !== 3) errors.push("badges: expected three, got " + items.length);
+  if (md[1] !== "[![Keep the Why · live](https://acme.github.io/suite/keep-the-why-dashboard/badge-entries.svg)](https://acme.github.io/suite/keep-the-why-dashboard/)") errors.push("badges: the live badge's Markdown is wrong: " + md[1]);
+  if (!/<a href="https:\/\/acme\.github\.io\/suite\/keep-the-why-dashboard\/"><img alt="keep the why" src="https:\/\/acme\.github\.io\/suite\/keep-the-why-dashboard\/badge-entries-flat\.svg"><\/a>/.test(items[2]?.querySelectorAll(".badge-field input")[1]?.value || "")) errors.push("badges: the flat badge's HTML is wrong");
   if (report.shareOnLocal !== `https://acme.github.io/suite/keep-the-why-dashboard/#entry/${SUITE_ID}`) errors.push("copy link: on a local page it should be the published dashboard's address: " + b?.title);
   window.close();
 }

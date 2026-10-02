@@ -2585,6 +2585,25 @@ function authorLink(name, commit, project) {
     if (w) w.location.href = url; else window.open(url, "_blank", "noopener");
   } }, name);
 }
+// The badges, ready to paste: the static one, and the two live ones from this project's published export
+// (`dashboard-state`), each as Markdown and HTML with a copy button. Pointed at, the ⚙ beside the search shows them.
+function renderBadges() {
+  const pop = $("#badges-pop"); if (!pop || !S) return;
+  const st = SELF?.project?.dashboard_state || S.project?.dashboard_state || "";
+  const base = /^https:\/\//.test(st) ? st.replace(/state\.json$/, "") : "";
+  const list = [{ name: "Keep the Why", img: "https://keepthewhy.com/assets/badge.svg", href: "https://keepthewhy.com", alt: "Keep the Why" }];
+  if (base) list.push({ name: "live", img: `${base}badge-entries.svg`, href: base, alt: "Keep the Why · live" }, { name: "live, flat", img: `${base}badge-entries-flat.svg`, href: base, alt: "keep the why" });
+  const field = (label, text) => {
+    const b = el("button", { type: "button", class: "link-btn", onclick: async () => { const ok = await copyText(text); b.textContent = ok ? "✓" : "✗"; setTimeout(() => { b.textContent = "copy"; }, 1500); } }, "copy");
+    return el("div", { class: "badge-field" }, el("span", { class: "note" }, label), el("input", { type: "text", readonly: true, value: text, onfocus: (ev) => ev.target.select() }), b);
+  };
+  setKids(pop, el("b", {}, "Badges"),
+    ...list.map((x) => el("div", { class: "badge-item" },
+      el("a", { href: x.href, target: "_blank", rel: "noopener" }, el("img", { src: x.img, alt: x.alt })),
+      field("MD", `[![${x.alt}](${x.img})](${x.href})`),
+      field("HTML", `<a href="${x.href}"><img alt="${x.alt}" src="${x.img}"></a>`))),
+    base ? null : el("p", { class: "note" }, "The live badges come with a published export — a dashboard-state line in .keep-the-why."));
+}
 function applyState(state) {
   SELF = state; S = state;
   const p = S.project;
@@ -2598,6 +2617,7 @@ function applyState(state) {
     loadedUi(),
     el("span", { class: "grow" }, el("a", { href: "https://keepthewhy.com", target: "_blank", rel: "noopener" }, "keepthewhy.com")),
     el("a", { class: "globe-egg", href: "#globe", title: "the globe" }, "🌐"));
+  renderBadges();
   renderLoaded();
   FAMILY = null;
   if (LIVE()) $("#nav-projects").hidden = false;

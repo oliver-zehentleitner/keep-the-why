@@ -497,3 +497,11 @@ a.author:hover { color: var(--accent2); }
 .loaded-row .what .pill { margin-left: 6px; font-size: 10px; }
 .loaded-row .what a.dash, .loaded-row .what span a { display: inline; }
 .loaded-row .what .sep { color: var(--fg3); }
+.badges-btn { position: relative; cursor: default; }
+.badges-pop { display: none; position: absolute; top: 28px; right: 0; z-index: 30; width: 440px; background: var(--bg2); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; box-shadow: 0 8px 28px rgba(0,0,0,.4); font-size: 11px; color: var(--fg2); cursor: auto; text-align: left; }
+.badges-btn:hover .badges-pop, .badges-btn:focus-within .badges-pop { display: block; }
+.badges-pop > b { display: block; color: var(--fg); margin-bottom: 6px; }
+.badges-pop .badge-item { padding: 8px 0; border-top: 1px solid var(--line); }
+.badges-pop .badge-item img { height: 20px; display: block; margin-bottom: 6px; }
+.badges-pop .badge-field { display: grid; grid-template-columns: 36px 1fr auto; gap: 6px; align-items: center; margin-top: 3px; }
+.badges-pop .badge-field input { font: 10px var(--mono, monospace); background: var(--bg); color: var(--fg2); border: 1px solid var(--line); border-radius: 3px; padding: 2px 4px; min-width: 0; }
