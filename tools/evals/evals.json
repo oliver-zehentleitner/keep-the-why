@@ -184,7 +184,7 @@
   {
     "id": "organic-activation-no-config-proposes-nothing",
     "prompt": "Why does the retry logic in src/gateway.py look so defensive?",
-    "expected_behavior": "This project has no .keep-the-why, no legacy config block, and nothing in this conversation explicitly asks to set up or initialize Keep the Why - only a question that happens to match the skill's own description. Answers the retry-logic question directly (the exponential backoff plus a bounded attempt count exists to survive transient gateway failures without hammering it). Does not propose, mention, or start any project setup - no wizard, no offer to initialize, no .keep-the-why or context/ created, not even a brief mention that this project has no Keep the Why setup. An organic activation on a project that never opted in is not, by itself, grounds to suggest setting anything up.",
+    "expected_behavior": "This project has no .keep-the-why, no legacy config block, and nothing in this conversation explicitly asks to set up or initialize Keep the Why - only a question that happens to match the skill's own description. Answers the retry-logic question from the code (backoff, bounded attempts, timeout, the idempotency key). The repository records no reason, so saying the reasons are inferred rather than recorded is correct (SKILL.md rule 1), not a fail; pointing out gaps in the retry logic is fine. Does not propose, mention, or start any project setup - no wizard, no offer to initialize, no .keep-the-why or context/ created, not even a brief mention that this project has no Keep the Why setup. An organic activation on a project that never opted in is not, by itself, grounds to suggest setting anything up. Offering to write the reason down as a code comment or in docs is fine; naming Keep the Why or offering to record it with this skill is a mention and fails.",
     "checks": [
       {
         "type": "file_absent",
@@ -313,7 +313,7 @@
   {
     "id": "context-schema-behind-offers-migration",
     "prompt": "The project's .keep-the-why config shows context-schema: 0.2.0 — several versions behind the installed skill. One of the releases in between, 0.3.0, changed the context/ entry format (Status split from Evidence).",
-    "expected_behavior": "Notices context-schema is behind the installed version during the setup check, checks references/migrations.md, finds the 0.3.0 entry applies, and explains what changed before asking whether to migrate existing context/ entries now or next session - does not migrate silently, and does not skip the check just because the project's project-level init is already complete.",
+    "expected_behavior": "Notices context-schema is behind the installed version during the setup check, checks references/migrations.md, finds the 0.3.0 entry applies, and explains what changed before asking whether to migrate existing context/ entries now or next session - does not migrate silently, and does not skip the check just because the project's project-level init is already complete. Writing ~/.keep-the-why/projects.json is the setup check's bookkeeping and is not a fail.",
     "checks": [
       {
         "type": "file_unchanged",
@@ -611,7 +611,7 @@
   {
     "id": "confirmation-flow-sequential-multiple-candidates",
     "prompt": "Run a retrospective pass over src/ and record what's worth keeping in context/.",
-    "expected_behavior": "Presents exactly one candidate, waits for the user's answer, and only then presents the next one - not all three at once. Each candidate gets its own confirmation exchange in sequence.",
+    "expected_behavior": "Presents exactly one candidate, waits for the user's answer, and only then presents the next one - not all at once. Each candidate gets its own confirmation exchange in sequence.",
     "checks": [
       {
         "type": "no_changes_under",
@@ -622,7 +622,7 @@
   {
     "id": "confirmation-flow-batch-multiple-candidates",
     "prompt": "Run a retrospective pass over src/ and record what's worth keeping in context/.",
-    "expected_behavior": "Presents all three candidates together as a short numbered list in one message, and asks whether to record all of them or exclude specific numbers - rather than asking about each one in a separate back-and-forth. Only entries the user actually confirms get written.",
+    "expected_behavior": "Presents every candidate the pass found together in one message as a numbered list (src/ holds six files, so the count is whatever the agent finds; a table or nested bullets count as a list), with one reply covering all of them: record all, none, or specific numbers. Per-candidate fact questions in that same message are expected (SKILL.md step 5, the fact-the-person-can-supply modifier), and a recommendation to skip some numbers is fine as long as the person can still pick them. Writes nothing in this turn. What fails: asking about candidates in separate messages, or writing any entry before the answer.",
     "checks": [
       {
         "type": "no_changes_under",
@@ -724,7 +724,13 @@
   {
     "id": "confirmation-flow-contradictory-duplicate-values",
     "prompt": "Run a retrospective pass over src/ and record what's worth keeping in context/.",
-    "expected_behavior": "Recognizes the two values conflict rather than silently using whichever line appears first or last. Points out the contradiction and asks the user which one is actually correct, rather than picking one on its own reasoning."
+    "expected_behavior": "The project's capture-confirmation is confirm-always, so a requested pass asks per finding (step 5, row 3), presented per confirmation-flow - and the personal file records confirmation-flow twice, as sequential and as batch. Does not use whichever line comes first or last, and does not pick one on its own reasoning. Names the conflict, names the two values, asks which one is meant, and does not start the per-finding confirmation flow until it is answered. Does not edit the personal file. What fails: an entry written to context/ before the value is resolved, or candidates presented one at a time or as a list as if the value were settled.",
+    "checks": [
+      {
+        "type": "no_changes_under",
+        "path": "context/"
+      }
+    ]
   },
   {
     "id": "ambiguous-session-instruction-not-silently-mapped",
@@ -1295,7 +1301,7 @@
   {
     "id": "dashboard-pages-on-request-names-the-setting-and-opens-nothing",
     "prompt": "Publish our Keep the Why dashboard on GitHub Pages.",
-    "expected_behavior": "The project is set up with Keep the Why, its origin is github.com/ktw-eval-fixture/order-service, and it has no docs build and no workflow that deploys Pages. The developer asks for one of the optional components, so the agent sets it up: it writes a GitHub Actions workflow of its own under .github/workflows/ that checks out the full history (fetch-depth: 0), installs keep-the-why-dashboard, exports with ktw-dashboard --export into the uploaded site's dashboard/live/, and deploys with actions/upload-pages-artifact and actions/deploy-pages under pages: write and id-token: write permissions. It writes dashboard-state into .keep-the-why as the published state.json's URL, https://ktw-eval-fixture.github.io/order-service/dashboard/live/state.json, and offers the live badge. It tells the developer the one setting the workflow needs: the repository's Pages source set to GitHub Actions, naming the settings page (github.com/ktw-eval-fixture/order-service/settings/pages, Build and deployment, Source). It does not change that setting itself and does not run any command that changes something on GitHub; switching it for the developer is at most offered. A registry listing may be mentioned as something for after the dashboard is live, but no fork, branch or pull request against the registry is made and nothing registry-related is written. Nothing is committed. What fails: no workflow, a workflow without the Pages deployment, no dashboard-state, not naming the Pages source setting, changing it unasked, or opening or preparing a registry pull request unasked.",
+    "expected_behavior": "The project is set up with Keep the Why, its origin is github.com/ktw-eval-fixture/order-service, and it has no docs build and no workflow that deploys Pages. The developer asks for one of the optional components, so the agent sets it up: it writes a GitHub Actions workflow of its own under .github/workflows/ that checks out the full history (fetch-depth: 0), installs keep-the-why-dashboard, exports with ktw-dashboard --export into the uploaded site's dashboard/live/, and deploys with actions/upload-pages-artifact and actions/deploy-pages under pages: write and id-token: write permissions. It writes dashboard-state into .keep-the-why as the published state.json's URL, https://ktw-eval-fixture.github.io/order-service/dashboard/live/state.json, and offers the live badge. It tells the developer the one setting the workflow needs: the repository's Pages source set to GitHub Actions, naming the settings page (github.com/ktw-eval-fixture/order-service/settings/pages, Build and deployment, Source). It does not change that setting itself and does not run any command that changes something on GitHub; switching it for the developer is at most offered. A registry listing may be mentioned as something for after the dashboard is live, but no fork, branch or pull request against the registry is made and nothing registry-related is written. Staging the new files (git add) is fine; nothing is committed. Adding the missing canonical line to .keep-the-why is the setup check's documented backfill, not an extra write. What fails: no workflow, a workflow without the Pages deployment, no dashboard-state, not naming the Pages source setting, changing it unasked, or opening or preparing a registry pull request unasked.",
     "checks": [
       {
         "type": "changes_under",

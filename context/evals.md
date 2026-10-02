@@ -152,3 +152,20 @@ The fourteen earlier series, 0.6.2 to 0.17.1, were restored from the file's hist
 **Rejected alternative:** a copy of the whole page per release. The methodology sections would then exist fourteen times, each frozen at a different state, and nothing would say which one is in force. Also rejected: leaving it to Git history — the state this replaces.
 
 **Consequence:** release checklist step 14 writes a new page instead of editing a block. Series pages, round pages and run summaries are out of the site search (front matter), so a search finds the current state; the run summaries are also out of the navigation (`not_in_nav`), their series page links them. `docs/evals/runs/` is out of the link check: the runner cuts a quoted URL off at its column limit.
+
+## A rule the agent must not miss stands in `SKILL.md`, not only in a reference file
+
+**Id:** 0dc16831-abf0-4065-bae3-47d5e2ca4d20
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** baseline series on main, 2026-10-02 (three runs, 103 cases, `claude-sonnet-5-5`), and its failure analysis; maintainer approval of the fix package
+**Revisit when:** the agent model changes again, or a series shows the session shape (median tool calls) back near what Sonnet 5 had
+
+The skill's design leaned on reference files for detail: `SKILL.md` names the rule and points at where it is spelled out. That stays the shape, but a rule whose miss does harm — how the linter may be installed, when `dashboard-state` is written — gets its operative clause in `SKILL.md` or in the very sentence the agent is on, not only behind a pointer.
+
+**Reason:** `claude-sonnet-5-5` works in about half the steps Sonnet 5 did (median 4 tool calls per case instead of 11, 6 turns instead of 13) and opens a referenced file far less often. In the baseline every failing `local-lint-auto` run installed into a virtual environment, which `references/setup.md` forbids; none of them had opened that section, and the one run that did passed. Without the reference, the agent falls back on its trained habit.
+
+**Rejected alternative:** an instruction to always read every reference file named in `SKILL.md`. Rejected because it multiplies the cost of every session for rules most sessions never touch; the point of reference files is loading on demand.
+
+**Rejected alternative:** moving the reference files' content into `SKILL.md`. Rejected because the skill would grow past what is cheap to load at every activation (`CONTRIBUTING.md`); only the clause that must not be missed moves.

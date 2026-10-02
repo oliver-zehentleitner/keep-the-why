@@ -2,6 +2,8 @@
 
 What changed in each version that an existing project may need to know about or act on — not limited to changes to the `context/` entry *format*. Also covers structural/placement conventions (e.g. how `context/index.md` is ordered) and config defaults added to the config files (`.keep-the-why`, the personal file; before 0.10.0, blocks in `AGENTS.md`/`AGENTS.local.md`). Not every release needs an entry here — only ones with something an existing project should check. See `setup.md` for how and when this file gets consulted; note that "consulted" doesn't always mean "asks the user to act" — a purely informational entry (e.g. a config field silently backfilled to a default) is recorded here for completeness but needs no prompt.
 
+"Do it now", "mechanical" and "one pass by the agent" below say how a migration runs once the person has chosen to migrate now (`setup.md`, "Context schema and migrations") — completely, not left for the next touch. They never skip that question. The one exception is the 0.10.0 relocation of a legacy config block, and it says so.
+
 Entries below assume 0.2.0 as the starting point — nothing before it tracked a `context-schema` at all, and 0.2.0 itself introduced no `context/` entry format change.
 
 ## 0.19.0 — the optional components are offered, set up on request; a request can answer the wizards (informational, no action required)

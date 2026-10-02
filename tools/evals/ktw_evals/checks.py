@@ -54,7 +54,9 @@ class _State:
         self.home = home
         # project: relative paths of every created/modified/deleted file
         self.project_changed = set()
-        status = sh(["git", "status", "--porcelain"], cwd=workdir).stdout
+        # --untracked-files=all: a new directory is otherwise listed as one `?? dir/` line, which a
+        # check on a deeper prefix (changes_under / no_changes_under .github/workflows/) never matches
+        status = sh(["git", "status", "--porcelain", "--untracked-files=all"], cwd=workdir).stdout
         for line in status.splitlines():
             rel = line[3:].strip()
             if " -> " in rel:  # rename: both sides count as changed

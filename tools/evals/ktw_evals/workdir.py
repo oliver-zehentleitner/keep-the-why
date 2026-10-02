@@ -212,7 +212,7 @@ def build_workdir(case_id, cfg, workdir: Path, driver, home: Path = None):
 
 def collect_diff(workdir, home=None):
     """What the agent actually changed on disk: status, diff, new files."""
-    status = sh(["git", "status", "--porcelain"], cwd=workdir).stdout
+    status = sh(["git", "status", "--porcelain", "--untracked-files=all"], cwd=workdir).stdout
     diff = sh(["git", "diff"], cwd=workdir).stdout
     parts = [f"# git status --porcelain\n{status or '(clean)'}"]
     if diff.strip():

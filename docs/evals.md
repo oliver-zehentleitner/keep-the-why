@@ -42,7 +42,7 @@ them apart, in `summary.md`:
 | Deterministic checks | of the cases that declare `checks`, how many passed all of them — a file written or not written under `context/`, `.keep-the-why` untouched, a literal secret absent from disk, a `Status` line present, the skill loaded | mechanical |
 | Judge pass | of the cases the judge graded, how many it passed | LLM judge |
 
-The deterministic checks (74 of 103 cases carry them, from `tools/evals/evals.json`)
+The deterministic checks (75 of 103 cases carry them, from `tools/evals/evals.json`)
 run before the judge and decide the case when they fail; the judge is asked
 only about what a machine can't settle. `--judge-always` keeps calling the
 judge anyway and stores its verdict separately, which is how a judge blind
@@ -149,7 +149,7 @@ by `tools/evals/series.py`:
 | Complete | every run carries exactly the suite's cases (103 since 0.19.0), and the series has three runs | an empty or half-finished run is not a release measurement and cannot be recorded; `--partial` judges a deliberate subset on the cases it has, and says so |
 
 The 2-of-3 allowance covers what the judge decides and the checks that
-something *was* done; it does not cover the guards — 82 checks on 53 of the
+something *was* done; it does not cover the guards — 83 checks on 54 of the
 103 cases (`is_guard` in `tools/evals/ktw_evals/checks.py`). Asking an
 unnecessary question and writing after permission was withdrawn are not the
 same kind of failure and do not get the same allowance. The 0.17.0 series
