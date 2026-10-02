@@ -61,32 +61,68 @@ const FOREIGN_TIMEOUT_MS = 10000, FOREIGN_MAX_BYTES = 20 * 1024 * 1024;
 const LOADED = new Map(); // url -> { bytes, kind, at }
 const bytesOf = (text) => { try { return new TextEncoder().encode(text).length; } catch { return String(text).length; } };
 const fmtBytes = (b) => (b >= 1024 * 1024 ? `${(b / 1024 / 1024).toFixed(2)} MB` : b >= 1024 ? `${(b / 1024).toFixed(1)} KB` : `${b} B`);
-function noteLoaded(url, text, kind) {
+function noteLoaded(url, text, kind, extra = {}) {
   kind = kind || (/state\.body\.json/.test(url) ? "bodies" : /state\.json/.test(url) ? "state" : /\.keep-the-why/.test(url) ? "config" : "other");
-  const r = { bytes: bytesOf(text), kind, at: Date.now() };
+  const r = { bytes: bytesOf(text), kind, at: Date.now(), ...extra };
   // a state says which versions made it: the project's context-schema (the Keep the Why version it is on),
   // the dashboard that exported it, the linter that parsed it; a .keep-the-why names its context-schema
   try {
-    if (kind === "state") { const s = JSON.parse(text); r.project = s.project?.id || ""; r.schema = s.project?.schema || ""; r.dashboard = s.dashboard || ""; r.linter = s.linter || ""; r.lean = typeof s.bodies === "string"; }
+    if (kind === "state" || kind === "page") { const s = JSON.parse(text); r.project = s.project?.id || ""; r.schema = s.project?.schema || ""; r.dashboard = s.dashboard || ""; r.linter = s.linter || ""; r.lean = typeof s.bodies === "string"; }
     else if (kind === "config") { r.schema = configLine(text, "context-schema") || ""; r.project = configLine(text, "id") || ""; }
   } catch { /* not JSON, or not a state: the size and address still count */ }
   LOADED.set(String(url), r);
   renderLoaded();
 }
-const loadedTotals = () => { let bytes = 0, states = 0; for (const r of LOADED.values()) { bytes += r.bytes; if (r.kind === "state") states++; } return { bytes, states, files: LOADED.size }; };
+const loadedTotals = () => { let bytes = 0, states = 0; for (const r of LOADED.values()) { bytes += r.bytes; if (r.kind === "state" || r.kind === "page") states++; } return { bytes, states, files: LOADED.size }; };
 function renderLoaded() {
   const box = $("#loaded"); if (!box) return;
   const { bytes, states } = loadedTotals();
   const a = box.querySelector("a"); if (a) a.textContent = `${plural(states, "state")} · ${fmtBytes(bytes)}`;
   const pop = box.querySelector(".loaded-pop"); if (pop) fillLoadedPop(pop);
 }
+// The state monitor, one line per project: which files of it the page holds — the state, its bodies, its
+// .keep-the-why — each with its size and address, the versions that made it, and a link to that project's
+// dashboard. The page's own state comes first and says how it arrived: embedded in the page (an export) or
+// from the local server, in full either way; a neighbour's state is lean when its export keeps the bodies beside it.
+const dirOf = (url) => String(url).replace(/[?#].*$/, "").replace(/[^/]*$/, "");
+function loadedProjects() {
+  const groups = new Map(); const byDir = new Map();
+  const group = (key) => { if (!groups.has(key)) groups.set(key, { key, files: {} }); return groups.get(key); };
+  const entries = [...LOADED.entries()];
+  for (const [url, r] of entries) if (r.kind === "state" || r.kind === "page") {
+    const G = group(r.project || url); G.files.state = { url, ...r }; G.project ||= r.project; byDir.set(dirOf(url), G);
+    G.own ||= !!r.own || (!!r.project && r.project === SELF?.project?.id); // the centre, however it arrived (embedded, local server, public mode)
+    const m = String(url).match(/\/api\/state\.json\?project=([^&#]+)/);
+    G.dashboard = G.own ? null : m ? `${location.pathname}?project=${m[1]}#overview` : dirOf(url);
+  }
+  for (const [url, r] of entries) if (r.kind === "bodies") { const G = byDir.get(dirOf(url)) || group(url); G.files.bodies = { url, ...r }; }
+  for (const [url, r] of entries) if (r.kind === "config") { const G = (r.project && groups.get(r.project)) || group(r.project || url); G.files.config = { url, ...r }; G.project ||= r.project; }
+  for (const [url, r] of entries) if (r.kind === "other") group(url).files.other = { url, ...r };
+  const total = (G) => Object.values(G.files).reduce((n, f) => n + f.bytes, 0);
+  return [...groups.values()].sort((a, b) => (b.own - a.own) || total(b) - total(a)).map((G) => ({ ...G, bytes: total(G) }));
+}
 function fillLoadedPop(pop) {
-  const rows = [...LOADED.entries()].sort((a, b) => b[1].bytes - a[1].bytes);
-  const { bytes, states, files } = loadedTotals();
-  const versions = (r) => (r.kind === "state" ? [r.schema ? `ktw ${r.schema}` : null, r.dashboard ? `dashboard ${r.dashboard}` : null, r.linter ? `lint ${r.linter}` : null, r.lean ? "bodies beside it" : null] : [r.schema ? `ktw ${r.schema}` : null]).filter(Boolean).join(" · ");
-  setKids(pop, el("div", { class: "loaded-head" }, `${plural(files, "file")} loaded — ${plural(states, "state.json")} — ${fmtBytes(bytes)}`),
-    ...rows.map(([url, r]) => el("div", { class: "loaded-row" }, el("span", { class: "size" }, fmtBytes(r.bytes)), el("span", { class: "kind" }, r.kind),
-      el("span", { class: "what" }, r.project ? el("b", {}, r.project) : null, versions(r) ? [el("br"), el("span", { class: "note" }, versions(r))] : null, el("br"), el("a", { href: url, target: "_blank", rel: "noopener", title: url }, url)))));
+  const { bytes } = loadedTotals();
+  const list = loadedProjects();
+  const fileLink = (f, label) => el("a", { href: f.url, target: "_blank", rel: "noopener", title: f.url }, label);
+  const row = (G) => {
+    const st = G.files.state, b = G.files.bodies, c = G.files.config;
+    const v = st ? [st.schema ? `ktw ${st.schema}` : null, st.dashboard ? `dashboard ${st.dashboard}` : null, st.linter ? `lint ${st.linter}` : null].filter(Boolean).join(" · ") : c?.schema ? `ktw ${c.schema}` : "";
+    const parts = [];
+    if (st) parts.push(el("span", {}, fileLink(st, "state"), ` ${fmtBytes(st.bytes)}`,
+      el("span", { class: "note" }, st.kind === "page" ? " — embedded in this page, in full" : st.own && !st.lean && LIVE() ? " — from the local server, in full" : st.lean ? " — lean, bodies beside it" : " — in full")));
+    if (b) parts.push(el("span", {}, fileLink(b, "bodies"), ` ${fmtBytes(b.bytes)}`));
+    else if (st?.lean) parts.push(el("span", { class: "note" }, "bodies not loaded — fetched when an entry is opened"));
+    if (c) parts.push(el("span", {}, fileLink(c, ".keep-the-why"), ` ${fmtBytes(c.bytes)}`));
+    if (G.files.other) parts.push(el("span", {}, fileLink(G.files.other, "file"), ` ${fmtBytes(G.files.other.bytes)}`));
+    return el("div", { class: `loaded-row${G.own ? " own" : ""}` }, el("span", { class: "size" }, fmtBytes(G.bytes)),
+      el("span", { class: "what" },
+        el("b", {}, G.project || "—"), G.own ? el("span", { class: "pill" }, "this page") : null,
+        G.dashboard ? [" ", el("a", { class: "dash", href: G.dashboard, target: G.dashboard.startsWith(location.pathname) ? null : "_blank", rel: "noopener", title: "this project's dashboard" }, "dashboard ↗")] : null,
+        v ? [el("br"), el("span", { class: "note" }, v)] : null,
+        el("br"), ...parts.flatMap((p, i) => (i ? [el("span", { class: "sep" }, " · "), p] : [p]))));
+  };
+  setKids(pop, el("div", { class: "loaded-head" }, `${plural(list.length, "project")} — ${plural(LOADED.size, "file")} — ${fmtBytes(bytes)}`), ...list.map(row));
 }
 function loadedUi() {
   const box = el("span", { id: "loaded" });
@@ -2707,9 +2743,9 @@ async function boot() {
     return;
   }
   setupProjects();
-  if (window.__KTW_STATE__) { noteLoaded(location.href.split("#")[0], JSON.stringify(window.__KTW_STATE__), "state"); applyState(normalizeState(window.__KTW_STATE__)); }
+  if (window.__KTW_STATE__) { noteLoaded(location.href.split("#")[0], JSON.stringify(window.__KTW_STATE__), "page", { own: true }); applyState(normalizeState(window.__KTW_STATE__)); }
   else {
-    try { const text = await (await fetch(api("/api/state.json"), { cache: "no-store" })).text(); noteLoaded(new URL(api("/api/state.json"), location.href).href, text, "state"); applyState(normalizeState(JSON.parse(text))); }
+    try { const text = await (await fetch(api("/api/state.json"), { cache: "no-store" })).text(); noteLoaded(new URL(api("/api/state.json"), location.href).href, text, "state", { own: true }); applyState(normalizeState(JSON.parse(text))); }
     catch (err) { $("#main").append(el("p", { class: "center" }, PROJECT ? `No state for project "${PROJECT}" — unknown id or unknown location.` : "Could not load the state — is the server running?")); }
   }
   connectLive();

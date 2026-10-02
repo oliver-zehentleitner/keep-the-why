@@ -256,9 +256,9 @@ kbd { font-family: var(--mono); font-size: 11px; background: var(--bg3); border:
 #loaded { position: relative; }
 .loaded-pop { position: absolute; bottom: 22px; left: 0; z-index: 5; min-width: 420px; max-width: 70vw; max-height: 50vh; overflow: auto; background: var(--bg2); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font-size: 11px; box-shadow: 0 6px 24px rgba(0,0,0,.35); }
 .loaded-head { color: var(--fg); margin-bottom: 6px; }
-.loaded-row { display: grid; grid-template-columns: 64px 44px 1fr; gap: 8px; align-items: baseline; padding: 3px 0; border-top: 1px solid var(--line); }
+.loaded-row { display: grid; grid-template-columns: 64px 1fr; gap: 8px; align-items: baseline; padding: 3px 0; border-top: 1px solid var(--line); }
 .loaded-row .what { min-width: 0; line-height: 1.35; } .loaded-row .what b { color: var(--fg); font-weight: 500; } .loaded-row .what .note { white-space: nowrap; }
-.loaded-row .what a { display: block; }
+.loaded-row .what a { display: inline; }
 .loaded-row .size { text-align: right; color: var(--fg); font-variant-numeric: tabular-nums; }
 .loaded-row .kind { color: var(--fg3); }
 .loaded-row a { color: var(--fg2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -493,3 +493,7 @@ a.author:hover { color: var(--accent2); }
 .reader .crumbs .share-btn.done { color: var(--active); border-color: var(--active); }
 .globe-intro .globe-list p { margin: 4px 0 8px; line-height: 1.45; }
 .globe-intro .globe-actions label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+.loaded-row.own { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.loaded-row .what .pill { margin-left: 6px; font-size: 10px; }
+.loaded-row .what a.dash, .loaded-row .what span a { display: inline; }
+.loaded-row .what .sep { color: var(--fg3); }
