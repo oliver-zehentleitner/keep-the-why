@@ -383,3 +383,20 @@ The two shell snippets in `references/autostart.md` and `references/ci-linting.m
 **Rejected alternative:** a separate marketplace repository — one more place for a version to go stale, for a single plugin. Also rejected: documenting the route without the `--sparse` flag. The plugin root is the repository root, so a plain add copies docs, linter, evals and dashboard (about 13 MB); the sparse checkout brings `.claude-plugin/` and `skills/` plus the root files, about 0.6 MB. Codex has no equivalent flag, which is why that install stays large (`TODO.md`, "Lean Codex plugin").
 
 **Consequence:** the marketplace file carries no version, so the release checklist has nothing to bump there; `plugin.json` next to it is already covered. A `#<tag>` pin works from the first release that contains the file. The plugin ships the skill only — no hook — so the start path is still the setup's job, written into the project where collaborators get it too.
+
+## The link check reads github.com blob links from raw.githubusercontent.com
+
+**Id:** c2accce6-0b5b-4541-a101-04cb8a227e4b
+**Type:** workaround
+**Status:** active
+**Evidence:** confirmed
+**Source:** Link Check runs on main and on pull requests, 2026-10-02 — five red runs in a row, every finding a 503 on a `github.com/.../blob/...` page, none a 404
+**Revisit when:** github.com stops throttling blob pages for Actions runners, or lychee checks github.com links through the API on its own
+
+`lychee.toml` remaps every `https://github.com/<owner>/<repo>/blob/<ref>/<path>` to `https://raw.githubusercontent.com/<owner>/<repo>/<ref>/<path>` before checking it. A missing file is still a 404 there; what is lost is the line anchor, which the check never verified anyway.
+
+**Reason:** the repository links its own files by blob URL in many places (permalinks into `docs/evals.md`, `LICENSE`, references at `latest`), and github.com answers a burst of those page requests from a runner with 503 — from one afternoon on in every run, so a re-run no longer helped. raw.githubusercontent.com serves the same file at the same ref as a plain file and does not throttle that way.
+
+**Rejected alternative:** accepting 503 as a pass. Rejected because it would also pass a host that is really down, for every link, not only GitHub's.
+
+**Rejected alternative:** excluding github.com blob links. Rejected because a renamed or deleted file would then go unnoticed — the main thing the check exists for.

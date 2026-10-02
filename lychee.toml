@@ -39,3 +39,11 @@ exclude = [
   "^https://keepthewhy\\.com/dashboard/",
   "^https://github\\.com/oliver-zehentleitner/keep-the-why/tree/main/dashboard",
 ]
+
+# github.com answers a burst of blob-page requests from an Actions runner with
+# 503; the same file at the same ref is checked on raw.githubusercontent.com,
+# which serves it as a plain file and does not throttle that way. Only the
+# file's existence at that ref is checked either way (no line anchors).
+remap = [
+  "^https://github\\.com/([^/]+)/([^/]+)/blob/([^#?]+)(?:[#?].*)?$ https://raw.githubusercontent.com/$1/$2/$3",
+]
