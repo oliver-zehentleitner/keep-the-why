@@ -505,3 +505,7 @@ a.author:hover { color: var(--accent2); }
 .badges-pop .badge-item img { height: 20px; display: block; margin-bottom: 6px; }
 .badges-pop .badge-field { display: grid; grid-template-columns: 36px 1fr auto; gap: 6px; align-items: center; margin-top: 3px; }
 .badges-pop .badge-field input { font: 10px var(--mono, monospace); background: var(--bg); color: var(--fg2); border: 1px solid var(--line); border-radius: 3px; padding: 2px 4px; min-width: 0; }
+.loaded-failed { margin-top: 10px; border-top: 2px solid var(--warn); padding-top: 4px; }
+.loaded-row.failed .err { color: var(--fg); }
+.loaded-row.failed a { word-break: break-all; }
+#loaded > a .warn { color: var(--warn); }

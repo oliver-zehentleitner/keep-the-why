@@ -59,6 +59,12 @@ const FOREIGN_TIMEOUT_MS = 10000, FOREIGN_MAX_BYTES = 20 * 1024 * 1024;
 // own state, the family's, the friends', what a See into another repository resolved. The status bar
 // counts the states and sums the bytes; a click lists them. Measured as bytes of the text received.
 const LOADED = new Map(); // url -> { bytes, kind, at }
+const FAILED = new Map(); // url -> { error, kind, canonical?, at } — a fetch that did not come back; dropped when it later succeeds
+function noteFailed(url, error, extra = {}) {
+  const kind = /state\.body\.json/.test(url) ? "bodies" : /state\.json/.test(url) ? "state" : /\.keep-the-why/.test(url) ? "config" : /index\.json/.test(url) ? "registry index" : "file";
+  FAILED.set(String(url), { ...(FAILED.get(String(url)) || {}), error, kind, at: Date.now(), ...extra });
+  renderLoaded();
+}
 const bytesOf = (text) => { try { return new TextEncoder().encode(text).length; } catch { return String(text).length; } };
 const fmtBytes = (b) => (b >= 1024 * 1024 ? `${(b / 1024 / 1024).toFixed(2)} MB` : b >= 1024 ? `${(b / 1024).toFixed(1)} KB` : `${b} B`);
 function noteLoaded(url, text, kind, extra = {}) {
@@ -70,14 +76,14 @@ function noteLoaded(url, text, kind, extra = {}) {
     if (kind === "state" || kind === "page") { const s = JSON.parse(text); r.project = s.project?.id || ""; r.schema = s.project?.schema || ""; r.dashboard = s.dashboard || ""; r.linter = s.linter || ""; r.lean = typeof s.bodies === "string"; }
     else if (kind === "config") { r.schema = configLine(text, "context-schema") || ""; r.project = configLine(text, "id") || ""; }
   } catch { /* not JSON, or not a state: the size and address still count */ }
-  LOADED.set(String(url), r);
+  LOADED.set(String(url), r); FAILED.delete(String(url));
   renderLoaded();
 }
 const loadedTotals = () => { let bytes = 0, states = 0; for (const r of LOADED.values()) { bytes += r.bytes; if (r.kind === "state" || r.kind === "page") states++; } return { bytes, states, files: LOADED.size }; };
 function renderLoaded() {
   const box = $("#loaded"); if (!box) return;
   const { bytes, states } = loadedTotals();
-  const a = box.querySelector("a"); if (a) a.textContent = `${plural(states, "state")} · ${fmtBytes(bytes)}`;
+  const a = box.querySelector("a"); if (a) { setKids(a, `${plural(states, "state")} · ${fmtBytes(bytes)}`, FAILED.size ? el("span", { class: "warn" }, ` · ⚠ ${FAILED.size} failed`) : null); }
   const pop = box.querySelector(".loaded-pop"); if (pop) fillLoadedPop(pop);
 }
 // The state monitor, one line per project: which files of it the page holds — the state, its bodies, its
@@ -130,12 +136,20 @@ function fillLoadedPop(pop) {
         v ? [el("br"), el("span", { class: "note" }, v)] : null,
         el("br"), ...parts.flatMap((p, i) => (i ? [el("span", { class: "sep" }, " · "), p] : [p]))));
   };
-  setKids(pop, el("div", { class: "loaded-head" }, `${plural(list.length, "project")} — ${plural(LOADED.size, "file")} — ${fmtBytes(bytes)}`), ...list.map(row));
+  // what did not come back: a block of its own at the bottom, reached from the header's warning
+  const failed = [...FAILED.entries()].sort((x, y) => y[1].at - x[1].at);
+  const failedBlock = failed.length ? el("div", { class: "loaded-failed", id: "loaded-failed" }, el("div", { class: "loaded-head warn" }, `Not loaded (${failed.length})`),
+    ...failed.map(([url, f]) => el("div", { class: "loaded-row failed" }, el("span", { class: "size warn" }, "⚠"),
+      el("span", { class: "what" }, el("b", {}, f.canonical ? repoLabel(f.canonical) : f.kind), el("span", { class: "note" }, ` — ${f.kind}`),
+        el("br"), el("span", { class: "err" }, (f.error.startsWith(`${url}: `) ? f.error.slice(url.length + 2) : f.error.endsWith(` for ${url}`) ? f.error.slice(0, -(url.length + 5)) : f.error)), // the address is linked below; say it once
+        el("br"), el("a", { href: url, target: "_blank", rel: "noopener", title: "open it in the browser — does it answer at all?" }, `${url} ↗`))))) : null;
+  const toFailed = failed.length ? el("a", { href: "#", class: "warn", onclick: (ev) => { ev.preventDefault(); pop.querySelector("#loaded-failed")?.scrollIntoView?.({ block: "start", behavior: "smooth" }); } }, ` · ⚠ ${failed.length} not loaded ↓`) : null;
+  setKids(pop, el("div", { class: "loaded-head" }, `${plural(list.length, "project")} — ${plural(LOADED.size, "file")} — ${fmtBytes(bytes)}`, toFailed), ...list.map(row), failedBlock);
 }
 function loadedUi() {
   const box = el("span", { id: "loaded" });
   const pop = el("div", { class: "loaded-pop", hidden: true });
-  const a = el("a", { href: "#", title: "what this page has loaded: every state.json and .keep-the-why, with its size and address", onclick: (ev) => { ev.preventDefault(); pop.hidden = !pop.hidden; if (!pop.hidden) fillLoadedPop(pop); } }, "");
+  const a = el("a", { href: "#", title: "what this page has loaded: every state.json and .keep-the-why, with its size and address — and what did not come back", onclick: (ev) => { ev.preventDefault(); pop.hidden = !pop.hidden; if (!pop.hidden) { fillLoadedPop(pop); if (FAILED.size) pop.querySelector("#loaded-failed")?.scrollIntoView?.({ block: "start" }); } } }, "");
   box.append(a, pop);
   return box;
 }
@@ -150,12 +164,14 @@ async function fetchForeign(url) {
     noteLoaded(url, text);
     return text;
   } catch (err) {
-    if (err?.name === "AbortError") throw new Error(`${url} did not answer within ${FOREIGN_TIMEOUT_MS / 1000} s`);
     // A request the browser refuses to show the page — no CORS header on the host — and a host that is down
     // reach the page as the same TypeError, by design: it may not learn why another origin said no. Name both,
-    // and the header a host serving exports needs, so "blocked" is not mistaken for "nothing there".
-    if (err?.name === "TypeError") throw new Error(`${url}: network error or blocked by CORS — the browser does not say which. A host serving Keep the Why exports must send Access-Control-Allow-Origin.`);
-    throw err;
+    // and the header a host serving exports needs, so "blocked" is not mistaken for "nothing there". Every
+    // failure is recorded for the state monitor, which lists what did not come back beside what did.
+    const e = err?.name === "AbortError" ? new Error(`${url} did not answer within ${FOREIGN_TIMEOUT_MS / 1000} s`)
+      : err?.name === "TypeError" ? new Error(`${url}: network error or blocked by CORS — the browser does not say which. A host serving Keep the Why exports must send Access-Control-Allow-Origin.`) : err;
+    noteFailed(url, e?.message || String(e));
+    throw e;
   }
   finally { clearTimeout(timer); }
 }
@@ -165,12 +181,12 @@ function fetchPublicState(canonical, root = "") {
   return (PUBLIC_STATES[key] ||= loadPublicState(canonical, root));
 }
 async function loadPublicState(canonical, root) {
-  let result;
+  let result, url = "";
   const raw = rawFileUrl(canonical, root, ".keep-the-why");
   try {
-    const url = configLine(await fetchForeign(raw), "dashboard-state");
-    if (!url) result = { error: `no dashboard-state line in the published .keep-the-why (${raw}) — this project has no published export yet`, raw, missingLine: true };
-    else if (!/^https:\/\//.test(url)) result = { error: `dashboard-state is not an https URL: ${url}`, raw };
+    url = configLine(await fetchForeign(raw), "dashboard-state");
+    if (!url) { result = { error: `no dashboard-state line in the published .keep-the-why (${raw}) — this project has no published export yet`, raw, missingLine: true }; noteFailed(raw, result.error, { canonical }); }
+    else if (!/^https:\/\//.test(url)) { result = { error: `dashboard-state is not an https URL: ${url}`, raw }; noteFailed(raw, result.error, { canonical }); }
     else {
       const state = normalizeState(JSON.parse(await fetchForeign(url)));
       state.__url = url; // where it came from: its bodies, if kept beside it, resolve against this
@@ -180,10 +196,14 @@ async function loadPublicState(canonical, root) {
       // forked from as its canonical — shown as that fork, with what it says it is a fork of
       const origin = state.project?.git?.remote ? `https://${state.project.git.remote}` : "";
       if (claimed && !sameCanonical(claimed, canonical) && origin && sameCanonical(origin, canonical)) result = { state, url, canonical, root, raw, forkOf: claimed };
-      else if (claimed && !sameCanonical(claimed, canonical)) result = { error: `the export at ${url} belongs to ${claimed}, not to ${canonical}`, raw };
+      else if (claimed && !sameCanonical(claimed, canonical)) { result = { error: `the export at ${url} belongs to ${claimed}, not to ${canonical}`, raw }; noteFailed(url, result.error, { canonical }); }
       else result = { state, url, canonical, root, raw };
     }
-  } catch (err) { result = { error: `could not fetch the export: ${err?.message || "network error or blocked by CORS"}`, raw }; }
+  } catch (err) {
+    result = { error: `could not fetch the export: ${err?.message || "network error or blocked by CORS"}`, raw };
+    for (const u of [raw, url]) { const f = u && FAILED.get(u); if (f) f.canonical = canonical; } // the failed fetch belongs to this repository
+    renderLoaded();
+  }
   return result;
 }
 // An export since dashboard 0.6.0 keeps its entries' bodies in state.body.json beside state.json (`bodies` names

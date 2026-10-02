@@ -624,6 +624,15 @@ const report = {};
   if (hubs.join() !== "acme/far:1,acme/farther:registry") errors.push("globe: after the registry the graph should hold far (hop 1) and farther (registry): " + hubs.join());
   if (!/from the registry/.test(d.querySelector(".graph-legend")?.textContent || "")) errors.push("globe: the legend does not say 'from the registry'");
   if (!/acme\/gone not loaded · registry/.test(d.querySelector(".graph-legend")?.textContent || "")) errors.push("globe: a registry project that did not load is not named in the legend");
+  // the state monitor lists what did not come back: a count in the bar and the header, a block at the bottom
+  if (!/⚠ \d+ failed/.test(d.querySelector("#loaded > a")?.textContent || "")) errors.push("monitor: the bar does not count the failures: " + d.querySelector("#loaded > a")?.textContent);
+  d.querySelector("#loaded > a").click(); await tick(50);
+  const failedRows = [...d.querySelectorAll("#loaded-failed .loaded-row")].map((r) => r.textContent.replace(/\s+/g, " "));
+  report.monitorFailed = failedRows;
+  if (!failedRows.some((r) => /acme\/blocked — state/.test(r) && /blocked by CORS/.test(r) && /acme\.github\.io\/blocked\/state\.json/.test(r))) errors.push("monitor: blocked's state is not in the failures with its reason and address");
+  if (!failedRows.some((r) => /acme\/gone/.test(r))) errors.push("monitor: gone is not in the failures");
+  if (!/⚠ \d+ not loaded ↓/.test(d.querySelector(".loaded-pop .loaded-head")?.textContent || "")) errors.push("monitor: the header does not link to the failures");
+  d.querySelector("#loaded > a").click(); await tick(50);
   const blocked = [...d.querySelectorAll(".graph-legend .warn")].find((x) => /acme\/blocked not loaded/.test(x.textContent));
   if (!blocked || !/blocked by CORS/.test(blocked.title) || !/Access-Control-Allow-Origin/.test(blocked.title)) errors.push("globe: a host without CORS is not named as possibly blocked by CORS: " + blocked?.title);
   // the registry switched off and on again offers its projects again (their states come from memory)
