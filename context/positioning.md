@@ -139,3 +139,21 @@ README, landing page and installation page lead with one sentence for the agent 
 **Reason:** the many install routes — skills CLI, gh, asm, five plugin and package mechanisms, the manual copy — are a choice the person should not have to make; the agent knows which of them it supports. The person then talks to one interface for everything: the skill, and each optional component.
 
 **Rejected alternative:** a single recommended command for everyone, as before. Rejected: one command still leaves the person to know their agent's flags, scope and plugin mechanism, which is where installs failed.
+
+## The landing page's demo is a scripted, vendor-neutral simulation, not a recording
+
+**Id:** d75f1afd-14d7-46c2-8c2d-da4f91c6740d
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer design discussion, 2026-10-02 (the idea came from pi.dev's in-page agent demo; "simulation, neutral, asking is enough in the third chapter")
+**Revisit when:** the README's GIF and the landing page's demo tell visibly different stories, or a reader takes the simulation for a recording
+**See:** positioning.md#the-agent-is-the-installation-interface-the-skill-is-the-one-required-part — 2196306f-e2e1-4d07-ab12-41eacd335081 — as of 2026-10-02
+
+The landing page shows a simulated agent session in place of the GIF: a terminal and the project's files side by side, in three chapters — install and set up from the one sentence, learn a reason the code cannot show and record it, a later session that reads it and asks instead of repeating the change. It is a script played by `docs/assets/demo/demo.js`, plain JavaScript without dependencies, in no particular agent's look. Chapters 2 and 3 are re-enacted from the rejected-change experiment's transcripts, and the caption says it is simulated. With `prefers-reduced-motion` it is a static transcript; without JavaScript the old GIF stands in. The README keeps its GIF — GitHub runs no script.
+
+**Reason:** a recording is tied to one agent's interface and to one session's noise, and every change means recording again; Keep the Why works with any agent, and the story is the mechanism, not a vendor's terminal. A script stays text: edited in a pull request, readable by a screen reader, small. Grounding the lines in real transcripts keeps it honest.
+
+**Rejected alternative:** an asciinema recording of a real session, the way pi.dev does it. Rejected for the reasons above.
+
+**Rejected alternative:** a fourth chapter for "asks when unsure". The maintainer's call: the third chapter's closing question already shows it.

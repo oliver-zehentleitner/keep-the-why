@@ -1,0 +1,130 @@
+/* The landing page's simulated agent session (demo.js): a terminal on the
+   left, the project's files on the right. The terminal stays dark in both
+   site themes, the way a terminal does; the frame follows the theme. */
+
+.ktw-demo {
+  --demo-bg: #0f1720;
+  --demo-bg-2: #15202b;
+  --demo-fg: #d3dce8;
+  --demo-dim: #7d8ea3;
+  --demo-user: #7ee0c3;
+  --demo-tool: #8fb8ff;
+  --demo-ok: #8be28b;
+  --demo-mod: #f0c674;
+  --demo-read: #8fb8ff;
+  --demo-accent: #b59cff;
+  --demo-line: #26333f;
+  margin: 0;
+  border: 1px solid var(--ktw-border, rgba(127, 127, 127, .3));
+  border-radius: .5rem;
+  overflow: hidden;
+  background: var(--demo-bg);
+  color: var(--demo-fg);
+  font-family: var(--md-code-font-family, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+  font-size: .68rem;
+  line-height: 1.5;
+}
+
+.ktw-demo__bar {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .45rem .7rem;
+  background: var(--demo-bg-2);
+  border-bottom: 1px solid var(--demo-line);
+}
+.ktw-demo__dots { display: flex; gap: .3rem; flex: none; }
+.ktw-demo__dots span { width: .55rem; height: .55rem; border-radius: 50%; background: #34424f; }
+.ktw-demo__title { color: var(--demo-dim); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ktw-demo__tabs { display: flex; gap: .25rem; flex: none; }
+.ktw-demo button {
+  font: inherit;
+  color: var(--demo-dim);
+  background: transparent;
+  border: 1px solid var(--demo-line);
+  border-radius: .3rem;
+  padding: .1rem .5rem;
+  cursor: pointer;
+}
+.ktw-demo button:hover,
+.ktw-demo button:focus-visible { color: var(--demo-fg); border-color: var(--demo-dim); outline: none; }
+.ktw-demo button[aria-pressed="true"] { color: var(--demo-bg); background: var(--demo-accent); border-color: var(--demo-accent); }
+
+.ktw-demo__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+  height: 24rem;
+}
+
+.ktw-demo__term {
+  padding: .6rem .75rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #34424f transparent;
+}
+.ktw-demo__line { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0 0 .35rem; }
+.ktw-demo__session { color: var(--demo-dim); border-top: 1px dashed var(--demo-line); padding-top: .35rem; margin-top: .2rem; }
+.ktw-demo__status { color: var(--demo-ok); }
+.ktw-demo__user { color: var(--demo-fg); background: rgba(126, 224, 195, .07); border-left: 2px solid var(--demo-user); padding: .25rem .45rem; }
+.ktw-demo__user::before { content: "› "; color: var(--demo-user); }
+.ktw-demo__tool { color: var(--demo-dim); }
+.ktw-demo__tool b { color: var(--demo-tool); font-weight: 600; }
+.ktw-demo__tool::before { content: "● "; color: var(--demo-ok); }
+.ktw-demo__out { color: var(--demo-dim); margin-top: -.3rem; padding-left: 1.1rem; }
+.ktw-demo__out::before { content: "⎿ "; }
+.ktw-demo__agent { color: var(--demo-fg); }
+.ktw-demo__cursor::after { content: "▍"; color: var(--demo-user); animation: ktw-demo-blink 1s steps(1) infinite; }
+@keyframes ktw-demo-blink { 50% { opacity: 0; } }
+
+.ktw-demo__side {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-left: 1px solid var(--demo-line);
+  background: var(--demo-bg-2);
+}
+.ktw-demo__tree { padding: .55rem .7rem; border-bottom: 1px solid var(--demo-line); flex: none; }
+.ktw-demo__tree ul { list-style: none; margin: 0; padding: 0; }
+.ktw-demo__tree li { margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--demo-dim); transition: color .4s; }
+.ktw-demo__tree li[data-state] { color: var(--demo-fg); }
+.ktw-demo__tree li[data-state]::after { margin-left: .4rem; font-size: .6rem; }
+.ktw-demo__tree li[data-state="new"]::after { content: "new"; color: var(--demo-ok); }
+.ktw-demo__tree li[data-state="mod"]::after { content: "changed"; color: var(--demo-mod); }
+.ktw-demo__tree li[data-state="read"]::after { content: "read"; color: var(--demo-read); }
+.ktw-demo__tree li.is-hot { background: rgba(181, 156, 255, .12); }
+.ktw-demo__file { padding: .55rem .7rem; overflow-y: auto; flex: 1; min-height: 0; }
+.ktw-demo__file-name { color: var(--demo-accent); margin-bottom: .3rem; }
+.ktw-demo__file pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; color: var(--demo-fg); background: none; }
+.ktw-demo__file .h { color: var(--demo-fg); font-weight: 700; }
+.ktw-demo__file .k { color: var(--demo-accent); }
+.ktw-demo__file-empty { color: var(--demo-dim); }
+
+.ktw-demo__foot {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  padding: .45rem .7rem;
+  background: var(--demo-bg-2);
+  border-top: 1px solid var(--demo-line);
+  color: var(--demo-dim);
+}
+.ktw-demo__caption { flex: 1; min-width: 0; }
+.ktw-demo__foot button { flex: none; }
+
+.ktw-demo .ktw-demo__sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* reduced motion: the whole session as a static transcript, no player */
+.ktw-demo.is-static .ktw-demo__body { height: auto; }
+.ktw-demo.is-static .ktw-demo__term { max-height: 32rem; }
+.ktw-demo.is-static .ktw-demo__tabs,
+.ktw-demo.is-static .ktw-demo__foot button { display: none; }
+
+@media screen and (max-width: 40em) {
+  .ktw-demo { font-size: .64rem; }
+  .ktw-demo__bar { flex-wrap: wrap; }
+  .ktw-demo__tabs { width: 100%; }
+  .ktw-demo__tabs button { flex: 1; }
+  .ktw-demo__body { grid-template-columns: 1fr; height: auto; }
+  .ktw-demo__term { height: 20rem; }
+  .ktw-demo__side { border-left: 0; border-top: 1px solid var(--demo-line); max-height: 15rem; }
+}

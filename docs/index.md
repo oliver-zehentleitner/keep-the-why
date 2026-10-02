@@ -29,7 +29,11 @@ Open source under the [MIT license](https://keepthewhy.com/license/) — the ski
 </div>
 
 <div class="ktw-hero__demo">
-<img src="assets/keep-the-why-readme.gif" alt="Keep the Why captures the reason an attempted retry-wrapper simplification was abandoned, stores it as versioned Markdown in context/retries.md, and lets a later agent session retrieve that reasoning instead of repeating the attempt." loading="lazy">
+<link rel="stylesheet" href="assets/demo/demo.css">
+<div data-ktw-demo>
+<noscript><img src="assets/keep-the-why-readme.gif" alt="Keep the Why captures the reason an attempted retry-wrapper simplification was abandoned, stores it as versioned Markdown in context/retries.md, and lets a later agent session retrieve that reasoning instead of repeating the attempt." loading="lazy"></noscript>
+</div>
+<script src="assets/demo/demo.js" defer></script>
 </div>
 
 </div>
