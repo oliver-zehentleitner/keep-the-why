@@ -109,16 +109,24 @@ function fillLoadedPop(pop) {
     const st = G.files.state, b = G.files.bodies, c = G.files.config;
     const v = st ? [st.schema ? `ktw ${st.schema}` : null, st.dashboard ? `dashboard ${st.dashboard}` : null, st.linter ? `lint ${st.linter}` : null].filter(Boolean).join(" · ") : c?.schema ? `ktw ${c.schema}` : "";
     const parts = [];
-    if (st) parts.push(el("span", {}, fileLink(st, "state"), ` ${fmtBytes(st.bytes)}`,
+    if (st) parts.push(el("span", {}, `state ${fmtBytes(st.bytes)}`,
       el("span", { class: "note" }, st.kind === "page" ? " — embedded in this page, in full" : st.own && !st.lean && LIVE() ? " — from the local server, in full" : st.lean ? " — lean, bodies beside it" : " — in full")));
-    if (b) parts.push(el("span", {}, fileLink(b, "bodies"), ` ${fmtBytes(b.bytes)}`));
+    if (b) parts.push(el("span", {}, `bodies ${fmtBytes(b.bytes)}`));
     else if (st?.lean) parts.push(el("span", { class: "note" }, "bodies not loaded — fetched when an entry is opened"));
-    if (c) parts.push(el("span", {}, fileLink(c, ".keep-the-why"), ` ${fmtBytes(c.bytes)}`));
-    if (G.files.other) parts.push(el("span", {}, fileLink(G.files.other, "file"), ` ${fmtBytes(G.files.other.bytes)}`));
+    if (c) parts.push(el("span", {}, `.keep-the-why ${fmtBytes(c.bytes)}`));
+    if (G.files.other) parts.push(el("span", {}, `file ${fmtBytes(G.files.other.bytes)}`));
+    // the links on a line of their own, under the name: the dashboard, then each file that came
+    const links = [
+      G.dashboard ? el("a", { class: "dash", href: G.dashboard, target: G.dashboard.startsWith(location.pathname) ? null : "_blank", rel: "noopener", title: "this project's dashboard" }, "dashboard ↗") : null,
+      st && st.kind !== "page" ? fileLink(st, "state ↗") : null,
+      b ? fileLink(b, "bodies ↗") : null,
+      c ? fileLink(c, ".keep-the-why ↗") : null,
+      G.files.other ? fileLink(G.files.other, "file ↗") : null,
+    ].filter(Boolean);
     return el("div", { class: `loaded-row${G.own ? " own" : ""}` }, el("span", { class: "size" }, fmtBytes(G.bytes)),
       el("span", { class: "what" },
         el("b", {}, G.project || "—"), G.own ? el("span", { class: "pill" }, "this page") : null,
-        G.dashboard ? [" ", el("a", { class: "dash", href: G.dashboard, target: G.dashboard.startsWith(location.pathname) ? null : "_blank", rel: "noopener", title: "this project's dashboard" }, "dashboard ↗")] : null,
+        links.length ? [el("br"), ...links.flatMap((a, i) => (i ? [el("span", { class: "sep" }, " · "), a] : [a]))] : null,
         v ? [el("br"), el("span", { class: "note" }, v)] : null,
         el("br"), ...parts.flatMap((p, i) => (i ? [el("span", { class: "sep" }, " · "), p] : [p]))));
   };
