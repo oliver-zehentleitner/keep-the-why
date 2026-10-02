@@ -25,3 +25,4 @@ https://github.com/oliver-zehentleitner/unicorn-binance-depth-cache-cluster
 https://github.com/oliver-zehentleitner/unicorn-fy
 https://github.com/oliver-zehentleitner/ubdcc-dashboard
 https://github.com/zyvop/zyvop-cli
+https://github.com/rapt0p7/scenegrid-console
