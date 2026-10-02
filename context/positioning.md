@@ -156,4 +156,6 @@ The landing page shows a simulated agent session in place of the GIF: a terminal
 
 **Rejected alternative:** an asciinema recording of a real session, the way pi.dev does it. Rejected for the reasons above.
 
+**Consequence (2026-10-02, maintainer review of the first version):** the point is that a *fresh* agent finds the reason, so the session boundary is a banner of its own ("NEW SESSION · fresh agent, no memory of session 1"); what Keep the Why does is marked apart from the agent's output ("◆ Keep the Why · captured rationale", "… found relevant context") — a marker of the demo, not a line any agent prints; a strip above the terminal tells the story in six words for someone half watching; the agent's lines are cut to cause and effect; the end holds on the second agent's answer instead of moving on; and "simulated coding-agent sessions" stands in the title bar the whole time. Installation stays the first chapter, shortened — how fast it goes is part of the message.
+
 **Rejected alternative:** a fourth chapter for "asks when unsure". The maintainer's call: the third chapter's closing question already shows it.

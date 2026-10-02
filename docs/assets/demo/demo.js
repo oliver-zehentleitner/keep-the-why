@@ -95,70 +95,70 @@
   var INITIAL_FILES = ["AGENTS.md", "README.md", "src/gateway.py", "src/orders.py"];
   var INITIAL_CONTENT = { "src/gateway.py": GATEWAY, "AGENTS.md": "# AGENTS.md\n\n- Run the tests with `make test`." };
 
-  // Step kinds: session (a new session starts), status, user, tool (name, arg,
-  // optional out), agent, file (path, state new|mod|read, optional content).
+  // Step kinds: banner (a session starts; reset = the agent's memory is gone),
+  // status, user, tool (name, arg, optional out), agent (optional payoff),
+  // ktw (what Keep the Why did, marked apart from the agent's own output),
+  // file (path, state new|mod|read, optional content). `beat` lights the
+  // story strip above the terminal.
+  var BEATS = ["installed", "simplify", "constraint found", "saved", "new session", "agent knows"];
+
   var CHAPTERS = [
     {
       label: "1 · Install",
-      caption: "One sentence to the agent: it installs the skill and sets the project up.",
+      caption: "Installed and set up: one sentence to the agent.",
       steps: [
-        { k: "session", text: "~/order-service · new session" },
+        { k: "banner", text: "SETUP · ~/order-service" },
         { k: "user", text: "Install the Keep the Why skill — pick the best installation method for you from https://keepthewhy.com/installation/ — then set up Keep the Why in this project with default settings, including autostart." },
-        { k: "tool", name: "Fetch", arg: "keepthewhy.com/installation/", out: "\"For agents reading this page\": skills CLI, pinned to latest" },
-        { k: "tool", name: "Bash", arg: "npx skills add https://github.com/oliver-zehentleitner/keep-the-why/tree/latest/skills/keep-the-why -y", out: "✓ keep-the-why installed" },
+        { k: "tool", name: "Fetch", arg: "keepthewhy.com/installation/", out: "skills CLI, pinned to latest" },
+        { k: "tool", name: "Bash", arg: "npx skills add …/keep-the-why/tree/latest/skills/keep-the-why -y", out: "✓ keep-the-why installed" },
         { k: "file", path: ".agents/skills/keep-the-why/", state: "new", content: "SKILL.md\nreferences/\nexamples/" },
-        { k: "agent", text: "Installed. This session started before the skill existed, so I'm reading the installed SKILL.md and following its setup." },
-        { k: "tool", name: "Read", arg: ".agents/skills/keep-the-why/SKILL.md" },
-        { k: "tool", name: "Write", arg: ".keep-the-why" },
+        { k: "tool", name: "Write", arg: ".keep-the-why · context/ · AGENTS.md (autostart)" },
         { k: "file", path: ".keep-the-why", state: "new", content: KEEP_THE_WHY },
-        { k: "tool", name: "Write", arg: "context/README.md, AGENTS.md, CLAUDE.md, index.md" },
         { k: "file", path: "context/README.md", state: "new", content: "# Project context\n\nThis directory is the why layer of the\nproject's memory: the reasoning behind\nthe code, kept next to it." },
         { k: "file", path: "context/AGENTS.md", state: "new", content: "Before creating or editing anything in this\ndirectory, invoke the keep-the-why skill." },
         { k: "file", path: "context/CLAUDE.md", state: "new", content: "@AGENTS.md" },
         { k: "file", path: "context/index.md", state: "new", content: INDEX_EMPTY },
-        { k: "tool", name: "Edit", arg: "AGENTS.md — the Keep the Why section (autostart)" },
         { k: "file", path: "AGENTS.md", state: "mod", content: AGENTS_AFTER },
-        { k: "agent", text: "Set up with the defaults.\n  project:  context/ · capture from now on · ask only when unsure · every session loads the skill (AGENTS.md)\n  personal: proactive capture · questions as one list · the linter checks each write\nOptional, whenever you want them: the linter as a CI workflow, the dashboard on GitHub Pages." }
+        { k: "ktw", text: "project set up → .keep-the-why, context/", beat: 0 },
+        { k: "agent", text: "Done: default settings, autostart on. Every session here loads the skill." }
       ]
     },
     {
       label: "2 · Learn",
-      caption: "A change is about to be made. The reason against it was never written down — until now.",
+      caption: "The reason against a change lives in one head — until it is captured.",
       steps: [
-        { k: "session", text: "~/order-service · new session" },
-        { k: "status", text: "keep-the-why loaded (AGENTS.md)" },
-        { k: "user", text: PROMPT_SIMPLIFY },
+        { k: "banner", text: "SESSION 1" },
+        { k: "status", text: "keep-the-why loaded" },
+        { k: "user", text: PROMPT_SIMPLIFY, beat: 1 },
         { k: "tool", name: "Read", arg: "src/gateway.py" },
         { k: "file", path: "src/gateway.py", state: "read" },
         { k: "tool", name: "Read", arg: "context/index.md", out: "nothing about retries" },
-        { k: "agent", text: "retry_with_jitter has one behavior a plain loop would drop: on 429 it waits for the server's Retry-After instead of its own backoff. Nothing in the repository says whether that is deliberate. Two ways:\n  1. keep Retry-After, merge the two near-identical branches\n  2. drop Retry-After — a true plain loop, and a behavior change\nWhich one?" },
-        { k: "user", text: "Neither. We tried a plain loop last spring: the limiter sends a different Retry-After per request, the loop kept retrying too early, repeated 429s under load. Leave it." },
-        { k: "agent", text: "Leaving it as it is. That is a reason the code cannot show, so I'm recording it." },
-        { k: "tool", name: "Write", arg: "context/retries.md" },
+        { k: "agent", text: "Nothing on disk explains the Retry-After branch. Drop it for a plain loop?" },
+        { k: "user", text: "No. We tried that: the limiter sends a per-request Retry-After, and a plain loop hit 429s under load.", beat: 2 },
         { k: "file", path: "context/retries.md", state: "new", content: RETRIES },
-        { k: "tool", name: "Edit", arg: "context/index.md" },
         { k: "file", path: "context/index.md", state: "mod", content: INDEX_RETRIES },
-        { k: "tool", name: "Bash", arg: "ktw-lint .", out: "0 error(s), 0 warning(s)" },
-        { k: "agent", text: "Recorded in context/retries.md: the constraint, and the plain loop as the rejected alternative. No code changed." },
-        { k: "file", path: "context/retries.md", state: "new", content: RETRIES }
+        { k: "ktw", text: "captured rationale → context/retries.md", beat: 3 },
+        { k: "file", path: "context/retries.md", state: "new", content: RETRIES },
+        { k: "agent", text: "Recorded. Code unchanged." }
       ]
     },
     {
       label: "3 · Reuse",
-      caption: "Weeks later, someone has the same idea. The agent reads the why first — and asks instead of repeating it.",
+      caption: "A fresh agent, no memory of session 1 — it finds the reason and asks instead of repeating the change.",
       steps: [
-        { k: "session", text: "~/order-service · three weeks later · a colleague's session" },
-        { k: "status", text: "keep-the-why loaded (AGENTS.md)" },
+        { k: "banner", text: "NEW SESSION · fresh agent, no memory of session 1", reset: true, beat: 4 },
+        { k: "banner", text: "SESSION 2 · three weeks later" },
+        { k: "status", text: "keep-the-why loaded" },
         { k: "user", text: PROMPT_SIMPLIFY },
-        { k: "tool", name: "Read", arg: "context/index.md", out: "R: retries.md — why retry_with_jitter isn't a plain retry loop" },
-        { k: "tool", name: "Read", arg: "context/retries.md" },
         { k: "file", path: "context/retries.md", state: "read", content: RETRIES },
-        { k: "agent", text: "context/retries.md records that this exact change was considered and rejected: the gateway's limiter sends a per-request Retry-After, and a plain loop retries before it resets — repeated 429s under load.\nSo I won't replace it. What I can do without changing behavior: merge the two near-identical branches into one loop body. Want that, or leave it as it is?" }
+        { k: "ktw", text: "found relevant context → context/retries.md", beat: 5 },
+        { k: "agent", payoff: true, text: "I found why this was rejected before: the limiter sends a per-request Retry-After, and a plain loop hits 429s under load. I won't replace it. Merge the two branches without changing behavior instead?" }
       ]
     }
   ];
 
-  var FOOTNOTE = "Simulated. Chapters 2 and 3 are re-enacted from real sessions: with the entry on disk, 10 of 10 declined and cited it.";
+  var LABEL = "simulated coding-agent sessions";
+  var RESULT = "Re-enacted from real sessions: with the entry on disk, 10 of 10 declined and cited it.";
 
   function el(tag, cls, text) {
     var n = document.createElement(tag);
@@ -180,7 +180,7 @@
     dots.appendChild(el("span")); dots.appendChild(el("span")); dots.appendChild(el("span"));
     dots.setAttribute("aria-hidden", "true");
     bar.appendChild(dots);
-    bar.appendChild(el("span", "ktw-demo__title", "agent · ~/order-service"));
+    bar.appendChild(el("span", "ktw-demo__title", LABEL));
     var tabs = el("span", "ktw-demo__tabs");
     var tabButtons = CHAPTERS.map(function (ch, i) {
       var b = el("button", null, ch.label);
@@ -191,6 +191,21 @@
       return b;
     });
     bar.appendChild(tabs);
+
+    var story = el("div", "ktw-demo__story");
+    story.setAttribute("aria-hidden", "true");
+    var beatEls = BEATS.map(function (b, i) {
+      if (i) story.appendChild(el("span", "ktw-demo__arrow", "→"));
+      var n = el("span", "ktw-demo__beat", b);
+      story.appendChild(n);
+      return n;
+    });
+    function setBeat(n) {
+      beatEls.forEach(function (e, i) {
+        e.classList.toggle("is-done", i < n);
+        e.classList.toggle("is-active", i === n);
+      });
+    }
 
     var body = el("div", "ktw-demo__body");
     var term = el("div", "ktw-demo__term");
@@ -207,7 +222,7 @@
     body.appendChild(side);
 
     var foot = el("div", "ktw-demo__foot");
-    var caption = el("span", "ktw-demo__caption", FOOTNOTE);
+    var caption = el("span", "ktw-demo__caption", CHAPTERS[0].caption);
     var playBtn = el("button", null, "pause");
     playBtn.type = "button";
     foot.appendChild(caption);
@@ -217,6 +232,7 @@
     sr.textContent = transcriptText();
 
     root.appendChild(bar);
+    root.appendChild(story);
     root.appendChild(body);
     root.appendChild(foot);
     root.appendChild(sr);
@@ -291,14 +307,17 @@
         ch.steps.forEach(function (s) { renderInstant(s); });
       });
       term.scrollTop = 0;
+      setBeat(BEATS.length);
+      caption.textContent = RESULT;
       playBtn.hidden = true;
       return;
     }
     function renderInstant(s) {
-      if (s.k === "session") line("ktw-demo__session", s.text);
+      if (s.k === "banner") line("ktw-demo__banner" + (s.reset ? " ktw-demo__banner--reset" : ""), s.text);
+      else if (s.k === "ktw") line("ktw-demo__ktw", "◆ Keep the Why · " + s.text);
       else if (s.k === "status") line("ktw-demo__status", "✓ " + s.text);
       else if (s.k === "user") line("ktw-demo__user", s.text);
-      else if (s.k === "agent") line("ktw-demo__agent", s.text);
+      else if (s.k === "agent") line("ktw-demo__agent" + (s.payoff ? " is-payoff" : ""), s.text);
       else if (s.k === "tool") { toolLine(s); if (s.out) line("ktw-demo__out", s.out); }
       else if (s.k === "file") applyFile(s);
     }
@@ -338,7 +357,15 @@
       }
     }
     async function runStep(s, g) {
-      if (s.k === "session") { line("ktw-demo__session", s.text); await wait(500, g); }
+      if (s.beat != null) setBeat(s.beat);
+      if (s.k === "banner") {
+        if (s.reset) {
+          term.textContent = "";
+          line("ktw-demo__banner ktw-demo__banner--reset", s.text);
+          await wait(1800, g);
+        } else { line("ktw-demo__banner", s.text); await wait(450, g); }
+      }
+      else if (s.k === "ktw") { await wait(300, g); line("ktw-demo__ktw", "◆ Keep the Why · " + s.text); await wait(900, g); }
       else if (s.k === "status") { await wait(300, g); line("ktw-demo__status", "✓ " + s.text); await wait(400, g); }
       else if (s.k === "user") {
         var n = line("ktw-demo__user", "");
@@ -350,7 +377,7 @@
         if (s.out) { await wait(450, g); line("ktw-demo__out", s.out); }
         await wait(250, g);
       }
-      else if (s.k === "agent") { await wait(400, g); await streamInto(line("ktw-demo__agent", ""), s.text, g); await wait(700, g); }
+      else if (s.k === "agent") { await wait(300, g); await streamInto(line("ktw-demo__agent" + (s.payoff ? " is-payoff" : ""), ""), s.text, g); await wait(600, g); }
       else if (s.k === "file") { applyFile(s); await wait(350, g); }
     }
     function setChapterUi(i) {
@@ -366,18 +393,21 @@
       Object.keys(rows).forEach(function (p) { delete rows[p]; });
       renderTree();
       showFile(null);
+      var b = -1;
+      for (var k = 0; k < i; k++) CHAPTERS[k].steps.forEach(function (s) { if (s.beat != null) b = s.beat; });
+      setBeat(b);
     }
     async function playFrom(i) {
       var g = ++gen;
       try {
         for (var c = i; c < CHAPTERS.length; c++) {
           chapter = c;
-          setChapterUi(c);
           if (c > i) { await wait(2600, g); term.textContent = ""; Object.keys(rows).forEach(function (p) { delete rows[p]; }); renderTree(); }
+          setChapterUi(c);
           for (var s = 0; s < CHAPTERS[c].steps.length; s++) await runStep(CHAPTERS[c].steps[s], g);
         }
-        await wait(1500, g);
-        caption.textContent = FOOTNOTE;
+        await wait(4000, g);
+        caption.textContent = RESULT;
         playing = false;
         playBtn.textContent = "replay";
       } catch (e) {
@@ -401,7 +431,7 @@
 
     resetFiles();
     setChapterUi(0);
-    caption.textContent = FOOTNOTE;
+    setBeat(-1);
 
     function onVisible(v) {
       visible = v;
@@ -431,10 +461,11 @@
         if (s.k === "user") out.push("Developer: " + s.text);
         else if (s.k === "agent") out.push("Agent: " + s.text);
         else if (s.k === "tool") out.push("Agent runs " + s.name + " " + s.arg + (s.out ? " — " + s.out : ""));
-        else if (s.k === "session") out.push(s.text);
+        else if (s.k === "banner") out.push(s.text);
+        else if (s.k === "ktw") out.push("Keep the Why: " + s.text);
       });
     });
-    out.push(FOOTNOTE);
+    out.push(LABEL + ". " + RESULT);
     return out.join("\n");
   }
 
