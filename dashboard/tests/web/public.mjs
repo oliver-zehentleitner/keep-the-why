@@ -588,10 +588,12 @@ const report = {};
   const ctl = d.querySelector(".graph-ui .globe-ctl");
   if (!ctl) errors.push("globe: no globe group in the control bar");
   const sel = ctl?.querySelector("select");
-  if (!sel || sel.options.length !== 11 || sel.value !== "1") errors.push("globe: the hops choice is not off…10 with 1 chosen: " + sel?.options.length + " " + sel?.value);
+  if (!sel || sel.options.length !== 11 || sel.value !== "0" || sel.options[0].textContent !== "0 hops") errors.push("globe: the hops choice is not 0…10 hops with 0 chosen: " + sel?.options.length + " " + sel?.value + " " + sel?.options[0]?.textContent);
+  if (![...ctl.querySelectorAll("button")].find((b) => b.textContent === "go")?.disabled) errors.push("globe: go is not disabled at 0 hops");
+  sel.value = "1"; sel.dispatchEvent(new window.Event("change")); await tick(200);
   const before = fetched.length;
   window.__g().userMoved = true; // as if the reader had panned or zoomed
-  [...ctl.querySelectorAll("button")].find((b) => b.textContent === "go")?.click(); await tick(300);
+  [...d.querySelectorAll(".graph-ui .globe-ctl button")].find((b) => b.textContent === "go")?.click(); await tick(300);
   const dialog = d.querySelector(".globe-dialog");
   if (!dialog) errors.push("globe: no dialog before the first wave");
   report.globeWave1 = dialog?.querySelector("h3")?.textContent;
@@ -668,11 +670,12 @@ const report = {};
   g = window.__g();
   if (g.nodes.some((n) => n.kind === "project" && n.hop != null)) errors.push("globe: clear left globe repositories in the graph");
   if (!g.nodes.some((n) => n.kind === "project" && n.friend)) errors.push("globe: clear took the friends away too");
-  // hops off: the project alone — no friends, no family, no path
+  // 0 hops: what the graph shows — friends stay, no globe wave
   const selOff = d.querySelector(".graph-ui .globe-ctl select"); selOff.value = "0"; selOff.dispatchEvent(new window.Event("change")); await tick(300);
   g = window.__g();
-  if (g.nodes.some((n) => n.kind === "project")) errors.push("globe: at off the graph should hold the project alone, got hubs: " + g.nodes.filter((n) => n.kind === "project").map((n) => n.label).join());
-  if (!g.nodes.some((n) => n.kind === "topic" && !n.ext)) errors.push("globe: at off the project's own topics are gone");
+  if (g.nodes.some((n) => n.kind === "project" && n.hop != null)) errors.push("globe: at 0 hops a globe wave is still in the graph");
+  if (!g.nodes.some((n) => n.kind === "project" && n.friend)) errors.push("globe: at 0 hops the friends are gone — it should show what the graph shows");
+  if (!g.nodes.some((n) => n.kind === "topic" && !n.ext)) errors.push("globe: at 0 hops the project's own topics are gone");
   window.close();
 }
 {

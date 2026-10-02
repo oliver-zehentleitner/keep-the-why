@@ -316,6 +316,8 @@ The globe (`#globe`, the 🌐 at the end of the status bar) is the graph alone, 
 
 **Consequence (2026-10-01, maintainer decision):** the registry lists repositories, not exports. `registry/projects.txt` holds canonical URLs; the build reads each `.keep-the-why` at `HEAD` and follows `dashboard-state` — the way the dashboard's public mode starts from a canonical. A listed state URL went stale the moment an owner moved the export, and the check had to compare two URLs; a canonical stays right, and the check is that the export names its repository. A family is listed by its root: its `children` block brings the rest. Changed an hour after the first version went out, before anyone had listed by the old form.
 
+**Consequence (2026-10-02, maintainer review, dashboard 0.6.9):** the hops count from what the graph shows. The graph already draws the friends, so with *1 hop* as the default the first wave sat one step further out than its label, and *off* hid friends and family the graph had shown a moment before. *0 hops* is now the default and equals the graph view; a wave is always one step beyond what is drawn, and the globe no longer has a mode that shows less than the graph — hiding friends or family is their own switches' job.
+
 **Rejected alternative:** a page of its own for the globe, without thoughts and side pane. Rejected — a second legend, a second control bar and a second thoughts logic for the same graph; thoughts across three repositories are the interesting part, and the reader wants to walk on from the globe. The globe is the graph view with the side pane folded away.
 
 **Rejected alternative:** a browser `confirm` per wave. Rejected for the list — see the reason.

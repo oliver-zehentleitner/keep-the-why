@@ -1288,7 +1288,7 @@ function setFamilyNeighbours(on) { FAMILY_NB_ON = on; try { localStorage.setItem
 // merges search, queues and counts: "off" (the project alone, with friends and path), "linked" (the
 // members beside it with the entries linked here), "all" (the family graph, every member whole).
 const graphFamily = () => (!canFamily() ? "none" : !FAMILY_NB_ON ? "off" : FAMILY_ENTRIES ? "all" : "linked");
-const familyGraphShown = () => graphFamily() === "all" && !(GLOBE.view && GLOBE.hops === 0); // the globe at off shows the project alone
+const familyGraphShown = () => graphFamily() === "all";
 function autoFamily() {
   if (!FAMILY_NB_ON || !canFamily() || FAMILY_NB.groups || FAMILY_NB.loading) return;
   FAMILY_NB.loading = true;
@@ -1409,7 +1409,6 @@ function friendUnits(g) {
 }
 function addFriendLayer(g, prev) {
   const items = [];
-  if (GLOBE.view && GLOBE.hops === 0) return; // the globe at off: the project alone
   const trail = pathShown() ? TRAIL.filter((t) => !sameCentreAsGraph(g, t)) : [];
   trail.forEach((t, i) => items.push({
     k: `trail:${t.key}`, kind: "trail", color: PALETTE[(i + 2) % PALETTE.length], cited: PATH_ENTRIES ? null : "linked", // a path step is a neighbour like a friend: its own "all their entries" opens it
@@ -1819,7 +1818,7 @@ async function followChains(pick) {
 // in keepthewhy.com's registry, loaded as a wave of its own. Nothing of this is kept per browser: every load
 // from another host is a click, and a reload starts without it.
 const REGISTRY_URL = "https://keepthewhy.com/registry/index.json";
-const GLOBE = { view: false, hops: 1, extra: new Map(), failed: new Map(), busy: false, registry: false, registryUrl: REGISTRY_URL, done: 0, log: [] }; // failed: canonical key -> { canonical, error, hop }
+const GLOBE = { view: false, hops: 0, extra: new Map(), failed: new Map(), busy: false, registry: false, registryUrl: REGISTRY_URL, done: 0, log: [] }; // failed: canonical key -> { canonical, error, hop }
 function loadedCanonicals() {
   // what the page shows beside the project — not everything it ever fetched: a repository dropped from the
   // globe (clear, the registry switched off) is offered again, its state coming from memory
@@ -1904,7 +1903,7 @@ function globeIntro() {
     el("h3", {}, "🌐 The globe"),
     el("p", {}, "This project's graph, full width — and from here as far out as you choose. Nothing loads by itself: the graph grows only when you ask, with the controls at the top left."),
     el("div", { class: "globe-list" },
-      el("p", {}, el("b", {}, "Hops"), " — choose 1 to 10, then ", el("i", {}, "go"), ". Hop 1 is every repository the loaded entries cite outside the page, hop 2 what those cite, and so on. Before each wave a dialog lists the repositories and files it would fetch; you load them or stop there. ", el("i", {}, "off"), " shows this project alone."),
+      el("p", {}, el("b", {}, "Hops"), " — choose 1 to 10, then ", el("i", {}, "go"), ". Hop 1 is every repository the drawn entries cite beyond what the graph shows, hop 2 what those cite, and so on. Before each wave a dialog lists the repositories and files it would fetch; you load them or stop there. ", el("i", {}, "0 hops"), " — the default — shows what the graph shows: the project with its family and friends, as their switches have them; going back to it drops the waves."),
       el("p", {}, el("b", {}, "registry"), " — every project listed in the Keep the Why registry (keepthewhy.com/registry), loaded as a wave of its own, asked for the same way: projects that cite nothing of yours, and the ones that cite you. The ⓘ beside it says how a project gets listed."),
       el("p", {}, el("b", {}, "clear"), " drops what the globe loaded; friends, family and path stay.")),
     el("div", { class: "globe-actions" }, el("label", { class: "note", style: "margin-right:auto" }, never, " don't show this again"), el("button", { type: "button", class: "primary", onclick: close }, "got it"))));
@@ -1915,7 +1914,7 @@ function globeRefit() { for (const x of [graph, fgraph]) if (x) { x.userMoved = 
 function globeClear() { globeRefit(); GLOBE.extra.clear(); GLOBE.failed.clear(); GLOBE.done = 0; GLOBE.registry = false; GLOBE.log = []; if (fgraph) fgraph.at = 0; render(); }
 function globeUi(g) {
   if (!GLOBE.view) return null;
-  const sel = el("select", { title: "how many hops out from what is loaded — each wave is asked for with its count", onchange: (ev) => { GLOBE.hops = Number(ev.target.value); if (GLOBE.hops === 0) globeClear(); else render(); } }, ...Array.from({ length: 11 }, (_, i) => el("option", { value: String(i), selected: i === GLOBE.hops }, i === 0 ? "off" : `${i} hop${i === 1 ? "" : "s"}`)));
+  const sel = el("select", { title: "how many hops out from what is loaded — each wave is asked for with its count", onchange: (ev) => { GLOBE.hops = Number(ev.target.value); if (GLOBE.hops === 0) globeClear(); else render(); } }, ...Array.from({ length: 11 }, (_, i) => el("option", { value: String(i), selected: i === GLOBE.hops }, `${i} hop${i === 1 ? "" : "s"}`)));
   const go = el("button", { type: "button", class: "link-btn", disabled: GLOBE.busy || GLOBE.hops <= GLOBE.done, title: "load the next waves, one asked after the other", onclick: () => globeRun(GLOBE.hops) }, GLOBE.busy ? "loading…" : GLOBE.done ? `go on (${GLOBE.done} done)` : "go");
   const reg = el("label", { title: `every project listed in the registry — ${GLOBE.registryUrl}` }, el("input", { type: "checkbox", checked: GLOBE.registry, disabled: GLOBE.busy, onchange: (ev) => { if (ev.target.checked) globeRegistry(); else { for (const [k, f] of GLOBE.extra) if (f.registry) GLOBE.extra.delete(k); GLOBE.registry = false; render(); } } }), "registry");
   // an ⓘ beside the switch: what the registry is, and that one line in a pull request puts a project on it
