@@ -90,16 +90,7 @@ That is the whole setup: the skill is the one part a project needs. Three compon
 | "Publish the Keep the Why dashboard on GitHub Pages." | Your project's own [dashboard](https://keepthewhy.com/dashboard/) and live badge; the agent writes the workflow and tells you the one setting it needs (*Settings → Pages → Source: GitHub Actions*). |
 | "List this project in the Keep the Why registry." | A one-line pull request to the [registry](https://keepthewhy.com/registry/), so every published dashboard's globe can find your project. |
 
-**Then fill it.** A new `context/` starts empty and fills itself as you work. What the project already knows — scattered across commit messages, pull requests, issues, old docs and people's heads — can be gathered right away, one sentence each:
-
-| Say to your agent | What it does |
-|---|---|
-| "Go through the git history, pull requests, issues and existing docs, and collect the reasoning that is already there into `context/`." | A retrospective pass: reconstructs decisions, rejected alternatives and workarounds from what the repository already holds. What it cannot back up is marked `unknown`, never made up. |
-| "Interview me about this project — ask about what the code can't explain." | Analyzes the repository first, then asks targeted questions about the gaps it found. |
-| "I'll tell you about this project — listen, and record the decisions." | Free narration, for broad knowledge built up over years: the agent extracts the decisions and their alternatives, then closes the gaps with questions. |
-| "Check `context/` for entries that are stale or contradict the code." | Maintenance: contradictions surfaced, superseded entries marked, oversized files split. |
-
-By hand, with the commands below:
+### By hand
 
 `main` is active development, not guaranteed release-ready — pin to `latest` instead of tracking it directly (moved automatically by CI to the newest release; use an exact [tag](https://github.com/oliver-zehentleitner/keep-the-why/releases) instead for full reproducibility).
 
@@ -159,6 +150,17 @@ Also compatible with Windsurf, Goose, Roo Code, Trae, Factory, JetBrains Junie, 
 </details>
 
 Full install detail for every method, including tools without a skill runtime at all: [`docs/installation.md`](docs/installation.md) or [https://keepthewhy.com/installation/](https://keepthewhy.com/installation/).
+
+### Then fill it
+
+A new `context/` starts empty and fills itself as you work. What the project already knows — scattered across commit messages, pull requests, issues, old docs and people's heads — can be gathered right away, one sentence each:
+
+| Say to your agent | What it does |
+|---|---|
+| "Go through the git history, pull requests, issues and existing docs, and collect the reasoning that is already there into `context/`." | A retrospective pass: reconstructs decisions, rejected alternatives and workarounds from what the repository already holds. What it cannot back up is marked `unknown`, never made up. |
+| "Interview me about this project — ask about what the code can't explain." | Analyzes the repository first, then asks targeted questions about the gaps it found. |
+| "I'll tell you about this project — listen, and record the decisions." | Free narration, for broad knowledge built up over years: the agent extracts the decisions and their alternatives, then closes the gaps with questions. |
+| "Check `context/` for entries that are stale or contradict the code." | Maintenance: contradictions surfaced, superseded entries marked, oversized files split. |
 
 ### Also listed on
 
