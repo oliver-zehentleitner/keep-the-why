@@ -133,6 +133,12 @@ linter as a GitHub workflow"), the dashboard on the project's GitHub Pages ("pub
 Why dashboard on GitHub Pages" — the agent writes the workflow, the developer sets the
 repository's Pages source to GitHub Actions), and a listing in the registry ("list this project
 in the Keep the Why registry" — a one-line pull request; https://keepthewhy.com/registry/).
+After setup, what the project already knows can be gathered with one sentence each: "go
+through the git history, pull requests, issues and existing docs, and collect the reasoning
+that is already there into context/" (a retrospective pass; what cannot be backed up is marked
+unknown), "interview me about this project" (targeted questions about the gaps), "I'll tell you
+about this project — listen, and record the decisions" (free narration), and "check context/
+for entries that are stale or contradict the code" (maintenance).
 
 What a developer has to do, in full: install the skill (one command, `npx skills add …` above,
 for any of 70+ agents; other routes: https://keepthewhy.com/installation/ — or the sentence

@@ -18,6 +18,15 @@ Three components are optional. The agent knows how to set up each one, offers th
 | "Publish the Keep the Why dashboard on GitHub Pages." | Your project's own [dashboard](dashboard.md) and live badge. The agent writes the workflow and tells you the one setting it needs: the repository's *Settings → Pages → Build and deployment → Source: GitHub Actions*. |
 | "List this project in the Keep the Why registry." | A one-line pull request to the [registry](registry/index.md), so the globe of every published dashboard can find your project. Needs the published dashboard. |
 
+**Then fill it.** A new `context/` starts empty and fills itself as you work. What the project already knows — scattered across commit messages, pull requests, issues, old docs and people's heads — can be gathered right away, one sentence each:
+
+| Say to your agent | What it does |
+|---|---|
+| "Go through the git history, pull requests, issues and existing docs, and collect the reasoning that is already there into `context/`." | A retrospective pass: reconstructs decisions, rejected alternatives and workarounds from what the repository already holds. What it cannot back up is marked `unknown`, never made up. |
+| "Interview me about this project — ask about what the code can't explain." | Analyzes the repository first, then asks targeted questions about the gaps it found. |
+| "I'll tell you about this project — listen, and record the decisions." | Free narration, for broad knowledge built up over years: the agent extracts the decisions and their alternatives, then closes the gaps with questions. |
+| "Check `context/` for entries that are stale or contradict the code." | Maintenance: contradictions surfaced, superseded entries marked, oversized files split. |
+
 Everything below is for the agent doing the installing, and for anyone who prefers to do it by hand.
 
 ### For agents reading this page

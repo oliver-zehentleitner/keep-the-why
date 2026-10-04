@@ -48,6 +48,8 @@ Open source under the [MIT license](https://keepthewhy.com/license/) — the ski
 
 The skill is the one part a project needs, and that sentence covers any of 70+ agents (Claude Code, Codex, OpenCode, Cursor, …). Three components are optional, one sentence each whenever you want them — the linter as a GitHub workflow, the dashboard on GitHub Pages, a listing in the registry: the agent knows how, offers them, and does it only when you say so. All of it, and the commands by hand: the [installation page](installation.md). The defaults include the start path, so from then on every session in that project loads the skill by itself. The agent records the why as it surfaces and asks only when it is genuinely unsure. You never have to tell it what to write down.
 
+**Then fill it.** A new `context/` starts empty and fills itself as you work. What the project already knows — in commit messages, pull requests, issues, old docs and people's heads — is one sentence away: *"Go through the git history, pull requests, issues and existing docs, and collect the reasoning that is already there into `context/`."* What the agent cannot back up it marks `unknown`, never made up. For what lives only in someone's head: *"Interview me about this project."* More on the [installation page](installation.md#your-agent-is-the-interface).
+
 <div class="ktw-cards" markdown>
 
 <div class="ktw-card" markdown>
