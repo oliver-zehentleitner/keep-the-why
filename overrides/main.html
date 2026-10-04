@@ -32,7 +32,14 @@
       a.title = "The globe: every published Keep the Why project and how they cite each other";
       a.setAttribute("aria-label", a.title);
       a.textContent = "🌐";
-      inner.insertBefore(a, inner.querySelector(".md-search") || inner.querySelector(".md-header__source"));
+      // desktop: at the far right, after the repository's tag/stars/forks; narrow screens: before the search
+      var wide = window.matchMedia("(min-width: 60em)");
+      var place = function () {
+        if (wide.matches) inner.appendChild(a);
+        else inner.insertBefore(a, inner.querySelector(".md-search") || inner.querySelector(".md-header__source"));
+      };
+      place();
+      wide.addEventListener("change", place);
     })();
   </script>
   {#- The "See it in the dashboard" nav entry leaves the docs for the live export; open it in a new tab so the reader keeps their place. Material has no per-entry option for this. -#}

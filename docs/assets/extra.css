@@ -235,9 +235,9 @@
   margin: 0 .2rem;
   opacity: .9;
 }
-/* desktop: at the far right, after the repository's tag/stars/forks; on narrow screens it stays before the search */
+/* desktop: placed after the repository's tag/stars/forks by the script; a little room to them */
 @media screen and (min-width: 60em) {
-  .md-header__button.ktw-globe { order: 1; margin-left: .6rem; }
+  .md-header__button.ktw-globe { margin-left: .6rem; }
 }
 .md-header__button.ktw-globe:hover,
 .md-header__button.ktw-globe:focus-visible { opacity: 1; }
