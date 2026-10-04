@@ -229,11 +229,15 @@
 
 /* the globe link in the header bar (overrides/main.html) */
 .md-header__button.ktw-globe {
-  font-size: 1.1rem;
+  font-size: 1.5rem;
   line-height: 1;
   text-decoration: none;
   margin: 0 .2rem;
   opacity: .9;
+}
+/* desktop: at the far right, after the repository's tag/stars/forks; on narrow screens it stays before the search */
+@media screen and (min-width: 60em) {
+  .md-header__button.ktw-globe { order: 1; margin-left: .6rem; }
 }
 .md-header__button.ktw-globe:hover,
 .md-header__button.ktw-globe:focus-visible { opacity: 1; }
