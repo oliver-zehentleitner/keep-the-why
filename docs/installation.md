@@ -8,7 +8,7 @@ You don't have to read the rest of this page. Tell your coding agent:
 
 > Install the Keep the Why skill — pick the best installation method for you from https://keepthewhy.com/installation/ — then set up Keep the Why in this project with default settings, including autostart.
 
-That is the whole setup. The skill is the one part a project needs: the agent installs it, the [setup](#verifying-it-loaded) writes `.keep-the-why` and `context/`, autostart makes every later session load the skill by itself, and from then on the agent records the why as it surfaces. "Default settings" is a complete answer; leave it out and the agent shows you the settings as one list first.
+That is the whole setup. The skill is the one part a project needs: the agent installs it, the [setup](setup.md) writes `.keep-the-why` and `context/`, [autostart](autostart.md) makes every later session load the skill by itself, and from then on the agent records the why as it surfaces. "Default settings" is a complete answer; leave it out and the agent shows you the settings as one list first.
 
 Three components are optional. The agent knows how to set up each one, offers them where they fit, and does it only when you say so — one sentence each, now or any time later:
 
