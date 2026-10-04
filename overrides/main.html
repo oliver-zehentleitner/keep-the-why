@@ -19,6 +19,22 @@
 
 {% block scripts %}
   {{ super() }}
+  {#- The globe in the header bar, before the search: the dashboard's 🌐 — every published Keep the Why project and how they cite each other. Material has no header-link option; a new tab, like the dashboard entry in the nav. -#}
+  <script>
+    (function () {
+      var inner = document.querySelector(".md-header__inner");
+      if (!inner || inner.querySelector(".ktw-globe")) return;
+      var a = document.createElement("a");
+      a.className = "md-header__button ktw-globe";
+      a.href = "https://keepthewhy.com/dashboard/live/#globe";
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.title = "The globe: every published Keep the Why project and how they cite each other";
+      a.setAttribute("aria-label", a.title);
+      a.textContent = "🌐";
+      inner.insertBefore(a, inner.querySelector(".md-search") || inner.querySelector(".md-header__source"));
+    })();
+  </script>
   {#- The "See it in the dashboard" nav entry leaves the docs for the live export; open it in a new tab so the reader keeps their place. Material has no per-entry option for this. -#}
   <script>
     document.querySelectorAll('.md-nav__link[href^="https://keepthewhy.com/dashboard/live/"]').forEach(function (a) {

@@ -226,3 +226,15 @@
 
 .md-typeset .ktw-globe-link { font-size: .9rem; margin-top: -.4rem; }
 .md-typeset .ktw-globe-link a:first-child { font-size: 1.6rem; text-decoration: none; vertical-align: middle; margin-right: .2rem; }
+
+/* the globe link in the header bar (overrides/main.html) */
+.md-header__button.ktw-globe {
+  font-size: 1.1rem;
+  line-height: 1;
+  text-decoration: none;
+  margin: 0 .2rem;
+  opacity: .9;
+}
+.md-header__button.ktw-globe:hover,
+.md-header__button.ktw-globe:focus-visible { opacity: 1; }
+
