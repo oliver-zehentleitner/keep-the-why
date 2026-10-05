@@ -186,7 +186,7 @@ The skill carries what the README tells a person — what Keep the Why is, which
 **Source:** maintainer decision, 2026-10-05, after a check of the vendors' published brand rules
 **Revisit when:** the vendors whose marks need permission publish a compatibility or "works with" program, or permission is given in writing
 
-The README's second line and the landing page's hero, as its third paragraph, name the agents Keep the Why installs on — Claude Code, Codex, GitHub Copilot, Cursor, OpenClaw, Hermes Agent, Cline, OpenCode, Pi, Antigravity — as plain text; on the landing page the ones with an install route of their own (the plugins) link it, the rest go through the one command the line links.
+The README's second line and the landing page, under the demo above *How it works*, name the agents Keep the Why installs on — Claude Code, Codex, GitHub Copilot, Cursor, OpenClaw, Hermes Agent, Cline, OpenCode, Pi, Antigravity — as plain text; on the landing page the ones with an install route of their own (the plugins) link it, the rest go through the one command the line links.
 
 **Reason:** the three best-known names cannot carry a logo: Anthropic allows saying in plain text that a product runs Claude Code and requires written permission for any other use of its names or logos; OpenAI's brand guidelines say not to use its logo without permission; Google requires prior written consent for uses its brand documentation does not cover. Of the others, only some have a mark under an open license, and most publish no rules for third parties at all — which is no permission. A row where the best-known agents are text and the rest logos would point at the gap.
 
