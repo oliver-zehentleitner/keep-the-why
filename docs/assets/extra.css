@@ -43,7 +43,8 @@
 .md-typeset .ktw-agents {
   font-size: .72rem;
   line-height: 2;
-  margin: -.4rem 0 1rem;
+  margin: .2rem 0 0;
+  max-width: 48rem;
   color: var(--md-default-fg-color--light);
 }
 /* the agents as plain-text pills, all alike: no logos (most vendors' marks need written permission) */
