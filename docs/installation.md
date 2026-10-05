@@ -49,7 +49,7 @@ Install a tagged release (`latest`), never `main`. Then set up the project as th
 
 ### The short version, by hand
 
-For any of 70+ agents ([Claude Code](#also-installable-claude-code-plugin), [Codex](#also-installable-codex-plugin), [GitHub Copilot](#also-installable-github-copilot-cli-plugin), [Cursor](#also-installable-cursor-plugin), [Pi](#also-installable-pi-package), [Antigravity](#recommended-skills-cli), [OpenCode](#recommended-skills-cli), …), pinned to the newest release:
+For any of 70+ agents ([Claude Code](#also-installable-claude-code-plugin), [Codex](#also-installable-codex-plugin), [GitHub Copilot](#also-installable-github-copilot-cli-plugin), [Cursor](#also-installable-cursor-plugin), [Pi](#also-installable-pi-package), [Antigravity](#recommended-skills-cli), [OpenCode](#recommended-skills-cli), [OpenClaw](#recommended-skills-cli), [Hermes Agent](#recommended-skills-cli), [Cline](#recommended-skills-cli), …), pinned to the newest release:
 
 ```bash
 npx skills add https://github.com/oliver-zehentleitner/keep-the-why/tree/latest/skills/keep-the-why
@@ -71,7 +71,7 @@ Replace `latest` with an exact [tag](https://github.com/oliver-zehentleitner/kee
 npx skills add oliver-zehentleitner/keep-the-why
 ```
 
-Either form prompts for which of its 70+ supported agents ([Claude Code](#also-installable-claude-code-plugin), [Codex](#also-installable-codex-plugin), [GitHub Copilot](#also-installable-github-copilot-cli-plugin), [Cursor](#also-installable-cursor-plugin), [Pi](#also-installable-pi-package), [Antigravity](#recommended-skills-cli), [OpenCode](#recommended-skills-cli), and more) and scope (project or personal) to install for, then installs via symlink or copy, your choice. Also listed on [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why).
+Either form prompts for which of its 70+ supported agents ([Claude Code](#also-installable-claude-code-plugin), [Codex](#also-installable-codex-plugin), [GitHub Copilot](#also-installable-github-copilot-cli-plugin), [Cursor](#also-installable-cursor-plugin), [Pi](#also-installable-pi-package), [Antigravity](#recommended-skills-cli), [OpenCode](#recommended-skills-cli), [OpenClaw](#recommended-skills-cli), [Hermes Agent](#recommended-skills-cli), [Cline](#recommended-skills-cli), and more) and scope (project or personal) to install for, then installs via symlink or copy, your choice. Also listed on [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why).
 
 ## Also recommended: GitHub CLI
 
