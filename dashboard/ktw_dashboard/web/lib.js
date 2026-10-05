@@ -40,6 +40,11 @@ export function normalizeState(s) {
 }
 
 export const slug = (t) => t.toLowerCase().replace(/[^\w\- ]/g, "").replace(/ /g, "-");
+// A heading's anchor as the host renders it (GitHub's rule: lowercase, everything but letters, digits,
+// `_`, `-` and spaces dropped, spaces to hyphens; letters beyond ASCII kept) — for links into the host,
+// not the dashboard's own entry id, which turns an apostrophe or a slash into a hyphen. export.py's
+// list without JavaScript uses the same rule. A repeated heading's `-1` suffix is not reproduced.
+export const hostAnchor = (title) => String(title || "").toLowerCase().replace(/[^\p{L}\p{N}_\- ]/gu, "").replace(/ /g, "-");
 
 // The one place host URL grammar lives: a file (and heading anchor) of a
 // repository as its host renders it. Everything else in Keep the Why keeps

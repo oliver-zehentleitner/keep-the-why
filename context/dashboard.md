@@ -484,4 +484,4 @@ The page hides its app shell under `<noscript>` and shows a notice instead. In a
 
 **Rejected alternative:** the entry bodies in the static list. Rejected for size; the export already embeds the state once for the script.
 
-**Consequence:** the host's URL forms are written twice, in `lib.js` (`hostFileLink`) and in `export.py` (`host_file_link`). Heading anchors in the static list follow GitHub's rule (`slug` in `lib.js`), not the dashboard's entry id, which differs for titles with an apostrophe or a dot.
+**Consequence:** the host's URL forms are written twice, in `lib.js` (`hostFileLink`) and in `export.py` (`host_file_link`). Heading anchors in the static list follow GitHub's rule (`hostAnchor` in `lib.js`, since 0.6.16 also behind *open on the host*), not the dashboard's entry id, which differs for titles with an apostrophe or a dot.

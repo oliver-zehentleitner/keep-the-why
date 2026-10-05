@@ -102,7 +102,7 @@ def noscript_body(state: dict) -> str:
         )
         items = []
         for e in by_file.get(file, []):
-            # the heading's anchor as the host renders it (GitHub's rule, as `slug` in lib.js), not the
+            # the heading's anchor as the host renders it (GitHub's rule, as `hostAnchor` in lib.js), not the
             # dashboard's own entry id, which differs for a title with an apostrophe or a dot
             anchor = re.sub(r"[^\w\- ]", "", (e.get("title") or "").lower()).replace(
                 " ", "-"

@@ -25,6 +25,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Fixed
 
+- `keep-the-why-dashboard` 0.6.16: *open on the host* lands on the entry's heading. The link's anchor came from the dashboard's entry id, which turns an apostrophe, a slash or a backtick into a hyphen where GitHub drops it — for 57 of this repository's 127 entries the host opened the file at the top. The anchor now follows GitHub's rule (`hostAnchor`), as the list without JavaScript does; checked against github.com, 126 of 127 land (a title with nested code spans does not). The entry ids, and every link inside the dashboard, are unchanged.
 - `keep-the-why-dashboard` 0.6.13: the globe on a phone. Its full-width rules, more specific than the phone layout, put every area of the page into a zero-wide first column — the counts and the navigation stood letter by letter, the graph got no room. They apply from 901 px up now; on a phone the globe is the graph in the one-column layout, with the navigation above it.
 - `keep-the-why-dashboard` 0.6.10: the thought being read is held in the graph beside the reader however the reader was reached. *read ›* used to keep the highlight only when the thought had been clicked first; without that click — or on a link or a reload — the graph showed everything undimmed and the thought only lit while an entry was pointed at.
 

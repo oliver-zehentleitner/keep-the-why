@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import {
   esc, plural, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, canonicalOf,
   parseSupersededBy, kindLabel, typeName, groupByFamily, searchTerms, searchHit, compareHits, snippetAt, highlight,
-  resolveLocation, bodyProse, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, HOSTS, hostOf, backlinksUrl, citingOf,
+  resolveLocation, bodyProse, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, HOSTS, hostOf, backlinksUrl, citingOf, hostAnchor,
 } from "../../ktw_dashboard/web/lib.js";
 
 test("esc escapes the five HTML characters and nothing else", () => {
@@ -317,4 +317,14 @@ test("citingOf: one item per citing repository, only citations of Ids held here"
   assert.equal(r.elsewhere, 1);
   assert.deepEqual(citingOf(null, [U(1)]), { citing: [], elsewhere: 0 });
   assert.deepEqual(citingOf({ cited_by: "x" }, [U(1)]), { citing: [], elsewhere: 0 });
+});
+
+test("hostAnchor: a heading's anchor as GitHub renders it, not the entry id", () => {
+  // each checked against the heading's id on github.com
+  assert.equal(hostAnchor("The wizard now asks about activation reliability, and delegates setup to the current agent's own platform"), "the-wizard-now-asks-about-activation-reliability-and-delegates-setup-to-the-current-agents-own-platform");
+  assert.equal(hostAnchor("Setup/init state is tracked opportunistically"), "setupinit-state-is-tracked-opportunistically");
+  assert.equal(hostAnchor("`context/` gets `AGENTS.md`/`CLAUDE.md` guard files"), "context-gets-agentsmdclaudemd-guard-files");
+  assert.equal(hostAnchor("Snake_case and hy-phens stay"), "snake_case-and-hy-phens-stay");
+  assert.equal(hostAnchor("Größe über alles"), "größe-über-alles");
+  assert.equal(hostAnchor(null), "");
 });
