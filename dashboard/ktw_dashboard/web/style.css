@@ -515,3 +515,16 @@ a.author:hover { color: var(--accent2); }
 .loaded-row.failed .err { color: var(--fg); }
 .loaded-row.failed a { word-break: break-all; }
 #loaded > a .warn { color: var(--warn); }
+
+/* without JavaScript: a notice, in an export the project's topics and entries as links to its host, and what Keep the Why is */
+.nojs { max-width: 860px; margin: 0 auto; padding: 24px 16px 48px; line-height: 1.5; }
+.nojs a { color: var(--accent2); }
+.nojs-brand { display: inline-block; margin-bottom: 8px; }
+.nojs-brand img { display: block; height: 29px; width: auto; }
+.nojs-need { color: var(--fg2); border-left: 3px solid var(--accent); padding-left: 12px; }
+.nojs h1 { font-size: 22px; margin: 24px 0 4px; overflow-wrap: anywhere; }
+.nojs h2 { font-size: 17px; margin: 24px 0 6px; }
+.nojs ul { padding-left: 20px; margin: 4px 0; }
+.nojs li { margin: 3px 0; }
+.nojs .nojs-meta { color: var(--fg3); font-size: 13px; }
+.nojs-about { margin-top: 36px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--fg2); }

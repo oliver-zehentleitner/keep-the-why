@@ -466,3 +466,22 @@ The graph's *cited by* switch fetches the registry's backlink file for this repo
 **Rejected alternative:** loading the backlinks with the friends, on by default. Rejected for the request on every open. A separate drawing for citing repositories was not needed: the hub list and legend say *cites this project*, and the arrow of the See already points from the citing entry to the cited one.
 
 **Consequence:** only citations of Ids this export holds are drawn — a repository's file covers every project in it, and a cited entry may be gone — the rest is counted beside the switch. A 404 for the file means nothing in the registry cites the repository, not a failure.
+
+## Without JavaScript an export lists its entries as links to the host; the Keep the Why note uses the page's own logo
+
+**Id:** 80a781e1-ab6e-4a51-83cf-e31382659bcf
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer report and request, 2026-10-05 ("with JavaScript disabled the dashboard is completely empty"; a note on Keep the Why with logo and links); the static list in the export was the assisting agent's proposal, accepted
+**Revisit when:** the page gains a rendering that works without the script anyway, or the list makes exports noticeably larger
+
+The page hides its app shell under `<noscript>` and shows a notice instead. In an export, the notice is followed by the project's topics and entries — title, status, evidence — each linked to its file and heading on the host, then a short paragraph on Keep the Why with the wordmark and links to keepthewhy.com. Bodies are left out. The local server shows the notice and the paragraph alone.
+
+**Reason:** the page was blank without JavaScript — for a reader who disabled it, a text browser, a screen reader, and a crawler that does not run scripts, which also left the exports' titles and description from the static head as the only thing to index. The export already has the state in Python, so the list costs a few kilobytes and no script; the Markdown itself is one click away on the host.
+
+**Rejected alternative:** the logo as an image from keepthewhy.com. Rejected: `<noscript>` content loads like any page content, so every view without JavaScript would ask keepthewhy.com — the page asks other hosts only for what a person opens. The wordmark the page already inlines is used instead.
+
+**Rejected alternative:** the entry bodies in the static list. Rejected for size; the export already embeds the state once for the script.
+
+**Consequence:** the host's URL forms are written twice, in `lib.js` (`hostFileLink`) and in `export.py` (`host_file_link`). Heading anchors in the static list follow GitHub's rule (`slug` in `lib.js`), not the dashboard's entry id, which differs for titles with an apostrophe or a dot.
