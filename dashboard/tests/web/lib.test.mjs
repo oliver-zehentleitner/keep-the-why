@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import {
   esc, plural, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, canonicalOf,
   parseSupersededBy, kindLabel, typeName, groupByFamily, searchTerms, searchHit, compareHits, snippetAt, highlight,
-  resolveLocation, bodyProse, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, HOSTS, hostOf,
+  resolveLocation, bodyProse, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, HOSTS, hostOf, backlinksUrl, citingOf,
 } from "../../ktw_dashboard/web/lib.js";
 
 test("esc escapes the five HTML characters and nothing else", () => {
@@ -288,4 +288,33 @@ test("hostOf reads the platform from the URL alone; an unknown host gets none", 
   assert.equal(name(""), null);
   assert.equal(name(undefined), null);
   for (const h of HOSTS) assert.match(h.path, /^[Mm][\d.\s,\-a-zA-Z]+$/, h.name);
+});
+
+test("backlinksUrl: the registry's path for a repository, or none", () => {
+  const idx = "https://keepthewhy.com/registry/index.json";
+  assert.equal(backlinksUrl(idx, "https://github.com/Acme/Widget/"), "https://keepthewhy.com/registry/backlinks/github.com/acme/widget.json");
+  assert.equal(backlinksUrl(idx, "https://github.com/acme/widget.git"), "https://keepthewhy.com/registry/backlinks/github.com/acme/widget.json");
+  for (const c of ["", null, "http://github.com/a/b", "https://gitlab.com/group/sub/app", "https://github.com/acme", "https://github.com/../x", "https://github.com/a/b%2Fc"]) assert.equal(backlinksUrl(idx, c), null, String(c));
+});
+
+test("citingOf: one item per citing repository, only citations of Ids held here", () => {
+  const U = (n) => `${n}${n}${n}${n}${n}${n}${n}${n}-0000-4000-8000-000000000000`;
+  const file = { cited_by: [
+    { from: "https://github.com/b/two", entry: U(3), to: U(1), kind: "see" },
+    { from: "https://github.com/a/one", entry: U(4), to: U(1), kind: "see" },
+    { from: "https://github.com/a/one", entry: U(5), to: U(2), kind: "superseded_by" },
+    { from: "https://github.com/a/one", entry: U(4), to: U(2), kind: "see" },
+    { from: "https://github.com/a/one", entry: U(6), to: U(9), kind: "see" }, // an Id not held here
+    { from: "https://github.com/fam/member", entry: U(7), to: U(1), kind: "see" }, // family: drawn already
+    { from: "javascript:alert(1)", entry: U(8), to: U(1) },
+    null,
+  ] };
+  const r = citingOf(file, [U(1), U(2)], ["https://github.com/fam/member/"]);
+  assert.deepEqual(r.citing, [
+    { canonical: "https://github.com/a/one", uuids: [U(4), U(5)] },
+    { canonical: "https://github.com/b/two", uuids: [U(3)] },
+  ]);
+  assert.equal(r.elsewhere, 1);
+  assert.deepEqual(citingOf(null, [U(1)]), { citing: [], elsewhere: 0 });
+  assert.deepEqual(citingOf({ cited_by: "x" }, [U(1)]), { citing: [], elsewhere: 0 });
 });

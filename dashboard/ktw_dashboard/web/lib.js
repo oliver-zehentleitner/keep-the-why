@@ -181,6 +181,34 @@ export function resolveLocation(location, canonical, root = "") {
 // Superseded by, minus the canonicals in `exclude` (this project, its
 // family). One row per repository with the Ids cited there, sorted by
 // canonical. Derived from the entries alone — nothing is fetched here.
+// The registry's backlink file for a repository: `<registry>/backlinks/<host>/<owner>/<repo>.json`,
+// lowercase — the path the registry build writes (tools/registry/build.py, backlink_path), so only for
+// a URL of exactly three plain segments; anything else has no file, and null says so.
+export function backlinksUrl(registryIndexUrl, canonical) {
+  const m = String(canonical || "").trim().replace(/\/+$/, "").replace(/\.git$/, "").match(/^https:\/\/([^/]+)\/([^/]+)\/([^/]+)$/);
+  if (!m) return null;
+  const parts = m.slice(1).map((x) => x.toLowerCase());
+  if (parts.some((x) => !/^[a-z0-9._-]+$/.test(x) || x === "." || x === "..")) return null;
+  return `${String(registryIndexUrl).replace(/[^/]*$/, "")}backlinks/${parts.join("/")}.json`;
+}
+// Who cites this project, from a backlink file: one item per citing repository — its canonical and the Ids
+// of its entries that cite here — in the friends' shape, so it loads and draws like one. Only citations of
+// an Id this project holds count (a repository's file covers every project in it; a cited entry may be gone);
+// the rest is counted apart. Repositories in `exclude` (this project, its family) are drawn already.
+export function citingOf(file, ownUuids, exclude = []) {
+  const norm = (c) => String(c || "").replace(/\/+$/, "").toLowerCase();
+  const skip = new Set(exclude.filter(Boolean).map(norm));
+  const own = new Set(ownUuids || []);
+  const out = new Map(); let elsewhere = 0;
+  for (const c of (file && Array.isArray(file.cited_by) ? file.cited_by : [])) {
+    if (!c || typeof c.from !== "string" || !c.from.startsWith("https://") || !c.entry || skip.has(norm(c.from))) continue;
+    if (!own.has(c.to)) { elsewhere++; continue; }
+    const k = norm(c.from);
+    if (!out.has(k)) out.set(k, { canonical: c.from.replace(/\/+$/, ""), uuids: [] });
+    const f = out.get(k); if (!f.uuids.includes(c.entry)) f.uuids.push(c.entry);
+  }
+  return { citing: [...out.values()].sort((a, b) => norm(a.canonical).localeCompare(norm(b.canonical))), elsewhere };
+}
 export function friendsOf(entries, exclude = []) {
   const norm = (c) => String(c || "").replace(/\/+$/, "").toLowerCase();
   const skip = new Set(exclude.filter(Boolean).map(norm));

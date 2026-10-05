@@ -448,3 +448,21 @@ Hubs and repository links show the platform's mark — GitHub, GitLab, Codeberg,
 **Rejected alternative:** a `state.links.json` written by every dashboard export, read by the registry. Rejected for the reasons above; its one advantage, a smaller download, does not matter at the registry's size.
 
 **Consequence:** the target's path comes from a foreign export, so it is accepted only as three plain segments under `backlinks/` (a nested GitLab group gets no file), and one export counts with at most 500 citations — without both bounds a listed project could write outside the directory or fill the site. Where the cited repository was loaded in the same build, `resolved` says whether the cited Id exists; elsewhere the field is left out rather than guessed. Citations from an export in its 30-day grace are missing from that build — the build keeps no state between runs.
+
+## "Cited by" is fetched from the registry on a click, never remembered, and drawn the way friends are
+
+**Id:** 707ff0bf-6e58-4f8b-a0ec-b634f7ce98ea
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer review, 2026-10-05 ("cited by" as a filter, loaded on the click; the agent's proposal, accepted)
+**See:** dashboard.md#the-registry-build-derives-backlinks-from-the-exports-it-already-loads-no-links-file-in-the-export — d8791f26-64b7-47df-9a2c-188f55562ae2 — as of 2026-10-05
+**Revisit when:** the backlink files move out of the registry, or the page gains a way to know who cites it without asking a host
+
+The graph's *cited by* switch fetches the registry's backlink file for this repository when it is checked, and loads the repositories in it through the friends' path: the same unit, the same drawing, the citing entries joined to the cited ones by the See and Superseded by the layer already draws both ways. The state is reset when the centre moves and is not stored in the browser.
+
+**Reason:** loaded automatically, every dashboard would ask keepthewhy.com on every open: a central dependency for a page that otherwise needs nothing, and a record of who looks at which dashboard. The page asks other hosts only for what a person opens; a remembered switch would break that on the next reload. Drawing citing repositories as friends reuses what works — loading, families, failures in the Friends view — instead of a second mechanism.
+
+**Rejected alternative:** loading the backlinks with the friends, on by default. Rejected for the request on every open. A separate drawing for citing repositories was not needed: the hub list and legend say *cites this project*, and the arrow of the See already points from the citing entry to the cited one.
+
+**Consequence:** only citations of Ids this export holds are drawn — a repository's file covers every project in it, and a cited entry may be gone — the rest is counted beside the switch. A 404 for the file means nothing in the registry cites the repository, not a failure.

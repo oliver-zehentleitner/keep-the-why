@@ -52,6 +52,11 @@ const FILES = {
   "https://raw.githubusercontent.com/acme/blocked/HEAD/.keep-the-why": config("acme---blocked", ["- dashboard-state: https://acme.github.io/blocked/state.json"]),
   "https://raw.githubusercontent.com/acme/farther/HEAD/.keep-the-why": config("acme---farther", ["- dashboard-state: https://acme.github.io/farther/state.json"]),
   "https://acme.github.io/farther/state.json": state("acme---farther", { canonical: `${GH}/farther` }, [entry("The origin", "Where it started.", { uuid: FARTHER_ID, evidence: "inferred", git: { created: { date: "2026-08-01" } } })]),
+  // the registry's backlinks for far: notes cites it; a citation of an Id far does not hold counts apart
+  "https://keepthewhy.com/registry/backlinks/github.com/acme/far.json": JSON.stringify({ canonical: `${GH}/far`, checked: "2026-10-05", cited_by: [
+    { from: `${GH}/notes`, entry: NOTES_ID, title: "Notes", kind: "see", to: FAR_ID, as_of: "2026-09-29", resolved: true },
+    { from: `${GH}/refs`, entry: "5a1e5a1e-0000-4000-8000-000000000004", title: "Cites elsewhere", kind: "see", to: "5a1e5a1e-0000-4000-8000-00000000dead", as_of: "2026-09-29", resolved: false },
+  ] }),
   // an export that claims to be another repository's
   "https://raw.githubusercontent.com/acme/impostor/HEAD/.keep-the-why": config("acme---impostor", ["- dashboard-state: https://acme.github.io/impostor/state.json"]),
   "https://acme.github.io/impostor/state.json": state("acme---impostor", { canonical: `${GH}/suite` }, [entry("Release together", "A copy.", { uuid: NOTES_ID })]),
@@ -703,6 +708,46 @@ const report = {};
   if (md[1] !== "[![Keep the Why · live](https://acme.github.io/suite/keep-the-why-dashboard/badge-entries.svg)](https://acme.github.io/suite/keep-the-why-dashboard/)") errors.push("badges: the live badge's Markdown is wrong: " + md[1]);
   if (!/<a href="https:\/\/acme\.github\.io\/suite\/keep-the-why-dashboard\/"><img alt="keep the why" src="https:\/\/acme\.github\.io\/suite\/keep-the-why-dashboard\/badge-entries-flat\.svg"><\/a>/.test(items[2]?.querySelectorAll(".badge-field input")[1]?.value || "")) errors.push("badges: the flat badge's HTML is wrong");
   if (report.shareOnLocal !== `https://acme.github.io/suite/keep-the-why-dashboard/#entry/${SUITE_ID}`) errors.push("copy link: on a local page it should be the published dashboard's address: " + b?.title);
+  window.close();
+}
+{
+  // cited by: who in the registry cites this project — one backlink file, fetched on the click, never before
+  const before = fetched.length;
+  const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/far`)}#graph`, html, { "ktw-friends": "off" });
+  await tick(200);
+  const d = window.document;
+  const BL = "https://keepthewhy.com/registry/backlinks/github.com/acme/far.json";
+  if (fetched.slice(before).includes(BL)) errors.push("cited by: the backlink file was fetched before the click");
+  const box = () => d.querySelector(".graph-ui .cited-ctl input");
+  if (!box() || box().checked) errors.push("cited by: no unchecked 'cited by' switch in the graph");
+  box().checked = true; box().dispatchEvent(new window.Event("change")); await tick(400);
+  if (!fetched.slice(before).includes(BL)) errors.push("cited by: the backlink file was not fetched on the click");
+  report.citedBy = d.querySelector(".graph-ui .cited-ctl")?.textContent;
+  if (!/^cited by \(1\)/.test(report.citedBy || "")) errors.push("cited by: expected 'cited by (1)': " + report.citedBy);
+  if (!/1 of Ids not here/.test(report.citedBy || "")) errors.push("cited by: the citation of an Id far does not hold is not counted apart: " + report.citedBy);
+  const g = window.__g();
+  const hub = g.nodes.find((n) => n.kind === "project" && n.citedOnly);
+  if (!hub || hub.label !== "acme/notes") errors.push("cited by: notes is not drawn as citing this project: " + (hub?.label || "none"));
+  const link = g.links.find((l) => l.kind === "see" && g.nodes[l.s].entry?.uuid === NOTES_ID && g.nodes[l.t].entry?.uuid === FAR_ID);
+  if (!link) errors.push("cited by: no See from the notes entry to the far entry in the graph");
+  if (!/cites this project/.test(d.querySelector(".graph-legend")?.textContent || "")) errors.push("cited by: the legend does not say 'cites this project'");
+  // the Friends view lists it in a section of its own
+  window.location.hash = "#friends"; window.dispatchEvent(new window.Event("hashchange")); await tick(300);
+  const fr = d.getElementById("main").textContent;
+  if (!/Citing this project — from the registry/.test(fr) || !/acme\/notes/.test(fr)) errors.push("cited by: the Friends view has no 'Citing this project' section with notes");
+  window.close();
+}
+{
+  // a repository nothing in the registry cites has no backlink file: an answer, not a failure
+  const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/web`)}#graph`, html, { "ktw-friends": "off" });
+  await tick(200);
+  const d = window.document;
+  const box = d.querySelector(".graph-ui .cited-ctl input");
+  box.checked = true; box.dispatchEvent(new window.Event("change")); await tick(300);
+  const t = d.querySelector(".graph-ui .cited-ctl")?.textContent || "";
+  report.citedByNone = t;
+  if (!/cited by \(0\)/.test(t) || !/nothing in the registry cites this project/.test(t)) errors.push("cited by: a 404 should read as nothing citing: " + t);
+  if (/registry not reached/.test(t)) errors.push("cited by: a 404 shown as a failure");
   window.close();
 }
 console.log(JSON.stringify(report, null, 1));

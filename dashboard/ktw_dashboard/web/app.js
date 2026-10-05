@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-import { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, searchTerms, searchHit, compareHits, snippetAt, highlight, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf } from "./lib.js";
+import { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, searchTerms, searchHit, compareHits, snippetAt, highlight, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf, backlinksUrl, citingOf } from "./lib.js";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const narrow = () => !!window.matchMedia?.("(max-width: 900px)").matches;
@@ -702,6 +702,7 @@ async function viewFriends(main) {
   const waiting = list.filter((f) => !FRIENDS.loaded[fkey(f.canonical)]);
   const kids = [];
   if (!list.length && !units.length) kids.push(el("p", { class: "empty" }, "No entry here cites a repository outside the family yet. A See line into another project — its canonical and an entry's Id — makes it a friend."));
+  if (!CITED.on && !CITED.loading && backlinksUrl(REGISTRY_URL, canonicalOf(SELF?.project))) kids.push(el("p", {}, el("button", { type: "button", class: "link-btn", title: "who in the Keep the Why registry cites this project — one file from the registry, loaded on this click", onclick: () => { CITED.url = backlinksUrl(REGISTRY_URL, canonicalOf(SELF?.project)); loadCited(); } }, "who in the registry cites this project?")));
   if (list.length && (!FRIENDS.on || waiting.length)) kids.push(el("p", {}, FRIENDS.loading ? "Loading friends…" : el("button", { type: "button", class: "link-btn", onclick: () => { setFriendsAuto(true); loadFriends(FRIENDS.on ? waiting : list); } }, `load the ${plural(FRIENDS.on ? waiting.length : list.length, "friend")}`)));
   const ours = g.nodes.filter((n) => n.kind === "entry" && !n.ext);
   const ourByUuid = Object.fromEntries(ours.filter((n) => n.entry.uuid).map((n) => [n.entry.uuid, n]));
@@ -723,8 +724,9 @@ async function viewFriends(main) {
       el("h3", {}, `Citing this project (${back.length})`),
       ...(back.length ? back.map((x) => rel(el("a", { href: x.from.m.href ? x.from.m.href(x.from.e) : "#graph" }, x.from.e.title), el("a", { href: x.to.href }, x.to.label), x.kind)) : [el("p", { class: "empty" }, "None of its entries cites an entry here.")]));
   };
-  const friends = units.filter((u) => u.via !== "chain"), chained = units.filter((u) => u.via === "chain");
+  const friends = units.filter((u) => u.via !== "chain" && u.via !== "cited"), chained = units.filter((u) => u.via === "chain"), citing = units.filter((u) => u.via === "cited");
   kids.push(...friends.map((u) => card(u, units.indexOf(u))));
+  if (citing.length) kids.push(el("h2", { class: "section" }, "Citing this project — from the registry"), el("p", { class: "note" }, `Repositories in the Keep the Why registry whose entries cite this project, from its backlink file${CITED.checked ? `, built ${CITED.checked}` : ""}. Citations from outside the registry are not in it.`), ...citing.map((u) => card(u, units.indexOf(u))));
   if (chained.length) kids.push(el("h2", { class: "section" }, "Reached by following a thought"), ...chained.map((u) => card(u, units.indexOf(u))));
   if (failed.length) kids.push(el("h2", { class: "section" }, "Not loaded"), ...failed.map((r) => el("div", { class: "ref" }, el("a", { href: r.canonical, target: "_blank", rel: "noopener" }, hostMark(r.canonical), repoLabel(r.canonical)), el("span", { class: "note warn" }, ` · ${r.error}`))));
   setKids(box, ...kids);
@@ -1231,6 +1233,10 @@ const color0 = () => getComputedStyle(document.documentElement).getPropertyValue
 // search, queues, counts and the other views stay with the project or family.
 // Its hub shows the entries cited there; a click on the hub goes there, as its name does.
 const FRIENDS = { on: false, loaded: {}, pending: {}, expanded: new Set(), load: false, loading: false };
+// Who in the registry cites this project: its backlink file, fetched from the registry on the click and not
+// remembered — a remembered switch would ask the registry on every reload without one. `list` is in the
+// friends' shape ({ canonical, uuids: the citing entries }), loaded and drawn like friends.
+const CITED = { on: false, loading: false, error: null, list: [], elsewhere: 0, checked: "", url: null };
 // Loaded as soon as a graph shows them, by default (few projects have many
 // friends yet); *friends* unchecked turns that off, kept per browser — then a
 // click on *friends (N)* loads them.
@@ -1409,11 +1415,12 @@ function friendUnits(g) {
     const members = (FRIEND_FAMILIES ? r.members || [r] : [r]).filter((m) => fkey(m.canonical) !== centre || m === r);
     const k = unitKey(members);
     if (!units.has(k)) units.set(k, { k, r, members, uuids: new Set(), via });
-    const u = units.get(k); if (via === "friend") u.via = "friend";
+    const u = units.get(k); if (via === "friend") u.via = "friend"; if (via === "cited") u.citing = true;
     for (const x of f.uuids) u.uuids.add(x);
   };
   if (FRIENDS.on) (g.friends || []).forEach((f) => add(f, "friend"));
   for (const f of CHAIN.extra.values()) add(f, "chain"); // reached by following a thought
+  if (CITED.on) { const skip = new Set(citedExclude().map(fkey)); for (const f of CITED.list) if (!skip.has(fkey(f.canonical))) add(f, "cited"); }
   for (const f of GLOBE.extra.values()) { add(f, "globe"); const u = units.get(unitKey((FRIENDS.loaded[fkey(f.canonical)]?.members) || [FRIENDS.loaded[fkey(f.canonical)]])); if (u && u.via === "globe") u.hop = f.registry ? "registry" : f.hop; }
   return [...units.values()];
 }
@@ -1434,7 +1441,7 @@ function addFriendLayer(g, prev) {
     topic: (m) => (m.centre ? (file) => moveTo({ centre: m.centre, state: m.state }, `#topic/${file}`) : null),
   });
   friendUnits(g).forEach((u, i) => items.push({
-    k: u.k, kind: "friend", chain: u.via === "chain" || u.via === "globe", hop: u.via === "globe" ? u.hop : null, color: friendColor(i), cited: (FRIEND_ENTRIES && (FRIEND_FAM_ENTRIES || u.members.length === 1)) || FRIENDS.expanded.has(u.k) ? null : u.uuids, members: u.members,
+    k: u.k, kind: "friend", chain: u.via === "chain" || u.via === "globe", hop: u.via === "globe" ? u.hop : null, citing: !!u.citing, citedOnly: u.via === "cited", color: friendColor(i), cited: (FRIEND_ENTRIES && (FRIEND_FAM_ENTRIES || u.members.length === 1)) || FRIENDS.expanded.has(u.k) ? null : u.uuids, members: u.members,
     allFor: (m) => (m === u.members[0] ? FRIEND_ENTRIES : FRIEND_FAM_ENTRIES), kin: (m) => m !== u.members[0], // the cited repository first, then its family
     hub: () => toggleFriend(u.k),
     entry: (m) => (m.centre ? (e) => moveTo({ centre: m.centre, state: m.state }, entryHref(e)) : null),
@@ -1501,7 +1508,7 @@ function addLinkedLayer(g, prev, items) {
       const off = it.members.length > 1 ? { x: centre.x + 110 * Math.cos((2 * Math.PI * j) / it.members.length), y: centre.y + 110 * Math.sin((2 * Math.PI * j) / it.members.length) } : centre;
       // the hub and its name both go to that project (back along the path for a step of it)
       const walk = it.kind === "trail" ? it.hub : m.centre ? () => moveTo({ centre: m.centre, state: m.state }, "#graph") : m.open ? () => go(m.open) : null;
-      const hub = add({ id: `f:${it.k}:${m.key}`, kind: "project", friend: it.kind === "friend", chain: !!it.chain, hop: it.hop ?? null, trail: it.kind === "trail", family: it.kind === "family", label: m.name, canonical: m.canonical, r: it.kind === "family" ? 13 : j === 0 ? 13 : 10, color: mcol, href: m.open || "#graph", action: it.hub, walk }, off);
+      const hub = add({ id: `f:${it.k}:${m.key}`, kind: "project", friend: it.kind === "friend", chain: !!it.chain, hop: it.hop ?? null, citing: j === 0 && !!it.citing, citedOnly: j === 0 && !!it.citedOnly, trail: it.kind === "trail", family: it.kind === "family", label: m.name, canonical: m.canonical, r: it.kind === "family" ? 13 : j === 0 ? 13 : 10, color: mcol, href: m.open || "#graph", action: it.hub, walk }, off);
       if (selfHub && it.kind === "family" && m.role === "child") links.push({ s: index[hub.id], t: index[selfHub.id], kind: "family", len: 260 });
       if (selfHub && it.kind === "family" && m.role === "parent") links.push({ s: index[selfHub.id], t: index[hub.id], kind: "family", len: 260 });
       hubs[m.key] = index[hub.id];
@@ -1605,6 +1612,7 @@ function setCentre(c, state) {
   FRIENDS.on = false; FRIENDS.expanded.clear(); THOUGHT_PIN = null; MINI = null; CHAIN.extra.clear(); CHAIN.tried.clear();
   FAMILY_NB = { groups: null, missing: [], loading: false }; // the family beside the graph is the new centre's
   GLOBE.extra.clear(); GLOBE.failed.clear(); GLOBE.done = 0; GLOBE.registry = false; // the globe's waves were counted from the old centre; what was fetched stays in memory
+  CITED.on = false; CITED.loading = false; CITED.error = null; CITED.list = []; CITED.elsewhere = 0; CITED.checked = ""; CITED.url = null; // who cites the old centre
   if (MODE === "public") state.exported = true;
   connectLive();
   const sel = $("#project-select");
@@ -1682,6 +1690,47 @@ function friendsUi(g) {
       el("label", { class: "friend-families", title: FRIEND_FAMILIES ? "a friend's family beside it — unchecked, the cited repository alone" : "show a friend's family beside it" }, el("input", { type: "checkbox", checked: FRIEND_FAMILIES, onchange: (ev) => { setFriendFamilies(ev.target.checked); if (fgraph) fgraph.at = 0; render(); } }), "friends families"),
       ...(FRIEND_FAMILIES ? [allEntriesUi("friendsFamilies", FRIEND_FAM_ENTRIES, setFriendFamEntries, "every member of a friend's family"), labelsUi(g, "friendsFamilies", "the friends' families")] : []),
     ] : []));
+}
+// what this project and its family are, for "cited by": drawn already, so not again as a citing repository
+function citedExclude() {
+  const p = SELF?.project || {}; const base = canonicalOf(p); const root = MY_ROOT();
+  const declared = [p.parent, ...(p.children || []).map((c) => c.location)].map((l) => resolveLocation(l, base, root)?.canonical);
+  return [base, ...declared, ...(TREE || []).map((m) => m.canonical), ...familyMembers().map((m) => m.canonical), ...(PUBLIC_TREE?.groups || []).map((x) => x.member.canonical)];
+}
+async function loadCited() {
+  CITED.loading = true; CITED.error = null; render();
+  try {
+    let file = { cited_by: [] };
+    try { file = JSON.parse(await fetchForeign(CITED.url)); } catch (err) {
+      // no file: nothing in the registry cites this repository — an answer, not a failure
+      if (!/HTTP 404/.test(err?.message || "")) throw err;
+      FAILED.delete(CITED.url);
+    }
+    const r = citingOf(file, (SELF?.entries || []).map((e) => e.uuid).filter(Boolean), [canonicalOf(SELF?.project)]);
+    CITED.list = r.citing; CITED.elsewhere = r.elsewhere; CITED.checked = file.checked || "";
+    await Promise.all(CITED.list.map(loadFriend));
+    CITED.on = true;
+  } catch (err) { CITED.error = err?.message || String(err); CITED.on = false; }
+  CITED.loading = false;
+  if (fgraph) fgraph.at = 0;
+  render();
+}
+// "cited by": who in the registry cites this project — asked for on the click, one file from the registry
+function citedUi(g) {
+  if (g !== graph && g !== fgraph) return null;
+  const url = backlinksUrl(REGISTRY_URL, canonicalOf(SELF?.project));
+  if (!url) return null; // no repository URL the registry could hold
+  CITED.url = url;
+  const title = `who in the Keep the Why registry cites this project — the registry's backlink file, ${url}, loaded on the click and not remembered${CITED.checked ? `; built ${CITED.checked}` : ""}. Citations from repositories outside the registry are not in it.`;
+  if (CITED.loading) return el("span", { class: "ui-group" }, el("span", { class: "note" }, "loading cited by…"));
+  const failed = CITED.on ? CITED.list.filter((f) => FRIENDS.loaded[fkey(f.canonical)]?.error) : [];
+  return el("span", { class: "ui-group cited-ctl" },
+    el("label", { title }, el("input", { type: "checkbox", checked: CITED.on, onchange: (ev) => { if (ev.target.checked) loadCited(); else { CITED.on = false; if (fgraph) fgraph.at = 0; render(); } } }),
+      CITED.on ? `cited by (${CITED.list.length})` : "cited by"),
+    CITED.on && !CITED.list.length ? el("span", { class: "note" }, "nothing in the registry cites this project") : null,
+    CITED.on && CITED.elsewhere ? el("span", { class: "note", title: "the registry lists citations of Ids this export does not hold — an entry since removed, or another project in the same repository" }, `${CITED.elsewhere} of Ids not here`) : null,
+    failed.length ? el("a", { class: "warn", href: "#friends", title: failed.map((f) => `${repoLabel(f.canonical)} — ${FRIENDS.loaded[fkey(f.canonical)].error}`).join("\n") }, `${failed.length} not loaded ↗`) : null,
+    CITED.error ? el("span", { class: "warn", title: CITED.error }, "registry not reached") : null);
 }
 // the family beside the project graph: on by default, off per browser (and then not loaded either)
 function familyUi(g) {
@@ -2034,7 +2083,7 @@ function projectsLegend(g) {
   const hubs = g.nodes.filter((n) => n.kind === "project");
   const out = [];
   if (!hubs.some((n) => n.self)) out.push(el("span", { class: "family" }, el("i", { class: "dot", style: "background:var(--accent);width:10px;height:10px" }), el("b", {}, p.id || p.name || "this project")));
-  const kind = (n) => (n.self ? "this project" : n.trail ? "a step of the path" : n.chain ? "reached by a thought" : n.friend ? (n.kin ? "a friend's family member" : "a friend") : "family");
+  const kind = (n) => (n.self ? "this project" : n.trail ? "a step of the path" : n.chain ? "reached by a thought" : n.citedOnly ? "cites this project — from the registry" : n.friend ? (n.kin ? "a friend's family member" : n.citing ? "a friend that also cites this project" : "a friend") : "family");
   const ring = (n) => (n.self ? `background:${n.color};` : `background:transparent;border:2px ${n.chain ? "dashed" : n.friend ? "dashed" : n.trail ? "dotted" : "solid"} ${n.color};`);
   const units = new Map(friendUnits(g).map((u) => [u.k, u]));
   // the family's shape, from the parent lines the graph draws (child → parent): roots first, children indented
@@ -2052,7 +2101,8 @@ function projectsLegend(g) {
     out.push(el("span", { class: n.friend ? "friend" : "family", style: depth ? `padding-left:${depth * 14}px` : "", title: kind(n), onmouseenter: () => { g.spot = projectNodes(g, n); g.alpha = Math.max(g.alpha, 0.02); g.wake?.(); }, onmouseleave: () => { g.spot = null; g.alpha = Math.max(g.alpha, 0.02); g.wake?.(); } }, el("i", { class: "dot", style: `${ring(n)}width:10px;height:10px` }), hostMark(n.canonical), name,
       notShown ? el("span", { class: "note" }, ` · family of ${notShown}, not shown`) : null,
       forkOf ? el("span", { class: "note", title: `the export names ${forkOf} as its canonical and was made in a checkout of ${u.r.canonical}` }, " · fork of ", el("a", { href: forkOf, target: "_blank", rel: "noopener" }, hostMark(forkOf), repoLabel(forkOf))) : null,
-      n.hop != null ? el("span", { class: "note" }, n.hop === "registry" ? " · from the registry" : ` · hop ${n.hop}`) : n.chain ? el("span", { class: "note" }, " · via a thought") : null));
+      n.hop != null ? el("span", { class: "note" }, n.hop === "registry" ? " · from the registry" : ` · hop ${n.hop}`) : n.chain ? el("span", { class: "note" }, " · via a thought") : null,
+      n.citing ? el("span", { class: "note" }, n.citedOnly ? " · cites this project" : " · cites this project too") : null));
   }
   return out;
 }
@@ -2080,6 +2130,7 @@ function graphControlGroups(g, family) {
     el("span", { class: "ui-group" }, el("label", {}, el("input", { type: "checkbox", checked: g.showEntries, onchange: (ev) => { g.showEntries = ev.target.checked; setShowEntries(ev.target.checked); g.alpha = 0.5; g.wake?.(); } }), "entries"), labelsUi(g, "project", "this project's topics and entries")),
     famUi ? el("span", { class: "ui-group" }, famUi, FAMILY_NB_ON ? labelsUi(g, "family", "the family's projects") : null) : null,
     fui ? el("span", { class: "ui-group" }, fui) : null,
+    citedUi(g),
     el("span", { class: "ui-group" }, el("label", { title: "the path's projects in the graph — the projects you came through; unchecked they are hidden, not forgotten (the path bar discards)" }, el("input", { type: "checkbox", checked: keepPath() && TRAIL_SHOW, onchange: (ev) => { if (ev.target.checked && !keepPath()) setKeepPath(true); setTrailShow(ev.target.checked); if (fgraph) fgraph.at = 0; render(); } }), "path"),
       ...(pathShown() && TRAIL.some((t) => !sameCentreAsGraph(g, t)) ? [allEntriesUi("path", PATH_ENTRIES, setPathEntries, "every step of the path"), labelsUi(g, "path", "the path's projects")] : [])),
     el("span", { class: "ui-group" }, el("label", { title: "the graph turns very slowly; it stops while you point at it" }, el("input", { type: "checkbox", checked: driftOn(), onchange: (ev) => { setDrift(ev.target.checked); g.wake?.(); } }), "motion")),
