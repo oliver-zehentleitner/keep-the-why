@@ -412,3 +412,21 @@ An exported page writes `<title>Keep the Why Dashboard · <id></title>`, a `desc
 **Reason:** the exports are meant to be found — every published dashboard is a public showcase of a project's reasoning — and there will be many of them, so the title has to say which project it is. A crawler reading the static head gets the right text without running the script; before, the head said only *Keep the Why — dashboard* and had no description, so the search result took the script-set id as title and picked a sentence out of the embedded state.
 
 **Rejected alternative:** `noindex` on the export, leaving the docs page `/dashboard/` as the entry point. Rejected: the exports are what should show up in search, not be hidden from it.
+
+## A repository's platform is read from its URL alone, its mark drawn from paths the page carries
+
+**Id:** 26af2206-a51f-41c3-bed9-cc700ff22a2f
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer request and review, 2026-10-05; the inline marks and "no mark for an unknown host" were the assisting agent's proposal, accepted
+**See:** dashboard.md#the-update-check-is-the-servers-one-network-call-the-page-asks-other-hosts-only-for-what-a-person-opens — 5b7a6c2d-8218-4987-b912-0fe7bb15cc1a — as of 2026-10-05
+**Revisit when:** a self-hosted instance appears often enough that its missing mark is felt, or the page starts loading anything from the platforms anyway
+
+Hubs and repository links show the platform's mark — GitHub, GitLab, Codeberg, Bitbucket, Gitea, Forgejo — taken from the host name of `canonical` or the remote through one table, `HOSTS` in `lib.js`. The marks are SVG paths in that table, drawn in the text colour on the canvas and inline in the DOM. A host no row matches gets no mark. New platforms come in as a row, by pull request.
+
+**Reason:** the page asks other hosts only for what a person opens (the See line above). Fetching each platform's favicon would ask one host per project on every load, and would tell those hosts who looks at which dashboard. Paths the page carries cost a few kilobytes and work in a static export offline.
+
+**Rejected alternative:** a `host-kind` field in `.keep-the-why` so a self-hosted instance could name its platform. Rejected: a schema change, with spec, linter and migration, for an icon, while no known project sits on a self-hosted instance; the URL decides, and where it cannot, nothing is shown.
+
+**Rejected alternative:** a generic mark for unknown hosts. Rejected: it says nothing the name beside it does not, and "no mark" already reads as "platform unknown".

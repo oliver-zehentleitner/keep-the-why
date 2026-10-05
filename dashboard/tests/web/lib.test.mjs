@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import {
   esc, plural, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, canonicalOf,
   parseSupersededBy, kindLabel, typeName, groupByFamily, searchTerms, searchHit, compareHits, snippetAt, highlight,
-  resolveLocation, bodyProse, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights,
+  resolveLocation, bodyProse, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, HOSTS, hostOf,
 } from "../../ktw_dashboard/web/lib.js";
 
 test("esc escapes the five HTML characters and nothing else", () => {
@@ -270,4 +270,22 @@ test("thoughtInsights: an unconfirmed origin, steps in question and what rests o
   assert.deepEqual(stale.shaky, [{ i: 0, why: "superseded, still cited" }]);
   assert.deepEqual(stale.affected, [1, 2]);
   assert.equal(stale.from, "");
+});
+
+test("hostOf reads the platform from the URL alone; an unknown host gets none", () => {
+  const name = (u) => hostOf(u)?.name ?? null;
+  assert.equal(name("https://github.com/acme/widget"), "GitHub");
+  assert.equal(name("github.com/acme/widget"), "GitHub"); // git.remote's form
+  assert.equal(name("git@gitlab.com:acme/widget.git"), "GitLab");
+  assert.equal(name("https://gitlab.acme.at/team/widget"), "GitLab");
+  assert.equal(name("https://codeberg.org/acme/widget"), "Codeberg");
+  assert.equal(name("https://user:token@bitbucket.org/acme/widget"), "Bitbucket");
+  assert.equal(name("https://gitea.acme.at/acme/widget"), "Gitea");
+  assert.equal(name("https://forgejo.acme.at/acme/widget"), "Forgejo");
+  assert.equal(name("https://GitHub.com/acme/widget"), "GitHub");
+  assert.equal(name("https://git.acme.at/acme/widget"), null); // self-hosted under its own name: no guess
+  assert.equal(name("https://notgithub.com/acme/widget"), null);
+  assert.equal(name(""), null);
+  assert.equal(name(undefined), null);
+  for (const h of HOSTS) assert.match(h.path, /^[Mm][\d.\s,\-a-zA-Z]+$/, h.name);
 });

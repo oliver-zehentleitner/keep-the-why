@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-import { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, searchTerms, searchHit, compareHits, snippetAt, highlight, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights } from "./lib.js";
+import { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, searchTerms, searchHit, compareHits, snippetAt, highlight, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf } from "./lib.js";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const narrow = () => !!window.matchMedia?.("(max-width: 900px)").matches;
@@ -20,7 +20,17 @@ const el = (tag, attrs = {}, ...kids) => {
 };
 const setKids = (node, ...kids) => node.replaceChildren(...kids.flat(Infinity).filter((k) => k != null && k !== false));
 const fmtDate = (d) => d || "—";
-const remoteLink = (remote) => el("a", { class: "gh", href: `https://${remote}`, target: "_blank", rel: "noopener" }, remote);
+// the platform's mark before a repository's name, from its URL (lib.js HOSTS);
+// none for a host no row knows
+function hostMark(url) {
+  const h = hostOf(url); if (!h) return null;
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24"); svg.setAttribute("class", "host-mark"); svg.setAttribute("role", "img"); svg.setAttribute("aria-label", h.name);
+  // the name as aria-label, not as an SVG title element: that would join the link's text
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path"); path.setAttribute("d", h.path);
+  svg.append(path); return svg;
+}
+const remoteLink = (remote) => el("a", { class: "gh", href: `https://${remote}`, target: "_blank", rel: "noopener" }, hostMark(remote), remote);
 const onGitHub = (g) => !!g?.remote && /^github\.com\//.test(g.remote);
 // a fork checkout: `origin` is the fork, the published repository is elsewhere — read from
 // the `upstream` remote, or from `canonical` in .keep-the-why differing from `origin`
@@ -140,7 +150,7 @@ function fillLoadedPop(pop) {
   const failed = [...FAILED.entries()].sort((x, y) => y[1].at - x[1].at);
   const failedBlock = failed.length ? el("div", { class: "loaded-failed", id: "loaded-failed" }, el("div", { class: "loaded-head warn" }, `Not loaded (${failed.length})`),
     ...failed.map(([url, f]) => el("div", { class: "loaded-row failed" }, el("span", { class: "size warn" }, "⚠"),
-      el("span", { class: "what" }, el("b", {}, f.canonical ? repoLabel(f.canonical) : f.kind), el("span", { class: "note" }, ` — ${f.kind}`),
+      el("span", { class: "what" }, el("b", {}, hostMark(f.canonical), f.canonical ? repoLabel(f.canonical) : f.kind), el("span", { class: "note" }, ` — ${f.kind}`),
         el("br"), el("span", { class: "err" }, (f.error.startsWith(`${url}: `) ? f.error.slice(url.length + 2) : f.error.endsWith(` for ${url}`) ? f.error.slice(0, -(url.length + 5)) : f.error)), // the address is linked below; say it once
         el("br"), el("a", { href: url, target: "_blank", rel: "noopener", title: "open it in the browser — does it answer at all?" }, `${url} ↗`))))) : null;
   const toFailed = failed.length ? el("a", { href: "#", class: "warn", onclick: (ev) => { ev.preventDefault(); pop.querySelector("#loaded-failed")?.scrollIntoView?.({ block: "start", behavior: "smooth" }); } }, ` · ⚠ ${failed.length} not loaded ↓`) : null;
@@ -534,14 +544,14 @@ function remoteRefLine(ref, label) {
   const lead = () => (label ? el("b", {}, label) : null);
   const date = ref.date ? el("span", { class: "note" }, ` · as of ${ref.date}`) : null;
   const repo = () => el("a", { class: "note", href: ref.remote, target: "_blank", rel: "noopener", title: "the repository on its host" }, " · repository");
-  const row = el("div", { class: "ref remote" }, lead(), el("a", { href: `#ref/${encodeURIComponent(ref.remote)}/${ref.uuid}` }, repoLabel(ref.remote)),
+  const row = el("div", { class: "ref remote" }, lead(), el("a", { href: `#ref/${encodeURIComponent(ref.remote)}/${ref.uuid}` }, hostMark(ref.remote), repoLabel(ref.remote)),
     el("span", { class: "note mono" }, ` · ${ref.uuid}`), el("span", { class: "note" }, " · resolving…"), date, repo());
   resolveRemoteRef(ref.remote, ref.uuid).then((r) => {
     if (r.entry) {
       const e = r.entry; const state = [e.status, e.evidence].filter(Boolean).join(" · ");
-      setKids(row, lead(), el("a", { href: r.href }, e.title || ref.uuid), el("span", { class: "note" }, ` · ${repoLabel(ref.remote)}${state ? " · " + state : ""}`), date, repo());
+      setKids(row, lead(), el("a", { href: r.href }, e.title || ref.uuid), el("span", { class: "note" }, " · ", hostMark(ref.remote), `${repoLabel(ref.remote)}${state ? " · " + state : ""}`), date, repo());
     } else {
-      setKids(row, lead(), el("a", { href: ref.remote, target: "_blank", rel: "noopener" }, repoLabel(ref.remote)), el("span", { class: "note mono" }, ` · ${ref.uuid}`), el("span", { class: "note warn" }, ` · not resolved: ${r.error}`), date);
+      setKids(row, lead(), el("a", { href: ref.remote, target: "_blank", rel: "noopener" }, hostMark(ref.remote), repoLabel(ref.remote)), el("span", { class: "note mono" }, ` · ${ref.uuid}`), el("span", { class: "note warn" }, ` · not resolved: ${r.error}`), date);
     }
   });
   return row;
@@ -705,7 +715,7 @@ async function viewFriends(main) {
     const src = u.r.centre?.mode === "live" ? "a checkout on this machine" : `the published export${u.r.state.generated ? `, generated ${u.r.state.generated}` : ""}`;
     const rel = (a, b, kind) => el("div", { class: "ref" }, a, el("span", { class: "note" }, kind === "superseded" ? " — superseded by — " : " — cites — "), b);
     return el("section", { class: "friend-card" },
-      el("h2", {}, el("i", { class: "dot", style: `background:transparent;border:2px dashed ${friendColor(i)};width:11px;height:11px;margin-right:8px` }), el("a", { href: u.r.open || "#graph" }, u.r.name),
+      el("h2", {}, el("i", { class: "dot", style: `background:transparent;border:2px dashed ${friendColor(i)};width:11px;height:11px;margin-right:8px` }), el("a", { href: u.r.open || "#graph" }, hostMark(u.r.canonical), u.r.name),
         u.via === "chain" ? el("span", { class: "pill" }, "via a thought") : null),
       el("p", { class: "note" }, `${u.members.length > 1 ? `A family of ${u.members.length}: ${u.members.map((m) => m.name).join(", ")}. ` : ""}Read from ${src}. ${u.r.canonical}${u.r.forkOf ? ` — a fork of ${u.r.forkOf}, by its own export` : ""}`),
       el("h3", {}, `Cited from here (${out.length})`),
@@ -716,7 +726,7 @@ async function viewFriends(main) {
   const friends = units.filter((u) => u.via !== "chain"), chained = units.filter((u) => u.via === "chain");
   kids.push(...friends.map((u) => card(u, units.indexOf(u))));
   if (chained.length) kids.push(el("h2", { class: "section" }, "Reached by following a thought"), ...chained.map((u) => card(u, units.indexOf(u))));
-  if (failed.length) kids.push(el("h2", { class: "section" }, "Not loaded"), ...failed.map((r) => el("div", { class: "ref" }, el("a", { href: r.canonical, target: "_blank", rel: "noopener" }, repoLabel(r.canonical)), el("span", { class: "note warn" }, ` · ${r.error}`))));
+  if (failed.length) kids.push(el("h2", { class: "section" }, "Not loaded"), ...failed.map((r) => el("div", { class: "ref" }, el("a", { href: r.canonical, target: "_blank", rel: "noopener" }, hostMark(r.canonical), repoLabel(r.canonical)), el("span", { class: "note warn" }, ` · ${r.error}`))));
   setKids(box, ...kids);
 }
 async function viewThoughtsPage(main) {
@@ -876,7 +886,7 @@ function memberRow(m) {
   return el("div", { class: `member ${m.role} ${m.available}`, onmouseenter: () => spotProject(m.canonical), onmouseleave: () => spotProject(null) },
     el("div", { class: "mr" }, el("span", { class: "role" }, m.role), title, el("span", { class: `pill kind-${m.available}` }, here ? "this project" : kindLabel(m.available))),
     m.scope ? el("div", { class: "ms" }, m.scope) : (m.role === "parent" ? el("div", { class: "ms note" }, "holds what is family-wide") : null),
-    el("div", { class: "mm mono" }, m.canonical || m.location || "", m.path && !here ? ` · ${m.path}` : ""),
+    el("div", { class: "mm mono" }, hostMark(m.canonical), m.canonical || m.location || "", m.path && !here ? ` · ${m.path}` : ""),
     m.fetch ? el("details", { class: "fetch" }, el("summary", {}, "not checked out here — how to get it"),
       el("p", { class: "note" }, "A working tree, writable (the mapping learns it on next start):"), el("pre", {}, el("code", {}, m.fetch.clone)),
       el("p", { class: "note" }, "Or the read-only context cache, shared by every project on this machine:"), el("pre", {}, el("code", {}, m.fetch.cache))) : null);
@@ -2039,9 +2049,9 @@ function projectsLegend(g) {
     const u = n.friend && !n.kin ? units.get(n.unit) : null;
     const notShown = u && u.members.length === 1 && (u.r.members || []).length > 1 ? u.r.members.length : 0;
     const forkOf = u?.r.forkOf || null;
-    out.push(el("span", { class: n.friend ? "friend" : "family", style: depth ? `padding-left:${depth * 14}px` : "", title: kind(n), onmouseenter: () => { g.spot = projectNodes(g, n); g.alpha = Math.max(g.alpha, 0.02); g.wake?.(); }, onmouseleave: () => { g.spot = null; g.alpha = Math.max(g.alpha, 0.02); g.wake?.(); } }, el("i", { class: "dot", style: `${ring(n)}width:10px;height:10px` }), name,
+    out.push(el("span", { class: n.friend ? "friend" : "family", style: depth ? `padding-left:${depth * 14}px` : "", title: kind(n), onmouseenter: () => { g.spot = projectNodes(g, n); g.alpha = Math.max(g.alpha, 0.02); g.wake?.(); }, onmouseleave: () => { g.spot = null; g.alpha = Math.max(g.alpha, 0.02); g.wake?.(); } }, el("i", { class: "dot", style: `${ring(n)}width:10px;height:10px` }), hostMark(n.canonical), name,
       notShown ? el("span", { class: "note" }, ` · family of ${notShown}, not shown`) : null,
-      forkOf ? el("span", { class: "note", title: `the export names ${forkOf} as its canonical and was made in a checkout of ${u.r.canonical}` }, " · fork of ", el("a", { href: forkOf, target: "_blank", rel: "noopener" }, repoLabel(forkOf))) : null,
+      forkOf ? el("span", { class: "note", title: `the export names ${forkOf} as its canonical and was made in a checkout of ${u.r.canonical}` }, " · fork of ", el("a", { href: forkOf, target: "_blank", rel: "noopener" }, hostMark(forkOf), repoLabel(forkOf))) : null,
       n.hop != null ? el("span", { class: "note" }, n.hop === "registry" ? " · from the registry" : ` · hop ${n.hop}`) : n.chain ? el("span", { class: "note" }, " · via a thought") : null));
   }
   return out;
@@ -2123,6 +2133,13 @@ let DRIFT = (() => { try { return localStorage.getItem("ktw-motion") !== "off"; 
 const reducedMotion = () => { try { return !!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches; } catch { return false; } };
 const driftOn = () => DRIFT && !reducedMotion();
 function setDrift(on) { DRIFT = on; try { localStorage.setItem("ktw-motion", on ? "on" : "off"); } catch {} }
+// the platform's mark for a hub's name on the canvas, one Path2D per platform
+const HOST_PATHS = new Map();
+function hostPath(url) {
+  const h = hostOf(url); if (!h || typeof Path2D === "undefined") return null;
+  if (!HOST_PATHS.has(h.name)) HOST_PATHS.set(h.name, new Path2D(h.path));
+  return HOST_PATHS.get(h.name);
+}
 function runGraph(canvas, g, opts = {}) {
   const mini = !!opts.mini;
   const ctx = canvas.getContext("2d");
@@ -2274,12 +2291,15 @@ function runGraph(canvas, g, opts = {}) {
         const faded = (focus || th) && !neigh.has(n) && n !== focus; if (faded && !hubName) continue;
         const lbl = n.label.replace(/`/g, ""); const txt = lbl.length > 48 ? lbl.slice(0, 46) + "…" : lbl;
         if (hubName) ctx.font = `600 ${(mini ? 12 : 13) / g.scale}px ${color("--font") || "sans-serif"}`;
+        const mark = hubName ? hostPath(n.canonical) : null; const iw = mark ? (mini ? 12 : 13) / g.scale : 0; const gap = mark ? 4 / g.scale : 0;
         const tw = ctx.measureText(txt).width; const y = n.y + n.r + 3 / g.scale;
-        ctx.fillStyle = color("--bg"); ctx.globalAlpha = faded ? 0.4 : 0.75; ctx.fillRect(n.x - tw / 2 - 3 / g.scale, y - 1 / g.scale, tw + 6 / g.scale, 15 / g.scale); ctx.globalAlpha = faded ? 0.5 : 1;
-        ctx.fillStyle = n.kind === "entry" ? color("--fg2") : hubName && n === hoverName ? color("--accent2") : color("--fg"); ctx.fillText(txt, n.x, y);
+        const left = n.x - (tw + iw + gap) / 2; const tx = left + iw + gap + tw / 2; // the mark before the name, the pair centred
+        ctx.fillStyle = color("--bg"); ctx.globalAlpha = faded ? 0.4 : 0.75; ctx.fillRect(left - 3 / g.scale, y - 1 / g.scale, tw + iw + gap + 6 / g.scale, 15 / g.scale); ctx.globalAlpha = faded ? 0.5 : 1;
+        ctx.fillStyle = n.kind === "entry" ? color("--fg2") : hubName && n === hoverName ? color("--accent2") : color("--fg"); ctx.fillText(txt, tx, y);
+        if (mark) { ctx.save(); ctx.translate(left, y + 0.5 / g.scale); ctx.scale(iw / 24, iw / 24); ctx.fill(mark); ctx.restore(); }
         if (hubName) {
-          g.nameBoxes.push({ n, x0: n.x - tw / 2 - 3 / g.scale, y0: y - 1 / g.scale, x1: n.x + tw / 2 + 3 / g.scale, y1: y + 15 / g.scale });
-          if (n === hoverName) { ctx.fillRect(n.x - tw / 2, y + 14 / g.scale, tw, 1 / g.scale); }
+          g.nameBoxes.push({ n, x0: left - 3 / g.scale, y0: y - 1 / g.scale, x1: tx + tw / 2 + 3 / g.scale, y1: y + 15 / g.scale });
+          if (n === hoverName) { ctx.fillRect(tx - tw / 2, y + 14 / g.scale, tw, 1 / g.scale); }
           ctx.font = `${(mini ? 11 : 12) / g.scale}px ${color("--font") || "sans-serif"}`;
         }
         ctx.globalAlpha = 1;

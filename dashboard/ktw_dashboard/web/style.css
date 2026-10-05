@@ -50,6 +50,7 @@ button { font: inherit; color: inherit; }
 .brand img { display: block; }
 .brand .wordmark { height: 29px; width: auto; }
 .gh { color: var(--fg2); }
+.host-mark { width: 1em; height: 1em; vertical-align: -0.15em; margin-right: 0.3em; fill: currentColor; flex: none; }
 .queue-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 8px 0 8px; }
 .queue-tiles a.tile { color: var(--fg); }
 .queue-tiles a.tile:hover { border-color: var(--accent); text-decoration: none; }
