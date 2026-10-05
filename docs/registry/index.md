@@ -22,7 +22,20 @@ Much of that is temporary — a pages deploy in progress, a host having a bad ho
 
 ## What the index holds
 
-Per project: the canonical repository URL, the state's URL as `dashboard-state` names it today, the project's id, the Keep the Why version it is on (`context-schema`), the dashboard and linter versions that made the export, the number of entries and topics, its parent and how many children it lists, and when the export was generated. Built into the site with every deploy — a change to the list, a weekly run, a run on request — and never committed: the index is a build artifact, and the previous published one is what the 30-day grace reads.
+Per project: the canonical repository URL, the state's URL as `dashboard-state` names it today, the project's id, the Keep the Why version it is on (`context-schema`), the dashboard and linter versions that made the export, the number of entries and topics, its parent and how many children it lists, when the export was generated, and how often it is cited from the registry (`cited_by`: repositories and citations) with the path of its backlink file. Built into the site with every deploy — a change to the list, a weekly run, a run on request — and never committed: the index is a build artifact, and the previous published one is what the 30-day grace reads.
+
+## Backlinks
+
+A citation runs one way: an entry's `See` or `Superseded by` names the repository it cites, and the cited repository cannot know. The build reads every export it loads — the listed ones and the family members their `children` blocks name — and writes, for each repository cited from them, `backlinks/<host>/<owner>/<repo>.json` beside the index, e.g. `keepthewhy.com/registry/backlinks/github.com/oliver-zehentleitner/keep-the-why.json`: per citation the citing repository and entry, its title, `see` or `superseded_by`, the cited Id and the date the line gives. Where the cited repository was loaded in the same build, `resolved` says whether that Id exists there; a repository outside the registry gets its file too, without `resolved`.
+
+What this is and is not:
+
+- **Who in the registry cites you** — not the web. A citation from a repository that is not listed, or not a member of a listed family, is not seen.
+- **As of the build.** Each export is a snapshot of its repository, the backlinks a snapshot of the exports: a new citation appears with the next build, weekly at the latest. Index and backlink files come from the same run and go out in the same deploy.
+- **Only from an export the repository points at** — its own `.keep-the-why` at `HEAD` names it, and the export names the repository. Whether you are cited is the citing project's statement; there is nothing to accept or refuse.
+- **An export that is not answering** (the 30-day grace above) adds no citations to that build.
+- **Bounded.** A repository URL becomes a path only as exactly three plain segments (`host/owner/repo`; a nested GitLab group is not one), and an export counts with its first 500 cross-project citations.
+- **Sorted throughout** — files, citations and keys — so two builds differ only where the citations did.
 
 ## In the dashboard
 

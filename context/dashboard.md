@@ -430,3 +430,21 @@ Hubs and repository links show the platform's mark — GitHub, GitLab, Codeberg,
 **Rejected alternative:** a `host-kind` field in `.keep-the-why` so a self-hosted instance could name its platform. Rejected: a schema change, with spec, linter and migration, for an icon, while no known project sits on a self-hosted instance; the URL decides, and where it cannot, nothing is shown.
 
 **Rejected alternative:** a generic mark for unknown hosts. Rejected: it says nothing the name beside it does not, and "no mark" already reads as "platform unknown".
+
+## The registry build derives backlinks from the exports it already loads; no links file in the export
+
+**Id:** d8791f26-64b7-47df-9a2c-188f55562ae2
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer proposal and review, 2026-10-05; deriving from the state, keying by canonical and the bounds were the assisting agent's proposals, accepted
+**See:** dashboard.md#the-globe-loads-the-web-in-waves-each-asked-for-with-its-count-the-registry-is-an-invitation-never-a-requirement — 64f88b63-67b6-4a87-990c-e0258e7b63b0 — as of 2026-10-05
+**Revisit when:** the registry grows past what one build can fetch, or a project asks for backlinks it can see in the dashboard without the registry
+
+`tools/registry/build.py` reads the cross-project `See` and `Superseded by` lines of every export it loads — the listed lines and the family members their `children` blocks name — and writes `backlinks/<host>/<owner>/<repo>.json` per cited repository into the site, with `cited_by` counts in the index. Files, citations and keys are sorted. Like the index, it is a build artifact, never committed.
+
+**Reason:** the build already fetches every listed `state.json` to check it, and the state carries the citations. A second file per export would be another format to version and keep in step, and every project would have to export it before the registry could count it. Files are keyed by the repository URL, not the project id: the build has checked the URL (the export names its repository, the repository's `.keep-the-why` names the export), and anyone can write any id. Repositories outside the registry get a file too, so one that publishes later finds its backlinks waiting.
+
+**Rejected alternative:** a `state.links.json` written by every dashboard export, read by the registry. Rejected for the reasons above; its one advantage, a smaller download, does not matter at the registry's size.
+
+**Consequence:** the target's path comes from a foreign export, so it is accepted only as three plain segments under `backlinks/` (a nested GitLab group gets no file), and one export counts with at most 500 citations — without both bounds a listed project could write outside the directory or fill the site. Where the cited repository was loaded in the same build, `resolved` says whether the cited Id exists; elsewhere the field is left out rather than guessed. Citations from an export in its 30-day grace are missing from that build — the build keeps no state between runs.

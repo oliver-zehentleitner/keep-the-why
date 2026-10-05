@@ -40,3 +40,4 @@ dashboard/tests/web/package-lock.json
 
 # The registry index, built into the site by the docs workflow (tools/registry/build.py --publish)
 docs/registry/index.json
+docs/registry/backlinks/
