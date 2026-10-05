@@ -8,26 +8,10 @@ Last reviewed: 2026-09-30.
 
 ### Active
 
-0.18.2 (skill + linter 0.18.2.0) is released: an `Id` is written in
-lowercase whatever the OS command prints (macOS's `uuidgen` prints capitals),
-the linter names a UUID in capitals instead of "not a UUID", and the migration
-covers the live badge's new file names. `keep-the-why-dashboard` is at 0.4.0.
-The 0.18.0 eval series is recorded as measured (`docs/evals/0.18.0.md`): 100,
-100 and 98 of 101, all three lines of the series rule missed. 0.18.1 and
-0.18.2 are not measured.
-Next: run the suite again on the current `main` (three full runs, on
-request), open issues from that measurement and work on them. Beyond that
-the skill is considered complete: changes follow user feedback.
+-
 
 ### Pending
 
-- [ ] **Marketplace reviews, all external.** Cursor plugin: submitted
-  2026-09-10, every release is reviewed again. Claude Community Marketplace:
-  submitted 2026-09-08. Nothing to do on our side but answer.
-- [ ] **awesome-copilot**
-  ([github/awesome-copilot#3478](https://github.com/github/awesome-copilot/pull/3478)),
-  the bump to 0.18.2, waits on their review. Every release gets its own bump
-  PR there.
 - [ ] **`docs/security.md` against the skills.sh audits** of 0.18.2, once the
   three auditors have re-audited (release checklist step 12).
 
@@ -47,7 +31,6 @@ the skill is considered complete: changes follow user feedback.
   skill to the agent by path; with the plugin manifest in place, a variant
   that installs through `codex plugin add` would measure the documented
   install route rather than the by-hand one.
-- **openclaw** — listing or plugin, to be looked at.
 - **Topic-file size threshold** — tracked as
   [#256](https://github.com/oliver-zehentleitner/keep-the-why/issues/256):
   learn it from real repositories, don't invent one.
