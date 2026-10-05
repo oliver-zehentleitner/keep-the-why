@@ -41,25 +41,10 @@
   color: var(--md-default-fg-color);
 }
 .md-typeset .ktw-agents {
-  font-size: .72rem;
-  line-height: 2;
+  font-size: .75rem;
   margin: .2rem 0 0;
   max-width: 48rem;
-  color: var(--md-default-fg-color--light);
-}
-/* the agents as plain-text pills, all alike: no logos (most vendors' marks need written permission) */
-.md-typeset .ktw-agents .ktw-agent {
-  display: inline-block;
-  padding: 0 .55rem;
-  line-height: 1.5;
-  border: 1px solid var(--ktw-border);
-  border-radius: 999px;
-  color: var(--md-default-fg-color);
-  white-space: nowrap;
-}
-.md-typeset .ktw-agents .ktw-agent:hover {
-  border-color: var(--md-accent-fg-color);
-  color: var(--md-accent-fg-color);
+  opacity: .85;
 }
 .ktw-hero__actions {
   display: flex;

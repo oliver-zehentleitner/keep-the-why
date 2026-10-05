@@ -27,7 +27,7 @@ Keep the Why is the part that remembers *why*. Your repository already is your p
 Open source under the [MIT license](https://keepthewhy.com/license/) — the skill, the linter, the dashboard, and this site. No account, no telemetry, no cloud backend.
 { .ktw-caption }
 
-Installable [with one command](installation.md) on [Claude Code](installation.md#also-installable-claude-code-plugin){ .ktw-agent } [Codex](installation.md#also-installable-codex-plugin){ .ktw-agent } [GitHub Copilot](installation.md#also-installable-github-copilot-cli-plugin){ .ktw-agent } [Cursor](installation.md#also-installable-cursor-plugin){ .ktw-agent } [OpenClaw](installation.md#recommended-skills-cli){ .ktw-agent } [Hermes Agent](installation.md#recommended-skills-cli){ .ktw-agent } [Cline](installation.md#recommended-skills-cli){ .ktw-agent } [OpenCode](installation.md#recommended-skills-cli){ .ktw-agent } [Pi](installation.md#also-installable-pi-package){ .ktw-agent } [Antigravity](installation.md#recommended-skills-cli){ .ktw-agent } and 60+ more agents.
+Installable [with one command](installation.md) on [Claude Code](installation.md#also-installable-claude-code-plugin), [Codex](installation.md#also-installable-codex-plugin), [GitHub Copilot](installation.md#also-installable-github-copilot-cli-plugin), [Cursor](installation.md#also-installable-cursor-plugin), OpenClaw, Hermes Agent, Cline, OpenCode, [Pi](installation.md#also-installable-pi-package), Antigravity and 60+ more agents.
 { .ktw-agents }
 
 </div>
