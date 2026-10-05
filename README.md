@@ -173,17 +173,6 @@ A new release of the skill can ask something of a project — a new field, a ren
 | "Update the Keep the Why skill to the latest release." | Re-runs the install command the skill came with ([updating](https://keepthewhy.com/installation/#updating)). The new version is loaded from the next session on — a session already running keeps the one it started with. |
 | "Migrate this project to the installed Keep the Why version." | In a new session after the update: compares the project's `context-schema` in `.keep-the-why` with the skill's version, applies what the [migrations](https://keepthewhy.com/migrations/) list for the versions in between — asking where a step needs a decision — and raises `context-schema`. A session that notices the project is behind offers this by itself; the sentence is for when you want it now. |
 
-### Also listed on
-
-- [ASM](https://luongnv.com/asm/#/skills/oliver-zehentleitner%2Fkeep-the-why%3A%3Askills%2Fkeep-the-why%3A%3Akeep-the-why)
-- [awesome-agent-skills](https://github.com/VoltAgent/awesome-agent-skills#context-engineering)
-- [GitHub Copilot plugin marketplace](https://awesome-copilot.github.com/plugin/keep-the-why/)
-- [HOL AI plugin registry](https://hol.org/registry/plugins/oliver-zehentleitner%2Fkeep-the-why)
-- [MCP Market](https://mcpmarket.com/tools/skills/keep-the-why)
-- [Pi package catalog](https://pi.dev/packages/keep-the-why) — `pi install npm:keep-the-why`
-- [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why)
-- [SkillsLLM](https://skillsllm.com/skill/keep-the-why)
-
 ## Example
 
 ```text
@@ -314,6 +303,17 @@ Also listed among the tools and further reading in the [Architecture Decision Re
 ## Why I built this
 
 See [Why I built this](https://keepthewhy.com/why/) — Oliver Zehentleitner on noticing this pattern while working with agents day to day, [blog](https://blog.technopathy.club), [GitHub](https://github.com/oliver-zehentleitner). For why it's built the way it is — no database, no daemon, no account, deliberately, and a dashboard that only reads — see [Philosophy](https://keepthewhy.com/philosophy/). The thesis behind the positioning, in 800 words: [Your repository already is your project's memory. One layer was missing.](https://blog.technopathy.club/your-repository-already-is-your-project-s-memory-one-layer-was-missing)
+
+## Also listed on
+
+- [ASM](https://luongnv.com/asm/#/skills/oliver-zehentleitner%2Fkeep-the-why%3A%3Askills%2Fkeep-the-why%3A%3Akeep-the-why)
+- [awesome-agent-skills](https://github.com/VoltAgent/awesome-agent-skills#context-engineering)
+- [GitHub Copilot plugin marketplace](https://awesome-copilot.github.com/plugin/keep-the-why/)
+- [HOL AI plugin registry](https://hol.org/registry/plugins/oliver-zehentleitner%2Fkeep-the-why)
+- [MCP Market](https://mcpmarket.com/tools/skills/keep-the-why)
+- [Pi package catalog](https://pi.dev/packages/keep-the-why) — `pi install npm:keep-the-why`
+- [skills.sh](https://skills.sh/oliver-zehentleitner/keep-the-why/keep-the-why)
+- [SkillsLLM](https://skillsllm.com/skill/keep-the-why)
 
 ## Feedback
 
