@@ -471,9 +471,14 @@ a.author:hover { color: var(--accent2); }
 .details .mini .mini-hint { right: auto; left: 8px; }
 
 /* the globe: the graph alone, full width; waves asked for in a dialog */
-.app.globe { grid-template-columns: 0 1fr 0; }
-.app.globe .side, .app.globe .details { display: none; }
-.app.globe .graph-wrap { margin-left: -32px; margin-right: -32px; }
+/* desktop only: the phone layout is one column already, and these rules, more specific than
+   its .app, put every area into a zero-wide first column there */
+@media (min-width: 901px) {
+  .app.globe { grid-template-columns: 0 1fr 0; }
+  .app.globe .sidebar { display: none; }
+  .app.globe .graph-wrap { margin-left: -32px; margin-right: -32px; }
+}
+.app.globe .details { display: none; }
 .statusbar .globe-egg { margin-left: 14px; font-size: 12px; opacity: .55; text-decoration: none; } .statusbar .globe-egg:hover { opacity: 1; }
 .graph-ui .globe-ctl select { font-size: 11px; background: var(--bg2); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 1px 4px; }
 .graph-ui .globe-mark { font-size: 13px; text-decoration: none; }
