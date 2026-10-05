@@ -227,6 +227,30 @@ class StateTest(unittest.TestCase):
         self.assertNotIn("</script>", payload)
         self.assertIn("<\\/script>", payload)
 
+    def test_export_head_names_the_project_for_search_and_previews(self):
+        from ktw_dashboard.export import page_description
+
+        state = StateBuilder(self.root).build()
+        n = len(state["entries"])
+        html = render_page(state)
+        self.assertEqual(html.count("<title>"), 1)
+        self.assertIn("<title>Keep the Why Dashboard · acme---widget</title>", html)
+        # no canonical and no remote: the description falls back to the id
+        self.assertIn(
+            f'<meta name="description" content="Keep the Why dashboard of acme---widget: {n} recorded entries',
+            html,
+        )
+        self.assertIn('<meta property="og:title" content="Keep the Why Dashboard · acme---widget">', html)
+        # owner/repo from canonical, SSH and .git forms normalized; quotes escaped
+        state["project"]["canonical"] = "git@github.com:acme/widget.git"
+        self.assertTrue(page_description(state).startswith("Keep the Why dashboard of acme/widget: "))
+        state["project"]["canonical"] = ""
+        state["project"]["git"]["remote"] = "gitlab.com/acme/sub/widget"
+        self.assertIn("of acme/sub/widget:", page_description(state))
+        state["project"]["id"] = 'a"b<c'
+        html = render_page(state)
+        self.assertIn("Keep the Why Dashboard · a&quot;b&lt;c</title>", html)
+
     def test_export_keeps_the_bodies_beside_a_lean_state(self):
         from ktw_dashboard.export import BODIES_FILE, export, split_bodies
 

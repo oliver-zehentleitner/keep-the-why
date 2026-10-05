@@ -2643,7 +2643,7 @@ function applyState(state) {
   SELF = state; S = state;
   const p = S.project;
   setKids($("#project-title"), $("#project-select").hidden ? el("b", {}, p.id || p.name) : null, schemaPill(p), headPill(p.git), p.git?.remote ? el("span", { class: "pill" }, remoteLink(p.git.remote)) : null, forkPill(p.git));
-  document.title = `${p.id || p.name} — Keep the Why`;
+  document.title = `Keep the Why Dashboard · ${p.id || p.name}`;
   setKids($("#statusbar"),
     el("span", { id: "pkg-dashboard" }, el("a", { href: "https://pypi.org/project/keep-the-why-dashboard/", target: "_blank", rel: "noopener", title: "keep-the-why-dashboard on PyPI" }, `keep-the-why-dashboard ${S.dashboard}`)),
     el("span", { id: "pkg-lint" }, el("a", { href: "https://pypi.org/project/keep-the-why-lint/", target: "_blank", rel: "noopener", title: "keep-the-why-lint on PyPI" }, `keep-the-why-lint ${S.linter}`)),

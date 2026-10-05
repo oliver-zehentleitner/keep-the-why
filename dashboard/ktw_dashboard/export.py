@@ -7,11 +7,55 @@ requests, no badge service in between."""
 from __future__ import annotations
 
 import base64
+import html as html_lib
 import json
 import os
 import re
 
+from . import gitinfo
 from .server import WEB_DIR
+
+TITLE_PREFIX = "Keep the Why Dashboard"
+
+
+def page_title(state: dict) -> str:
+    """`Keep the Why Dashboard · <id>` — the same in app.js, so a search
+    result names the project and many exports stay told apart."""
+    p = state.get("project", {})
+    return f"{TITLE_PREFIX} · {p.get('id') or p.get('name') or 'project'}"
+
+
+def page_description(state: dict) -> str:
+    """One sentence for search results and link previews: whose repository,
+    how many entries, what they are. `owner/repo` from `canonical`, else
+    from the remote; without either, the project's id."""
+    p = state.get("project", {})
+    remote = gitinfo.normalize_remote(
+        p.get("canonical") or (p.get("git") or {}).get("remote") or ""
+    )
+    repo = remote.split("/", 1)[1] if "/" in remote else ""
+    whose = repo or p.get("id") or p.get("name") or "a project"
+    entries = len(state.get("entries", []))
+    topics = len(state.get("topics", []))
+    e_noun = "entry" if entries == 1 else "entries"
+    t_noun = "topic" if topics == 1 else "topics"
+    return (
+        f"Keep the Why dashboard of {whose}: {entries} recorded {e_noun} — "
+        f"decisions, rejected alternatives, workarounds and constraints — "
+        f"across {topics} {t_noun}; the reasoning the code cannot explain."
+    )
+
+
+def _head_meta(state: dict) -> str:
+    title = html_lib.escape(page_title(state))
+    desc = html_lib.escape(page_description(state))
+    return (
+        f"<title>{title}</title>\n"
+        f'<meta name="description" content="{desc}">\n'
+        f'<meta property="og:type" content="website">\n'
+        f'<meta property="og:title" content="{title}">\n'
+        f'<meta property="og:description" content="{desc}">'
+    )
 
 
 def render_page(state: dict) -> str:
@@ -37,6 +81,9 @@ def render_page(state: dict) -> str:
                 "ascii"
             )
         html = html.replace(f"/static/{name}", data_uri)
+    # title and description in the page itself, not only set by the script:
+    # a crawler or a link preview reads the static head
+    html = re.sub(r"<title>[^<]*</title>", lambda _: _head_meta(state), html, count=1)
     html = html.replace(
         '<link rel="stylesheet" href="/static/style.css">', f"<style>\n{css}\n</style>"
     )

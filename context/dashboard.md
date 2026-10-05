@@ -397,3 +397,18 @@ The page marks a checkout as a fork — *fork of host/owner/repo*, linking the r
 **Rejected alternative:** ask the host — GitHub's repository API says `fork: true` and names `parent`. Authoritative, but one request per project at every build, and the page asks a host only on a click (the author lookup). The API can be added as an opt-in confirmation later; the local signals stay the default.
 
 **Consequence:** a mirror — `origin` points at a copy, `canonical` at the original — is marked a fork by the second signal; the tooltip says "fork or mirror" for that one. Comparison is case-insensitive on the normalized form, so `git@github.com:Acme/widget.git` and `https://github.com/acme/widget/` are one repository.
+
+## An export carries its title and description in the static head, the project's id in the title
+
+**Id:** f1798af9-40d1-493a-9edc-6fb29b97e11c
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer request, 2026-10-05, after a search result for `/dashboard/live/` showed the bare id as title and a random sentence from an entry body as snippet; the static-head form was the assisting agent's proposal, accepted
+**Revisit when:** search engines or link previews show the exports badly again, or the registry lists so many projects that the description needs more than the repository and its counts
+
+An exported page writes `<title>Keep the Why Dashboard · <id></title>`, a `description` and `og:title` / `og:description` into its head at export time; the description names `owner/repo` (from `canonical`, else the remote, else the id), the entry and topic counts, and what the entries are. The script sets the same title.
+
+**Reason:** the exports are meant to be found — every published dashboard is a public showcase of a project's reasoning — and there will be many of them, so the title has to say which project it is. A crawler reading the static head gets the right text without running the script; before, the head said only *Keep the Why — dashboard* and had no description, so the search result took the script-set id as title and picked a sentence out of the embedded state.
+
+**Rejected alternative:** `noindex` on the export, leaving the docs page `/dashboard/` as the entry point. Rejected: the exports are what should show up in search, not be hidden from it.

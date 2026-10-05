@@ -10,6 +10,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Changed
 
+- `keep-the-why-dashboard` 0.6.11: an exported page names its project in its own head, for search results and link previews. The title is *Keep the Why Dashboard · \<id\>* — set by the script before, so a crawler that indexed the page showed the bare id; a `description`, `og:title` and `og:description` say whose repository it is (`owner/repo` from `canonical`, else the remote, else the id), how many entries across how many topics, and what they are. The local server's tab shows the same title.
 - Registry: the index (`keepthewhy.com/registry/index.json`) is built into the site by the docs workflow on every deploy and weekly, no longer committed — the workflow's push to the protected `main` was rejected whenever the index changed, so a merged listing (#596) did not reach the globe. The previous published index feeds the 30-day grace; a line that cannot be listed is left out with a warning instead of failing the deploy. The registry workflow checks pull requests only. `registry/projects.txt` is kept in A–Z order, and the check fails on a line out of order.
 
 ### Fixed
