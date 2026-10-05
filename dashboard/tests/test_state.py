@@ -240,10 +240,17 @@ class StateTest(unittest.TestCase):
             f'<meta name="description" content="Keep the Why dashboard of acme---widget: {n} recorded entries',
             html,
         )
-        self.assertIn('<meta property="og:title" content="Keep the Why Dashboard · acme---widget">', html)
+        self.assertIn(
+            '<meta property="og:title" content="Keep the Why Dashboard · acme---widget">',
+            html,
+        )
         # owner/repo from canonical, SSH and .git forms normalized; quotes escaped
         state["project"]["canonical"] = "git@github.com:acme/widget.git"
-        self.assertTrue(page_description(state).startswith("Keep the Why dashboard of acme/widget: "))
+        self.assertTrue(
+            page_description(state).startswith(
+                "Keep the Why dashboard of acme/widget: "
+            )
+        )
         state["project"]["canonical"] = ""
         state["project"]["git"]["remote"] = "gitlab.com/acme/sub/widget"
         self.assertIn("of acme/sub/widget:", page_description(state))
