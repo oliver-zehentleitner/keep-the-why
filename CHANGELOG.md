@@ -18,6 +18,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Changed
 
+- Installation page: the opening paragraph goes; the page starts with *Your agent is the interface*. What it said is on the landing page and in the page's own trust section — and its last clause, that the skill installs neither the linter nor the dashboard, no longer held: with the default `local-lint: auto` the skill installs the linter from PyPI.
 - Site navigation: *Why this project is built this way* moves up above *Evals*. *Why I built this* is no longer in the menu; the page stays, linked from the README.
 - A context cache is read with read commands only: `SKILL.md` and `references/setup.md` say that not even a test file goes into it to probe whether it could be written — the one write the pre-release series still saw (`context-cache-is-read-only`, a `touch`/`rm` probe).
 - `keep-the-why-dashboard` 0.6.11: an exported page names its project in its own head, for search results and link previews. The title is *Keep the Why Dashboard · \<id\>* — set by the script before, so a crawler that indexed the page showed the bare id; a `description`, `og:title` and `og:description` say whose repository it is (`owner/repo` from `canonical`, else the remote, else the id), how many entries across how many topics, and what they are. The local server's tab shows the same title.
