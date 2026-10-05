@@ -188,6 +188,11 @@ split — which **See** (a related entry, in this project or another) and **Supe
   knowledge — let them talk, extract decision-forks from what comes up)
 - Maintenance — keep existing rationale current, resolve contradictions, split oversized files
 
+Autonomous agents with no human in the loop: in a session declared unattended (`session: unattended`
+in `~/.keep-the-why/config`), the agent writes an entry it would otherwise have asked about and flags
+it `pending-confirmation` instead of asking into the void or dropping it; the next attended session
+confirms it.
+
 Composition with other skills: Keep the Why is a cross-cutting persistence skill, not a
 development methodology or workflow orchestrator. When another skill or framework already
 governs how the work gets done (brainstorming, planning, systematic debugging, TDD, code

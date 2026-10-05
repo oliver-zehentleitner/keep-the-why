@@ -6,6 +6,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Added
 
+- README, landing page and `llms.txt`: Keep the Why works for autonomous agents with no human in the loop — in a session declared `unattended`, the agent writes what it would have asked about and flags it `pending-confirmation`, confirmed by the next person who looks.
 - `keep-the-why-dashboard` 0.6.12: a repository's platform mark — GitHub, GitLab, Codeberg, Bitbucket, Gitea, Forgejo — before its name in the graph's hub labels, the hub list beside the graph, cross-project reference rows, the Friends and Family views, the fork pill and the list of what did not load. Read from the URL alone; a host no rule knows, such as a self-hosted instance under its own name, gets no mark. The marks are inline paths (Simple Icons, CC0) in the text colour — nothing is fetched from the platforms. A new platform is one row in `HOSTS` in `lib.js`.
 - README, installation page, landing page and `llms.txt`: after setup, the sentences that fill a new `context/` from what the project already knows — a retrospective pass over git history, pull requests, issues and docs; an interview; free narration; a maintenance check — one sentence each, beside the optional components.
 
