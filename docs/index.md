@@ -50,6 +50,8 @@ The skill is the one part a project needs, and that sentence covers any of 70+ a
 
 **Then fill it.** A new `context/` starts empty and fills itself as you work. What the project already knows — in commit messages, pull requests, issues, old docs and people's heads — is one sentence away: *"Go through the git history, pull requests, issues and existing docs, and collect the reasoning that is already there into `context/`."* What the agent cannot back up it marks `unknown`, never made up. For what lives only in someone's head: *"Interview me about this project."* More on the [installation page](installation.md#your-agent-is-the-interface).
 
+**Keep it current.** After a skill update, in a new session: *"Migrate this project to the installed Keep the Why version."* The agent compares the project's `context-schema` with the skill's version, applies the [migrations](migrations.md) in between and raises it — and offers the same by itself when it notices the project is behind.
+
 <div class="ktw-cards" markdown>
 
 <div class="ktw-card" markdown>

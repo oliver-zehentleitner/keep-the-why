@@ -27,6 +27,13 @@ Three components are optional. The agent knows how to set up each one, offers th
 | "I'll tell you about this project — listen, and record the decisions." | Free narration, for broad knowledge built up over years: the agent extracts the decisions and their alternatives, then closes the gaps with questions. |
 | "Check `context/` for entries that are stale or contradict the code." | Maintenance: contradictions surfaced, superseded entries marked, oversized files split. |
 
+**Keep it current.** A new release of the skill can ask something of a project — a new field, a renamed file, a check the linter now makes. Two sentences, in two sessions:
+
+| Say to your agent | What it does |
+|---|---|
+| "Update the Keep the Why skill to the latest release." | Re-runs the install command the skill came with ([updating](#updating)). The new version is loaded from the next session on — a session already running keeps the one it started with. |
+| "Migrate this project to the installed Keep the Why version." | In a new session after the update: compares the project's `context-schema` in `.keep-the-why` with the skill's version, applies what the [migrations](migrations.md) list for the versions in between — asking where a step needs a decision — and raises `context-schema`. A session that notices the project is behind offers this by itself; the sentence is for when you want it now. |
+
 Everything below is for the agent doing the installing, and for anyone who prefers to do it by hand.
 
 ### For agents reading this page

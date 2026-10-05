@@ -139,6 +139,11 @@ that is already there into context/" (a retrospective pass; what cannot be backe
 unknown), "interview me about this project" (targeted questions about the gaps), "I'll tell you
 about this project — listen, and record the decisions" (free narration), and "check context/
 for entries that are stale or contradict the code" (maintenance).
+Keeping it current, two sentences in two sessions: "update the Keep the Why skill to the latest
+release" (re-runs the install command; the new version loads from the next session on), then
+"migrate this project to the installed Keep the Why version" (compares the project's
+`context-schema` with the skill's version, applies https://keepthewhy.com/migrations/ in between,
+raises `context-schema`; a session that notices the project is behind offers this by itself).
 
 What a developer has to do, in full: install the skill (one command, `npx skills add …` above,
 for any of 70+ agents; other routes: https://keepthewhy.com/installation/ — or the sentence
