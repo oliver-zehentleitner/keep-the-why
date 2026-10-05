@@ -84,7 +84,10 @@ nav:
   - Security: security.md
   - Badge: badge.md
   - FAQ: faq.md
-  - Why I built this: why.md
+  - "Why this project is built this way":
+      - Why I built this: why.md
+      - "Read this project's context/": context/index.md
+      - "See it in the dashboard ↗": https://keepthewhy.com/dashboard/live/
   - Evals:
       - Full suite: evals.md
       - Agent & model matrix: agent-matrix.md
@@ -105,6 +108,3 @@ nav:
       - Abandoned change: examples/abandoned-change.md
       - Legacy project: examples/legacy-project.md
       - Developer handover: examples/developer-handover.md
-  - "Why this project is built this way":
-      - "Read this project's context/": context/index.md
-      - "See it in the dashboard ↗": https://keepthewhy.com/dashboard/live/
