@@ -12,6 +12,9 @@ hide:
 
 <h1 class="ktw-hero__tagline">Keep a Changelog records what changed.<br>Keep the Why preserves why it changed.</h1>
 
+Installable [with one command](installation.md) on [Claude Code](installation.md#also-installable-claude-code-plugin){ .ktw-agent } [Codex](installation.md#also-installable-codex-plugin){ .ktw-agent } [GitHub Copilot](installation.md#also-installable-github-copilot-cli-plugin){ .ktw-agent } [Cursor](installation.md#also-installable-cursor-plugin){ .ktw-agent } [OpenClaw](installation.md#recommended-skills-cli){ .ktw-agent } [Hermes Agent](installation.md#recommended-skills-cli){ .ktw-agent } [Cline](installation.md#recommended-skills-cli){ .ktw-agent } [OpenCode](installation.md#recommended-skills-cli){ .ktw-agent } [Pi](installation.md#also-installable-pi-package){ .ktw-agent } [Antigravity](installation.md#recommended-skills-cli){ .ktw-agent } and 60+ more agents.
+{ .ktw-agents }
+
 Same question. Same wrong turn. Same explanation, again. Your agent forgets between sessions. Nothing in the usual project structure is dedicated to remembering it.
 
 Keep the Why is the part that remembers *why*. Your repository already is your project's memory — README, docs, tests, changelog, history; [one layer was missing](https://oliver-zehentleitner.github.io/repo-native-project-memory/). [The reasoning behind a codebase](https://keepthewhy.com/dashboard/live/#thoughts){ target=_blank rel=noopener } — decisions, rejected alternatives, workarounds, constraints the code alone can't explain — captured as a byproduct of working with your agent and kept as plain Markdown in `context/`, versioned and shared by Git. No database, no daemon, no account.

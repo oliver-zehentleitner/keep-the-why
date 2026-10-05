@@ -175,3 +175,19 @@ The skill carries what the README tells a person — what Keep the Why is, which
 **Reason:** the agent is the interface, but the README is not installed with the skill: an agent asked "what can I tell you to do?" knew the modes and the optional components only from scattered rules, and the sentences not at all. One file keeps the answer complete and the sentences identical to the README's.
 
 **Rejected alternative:** the whole explanation in `SKILL.md`. Rejected — it is needed only when someone asks, and `SKILL.md` stays small enough to load on every activation; a read-before trigger is the pattern for that (`context/evals.md`).
+
+## Supported agents are named in plain text, never shown as logos
+
+**Id:** cd274fee-3191-4ca2-8ab1-999b752d18d4
+**Type:** decision
+**Type:** constraint
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer decision, 2026-10-05, after a check of the vendors' published brand rules
+**Revisit when:** the vendors whose marks need permission publish a compatibility or "works with" program, or permission is given in writing
+
+The README's second line and the landing page under the hero name the agents Keep the Why installs on — Claude Code, Codex, GitHub Copilot, Cursor, OpenClaw, Hermes Agent, Cline, OpenCode, Pi, Antigravity — as text; on the landing page as plain pills, all alike, each linking the installation page.
+
+**Reason:** the three best-known names cannot carry a logo: Anthropic allows saying in plain text that a product runs Claude Code and requires written permission for any other use of its names or logos; OpenAI's brand guidelines say not to use its logo without permission; Google requires prior written consent for uses its brand documentation does not cover. Of the others, only some have a mark under an open license, and most publish no rules for third parties at all — which is no permission. A row where the best-known agents are text and the rest logos would point at the gap.
+
+**Rejected alternative:** logos where a source allows them (OpenClaw and Hermes Agent from their MIT repositories; OpenCode and Pi from Simple Icons, CC0; Cline, Cursor, GitHub Copilot from their brand pages or icon sets), text for the rest. Rejected for the mixed look and the unclear footing of the ones without rules.
