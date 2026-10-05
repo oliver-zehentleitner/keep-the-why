@@ -24,8 +24,6 @@
 
 Keep a Changelog records what changed. Keep the Why preserves why it changed.
 
-**Installable [with one command](#install) on Claude Code, Codex, GitHub Copilot, Cursor, OpenClaw, Hermes Agent, Cline, OpenCode, Pi, Antigravity and 60+ more agents.**
-
 <!-- ktw-intro:start -->
 **Keep the Why** is the why layer of [repo-native project memory](https://oliver-zehentleitner.github.io/repo-native-project-memory/): your repository already holds what the project is, how it works and what changed; this is the agent skill, and the file convention it maintains, that preserve the one thing it was missing — [the reasoning behind a codebase](https://keepthewhy.com/dashboard/live/#thoughts) — architecture decisions, rejected alternatives, workarounds, incident learnings, operational constraints that the code alone can't explain — in the repo. That memory is plain Markdown in `context/`, committed with the code, so Git already provides the storage, the history and the distribution: it travels with every clone, branch and fork, and a pull request shows the reasoning diff beside the code diff. It captures that reasoning as a byproduct of working with your agent, so every later session can use it. Your agent, and every other agent that works in the repository, understands not just the code but everything around it: why it is the way it is, what was tried and rejected, which constraints the source doesn't show. So does the next person. Onboarding gets faster, legacy projects become tractable again. It works continuously as you develop, where the reasoning comes for free.
 
@@ -39,6 +37,8 @@ Documentation is normally extra work that happens after the code is done — rel
 <!-- ktw-tested-with:start -->
 **Tested with:** Claude Code, opencode, Pi, Hermes, and more — see the [full eval suite](https://keepthewhy.com/evals/) and the [agent × model matrix](https://keepthewhy.com/agent-matrix/) for what's actually been run against what, and how.
 <!-- ktw-tested-with:end -->
+
+**Installable [with one command](#install) on Claude Code, Codex, GitHub Copilot, Cursor, OpenClaw, Hermes Agent, Cline, OpenCode, Pi, Antigravity and 60+ more agents.**
 
 Website: [https://keepthewhy.com](https://keepthewhy.com/) · [llms.txt](https://keepthewhy.com/llms.txt) for AI agents/assistants looking up this project
 
