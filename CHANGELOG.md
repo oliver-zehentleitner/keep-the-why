@@ -18,6 +18,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Changed
 
+- Installation page: the sentence to give the agent is a code block with a copy button, wrapped like prose.
 - Installation page: the opening paragraph is replaced by one line — *Installable with one command on Claude Code, Pi, Codex, GitHub Copilot, Cursor, OpenClaw, Hermes Agent, Cline, OpenCode, Antigravity and 60+ more agents*, the agents with an install route of their own linking their section, *with one command* the skills CLI. What it said is on the landing page and in the page's own trust section — and its last clause, that the skill installs neither the linter nor the dashboard, no longer held: with the default `local-lint: auto` the skill installs the linter from PyPI.
 - Site navigation: *Why this project is built this way* moves up above *Evals*. *Why I built this* is no longer in the menu; the page stays, linked from the README.
 - A context cache is read with read commands only: `SKILL.md` and `references/setup.md` say that not even a test file goes into it to probe whether it could be written — the one write the pre-release series still saw (`context-cache-is-read-only`, a `touch`/`rm` probe).

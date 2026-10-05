@@ -6,7 +6,9 @@ Installable [with one command](#recommended-skills-cli) on [Claude Code](#also-i
 
 You don't have to read the rest of this page. Tell your coding agent:
 
-> Install the Keep the Why skill — pick the best installation method for you from https://keepthewhy.com/installation/ — then set up Keep the Why in this project with default settings, including autostart.
+``` { .text .ktw-prompt }
+Install the Keep the Why skill — pick the best installation method for you from https://keepthewhy.com/installation/ — then set up Keep the Why in this project with default settings, including autostart.
+```
 
 That is the whole setup. The skill is the one part a project needs: the agent installs it, the [setup](setup.md) writes `.keep-the-why` and `context/`, [autostart](autostart.md) makes every later session load the skill by itself, and from then on the agent records the why as it surfaces. "Default settings" is a complete answer; leave it out and the agent shows you the settings as one list first.
 

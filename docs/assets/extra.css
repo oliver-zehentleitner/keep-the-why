@@ -242,3 +242,11 @@
 .md-header__button.ktw-globe:hover,
 .md-header__button.ktw-globe:focus-visible { opacity: 1; }
 
+/* the sentence to give an agent, as a code block for the copy button — wrapped like prose, not scrolled */
+.md-typeset .ktw-prompt pre > code {
+  white-space: pre-wrap;
+  word-break: normal;
+  overflow-wrap: anywhere;
+  font-size: .8rem;
+  line-height: 1.5;
+}
