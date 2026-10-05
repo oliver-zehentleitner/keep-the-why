@@ -12,10 +12,11 @@ hide:
 
 <h1 class="ktw-hero__tagline">Keep a Changelog records what changed.<br>Keep the Why preserves why it changed.</h1>
 
-
 Same question. Same wrong turn. Same explanation, again. Your agent forgets between sessions. Nothing in the usual project structure is dedicated to remembering it.
 
 Keep the Why is the part that remembers *why*. Your repository already is your project's memory — README, docs, tests, changelog, history; [one layer was missing](https://oliver-zehentleitner.github.io/repo-native-project-memory/). [The reasoning behind a codebase](https://keepthewhy.com/dashboard/live/#thoughts){ target=_blank rel=noopener } — decisions, rejected alternatives, workarounds, constraints the code alone can't explain — captured as a byproduct of working with your agent and kept as plain Markdown in `context/`, versioned and shared by Git. No database, no daemon, no account.
+
+Installable [with one command](installation.md) on [Claude Code](installation.md#also-installable-claude-code-plugin), [Pi](installation.md#also-installable-pi-package), [Codex](installation.md#also-installable-codex-plugin), [GitHub Copilot](installation.md#also-installable-github-copilot-cli-plugin), [Cursor](installation.md#also-installable-cursor-plugin), OpenClaw, Hermes Agent, Cline, OpenCode, Antigravity and 60+ more agents.
 
 [Install](installation.md){ .md-button .md-button--primary }
 [Read the README](readme.md){ .md-button }
@@ -26,9 +27,6 @@ Keep the Why is the part that remembers *why*. Your repository already is your p
 
 Open source under the [MIT license](https://keepthewhy.com/license/) — the skill, the linter, the dashboard, and this site. No account, no telemetry, no cloud backend.
 { .ktw-caption }
-
-Installable [with one command](installation.md) on [Claude Code](installation.md#also-installable-claude-code-plugin), [Pi](installation.md#also-installable-pi-package), [Codex](installation.md#also-installable-codex-plugin), [GitHub Copilot](installation.md#also-installable-github-copilot-cli-plugin), [Cursor](installation.md#also-installable-cursor-plugin), OpenClaw, Hermes Agent, Cline, OpenCode, Antigravity and 60+ more agents.
-{ .ktw-agents }
 
 </div>
 

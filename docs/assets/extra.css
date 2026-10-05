@@ -40,12 +40,6 @@
   margin: 0 0 1rem;
   color: var(--md-default-fg-color);
 }
-.md-typeset .ktw-agents {
-  font-size: .75rem;
-  margin: .2rem 0 0;
-  max-width: 48rem;
-  opacity: .85;
-}
 .ktw-hero__actions {
   display: flex;
   flex-wrap: wrap;
