@@ -1,5 +1,7 @@
 # Installation
 
+Installable [with one command](#recommended-skills-cli) on [Claude Code](#also-installable-claude-code-plugin), [Pi](#also-installable-pi-package), [Codex](#also-installable-codex-plugin), [GitHub Copilot](#also-installable-github-copilot-cli-plugin), [Cursor](#also-installable-cursor-plugin), OpenClaw, Hermes Agent, Cline, OpenCode, Antigravity and 60+ more agents.
+
 ## Your agent is the interface
 
 You don't have to read the rest of this page. Tell your coding agent:
