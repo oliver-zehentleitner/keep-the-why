@@ -85,7 +85,6 @@ nav:
   - Badge: badge.md
   - FAQ: faq.md
   - "Why this project is built this way":
-      - Why I built this: why.md
       - "Read this project's context/": context/index.md
       - "See it in the dashboard ↗": https://keepthewhy.com/dashboard/live/
   - Evals:
