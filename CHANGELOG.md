@@ -6,6 +6,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Added
 
+- FAQ: three questions in the words people search with — an agent that keeps suggesting what was already rejected (with the measured result), an instruction file (`CLAUDE.md`, `AGENTS.md`) that keeps growing, and whether project memory needs a vector database or an MCP memory server — and a table comparing session/vector memory, one large instruction file and Keep the Why. `llms.txt`: the same three as *Questions this answers*.
 - Installation page: *Pinning a project to one skill version* — a copy of the skill in the repository plus `pinned-version` and `pinned-path` in `.keep-the-why`, how it works together with a skill installed globally (whichever copy loads first follows the pinned one, and stops instead of silently running another version), and how a pinned project is updated. A FAQ entry, a line under *Keep it current* in the README, on the installation page and in `llms.txt`, and two sentences in `references/help.md` (*What you can ask for*) to pin a project and to update its pinned copy. Until now the mechanism was described only in `references/setup.md`.
 
 ### Changed

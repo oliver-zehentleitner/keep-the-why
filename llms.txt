@@ -357,6 +357,21 @@ knowledge-transfer interviews, plus ongoing maintenance of what's already there,
 topic-indexed living docs rather than a shadow tree or one-file-per-decision, with no required
 external service (no database, no MCP server).
 
+## Questions this answers
+
+- "My coding agent keeps suggesting something we already tried and rejected": record the
+  rejection in `context/` with its reason; the agent reads the topic before changing that code.
+  Measured once: without a recorded reason 7 of 10 fresh sessions re-proposed the rejected
+  change, with one `context/` entry 0 of 10 did. Guidance the agent reads, not a lock.
+- "My CLAUDE.md / AGENTS.md keeps growing": keep instructions there; put the reasons behind the
+  code in `context/`, one file per topic, behind a one-line-per-topic index, so an agent opens
+  only the topic its task touches instead of loading every decision in every session.
+- "Do I need a vector database or an MCP memory server for project memory?": not for the
+  reasoning behind the code. Session/vector memory recalls past conversations by similarity;
+  Keep the Why is plain Markdown in the repository, found by its index, reviewed in pull
+  requests. Different layers that can run side by side.
+- Details and a comparison table: https://keepthewhy.com/faq/
+
 ## Plain Facts (what it is and is not)
 
 - A `.keep-the-why` file marks a project; the project is the tree under the nearest one walking

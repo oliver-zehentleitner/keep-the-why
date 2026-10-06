@@ -33,6 +33,23 @@ Through `context/index.md`: one line per topic file under a fixed heading skelet
 **Does it have similarity search, like a vector memory?**
 No. Retrieval is the index and the topic name: `context/index.md` names every topic file in one line, the agent reads that page and opens the topic the task touches, and inside a topic file the entries are headings a reader — human or agent — scans. Nothing is embedded, nothing is ranked by similarity; `git grep` works because it is text. That is a choice, not a gap: entries are synthesized from the conversation rather than stored verbatim, written to be read in full, so a topic file is a few screens and "have we been here before" is answered by the topic's name. The limit is easy to name: a project whose `context/` grows to hundreds of topic files needs more than one line per file, and the index would be the thing to fix. Nothing prevents a search tool from indexing `context/` — it is Markdown — but the skill does not need one and does not ship one.
 
+**My coding agent keeps suggesting something we already tried and rejected. How do I stop that?**
+Write the rejection down where the next session will look before it changes the code, with the reason and what went wrong. A fresh session has no memory of the last one, and the code only shows what was kept, not what was ruled out. That is what `context/` is for: an entry records the decision, the rejected alternative and why it lost, and the agent reads the matching topic before touching that part of the code. Measured once, on the core claim: twenty fresh sessions, the same codebase, the same request to simplify a retry wrapper. Without a recorded reason, seven of ten offered the already-rejected simplification again; with one `context/` entry, all ten found it and none did ([the experiment](https://blog.technopathy.club/what-happens-when-a-coding-agent-forgets-why-a-change-was-rejected), [transcripts and grades](https://github.com/oliver-zehentleitner/keep-the-why/tree/main/experiments/rejected-change)). It is guidance the agent reads, not a lock: nothing blocks a commit that repeats a rejected approach (see below).
+
+**My CLAUDE.md / AGENTS.md keeps growing. Where should project decisions go instead?**
+Keep the instruction file for instructions: how to build, test and work in this repository. The reasons behind the code don't belong there. An instruction file is read in full at the start of every session, so every decision added to it is loaded every time, whether the task touches it or not, and a long file is hard to keep current. In Keep the Why the decisions live in `context/`, one Markdown file per topic, and `context/index.md` lists every topic in one line. The agent reads the index and opens only the topic the task touches. `AGENTS.md` stays a lean entry point that points there ([repository structure](repository-structure.md)).
+
+**Do I need a vector database or an MCP memory server for project memory?**
+Not for the reasoning behind the code. Session and vector memory tools remember what happened in conversations and recall it by similarity. Keep the Why records why the code is the way it is, as plain Markdown in the repository, found by its index. They are different layers and can run side by side; one memory server, [ai-memory](https://github.com/akitaonrails/ai-memory/blob/main/docs/marker-file.md), documents how to run it next to a Keep the Why `context/`.
+
+| | Session or vector memory (memory service, MCP memory server) | One large instruction file (`CLAUDE.md`, `AGENTS.md`, rules files) | Keep the Why |
+|---|---|---|---|
+| What it holds | what happened in sessions; facts recalled about the user and the work | instructions: how to work in this repository | why the code is the way it is: decisions, rejected alternatives, workarounds, constraints |
+| Where it lives | the tool's store, usually per user or per machine | the repository | the repository, in `context/` |
+| Infrastructure | a server or service, often an embedding model | none | none: Markdown, plus an optional linter and viewer |
+| Shared with the team and reviewed | through the tool, if it supports that | in the pull request, as a diff | in the pull request, as a diff beside the code it explains |
+| How the agent finds the relevant part | similarity search | reads the whole file every session | reads a one-line-per-topic index, then opens the topic the task touches |
+
 **How is this different from an ADR (Architecture Decision Record)?**
 ADRs are typically human-authored, written at a discrete decision point, one file per decision, and treated as frozen once accepted. Side by side:
 
