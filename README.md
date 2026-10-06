@@ -176,6 +176,8 @@ A new release of the skill can ask something of a project — a new field, a ren
 | "Update the Keep the Why skill to the latest release." | Re-runs the install command the skill came with ([updating](https://keepthewhy.com/installation/#updating)). The new version is loaded from the next session on — a session already running keeps the one it started with. |
 | "Migrate this project to the installed Keep the Why version." | In a new session after the update: compares the project's `context-schema` in `.keep-the-why` with the skill's version, applies what the [migrations](https://keepthewhy.com/migrations/) list for the versions in between — asking where a step needs a decision — and raises `context-schema`. A session that notices the project is behind offers this by itself; the sentence is for when you want it now. |
 
+A project can also pin the version it runs, whatever is installed on the machine — a copy of the skill in the repository and two lines in `.keep-the-why`; a global install then follows that copy: [pinning a project](https://keepthewhy.com/installation/#pinning-a-project-to-one-skill-version).
+
 ## Example
 
 ```text

@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- Installation page: *Pinning a project to one skill version* — a copy of the skill in the repository plus `pinned-version` and `pinned-path` in `.keep-the-why`, how it works together with a skill installed globally (whichever copy loads first follows the pinned one, and stops instead of silently running another version), and how a pinned project is updated. A FAQ entry, a line under *Keep it current* in the README, on the installation page and in `llms.txt`, and two sentences in `references/help.md` (*What you can ask for*) to pin a project and to update its pinned copy. Until now the mechanism was described only in `references/setup.md`.
+
 ### Changed
 
 - Linter and dashboard READMEs (and with them their PyPI pages): the Keep the Why badge is the live one the main README carries — this project's entries from its published dashboard, linking the live dashboard — instead of the static badge.

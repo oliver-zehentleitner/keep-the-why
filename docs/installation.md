@@ -36,6 +36,8 @@ Three components are optional. The agent knows how to set up each one, offers th
 | "Update the Keep the Why skill to the latest release." | Re-runs the install command the skill came with ([updating](#updating)). The new version is loaded from the next session on — a session already running keeps the one it started with. |
 | "Migrate this project to the installed Keep the Why version." | In a new session after the update: compares the project's `context-schema` in `.keep-the-why` with the skill's version, applies what the [migrations](migrations.md) list for the versions in between — asking where a step needs a decision — and raises `context-schema`. A session that notices the project is behind offers this by itself; the sentence is for when you want it now. |
 
+A project can also pin the version it runs, whatever is installed on the machine — a copy of the skill in the repository and two lines in `.keep-the-why`; a global install then follows that copy: [pinning a project](#pinning-a-project-to-one-skill-version).
+
 Everything below is for the agent doing the installing, and for anyone who prefers to do it by hand.
 
 ### For agents reading this page
@@ -197,6 +199,23 @@ Re-run whichever install command you used the first time. If you pinned to `late
 Start a new session afterward, same as a fresh install — a session already in progress keeps whatever `SKILL.md` it already loaded and won't pick up the update mid-conversation. To confirm the update actually took, check the `metadata.version` field in your installed `skills/keep-the-why/SKILL.md`, or ask your agent to report it.
 
 This is separate from whether your project's own `context/` needs anything done to it. Updating the skill replaces its own files wholesale — nothing to do on your side just because a release changed how `SKILL.md` describes itself internally. A release asks something of your project when `migrations.md` has an entry that applies — not just `context/` entry-format changes, also structural conventions (like `context/index.md`'s sort order), new config defaults, and storage-location changes (like config moving into a dedicated `.keep-the-why` file) — tracked via `context-schema` in your project's `.keep-the-why`; see `setup.md` and `migrations.md`. The two are independent: a release can update the skill's own frontmatter shape (as `0.3.1` did) without touching `context-schema` at all.
+
+## Pinning a project to one skill version
+
+Installing from a release tag (above) decides which version *your machine* has. A project can also decide which version *it* runs, whatever is installed on the machine: check a copy of the skill into the repository and pin it in `.keep-the-why`. Useful when a team wants everyone on the version the project was set up and tested with, or when a project should not change behaviour just because someone's personal install is newer or older.
+
+The copy is the `skills/keep-the-why/` folder of a release, for example at `.agents/skills/keep-the-why/`, plus two lines in `.keep-the-why`:
+
+```markdown
+- pinned-version: 0.20.0
+- pinned-path: .agents/skills/keep-the-why/SKILL.md
+```
+
+Or ask the agent: *"Pin this project to the Keep the Why version installed here."*
+
+**It works with a global install too.** In some tools a skill installed for the user overrides a project's copy with the same name, so the project's copy would never load. The pin handles that from the other side: whichever copy loads first reads `pinned-version` before anything else. If its own version is a different one, it checks the pinned file — inside the project, `name: keep-the-why`, the pinned version in its frontmatter — and follows that file for the rest of the session instead of itself. If the pinned file is missing or does not match, the agent stops and says so, and offers to restore the copy, remove the pin, or continue with the installed version for this session only. It never quietly runs a different version than the one the project pinned. A "Keep the Why" section in the project's `AGENTS.md` ([autostart](autostart.md)) should name the pinned `SKILL.md`, so agents without a skill tool read the right copy as well.
+
+**Updating a pinned project** is a change to the project, not to the machine: replace the copied folder with the new release's `skills/keep-the-why/`, set `pinned-version` to the new version, then *"Migrate this project to the installed Keep the Why version."* in a new session, as with any update. Or ask: *"Update this project's pinned Keep the Why copy to the latest release."* To stop pinning, delete the two lines (and the copy, if nothing else uses it). Every condition and the exact checks: [setup — Pinned versions](setup.md#pinned-versions).
 
 ## Trust and scope
 

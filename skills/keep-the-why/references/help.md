@@ -38,12 +38,14 @@ No database, no service, no account, no telemetry; MIT licensed; works with any 
 | "I'll tell you about this project — listen, and record the decisions." | free narration; the decisions and their alternatives are extracted |
 | "Check `context/` for entries that are stale or contradict the code." | maintenance: contradictions surfaced, superseded entries marked, oversized files split |
 
-**Keep it current** — two sentences, in two sessions
+**Keep it current** — two sentences, in two sessions; a project that pins its own copy updates that copy instead
 
 | Say | What happens |
 |---|---|
 | "Update the Keep the Why skill to the latest release." | re-runs the install command the skill came with; the new version loads from the next session on |
 | "Migrate this project to the installed Keep the Why version." | applies what the migrations list between the project's `context-schema` and the skill's version, asking where a step needs a decision |
+| "Pin this project to the Keep the Why version installed here." | copies the skill into the project and writes `pinned-version` and `pinned-path` to `.keep-the-why`: every session follows that copy, whatever version is installed on the machine (`references/setup.md`, "Pinned versions") |
+| "Update this project's pinned Keep the Why copy to the latest release." | replaces the copy and moves `pinned-version`; migrating the project follows in the next session, as above |
 
 **Optional components** — offered, set up only when asked
 

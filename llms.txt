@@ -144,6 +144,10 @@ release" (re-runs the install command; the new version loads from the next sessi
 "migrate this project to the installed Keep the Why version" (compares the project's
 `context-schema` with the skill's version, applies https://keepthewhy.com/migrations/ in between,
 raises `context-schema`; a session that notices the project is behind offers this by itself).
+A project can pin the skill version it runs: a copy of the skill folder in the repository plus
+`pinned-version` and `pinned-path` in `.keep-the-why`; whichever copy loads first, a global install
+included, follows the pinned one and stops instead of silently running another version
+(https://keepthewhy.com/installation/#pinning-a-project-to-one-skill-version).
 
 What a developer has to do, in full: install the skill (one command, `npx skills add …` above,
 for any of 70+ agents; other routes: https://keepthewhy.com/installation/ — or the sentence
