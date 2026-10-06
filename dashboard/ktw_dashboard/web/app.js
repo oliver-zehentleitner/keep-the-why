@@ -1258,8 +1258,10 @@ function setFamilyEntries(on) { FAMILY_ENTRIES = on; try { localStorage.setItem(
 // "entries" of the main graph, kept per browser like every other switch in the bar — a move to another centre builds a new graph and must not reset it
 let SHOW_ENTRIES = (() => { try { return localStorage.getItem("ktw-entries") !== "off"; } catch { return true; } })();
 function setShowEntries(on) { SHOW_ENTRIES = on; try { localStorage.setItem("ktw-entries", on ? "on" : "off"); } catch {} }
-// labels per group too — the project's own nodes, the family, the friends, the path — kept per browser, all on by default
-let LABELS = (() => { try { return { project: true, family: true, friends: true, friendsFamilies: true, path: true, ...JSON.parse(localStorage.getItem("ktw-labels") || "{}") }; } catch { return { project: true, family: true, friends: true, friendsFamilies: true, path: true }; } })();
+// labels per group too — the project's own nodes, the family, the friends, the path — kept per browser, all on by default;
+// on a phone only this project's names: the other groups' topic names pile up on a small screen (hub names always show)
+const LABEL_DEFAULTS = (() => { const all = !narrow(); return { project: true, family: all, friends: all, friendsFamilies: all, path: all }; })();
+let LABELS = (() => { try { return { ...LABEL_DEFAULTS, ...JSON.parse(localStorage.getItem("ktw-labels") || "{}") }; } catch { return { ...LABEL_DEFAULTS }; } })();
 function setLabels(group, on) { LABELS = { ...LABELS, [group]: on }; try { localStorage.setItem("ktw-labels", JSON.stringify(LABELS)); } catch {} }
 const labelGroupOf = (n) => (n.ext ? (n.unit === "family" ? "family" : String(n.unit || "").startsWith("trail:") ? "path" : n.kin ? "friendsFamilies" : "friends") : n.fam ? "family" : "project");
 const labelsOn = (n) => LABELS[labelGroupOf(n)] !== false;
@@ -2160,14 +2162,22 @@ function viewGraph(main) {
         el("span", {}, el("i", { class: "dot confirmed" }), "confirmed"), el("span", {}, el("i", { class: "dot inferred" }), "inferred"), el("span", {}, el("i", { class: "dot unknown" }), "unknown"),
         el("span", {}, el("i", { class: "dot", style: "background:transparent;border:1.5px solid var(--fg3)" }), "superseded"),
         el("span", {}, "— reference · ··· membership"), ...pathLegend(g), ...projectsLegend(g), ...familyLegend(g).filter((x) => x.classList.contains("warn") || x.classList.contains("note")), ...friendsLegend(g).filter((x) => x.classList.contains("warn")));
-    wrap.replaceChildren(canvas, ui, legend, ...[pathBar()].filter(Boolean), el("div", { class: "graph-hint" }, family ? "family — a project's name goes there, in place · drag nodes · wheel zoom · drag background to pan" : "drag nodes · wheel zoom · drag background to pan · click to open"));
+    // on a phone the switches and the legend sit behind two buttons, so the graph gets the screen (CSS shows them there only)
+    const toggle = (cls, label, other) => el("button", { type: "button", class: `graph-toggle ${cls}-toggle`, "aria-expanded": "false",
+      onclick: (ev) => { const open = wrap.classList.toggle(`${cls}-open`); wrap.classList.remove(`${other}-open`); ev.currentTarget.setAttribute("aria-expanded", String(open)); } }, label);
+    wrap.replaceChildren(canvas, ui, legend, ...[pathBar()].filter(Boolean), toggle("ui", "Layers", "legend"), toggle("legend", "Legend", "ui"),
+      el("div", { class: "graph-hint" }, family ? "family — a project's name goes there, in place · drag nodes · wheel zoom · drag background to pan" : "drag nodes · wheel zoom · drag background to pan · click to open"),
+      el("div", { class: "graph-hint-touch" }, "pinch to zoom · drag to pan · tap to open"));
+    // on a phone the graph opens fitted to the screen, also one that settled earlier and was moved then
+    if (narrow()) { g.userMoved = false; g.needFit = true; }
     // arriving from the side pane's graph: centred on the entry or topic it showed
     if (GRAPH_CENTER) {
       const c = GRAPH_CENTER; GRAPH_CENTER = null;
       const n = g.nodes.find((x) => (c.entry && x.entry && (x.entry === c.entry || (c.entry.uuid && x.entry.uuid === c.entry.uuid))) || (c.topic && x.kind === "topic" && x.file === c.topic.file));
       if (n) { g.ox = -n.x * g.scale; g.oy = -n.y * g.scale; g.userMoved = true; }
     }
-    runGraph(canvas, g, { fit: family || GLOBE.view }); // the family graph and the globe keep everything in view
+    // the family graph and the globe keep everything in view; on a phone every graph does, until it is touched
+    runGraph(canvas, g, { fit: family || GLOBE.view || narrow(), onTouch: () => wrap.classList.remove("ui-open", "legend-open") });
     renderThoughts(g);
   };
   if (!family) return fill(buildGraph());
@@ -2180,7 +2190,8 @@ const go = (href) => { if (href.startsWith("#")) location.hash = href; else loca
 // and stops while it is pointed at, dragged or panned. Off with the system's
 // reduced-motion setting, or with *motion* in the graph (kept per browser).
 const DRIFT_RATE = (2 * Math.PI) / 360000; // radians per millisecond
-let DRIFT = (() => { try { return localStorage.getItem("ktw-motion") !== "off"; } catch { return true; } })();
+// motion: on by default, off on a phone (a turning graph is hard to tap, and it keeps the battery busy); a stored choice wins
+let DRIFT = (() => { try { const v = localStorage.getItem("ktw-motion"); return v ? v !== "off" : !narrow(); } catch { return !narrow(); } })();
 const reducedMotion = () => { try { return !!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches; } catch { return false; } };
 const driftOn = () => DRIFT && !reducedMotion();
 function setDrift(on) { DRIFT = on; try { localStorage.setItem("ktw-motion", on ? "on" : "off"); } catch {} }
@@ -2202,6 +2213,10 @@ function runGraph(canvas, g, opts = {}) {
   resize();
   const ro = new ResizeObserver(resize); ro.observe(canvas);
   const toWorld = (px, py) => [(px - W / 2 - g.ox) / g.scale, (py - H / 2 - g.oy) / g.scale];
+  // zoom limits: never below half of what the fitted view needed — a fixed floor above it made a large family
+  // or the globe jump in on the first pinch and refuse to zoom out again
+  const minScale = () => Math.min(0.15, (g.fitScale || 0.15) / 2);
+  const zoomTo = (ns, px, py) => { ns = Math.min(6, Math.max(minScale(), ns)); const k = ns / g.scale; g.ox = px - (px - g.ox) * k; g.oy = py - (py - g.oy) * k; g.scale = ns; };
   const visible = (n) => n.kind !== "entry" || g.showEntries || !!g.thought?.nodes.has(n);
   // a topic-level reference stands in for entry references only while entries are hidden
   const linkOn = (l) => visible(g.nodes[l.s]) && visible(g.nodes[l.t]) && (l.kind !== "xtopic" || !g.showEntries);
@@ -2225,20 +2240,25 @@ function runGraph(canvas, g, opts = {}) {
   const open = (n) => (n.kind === "project" ? walkTo(n) : n.action ? n.action() : go(n.href));
   window.addEventListener("mouseup", () => { if (nameDown) { const n = nameDown; nameDown = null; walkTo(n); return; } if (drag && !moved) open(drag); drag = null; pan = null; canvas.classList.remove("grabbing"); });
   canvas.onmouseleave = () => { hover = null; hoverName = null; };
-  canvas.onwheel = (ev) => { ev.preventDefault(); g.userMoved = true; const r = canvas.getBoundingClientRect(); const px = ev.clientX - r.left - W / 2, py = ev.clientY - r.top - H / 2; const f = Math.exp(-ev.deltaY * 0.0012); const ns = Math.min(6, Math.max(0.15, g.scale * f)); const k = ns / g.scale; g.ox = px - (px - g.ox) * k; g.oy = py - (py - g.oy) * k; g.scale = ns; };
+  canvas.onwheel = (ev) => { ev.preventDefault(); g.userMoved = true; const r = canvas.getBoundingClientRect(); zoomTo(g.scale * Math.exp(-ev.deltaY * 0.0012), ev.clientX - r.left - W / 2, ev.clientY - r.top - H / 2); };
   canvas.ondblclick = (ev) => { const r = canvas.getBoundingClientRect(); const n = pick(ev.clientX - r.left, ev.clientY - r.top); if (n) { n.fixed = false; g.alpha = 0.4; } };
-  // touch: one finger drags a node or pans (full view only), two fingers pinch-zoom, a tap opens
+  // touch: one finger drags a node or pans (full view only), two fingers pinch-zoom around the point between them
+  // and pan with it, a tap opens
   let pinch = null;
   const tpos = (t) => { const r = canvas.getBoundingClientRect(); return [t.clientX - r.left, t.clientY - r.top]; };
   const tdist = (ts) => Math.hypot(ts[0].clientX - ts[1].clientX, ts[0].clientY - ts[1].clientY);
+  const tmid = (ts) => { const [ax, ay] = tpos(ts[0]), [bx, by] = tpos(ts[1]); return [(ax + bx) / 2 - W / 2, (ay + by) / 2 - H / 2]; };
   canvas.addEventListener("touchstart", (ev) => {
-    g.userMoved = true;
-    if (ev.touches.length === 2) { pinch = { d: tdist(ev.touches), scale: g.scale, ox: g.ox, oy: g.oy }; drag = null; pan = null; return; }
+    g.userMoved = true; opts.onTouch?.();
+    if (ev.touches.length === 2) { const [mx, my] = tmid(ev.touches); pinch = { d: tdist(ev.touches) || 1, scale: g.scale, wx: (mx - g.ox) / g.scale, wy: (my - g.oy) / g.scale }; drag = null; pan = null; return; }
     const [px, py] = tpos(ev.touches[0]); moved = false; nameDown = pickName(px, py); if (nameDown) return; const n = pick(px, py);
     if (n) drag = n; else if (!mini) pan = { px, py, ox: g.ox, oy: g.oy };
   }, { passive: true });
   canvas.addEventListener("touchmove", (ev) => {
-    if (pinch && ev.touches.length === 2) { const k = tdist(ev.touches) / pinch.d; g.scale = Math.min(6, Math.max(0.15, pinch.scale * k)); ev.preventDefault(); return; }
+    if (pinch && ev.touches.length === 2) {
+      const [mx, my] = tmid(ev.touches); const ns = Math.min(6, Math.max(minScale(), pinch.scale * (tdist(ev.touches) / pinch.d)));
+      g.scale = ns; g.ox = mx - pinch.wx * ns; g.oy = my - pinch.wy * ns; ev.preventDefault(); return; // the point under the fingers stays under them
+    }
     if (!ev.touches.length) return;
     const [px, py] = tpos(ev.touches[0]);
     if (drag) { const [x, y] = toWorld(px, py); drag.x = x; drag.y = y; drag.vx = drag.vy = 0; drag.fixed = true; g.alpha = Math.max(g.alpha, 0.3); moved = true; ev.preventDefault(); }
@@ -2280,11 +2300,12 @@ function runGraph(canvas, g, opts = {}) {
       g.alpha *= 0.985;
     }
     // keep the canvas framed on the nodes while they settle: the small one always, the family graph until the person moves it
-    if ((mini || (opts.fit && !g.userMoved)) && g.alpha > 0.01 && W && H) {
+    if ((mini || ((opts.fit || g.needFit) && !g.userMoved)) && (g.alpha > 0.01 || g.needFit) && W && H) {
       let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
       for (const n of ns) { minX = Math.min(minX, n.x - n.r); maxX = Math.max(maxX, n.x + n.r); minY = Math.min(minY, n.y - n.r); maxY = Math.max(maxY, n.y + n.r + 18); }
-      const pad = mini ? 60 : 140;
-      if (ns.length) { const sw = Math.max(80, maxX - minX + pad), sh = Math.max(80, maxY - minY + pad); g.scale = Math.min(mini ? 2.2 : 1.2, Math.min(W / sw, H / sh)); g.ox = -((minX + maxX) / 2) * g.scale; g.oy = -((minY + maxY) / 2) * g.scale; }
+      const pad = mini || narrow() ? 60 : 140;
+      if (ns.length) { const sw = Math.max(80, maxX - minX + pad), sh = Math.max(80, maxY - minY + pad); g.scale = Math.min(mini ? 2.2 : 1.2, Math.min(W / sw, H / sh)); g.fitScale = g.scale; g.ox = -((minX + maxX) / 2) * g.scale; g.oy = -((minY + maxY) / 2) * g.scale; }
+      g.needFit = false;
     }
     // draw
     ctx.clearRect(0, 0, W, H);
@@ -2331,7 +2352,11 @@ function runGraph(canvas, g, opts = {}) {
     const anyLabels = (g.showLabels && Object.values(LABELS).some(Boolean)) || focus || th || stepNode;
     g.nameBoxes = [];
     {
-      ctx.font = `${(mini ? 11 : 12) / g.scale}px ${color("--font") || "sans-serif"}`; ctx.textAlign = "center"; ctx.textBaseline = "top";
+      // which names to draw: first the ones that must show (the focus, the step, a thought, the name pointed at), then the
+      // focus's neighbours, project names (this project first), topics, entries — bigger nodes first within each. A name
+      // that would cover one already drawn is left out, so a dense graph shows fewer names instead of a pile of text;
+      // zooming in makes room and brings them back.
+      const cand = [];
       for (const n of ns) {
         const hubName = n.kind === "project";
         if (sp) { if (!sp.has(n)) continue; if (!hubName && n.kind !== "topic" && !(g.scale > 1.6)) continue; } // a spotted project: its names alone
@@ -2340,18 +2365,29 @@ function runGraph(canvas, g, opts = {}) {
         const show = sp || n === stepNode || (th && th.nodes.has(n)) ? true : hubName ? true : n.kind === "topic" ? (mini ? neigh.has(n) || n === focus || g.nodes.filter((x) => x.kind === "topic").length <= 12 : lab || neigh.has(n)) : (focus && (neigh.has(n) || n === focus)) || (!mini && lab && g.scale > 1.6);
         if (!show) continue;
         const faded = (focus || th) && !neigh.has(n) && n !== focus; if (faded && !hubName) continue;
-        const lbl = n.label.replace(/`/g, ""); const txt = lbl.length > 48 ? lbl.slice(0, 46) + "…" : lbl;
-        if (hubName) ctx.font = `600 ${(mini ? 12 : 13) / g.scale}px ${color("--font") || "sans-serif"}`;
+        const must = n === focus || n === stepNode || n === hoverName || (th && th.nodes.has(n));
+        const rank = must ? 0 : faded ? 5 : focus && neigh.has(n) ? 1 : hubName ? (n.self ? 2 : 3) : n.kind === "topic" ? 4 : 6;
+        cand.push({ n, hubName, faded, must, rank });
+      }
+      cand.sort((a, b) => a.rank - b.rank || b.n.r - a.n.r);
+      const placed = [], maxLen = narrow() ? 32 : 48, pad = 2 / g.scale;
+      const free = (b) => !placed.some((p) => b.x0 < p.x1 + pad && b.x1 > p.x0 - pad && b.y0 < p.y1 + pad && b.y1 > p.y0 - pad);
+      ctx.textAlign = "center"; ctx.textBaseline = "top";
+      for (const { n, hubName, faded, must } of cand) {
+        ctx.font = hubName ? `600 ${(mini ? 12 : 13) / g.scale}px ${color("--font") || "sans-serif"}` : `${(mini ? 11 : 12) / g.scale}px ${color("--font") || "sans-serif"}`;
+        const lbl = n.label.replace(/`/g, ""); const txt = lbl.length > maxLen ? lbl.slice(0, maxLen - 2) + "…" : lbl;
         const mark = hubName ? hostPath(n.canonical) : null; const iw = mark ? (mini ? 12 : 13) / g.scale : 0; const gap = mark ? 4 / g.scale : 0;
         const tw = ctx.measureText(txt).width; const y = n.y + n.r + 3 / g.scale;
         const left = n.x - (tw + iw + gap) / 2; const tx = left + iw + gap + tw / 2; // the mark before the name, the pair centred
-        ctx.fillStyle = color("--bg"); ctx.globalAlpha = faded ? 0.4 : 0.75; ctx.fillRect(left - 3 / g.scale, y - 1 / g.scale, tw + iw + gap + 6 / g.scale, 15 / g.scale); ctx.globalAlpha = faded ? 0.5 : 1;
+        const box = { x0: left - 3 / g.scale, y0: y - 1 / g.scale, x1: tx + tw / 2 + 3 / g.scale, y1: y + 15 / g.scale };
+        if (!must && !free(box)) continue;
+        placed.push(box);
+        ctx.fillStyle = color("--bg"); ctx.globalAlpha = faded ? 0.4 : 0.75; ctx.fillRect(box.x0, box.y0, box.x1 - box.x0, 15 / g.scale); ctx.globalAlpha = faded ? 0.5 : 1;
         ctx.fillStyle = n.kind === "entry" ? color("--fg2") : hubName && n === hoverName ? color("--accent2") : color("--fg"); ctx.fillText(txt, tx, y);
         if (mark) { ctx.save(); ctx.translate(left, y + 0.5 / g.scale); ctx.scale(iw / 24, iw / 24); ctx.fill(mark); ctx.restore(); }
         if (hubName) {
-          g.nameBoxes.push({ n, x0: left - 3 / g.scale, y0: y - 1 / g.scale, x1: tx + tw / 2 + 3 / g.scale, y1: y + 15 / g.scale });
+          g.nameBoxes.push({ n, ...box });
           if (n === hoverName) { ctx.fillRect(tx - tw / 2, y + 14 / g.scale, tw, 1 / g.scale); }
-          ctx.font = `${(mini ? 11 : 12) / g.scale}px ${color("--font") || "sans-serif"}`;
         }
         ctx.globalAlpha = 1;
       }

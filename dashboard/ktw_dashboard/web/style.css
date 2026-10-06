@@ -235,6 +235,7 @@ table.t.findings td { font-size: 12.5px; } table.t.findings .mono { white-space:
 .graph-legend > span { white-space: nowrap; }
 .graph-legend .dot { width: 9px; height: 9px; margin-right: 4px; vertical-align: middle; }
 .graph-hint { position: absolute; bottom: 14px; right: 18px; font-size: 11px; color: var(--fg3); text-align: right; max-width: 40%; }
+.graph-toggle, .graph-hint-touch { display: none; } /* phones only, see the 900px block */
 
 .timeline svg { width: 100%; height: 260px; display: block; }
 .timeline .axis text { fill: var(--fg3); font-size: 10px; }
@@ -307,10 +308,20 @@ kbd { font-family: var(--mono); font-size: 11px; background: var(--bg3); border:
   .details { border-left: 0; border-top: 1px solid var(--line); padding: 14px; }
   .details .mini { min-height: 240px; height: 240px; }
   .details .mini.tall { height: 280px; }
-  .graph-wrap { height: 72vh; margin: -16px -14px -32px; }
-  .graph-ui { top: 10px; left: 10px; font-size: 11px; gap: 8px; padding: 5px 8px; }
-  .graph-legend { left: 10px; right: 10px; bottom: 10px; flex-direction: row; flex-wrap: wrap; gap: 6px 10px; max-height: none; }
+  /* the graph gets the screen: switches and legend behind two buttons, opened one at a time, closed by touching the graph */
+  .graph-wrap { height: 80vh; height: 80svh; min-height: 380px; margin: -16px -14px -32px; }
+  .graph-ui { top: 46px; left: 10px; right: 10px; font-size: 12px; gap: 8px; padding: 8px 10px; max-height: calc(100% - 100px); overflow: auto; background: var(--bg2); box-shadow: 0 8px 28px rgba(0,0,0,.35); z-index: 3; }
+  .graph-wrap:not(.ui-open) .graph-ui { display: none; }
+  .graph-legend { left: 10px; right: 10px; bottom: 46px; flex-direction: row; flex-wrap: wrap; gap: 6px 10px; max-height: 45%; background: var(--bg2); box-shadow: 0 8px 28px rgba(0,0,0,.35); z-index: 3; }
+  .graph-wrap:not(.legend-open) .graph-legend { display: none; }
+  .graph-legend > span { white-space: normal; }
+  .graph-toggle { display: inline-block; position: absolute; left: 10px; z-index: 4; font: inherit; font-size: 12px; color: var(--fg); background: color-mix(in srgb, var(--bg2) 92%, transparent); border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; }
+  .graph-toggle[aria-expanded="true"] { border-color: var(--accent); color: var(--accent2); }
+  .ui-toggle { top: 10px; }
+  .legend-toggle { bottom: 10px; }
+  .graph-wrap.ui-open .path-bar { display: none; }
   .graph-hint { display: none; }
+  .graph-hint-touch { display: block; position: absolute; bottom: 16px; right: 12px; font-size: 11px; color: var(--fg3); pointer-events: none; }
   .statusbar { height: auto; flex-wrap: wrap; padding: 6px 10px; gap: 4px 12px; line-height: 1.4; }
   .statusbar .grow { margin-left: 0; flex-basis: 100%; }
   .reader h1 { font-size: 20px; }

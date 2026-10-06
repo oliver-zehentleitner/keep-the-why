@@ -11,9 +11,11 @@ All notable changes to this project are documented here. Format follows [Keep a 
 ### Changed
 
 - Linter and dashboard READMEs (and with them their PyPI pages): the Keep the Why badge is the live one the main README carries — this project's entries from its published dashboard, linking the live dashboard — instead of the static badge.
+- `keep-the-why-dashboard` 0.7.1: the graph and the globe on a phone. The graph gets the screen: the switches and the legend sit behind two buttons, *Layers* and *Legend*, opened one at a time and closed by touching the graph. Every graph opens fitted to the screen. Names no longer pile up on any screen: they are drawn by priority (what is focused or pointed at, the focus's neighbours, project names with this project first, topics, entries, bigger nodes first), and a name that would cover one already drawn is left out until zooming in makes room. On a phone, labels of the family, friends and path groups and motion start off (a stored choice wins), and names are cut at 32 characters instead of 48.
 
 ### Fixed
 
+- `keep-the-why-dashboard` 0.7.1: zooming works on large graphs. The smallest zoom was a fixed 0.15, while a fitted family graph or globe can need less: the first pinch or wheel step jumped to 0.15 and zooming out stopped there. The floor is now half the fitted scale. A pinch zooms around the point between the fingers and pans with them, instead of around a fixed point.
 - `keep-the-why-dashboard` 0.7.1: tables on a phone scroll sideways instead of being squeezed. Below 900 px every cell could wrap at any character, so the Authors table (and the lint findings and the thoughts' *By project*) shrank its columns to one letter: names, headers and dates stood letter by letter. Cells now wrap at spaces only, dates and codes stay on one line, and the table scrolls inside its frame.
 
 ## [0.20.0] - 2026-10-05
