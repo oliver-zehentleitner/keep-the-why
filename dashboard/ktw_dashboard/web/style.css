@@ -272,6 +272,9 @@ kbd { font-family: var(--mono); font-size: 11px; background: var(--bg3); border:
   .app > * { min-width: 0; max-width: 100vw; }
   .main, .details, .sidebar, .strip, .topbar, .statusbar { overflow-wrap: anywhere; }
   code, .mono { overflow-wrap: anywhere; word-break: break-word; }
+  /* except in tables: .table-wrap scrolls them sideways, so a cell wraps at spaces only — with "anywhere" the table shrank its columns to one character (names, headers and dates stacked letter by letter) */
+  table.t th, table.t td { overflow-wrap: normal; word-break: normal; }
+  table.t .mono { white-space: nowrap; }
   pre, .reader .body pre { max-width: 100%; }
   .reader, .entry-list, .kv, .topic-cards, .card { max-width: 100%; }
   .kv { grid-template-columns: max-content minmax(0, 1fr); }
