@@ -12,7 +12,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Changed
 
-- `keep-the-why-dashboard` 0.7.2: the globe's 🌐 is a button next to the search in the top bar, where people look; it was a faint mark at the end of the status bar. The dashboard and registry pages say where it is now.
+- `keep-the-why-dashboard` 0.7.2: the globe's 🌐 is a button left of the search in the top bar, where people look; it was a faint mark at the end of the status bar. The dashboard and registry pages say where it is now. The live indicator moved the other way: from the top bar into the status bar, beside the state monitor, with a word next to the dot — *live*, *offline*, *export*, *public export* — so it explains itself without a tooltip.
 - Linter and dashboard READMEs (and with them their PyPI pages): the Keep the Why badge is the live one the main README carries — this project's entries from its published dashboard, linking the live dashboard — instead of the static badge.
 - `keep-the-why-dashboard` 0.7.1: the graph and the globe on a phone. The graph gets the screen: the switches and the legend sit behind two buttons, *Layers* and *Legend*, opened one at a time and closed by touching the graph. Every graph opens fitted to the screen. Names no longer pile up on any screen: they are drawn by priority (what is focused or pointed at, the focus's neighbours, project names with this project first, topics, entries, bigger nodes first), and a name that would cover one already drawn is left out until zooming in makes room. On a phone, labels of the family, friends and path groups and motion start off (a stored choice wins), and names are cut at 32 characters instead of 48.
 

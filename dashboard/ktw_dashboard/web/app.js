@@ -156,6 +156,14 @@ function fillLoadedPop(pop) {
   const toFailed = failed.length ? el("a", { href: "#", class: "warn", onclick: (ev) => { ev.preventDefault(); pop.querySelector("#loaded-failed")?.scrollIntoView?.({ block: "start", behavior: "smooth" }); } }, ` · ⚠ ${failed.length} not loaded ↓`) : null;
   setKids(pop, el("div", { class: "loaded-head" }, `${plural(list.length, "project")} — ${plural(LOADED.size, "file")} — ${fmtBytes(bytes)}`, toFailed), ...list.map(row), failedBlock);
 }
+// whether this page follows the project: a dot and a word in the status bar, beside the state monitor. One node,
+// kept across re-renders of the bar (every live update rebuilds it), so its state survives them.
+let LIVE_NODE = null;
+function liveUi() {
+  if (!LIVE_NODE) LIVE_NODE = el("span", { id: "live", class: "live", title: "connecting to the dashboard server" }, el("i", { class: "live-dot" }, "●"), el("span", { class: "live-label" }, "connecting"));
+  return LIVE_NODE;
+}
+function setLive(kind, label, title) { const n = liveUi(); n.className = `live ${kind}`; n.title = title; n.querySelector(".live-label").textContent = label; }
 function loadedUi() {
   const box = el("span", { id: "loaded" });
   const pop = el("div", { class: "loaded-pop", hidden: true });
@@ -2756,7 +2764,7 @@ function applyState(state) {
     el("span", { id: "pkg-lint" }, el("a", { href: "https://pypi.org/project/keep-the-why-lint/", target: "_blank", rel: "noopener", title: "keep-the-why-lint on PyPI" }, `keep-the-why-lint ${S.linter}`)),
     el("span", {}, MODE === "public" ? `public export · generated ${S.generated}` : S.exported ? `exported ${S.generated}` : `state ${S.generated}`),
     el("span", { id: "counts" }, `${S.entries.length} entries · ${S.topics.length} topics · ${S.authors.length} authors`),
-    loadedUi(),
+    liveUi(), loadedUi(),
     el("span", { class: "grow" }, el("a", { href: "https://keepthewhy.com", target: "_blank", rel: "noopener" }, "keepthewhy.com")));
   renderBadges();
   renderLoaded();
@@ -2788,16 +2796,15 @@ async function pollUpdates() {
 }
 let LIVE_ES = null;
 function connectLive() {
-  const dot = $("#live");
   if (LIVE_ES) { LIVE_ES.close(); LIVE_ES = null; }
-  if (window.__KTW_STATE__ && MODE === "export") { dot.className = "live export"; dot.title = "static export — no live updates"; return; }
-  if (!LIVE()) { dot.className = "live export"; dot.title = "public export — no live updates"; return; }
+  if (window.__KTW_STATE__ && MODE === "export") { setLive("export", "export", "static export — the state when it was exported, no live updates"); return; }
+  if (!LIVE()) { setLive("export", "public export", "public export — read from the published state.json, no live updates"); return; }
   let es;
   const open = () => {
     es = LIVE_ES = new EventSource(api("/api/events"));
-    es.addEventListener("state", (ev) => { try { applyState(normalizeState(JSON.parse(ev.data))); dot.className = "live on"; dot.title = `live — last update ${new Date().toLocaleTimeString()}`; } catch (err) { console.error(err); } });
-    es.onopen = () => { dot.className = "live on"; dot.title = "live — watching the project for changes"; };
-    es.onerror = () => { dot.className = "live off"; dot.title = "connection lost — the server is gone; retrying"; };
+    es.addEventListener("state", (ev) => { try { applyState(normalizeState(JSON.parse(ev.data))); setLive("on", "live", `live — last update ${new Date().toLocaleTimeString()}`); } catch (err) { console.error(err); } });
+    es.onopen = () => setLive("on", "live", "live — the server watches the project and sends every change");
+    es.onerror = () => setLive("off", "offline", "connection lost — the server is gone; retrying");
   };
   open();
 }
@@ -2893,7 +2900,7 @@ async function boot() {
   document.addEventListener("click", onLinkClick);
   if (MODE === "public") {
     const r = await fetchPublicState(PUBLIC, PUBLIC_ROOT);
-    const dot = $("#live"); dot.className = "live export"; dot.title = "public export — no live updates";
+    setLive("export", "public export", "public export — read from the published state.json, no live updates");
     if (!r.state) {
       const msg = el("div", { class: "center" }, el("p", {}, `Cannot browse ${PUBLIC} publicly: ${r.error}.`));
       $("#main").append(msg);

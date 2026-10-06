@@ -164,6 +164,13 @@ if (report.strip < 10) errors.push("strip: expected at least 10 stats, got " + r
 if (report.entryMiniGraph !== 1 || report.topicMiniGraph !== 1 || report.defaultMiniGraph !== 1) errors.push(`mini graph missing: entry=${report.entryMiniGraph} topic=${report.topicMiniGraph} default=${report.defaultMiniGraph}`);
 if (window.document.body.textContent.includes("[object ")) errors.push("[object ...] leaked into the page text");
 if (/\bnull\b/.test(window.document.getElementById("project-title").textContent + window.document.getElementById("statusbar").textContent)) errors.push("null leaked into the top bar or status bar");
+{ // the live indicator sits in the status bar, beside the state monitor, and says in a word what it means
+  const live = window.document.querySelector("#statusbar #live");
+  if (!live) errors.push("live: no indicator in the status bar");
+  else if (live.querySelector(".live-label")?.textContent !== "export" || !live.classList.contains("export")) errors.push(`live: an export should read "export", got "${live.textContent}"`);
+  if (window.document.querySelector(".topbar #live")) errors.push("live: still in the top bar");
+  if (!window.document.querySelector(".topbar #globe-btn + #search")) errors.push("globe: the button should sit left of the search");
+}
 report.details = window.document.getElementById("details").textContent.trim().length;
 window.__ktwApplyUpdates({ enabled: true, packages: { "keep-the-why-dashboard": { installed: S.dashboard, latest: "99.0.0", outdated: true }, "keep-the-why-lint": { installed: S.linter, latest: S.linter, outdated: false } } });
 const pd = window.document.getElementById("pkg-dashboard"), pl = window.document.getElementById("pkg-lint");

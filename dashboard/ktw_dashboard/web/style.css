@@ -44,7 +44,6 @@ button { font: inherit; color: inherit; }
 .topbar #search, .topbar .project-select { background: #1e1e24; color: #e6e6ec; border-color: #3a3a43; }
 .topbar #search::placeholder { color: #7a7a86; }
 .topbar .icon-btn { color: #c4c4cc; border-color: #3a3a43; } .topbar .icon-btn:hover { color: #fff; border-color: #6f6f7a; }
-.topbar .live { color: #6f6f7a; }
 .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--fg); letter-spacing: .2px; }
 .brand:hover { text-decoration: none; }
 .brand img { display: block; }
@@ -68,8 +67,8 @@ button { font: inherit; color: inherit; }
 .search-results .sr-file { color: var(--fg3); font-size: 12px; }
 .search-results .sr-snip { color: var(--fg2); font-size: 12px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .search-results mark { background: transparent; color: var(--accent2); font-weight: 600; }
-.live { color: var(--fg3); font-size: 12px; }
-.live.on { color: var(--ok); animation: pulse 2.4s ease-in-out infinite; }
+.live { color: var(--fg3); white-space: nowrap; cursor: default; } .live .live-dot { font-style: normal; margin-right: 4px; }
+.live.on { color: var(--ok); } .live.on .live-dot { display: inline-block; animation: pulse 2.4s ease-in-out infinite; }
 .live.off { color: var(--bad); }
 .live.export { color: var(--info); }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
