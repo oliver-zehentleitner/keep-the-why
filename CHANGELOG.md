@@ -8,6 +8,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 - Linter and dashboard READMEs (and with them their PyPI pages): the Keep the Why badge is the live one the main README carries — this project's entries from its published dashboard, linking the live dashboard — instead of the static badge.
 
+### Fixed
+
+- `keep-the-why-dashboard` 0.7.1: tables on a phone scroll sideways instead of being squeezed. Below 900 px every cell could wrap at any character, so the Authors table (and the lint findings and the thoughts' *By project*) shrank its columns to one letter: names, headers and dates stood letter by letter. Cells now wrap at spaces only, dates and codes stay on one line, and the table scrolls inside its frame.
+
 ## [0.20.0] - 2026-10-05
 
 ### Added
