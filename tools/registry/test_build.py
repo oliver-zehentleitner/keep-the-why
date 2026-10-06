@@ -2,7 +2,9 @@
 
 import sys
 import unittest
+import urllib.error
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import build  # noqa: E402
@@ -28,6 +30,53 @@ def see(remote, uuid, date="2026-10-01"):
 
 
 class BacklinkPath(unittest.TestCase):
+    def test_raw_url_per_host(self):
+        self.assertEqual(
+            build.raw_url("https://github.com/acme/app"),
+            "https://raw.githubusercontent.com/acme/app/HEAD/.keep-the-why",
+        )
+        # GitLab through the files API, which sends CORS headers; nested groups encoded
+        self.assertEqual(
+            build.raw_url("https://gitlab.com/acme/app"),
+            "https://gitlab.com/api/v4/projects/acme%2Fapp/repository/files/.keep-the-why/raw?ref=HEAD",
+        )
+        self.assertEqual(
+            build.raw_url("https://gitlab.com/group/sub/app/"),
+            "https://gitlab.com/api/v4/projects/group%2Fsub%2Fapp/repository/files/.keep-the-why/raw?ref=HEAD",
+        )
+        self.assertEqual(
+            build.raw_url("https://codeberg.org/acme/app"),
+            "https://codeberg.org/acme/app/raw/HEAD/.keep-the-why",
+        )
+
+    def test_fetch_retries_a_refused_request_then_gives_up(self):
+        calls = []
+
+        def refuse(req, timeout):
+            calls.append(req.full_url)
+            raise urllib.error.HTTPError(req.full_url, 403, "Forbidden", {}, None)
+
+        with mock.patch.object(
+            build.urllib.request, "urlopen", refuse
+        ), mock.patch.object(build.time, "sleep", lambda s: None):
+            with self.assertRaises(urllib.error.HTTPError):
+                build.fetch("https://gitlab.com/x")
+        self.assertEqual(len(calls), 3)
+
+    def test_fetch_does_not_retry_not_found(self):
+        calls = []
+
+        def missing(req, timeout):
+            calls.append(1)
+            raise urllib.error.HTTPError(req.full_url, 404, "Not Found", {}, None)
+
+        with mock.patch.object(
+            build.urllib.request, "urlopen", missing
+        ), mock.patch.object(build.time, "sleep", lambda s: None):
+            with self.assertRaises(urllib.error.HTTPError):
+                build.fetch("https://gitlab.com/x")
+        self.assertEqual(len(calls), 1)
+
     def test_three_plain_segments_lowercase(self):
         self.assertEqual(
             build.backlink_path("https://GitHub.com/Acme/App"),

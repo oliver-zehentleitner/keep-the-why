@@ -592,7 +592,7 @@ const report = {};
   window.location.hash = "#graph"; window.dispatchEvent(new window.Event("hashchange")); await tick(150);
   window.location.hash = "#globe"; window.dispatchEvent(new window.Event("hashchange")); await tick(150);
   if (d.querySelector(".globe-intro")) errors.push("globe: the intro came back after 'don't show this again'");
-  if (!d.querySelector(".statusbar .globe-egg")) errors.push("globe: no globe in the status bar");
+  if (!d.querySelector(".topbar #globe-btn[href='#globe']")) errors.push("globe: no globe button next to the search");
   const ctl = d.querySelector(".graph-ui .globe-ctl");
   if (!ctl) errors.push("globe: no globe group in the control bar");
   const sel = ctl?.querySelector("select");

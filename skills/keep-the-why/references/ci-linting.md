@@ -99,7 +99,7 @@ ktw-lint . --setup    # locally only: also ~/.keep-the-why/<id>.md and ~/.keep-t
 
 ## The dashboard export
 
-Offered by the project wizard when a docs build exists (a GitHub Pages workflow, `mkdocs.yml`, a `docs/` deploy job) or the remote is on GitHub, default *no*; set up when the person says yes or asks. With a docs build: one step in that build, after the site is generated and before it is uploaded — `keep-the-why-dashboard` reads the checkout and writes three static files, no server, no external request:
+Offered by the project wizard when a docs build exists (a GitHub Pages workflow, `mkdocs.yml`, a `docs/` deploy job) or the remote is on GitHub or GitLab, default *no*; set up when the person says yes or asks. With a docs build: one step in that build, after the site is generated and before it is uploaded — `keep-the-why-dashboard` reads the checkout and writes three static files, no server, no external request:
 
 ```yaml
       # Keep the Why: the project's own dashboard on /dashboard/live/ — index.html,
@@ -162,6 +162,29 @@ jobs:
 ```
 
 `branches:` names the repository's default branch. The site is then `https://<owner>.github.io/<repo>/`, the dashboard `<site>/dashboard/live/`. In the same change, write `dashboard-state: <site>/dashboard/live/state.json` into `.keep-the-why` and offer the live badge with the same `<site>` — both derived from the remote now. The URL answers only after the first deploy; that is expected and no reason to wait. A custom domain changes only the host: when the repository's Pages already uses one (a `CNAME`, or the person names it), use that host instead. A workflow can only deploy once the repository's Pages source is *GitHub Actions*: tell the person to set it at `https://github.com/<owner>/<repo>/settings/pages`, under "Build and deployment" → "Source" → "GitHub Actions". If Pages already serves something from a branch, switching the source replaces that site — say so and ask instead of writing the workflow. Changing the setting is the person's; the agent does it (`gh api -X POST repos/<owner>/<repo>/pages -f build_type=workflow`, or `-X PUT` when Pages exists) only when asked to. The first deploy runs on the push after the workflow is merged.
+
+**No docs build, remote on GitLab:** a `pages` job in `.gitlab-ci.yml` publishes the export to the project's GitLab Pages, after checking that no job already deploys Pages (one that does gets the export step instead, never a second `pages` job). If the file defines `stages:`, add `deploy` to it; with no `.gitlab-ci.yml` at all, this job would be the project's first pipeline — say that plainly before writing it:
+
+```yaml
+# GitLab Pages: the Keep the Why dashboard on /dashboard/live/ —
+# index.html, state.json and the live badges, exported from this checkout.
+# GIT_DEPTH 0: the dashboard dates entries by their Git history.
+pages:
+  stage: deploy
+  image: python:3.12
+  variables:
+    GIT_DEPTH: 0
+  script:
+    - pip install --quiet keep-the-why-dashboard
+    - ktw-dashboard --export public/dashboard/live .
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+```
+
+The site is then `https://<namespace>.gitlab.io/<project>/` (a group's or user's namespace, subgroups as further path segments), the dashboard `<site>/dashboard/live/`; write `dashboard-state` and offer the live badge from it, as above. Three settings on GitLab's side are the person's, and the agent names them: on gitlab.com, CI runs on the shared runners only once the account is verified (a pipeline otherwise fails with *the user not being verified*, before any job runs); the project's Pages visibility must be *Everyone* (Settings → General → Visibility, project features, permissions → Pages), or every visitor is sent to a GitLab sign-in; and when *Use unique domain* is on (Deploy → Pages), the site is served under a generated domain instead, which then is the `<site>` to use. A custom domain changes the host, as on GitHub.
 
 ## The registry
 

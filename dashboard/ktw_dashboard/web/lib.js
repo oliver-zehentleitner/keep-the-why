@@ -19,7 +19,10 @@ export function rawFileUrl(canonical, root, path) {
   const rel = `${root ? root.replace(/\/$/, "") + "/" : ""}${path}`;
   const gh = base.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)$/);
   if (gh) return `https://raw.githubusercontent.com/${gh[1]}/${gh[2]}/HEAD/${rel}`;
-  if (/^https:\/\/gitlab\./.test(base)) return `${base}/-/raw/HEAD/${rel}`;
+  // GitLab: the repository files API — it sends Access-Control-Allow-Origin, the /-/raw/ path does not,
+  // and this page reads the file from another site. Same rule as the registry's raw_url.
+  const gl = base.match(/^(https:\/\/gitlab\.[^/]+)\/(.+)$/);
+  if (gl) return `${gl[1]}/api/v4/projects/${encodeURIComponent(gl[2])}/repository/files/${encodeURIComponent(rel)}/raw?ref=HEAD`;
   if (/^https:\/\/bitbucket\.org/.test(base)) return `${base}/raw/HEAD/${rel}`;
   return `${base}/raw/branch/HEAD/${rel}`; // Codeberg, Gitea, Forgejo
 }

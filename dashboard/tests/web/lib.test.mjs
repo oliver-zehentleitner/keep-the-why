@@ -42,7 +42,9 @@ test("hostFileLink knows the four host grammars and defaults to GitHub's", () =>
 test("rawFileUrl fetches at HEAD on every host, root prefixed", () => {
   assert.equal(rawFileUrl("https://github.com/acme/widget", "", ".keep-the-why"), "https://raw.githubusercontent.com/acme/widget/HEAD/.keep-the-why");
   assert.equal(rawFileUrl("https://github.com/acme/mono/", "packages/widget", ".keep-the-why"), "https://raw.githubusercontent.com/acme/mono/HEAD/packages/widget/.keep-the-why");
-  assert.equal(rawFileUrl("https://gitlab.com/group/widget", "", ".keep-the-why"), "https://gitlab.com/group/widget/-/raw/HEAD/.keep-the-why");
+  // GitLab through the files API (it sends CORS headers), project path and file path URL-encoded
+  assert.equal(rawFileUrl("https://gitlab.com/group/widget", "", ".keep-the-why"), "https://gitlab.com/api/v4/projects/group%2Fwidget/repository/files/.keep-the-why/raw?ref=HEAD");
+  assert.equal(rawFileUrl("https://gitlab.com/group/sub/mono/", "packages/widget", ".keep-the-why"), "https://gitlab.com/api/v4/projects/group%2Fsub%2Fmono/repository/files/packages%2Fwidget%2F.keep-the-why/raw?ref=HEAD");
   assert.equal(rawFileUrl("https://bitbucket.org/acme/widget", "", ".keep-the-why"), "https://bitbucket.org/acme/widget/raw/HEAD/.keep-the-why");
   assert.equal(rawFileUrl("https://codeberg.org/acme/widget", "", ".keep-the-why"), "https://codeberg.org/acme/widget/raw/branch/HEAD/.keep-the-why");
 });

@@ -493,7 +493,9 @@ a.author:hover { color: var(--accent2); }
   .app.globe .graph-wrap { margin-left: -32px; margin-right: -32px; }
 }
 .app.globe .details { display: none; }
-.statusbar .globe-egg { margin-left: 14px; font-size: 12px; opacity: .55; text-decoration: none; } .statusbar .globe-egg:hover { opacity: 1; }
+/* the globe's button sits next to the search, where people look — it used to be a faint 🌐 at the end of the status bar */
+.globe-btn { display: inline-flex; align-items: center; justify-content: center; flex: none; font-size: 15px; text-decoration: none; }
+.app.globe .globe-btn { border-color: var(--accent); }
 .graph-ui .globe-ctl select { font-size: 11px; background: var(--bg2); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 1px 4px; }
 .graph-ui .globe-mark { font-size: 13px; text-decoration: none; }
 .graph-ui .globe-info { position: relative; color: var(--fg3); cursor: help; font-size: 13px; line-height: 1; margin-left: -4px; }

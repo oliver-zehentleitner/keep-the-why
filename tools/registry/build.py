@@ -31,7 +31,9 @@ import json
 import re
 import shutil
 import sys
+import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
@@ -46,6 +48,26 @@ MAX_CITATIONS = 500  # per citing export: more is cut, with a warning — one ex
 MAX_CHILDREN = 200  # family members loaded beyond the listed lines, in all
 
 
+RETRY_STATUS = {403, 429, 500, 502, 503, 504}
+RETRY_DELAYS = (2, 6)  # seconds before the second and the third attempt
+
+
+def _open(req):
+    """urlopen with two retries. gitlab.com sits behind Cloudflare, which answers some CI runner addresses
+    with 403 and others with 200 for the same file; a busy host answers 429 or 5xx. A second try often lands.
+    """
+    for delay in (*RETRY_DELAYS, None):
+        try:
+            return urllib.request.urlopen(req, timeout=TIMEOUT)
+        except urllib.error.HTTPError as err:
+            if err.code not in RETRY_STATUS or delay is None:
+                raise
+        except urllib.error.URLError:
+            if delay is None:
+                raise
+        time.sleep(delay)
+
+
 def fetch(url, want_headers=False):
     # an Origin header, as a browser sends one: a host that answers cross-origin requests says so in the reply
     req = urllib.request.Request(
@@ -55,7 +77,7 @@ def fetch(url, want_headers=False):
             "Origin": "https://keepthewhy.com",
         },
     )
-    with urllib.request.urlopen(req, timeout=TIMEOUT) as res:
+    with _open(req) as res:
         data = res.read(MAX_BYTES + 1)
         headers = res.headers
     if len(data) > MAX_BYTES:
@@ -76,7 +98,13 @@ def raw_url(canonical):
     m = re.match(r"^https://github\.com/([^/]+)/([^/]+?)/?$", canonical)
     if m:
         return f"https://raw.githubusercontent.com/{m.group(1)}/{m.group(2)}/HEAD/.keep-the-why"
-    # other hosts: the dashboard's rule — <canonical>/raw/HEAD/.keep-the-why (GitLab, Gitea, Forgejo, Codeberg)
+    # GitLab: the repository files API, which sends Access-Control-Allow-Origin — the /-/raw/ path does not,
+    # so a browser on another site (the globe, public mode) could not read it. Same rule as lib.js rawFileUrl.
+    gl = re.match(r"^(https://gitlab\.[^/]+)/(.+)$", canonical.rstrip("/"))
+    if gl:
+        project = urllib.parse.quote(gl.group(2), safe="")
+        return f"{gl.group(1)}/api/v4/projects/{project}/repository/files/.keep-the-why/raw?ref=HEAD"
+    # other hosts: the dashboard's rule — <canonical>/raw/HEAD/.keep-the-why (Gitea, Forgejo, Codeberg)
     return canonical.rstrip("/") + "/raw/HEAD/.keep-the-why"
 
 

@@ -2757,8 +2757,7 @@ function applyState(state) {
     el("span", {}, MODE === "public" ? `public export · generated ${S.generated}` : S.exported ? `exported ${S.generated}` : `state ${S.generated}`),
     el("span", { id: "counts" }, `${S.entries.length} entries · ${S.topics.length} topics · ${S.authors.length} authors`),
     loadedUi(),
-    el("span", { class: "grow" }, el("a", { href: "https://keepthewhy.com", target: "_blank", rel: "noopener" }, "keepthewhy.com")),
-    el("a", { class: "globe-egg", href: "#globe", title: "the globe" }, "🌐"));
+    el("span", { class: "grow" }, el("a", { href: "https://keepthewhy.com", target: "_blank", rel: "noopener" }, "keepthewhy.com")));
   renderBadges();
   renderLoaded();
   FAMILY = null;

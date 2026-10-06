@@ -6,22 +6,22 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Added
 
+- Skill, `references/ci-linting.md`: the dashboard on GitLab Pages — a `pages` job for `.gitlab-ci.yml`, the site URL, and the three GitLab settings that are the person's (account verification for shared runners, Pages visibility *Everyone*, *unique domain*). The project wizard offers the dashboard where the remote is on GitLab too.
 - FAQ: three questions in the words people search with — an agent that keeps suggesting what was already rejected (with the measured result), an instruction file (`CLAUDE.md`, `AGENTS.md`) that keeps growing, and whether project memory needs a vector database or an MCP memory server — and a table comparing session/vector memory, one large instruction file and Keep the Why. `llms.txt`: the same three as *Questions this answers*.
 - Installation page: *Pinning a project to one skill version* — a copy of the skill in the repository plus `pinned-version` and `pinned-path` in `.keep-the-why`, how it works together with a skill installed globally (whichever copy loads first follows the pinned one, and stops instead of silently running another version), and how a pinned project is updated. A FAQ entry, a line under *Keep it current* in the README, on the installation page and in `llms.txt`, and two sentences in `references/help.md` (*What you can ask for*) to pin a project and to update its pinned copy. Until now the mechanism was described only in `references/setup.md`.
 
 ### Changed
 
+- `keep-the-why-dashboard` 0.7.2: the globe's 🌐 is a button next to the search in the top bar, where people look; it was a faint mark at the end of the status bar. The dashboard and registry pages say where it is now.
 - Linter and dashboard READMEs (and with them their PyPI pages): the Keep the Why badge is the live one the main README carries — this project's entries from its published dashboard, linking the live dashboard — instead of the static badge.
 - `keep-the-why-dashboard` 0.7.1: the graph and the globe on a phone. The graph gets the screen: the switches and the legend sit behind two buttons, *Layers* and *Legend*, opened one at a time and closed by touching the graph. Every graph opens fitted to the screen. Names no longer pile up on any screen: they are drawn by priority (what is focused or pointed at, the focus's neighbours, project names with this project first, topics, entries, bigger nodes first), and a name that would cover one already drawn is left out until zooming in makes room. On a phone, labels of the family, friends and path groups and motion start off (a stored choice wins), and names are cut at 32 characters instead of 48.
 
 ### Fixed
 
+- Registry and `keep-the-why-dashboard` 0.7.2: a project on GitLab is read through GitLab's repository files API (`/api/v4/projects/<path>/repository/files/.keep-the-why/raw?ref=HEAD`), which sends `Access-Control-Allow-Origin`; the `/-/raw/` path does not, so the globe and public mode could not read a GitLab project from the browser. The registry build retries a request twice on 403, 429 and 5xx: gitlab.com, behind Cloudflare, refuses some CI runner addresses and not others. Found with keep-the-why-demo, the first listed repository on GitLab.
 - `keep-the-why-dashboard` 0.7.1: zooming works on large graphs. The smallest zoom was a fixed 0.15, while a fitted family graph or globe can need less: the first pinch or wheel step jumped to 0.15 and zooming out stopped there. The floor is now half the fitted scale. A pinch zooms around the point between the fingers and pans with them, instead of around a fixed point.
 - `keep-the-why-dashboard` 0.7.1: tables on a phone scroll sideways instead of being squeezed. Below 900 px every cell could wrap at any character, so the Authors table (and the lint findings and the thoughts' *By project*) shrank its columns to one letter: names, headers and dates stood letter by letter. Cells now wrap at spaces only, dates and codes stay on one line, and the table scrolls inside its frame.
 
-### Fixed
-
-- `keep-the-why-dashboard` 0.7.1: tables on a phone scroll sideways instead of being squeezed. Below 900 px every cell could wrap at any character, so the Authors table (and the lint findings and the thoughts' *By project*) shrank its columns to one letter: names, headers and dates stood letter by letter. Cells now wrap at spaces only, dates and codes stay on one line, and the table scrolls inside its frame.
 
 ## [0.20.0] - 2026-10-05
 

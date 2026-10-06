@@ -308,7 +308,7 @@ Beside the graph, *Thoughts* lists its lines of reasoning: the longest chains of
 **Revisit when:** a wave regularly offers more than the dialog can list, or a registry listing is asked to carry anything beyond what the export already says
 **See:** dashboard.md#thoughts-are-the-longest-chains-of-see-and-superseded-by-listed-beside-the-graph — cfe036bd-3264-411d-b26d-4214a22f6fe2 — as of 2026-10-01
 
-The globe (`#globe`, the 🌐 at the end of the status bar) is the graph alone, full width, loading repositories in waves out from what the page holds: hop 1 is what the loaded entries cite outside the page, hop 2 what those cite, up to ten. Each wave is asked for in a dialog naming the repositories and the files before anything is fetched, and a wave's count is only known once the previous one is in — so the pauses are not caution for its own sake but the only order the counting allows. The registry — `registry/projects.txt`, one canonical repository URL per line, added by pull request, followed to each export and built into `docs/registry/index.json` by a workflow — is loaded the same way, as a wave of its own. The setting is not kept per browser.
+The globe (`#globe`, the 🌐 next to the search in the top bar; until dashboard 0.7.2 at the end of the status bar) is the graph alone, full width, loading repositories in waves out from what the page holds: hop 1 is what the loaded entries cite outside the page, hop 2 what those cite, up to ten. Each wave is asked for in a dialog naming the repositories and the files before anything is fetched, and a wave's count is only known once the previous one is in — so the pauses are not caution for its own sake but the only order the counting allows. The registry — `registry/projects.txt`, one canonical repository URL per line, added by pull request, followed to each export and built into `docs/registry/index.json` by a workflow — is loaded the same way, as a wave of its own. The setting is not kept per browser.
 
 **Reason:** following a thought already loads repositories hop by hop, along one chain; the globe is the same mechanism in the breadth, and it reuses the layer that draws friends and chain-reached units, so nothing new is drawn, only more of it. The dialog with the list, rather than a browser `confirm`, is there so the reader sees *which* repositories would be fetched, not only how many — the page's rule is that it asks other hosts only for what a person opens, and a wave is that opening, made explicit. Not keeping the setting is the same rule: a remembered globe would fetch from other hosts on a reload without a click.
 
@@ -319,6 +319,8 @@ The globe (`#globe`, the 🌐 at the end of the status bar) is the graph alone, 
 **Consequence (2026-10-02, maintainer review, dashboard 0.6.9):** the hops count from what the graph shows. The graph already draws the friends, so with *1 hop* as the default the first wave sat one step further out than its label, and *off* hid friends and family the graph had shown a moment before. *0 hops* is now the default and equals the graph view; a wave is always one step beyond what is drawn, and the globe no longer has a mode that shows less than the graph — hiding friends or family is their own switches' job.
 
 **Consequence (2026-10-03, maintainer decision):** the index is a build artifact, no longer a committed file. Since main has been protected by a ruleset (pull requests with required checks, 2026-09-07), the workflow's push of a rebuilt index was rejected whenever the index changed — unnoticed while registry pull requests carried a hand-built index along, visible when the first outside pull request (#596) was merged without one. The docs workflow now runs `tools/registry/build.py --publish` before `mkdocs build`, on every deploy and weekly, and reads the published index as the previous state for the 30-day grace; a line that cannot be listed is left out with a warning instead of failing the site. The registry workflow only checks pull requests. Rejected: a ruleset bypass for the Actions bot — it would open the protected branch to a bot for one generated file. In the same change `registry/projects.txt` is kept in A–Z order, enforced by the check, so concurrent additions land in different places.
+
+**Consequence (2026-10-06, maintainer decision, dashboard 0.7.2):** the 🌐 moved from the end of the status bar to a button next to the search. Placed as an easter egg it went unnoticed, and people who arrive from a post should find the globe. The easter-egg placement was given up for that.
 
 **Rejected alternative:** a page of its own for the globe, without thoughts and side pane. Rejected — a second legend, a second control bar and a second thoughts logic for the same graph; thoughts across three repositories are the interesting part, and the reader wants to walk on from the globe. The globe is the graph view with the side pane folded away.
 
@@ -485,3 +487,23 @@ The page hides its app shell under `<noscript>` and shows a notice instead. In a
 **Rejected alternative:** the entry bodies in the static list. Rejected for size; the export already embeds the state once for the script.
 
 **Consequence:** the host's URL forms are written twice, in `lib.js` (`hostFileLink`) and in `export.py` (`host_file_link`). Heading anchors in the static list follow GitHub's rule (`hostAnchor` in `lib.js`, since 0.6.16 also behind *open on the host*), not the dashboard's entry id, which differs for titles with an apostrophe or a dot.
+
+## A GitLab project is read through the repository files API, not its raw path
+
+**Id:** b21b37fe-785e-480a-9b97-66b41974a672
+**Type:** decision
+**Type:** workaround
+**Status:** active
+**Evidence:** confirmed
+**Source:** listing keep-the-why-demo, the first repository on GitLab (PR #640), and a probe from a GitHub runner, 2026-10-06
+**Revisit when:** gitlab.com sends Access-Control-Allow-Origin on its raw path, or the files API starts limiting the registry's or a reader's requests
+**See:** dashboard.md#the-registry-build-derives-backlinks-from-the-exports-it-already-loads-no-links-file-in-the-export — d8791f26-64b7-47df-9a2c-188f55562ae2 — as of 2026-10-06
+
+For a canonical on a `gitlab.` host, the registry build (`raw_url`) and the page (`rawFileUrl` in `lib.js`) read `.keep-the-why` at `<host>/api/v4/projects/<path, URL-encoded>/repository/files/<file, URL-encoded>/raw?ref=HEAD`, not at `<canonical>/-/raw/HEAD/`. The registry build also retries a request twice, after 2 and 6 seconds, on 403, 429 and 5xx.
+
+**Reason:** gitlab.com serves raw files without `Access-Control-Allow-Origin`, so a dashboard on another site (the globe, public mode) could not read a GitLab project's `.keep-the-why`, and the registry listed it with `cors: false`. The files API returns the same file with `Access-Control-Allow-Origin: *`. The retry is for Cloudflare in front of gitlab.com: the first registry check of the demo got 403 from one GitHub runner; a re-run, and a probe from another runner, got 200 for the same URL.
+
+**Rejected alternative:** keep the raw path and accept `cors: false` for GitLab. GitLab projects would be listed but invisible to every browser-side reader.
+
+**Rejected alternative:** a copy of `.keep-the-why` in the published export, read from Pages, which does send CORS. That changes what every listed project must publish, on every host, to work around one host's headers.
+
