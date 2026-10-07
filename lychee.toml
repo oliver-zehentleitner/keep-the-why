@@ -30,7 +30,13 @@ exclude_path = ["tools/evals/fixtures", "experiments/rejected-change/results", "
 # rate limiting and slow hosts on their side, not dead links.
 # www.npmjs.com answers non-browser clients with 403 (bot protection); the
 # package page exists, `npm view keep-the-why` is the check that works.
+# luongnv.com/asm/ (the asm registry's listing, README.md, llms.txt,
+# docs/installation.md) answers 301 to asm.luongnv.com since 2026-10-07, and
+# that name does not resolve — a move on their side that is not finished.
+# The links stay as published; drop this line once the new host answers, and
+# point the links there if the redirect stays.
 exclude = [
+  "^https://luongnv\\.com/asm/",
   "^https://www\\.npmjs\\.com/",
   "^https://deepwiki\\.com/",
   "^https://hol\\.org/",
