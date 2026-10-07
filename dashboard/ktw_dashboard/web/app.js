@@ -2665,12 +2665,13 @@ function setupSearch() {
     const all = searchRows(pool, q);
     const rows = all.slice(0, 12);
     const wider = Object.entries(SEARCH_SCOPES).filter(([k]) => k !== "project" && canSearch(k));
-    box.replaceChildren(...[...(rows.length ? rows.map(({ e, hit, g }) => el("a", { href: g.href(e), onclick: close },
+    // the wider scopes first, so they are in view however long the list of hits gets
+    box.replaceChildren(...[...wider.map(([k, label]) => el("a", { class: "sr-all sr-scope", href: searchHref(k, q), onclick: close }, `Search in ${label}`)),
+      ...(rows.length ? rows.map(({ e, hit, g }) => el("a", { href: g.href(e), onclick: close },
       el("div", { html: highlight(e.title.replace(/`/g, ""), hit.terms) }),
       el("div", { class: "sr-file" }, topicTitle(g.state, e.file)),
       el("div", { class: "sr-snip", html: hitSnippet(hit) }))) : [el("div", { style: "padding:10px 12px;color:var(--fg3)" }, "no matches in this project")]),
-      el("a", { class: "sr-all", href: searchHref("project", q), onclick: close }, all.length > rows.length ? `↵  all ${all.length} results in this project` : "↵  results page"),
-      ...wider.map(([k, label]) => el("a", { class: "sr-all sr-scope", href: searchHref(k, q), onclick: close }, `Search in ${label}`))].filter(Boolean)); // replaceChildren writes a null as the text "null"
+      el("a", { class: "sr-all", href: searchHref("project", q), onclick: close }, all.length > rows.length ? `↵  all ${all.length} results in this project` : "↵  results page")].filter(Boolean)); // replaceChildren writes a null as the text "null"
     box.hidden = false; sel = -1;
   };
   input.oninput = run; input.onfocus = () => { if (input.value.trim().length >= 2 && !location.hash.startsWith("#search/")) run(); };

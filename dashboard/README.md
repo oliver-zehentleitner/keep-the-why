@@ -92,7 +92,7 @@ Started inside a project, the dashboard shows that one. The project menu shows f
 | **Findings** | the linter's findings with links to the entries they sit in |
 | **Status bar** | the two package versions, linking PyPI; when a newer release exists the entry shimmers and its tooltip names the version and the `pip install -U` line |
 
-Search (`/`): every word must occur in the entry (title, body, the field lines, Id, file); Enter opens a results page for this project with every hit grouped by project; the dropdown's last rows and the results page's bar search the *family* (the whole tree, root to leaves), the *friends* (the repositories the entries cite outside the family, from their exports) or both. Filters by status, evidence and author apply everywhere. Keys: `g` graph, `o` overview, `q` queues, `t` timeline, `a` authors, `l` findings.
+Search (`/`): every word must occur in the entry (title, body, the field lines, Id, file); Enter opens a results page for this project with every hit grouped by project; the dropdown's first rows and the results page's bar search the *family* (the whole tree, root to leaves), the *friends* (the repositories the entries cite outside the family, from their exports) or both. Filters by status, evidence and author apply everywhere. Keys: `g` graph, `o` overview, `q` queues, `t` timeline, `a` authors, `l` findings.
 
 ## Example
 
