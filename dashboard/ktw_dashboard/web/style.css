@@ -179,7 +179,7 @@ table.t tr.clickable { cursor: pointer; }
 .search-scope a:hover { text-decoration: none; color: var(--fg); }
 .search-scope a.on { background: var(--accent); color: #fff; }
 .search-results a.sr-scope { color: var(--fg2); font-weight: 500; padding: 6px 12px; }
-.search-results a.sr-scope + a:not(.sr-scope) { border-top: 1px solid var(--line); }
+.search-results .sr-head { padding: 6px 12px 3px; color: var(--fg3); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; border-top: 1px solid var(--line); }
 .search-page { max-width: 980px; }
 .search-page .sgroup { margin: 0 0 22px; }
 .search-page .sg-head { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 14px; }
