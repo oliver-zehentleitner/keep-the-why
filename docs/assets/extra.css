@@ -368,8 +368,8 @@
 /* Git hosts under the "Git does the rest" cards: the same marks as the
    dashboard's HOSTS table (Simple Icons, CC0). A standing, centered row
    where the width allows; narrower than the row (six marks and five gaps,
-   17.5rem) the container query turns it into a strip that runs left to
-   right, with the list's second copy making the loop seamless. The query
+   17.5rem) the container query turns it into a strip that runs right to
+   left like the agent strip, with the list's second copy making the loop seamless. The query
    is the measurement: no script. Simple Icons are filled glyphs on a
    transparent 24×24 box, so the mask reads alpha and is scaled down. */
 .ktw-hosts {
@@ -432,8 +432,8 @@
   }
 }
 @keyframes ktw-hosts-scroll {
-  from { transform: translateX(-50%); }
-  to { transform: translateX(0); }
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
 @keyframes ktw-agents-scroll {
   from { transform: translateX(0); }
