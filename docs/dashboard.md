@@ -51,6 +51,11 @@ ktw-dashboard            # in a project with a .keep-the-why file
 
 The page opens at `http://127.0.0.1:8765/` and stays current: the server checks the project's fingerprint (HEAD, `.git/index` and `.git/HEAD`, `.mailmap`, `.keep-the-why`, `AGENTS.md`, the files under `context/`) every two seconds and pushes a fresh state to every open page when something changed — after a `git pull` as much as after an agent wrote an entry a moment ago. Uncommitted entries show as author `working tree`, which makes the page a live window on what the skill is capturing during a session.
 
+<figure class="ktw-shot-small" markdown>
+[![The dashboard on a local checkout of a fork: the project menu top left, the local / public switch, the branch, the fork's origin and what it is a fork of, the graph beside the overview](assets/dashboard-local-screenschot.png)](assets/dashboard-local-screenschot.png){ target=_blank rel=noopener title="Open the screenshot at full size" }
+<figcaption>Running locally on a checkout of a fork: the project menu, local / public, the branch, the fork and what it is a fork of — click for full size</figcaption>
+</figure>
+
 ```
 ktw-dashboard [PATH] [--host 127.0.0.1] [--port 8765] [--no-browser] [--interval 2]
               [--scan DIR] [--no-history] [--no-update-check] [--export DIR] [--anonymize] [--json] [--version]
