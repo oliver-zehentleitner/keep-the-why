@@ -100,7 +100,7 @@ Yes. Check the skill's folder from a release into the repository and pin it in `
 **What if my project already has a documentation structure I like?**
 Keep the Why is meant to adapt to what exists, not replace a working structure with a fixed template. See [Repository structure](repository-structure.md), "Retrofitting an existing project."
 
-**Does it work on GitLab, Codeberg, Bitbucket or a self-hosted forge?**
+**Does it work on GitLab, Codeberg, Bitbucket or a self-hosted forge?**{ #hosts }
 The format and the skill need nothing from the host: `context/` is Markdown in the repository and travels with Git wherever the repository lives. What touches the host is optional: the linter in CI, the dashboard published on the project's site, and the registry. Two hosts are tested end to end:
 
 - **GitHub:** this project and the other GitHub repositories in the [registry](registry/index.md).

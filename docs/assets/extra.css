@@ -365,6 +365,23 @@
   mask-position: center;
   mask-mode: luminance;
 }
+/* Git hosts under the "Git does the rest" cards: the same marks as the
+   dashboard's HOSTS table (Simple Icons, CC0), as a standing row — six do
+   not fill a strip. Simple Icons are filled glyphs on a transparent 24×24
+   box, so the mask reads alpha and is scaled down to match the agents. */
+.ktw-hosts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.1rem;
+  margin: 1.2rem 0 0;
+}
+.ktw-hosts .ktw-agents__logo {
+  width: 1.75rem;
+  height: 1.75rem;
+  -webkit-mask-size: 66%;
+  mask-size: 66%;
+  mask-mode: alpha;
+}
 @keyframes ktw-agents-scroll {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
