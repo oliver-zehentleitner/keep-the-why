@@ -372,8 +372,9 @@
 .ktw-hosts {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.1rem;
-  margin: 1.2rem 0 0;
+  justify-content: center;
+  gap: 1.4rem;
+  margin: 1.6rem 0 0;
 }
 .ktw-hosts .ktw-agents__logo {
   width: 1.75rem;
