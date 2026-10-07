@@ -2519,15 +2519,46 @@ async function publicTreeFrom(start) {
   return { groups, missing };
 }
 // { groups: [{ member, state, href(e) }], missing: [{ member, reason }] } — this project first
+// Four scopes, chosen per search (the dropdown's rows, the results page's bar): this project alone,
+// the family tree, the friends, or both. The top bar's scope switch governs the graph and the lists,
+// not the search — Enter in the search field always searches this project.
+const SEARCH_SCOPES = { project: "this project", family: "family", friends: "friends", all: "family & friends" };
 async function searchPool(scope) {
-  const self = { member: { role: "self", name: S.project.name || S.project.id }, state: SELF, href: (e) => entryHref(e) };
-  if (scope !== "family") return { groups: [self], missing: [] };
+  const self = { member: { role: "self", name: S.project.name || S.project.id, canonical: canonicalOf(S.project) }, state: SELF, href: (e) => entryHref(e) };
+  if (!(scope in SEARCH_SCOPES) || scope === "project") return { groups: [self], missing: [] };
+  const fam = scope === "friends" ? { groups: [self], missing: [] } : await familyPool(self);
+  if (scope === "family") return fam;
+  const fr = await friendPool(fam);
+  return { groups: [...fam.groups, ...fr.groups], missing: [...fam.missing, ...fr.missing] };
+}
+async function familyPool(self) {
   if (PUBLISHED()) return publicTree();
   if (!LIVE()) return { groups: [self], missing: [] };
   const others = [...(await fetchTree() || [])].filter((m) => m.role !== "self").sort((a, b) => familyRank(a) - familyRank(b));
   const results = await Promise.all(others.map((m) => m.key ? memberState(m.key) : { error: m.available === "none" ? "not checked out or cached on this machine" : "location unknown" }));
   const groups = [self]; const missing = [];
   others.forEach((m, i) => { const r = results[i]; if (r.state) groups.push({ member: m, state: r.state, href: (e) => `${location.pathname}?project=${encodeURIComponent(m.key)}${entryHref(e)}` }); else missing.push({ member: m, reason: r.error }); });
+  return { groups, missing };
+}
+// The friends of the projects in a pool — the repositories their entries cite outside the family —
+// read the way the graph reads them (loadFriend: a local checkout the live server knows, else the
+// published export), bodies included, since the search reads them. A friend that has a family comes
+// with it, as in the graph. What does not load is listed under "Not searched", never dropped.
+async function friendPool(pool) {
+  if (LIVE()) await fetchTree(); // the whole family is known before anything counts as a friend
+  const known = [...pool.groups.map((g) => g.member.canonical), ...pool.missing.map(({ member: m }) => m.canonical)].filter(Boolean);
+  const list = friendCandidates(pool.groups.flatMap((g) => g.state.entries || []), known);
+  const results = await Promise.all(list.map(loadFriend));
+  const groups = []; const missing = []; const seen = new Set(known.map(fkey));
+  results.forEach((r, i) => {
+    const f = list[i];
+    if (!r.state) { missing.push({ member: { role: "friend", name: repoLabel(f.canonical), canonical: f.canonical }, reason: r.error || "could not load the export" }); return; }
+    for (const u of r.members || [r]) {
+      const k = fkey(u.canonical); if (!k || seen.has(k)) continue; seen.add(k);
+      groups.push({ member: { role: "friend", name: u.name, canonical: u.canonical, root: u.root || "", key: u.key, open: u.open, via: k === fkey(r.canonical) ? "" : r.name }, state: u.state, href: u.href });
+    }
+  });
+  await Promise.all(groups.map((g) => ensureBodies(g.state)));
   return { groups, missing };
 }
 // every hit, best first; the dropdown keeps this project's hits on top
@@ -2542,6 +2573,9 @@ const searchScopes = () => (LIVE() || MODE === "public" || (MODE === "export" &&
 // carries its own scope and sets it.
 const hasFamily = () => !!(S?.project?.parent || (S?.project?.children || []).length);
 const canFamily = () => searchScopes().includes("family") && hasFamily();
+// friends can be searched where the family can be read, and there are any: entries citing outside the family
+const canFriends = () => searchScopes().includes("family") && !!SELF && friendCandidates(SELF.entries || []).length > 0;
+const canSearch = (s) => s === "project" || (s === "family" ? canFamily() : s === "friends" ? canFriends() : s === "all" ? canFamily() || canFriends() : false);
 let SCOPE = (() => { try { return localStorage.getItem("ktw-scope") || localStorage.getItem("ktw-search-scope") || "project"; } catch { return "project"; } })();
 const scope = () => (canFamily() && SCOPE === "family" ? "family" : "project");
 function markScope() {
@@ -2557,14 +2591,11 @@ function setScope(v, { rerender: again = true } = {}) {
   markScope();
   if (!changed) return;
   if (!again) { setTimeout(showScope); return; } // the caller renders now; the merge follows
-  const route = location.hash.slice(1);
-  if (route.startsWith("search/")) { const q = decodeURIComponent(route.split("/").slice(2).join("/")); location.hash = searchHref(scope(), q); }
   showScope();
-  window.__ktwScopeChanged?.();
 }
 function setupScope() { for (const b of $("#scope").querySelectorAll("button")) b.onclick = () => setScope(b.dataset.scope); markScope(); }
 const searchHref = (scope, q) => `#search/${scope}/${encodeURIComponent(q)}`;
-const memberLabel = (m) => m.role === "self" ? "this project" : m.role === "relative" && m.via ? `relative, via ${m.via}` : m.role;
+const memberLabel = (m) => m.role === "self" ? "this project" : m.role === "friend" ? (m.via ? `friend's family, with ${m.via}` : "friend") : m.role === "relative" && m.via ? `relative, via ${m.via}` : m.role;
 const topicTitle = (st, file) => st.topics?.find((t) => t.file === file)?.title || file;
 function hitSnippet(hit) {
   const w = hit.where; if (!w) return "";
@@ -2573,13 +2604,14 @@ function hitSnippet(hit) {
 }
 let RESTORE_SCROLL = 0; // a live update re-renders the results page; its rows arrive after the scroll was restored
 async function viewSearch(main, linkScope, q) {
-  if (linkScope === "family" || linkScope === "project") setScope(linkScope, { rerender: false }); // a shared link brings its scope
-  const scope = SCOPE === "family" && canFamily() ? "family" : "project";
-  if (scope !== linkScope) { history.replaceState(null, "", searchHref(scope, q)); } // this project has no family: the link falls back
+  const scope = canSearch(linkScope) ? linkScope : "project"; // a shared link may carry a scope this project cannot search: it falls back
+  if (scope !== linkScope) { history.replaceState(null, "", searchHref(scope, q)); }
   const input = $("#search"); if (document.activeElement !== input) input.value = q;
   const terms = searchTerms(q);
   const sub = el("p", { class: "sub" }, "Searching…");
-  main.append(el("div", { class: "search-head" }, el("h1", {}, "Search ", el("span", { class: "q" }, `“${q}”`)), el("span", { class: "note" }, scope === "family" ? "whole family — switch next to the project menu" : canFamily() ? "this project — switch next to the project menu" : "")), sub);
+  const bar = el("span", { class: "search-scope", title: "where to search — the switch next to the project menu sets the graph and the lists, not the search" },
+    ...Object.entries(SEARCH_SCOPES).filter(([k]) => canSearch(k)).map(([k, label]) => el("a", { href: searchHref(k, q), class: k === scope ? "on" : "" }, label)));
+  main.append(el("div", { class: "search-head" }, el("h1", {}, "Search ", el("span", { class: "q" }, `“${q}”`)), bar), sub);
   if (terms.length === 0 || q.trim().length < 2) { sub.textContent = "Type at least two characters in the search field and press Enter."; return; }
   const pool = await searchPool(scope);
   if (location.hash !== searchHref(scope, q) && decodeURIComponent(location.hash) !== decodeURIComponent(searchHref(scope, q))) return; // navigated away meanwhile
@@ -2587,7 +2619,7 @@ async function viewSearch(main, linkScope, q) {
   const shown = rows.filter(({ e }) => matches(e)).length;
   const projectsHit = new Set(rows.map((r) => r.g)).size;
   sub.textContent = `${plural(rows.length, "entry")} in ${plural(projectsHit, "project")}` +
-    (scope === "family" ? ` · ${plural(pool.groups.length, "project")} searched` : "") +
+    (scope !== "project" ? ` · ${plural(pool.groups.length, "project")} searched` : "") +
     (terms.length > 1 ? ` · all of: ${terms.join(", ")}` : "") +
     (filterActive() ? ` · ${shown} match the sidebar filters, the rest dimmed` : "") +
     " · searched: title, body, Revisit when, Source, Verification, Superseded by, Id, file, type, status, evidence";
@@ -2597,7 +2629,7 @@ async function viewSearch(main, linkScope, q) {
     if (!mine.length) continue;
     const m = g.member;
     const head = el("div", { class: "sg-head" },
-      m.role === "self" ? el("b", {}, m.name) : el("a", { href: PUBLISHED() ? publicHref(m.canonical, m.root || "") : `${location.pathname}?project=${encodeURIComponent(m.key)}#overview` }, m.name),
+      m.role === "self" ? el("b", {}, m.name) : el("a", { href: m.open || (PUBLISHED() ? publicHref(m.canonical, m.root || "") : `${location.pathname}?project=${encodeURIComponent(m.key)}#overview`) }, m.name),
       pill(memberLabel(m), "role"), el("span", { class: "count" }, plural(mine.length, "hit")));
     box.append(el("section", { class: "sgroup" }, head, m.scope ? el("div", { class: "ms note" }, m.scope) : null,
       el("div", { class: "entry-list" }, mine.map(({ e, hit }) => {
@@ -2611,10 +2643,13 @@ async function viewSearch(main, linkScope, q) {
           el("div", { class: "rm" }, meta));
       }))));
   }
-  if (!rows.length) box.append(el("p", { class: "center" }, `No entry matches “${q}”`, scope === "project" && canFamily() ? [" in this project — ", el("a", { href: searchHref("family", q) }, "search the whole family")] : "", "."));
+  const wider = scope === "all" ? null : canSearch("all") ? "all" : scope === "project" && canSearch("family") ? "family" : scope === "project" && canSearch("friends") ? "friends" : null;
+  if (!rows.length) box.append(el("p", { class: "center" }, `No entry matches “${q}”`, scope === "project" ? " in this project" : scope === "all" ? " in the family or the friends" : ` in the ${SEARCH_SCOPES[scope]}`,
+    wider ? [" — ", el("a", { href: searchHref(wider, q) }, `search ${SEARCH_SCOPES[wider]}`)] : "", "."));
   if (pool.missing.length) box.append(el("section", { class: "sgroup missing" }, el("div", { class: "sg-head" }, el("b", {}, "Not searched"), el("span", { class: "count" }, pool.missing.length)),
     pool.missing.map(({ member: m, reason }) => el("div", { class: "sr-missing" }, el("b", {}, m.name), ` (${memberLabel(m)}) — ${reason}`)),
-    el("p", { class: "note" }, "Family shows how to get a member that is not on this machine.")));
+    el("p", { class: "note" }, [pool.missing.some(({ member: m }) => m.role !== "friend") ? "Family shows how to get a member that is not on this machine. " : "",
+      pool.missing.some(({ member: m }) => m.role === "friend") ? "Friends lists the repositories the entries cite outside the family, and what could not be loaded." : ""].join("").trim())));
   main.append(box);
   if (RESTORE_SCROLL) main.scrollTop = RESTORE_SCROLL;
 }
@@ -2624,21 +2659,20 @@ function setupSearch() {
   const run = async () => {
     const q = input.value.trim(); if (q.length < 2 || !S) return close();
     const mine = ++seq;
-    const pool = await searchPool(scope());
+    // the dropdown searches this project alone — on hand, nothing to fetch; the wider scopes are its last rows
+    const pool = await searchPool("project");
     if (mine !== seq) return; // a newer keystroke won
     const all = searchRows(pool, q);
-    // this project's hits first, then the rest; the page shows everything
-    const rows = [...all.filter((r) => r.g.member.role === "self"), ...all.filter((r) => r.g.member.role !== "self")].slice(0, 12);
-    const projects = new Set(all.map((r) => r.g)).size;
+    const rows = all.slice(0, 12);
+    const wider = Object.entries(SEARCH_SCOPES).filter(([k]) => k !== "project" && canSearch(k));
     box.replaceChildren(...[...(rows.length ? rows.map(({ e, hit, g }) => el("a", { href: g.href(e), onclick: close },
       el("div", { html: highlight(e.title.replace(/`/g, ""), hit.terms) }),
-      el("div", { class: "sr-file" }, g.member.role === "self" ? "" : `${g.member.name} (${memberLabel(g.member)}) · `, topicTitle(g.state, e.file)),
-      el("div", { class: "sr-snip", html: hitSnippet(hit) }))) : [el("div", { style: "padding:10px 12px;color:var(--fg3)" }, "no matches")]),
-      pool.missing.length ? el("div", { class: "sr-missing" }, `${plural(pool.missing.length, "family member")} not available here — not searched.`) : null,
-      el("a", { class: "sr-all", href: searchHref(scope(), q), onclick: close }, all.length > rows.length ? `↵  all ${all.length} results in ${plural(projects, "project")}` : "↵  results page")].filter(Boolean)); // replaceChildren writes a null as the text "null"
+      el("div", { class: "sr-file" }, topicTitle(g.state, e.file)),
+      el("div", { class: "sr-snip", html: hitSnippet(hit) }))) : [el("div", { style: "padding:10px 12px;color:var(--fg3)" }, "no matches in this project")]),
+      el("a", { class: "sr-all", href: searchHref("project", q), onclick: close }, all.length > rows.length ? `↵  all ${all.length} results in this project` : "↵  results page"),
+      ...wider.map(([k, label]) => el("a", { class: "sr-all sr-scope", href: searchHref(k, q), onclick: close }, `Search in ${label}`))].filter(Boolean)); // replaceChildren writes a null as the text "null"
     box.hidden = false; sel = -1;
   };
-  window.__ktwScopeChanged = () => { if (!box.hidden && input.value.trim().length >= 2) run(); };
   input.oninput = run; input.onfocus = () => { if (input.value.trim().length >= 2 && !location.hash.startsWith("#search/")) run(); };
   input.onkeydown = (ev) => {
     const items = [...box.querySelectorAll("a")];
@@ -2649,8 +2683,8 @@ function setupSearch() {
       ev.preventDefault();
       if (!box.hidden && items[sel]) { items[sel].click(); input.blur(); return; }
       const q = input.value.trim(); if (q.length < 2) return;
-      seq++; close(); input.blur(); // Enter without a selection: the results page
-      location.hash = searchHref(scope(), q);
+      seq++; close(); input.blur(); // Enter without a selection: the results page, this project
+      location.hash = searchHref("project", q);
     }
   };
   document.addEventListener("click", (ev) => { if (!ev.target.closest(".topbar-right")) close(); });

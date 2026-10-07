@@ -169,7 +169,7 @@ if (/\bnull\b/.test(window.document.getElementById("project-title").textContent 
   if (!live) errors.push("live: no indicator in the status bar");
   else if (live.querySelector(".live-label")?.textContent !== "export" || !live.classList.contains("export")) errors.push(`live: an export should read "export", got "${live.textContent}"`);
   if (window.document.querySelector(".topbar #live")) errors.push("live: still in the top bar");
-  if (!window.document.querySelector(".topbar #globe-btn + #search")) errors.push("globe: the button should sit left of the search");
+  if (!window.document.querySelector(".topbar #search-results + #globe-btn")) errors.push("globe: the button should sit right of the search");
 }
 report.details = window.document.getElementById("details").textContent.trim().length;
 window.__ktwApplyUpdates({ enabled: true, packages: { "keep-the-why-dashboard": { installed: S.dashboard, latest: "99.0.0", outdated: true }, "keep-the-why-lint": { installed: S.linter, latest: S.linter, outdated: false } } });

@@ -99,25 +99,57 @@ const report = {};
   const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/web`)}#overview`);
   const d = window.document;
   if (d.getElementById("mode").hidden) errors.push("public mode: the local/public switch is hidden — no way back to local");
-  // one scope switch, next to the project menu, for search and graph alike
+  // the scope switch next to the project menu sets the graph and the lists; the search chooses its scope
+  // per search: Enter searches this project, the dropdown's last rows and the results page's bar reach wider
   if (d.getElementById("scope").hidden) errors.push("public mode: the this-project/family switch is hidden");
   d.querySelector('#scope button[data-scope="family"]').click();
   const input = d.getElementById("search"); input.value = "needle"; input.dispatchEvent(new window.Event("input"));
   await tick(300);
   report.dropdown = d.querySelectorAll("#search-results a").length;
+  report.dropdownScopes = [...d.querySelectorAll("#search-results a.sr-scope")].map((a) => a.textContent);
+  if (report.dropdownScopes.join("|") !== "Search in family|Search in family & friends") errors.push("dropdown: wider scopes wrong (web has a family, no friends of its own): " + JSON.stringify(report.dropdownScopes));
+  if ([...d.querySelectorAll("#search-results a:not(.sr-all)")].some((a) => /\(parent\)|\(child\)|\(sibling\)/.test(a.textContent))) errors.push("dropdown: shows family hits, should show this project alone");
   input.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
   await tick(50); window.dispatchEvent(new window.Event("hashchange")); await tick(300);
   report.hash = window.location.hash;
   const main = d.getElementById("main");
+  if (report.hash !== "#search/project/needle") errors.push("Enter without a selection did not open the results page for this project: " + report.hash);
+  report.projectGroups = [...main.querySelectorAll(".sgroup:not(.missing) .sg-head")].map((h) => h.textContent);
+  if (report.projectGroups.length !== 1 || !report.projectGroups[0].startsWith("acme---web")) errors.push("results page (project): expected this project alone, got " + JSON.stringify(report.projectGroups));
+  report.scopeBar = [...main.querySelectorAll(".search-scope a")].map((a) => a.textContent + (a.classList.contains("on") ? "*" : ""));
+  if (report.scopeBar.join("|") !== "this project*|family|family & friends") errors.push("results page: scope bar wrong: " + JSON.stringify(report.scopeBar));
+  const famLink = main.querySelector('.search-scope a[href="#search/family/needle"]');
+  if (!famLink) errors.push("results page: no family link in the scope bar");
+  window.location.hash = "#search/family/needle"; window.dispatchEvent(new window.Event("hashchange")); await tick(300);
+  report.hash = window.location.hash;
   report.groups = [...main.querySelectorAll(".sgroup:not(.missing) .sg-head")].map((h) => h.textContent);
   report.missing = [...main.querySelectorAll(".sgroup.missing .sr-missing")].map((m) => m.textContent);
   report.links = [...main.querySelectorAll(".sgroup .row")].map((a) => a.getAttribute("href"));
-  if (report.hash !== "#search/family/needle") errors.push("Enter without a selection did not open the results page: " + report.hash);
+  if (report.hash !== "#search/family/needle") errors.push("the family results page did not open: " + report.hash);
+  if (!main.querySelector(".search-scope a.on[href=\"#search/family/needle\"]")) errors.push("results page (family): the scope bar does not mark family");
   const want = [["acme---web", "this project"], ["github.com/acme/suite", "parent"], ["docs", "sibling"], ["plugin", "child"]];
   for (const [name, role] of want) if (!report.groups.some((g) => g.startsWith(name) && g.includes(role))) errors.push(`results page: no group for ${name} (${role})`);
   if (report.groups.length !== 4) errors.push("results page: expected 4 groups, got " + report.groups.length);
   if (!report.missing.some((m) => m.startsWith("cli") && /no dashboard-state line/.test(m))) errors.push("results page: cli (no export) not named as not searched");
   if (!report.links.some((h) => h.includes("public=https%3A%2F%2Fgithub.com%2Facme%2Fsuite&root=docs#entry/"))) errors.push("results page: the docs hit does not link to the docs export");
+  window.close();
+}
+{
+  // the friends scope: refs has no family and cites notes and suite — both are friends, searched from their
+  // exports, bodies included (notes is a lean export: the needle sits in state.body.json)
+  const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/refs`)}#overview`);
+  const d = window.document; const main = d.getElementById("main");
+  const input = d.getElementById("search"); input.value = "needle"; input.dispatchEvent(new window.Event("input"));
+  await tick(300);
+  report.friendsDropdown = [...d.querySelectorAll("#search-results a.sr-scope")].map((a) => a.textContent);
+  if (report.friendsDropdown.join("|") !== "Search in friends|Search in family & friends") errors.push("dropdown (refs): wider scopes wrong: " + JSON.stringify(report.friendsDropdown));
+  window.location.hash = "#search/friends/needle"; window.dispatchEvent(new window.Event("hashchange")); await tick(400);
+  report.friendsGroups = [...main.querySelectorAll(".sgroup:not(.missing) .sg-head")].map((h) => h.textContent);
+  report.friendsLinks = [...main.querySelectorAll(".sgroup .row")].map((a) => a.getAttribute("href"));
+  if (!report.friendsGroups.some((g) => /acme---notes|acme\/notes/.test(g) && g.includes("friend"))) errors.push("friends search: no group for notes (friend): " + JSON.stringify(report.friendsGroups));
+  if (!report.friendsLinks.some((h) => h.includes("public=https%3A%2F%2Fgithub.com%2Facme%2Fnotes") && h.includes("#entry/"))) errors.push("friends search: the notes hit does not link to the notes export: " + JSON.stringify(report.friendsLinks));
+  if (report.friendsGroups.some((g) => g.startsWith("acme---refs"))) errors.push("friends search: refs itself has no needle but is listed");
+  if (!main.querySelector(".search-scope a.on[href=\"#search/friends/needle\"]")) errors.push("friends search: the scope bar does not mark friends");
   window.close();
 }
 {
@@ -258,6 +290,7 @@ const report = {};
 {
   // references into other repositories — family or not — are resolved when the entry is shown: the row carries the
   // target's title and links into its export; what cannot be resolved says why, and foreign text stays text
+  const f0 = fetched.length; // the friends search above read notes' export already; this block counts its own fetches
   const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/refs`)}#entry/5a1e5a1e-0000-4000-8000-000000000004`);
   await tick(300);
   const d = window.document;
@@ -272,7 +305,7 @@ const report = {};
   if (!/not resolved: no dashboard-state line/.test(report.remoteRows[3] || "")) errors.push("remote See, target without export: no reason: " + report.remoteRows[3]);
   if (!/not resolved: the export at .* belongs to https:\/\/github\.com\/acme\/suite/.test(report.remoteRows[4] || "")) errors.push("remote See, export claiming another repository: shown anyway: " + report.remoteRows[4]);
   // one lookup per target: notes' export fetched once for two references
-  if (fetched.filter((u) => u === "https://acme.github.io/notes/state.json").length !== 1) errors.push("remote See: the same export was fetched more than once");
+  if (fetched.slice(f0).filter((u) => u === "https://acme.github.io/notes/state.json").length !== 1) errors.push("remote See: the same export was fetched more than once");
   // the #ref route (a shared link) resolves the same way and goes there
   const nav = navigations.length;
   window.location.hash = `#ref/${encodeURIComponent(`${GH}/notes`)}/${NOTES_ID}`; window.dispatchEvent(new window.Event("hashchange")); await tick(300);
