@@ -366,15 +366,25 @@
   mask-mode: luminance;
 }
 /* Git hosts under the "Git does the rest" cards: the same marks as the
-   dashboard's HOSTS table (Simple Icons, CC0), as a standing row — six do
-   not fill a strip. Simple Icons are filled glyphs on a transparent 24×24
-   box, so the mask reads alpha and is scaled down to match the agents. */
+   dashboard's HOSTS table (Simple Icons, CC0). A standing, centered row
+   where the width allows; narrower than the row (six marks and five gaps,
+   17.5rem) the container query turns it into a strip that runs left to
+   right, with the list's second copy making the loop seamless. The query
+   is the measurement: no script. Simple Icons are filled glyphs on a
+   transparent 24×24 box, so the mask reads alpha and is scaled down. */
 .ktw-hosts {
+  container-type: inline-size;
+  position: relative;
+  margin: 1.6rem 0 0;
+}
+.ktw-hosts__track {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 1.4rem;
-  margin: 1.6rem 0 0;
+}
+.ktw-hosts .ktw-agents__item[aria-hidden="true"] {
+  display: none;
 }
 .ktw-hosts .ktw-agents__logo {
   width: 1.75rem;
@@ -383,12 +393,54 @@
   mask-size: 66%;
   mask-mode: alpha;
 }
+@container (max-width: 18rem) {
+  .ktw-hosts {
+    overflow-x: clip;
+    overflow-y: visible;
+  }
+  .ktw-hosts::before,
+  .ktw-hosts::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: -1rem;
+    width: 12%;
+    z-index: 1;
+    pointer-events: none;
+  }
+  .ktw-hosts::before {
+    left: 0;
+    background: linear-gradient(to right, var(--md-default-bg-color), transparent);
+  }
+  .ktw-hosts::after {
+    right: 0;
+    background: linear-gradient(to left, var(--md-default-bg-color), transparent);
+  }
+  .ktw-hosts__track {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    width: max-content;
+    will-change: transform;
+    animation: ktw-hosts-scroll 40s linear infinite;
+  }
+  .ktw-hosts:hover .ktw-hosts__track,
+  .ktw-hosts__track:focus-within {
+    animation-play-state: paused;
+  }
+  .ktw-hosts .ktw-agents__item[aria-hidden="true"] {
+    display: block;
+  }
+}
+@keyframes ktw-hosts-scroll {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
+}
 @keyframes ktw-agents-scroll {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ktw-agents__track { animation: none; flex-wrap: wrap; width: auto; }
-  .ktw-agents__item[aria-hidden="true"] { display: none; }
-  .ktw-agents__viewport::before, .ktw-agents__viewport::after { display: none; }
+  .ktw-agents__track, .ktw-hosts__track { animation: none; flex-wrap: wrap; width: auto; }
+  .ktw-agents__item[aria-hidden="true"], .ktw-hosts .ktw-agents__item[aria-hidden="true"] { display: none; }
+  .ktw-agents__viewport::before, .ktw-agents__viewport::after, .ktw-hosts::before, .ktw-hosts::after { display: none; }
 }
