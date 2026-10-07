@@ -250,3 +250,127 @@
   font-size: .8rem;
   line-height: 1.5;
 }
+
+/* Agent marquee under the hero buttons: two copies of the list, the track
+   slides by half its width, so the loop is seamless. Pure CSS, no script. */
+.ktw-agents {
+  margin: .6rem 0 0;
+  max-width: 48rem;
+}
+.md-typeset .ktw-agents + .ktw-caption {
+  margin-top: .3rem;
+}
+/* overflow-x: clip (not hidden) so the hover label may hang below the box. */
+.ktw-agents__viewport {
+  position: relative;
+  overflow-x: clip;
+  overflow-y: visible;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.ktw-agents__viewport::before,
+.ktw-agents__viewport::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: -1rem;
+  width: 12%;
+  z-index: 1;
+  pointer-events: none;
+}
+.ktw-agents__viewport::before {
+  left: 0;
+  background: linear-gradient(to right, var(--md-default-bg-color), transparent);
+}
+.ktw-agents__viewport::after {
+  right: 0;
+  background: linear-gradient(to left, var(--md-default-bg-color), transparent);
+}
+.ktw-agents__viewport--dragging {
+  cursor: grabbing;
+}
+.ktw-agents__viewport--dragging .ktw-agents__item {
+  pointer-events: none;
+}
+.ktw-agents__track {
+  display: flex;
+  gap: .9rem;
+  width: max-content;
+  will-change: transform;
+  animation: ktw-agents-scroll 70s linear infinite;
+}
+.ktw-agents__viewport:hover .ktw-agents__track,
+.ktw-agents__track:focus-within {
+  animation-play-state: paused;
+}
+/* With marquee.js running, the script drives the motion (drag to scroll). */
+.ktw-agents__track--scripted {
+  animation: none;
+}
+.ktw-agents__item {
+  position: relative;
+  flex: 0 0 auto;
+  display: block;
+  line-height: 0;
+  opacity: .7;
+  transition: opacity .3s;
+}
+.ktw-agents__item:hover,
+.ktw-agents__item:focus-visible {
+  opacity: 1;
+}
+/* The agent's name right under the hovered glyph, hanging below the box. */
+.ktw-agents__item::after {
+  content: attr(data-name);
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: .05rem;
+  padding: .05rem .2rem;
+  border-radius: .2rem;
+  font-size: .55rem;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--md-default-fg-color--light);
+  background: var(--md-default-bg-color);
+  opacity: 0;
+  transition: opacity .2s;
+  pointer-events: none;
+  z-index: 2;
+}
+.ktw-agents__item:hover::after,
+.ktw-agents__item:focus-visible::after {
+  opacity: 1;
+}
+/* The logo files are white glyphs centered on a black tile, the glyph
+   within the middle half of it. A luminance mask keeps the glyph and drops
+   the tile, mask-size 200% crops the empty margin, and the color comes
+   from the background, so the files stay untouched and the icons take the
+   button and link color. The mask-image itself is set inline per logo with
+   an absolute path: a url() inside a custom property resolves against the
+   stylesheet, not the page. */
+.ktw-agents__logo {
+  display: block;
+  width: 1.5rem;
+  height: 1.5rem;
+  background-color: var(--md-typeset-a-color); /* same as links and buttons */
+  -webkit-mask-size: 200%;
+  mask-size: 200%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  mask-mode: luminance;
+}
+@keyframes ktw-agents-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ktw-agents__track { animation: none; flex-wrap: wrap; width: auto; }
+  .ktw-agents__item[aria-hidden="true"] { display: none; }
+  .ktw-agents__viewport::before, .ktw-agents__viewport::after { display: none; }
+}

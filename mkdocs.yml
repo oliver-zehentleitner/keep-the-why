@@ -50,6 +50,8 @@ copyright: '<a href="/imprint/">Imprint</a> · <a href="/license/">License</a>'
 # keeps "Full suite" and "Agent & model matrix", and
 # tools/mkdocs/measurement_pages.py links the pages from there - a row of
 # all of them under each title - and marks the entry they belong to.
+exclude_docs: |
+  assets/third-party/agents/README.md
 not_in_nav: |
   imprint.md
   license.md

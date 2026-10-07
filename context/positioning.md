@@ -56,6 +56,8 @@ Every nav section is a plain heading with its entries beneath: Reference, Exampl
 
 **Consequence (2026-10-01, "Git does the rest"):** a section of its own, six cards, between the entry example and the dashboard — maintainer request to name the Git integration on the page (permissions, distribution, reviews, forks, blame); the section form and the sixth card were the assisting agent's proposal, accepted. The "Keep & Share" card had said it in one sentence; expanding that card would have unbalanced the four-card "How it works" row, and the claim deserves the place where a reader has just seen an entry and asks how it reaches the team. The sixth card, *Branches*, is there because it is the one Git point the format itself was shaped for — the index heading skeleton exists so parallel additions don't collide (`entry-format.md`). What the section deliberately does not claim: that `git blame` shows who *decided* — it shows who committed, which may be the agent's account; the *Permissions* card says the skill never commits on its own, so the history is a person's. The README's "Keep & Share" paragraph and `llms.txt` carry the same point in two sentences.
 
+**Consequence (2026-10-07, agent strip):** the page gained a carousel — the agent logo strip under the hero buttons (entry below) — which the *Revisit when* line names as something CSS can't do. It can: two copies of the list and a translate by half, on a CSS animation; the script in `docs/assets/agents/marquee.js` only adds drag-to-scroll and stays out under reduced motion, the way the demo's script already does for its part. The page is still Markdown with HTML blocks; the decision stands.
+
 **Rejected alternative:** a raw `index.html` in `docs/`. Full layout freedom, but it would have to rebuild the header, search, palette toggle and footer itself, and the include mechanism wouldn't reach into it — the facts would be typed in by hand. Also rejected: a custom Jinja page template (`template:` front matter) — real HTML inside the site chrome, but a second place where layout lives, for a gain (a wider column) the page doesn't need.
 
 ## The project's own `context/` is published on the site through one-line include stubs
@@ -181,13 +183,30 @@ The skill carries what the README tells a person — what Keep the Why is, which
 **Id:** cd274fee-3191-4ca2-8ab1-999b752d18d4
 **Type:** decision
 **Type:** constraint
-**Status:** active
+**Status:** superseded
 **Evidence:** confirmed
 **Source:** maintainer decision, 2026-10-05, after a check of the vendors' published brand rules
-**Revisit when:** the vendors whose marks need permission publish a compatibility or "works with" program, or permission is given in writing
+**Superseded by:** 9e2cd363-ee42-4944-9271-ef726c3f1bcb
+
+Superseded on 2026-10-07 by the next entry: the landing page now carries a logo strip. The text lists this entry describes (README, *How it works*, installation page) stay as they are; what changed is the footing the maintainer accepts for the marks, not the lists. Kept for the brand-rule findings, which still hold.
 
 The README's line above the website link names the agents Keep the Why installs on — Claude Code, Codex, GitHub Copilot, Cursor, OpenClaw, Hermes Agent, Cline, OpenCode, Pi, Antigravity — as plain text, as do the agent lists on the landing page (*How it works*) and the installation page, where the ones with an install route of their own (the plugins) link it.
 
 **Reason:** the three best-known names cannot carry a logo: Anthropic allows saying in plain text that a product runs Claude Code and requires written permission for any other use of its names or logos; OpenAI's brand guidelines say not to use its logo without permission; Google requires prior written consent for uses its brand documentation does not cover. Of the others, only some have a mark under an open license, and most publish no rules for third parties at all — which is no permission. A row where the best-known agents are text and the rest logos would point at the gap.
 
 **Rejected alternative:** logos where a source allows them (OpenClaw and Hermes Agent from their MIT repositories; OpenCode and Pi from Simple Icons, CC0; Cline, Cursor, GitHub Copilot from their brand pages or icon sets), text for the rest. Rejected for the mixed look and the unclear footing of the ones without rules.
+
+## The landing page shows supported agents as a logo strip, on the same footing as skills.sh
+
+**Id:** 9e2cd363-ee42-4944-9271-ef726c3f1bcb
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer decision, 2026-10-07, prompted by the "Available for these agents" strip on skills.sh
+**Revisit when:** a vendor objects or publishes rules that exclude this use, or the skills CLI's agent list changes enough that the strip no longer mirrors it
+
+Between the hero buttons and the license line, the landing page runs a slowly scrolling strip of agent marks: the twenty agents skills.sh shows under "Available for these agents", plus Pi (Simple Icons, CC0). The files live in `docs/assets/third-party/agents/` exactly as received, with a README naming owner, origin and the use; the page recolors them at render time with a CSS luminance mask into the link color, hover shows the name, a drag scrolls the strip (`docs/assets/agents/marquee.js`), and without the script the CSS animation runs alone; under reduced motion the list stands still. Each mark links to its install route on the installation page.
+
+**Reason:** Keep the Why installs through the skills CLI, so the list skills.sh shows is the one this project inherits — not a selection of its own. The marks are used the way skills.sh uses them: a "works with" strip, one color, no claim of endorsement. That is the same footing, and the maintainer accepts it after seeing it in use there. What this is *not*: permission. The previous entry's findings stand — Anthropic, OpenAI and Google require written consent for logo use beyond a plain-text mention, most other vendors publish no rules — and the README in the folder exists so a removal request can be met file by file. The previous entry had been the assisting agent's caution, adopted at the time; the reversal is the maintainer's own reading two days later ("if skills.sh may, why not us").
+
+**Rejected alternative:** name chips in the same strip — no mark at all, nothing to ask anyone; rejected because the maintainer wanted the recognizable logo row. Also rejected: fetching every mark from its vendor's press kit instead of skills.sh — the rights are the same either way (Vercel holds no right in an Anthropic mark), only the provenance paperwork differs. Also rejected: editing the SVGs to recolor them — the files stay byte for byte as received so they can be compared with their origin; the CSS mask does the recoloring.
