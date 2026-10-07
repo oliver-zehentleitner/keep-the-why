@@ -12,7 +12,12 @@ A list of repositories with a published Keep the Why dashboard export, kept in [
 
 ## In the dashboard
 
-The globe — the [🌐](https://keepthewhy.com/dashboard/live/#globe) left of the search in the top bar — opens the graph alone, full width, and loads repositories in waves: hop 1 is what the loaded entries cite outside the page, hop 2 what those cite, up to ten, each wave asked for with its count and its list before anything is fetched. *registry* loads every listed project as a wave of its own, asked for the same way. Nothing of it is kept per browser: every load from another host is a click, and a reload starts without it.
+The globe — the [🌐](https://keepthewhy.com/dashboard/live/#globe) right of the search in the top bar — opens the graph alone, full width, and loads repositories in waves: hop 1 is what the loaded entries cite outside the page, hop 2 what those cite, up to ten, each wave asked for with its count and its list before anything is fetched. *registry* loads every listed project as a wave of its own, asked for the same way. Nothing of it is kept per browser: every load from another host is a click, and a reload starts without it.
+
+<figure class="ktw-shot-small" markdown>
+[![The globe: every project in the registry and the citations between them, loaded in waves](../assets/dashboard-globe-screenschot.png)](https://keepthewhy.com/dashboard/live/#globe){ target=_blank rel=noopener }
+<figcaption>The globe on this repository's dashboard — open it live</figcaption>
+</figure>
 
 ## To be listed
 
