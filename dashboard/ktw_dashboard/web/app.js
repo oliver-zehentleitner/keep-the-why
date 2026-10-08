@@ -1098,7 +1098,12 @@ function miniGraph(d, ctx) {
   const filters = el("div", { class: "mini-filters graph-ui", hidden: !MINI_FILTERS });
   const gear = el("button", { type: "button", class: "mini-gear", title: "the graph's switches — the same as in the full graph", onclick: () => { MINI_FILTERS = !MINI_FILTERS; filters.hidden = !MINI_FILTERS; } }, "⚙");
   const fillFilters = (g) => { if (mode !== "near") setKids(filters, ...graphControlGroups(g, mode === "family")); };
-  box.append(canvas, seg, el("span", { class: "mini-hint" }, mode === "near" ? "click to open" : "hover · click"), full, mode !== "near" ? gear : null, filters);
+  // fit and reset beside it, for the graph this box runs: fit the view, let go of the held thought
+  const corner = el("span", { class: "mini-corner" });
+  const cornerFor = (g) => setKids(corner,
+    el("button", { type: "button", class: "mini-corner-btn", title: "fit the view: everything in the box", onclick: () => { g.userMoved = false; g.needFit = true; g.wake?.(); } }, "fit"),
+    el("button", { type: "button", class: "mini-corner-btn", title: "let go of the held thought — every node alike again", onclick: () => { THOUGHT_PIN = null; focusStep(null); lightThought(g, null); renderThoughts(g); g.wake?.(); } }, "reset"));
+  box.append(canvas, seg, el("span", { class: "mini-hint" }, mode === "near" ? "click to open" : "hover · click"), corner, full, mode !== "near" ? gear : null, filters);
   if (focusId) d.append(el("h3", {}, "Graph"));
   d.append(box);
   const opts = { mini: true, focusId };
@@ -1108,12 +1113,13 @@ function miniGraph(d, ctx) {
     const up = modes.includes("family") && familyGraphShown() ? "family" : "project";
     if (n || hasFamily()) box.append(el("span", { class: "mini-seg mini-friends" }, el("button", { type: "button", title: `show the friends — switches to the ${up} level`,
       onclick: () => { MINI = up; FRIENDS.load = true; setFriendsAuto(true); render(); } }, n ? `friends (${n})` : "friends")));
-    return requestAnimationFrame(() => runGraph(canvas, ctx.entry ? buildSubgraph(ctx.entry) : buildTopicSubgraph(ctx.topic), opts));
+    const near = ctx.entry ? buildSubgraph(ctx.entry) : buildTopicSubgraph(ctx.topic); cornerFor(near);
+    return requestAnimationFrame(() => runGraph(canvas, near, opts));
   }
-  if (mode === "project") { const g = buildGraph(ctx.entry?.project || ctx.topic?.project || null); holdReading(g); fillFilters(g); /* friends are in the gear's groups */ return requestAnimationFrame(() => runGraph(canvas, g, opts)); }
+  if (mode === "project") { const g = buildGraph(ctx.entry?.project || ctx.topic?.project || null); holdReading(g); fillFilters(g); cornerFor(g); /* friends are in the gear's groups */ return requestAnimationFrame(() => runGraph(canvas, g, opts)); }
   // family: the family graph's nodes, in a view of its own (its own zoom, entries shown)
   const note = el("span", { class: "mini-hint", style: "top:28px;bottom:auto" }, "loading the family…"); box.append(note);
-  const show = (fg) => { note.remove(); if (!canvas.isConnected) return; const mg = { ...fg, scale: 1, ox: 0, oy: 0, showEntries: SHOW_ENTRIES, showLabels: true, raf: null, wake: null, alpha: Math.max(fg.alpha, 0.3) }; holdReading(mg); fillFilters(mg); runGraph(canvas, mg, opts); };
+  const show = (fg) => { note.remove(); if (!canvas.isConnected) return; const mg = { ...fg, scale: 1, ox: 0, oy: 0, showEntries: SHOW_ENTRIES, showLabels: true, raf: null, wake: null, alpha: Math.max(fg.alpha, 0.3) }; holdReading(mg); fillFilters(mg); cornerFor(mg); runGraph(canvas, mg, opts); };
   if (fgraph && Date.now() - fgraph.at < 30000) requestAnimationFrame(() => show(fgraph));
   else buildFamilyGraph().then(show);
 }
@@ -2203,9 +2209,9 @@ function viewGraph(main) {
       onclick: (ev) => { const open = wrap.classList.toggle(`${cls}-open`); wrap.classList.remove(`${other}-open`); ev.currentTarget.setAttribute("aria-expanded", String(open)); } }, label);
     // the corner's reset lets go of the held thought and the pointed-at step: every node alike again; the bar's reset
     // (fit, let go of placed nodes) stays what it is
-    const cornerReset = el("button", { type: "button", class: "graph-corner-reset", title: "let go of the held thought — every node alike again", onclick: () => { THOUGHT_PIN = null; focusStep(null); renderThoughts(g); g.wake?.(); } }, "reset");
+    const cornerReset = el("button", { type: "button", class: "graph-corner graph-corner-reset", title: "let go of the held thought — every node alike again", onclick: () => { THOUGHT_PIN = null; focusStep(null); renderThoughts(g); g.wake?.(); } }, "reset");
     // fit: nothing changes but the view — zoomed and centred so that everything is in the box, and stays in it while the graph turns
-    const cornerFit = el("button", { type: "button", class: "graph-corner-reset graph-corner-fit", title: "fit the view: everything in the box, centred on the point the graph turns around", onclick: () => { g.userMoved = false; g.needFit = true; g.wake?.(); } }, "fit");
+    const cornerFit = el("button", { type: "button", class: "graph-corner graph-corner-fit", title: "fit the view: everything in the box, centred on the point the graph turns around", onclick: () => { g.userMoved = false; g.needFit = true; g.wake?.(); } }, "fit");
     wrap.replaceChildren(canvas, ui, legend, ...[pathBar()].filter(Boolean), toggle("ui", "Layers", "legend"), toggle("legend", "Legend", "ui"), cornerFit, cornerReset,
       el("div", { class: "graph-hint" }, family ? "family — a project's name goes there, in place · drag nodes · wheel zoom · drag background to pan" : "drag nodes · wheel zoom · drag background to pan · click to open"),
       el("div", { class: "graph-hint-touch" }, "pinch to zoom · drag to pan · tap to open"));
