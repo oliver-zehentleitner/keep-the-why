@@ -1055,6 +1055,15 @@ function renderDetailsDefault() {
       el("h3", {}, "Keys"), el("p", { class: "note" }, el("kbd", {}, "/"), " search · ", el("kbd", {}, "g"), " graph · ", el("kbd", {}, "o"), " overview · ", el("kbd", {}, "q"), " queues · ", el("kbd", {}, "t"), " timeline · ", el("kbd", {}, "a"), " authors · ", el("kbd", {}, "l"), " findings"));
     return;
   }
+  if (route.startsWith("timeline")) {
+    // the timeline: the thoughts list first, as beside the graph, and a small project graph under it that follows the clock
+    d.dataset.pane = "graph";
+    d.append(el("div", { id: "thoughts" }));
+    renderThoughts(graph);
+    d.append(el("h3", {}, "Graph"), el("p", { class: "note" }, "What existed on the day shown, with the status it had then."));
+    miniGraph(d, { tall: true });
+    return;
+  }
   d.dataset.pane = "graph";
   miniGraph(d, {});
 }
@@ -1071,7 +1080,7 @@ function miniGraph(d, ctx) {
   if (narrow()) { d.append(el("h3", {}, "Graph"), el("a", { class: "backlink", href: "#graph" }, "Open the project graph →")); return; }
   const modes = [...(focusId ? ["near"] : []), "project", ...(canFamily() ? ["family"] : [])];
   const mode = MINI && modes.includes(MINI) ? MINI : focusId ? "near" : familyGraphShown() && modes.includes("family") ? "family" : "project";
-  const box = el("div", { class: `mini ${focusId ? "tall" : "fill"}` });
+  const box = el("div", { class: `mini ${focusId || ctx.tall ? "tall" : "fill"}` });
   const seg = el("span", { class: "mini-seg" }, modes.length > 1 ? modes.map((m) => el("button", { type: "button", class: m === mode ? "on" : "", title: { near: "this entry's or topic's neighbourhood", project: "the whole project", family: "the whole family tree" }[m], onclick: () => { MINI = m; const keep = d.querySelector(".mini"); const h = keep?.previousElementSibling?.tagName === "H3" ? keep.previousElementSibling : null; h?.remove(); keep?.remove(); miniGraph(d, ctx); } }, m)) : el("span", { class: "mini-title" }, "graph"));
   const canvas = el("canvas");
   // one click to the full graph: the same level, centred on the entry or topic shown
@@ -2243,7 +2252,8 @@ function runGraph(canvas, g, opts = {}) {
   const zoomTo = (ns, px, py) => { ns = Math.min(6, Math.max(minScale(), ns)); const k = ns / g.scale; g.ox = px - (px - g.ox) * k; g.oy = py - (py - g.oy) * k; g.scale = ns; };
   // under the clock an entry is there from the day it was created, a topic from its first entry's day
   const topicAlive = (n) => !CLOCK || g.nodes.some((m) => m.kind === "entry" && m.file === n.file && (m.unit || "") === (n.unit || "") && atClock(m.entry));
-  const visible = (n) => n.kind === "topic" ? topicAlive(n) : n.kind !== "entry" ? true : atClock(n.entry) && (g.showEntries || !!g.thought?.nodes.has(n));
+  // other repositories (friends, the family, the path) have no day on this page's clock: under it they stay out
+  const visible = (n) => (CLOCK && n.ext) ? false : n.kind === "topic" ? topicAlive(n) : n.kind !== "entry" ? true : atClock(n.entry) && (g.showEntries || !!g.thought?.nodes.has(n));
   // a topic-level reference stands in for entry references only while entries are hidden
   const linkOn = (l) => visible(g.nodes[l.s]) && visible(g.nodes[l.t]) && (l.kind !== "xtopic" || !g.showEntries) && linkExistsAt(CLOCK, l.day);
   const dim = (n) => n.kind === "entry" && filterActive() && !matches(n.entry);
@@ -2532,10 +2542,10 @@ function viewTimeline(main, day) {
     ...[["all", "all links"], ["lit", "lit only"], ["none", "no links"]].map(([v, l]) => el("button", { type: "button", class: v === STAGE_LINKS ? "on" : "", onclick: (ev) => { setStageLinks(v); for (const b of ev.currentTarget.parentNode.children) b.classList.toggle("on", b === ev.currentTarget); } }, l)));
   wrap.append(canvas, tip, card, linksSeg);
   main.append(wrap,
-    el("p", { class: "note stage-note" }, el("span", { class: "stage-hint" }, "On the stage: wheel — a day forward or back, shift for a week · drag — look around · ctrl+wheel — zoom · double-click — reset the view · click a card to read it, the floor to let go."), el("span", { class: "stage-hint-touch" }, "On the stage: drag — look around · pinch — zoom · tap a card to read it, the floor to let go. The slider sets the day.")),
-    el("div", { id: "thoughts", class: "timeline-thoughts" }), listBox);
-  const g = buildGraph(); // the thoughts beside the stage are the graph's; pointing at one lights it in the stage and in the graph alike
-  renderThoughts(g);
+    el("div", { class: "stage-legend" }, ...["decision", "constraint", "workaround", "incident"].map((k) => el("span", { html: `${typeGlyphSvg(k)} ${k}` })), el("span", { class: "note" }, "— the card's shape is its Type; the colours are the graph's: Evidence fills, Status rings, superseded hollow")),
+    el("p", { class: "note stage-note" }, el("span", { class: "stage-hint" }, "On the stage: wheel — a day forward or back, shift for a week · drag — look around · ctrl+wheel — zoom · double-click — reset the view · click a card to read it, the floor to let go. The thoughts beside: point at one to light its chain here and in the graph."), el("span", { class: "stage-hint-touch" }, "On the stage: drag — look around · pinch — zoom · tap a card to read it, the floor to let go. The slider sets the day.")),
+    listBox);
+  buildGraph(); // the thoughts beside the stage are the graph's; pointing at one lights it in the stage and in the graph alike
   const want = day && DAY_RE.test(day) ? clamp(day) : span.to;
   CLOCK = null; setClock(want); upd();
   runStage(canvas, { wrap, tip, card, span, setDay, play });
@@ -2549,6 +2559,26 @@ function viewTimeline(main, day) {
     else if (ev.key === " " && ev.target !== range) { play(!PLAY.on); ev.preventDefault(); }
   };
   document.addEventListener("keydown", onKey);
+}
+// A card's shape is its Type — the first of decision, constraint, workaround, incident on the entry; none: a plain card.
+// decision: a plain card with a diamond. constraint: a thick band across the top, a barred square. workaround: a folded
+// corner and a dashed edge, a folded square. incident: a striped band across the top, a triangle with a bar.
+const TYPE_KINDS = ["decision", "constraint", "workaround", "incident"];
+const typeKind = (e) => (e.type || []).map((t) => typeName(t)).find((t) => TYPE_KINDS.includes(t)) || null;
+function typeGlyphSvg(kind) {
+  const d = { decision: '<path d="M6 1 11 6 6 11 1 6z"/>', constraint: '<path d="M1.5 1.5h9v9h-9z" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M1.5 5h9v2h-9z"/>',
+    workaround: '<path d="M1.5 1.5h6l3 3v6h-9z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="2 1.5"/><path d="M7.5 1.5v3h3" fill="none" stroke="currentColor" stroke-width="1.4"/>',
+    incident: '<path d="M6 1.2 11.2 10.8H.8z" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M5.3 4.5h1.4v3.2H5.3zM5.3 8.5h1.4v1.3H5.3z"/>' }[kind] || "";
+  return `<svg class="type-glyph" viewBox="0 0 12 12" width="11" height="11" aria-hidden="true" fill="currentColor">${d}</svg>`;
+}
+// the same glyph on the canvas, `s` its size in pixels, drawn at (x, y) top-left in the current fill and stroke colour
+function typeGlyph(ctx, kind, x, y, s) {
+  ctx.save(); ctx.translate(x, y); ctx.scale(s / 12, s / 12); ctx.lineWidth = 1.5 * 12 / s; ctx.setLineDash([]);
+  if (kind === "decision") { ctx.beginPath(); ctx.moveTo(6, 1); ctx.lineTo(11, 6); ctx.lineTo(6, 11); ctx.lineTo(1, 6); ctx.closePath(); ctx.fill(); }
+  else if (kind === "constraint") { ctx.strokeRect(1.5, 1.5, 9, 9); ctx.fillRect(1.5, 5, 9, 2); }
+  else if (kind === "workaround") { ctx.setLineDash([2, 1.5]); ctx.beginPath(); ctx.moveTo(1.5, 1.5); ctx.lineTo(7.5, 1.5); ctx.lineTo(10.5, 4.5); ctx.lineTo(10.5, 10.5); ctx.lineTo(1.5, 10.5); ctx.closePath(); ctx.stroke(); ctx.setLineDash([]); ctx.beginPath(); ctx.moveTo(7.5, 1.5); ctx.lineTo(7.5, 4.5); ctx.lineTo(10.5, 4.5); ctx.stroke(); }
+  else if (kind === "incident") { ctx.beginPath(); ctx.moveTo(6, 1.2); ctx.lineTo(11.2, 10.8); ctx.lineTo(0.8, 10.8); ctx.closePath(); ctx.stroke(); ctx.fillRect(5.3, 4.5, 1.4, 3.2); ctx.fillRect(5.3, 8.5, 1.4, 1.3); }
+  ctx.restore();
 }
 // The stage: a perspective view of the entries at the day shown. World units: x — one per topic lane,
 // y — rows within a lane, z — days back from the day shown, scaled so the whole span fits the depth.
@@ -2654,22 +2684,30 @@ function runStage(canvas, o) {
       // a foot: the card's drop line to the floor
       const [fx, fy] = proj(c.x, floorY, z); ctx.globalAlpha = a * 0.35; ctx.strokeStyle = color("--fg3"); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(b.cx, b.y1); ctx.lineTo(fx, fy); ctx.stroke();
       const evc = evColor[e.evidence] || color("--muted");
+      const kind = typeKind(e); const fold = kind === "workaround" ? Math.min(b.h * 0.45, b.w * 0.3) : 0;
+      // the card's outline: a rectangle, or one with its top-right corner folded
+      const outline = () => { ctx.beginPath(); if (fold) { ctx.moveTo(b.x0, b.y0); ctx.lineTo(b.x1 - fold, b.y0); ctx.lineTo(b.x1, b.y0 + fold); ctx.lineTo(b.x1, b.y1); ctx.lineTo(b.x0, b.y1); ctx.closePath(); } else ctx.rect(b.x0, b.y0, b.w, b.h); };
       ctx.globalAlpha = a;
       if (fresh || isLit || c === hover || c === held || isStep) { ctx.shadowColor = isStep ? color("--accent2") : isLit ? color("--fg") : evc; ctx.shadowBlur = isStep ? 22 : 14; }
-      ctx.fillStyle = sup ? color("--bg2") : evc; ctx.globalAlpha = a * (sup ? 0.9 : 0.28); ctx.fillRect(b.x0, b.y0, b.w, b.h);
+      ctx.fillStyle = sup ? color("--bg2") : evc; ctx.globalAlpha = a * (sup ? 0.9 : 0.28); outline(); ctx.fill();
       ctx.shadowBlur = 0; ctx.globalAlpha = a;
-      ctx.lineWidth = c === hover || c === held ? 2 : 1.2; ctx.strokeStyle = sup ? color("--fg3") : evc; ctx.setLineDash(sup ? [4, 3] : []); ctx.strokeRect(b.x0, b.y0, b.w, b.h); ctx.setLineDash([]);
+      const band = Math.max(2, Math.min(5, b.h * 0.11));
+      if (kind === "constraint") { ctx.fillStyle = sup ? color("--fg3") : evc; ctx.globalAlpha = a * 0.9; ctx.fillRect(b.x0, b.y0, b.w, band); ctx.globalAlpha = a; }
+      if (kind === "incident") { ctx.save(); ctx.beginPath(); ctx.rect(b.x0, b.y0, b.w, band); ctx.clip(); ctx.fillStyle = sup ? color("--fg3") : evc; ctx.globalAlpha = a * 0.9; const st = Math.max(3, band * 1.6); for (let x = b.x0 - band; x < b.x1 + band; x += st * 2) { ctx.beginPath(); ctx.moveTo(x, b.y0); ctx.lineTo(x + st, b.y0); ctx.lineTo(x + st - band, b.y0 + band); ctx.lineTo(x - band, b.y0 + band); ctx.closePath(); ctx.fill(); } ctx.restore(); ctx.globalAlpha = a; }
+      if (fold) { ctx.fillStyle = color("--bg"); ctx.globalAlpha = a; ctx.beginPath(); ctx.moveTo(b.x1 - fold, b.y0); ctx.lineTo(b.x1 - fold, b.y0 + fold); ctx.lineTo(b.x1, b.y0 + fold); ctx.closePath(); ctx.fill(); ctx.strokeStyle = sup ? color("--fg3") : evc; ctx.lineWidth = 1; ctx.stroke(); }
+      ctx.lineWidth = c === hover || c === held ? 2 : 1.2; ctx.strokeStyle = sup ? color("--fg3") : evc; ctx.setLineDash(sup || kind === "workaround" ? [4, 3] : []); outline(); ctx.stroke(); ctx.setLineDash([]);
+      if (kind && b.w > 30) { ctx.fillStyle = sup ? color("--fg3") : evc; ctx.strokeStyle = ctx.fillStyle; const gs = Math.max(7, Math.min(11, b.h * 0.3)); typeGlyph(ctx, kind, b.x1 - gs - 4 - (fold ? fold * 0.6 : 0), b.y1 - gs - 3, gs); }
       if (st === "open" || st === "needs-review" || st === "pending-confirmation") { ctx.strokeStyle = color(`--${st}`); ctx.lineWidth = 1.2; ctx.strokeRect(b.x0 - 3, b.y0 - 3, b.w + 6, b.h + 6); }
       if (isStep) { ctx.strokeStyle = color("--accent2"); ctx.lineWidth = 2.5; ctx.strokeRect(b.x0 - 5, b.y0 - 5, b.w + 10, b.h + 10); }
       // the title, where it fits
-      const fs = Math.min(12, 11 * b.s * zoom);
+      const fs = Math.min(12, 11 * b.s * zoom); const top = kind === "constraint" || kind === "incident" ? band + 1 : 0;
       if (b.w > 54 && fs >= 8.5) {
         ctx.font = `${fs}px ${color("--font") || "sans-serif"}`; ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.fillStyle = sup ? color("--fg3") : color("--fg");
         const words = e.title.replace(/`/g, "").split(" "); const lines = []; let cur = "";
         for (const w of words) { const t = cur ? `${cur} ${w}` : w; if (ctx.measureText(t).width > b.w - 10 && cur) { lines.push(cur); cur = w; } else cur = t; if (lines.length >= 3) break; }
         if (lines.length < 3 && cur) lines.push(cur);
-        const lh = fs * 1.2; const maxLines = Math.max(1, Math.floor((b.h - 6) / lh));
-        lines.slice(0, maxLines).forEach((t, i) => { let txt = t; if (i === maxLines - 1 && (lines.length > maxLines || words.length > lines.join(" ").split(" ").length)) txt += "…"; while (txt.length > 2 && ctx.measureText(txt).width > b.w - 10) txt = txt.slice(0, -2) + "…"; ctx.fillText(txt, b.x0 + 5, b.y0 + 4 + i * lh); });
+        const lh = fs * 1.2; const maxLines = Math.max(1, Math.floor((b.h - 6 - top) / lh));
+        lines.slice(0, maxLines).forEach((t, i) => { let txt = t; if (i === maxLines - 1 && (lines.length > maxLines || words.length > lines.join(" ").split(" ").length)) txt += "…"; const room = b.w - 10 - (i === 0 && fold ? fold : 0); while (txt.length > 2 && ctx.measureText(txt).width > room) txt = txt.slice(0, -2) + "…"; ctx.fillText(txt, b.x0 + 5, b.y0 + 4 + top + i * lh); });
       }
       rects.push({ ...b, c });
     }
@@ -2693,7 +2731,7 @@ function runStage(canvas, o) {
     if (typeof S.bodies === "string") ensureBodies(SELF).then(() => { if (held === c) fill(); });
     wake();
   }
-  function closeCard() { if (!held) return; held = null; selected = null; o.card.hidden = true; renderDetailsDefault(); renderThoughts(graph); wake(); }
+  function closeCard() { if (!held) return; held = null; selected = null; o.card.hidden = true; renderDetailsDefault(); wake(); }
   const pos = (ev) => { const r = canvas.getBoundingClientRect(); return [ev.clientX - r.left, ev.clientY - r.top]; };
   canvas.onmousemove = (ev) => {
     const [px, py] = pos(ev);
