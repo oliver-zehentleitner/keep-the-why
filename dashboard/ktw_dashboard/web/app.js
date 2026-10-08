@@ -2468,7 +2468,7 @@ function stopPlay() { PLAY.on = false; if (PLAY.raf) cancelAnimationFrame(PLAY.r
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 function viewTimeline(main, day) {
   main.append(el("h1", {}, "Timeline"));
-  const sub = el("p", { class: "sub" }, "The project day by day. The stage shows what existed on the day shown, the graph beside it the same; the playhead sets the day. The card shows the entry that appeared last by then, or the one clicked on the stage. The bars below count the entries by the month their heading first appeared in Git, stacked by author, grey ticks for entries superseded that month.");
+  const sub = el("p", { class: "sub" }, "The project day by day. The stage shows what existed on the day shown, the graph beside it the same; the playhead sets the day. The card shows the entry that appeared last by then, or the one clicked on the stage. The bars count the entries by the month their heading first appeared in Git, stacked by author, grey ticks for entries superseded that month.");
   if (!S.project.git?.available) return main.append(el("p", { class: "center" }, "No Git repository — no dates to draw."));
   if (S.project.git.shallow) main.append(el("p", { class: "sub warn" }, "Shallow clone: the history stops at the clone's edge, so every entry older than that appears to start there. Fetch the full history (git fetch --unshallow) for real dates."));
   const created = S.entries.filter((e) => e.git?.created?.date && matches(e));
@@ -2482,7 +2482,7 @@ function viewTimeline(main, day) {
   while (y < ey || (y === ey && m <= em)) { all.push(`${y}-${String(m).padStart(2, "0")}`); m++; if (m > 12) { m = 1; y++; } }
   const max = Math.max(1, ...all.map((k) => Object.values(months[k] || {}).reduce((a, b) => a + b, 0)));
   // the drawing is as wide as the column beside the card, so its text keeps its size (an SVG scales as a whole)
-  const mainW = main.clientWidth || 900; const Wd = Math.max(360, Math.round(narrow() ? mainW - 28 : mainW - 64));
+  const mainW = main.clientWidth || 900; const Wd = Math.max(360, Math.round(narrow() ? mainW - 28 : mainW - 64 - 18 - Math.min(420, Math.max(280, (mainW - 82) * 0.42))));
   const Hd = 130, padL = 34, padB = 32, padT = 10; const colW = (Wd - padL) / all.length; const bw = colW - 2; // a bar spans its month, first day to last, a hair between months
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.setAttribute("viewBox", `0 0 ${Wd} ${Hd}`);
   const ns = (tag, attrs, text) => { const n = document.createElementNS("http://www.w3.org/2000/svg", tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); if (text != null) n.textContent = text; return n; };
@@ -2565,13 +2565,13 @@ function viewTimeline(main, day) {
     ...[["graph", "as the graph"], ["topics", "by topic"]].map(([v, l]) => el("button", { type: "button", class: v === STAGE_ARRANGE ? "on" : "", onclick: (ev) => { setStageArrange(v); for (const b of ev.currentTarget.parentNode.children) b.classList.toggle("on", b === ev.currentTarget); } }, l)));
   wrap.append(canvas, tip, arrangeSeg, linksSeg);
   main.append(el("div", { class: "timeline-head" },
-      el("div", { class: "timeline-head-text" }, sub, el("div", { class: "playhead" }, jump(() => span.from, "the first day", "⏮"), playBtn, jump(() => span.to, "today", "⏭"), range, dayLabel, speedSel, counts)),
+      el("div", { class: "timeline-head-text" }, sub, el("div", { class: "timeline" }, svg),
+        el("div", { class: "legend" }, S.authors.map((a) => el("span", {}, el("i", { class: "sw", style: `background:${authorColor(a.name)}` }), a.name)), el("span", {}, el("i", { class: "sw", style: "background:var(--superseded)" }), "superseded that month")),
+        el("div", { class: "playhead" }, jump(() => span.from, "the first day", "⏮"), playBtn, jump(() => span.to, "today", "⏭"), range, dayLabel, speedSel, counts)),
       slot),
     wrap,
     stageLegend(),
     el("p", { class: "note stage-note" }, el("span", { class: "stage-hint" }, "On the stage: wheel — a day forward or back, shift for a week · drag — look around · ctrl+wheel — zoom · double-click — reset the view · click a card to read it, the floor to let go. The thoughts beside: point at one to light its chain here and in the graph."), el("span", { class: "stage-hint-touch" }, "On the stage: drag — look around · pinch — zoom · tap a card to read it, the floor to let go. The slider sets the day.")),
-    el("div", { class: "timeline" }, svg),
-    el("div", { class: "legend" }, S.authors.map((a) => el("span", {}, el("i", { class: "sw", style: `background:${authorColor(a.name)}` }), a.name)), el("span", {}, el("i", { class: "sw", style: "background:var(--superseded)" }), "superseded that month")),
     listBox);
   buildGraph(); // the thoughts beside the stage are the graph's; pointing at one lights it in the stage and in the graph alike
   const want = day && DAY_RE.test(day) ? clamp(day) : span.to;

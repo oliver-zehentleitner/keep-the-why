@@ -579,6 +579,8 @@ a.author:hover { color: var(--accent2); }
 .timeline-head { display: grid; grid-template-columns: minmax(0, 1fr) clamp(280px, 42%, 420px); gap: 18px; align-items: stretch; margin-bottom: 4px; }
 .timeline-head-text { min-width: 0; display: flex; flex-direction: column; justify-content: space-between; }
 .timeline-head-text .sub { margin-top: 0; }
+.timeline-head-text .timeline { margin: 6px 0 4px; }
+.timeline-head-text .legend { margin: 0 0 10px; font-size: 11.5px; }
 .timeline-head-text .playhead { margin-bottom: 0; }
 .stage-card-slot { min-width: 0; }
 /* head, title and pills at the top, the foot (who recorded it · let go · open) always at the bottom; only the text scrolls */
