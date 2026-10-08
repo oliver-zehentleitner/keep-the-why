@@ -2696,8 +2696,10 @@ function stageCamera(scene, v, o) {
   const proj = (x, y, z) => { const s = F / (F + Math.max(z, -F * 0.9)); return [cx() + x * K() * s, horizon() + (camY - y) * KY() * s, s]; };
   const depthAlpha = (z) => Math.max(0.2, Math.min(1, 1.1 - z / (DEPTH_FAR * 1.6)));
   // the graph's positions, copied while it settles and then kept
-  const POS = new Map(); // node id -> { x, y }
-  const syncPositions = () => { const G = scene.G; if (!G) return; if (POS.size && G.alpha <= 0.01) return; for (const n of G.nodes) if (n.kind === "entry" || n.kind === "topic") POS.set(n.id, { x: n.x, y: n.y }); };
+  // (copied until the graph has settled once; from then on only a node not yet known is added — the graph is nudged
+  // awake by a pointed-at thought, and following that would walk the cards along its turn a step per hover)
+  const POS = new Map(); let settled = false; // node id -> { x, y }
+  const syncPositions = () => { const G = scene.G; if (!G) return; for (const n of G.nodes) if ((n.kind === "entry" || n.kind === "topic") && (!settled || !POS.has(n.id))) POS.set(n.id, { x: n.x, y: n.y }); if (G.alpha <= 0.01) settled = true; };
   const gbox = { x0: 0, x1: 1, y0: 0, y1: 1 };
   const measureGraph = (shownCards) => { syncPositions(); const xs = [], ys = []; for (const c of shownCards) { const q = POS.get(c.nid); if (q) { xs.push(q.x); ys.push(q.y); } } const b = percentileBox(xs, ys); if (b) Object.assign(gbox, b); };
   const clamp01 = (u) => Math.max(0, Math.min(1, u));
