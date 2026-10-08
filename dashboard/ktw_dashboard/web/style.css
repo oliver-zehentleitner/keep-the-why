@@ -562,7 +562,9 @@ a.author:hover { color: var(--accent2); }
 .playhead .playhead-range { flex: 1 1 200px; min-width: 120px; accent-color: var(--accent); margin: 0; }
 .playhead .playhead-day { font-family: var(--mono); font-size: 13px; color: var(--fg); min-width: 84px; }
 .playhead .play-speed { font: inherit; font-size: 11px; background: var(--bg2); color: var(--fg); border: 1px solid var(--line); border-radius: 5px; padding: 3px 4px; }
-.playhead .playhead-counts { color: var(--fg3); white-space: nowrap; }
+/* the counts on a line of their own, in tabular figures: as the days play their width changes, and nothing else may move with it */
+.playhead .playhead-counts { color: var(--fg3); white-space: nowrap; flex-basis: 100%; font-variant-numeric: tabular-nums; min-height: 1.4em; }
+.playhead .playhead-day { font-variant-numeric: tabular-nums; }
 .stage-wrap { position: relative; height: 480px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); overflow: hidden; margin: 14px 0 18px; }
 .stage-wrap canvas.stage { display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; }
 .stage-wrap canvas.stage.grabbing { cursor: grabbing; }
@@ -620,5 +622,5 @@ a.author:hover { color: var(--accent2); }
   .stage-note .stage-hint-touch { display: inline; }
   .timeline-head { grid-template-columns: 1fr; }
   .stage-card-slot { height: 320px; }
-  .playhead .playhead-counts { flex-basis: 100%; white-space: normal; }
+  .playhead .playhead-counts { white-space: normal; }
 }
