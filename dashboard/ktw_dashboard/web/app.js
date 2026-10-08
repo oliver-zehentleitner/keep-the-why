@@ -2462,7 +2462,7 @@ function setStageLinks(v) { STAGE_LINKS = v; try { localStorage.setItem("ktw-sta
 function stopPlay() { PLAY.on = false; if (PLAY.raf) cancelAnimationFrame(PLAY.raf); PLAY.raf = null; PLAY.last = 0; PLAY.acc = 0; PLAY.frac = 0; }
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 function viewTimeline(main, day) {
-  main.append(el("h1", {}, "Timeline"), el("p", { class: "sub" }, "The project day by day. The stage shows what existed on the day shown, the graph beside it the same; the playhead under the stage sets the day, the bars below count the entries by the month their heading first appeared in Git, stacked by author, grey ticks for entries superseded that month, and the card beside them shows the entry that appeared last by then — or the one clicked on the stage."));
+  main.append(el("h1", {}, "Timeline"), el("p", { class: "sub" }, "The project day by day. The stage shows what existed on the day shown, the graph beside it the same; the playhead above the stage sets the day, the bars below count the entries by the month their heading first appeared in Git, stacked by author, grey ticks for entries superseded that month, and the card beside them shows the entry that appeared last by then — or the one clicked on the stage."));
   if (!S.project.git?.available) return main.append(el("p", { class: "center" }, "No Git repository — no dates to draw."));
   if (S.project.git.shallow) main.append(el("p", { class: "sub warn" }, "Shallow clone: the history stops at the clone's edge, so every entry older than that appears to start there. Fetch the full history (git fetch --unshallow) for real dates."));
   const created = S.entries.filter((e) => e.git?.created?.date && matches(e));
@@ -2556,10 +2556,10 @@ function viewTimeline(main, day) {
   const linksSeg = el("span", { class: "mini-seg stage-links", title: "the See and Superseded by lines between cards: every one, only a thought pointed at or held, or none" },
     ...[["all", "all links"], ["lit", "lit only"], ["none", "no links"]].map(([v, l]) => el("button", { type: "button", class: v === STAGE_LINKS ? "on" : "", onclick: (ev) => { setStageLinks(v); for (const b of ev.currentTarget.parentNode.children) b.classList.toggle("on", b === ev.currentTarget); } }, l)));
   wrap.append(canvas, tip, linksSeg);
-  main.append(wrap,
+  main.append(el("div", { class: "playhead" }, jump(() => span.from, "the first day", "⏮"), playBtn, jump(() => span.to, "today", "⏭"), range, dayLabel, speedSel, counts),
+    wrap,
     stageLegend(),
     el("p", { class: "note stage-note" }, el("span", { class: "stage-hint" }, "On the stage: wheel — a day forward or back, shift for a week · drag — look around · ctrl+wheel — zoom · double-click — reset the view · click a card to read it, the floor to let go. The thoughts beside: point at one to light its chain here and in the graph."), el("span", { class: "stage-hint-touch" }, "On the stage: drag — look around · pinch — zoom · tap a card to read it, the floor to let go. The slider sets the day.")),
-    el("div", { class: "playhead" }, jump(() => span.from, "the first day", "⏮"), playBtn, jump(() => span.to, "today", "⏭"), range, dayLabel, speedSel, counts),
     el("div", { class: "timeline-top" }, el("div", { class: "timeline" }, svg), slot),
     el("div", { class: "legend" }, S.authors.map((a) => el("span", {}, el("i", { class: "sw", style: `background:${authorColor(a.name)}` }), a.name)), el("span", {}, el("i", { class: "sw", style: "background:var(--superseded)" }), "superseded that month")),
     listBox);
