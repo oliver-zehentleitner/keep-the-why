@@ -2571,7 +2571,9 @@ function viewTimeline(main, day) {
     ...[["graph", "as the graph"], ["topics", "by topic"]].map(([v, l]) => el("button", { type: "button", class: v === STAGE_ARRANGE ? "on" : "", onclick: (ev) => { setStageArrange(v); for (const b of ev.currentTarget.parentNode.children) b.classList.toggle("on", b === ev.currentTarget); } }, l)));
   const foreignSeg = el("span", { class: "mini-seg stage-links stage-foreign", title: "other repositories' entries — friends, family, path: only the ones a chain of See or Superseded by joins to this project's, every one the graph holds, or none" },
     el("span", { class: "seg-label" }, "others"), ...[["linked", "linked"], ["all", "all"], ["none", "none"]].map(([v, l]) => el("button", { type: "button", class: v === STAGE_FOREIGN ? "on" : "", onclick: (ev) => { setStageForeign(v); for (const b of ev.currentTarget.parentNode.querySelectorAll("button")) b.classList.toggle("on", b === ev.currentTarget); } }, l)));
-  wrap.append(canvas, tip, arrangeSeg, foreignSeg);
+  // reset: let go of the held card and the held thought, every card alike again, the view as it opened
+  const resetBtn = el("button", { type: "button", class: "stage-reset", title: "let go of the held thought and card — every card alike again — and reset the view", onclick: () => STAGE?.reset?.() }, "reset");
+  wrap.append(canvas, tip, arrangeSeg, foreignSeg, resetBtn);
   main.append(el("div", { class: "timeline-head" },
       el("div", { class: "timeline-head-text" }, sub, el("div", { class: "timeline" }, svg),
         el("div", { class: "legend" }, S.authors.map((a) => el("span", {}, el("i", { class: "sw", style: `background:${authorColor(a.name)}` }), a.name)), el("span", {}, el("i", { class: "sw", style: "background:var(--superseded)" }), "superseded that month")),
@@ -2876,7 +2878,9 @@ function runStage(canvas, o) {
   const wake = () => { if (!raf && canvas.isConnected) raf = requestAnimationFrame(draw); };
   // pick: an entry chosen elsewhere on the page (a thought's step in the pane) is held like a clicked card, and
   // the day moves to the entry's, so it arrives at the front of the stage
-  STAGE = { wake, relax, follows: asGraph, close: closeCard, pick: (e) => { held = (e.uuid && byId[e.uuid]) || byId[e.id] || null; o.play(false); o.open(e, held); o.setDay(createdOn(e) || o.span.to); wake(); } };
+  STAGE = { wake, relax, follows: asGraph, close: closeCard,
+    reset: () => { THOUGHT_PIN = null; renderThoughts(graph); focusStep(null); closeCard(); zoom = 1; panX = 0; panY = 0; hover = null; hideTip(); fitHeight(); wake(); },
+    pick: (e) => { held = (e.uuid && byId[e.uuid]) || byId[e.id] || null; o.play(false); o.open(e, held); o.setDay(createdOn(e) || o.span.to); wake(); } };
   // the tip under the pointer, the card panel on a click
   const place = (box, px, py) => { const r = canvas.getBoundingClientRect(); const w = box.offsetWidth || 280, h = box.offsetHeight || 80; const left = px + 14 + w > r.width - 8 ? Math.max(8, px - 14 - w) : px + 14; const top = py + 14 + h > r.height - 8 ? Math.max(8, py - 14 - h) : py + 14; box.style.left = `${left}px`; box.style.top = `${top}px`; };
   const showTip = (c, px, py) => { const e = c.e; setKids(o.tip, el("b", {}, e.title.replace(/`/g, "")), el("div", { class: "note" }, `${c.lane?.title || c.e.file} · ${c.day}${e.git?.created?.author ? " · " + e.git.created.author : ""}`), el("div", { class: "pills" }, ...typePills(e.type), statusPill(statusAt(e, now(), c.ext || hasRepo(e)) || e.status), evPill(e.evidence))); o.tip.hidden = false; place(o.tip, px, py); };
