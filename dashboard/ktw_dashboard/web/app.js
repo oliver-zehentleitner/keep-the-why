@@ -2459,7 +2459,6 @@ const authorColor = (name) => PALETTE[Math.max(0, S.authors.findIndex((a) => a.n
 const PLAY = { on: false, speed: 7, raf: null, last: 0, acc: 0, frac: 0 }; // speed: days per second; frac: the part of a day between two whole ones, for the stage's motion
 const SPEEDS = [[1 / 24, "1 hour /s"], [1, "1 day /s"], [7, "1 week /s"], [30, "1 month /s"], [120, "4 months /s"]];
 let STAGE = null; // the stage on the page: { wake }
-let STAGE_LINKS = (() => { try { return localStorage.getItem("ktw-stage-links") || "lit"; } catch { return "lit"; } })(); // "all" | "lit" | "none": the lines between cards
 // "graph": a card stands where its node stands in the graph beside, the stage is the graph with time pulled out as depth;
 // "topics": a lane per topic across the width. An experiment with a switch, kept per browser.
 let STAGE_ARRANGE = (() => { try { return localStorage.getItem("ktw-stage-arrange") || "graph"; } catch { return "graph"; } })();
@@ -2468,7 +2467,6 @@ let STAGE_ARRANGE = (() => { try { return localStorage.getItem("ktw-stage-arrang
 let STAGE_FOREIGN = (() => { try { return localStorage.getItem("ktw-stage-foreign") || "linked"; } catch { return "linked"; } })();
 function setStageForeign(v) { STAGE_FOREIGN = v; try { localStorage.setItem("ktw-stage-foreign", v); } catch {} STAGE?.relax?.(); STAGE?.wake?.(); }
 function setStageArrange(v) { STAGE_ARRANGE = v; try { localStorage.setItem("ktw-stage-arrange", v); } catch {} STAGE?.relax?.(); STAGE?.wake?.(); }
-function setStageLinks(v) { STAGE_LINKS = v; try { localStorage.setItem("ktw-stage-links", v); } catch {} STAGE?.wake?.(); }
 function stopPlay() { PLAY.on = false; if (PLAY.raf) cancelAnimationFrame(PLAY.raf); PLAY.raf = null; PLAY.last = 0; PLAY.acc = 0; PLAY.frac = 0; }
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 function viewTimeline(main, day) {
@@ -2566,13 +2564,11 @@ function viewTimeline(main, day) {
   const wrap = el("div", { class: "stage-wrap" });
   const canvas = el("canvas", { class: "stage" });
   const tip = el("div", { class: "stage-tip", hidden: true });
-  const linksSeg = el("span", { class: "mini-seg stage-links", title: "the See and Superseded by lines between cards: every one, only a thought pointed at or held, or none" },
-    ...[["all", "all links"], ["lit", "lit only"], ["none", "no links"]].map(([v, l]) => el("button", { type: "button", class: v === STAGE_LINKS ? "on" : "", onclick: (ev) => { setStageLinks(v); for (const b of ev.currentTarget.parentNode.children) b.classList.toggle("on", b === ev.currentTarget); } }, l)));
   const arrangeSeg = el("span", { class: "mini-seg stage-links stage-arrange", title: "where a card stands: where its node stands in the graph beside (the stage is the graph, time pulled out as depth), or in a lane per topic" },
     ...[["graph", "as the graph"], ["topics", "by topic"]].map(([v, l]) => el("button", { type: "button", class: v === STAGE_ARRANGE ? "on" : "", onclick: (ev) => { setStageArrange(v); for (const b of ev.currentTarget.parentNode.children) b.classList.toggle("on", b === ev.currentTarget); } }, l)));
   const foreignSeg = el("span", { class: "mini-seg stage-links stage-foreign", title: "other repositories' entries — friends, family, path: only the ones a chain of See or Superseded by joins to this project's, every one the graph holds, or none" },
     el("span", { class: "seg-label" }, "others"), ...[["linked", "linked"], ["all", "all"], ["none", "none"]].map(([v, l]) => el("button", { type: "button", class: v === STAGE_FOREIGN ? "on" : "", onclick: (ev) => { setStageForeign(v); for (const b of ev.currentTarget.parentNode.querySelectorAll("button")) b.classList.toggle("on", b === ev.currentTarget); } }, l)));
-  wrap.append(canvas, tip, arrangeSeg, foreignSeg, linksSeg);
+  wrap.append(canvas, tip, arrangeSeg, foreignSeg);
   main.append(el("div", { class: "timeline-head" },
       el("div", { class: "timeline-head-text" }, sub, el("div", { class: "timeline" }, svg),
         el("div", { class: "legend" }, S.authors.map((a) => el("span", {}, el("i", { class: "sw", style: `background:${authorColor(a.name)}` }), a.name)), el("span", {}, el("i", { class: "sw", style: "background:var(--superseded)" }), "superseded that month")),
@@ -2799,12 +2795,11 @@ function runStage(canvas, o) {
     const box = (c, z) => { const q = posOf(c); const [x, y, s] = proj(q.x, q.y, z); const w = K() * s * 0.78 * cardScale, h = K() * s * 0.36 * cardScale; return { x0: x - w / 2, y0: y - h / 2, x1: x + w / 2, y1: y + h / 2, cx: x, cy: y, s, w, h }; };
     const boxes = new Map(); for (const { c, z } of vis) boxes.set(c, box(c, z));
     keepApart(vis, boxes);
-    // the lines between cards: every one, the lit thought's, or none
-    if (STAGE_LINKS !== "none") for (const l of links) {
+    // the lines between cards — every See and Superseded by written by then; a lit thought's stand out, the rest fade
+    for (const l of links) {
       if (!boxes.has(l.a) || !boxes.has(l.b) || !linkExistsAt(day, l.day)) continue;
       const onLit = pairs && (pairs.has(`${l.a.nid}|${l.b.nid}`) || pairs.has(`${l.b.nid}|${l.a.nid}`));
       const near = hover && (l.a === hover || l.b === hover);
-      if (STAGE_LINKS === "lit" && !onLit && !near && !(held && (l.a === held || l.b === held))) continue;
       const A = boxes.get(l.a), B = boxes.get(l.b);
       ctx.globalAlpha = onLit || near ? 0.95 : anyLit ? 0.08 : 0.35 * Math.min(A.s, B.s) + 0.1;
       ctx.strokeStyle = onLit || near ? color("--fg") : l.kind === "see" ? color("--accent2") : color("--fg3"); ctx.lineWidth = onLit || near ? 1.6 : 1; ctx.setLineDash(l.kind === "superseded" ? [5, 4] : []);
