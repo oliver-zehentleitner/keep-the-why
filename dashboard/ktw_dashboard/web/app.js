@@ -2455,7 +2455,7 @@ const authorColor = (name) => PALETTE[Math.max(0, S.authors.findIndex((a) => a.n
 // Superseded by lines between cards from the day they were written. Plain canvas, projected by hand:
 // three numbers per point, no library. #timeline/<day> opens the page on that day.
 const PLAY = { on: false, speed: 7, raf: null, last: 0, acc: 0, frac: 0 }; // speed: days per second; frac: the part of a day between two whole ones, for the stage's motion
-const SPEEDS = [[1, "1 day /s"], [7, "1 week /s"], [30, "1 month /s"], [120, "4 months /s"]];
+const SPEEDS = [[1 / 24, "1 hour /s"], [1, "1 day /s"], [7, "1 week /s"], [30, "1 month /s"], [120, "4 months /s"]];
 let STAGE = null; // the stage on the page: { wake }
 let STAGE_LINKS = (() => { try { return localStorage.getItem("ktw-stage-links") || "lit"; } catch { return "lit"; } })(); // "all" | "lit" | "none": the lines between cards
 function setStageLinks(v) { STAGE_LINKS = v; try { localStorage.setItem("ktw-stage-links", v); } catch {} STAGE?.wake?.(); }
@@ -2475,7 +2475,9 @@ function viewTimeline(main, day) {
   const all = []; let [y, m] = keys[0].split("-").map(Number); const [ey, em] = todayISO().slice(0, 7).split("-").map(Number);
   while (y < ey || (y === ey && m <= em)) { all.push(`${y}-${String(m).padStart(2, "0")}`); m++; if (m > 12) { m = 1; y++; } }
   const max = Math.max(1, ...all.map((k) => Object.values(months[k] || {}).reduce((a, b) => a + b, 0)));
-  const Wd = 900, Hd = 260, padL = 34, padB = 40, padT = 10; const colW = (Wd - padL) / all.length; const bw = Math.min(48, colW - 4);
+  // the drawing is as wide as the column beside the card, so its text keeps its size (an SVG scales as a whole)
+  const mainW = main.clientWidth || 900; const Wd = Math.max(360, Math.round(narrow() || mainW < 760 ? mainW - 28 : mainW - 64 - 18 - Math.min(400, Math.max(280, (mainW - 82) * 0.4))));
+  const Hd = 260, padL = 34, padB = 40, padT = 10; const colW = (Wd - padL) / all.length; const bw = Math.min(48, colW - 4);
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.setAttribute("viewBox", `0 0 ${Wd} ${Hd}`);
   const ns = (tag, attrs, text) => { const n = document.createElementNS("http://www.w3.org/2000/svg", tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); if (text != null) n.textContent = text; return n; };
   const axis = ns("g", { class: "axis" }); svg.append(axis);
@@ -2499,13 +2501,14 @@ function viewTimeline(main, day) {
   const range = el("input", { type: "range", min: 0, max: total, step: 1, class: "playhead-range", title: "the day the page shows — drag, or ← → (a day), shift ← → (a week), space plays" });
   const dayLabel = el("b", { class: "playhead-day" }); const counts = el("span", { class: "playhead-counts" });
   const playBtn = el("button", { type: "button", class: "play-btn", title: "play the days — space" });
-  const speedSel = el("select", { class: "play-speed", title: "how fast the days pass" }, SPEEDS.map(([v, l]) => el("option", { value: v, selected: v === PLAY.speed }, l)));
+  const speedSel = el("select", { class: "play-speed", title: "how fast the days pass" }, SPEEDS.map(([v, l]) => el("option", { value: v }, l)));
   speedSel.onchange = () => { PLAY.speed = Number(speedSel.value) || 7; };
+  for (const o of speedSel.options) if (Math.abs(Number(o.value) - PLAY.speed) < 1e-9) o.selected = true;
   const upd = () => {
     const d = CLOCK || span.to;
     range.value = dayDiff(span.from, d); dayLabel.textContent = d;
     const x = monthX(d); marker.setAttribute("x1", x); marker.setAttribute("x2", x); markerLabel.setAttribute("x", Math.min(Wd - 30, Math.max(padL + 30, x))); markerLabel.textContent = d;
-    const here = S.entries.filter(atClock); const st = count(here.map((e) => ({ s: statusNow(e) })), "s");
+    const here = S.entries.filter(atClock); const st = count(here.map((e) => ({ s: statusNow(e) })), "s"); refreshCard();
     setKids(counts, `${plural(here.length, "entry")} by then`, st.active ? ` · ${st.active} active` : "", st.superseded ? ` · ${st.superseded} superseded` : "", (st.open || 0) + (st["needs-review"] || 0) + (st["pending-confirmation"] || 0) ? ` · ${(st.open || 0) + (st["needs-review"] || 0) + (st["pending-confirmation"] || 0)} in question` : "");
     playBtn.textContent = PLAY.on ? "⏸" : "▶"; playBtn.classList.toggle("on", PLAY.on);
     try { history.replaceState(null, "", d === span.to ? "#timeline" : `#timeline/${d}`); } catch {}
@@ -2530,17 +2533,32 @@ function viewTimeline(main, day) {
   playBtn.onclick = () => play(!PLAY.on);
   range.oninput = () => { play(false); setDay(addDays(span.from, Number(range.value))); };
   const jump = (to, title, label) => el("button", { type: "button", class: "play-jump", title, onclick: () => { play(false); setDay(to()); } }, label);
-  main.append(el("div", { class: "timeline" }, svg),
+  // the card beside the bars: the entry that appeared last by the day shown, or the one clicked on the stage
+  const card = el("div", { class: "stage-card" }); let HELD = null; // the held entry's id, after a click
+  const latestEntry = (d) => { let best = null; for (const e of S.entries) { if (!existsAt(e, d)) continue; const c = createdOn(e) || span.to; if (!best || c >= best.c) best = { e, c }; } return best?.e || null; };
+  function fillCard(e, held) {
+    const d = CLOCK || span.to; const lane = (e.project ? `${e.project} · ` : "") + (topicOf(e.file)?.title || e.file).replace(/`/g, "");
+    const body = e.body?.text || ""; const reason = e.body?.reason || ""; const excerpt = (reason ? `Reason: ${reason}` : body).replace(/\s+/g, " ").trim();
+    const cut = excerpt.length > 520 ? excerpt.slice(0, 518).replace(/\s\S*$/, "") + "…" : excerpt;
+    setKids(card, el("div", { class: "stage-card-head" }, el("span", { class: "note mono" }, `${createdOn(e) || "today"} · ${lane}`), el("span", { class: "pill" }, held ? "picked on the stage" : "latest by then")),
+      el("h3", {}, el("a", { href: entryHref(e), title: "read the whole entry" }, e.title.replace(/`/g, ""))),
+      el("div", { class: "pills" }, ...typePills(e.type), statusPill(statusAt(e, d) || e.status), evPill(e.evidence)),
+      el("p", {}, cut || el("span", { class: "empty" }, typeof S.bodies === "string" ? "loading the text…" : "no text")),
+      el("div", { class: "stage-card-foot" }, e.git?.created?.author ? el("span", { class: "note" }, `recorded by ${e.git.created.author}`) : el("span"), el("span", {}, held ? el("button", { type: "button", class: "link-btn", onclick: () => STAGE?.close?.() }, "let go · ") : null, el("a", { href: entryHref(e) }, "open ›"))));
+    if (typeof S.bodies === "string") ensureBodies(SELF).then(() => { if (card.isConnected && (HELD ? HELD === e.id : latestEntry(CLOCK || span.to) === e)) fillCard(e, held); });
+  }
+  const refreshCard = () => { if (HELD) return; const e = latestEntry(CLOCK || span.to); if (e) fillCard(e, false); else setKids(card, el("p", { class: "empty" }, "No entry by this day.")); };
+  const slot = el("div", { class: "stage-card-slot" }, card);
+  main.append(el("div", { class: "timeline-top" }, el("div", { class: "timeline" }, svg), slot),
     el("div", { class: "legend" }, S.authors.map((a) => el("span", {}, el("i", { class: "sw", style: `background:${authorColor(a.name)}` }), a.name)), el("span", {}, el("i", { class: "sw", style: "background:var(--superseded)" }), "superseded that month")),
     el("div", { class: "playhead" }, jump(() => span.from, "the first day", "⏮"), playBtn, jump(() => span.to, "today", "⏭"), range, dayLabel, speedSel, counts));
   // the stage
   const wrap = el("div", { class: "stage-wrap" });
   const canvas = el("canvas", { class: "stage" });
   const tip = el("div", { class: "stage-tip", hidden: true });
-  const card = el("div", { class: "stage-card", hidden: true });
   const linksSeg = el("span", { class: "mini-seg stage-links", title: "the See and Superseded by lines between cards: every one, only a thought pointed at or held, or none" },
     ...[["all", "all links"], ["lit", "lit only"], ["none", "no links"]].map(([v, l]) => el("button", { type: "button", class: v === STAGE_LINKS ? "on" : "", onclick: (ev) => { setStageLinks(v); for (const b of ev.currentTarget.parentNode.children) b.classList.toggle("on", b === ev.currentTarget); } }, l)));
-  wrap.append(canvas, tip, card, linksSeg);
+  wrap.append(canvas, tip, linksSeg);
   main.append(wrap,
     stageLegend(),
     el("p", { class: "note stage-note" }, el("span", { class: "stage-hint" }, "On the stage: wheel — a day forward or back, shift for a week · drag — look around · ctrl+wheel — zoom · double-click — reset the view · click a card to read it, the floor to let go. The thoughts beside: point at one to light its chain here and in the graph."), el("span", { class: "stage-hint-touch" }, "On the stage: drag — look around · pinch — zoom · tap a card to read it, the floor to let go. The slider sets the day.")),
@@ -2548,7 +2566,9 @@ function viewTimeline(main, day) {
   buildGraph(); // the thoughts beside the stage are the graph's; pointing at one lights it in the stage and in the graph alike
   const want = day && DAY_RE.test(day) ? clamp(day) : span.to;
   CLOCK = null; setClock(want); upd();
-  runStage(canvas, { wrap, tip, card, span, setDay, play });
+  runStage(canvas, { wrap, tip, span, setDay, play,
+    open: (e) => { HELD = e.id; selected = e.id; fillCard(e, true); renderDetailsEntry(e); },
+    close: () => { HELD = null; selected = null; refreshCard(); renderDetailsDefault(); } });
   // keys while the timeline is open: ← → a day, shift a week, space plays
   const onKey = (ev) => {
     if (!wrap.isConnected) return document.removeEventListener("keydown", onKey);
@@ -2665,9 +2685,8 @@ function runStage(canvas, o) {
       ctx.fillStyle = mm === 1 ? color("--fg2") : color("--fg3"); ctx.textAlign = "right"; if (ay > 8 && ay < H - 4 && (mm === 1 || z < 9)) ctx.fillText(mm === 1 ? String(yy) : first.slice(0, 7), ax - 6, ay);
       mm--; if (mm < 1) { mm = 12; yy--; }
     }
-    // the near plane: the day shown, a band across the lanes
-    { const [ax, ay] = proj(xl, 1.45, 0), [bx, by] = proj(xr, floorY, 0); ctx.globalAlpha = 1; ctx.fillStyle = color("--accent"); ctx.globalAlpha = 0.05; ctx.fillRect(ax, ay, bx - ax, by - ay); ctx.globalAlpha = 0.5; ctx.strokeStyle = color("--accent2"); ctx.lineWidth = 1; ctx.strokeRect(ax, ay, bx - ax, by - ay);
-      ctx.globalAlpha = 1; ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.font = `600 11px ${color("--mono") || "monospace"}`; ctx.fillStyle = color("--accent2"); ctx.fillText(`${day}${PLAY.on ? " ▶" : ""}`, 10, 9); ctx.textBaseline = "middle"; }
+    // the day shown, in the corner
+    { ctx.globalAlpha = 1; ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.font = `600 11px ${color("--mono") || "monospace"}`; ctx.fillStyle = color("--accent2"); ctx.fillText(`${day}${PLAY.on ? " ▶" : ""}`, 10, 9); ctx.textBaseline = "middle"; }
     // the lanes' names along the near edge
     ctx.font = `10.5px ${color("--font") || "sans-serif"}`; ctx.textAlign = "center"; ctx.textBaseline = "top";
     for (const L of lanes) { const alive = L.items.some((e) => existsAt(e, day)); if (!alive) continue; const [x, y, s] = proj(L.x, floorY, 0); const w = K() * s * 0.9 - 10; const t = L.title; let txt = t; while (txt.length > 3 && ctx.measureText(txt).width > w) txt = txt.slice(0, -2); if (txt !== t) txt = txt.slice(0, -1) + "…"; ctx.fillStyle = color("--fg2"); ctx.globalAlpha = L.shelf ? 0.9 : 0.65; ctx.fillText(`${L.shelf ? "▴" : "▾"} ${txt}`, x, y + (L.shelf ? 5 : 19)); }
@@ -2730,24 +2749,13 @@ function runStage(canvas, o) {
     ctx.globalAlpha = 1;
   }
   const wake = () => { if (!raf && canvas.isConnected) raf = requestAnimationFrame(draw); };
-  STAGE = { wake };
+  STAGE = { wake, close: closeCard };
   // the tip under the pointer, the card panel on a click
   const place = (box, px, py) => { const r = canvas.getBoundingClientRect(); box.style.left = `${Math.min(r.width - 280, Math.max(8, px + 14))}px`; box.style.top = `${Math.min(r.height - 90, py + 14)}px`; };
   const showTip = (c, px, py) => { const e = c.e; setKids(o.tip, el("b", {}, e.title.replace(/`/g, "")), el("div", { class: "note" }, `${c.lane.title} · ${c.day}${e.git?.created?.author ? " · " + e.git.created.author : ""}`), el("div", { class: "pills" }, ...typePills(e.type), statusPill(statusAt(e, now()) || e.status), evPill(e.evidence))); o.tip.hidden = false; place(o.tip, px, py); };
   const hideTip = () => { o.tip.hidden = true; };
-  function openCard(c) {
-    held = c; selected = c.e.id; const e = c.e;
-    const fill = () => { const body = e.body?.text || ""; const reason = e.body?.reason || ""; const excerpt = (reason ? `Reason: ${reason}` : body).replace(/\s+/g, " ").trim(); const cut = excerpt.length > 420 ? excerpt.slice(0, 418).replace(/\s\S*$/, "") + "…" : excerpt;
-      setKids(o.card, el("button", { type: "button", class: "stage-card-x", title: "close", onclick: () => closeCard() }, "×"),
-        el("div", { class: "note mono" }, `${c.day} · ${c.lane.title}`), el("h3", {}, el("a", { href: entryHref(e), title: "read the whole entry" }, e.title.replace(/`/g, ""))),
-        el("div", { class: "pills" }, ...typePills(e.type), statusPill(statusAt(e, now()) || e.status), evPill(e.evidence)),
-        el("p", {}, cut || el("span", { class: "empty" }, typeof S.bodies === "string" ? "loading the text…" : "no text")),
-        el("div", { class: "stage-card-foot" }, e.git?.created?.author ? el("span", { class: "note" }, `recorded by ${e.git.created.author}`) : null, el("a", { href: entryHref(e) }, "open ›"))); };
-    fill(); o.card.hidden = false; renderDetailsEntry(e);
-    if (typeof S.bodies === "string") ensureBodies(SELF).then(() => { if (held === c) fill(); });
-    wake();
-  }
-  function closeCard() { if (!held) return; held = null; selected = null; o.card.hidden = true; renderDetailsDefault(); wake(); }
+  function openCard(c) { held = c; o.open(c.e); wake(); }
+  function closeCard() { if (!held) return; held = null; o.close(); wake(); }
   const pos = (ev) => { const r = canvas.getBoundingClientRect(); return [ev.clientX - r.left, ev.clientY - r.top]; };
   canvas.onmousemove = (ev) => {
     const [px, py] = pos(ev);
