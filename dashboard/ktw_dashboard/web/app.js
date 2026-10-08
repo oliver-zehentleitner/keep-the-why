@@ -1062,7 +1062,7 @@ function renderDetailsDefault() {
     // the timeline: the thoughts list first, as beside the graph, and a small project graph under it that follows the clock
     d.dataset.pane = "graph";
     d.append(el("div", { id: "thoughts" }));
-    renderThoughts(graph);
+    renderThoughts(STAGE?.graph || graph);
     d.append(el("h3", {}, "Graph"), el("p", { class: "note" }, "What existed on the day shown, with the status it had then."));
     miniGraph(d, { tall: true });
     return;
@@ -2322,7 +2322,7 @@ function runGraph(canvas, g, opts = {}) {
     const dt = lastT && now ? Math.min(100, now - lastT) : 16; lastT = now || 0;
     const drifting = driftOn() && !hover && !drag && !pan && !pinch;
     if (drifting) { const a = DRIFT_RATE * dt, c = Math.cos(a), sn = Math.sin(a); for (const n of g.nodes) { const x = n.x, y = n.y; n.x = x * c - y * sn; n.y = x * sn + y * c; } }
-    if (g === graph && g.alpha > 0.01 && STAGE?.follows?.()) STAGE.wake(); // settling: the stage settles with it, then keeps the positions
+    if (g === STAGE?.graph && g.alpha > 0.01 && STAGE.follows?.()) STAGE.wake(); // settling: the stage settles with it, then keeps the positions
     // settled and only turning: every other frame is enough
     if (drifting && g.alpha <= 0.003 && (frame++ & 1)) { g.raf = canvas.isConnected ? requestAnimationFrame(step) : null; return; }
     const ns = g.nodes.filter(visible);
@@ -2469,7 +2469,8 @@ const authorColor = (name) => PALETTE[Math.max(0, S.authors.findIndex((a) => a.n
 // three numbers per point, no library. #timeline/<day> opens the page on that day.
 const PLAY = { on: false, speed: 7, raf: null, last: 0, acc: 0, frac: 0 }; // speed: days per second; frac: the part of a day between two whole ones, for the stage's motion
 const SPEEDS = [[1 / 24, "1 hour /s"], [1, "1 day /s"], [7, "1 week /s"], [30, "1 month /s"], [120, "4 months /s"]];
-let STAGE = null; // the stage on the page: { wake }
+let STAGE = null; // the stage on the page: { wake, graph, … }
+let TIMELINE_FAMILY_ASKED = false; // the family graph is being built for the timeline
 // "graph": a card stands where its node stands in the graph beside, the stage is the graph with time pulled out as depth;
 // "topics": a lane per topic across the width. An experiment with a switch, kept per browser.
 let STAGE_ARRANGE = (() => { try { return localStorage.getItem("ktw-stage-arrange") || "graph"; } catch { return "graph"; } })();
@@ -2506,7 +2507,11 @@ function viewTimeline(main, day) {
   for (const tick of [0, Math.ceil(max / 2), max]) { axis.append(ns("line", { x1: padL, x2: Wd, y1: scaleY(tick), y2: scaleY(tick) })); axis.append(ns("text", { x: padL - 6, y: scaleY(tick) + 3, "text-anchor": "end" }, tick)); }
   // the clock runs from the first day of any entry on the page — ours, or one a friend, the family or the path
   // brought into the graph — to today
-  const g = buildGraph(); // the thoughts beside the stage are the graph's; its entries are the stage's cards
+  // the thoughts beside the stage are the graph's and its entries are the stage's cards: the family graph with the
+  // family scope (built once it is asked for, the view rendered again when it arrives), else this project's
+  const family = familyGraphShown();
+  if (family && !(fgraph && Date.now() - fgraph.at < 30000)) { if (!TIMELINE_FAMILY_ASKED) { TIMELINE_FAMILY_ASKED = true; buildFamilyGraph().then(() => { TIMELINE_FAMILY_ASKED = false; if (location.hash.startsWith("#timeline")) render(); }); } }
+  const g = family && fgraph && Date.now() - fgraph.at < 30000 ? fgraph : buildGraph();
   const span = daySpan([...S.entries, ...g.nodes.filter((n) => n.kind === "entry" && n.entry).map((n) => n.entry)]) || { from: `${all[0]}-01`, to: todayISO() };
   const clamp = (d) => (d < span.from ? span.from : d > span.to ? span.to : d);
   const total = Math.max(1, dayDiff(span.from, span.to));
@@ -2595,7 +2600,7 @@ function viewTimeline(main, day) {
 
   const want = day && DAY_RE.test(day) ? clamp(day) : span.to;
   CLOCK = null; setClock(want); upd();
-  runStage(canvas, { wrap, tip, span, setDay, play,
+  runStage(canvas, { wrap, tip, span, setDay, play, graph: g,
     open: (e, c) => { HELD = e.uuid || e.id; selected = e.id; fillCard(e, true, c); },
     close: () => { HELD = null; selected = null; refreshCard(); } });
   // keys while the timeline is open: ← → a day, shift a week, space plays
@@ -2653,17 +2658,18 @@ function runStage(canvas, o) {
   // the cards are the graph's entry nodes — ours and the ones a friend, the family or the path brought — so a
   // thought that crosses repositories lights every step here; a card keeps its node's id and reads the node afresh
   // each frame (the graph rebuilds its nodes on every render, the ids stay)
-  const nodeOf = (c) => (graph?.index?.[c.nid] != null ? graph.nodes[graph.index[c.nid]] : null);
+  const nodeOf = (c) => (G?.index?.[c.nid] != null ? G.nodes[G.index[c.nid]] : null);
   // where the nodes stand, copied from the graph while it settles and then kept: the graph's slow turn would
   // otherwise walk the cards around the stage without end
   const POS = new Map(); // node id -> { x, y }
-  const syncPositions = () => { if (!graph) return; if (POS.size && graph.alpha <= 0.01) return; for (const n of graph.nodes) if (n.kind === "entry" || n.kind === "topic") POS.set(n.id, { x: n.x, y: n.y }); };
+  const syncPositions = () => { if (!G) return; if (POS.size && G.alpha <= 0.01) return; for (const n of G.nodes) if (n.kind === "entry" || n.kind === "topic") POS.set(n.id, { x: n.x, y: n.y }); };
   const posNode = (id) => POS.get(id) || null;
-  const entryNodes = (graph?.nodes || []).filter((n) => n.kind === "entry" && n.entry);
-  const projOfNode = (n) => n.ext ? (n.proj || "") : (n.entry.project || "");
+  const G = o.graph; // the graph the stage is a view of
+  const entryNodes = (G?.nodes || []).filter((n) => n.kind === "entry" && n.entry);
+  const projOfNode = (n) => n.ext || n.fam ? (n.proj || "") : (n.entry.project || "");
   // the cards, one per entry node, and the links between them by Id
   const cards = []; const byId = {};
-  for (const n of entryNodes) { const e = n.entry; const c = { e, nid: n.id, ext: !!n.ext, href: n.href, state: n.ext ? n.state : SELF, laneKey: `${projOfNode(n)}|${e.file}`, proj: projOfNode(n), day: createdOn(e) || o.span.to, x: 0, y: 0, dz: 0, lane: null }; cards.push(c); if (!n.ext) byId[e.id] = c; if (e.uuid) byId[e.uuid] = c; }
+  for (const n of entryNodes) { const e = n.entry; const c = { e, nid: n.id, ext: !!(n.ext || n.fam), href: n.href, state: n.ext || n.fam ? n.state : SELF, laneKey: `${projOfNode(n)}|${e.file}`, proj: projOfNode(n), day: createdOn(e) || o.span.to, x: 0, y: 0, dz: 0, lane: null }; cards.push(c); if (!n.ext) byId[e.id] = c; if (e.uuid) byId[e.uuid] = c; }
   const links = [];
   for (const c of cards) {
     for (const r of c.e.see || []) { const t = r?.uuid && byId[r.uuid]; if (t && t !== c) links.push({ a: c, b: t, kind: "see", day: seeDay(c.e, r) }); }
@@ -2728,8 +2734,8 @@ function runStage(canvas, o) {
   // where a card stands. "graph": its node's place in the graph beside, read live — the graph's plane mapped onto the
   // stage's near plane, so the eye finds a node here where it finds it there, and the stage turns with the graph;
   // "topics": its lane and row. A node the graph does not have (another project's entry) falls back to the lane.
-  const asGraph = () => STAGE_ARRANGE === "graph" && !!graph;
-  const tnodes = () => (graph?.nodes || []).filter((n) => n.kind === "topic" && POS.has(n.id)).map((n) => ({ ...n, ...POS.get(n.id) }));
+  const asGraph = () => STAGE_ARRANGE === "graph" && !!G;
+  const tnodes = () => (G?.nodes || []).filter((n) => n.kind === "topic" && POS.has(n.id)).map((n) => ({ ...n, ...POS.get(n.id) }));
   const gbox = { x0: 0, x1: 1, y0: 0, y1: 1 };
   // the graph's plane onto the near plane: the box is the 4th to 96th percentile of the nodes, so a few outliers do
   // not squeeze the rest into the middle; what lies outside is held at the edge
@@ -2759,7 +2765,7 @@ function runStage(canvas, o) {
     for (let i = 0; i < vis.length; i++) {
       const A = vis[i], a = boxes.get(A.c);
       for (let j = i + 1; j < vis.length; j++) {
-        const B = vis[j]; if (Math.abs(A.z - B.z) > 1.4) continue;
+        const B = vis[j]; if (A.z - B.z > 1.4) break; // sorted far to near: the rest are nearer still
         const b = boxes.get(B.c);
         const dx = Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0), dy = Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0);
         if (dx <= 2 || dy <= 2) continue;
@@ -2788,8 +2794,8 @@ function runStage(canvas, o) {
   const depthAlpha = (z) => Math.max(0.2, Math.min(1, 1.1 - z / (DEPTH_FAR * 1.6)));
   const HATCH = new Map(); // colour -> pattern: diagonal lines, the fill of an inferred entry
   const hatch = (col) => { if (!HATCH.has(col)) { const pc = document.createElement("canvas"); pc.width = pc.height = 6; const x = pc.getContext("2d"); if (x) { x.strokeStyle = col; x.lineWidth = 1.2; x.beginPath(); x.moveTo(-1, 7); x.lineTo(7, -1); x.moveTo(-1, 1); x.lineTo(1, -1); x.moveTo(5, 7); x.lineTo(7, 5); x.stroke(); } HATCH.set(col, ctx.createPattern(pc, "repeat")); } return HATCH.get(col); };
-  const litIds = () => { const t = graph?.thought; const set = new Set(); if (t) for (const n of t.nodes) if (n.entry) set.add(n.entry.uuid || n.id); return set; };
-  const litPairs = () => graph?.thought?.pairs || null;
+  const litIds = () => { const t = G?.thought; const set = new Set(); if (t) for (const n of t.nodes) if (n.entry) set.add(n.entry.uuid || n.id); return set; };
+  const litPairs = () => G?.thought?.pairs || null;
   let hover = null, held = null, drag = null, moved = false, pinch = null, raf = null, topicNames = null;
   const thereAt = (c, day) => existsAt(c.e, day, c.ext || hasRepo(c.e));
   const shown = (c) => foreignOn(c) && thereAt(c, now()) && (!PLAY.on || zOf(c.day) >= -0.02);
@@ -2904,8 +2910,8 @@ function runStage(canvas, o) {
   const wake = () => { if (!raf && canvas.isConnected) raf = requestAnimationFrame(draw); };
   // pick: an entry chosen elsewhere on the page (a thought's step in the pane) is held like a clicked card, and
   // the day moves to the entry's, so it arrives at the front of the stage
-  STAGE = { wake, relax, follows: asGraph, close: closeCard,
-    reset: () => { THOUGHT_PIN = null; renderThoughts(graph); focusStep(null); closeCard(); zoom = 1; panX = 0; panY = 0; hover = null; hideTip(); fitHeight(); wake(); },
+  STAGE = { wake, relax, graph: G, follows: asGraph, close: closeCard,
+    reset: () => { THOUGHT_PIN = null; renderThoughts(G); focusStep(null); closeCard(); zoom = 1; panX = 0; panY = 0; hover = null; hideTip(); fitHeight(); wake(); },
     pick: (e) => { held = (e.uuid && byId[e.uuid]) || byId[e.id] || null; o.play(false); o.open(e, held); o.setDay(createdOn(e) || o.span.to); wake(); } };
   // the tip under the pointer, the card panel on a click
   const place = (box, px, py) => { const r = canvas.getBoundingClientRect(); const w = box.offsetWidth || 280, h = box.offsetHeight || 80; const left = px + 14 + w > r.width - 8 ? Math.max(8, px - 14 - w) : px + 14; const top = py + 14 + h > r.height - 8 ? Math.max(8, py - 14 - h) : py + 14; box.style.left = `${left}px`; box.style.top = `${top}px`; };
