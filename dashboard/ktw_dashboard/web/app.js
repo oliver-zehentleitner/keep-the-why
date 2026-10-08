@@ -2465,7 +2465,7 @@ let STAGE_ARRANGE = (() => { try { return localStorage.getItem("ktw-stage-arrang
 // other repositories' entries on the stage: "linked" — only the ones a chain of See or Superseded by joins to this
 // project's entries; "all" — every one the graph holds; "none"
 let STAGE_FOREIGN = (() => { try { return localStorage.getItem("ktw-stage-foreign") || "linked"; } catch { return "linked"; } })();
-function setStageForeign(v) { STAGE_FOREIGN = v; try { localStorage.setItem("ktw-stage-foreign", v); } catch {} STAGE?.relax?.(); STAGE?.wake?.(); }
+function setStageForeign(v) { STAGE_FOREIGN = v; try { localStorage.setItem("ktw-stage-foreign", v); } catch {} render(); }
 function setStageArrange(v) { STAGE_ARRANGE = v; try { localStorage.setItem("ktw-stage-arrange", v); } catch {} STAGE?.relax?.(); STAGE?.wake?.(); }
 function stopPlay() { PLAY.on = false; if (PLAY.raf) cancelAnimationFrame(PLAY.raf); PLAY.raf = null; PLAY.last = 0; PLAY.acc = 0; PLAY.frac = 0; }
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -2647,30 +2647,39 @@ function runStage(canvas, o) {
   const posNode = (id) => POS.get(id) || null;
   const entryNodes = (graph?.nodes || []).filter((n) => n.kind === "entry" && n.entry);
   const projOfNode = (n) => n.ext ? (n.proj || "") : (n.entry.project || "");
-  const laneOf = (n) => `${projOfNode(n)}|${n.entry.file}`;
-  const byLane = new Map();
-  for (const n of entryNodes) { const e = n.entry, pr = projOfNode(n); if (!byLane.has(laneOf(n))) byLane.set(laneOf(n), { key: laneOf(n), file: e.file, project: pr, title: (pr ? `${pr} · ` : "") + ((n.ext ? null : topicOf(e.file)?.title) || e.file).replace(/`/g, ""), items: [], first: "" }); byLane.get(laneOf(n)).items.push(n); }
-  const lanes = [...byLane.values()];
-  for (const L of lanes) { L.items.sort((a, b) => (createdOn(a.entry) || "9") < (createdOn(b.entry) || "9") ? -1 : 1); L.first = L.items.map((n) => createdOn(n.entry)).filter(Boolean).sort()[0] || "9"; }
-  lanes.sort((a, b) => a.first < b.first ? -1 : a.first > b.first ? 1 : a.title.localeCompare(b.title)); // the oldest topic on the left: the stage fills left to right
-  // two shelves, the lanes alternating between them: half the width, and the picture gets a second height
-  const nL = lanes.length || 1; const cols = Math.ceil(nL / 2);
-  const SHELF = [-0.3, 1.0]; // the rows' base height on the lower and the upper shelf
+  // the cards, one per entry node, and the links between them by Id
   const cards = []; const byId = {};
+  for (const n of entryNodes) { const e = n.entry; const c = { e, nid: n.id, ext: !!n.ext, href: n.href, laneKey: `${projOfNode(n)}|${e.file}`, proj: projOfNode(n), day: createdOn(e) || o.span.to, x: 0, y: 0, dz: 0, lane: null }; cards.push(c); if (!n.ext) byId[e.id] = c; if (e.uuid) byId[e.uuid] = c; }
+  const links = [];
+  for (const c of cards) {
+    for (const r of c.e.see || []) { const t = r?.uuid && byId[r.uuid]; if (t && t !== c) links.push({ a: c, b: t, kind: "see", day: seeDay(c.e, r) }); }
+    const sb = c.e.superseded_by ? parseSupersededBy(c.e.superseded_by)?.uuid : null; const t = sb && byId[sb]; if (t && t !== c) links.push({ a: c, b: t, kind: "superseded", day: supersededDay(c.e) });
+  }
+  // which foreign cards show: joined to one of ours by a chain of See or Superseded by (in either direction), all, or none
+  { const adj = new Map(); const addEdge = (a, b) => { (adj.get(a) || adj.set(a, []).get(a)).push(b); }; for (const l of links) { addEdge(l.a, l.b); addEdge(l.b, l.a); }
+    const seen = new Set(cards.filter((c) => !c.ext)); const queue = [...seen];
+    while (queue.length) { const c = queue.pop(); for (const d of adj.get(c) || []) if (!seen.has(d)) { seen.add(d); queue.push(d); } }
+    for (const c of cards) c.linked = !c.ext || seen.has(c); }
+  const foreignOn = (c) => !c.ext || STAGE_FOREIGN === "all" || (STAGE_FOREIGN === "linked" && c.linked);
+  // the lanes, by topic: one per topic (per repository) among the cards that show — a change of the filter
+  // rebuilds the view, so the lanes are the shown cards' alone — the oldest topic on the left, on two shelves
+  const byLane = new Map();
+  for (const c of cards) { if (!foreignOn(c)) continue; if (!byLane.has(c.laneKey)) byLane.set(c.laneKey, { key: c.laneKey, file: c.e.file, project: c.proj, title: (c.proj ? `${c.proj} · ` : "") + ((c.ext ? null : topicOf(c.e.file)?.title) || c.e.file).replace(/`/g, ""), items: [], first: "" }); byLane.get(c.laneKey).items.push(c); }
+  const lanes = [...byLane.values()];
+  for (const L of lanes) { L.items.sort((a, b) => (a.day < b.day ? -1 : 1)); L.first = L.items[0]?.day || "9"; }
+  lanes.sort((a, b) => a.first < b.first ? -1 : a.first > b.first ? 1 : a.title.localeCompare(b.title));
+  const nL = lanes.length || 1; const cols = Math.ceil(nL / 2);
+  canvas.dataset.lanes = lanes.map((L) => L.title).join(" | "); // what the stage holds, readable from outside (tests)
+  const SHELF = [-0.3, 1.0]; // the rows' base height on the lower and the upper shelf
   const weekOf = (day) => { const d = new Date(`${day}T00:00:00Z`); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); };
   lanes.forEach((L, li) => {
     L.x = Math.floor(li / 2) - (cols - 1) / 2; L.shelf = li % 2;
     // entries of one lane and one calendar week sit at nearly one depth: they take three rows and two columns in turn,
     // and entries of one day a step of depth each, so a busy week stacks up instead of on top of itself
     const sameWeek = {}, sameDay = {};
-    L.items.forEach((n) => { const e = n.entry; const day = createdOn(e) || o.span.to; const w = (sameWeek[weekOf(day)] = (sameWeek[weekOf(day)] || 0) + 1) - 1; const k = (sameDay[day] = (sameDay[day] || 0) + 1) - 1;
-      const c = { e, nid: n.id, ext: !!n.ext, href: n.href, lane: L, x: L.x + ((Math.floor(w / 3) % 2) - 0.5) * 0.34, y: SHELF[L.shelf] + ((w % 3) - 1) * 0.44, dz: (k % 4) * 0.1, day }; cards.push(c); if (!n.ext) byId[e.id] = c; if (e.uuid) byId[e.uuid] = c; });
+    for (const c of L.items) { const w = (sameWeek[weekOf(c.day)] = (sameWeek[weekOf(c.day)] || 0) + 1) - 1; const k = (sameDay[c.day] = (sameDay[c.day] || 0) + 1) - 1;
+      Object.assign(c, { lane: L, x: L.x + ((Math.floor(w / 3) % 2) - 0.5) * 0.34, y: SHELF[L.shelf] + ((w % 3) - 1) * 0.44, dz: (k % 4) * 0.1 }); }
   });
-  const links = [];
-  for (const c of cards) {
-    for (const r of c.e.see || []) { const t = r?.uuid && byId[r.uuid]; if (t && t !== c) links.push({ a: c, b: t, kind: "see", day: seeDay(c.e, r) }); }
-    const sb = c.e.superseded_by ? parseSupersededBy(c.e.superseded_by)?.uuid : null; const t = sb && byId[sb]; if (t && t !== c) links.push({ a: c, b: t, kind: "superseded", day: supersededDay(c.e) });
-  }
   // depth is logarithmic in days and scaled to the project's span: the last days spread out where the eye is,
   // and the oldest entry stands at about two fifths of full size whether the project is three months or three
   // years old — so the past fills the stage instead of gathering at the horizon
@@ -2684,15 +2693,16 @@ function runStage(canvas, o) {
   // pixels per unit on the near plane: as the graph the plane is a fixed width in units, whatever the lane count —
   // the friends' lanes would otherwise shrink the whole picture; by topic it is the lanes' width
   const UNITS = () => (asGraph() ? 5.6 : cols + 1.2);
-  const K = () => Math.max(56, Math.min(190, (W - 40) / UNITS())) * zoom;
+  const K = () => Math.max(56, Math.min(190, (W - 40) / UNITS())) * zoom; // across
+  const KY = () => Math.max(56, Math.min(190, (W - 40) / 5.6)) * zoom; // up: the same in both arrangements, so the stage keeps its height by topic
   // the box is as tall as the near plane needs — a narrow pane gets a low stage, a wide one a tall one
-  const fitHeight = () => { const h = Math.round(Math.max(220, Math.min(760, K() / zoom * 3.15 + 60))); if (Math.abs(h - o.wrap.getBoundingClientRect().height) > 2) o.wrap.style.height = `${h}px`; };
+  const fitHeight = () => { const h = Math.round(Math.max(220, Math.min(760, KY() / zoom * 3.15 + 60))); if (Math.abs(h - o.wrap.getBoundingClientRect().height) > 2) o.wrap.style.height = `${h}px`; };
   const horizon = () => H * 0.13 + panY; const cx = () => W / 2 + panX;
   const now = () => (CLOCK || o.span.to);
   const tNow = () => dayDiff(o.span.from, now()) + (PLAY.on ? PLAY.frac : 0); // days since the first day, fractional while playing
   const zOf = (day) => depth(tNow() - dayDiff(o.span.from, day)); // depth units back from the day shown
   const zCard = (c) => zOf(c.day) + c.dz;
-  const proj = (x, y, z) => { const s = F / (F + Math.max(z, -F * 0.9)); return [cx() + x * K() * s, horizon() + (camY - y) * K() * s, s]; };
+  const proj = (x, y, z) => { const s = F / (F + Math.max(z, -F * 0.9)); return [cx() + x * K() * s, horizon() + (camY - y) * KY() * s, s]; };
   // where a card stands. "graph": its node's place in the graph beside, read live — the graph's plane mapped onto the
   // stage's near plane, so the eye finds a node here where it finds it there, and the stage turns with the graph;
   // "topics": its lane and row. A node the graph does not have (another project's entry) falls back to the lane.
@@ -2742,11 +2752,11 @@ function runStage(canvas, o) {
           unsettled = true; const pa = ua * K() * a.s, pb = ub * K() * b.s;
           A.c.ox = (A.c.ox || 0) + sx * ua; B.c.ox = (B.c.ox || 0) - sx * ub; a.x0 += sx * pa; a.x1 += sx * pa; a.cx += sx * pa; b.x0 -= sx * pb; b.x1 -= sx * pb; b.cx -= sx * pb;
         } else {
-          const u = dy * 0.5; let ua = u / (K() * a.s), ub = u / (K() * b.s); // screen y grows downward: sy > 0 moves A down, i.e. its oy down
+          const u = dy * 0.5; let ua = u / (KY() * a.s), ub = u / (KY() * b.s); // screen y grows downward: sy > 0 moves A down, i.e. its oy down
           const fa = sy > 0 ? Math.max(0, (A.c.oy || 0) - ra.ylo) : Math.max(0, ra.yhi - (A.c.oy || 0)), fb = sy > 0 ? Math.max(0, rb.yhi - (B.c.oy || 0)) : Math.max(0, (B.c.oy || 0) - rb.ylo);
           if (fa < ua) { ub = Math.min(ub + (ua - fa) * (b.s / a.s), fb); ua = fa; } else if (fb < ub) { ua = Math.min(ua + (ub - fb) * (a.s / b.s), fa); ub = fb; }
           if (ua + ub <= 1e-4) continue;
-          unsettled = true; const pa = ua * K() * a.s, pb = ub * K() * b.s;
+          unsettled = true; const pa = ua * KY() * a.s, pb = ub * KY() * b.s;
           A.c.oy = (A.c.oy || 0) - sy * ua; B.c.oy = (B.c.oy || 0) + sy * ub; a.y0 += sy * pa; a.y1 += sy * pa; a.cy += sy * pa; b.y0 -= sy * pb; b.y1 -= sy * pb; b.cy -= sy * pb;
         }
       }
@@ -2759,12 +2769,6 @@ function runStage(canvas, o) {
   const litIds = () => { const t = graph?.thought; const set = new Set(); if (t) for (const n of t.nodes) if (n.entry) set.add(n.entry.uuid || n.id); return set; };
   const litPairs = () => graph?.thought?.pairs || null;
   let hover = null, held = null, drag = null, moved = false, pinch = null, raf = null, topicNames = null;
-  // which foreign cards show: joined to one of ours by a chain of See or Superseded by (in either direction), all, or none
-  { const adj = new Map(); const addEdge = (a, b) => { (adj.get(a) || adj.set(a, []).get(a)).push(b); }; for (const l of links) { addEdge(l.a, l.b); addEdge(l.b, l.a); }
-    const seen = new Set(cards.filter((c) => !c.ext)); const queue = [...seen];
-    while (queue.length) { const c = queue.pop(); for (const d of adj.get(c) || []) if (!seen.has(d)) { seen.add(d); queue.push(d); } }
-    for (const c of cards) c.linked = !c.ext || seen.has(c); }
-  const foreignOn = (c) => !c.ext || STAGE_FOREIGN === "all" || (STAGE_FOREIGN === "linked" && c.linked);
   const shown = (c) => foreignOn(c) && existsAt(c.e, now()) && (!PLAY.on || zOf(c.day) >= -0.02);
   const zFarOf = () => Math.max(1, depth(tNow() + 20));
   const rects = []; // screen boxes of the cards drawn, near ones last; each with its foot, the line down to the floor
@@ -2793,11 +2797,11 @@ function runStage(canvas, o) {
     // the lanes' names along the near edge — or, as the graph, the topics' names where their hubs stand, faint, behind the cards
     ctx.font = `10.5px ${color("--font") || "sans-serif"}`; ctx.textAlign = "center"; ctx.textBaseline = "top";
     if (byGraph) topicNames = []; // drawn after the cards, at the centre of each topic's cards on screen
-    else for (const L of lanes) { const alive = L.items.some((e) => existsAt(e, day)); if (!alive) continue; const [x, y, s] = proj(L.x, floorY, 0); const w = K() * s * 0.9 - 10; const t = L.title; let txt = t; while (txt.length > 3 && ctx.measureText(txt).width > w) txt = txt.slice(0, -2); if (txt !== t) txt = txt.slice(0, -1) + "…"; ctx.fillStyle = color("--fg2"); ctx.globalAlpha = L.shelf ? 0.9 : 0.65; ctx.fillText(`${L.shelf ? "▴" : "▾"} ${txt}`, x, y + (L.shelf ? 5 : 19)); }
+    else for (const L of lanes) { const alive = L.items.some((c) => existsAt(c.e, day)); if (!alive) continue; const [x, y, s] = proj(L.x, floorY, 0); const w = K() * s * 0.9 - 10; const t = L.title; let txt = t; while (txt.length > 3 && ctx.measureText(txt).width > w) txt = txt.slice(0, -2); if (txt !== t) txt = txt.slice(0, -1) + "…"; ctx.fillStyle = color("--fg2"); ctx.globalAlpha = L.shelf ? 0.9 : 0.65; ctx.fillText(`${L.shelf ? "▴" : "▾"} ${txt}`, x, y + (L.shelf ? 5 : 19)); }
     // the cards, far ones first
     const vis = cards.filter(shown).map((c) => ({ c, z: zCard(c) })).sort((a, b) => b.z - a.z);
     const cardScale = byGraph ? 0.66 : 1; // as the graph the cards stand closer: smaller, the tip tells the rest
-    const box = (c, z) => { const q = posOf(c); const [x, y, s] = proj(q.x, q.y, z); const w = K() * s * 0.78 * cardScale, h = K() * s * 0.36 * cardScale; return { x0: x - w / 2, y0: y - h / 2, x1: x + w / 2, y1: y + h / 2, cx: x, cy: y, s, w, h }; };
+    const box = (c, z) => { const q = posOf(c); const [x, y, s] = proj(q.x, q.y, z); const w = K() * s * 0.78 * cardScale, h = Math.min(KY(), K() * 1.5) * s * 0.36 * cardScale; return { x0: x - w / 2, y0: y - h / 2, x1: x + w / 2, y1: y + h / 2, cx: x, cy: y, s, w, h }; };
     const boxes = new Map(); for (const { c, z } of vis) boxes.set(c, box(c, z));
     keepApart(vis, boxes);
     // the lines between cards — every See and Superseded by written by then; a lit thought's stand out, the rest fade
@@ -2870,7 +2874,7 @@ function runStage(canvas, o) {
   STAGE = { wake, relax, follows: asGraph, close: closeCard, pick: (e) => { held = (e.uuid && byId[e.uuid]) || byId[e.id] || null; o.play(false); o.open(e, held); o.setDay(createdOn(e) || o.span.to); wake(); } };
   // the tip under the pointer, the card panel on a click
   const place = (box, px, py) => { const r = canvas.getBoundingClientRect(); const w = box.offsetWidth || 280, h = box.offsetHeight || 80; const left = px + 14 + w > r.width - 8 ? Math.max(8, px - 14 - w) : px + 14; const top = py + 14 + h > r.height - 8 ? Math.max(8, py - 14 - h) : py + 14; box.style.left = `${left}px`; box.style.top = `${top}px`; };
-  const showTip = (c, px, py) => { const e = c.e; setKids(o.tip, el("b", {}, e.title.replace(/`/g, "")), el("div", { class: "note" }, `${c.lane.title} · ${c.day}${e.git?.created?.author ? " · " + e.git.created.author : ""}`), el("div", { class: "pills" }, ...typePills(e.type), statusPill(statusAt(e, now()) || e.status), evPill(e.evidence))); o.tip.hidden = false; place(o.tip, px, py); };
+  const showTip = (c, px, py) => { const e = c.e; setKids(o.tip, el("b", {}, e.title.replace(/`/g, "")), el("div", { class: "note" }, `${c.lane?.title || c.e.file} · ${c.day}${e.git?.created?.author ? " · " + e.git.created.author : ""}`), el("div", { class: "pills" }, ...typePills(e.type), statusPill(statusAt(e, now()) || e.status), evPill(e.evidence))); o.tip.hidden = false; place(o.tip, px, py); };
   const hideTip = () => { o.tip.hidden = true; };
   function openCard(c) { held = c; o.open(c.e, c); wake(); }
   function closeCard() { if (!held) return; held = null; o.close(); wake(); }
