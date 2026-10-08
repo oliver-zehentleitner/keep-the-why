@@ -215,7 +215,8 @@ table.t tr.clickable { cursor: pointer; }
 .details .mini { position: relative; min-height: 220px; height: 100%; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); overflow: hidden; }
 .details .mini canvas { width: 100%; height: 100%; display: block; touch-action: pan-y; }
 /* the small graph at the end of a long pane stays at the pane's bottom edge while the rest scrolls under it — always in view */
-.details .mini.tall { height: 320px; flex: none; position: sticky; bottom: -16px; margin-top: auto; box-shadow: 0 -10px 24px -6px color-mix(in srgb, var(--bg2) 85%, transparent), 0 0 0 16px var(--bg2); z-index: 2; }
+.details .mini.tall { height: 320px; flex: none; position: sticky; bottom: 0; margin-top: auto; margin-bottom: -16px; box-shadow: 0 -10px 24px -6px color-mix(in srgb, var(--bg2) 85%, transparent), 0 0 0 16px var(--bg2); z-index: 2; }
+/* its resting place at the end of the pane is flush with the edge too (the pane's padding is swallowed), so reaching the end moves nothing */
 .details .mini .mini-hint { position: absolute; bottom: 6px; right: 8px; font-size: 10px; color: var(--fg3); pointer-events: none; }
 .details .mini .mini-title { position: absolute; top: 6px; left: 8px; font-size: 10px; color: var(--fg3); text-transform: uppercase; letter-spacing: .06em; pointer-events: none; }
 .details .legend-list { display: grid; gap: 6px; font-size: 12px; color: var(--fg2); }
@@ -313,7 +314,7 @@ kbd { font-family: var(--mono); font-size: 11px; background: var(--bg3); border:
   .main { padding: 16px 14px 32px; }
   .details { border-left: 0; border-top: 1px solid var(--line); padding: 14px; }
   .details .mini { min-height: 240px; height: 240px; }
-  .details .mini.tall { height: 280px; position: static; box-shadow: none; margin-top: 0; }
+  .details .mini.tall { height: 280px; position: static; box-shadow: none; margin-top: 0; margin-bottom: 0; }
   /* the graph gets the screen: switches and legend behind two buttons, opened one at a time, closed by touching the graph */
   .graph-wrap { height: 80vh; height: 80svh; min-height: 380px; margin: -16px -14px -32px; }
   .graph-ui { top: 46px; left: 10px; right: 10px; font-size: 12px; gap: 8px; padding: 8px 10px; max-height: calc(100% - 100px); overflow: auto; background: var(--bg2); box-shadow: 0 8px 28px rgba(0,0,0,.35); z-index: 3; }
