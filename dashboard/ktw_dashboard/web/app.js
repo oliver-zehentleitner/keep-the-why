@@ -262,7 +262,7 @@ function setClock(day) {
   // the layout settles again only when the set of nodes changed, not on every day the playhead passes
   const n = S ? S.entries.filter(atClock).length : 0; const grew = n !== CLOCK_N; CLOCK_N = n;
   for (const g of ACTIVE_GRAPHS) { if (grew && g.alpha < 0.2) g.alpha = 0.2; g.wake?.(); }
-  STAGE?.wake?.();
+  if (grew) STAGE?.relax?.(); STAGE?.wake?.();
 }
 const byId = () => Object.fromEntries(S.entries.map((e) => [e.id, e]));
 const byUuid = () => Object.fromEntries(S.entries.filter((e) => e.uuid).map((e) => [e.uuid, e]));
@@ -2462,7 +2462,7 @@ let STAGE_LINKS = (() => { try { return localStorage.getItem("ktw-stage-links") 
 // "graph": a card stands where its node stands in the graph beside, the stage is the graph with time pulled out as depth;
 // "topics": a lane per topic across the width. An experiment with a switch, kept per browser.
 let STAGE_ARRANGE = (() => { try { return localStorage.getItem("ktw-stage-arrange") || "graph"; } catch { return "graph"; } })();
-function setStageArrange(v) { STAGE_ARRANGE = v; try { localStorage.setItem("ktw-stage-arrange", v); } catch {} STAGE?.wake?.(); }
+function setStageArrange(v) { STAGE_ARRANGE = v; try { localStorage.setItem("ktw-stage-arrange", v); } catch {} STAGE?.relax?.(); STAGE?.wake?.(); }
 function setStageLinks(v) { STAGE_LINKS = v; try { localStorage.setItem("ktw-stage-links", v); } catch {} STAGE?.wake?.(); }
 function stopPlay() { PLAY.on = false; if (PLAY.raf) cancelAnimationFrame(PLAY.raf); PLAY.raf = null; PLAY.last = 0; PLAY.acc = 0; PLAY.frac = 0; }
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -2681,10 +2681,12 @@ function runStage(canvas, o) {
   const measureGraph = () => { let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; for (const n of gnode.values()) { x0 = Math.min(x0, n.x); x1 = Math.max(x1, n.x); y0 = Math.min(y0, n.y); y1 = Math.max(y1, n.y); } if (x0 < x1) Object.assign(gbox, { x0, x1, y0, y1 }); };
   const posOf = (c) => { const q = asGraph() ? (gnode.get(c.e.id) ? gmap(gnode.get(c.e.id)) : { x: c.x, y: c.y }) : { x: c.x, y: c.y }; return { x: q.x + (c.ox || 0), y: q.y + (c.oy || 0) }; };
   // Cards keep apart: two cards at about one depth whose boxes overlap push each other off, by the smaller overlap,
-  // a little each frame until they clear, within bounds so no stack grows into a tower; the push is kept as an
-  // offset on the card (near-plane units, bounded) and fades slowly, so a card drifts back when the room frees up
-  // (the day moves on, the graph turns). A frame with pushes left asks for another, so the picture settles in a moment.
+  // half of it each frame until they touch, within bounds so no stack grows into a tower; the push is kept as an
+  // offset on the card (near-plane units). Nothing pulls an offset back on its own — a steady pull against the push
+  // made the cards shiver — the offsets are halved when the day or the arrangement changes (relax), so stale room
+  // is given up then, and the cards settle again. A frame with pushes left asks for another.
   let unsettled = false;
+  const relax = () => { for (const c of cards) { c.ox = (c.ox || 0) * 0.5; c.oy = (c.oy || 0) * 0.5; } };
   function keepApart(vis, boxes) {
     unsettled = false;
     for (let i = 0; i < vis.length; i++) {
@@ -2693,14 +2695,14 @@ function runStage(canvas, o) {
         const B = vis[j]; if (Math.abs(A.z - B.z) > 1.4) continue;
         const b = boxes.get(B.c);
         const dx = Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0), dy = Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0);
-        if (dx <= 1 || dy <= 1) continue;
+        if (dx <= 2 || dy <= 2) continue;
         unsettled = true;
         const sx = Math.sign(a.cx - b.cx) || (i & 1 ? 1 : -1), sy = Math.sign(a.cy - b.cy) || (j & 1 ? 1 : -1);
-        if (dx < dy) { const u = (dx + 2) * 0.3; const ua = u / (K() * a.s), ub = u / (K() * b.s); A.c.ox = (A.c.ox || 0) + sx * ua; B.c.ox = (B.c.ox || 0) - sx * ub; a.x0 += sx * u; a.x1 += sx * u; a.cx += sx * u; b.x0 -= sx * u; b.x1 -= sx * u; b.cx -= sx * u; }
-        else { const u = (dy + 2) * 0.3; const ua = u / (K() * a.s), ub = u / (K() * b.s); A.c.oy = (A.c.oy || 0) - sy * ua; B.c.oy = (B.c.oy || 0) + sy * ub; a.y0 += sy * u; a.y1 += sy * u; a.cy += sy * u; b.y0 -= sy * u; b.y1 -= sy * u; b.cy -= sy * u; }
+        if (dx < dy) { const u = dx * 0.5; const ua = u / (K() * a.s), ub = u / (K() * b.s); A.c.ox = (A.c.ox || 0) + sx * ua; B.c.ox = (B.c.ox || 0) - sx * ub; a.x0 += sx * u; a.x1 += sx * u; a.cx += sx * u; b.x0 -= sx * u; b.x1 -= sx * u; b.cx -= sx * u; }
+        else { const u = dy * 0.5; const ua = u / (K() * a.s), ub = u / (K() * b.s); A.c.oy = (A.c.oy || 0) - sy * ua; B.c.oy = (B.c.oy || 0) + sy * ub; a.y0 += sy * u; a.y1 += sy * u; a.cy += sy * u; b.y0 -= sy * u; b.y1 -= sy * u; b.cy -= sy * u; }
       }
     }
-    for (const { c } of vis) { c.ox = Math.max(-1.3, Math.min(1.3, (c.ox || 0) * 0.98)); c.oy = Math.max(-0.9, Math.min(0.9, (c.oy || 0) * 0.98)); }
+    for (const { c } of vis) { c.ox = Math.max(-1.3, Math.min(1.3, c.ox || 0)); c.oy = Math.max(-0.9, Math.min(0.9, c.oy || 0)); }
   }
   const depthAlpha = (z) => Math.max(0.14, Math.min(1, 1.08 - z / 16));
   const HATCH = new Map(); // colour -> pattern: diagonal lines, the fill of an inferred entry
@@ -2802,7 +2804,7 @@ function runStage(canvas, o) {
   const wake = () => { if (!raf && canvas.isConnected) raf = requestAnimationFrame(draw); };
   // pick: an entry chosen elsewhere on the page (a thought's step in the pane) is held like a clicked card, and
   // the day moves to the entry's, so it arrives at the front of the stage
-  STAGE = { wake, follows: asGraph, close: closeCard, pick: (e) => { held = byId[e.id] || (e.uuid && byId[e.uuid]) || null; o.play(false); o.open(e); o.setDay(createdOn(e) || o.span.to); wake(); } };
+  STAGE = { wake, relax, follows: asGraph, close: closeCard, pick: (e) => { held = byId[e.id] || (e.uuid && byId[e.uuid]) || null; o.play(false); o.open(e); o.setDay(createdOn(e) || o.span.to); wake(); } };
   // the tip under the pointer, the card panel on a click
   const place = (box, px, py) => { const r = canvas.getBoundingClientRect(); box.style.left = `${Math.min(r.width - 280, Math.max(8, px + 14))}px`; box.style.top = `${Math.min(r.height - 90, py + 14)}px`; };
   const showTip = (c, px, py) => { const e = c.e; setKids(o.tip, el("b", {}, e.title.replace(/`/g, "")), el("div", { class: "note" }, `${c.lane.title} · ${c.day}${e.git?.created?.author ? " · " + e.git.created.author : ""}`), el("div", { class: "pills" }, ...typePills(e.type), statusPill(statusAt(e, now()) || e.status), evPill(e.evidence))); o.tip.hidden = false; place(o.tip, px, py); };
