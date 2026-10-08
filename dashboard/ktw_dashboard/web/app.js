@@ -2671,10 +2671,13 @@ function runStage(canvas, o) {
     for (const r of c.e.see || []) { const t = r?.uuid && byId[r.uuid]; if (t && t !== c) links.push({ a: c, b: t, kind: "see", day: seeDay(c.e, r) }); }
     const sb = c.e.superseded_by ? parseSupersededBy(c.e.superseded_by)?.uuid : null; const t = sb && byId[sb]; if (t && t !== c) links.push({ a: c, b: t, kind: "superseded", day: supersededDay(c.e) });
   }
-  // depth is logarithmic in days: yesterday is a step away, last week two, a year ago fourteen — the last
-  // days spread out where the eye is, the whole past stays in view
-  const depth = (days) => 4 * Math.log1p(Math.max(0, days) / 10);
-  const F = 4.2; // focal length in lane units: a month back is still half size, so the past spreads instead of piling at the centre
+  // depth is logarithmic in days and scaled to the project's span: the last days spread out where the eye is,
+  // and the oldest entry stands at about two fifths of full size whether the project is three months or three
+  // years old — so the past fills the stage instead of gathering at the horizon
+  const F = 4.2; // focal length in plane units
+  const spanDays = Math.max(14, dayDiff(o.span.from, o.span.to));
+  const DEPTH_FAR = F * 1.4; // the depth at which size is 1 / 2.4
+  const depth = (days) => DEPTH_FAR * Math.log1p(Math.max(0, days) / 10) / Math.log1p(spanDays / 10);
   let zoom = 1, panX = 0, panY = 0; // the camera: zoom around the near plane, pan in screen pixels
   const camY = 1.85; // the eye just above the upper shelf's top row: the floor runs up toward the horizon
   const floorY = -0.95; // the floor's height
@@ -2712,12 +2715,14 @@ function runStage(canvas, o) {
   // is given up then, and the cards settle again. A frame with pushes left asks for another.
   // Settling ends: after SETTLE_FRAMES frames of pushes the cards stay where they are until the next relax — two
   // cards wedged between their bounds would otherwise trade places forever.
-  const SETTLE_FRAMES = 120; let unsettled = false, settleFrames = 0;
-  const relax = () => { for (const c of cards) { c.ox = (c.ox || 0) * 0.5; c.oy = (c.oy || 0) * 0.5; } settleFrames = 0; };
+  const SETTLE_FRAMES = 120; let unsettled = false, settleFrames = 0, easing = 0;
+  // relax: the offsets give up half their room, eased over a dozen frames so nothing jumps, while the pushes go on
+  const relax = () => { easing = 12; settleFrames = 0; };
+  const ease = () => { if (!easing) return; easing--; for (const c of cards) { c.ox = (c.ox || 0) * 0.944; c.oy = (c.oy || 0) * 0.944; } unsettled = true; };
   // how far a card may go: sideways within the room, up to just under the eye, down to just above the floor
   const room = (c) => { const b = basePos(c); return { xlo: -1.3, xhi: 1.3, ylo: Math.max(-0.9, floorY + 0.3 - b.y), yhi: Math.min(0.9, camY - 0.35 - b.y) }; };
   function keepApart(vis, boxes) {
-    unsettled = false;
+    unsettled = false; ease();
     if (settleFrames >= SETTLE_FRAMES) return;
     for (let i = 0; i < vis.length; i++) {
       const A = vis[i], a = boxes.get(A.c);
@@ -2748,12 +2753,12 @@ function runStage(canvas, o) {
     }
     if (unsettled) settleFrames++;
   }
-  const depthAlpha = (z) => Math.max(0.14, Math.min(1, 1.08 - z / 16));
+  const depthAlpha = (z) => Math.max(0.2, Math.min(1, 1.1 - z / (DEPTH_FAR * 1.6)));
   const HATCH = new Map(); // colour -> pattern: diagonal lines, the fill of an inferred entry
   const hatch = (col) => { if (!HATCH.has(col)) { const pc = document.createElement("canvas"); pc.width = pc.height = 6; const x = pc.getContext("2d"); if (x) { x.strokeStyle = col; x.lineWidth = 1.2; x.beginPath(); x.moveTo(-1, 7); x.lineTo(7, -1); x.moveTo(-1, 1); x.lineTo(1, -1); x.moveTo(5, 7); x.lineTo(7, 5); x.stroke(); } HATCH.set(col, ctx.createPattern(pc, "repeat")); } return HATCH.get(col); };
   const litIds = () => { const t = graph?.thought; const set = new Set(); if (t) for (const n of t.nodes) if (n.entry) set.add(n.entry.uuid || n.id); return set; };
   const litPairs = () => graph?.thought?.pairs || null;
-  let hover = null, held = null, drag = null, moved = false, pinch = null, raf = null, lastDraw = 0;
+  let hover = null, held = null, drag = null, moved = false, pinch = null, raf = null, topicNames = null;
   // which foreign cards show: joined to one of ours by a chain of See or Superseded by (in either direction), all, or none
   { const adj = new Map(); const addEdge = (a, b) => { (adj.get(a) || adj.set(a, []).get(a)).push(b); }; for (const l of links) { addEdge(l.a, l.b); addEdge(l.b, l.a); }
     const seen = new Set(cards.filter((c) => !c.ext)); const queue = [...seen];
@@ -2787,7 +2792,7 @@ function runStage(canvas, o) {
     { ctx.globalAlpha = 1; ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.font = `600 11px ${color("--mono") || "monospace"}`; ctx.fillStyle = color("--accent2"); ctx.fillText(`${day}${PLAY.on ? " ▶" : ""}`, 10, 9); ctx.textBaseline = "middle"; }
     // the lanes' names along the near edge — or, as the graph, the topics' names where their hubs stand, faint, behind the cards
     ctx.font = `10.5px ${color("--font") || "sans-serif"}`; ctx.textAlign = "center"; ctx.textBaseline = "top";
-    if (byGraph) for (const n of tnodes()) { if (n.ext) continue; const alive = cards.some((c) => !c.ext && c.e.file === n.file && existsAt(c.e, day)); if (!alive) continue; const q = gmap(n); const [x, y] = proj(q.x, q.y, 0); ctx.fillStyle = color("--fg3"); ctx.globalAlpha = 0.55; ctx.fillText(((n.ext && n.proj ? `${n.proj} · ` : "") + (n.label || n.file)).replace(/`/g, "").slice(0, 34), x, y); }
+    if (byGraph) topicNames = []; // drawn after the cards, at the centre of each topic's cards on screen
     else for (const L of lanes) { const alive = L.items.some((e) => existsAt(e, day)); if (!alive) continue; const [x, y, s] = proj(L.x, floorY, 0); const w = K() * s * 0.9 - 10; const t = L.title; let txt = t; while (txt.length > 3 && ctx.measureText(txt).width > w) txt = txt.slice(0, -2); if (txt !== t) txt = txt.slice(0, -1) + "…"; ctx.fillStyle = color("--fg2"); ctx.globalAlpha = L.shelf ? 0.9 : 0.65; ctx.fillText(`${L.shelf ? "▴" : "▾"} ${txt}`, x, y + (L.shelf ? 5 : 19)); }
     // the cards, far ones first
     const vis = cards.filter(shown).map((c) => ({ c, z: zCard(c) })).sort((a, b) => b.z - a.z);
@@ -2846,6 +2851,15 @@ function runStage(canvas, o) {
         lines.slice(0, maxLines).forEach((t, i) => { let txt = t; if (i === maxLines - 1 && (lines.length > maxLines || words.length > lines.join(" ").split(" ").length)) txt += "…"; const room = b.w - 10 - (i === 0 && fold ? fold : 0); while (txt.length > 2 && ctx.measureText(txt).width > room) txt = txt.slice(0, -2) + "…"; ctx.fillText(txt, b.x0 + 5, b.y0 + 4 + top + i * lh); });
       }
       rects.push({ ...b, c });
+    }
+    // the topics' names, each at the centre of its cards on screen, on a pill: the cards recede with the days,
+    // a name on the near plane would stand nowhere near them
+    if (topicNames) {
+      const groups = new Map();
+      for (const { c } of vis) { if (c.ext) continue; const b = boxes.get(c); const g = groups.get(c.e.file) || groups.set(c.e.file, { x: 0, y: 0, n: 0 }).get(c.e.file); g.x += b.cx; g.y += b.cy; g.n++; }
+      ctx.font = `600 10.5px ${color("--font") || "sans-serif"}`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      for (const [file, g] of groups) { const t = (topicOf(file)?.title || file).replace(/`/g, "").slice(0, 34); const x = g.x / g.n, y = g.y / g.n; const w = ctx.measureText(t).width + 12; ctx.globalAlpha = 0.82; ctx.fillStyle = color("--bg"); ctx.fillRect(x - w / 2, y - 8, w, 16); ctx.globalAlpha = 0.9; ctx.fillStyle = color("--fg2"); ctx.fillText(t, x, y); }
+      topicNames = null;
     }
     ctx.globalAlpha = 1;
     if (unsettled) wake();
