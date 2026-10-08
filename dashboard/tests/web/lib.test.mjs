@@ -350,7 +350,9 @@ test("existsAt: from the day the heading first appeared; uncommitted only today;
   const fresh = { git: { created: { date: "", author: "(uncommitted)" } } };
   assert.ok(!existsAt(fresh, "2020-01-01"));
   assert.ok(existsAt(fresh, todayISO()));
-  assert.ok(existsAt({ status: "active" }, "2020-01-01"), "no Git at all: it simply is");
+  assert.ok(!existsAt({ status: "active" }, "2020-01-01"), "no Git on the entry in a project with a repository: not committed yet, today only");
+  assert.ok(existsAt({ status: "active" }, todayISO()));
+  assert.ok(existsAt({ status: "active" }, "2020-01-01", false), "a project without a repository: it simply is");
 });
 
 test("statusAt follows the status history up to the day", () => {

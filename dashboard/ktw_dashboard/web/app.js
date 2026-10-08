@@ -254,8 +254,11 @@ let selected = null; // entry id shown in the details pane
 // everywhere else. Every graph on the page follows it: only what existed on that day, with the status it
 // had then, and the See and Superseded by lines that had been written by then (lib.js, existsAt and friends).
 let CLOCK = null; let CLOCK_N = -1;
-const atClock = (e) => existsAt(e, CLOCK);
-const statusNow = (e) => (CLOCK ? statusAt(e, CLOCK) || e.status : e.status);
+// an entry of this project goes by this project's repository: with one, an entry without a Git date is not committed
+// yet and exists today only; without one there are no days to go by. A foreign entry's export came from a repository.
+const hasRepo = (e) => (e?.origin || e?.project ? true : !!S?.project?.git?.available);
+const atClock = (e, ext = false) => existsAt(e, CLOCK, ext || hasRepo(e));
+const statusNow = (e) => (CLOCK ? statusAt(e, CLOCK, hasRepo(e)) || e.status : e.status);
 function setClock(day) {
   if (day === CLOCK) return;
   CLOCK = day;
@@ -2251,10 +2254,10 @@ function runGraph(canvas, g, opts = {}) {
   const minScale = () => Math.min(0.15, (g.fitScale || 0.15) / 2);
   const zoomTo = (ns, px, py) => { ns = Math.min(6, Math.max(minScale(), ns)); const k = ns / g.scale; g.ox = px - (px - g.ox) * k; g.oy = py - (py - g.oy) * k; g.scale = ns; };
   // under the clock an entry is there from the day it was created, a topic from its first entry's day
-  const topicAlive = (n) => !CLOCK || g.nodes.some((m) => m.kind === "entry" && m.file === n.file && (m.unit || "") === (n.unit || "") && atClock(m.entry));
+  const topicAlive = (n) => !CLOCK || g.nodes.some((m) => m.kind === "entry" && m.file === n.file && (m.unit || "") === (n.unit || "") && atClock(m.entry, !!m.ext));
   // under the clock every entry follows it, a friend's or a family member's as much as our own (their exports carry
   // the same Git days); one without Git is simply there
-  const visible = (n) => n.kind === "topic" ? topicAlive(n) : n.kind !== "entry" ? true : atClock(n.entry) && (g.showEntries || !!g.thought?.nodes.has(n));
+  const visible = (n) => n.kind === "topic" ? topicAlive(n) : n.kind !== "entry" ? true : atClock(n.entry, !!n.ext) && (g.showEntries || !!g.thought?.nodes.has(n));
   // a topic-level reference stands in for entry references only while entries are hidden
   const linkOn = (l) => visible(g.nodes[l.s]) && visible(g.nodes[l.t]) && (l.kind !== "xtopic" || !g.showEntries) && linkExistsAt(CLOCK, l.day);
   const dim = (n) => n.kind === "entry" && filterActive() && !matches(n.entry);
@@ -2547,13 +2550,13 @@ function viewTimeline(main, day) {
   const jump = (to, title, label) => el("button", { type: "button", class: "play-jump", title, onclick: () => { play(false); setDay(to()); } }, label);
   // the card beside the bars: the entry that appeared last by the day shown, or the one clicked on the stage
   const card = el("div", { class: "stage-card" }); let HELD = null; // the held entry's id, after a click
-  const latestEntry = (d) => { let best = null; for (const e of S.entries) { if (!existsAt(e, d)) continue; const c = createdOn(e) || span.to; if (!best || c >= best.c) best = { e, c }; } return best?.e || null; };
+  const latestEntry = (d) => { let best = null; for (const e of S.entries) { if (!existsAt(e, d, hasRepo(e))) continue; const c = createdOn(e) || span.to; if (!best || c >= best.c) best = { e, c }; } return best?.e || null; };
   function fillCard(e, held, c = null) {
     const d = CLOCK || span.to; const lane = c?.lane?.title || (e.project ? `${e.project} · ` : "") + (topicOf(e.file)?.title || e.file).replace(/`/g, ""); const href = c?.href || entryHref(e);
     const body = e.body?.text || "";
     setKids(card, el("div", { class: "stage-card-head" }, el("span", { class: "note mono" }, `${createdOn(e) || "today"} · ${lane}`), held ? el("button", { type: "button", class: "pill stage-card-held", title: "let go — back to the latest entry by the day shown", onclick: () => STAGE?.close?.() }, "picked ", el("b", {}, "×")) : el("span", { class: "pill" }, "latest by then")),
       el("h3", {}, el("a", { href, title: "read the whole entry" }, e.title.replace(/`/g, ""))),
-      el("div", { class: "pills" }, ...typePills(e.type), statusPill(statusAt(e, d) || e.status), evPill(e.evidence)),
+      el("div", { class: "pills" }, ...typePills(e.type), statusPill(statusAt(e, d, c?.ext || hasRepo(e)) || e.status), evPill(e.evidence)),
       body ? el("div", { class: "body stage-card-body", html: renderMarkdown(body) }) : el("p", { class: "empty stage-card-body" }, typeof S.bodies === "string" ? "loading the text…" : "no text"),
       el("div", { class: "stage-card-foot" }, e.git?.created?.author ? el("span", { class: "note" }, `recorded by ${e.git.created.author}`) : el("span"), el("a", { href }, "open ›")));
     if (typeof S.bodies === "string" && !c?.ext) ensureBodies(SELF).then(() => { if (card.isConnected && (HELD ? HELD === (e.uuid || e.id) : latestEntry(CLOCK || span.to) === e)) fillCard(e, held, c); });
@@ -2769,7 +2772,8 @@ function runStage(canvas, o) {
   const litIds = () => { const t = graph?.thought; const set = new Set(); if (t) for (const n of t.nodes) if (n.entry) set.add(n.entry.uuid || n.id); return set; };
   const litPairs = () => graph?.thought?.pairs || null;
   let hover = null, held = null, drag = null, moved = false, pinch = null, raf = null, topicNames = null;
-  const shown = (c) => foreignOn(c) && existsAt(c.e, now()) && (!PLAY.on || zOf(c.day) >= -0.02);
+  const thereAt = (c, day) => existsAt(c.e, day, c.ext || hasRepo(c.e));
+  const shown = (c) => foreignOn(c) && thereAt(c, now()) && (!PLAY.on || zOf(c.day) >= -0.02);
   const zFarOf = () => Math.max(1, depth(tNow() + 20));
   const rects = []; // screen boxes of the cards drawn, near ones last; each with its foot, the line down to the floor
   const nearFoot = (r, px, py) => { const [ax, ay, bx, by] = r.foot; const dx = bx - ax, dy = by - ay; const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy || 1))); return Math.hypot(px - (ax + t * dx), py - (ay + t * dy)) <= 4; };
@@ -2797,7 +2801,7 @@ function runStage(canvas, o) {
     // the lanes' names along the near edge — or, as the graph, the topics' names where their hubs stand, faint, behind the cards
     ctx.font = `10.5px ${color("--font") || "sans-serif"}`; ctx.textAlign = "center"; ctx.textBaseline = "top";
     if (byGraph) topicNames = []; // drawn after the cards, at the centre of each topic's cards on screen
-    else for (const L of lanes) { const alive = L.items.some((c) => existsAt(c.e, day)); if (!alive) continue; const [x, y, s] = proj(L.x, floorY, 0); const w = K() * s * 0.9 - 10; const t = L.title; let txt = t; while (txt.length > 3 && ctx.measureText(txt).width > w) txt = txt.slice(0, -2); if (txt !== t) txt = txt.slice(0, -1) + "…"; ctx.fillStyle = color("--fg2"); ctx.globalAlpha = L.shelf ? 0.9 : 0.65; ctx.fillText(`${L.shelf ? "▴" : "▾"} ${txt}`, x, y + (L.shelf ? 5 : 19)); }
+    else for (const L of lanes) { const alive = L.items.some((c) => thereAt(c, day)); if (!alive) continue; const [x, y, s] = proj(L.x, floorY, 0); const w = K() * s * 0.9 - 10; const t = L.title; let txt = t; while (txt.length > 3 && ctx.measureText(txt).width > w) txt = txt.slice(0, -2); if (txt !== t) txt = txt.slice(0, -1) + "…"; ctx.fillStyle = color("--fg2"); ctx.globalAlpha = L.shelf ? 0.9 : 0.65; ctx.fillText(`${L.shelf ? "▴" : "▾"} ${txt}`, x, y + (L.shelf ? 5 : 19)); }
     // the cards, far ones first
     const vis = cards.filter(shown).map((c) => ({ c, z: zCard(c) })).sort((a, b) => b.z - a.z);
     const cardScale = byGraph ? 0.66 : 1; // as the graph the cards stand closer: smaller, the tip tells the rest
@@ -2816,7 +2820,7 @@ function runStage(canvas, o) {
     }
     ctx.setLineDash([]);
     for (const { c, z } of vis) {
-      const b = boxes.get(c); const e = c.e; const st = statusAt(e, day) || e.status; const sup = st === "superseded";
+      const b = boxes.get(c); const e = c.e; const st = statusAt(e, day, c.ext || hasRepo(e)) || e.status; const sup = st === "superseded";
       const isLit = lit.has(e.uuid || c.nid); const isStep = step && (e.uuid === step || c.nid === step);
       const faded = (anyLit && !isLit && c !== hover && c !== held) || (filterActive() && !matches(e));
       const fresh = dayDiff(c.day, day) <= 3 && !PLAY.frac; // arrived within three days of the day shown: it glows
@@ -2874,7 +2878,7 @@ function runStage(canvas, o) {
   STAGE = { wake, relax, follows: asGraph, close: closeCard, pick: (e) => { held = (e.uuid && byId[e.uuid]) || byId[e.id] || null; o.play(false); o.open(e, held); o.setDay(createdOn(e) || o.span.to); wake(); } };
   // the tip under the pointer, the card panel on a click
   const place = (box, px, py) => { const r = canvas.getBoundingClientRect(); const w = box.offsetWidth || 280, h = box.offsetHeight || 80; const left = px + 14 + w > r.width - 8 ? Math.max(8, px - 14 - w) : px + 14; const top = py + 14 + h > r.height - 8 ? Math.max(8, py - 14 - h) : py + 14; box.style.left = `${left}px`; box.style.top = `${top}px`; };
-  const showTip = (c, px, py) => { const e = c.e; setKids(o.tip, el("b", {}, e.title.replace(/`/g, "")), el("div", { class: "note" }, `${c.lane?.title || c.e.file} · ${c.day}${e.git?.created?.author ? " · " + e.git.created.author : ""}`), el("div", { class: "pills" }, ...typePills(e.type), statusPill(statusAt(e, now()) || e.status), evPill(e.evidence))); o.tip.hidden = false; place(o.tip, px, py); };
+  const showTip = (c, px, py) => { const e = c.e; setKids(o.tip, el("b", {}, e.title.replace(/`/g, "")), el("div", { class: "note" }, `${c.lane?.title || c.e.file} · ${c.day}${e.git?.created?.author ? " · " + e.git.created.author : ""}`), el("div", { class: "pills" }, ...typePills(e.type), statusPill(statusAt(e, now(), c.ext || hasRepo(e)) || e.status), evPill(e.evidence))); o.tip.hidden = false; place(o.tip, px, py); };
   const hideTip = () => { o.tip.hidden = true; };
   function openCard(c) { held = c; o.open(c.e, c); wake(); }
   function closeCard() { if (!held) return; held = null; o.close(); wake(); }

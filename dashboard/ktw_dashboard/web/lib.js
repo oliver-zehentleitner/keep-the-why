@@ -381,21 +381,24 @@ export function mergeStates(groups) {
 // is the last status change up to that day; a See exists from its `as of`
 // day (never before the citing entry), a Superseded by from the day the old
 // entry's status became superseded. An entry not yet committed has no
-// date: it exists today only. Without a clock (null) everything is as it is.
+// date — whether Git knows the file and not the entry, or not the file at
+// all — it exists today only; `repo` false (a project without a repository)
+// means there are no days to go by and everything simply is. Without a
+// clock (null) everything is as it is.
 export const todayISO = () => new Date().toISOString().slice(0, 10);
 export const addDays = (iso, n) => { const d = new Date(`${iso}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 export const dayDiff = (a, b) => Math.round((new Date(`${b}T00:00:00Z`) - new Date(`${a}T00:00:00Z`)) / 86400000);
 export const createdOn = (e) => e?.git?.created?.date || "";
-export function existsAt(e, day) {
-  if (!day || !e?.git) return true;
+export function existsAt(e, day, repo = true) {
+  if (!day || !repo) return true;
   const c = createdOn(e);
   return c ? c <= day : day >= todayISO();
 }
-export function statusAt(e, day) {
+export function statusAt(e, day, repo = true) {
   if (!day || !e?.git) return e?.status;
   const h = (e.git.status_history || []).filter((x) => x.date && x.date <= day);
   if (h.length) return h[h.length - 1].status;
-  return existsAt(e, day) ? e.status : null;
+  return existsAt(e, day, repo) ? e.status : null;
 }
 // the day a link came to be: a See from `from`'s reference `ref`, a Superseded by from the old entry `from`
 export function seeDay(from, ref) { const c = createdOn(from); const d = ref?.date || ""; return d && c ? (d > c ? d : c) : d || c; }
