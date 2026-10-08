@@ -2848,9 +2848,10 @@ function runStage(canvas, o) {
       if (e.evidence === "unknown" && b.w > 30) { ctx.fillStyle = color("--unknown"); ctx.font = `700 ${Math.max(8, Math.min(12, b.h * 0.32))}px ${color("--font") || "sans-serif"}`; ctx.textAlign = "left"; ctx.textBaseline = "bottom"; ctx.fillText("?", b.x0 + 5, b.y1 - 2); }
       if (st === "open" || st === "needs-review" || st === "pending-confirmation") { ctx.strokeStyle = color(`--${st}`); ctx.lineWidth = 1.2; ctx.strokeRect(b.x0 - 3, b.y0 - 3, b.w + 6, b.h + 6); }
       if (isStep) { ctx.strokeStyle = color("--accent2"); ctx.lineWidth = 2.5; ctx.strokeRect(b.x0 - 5, b.y0 - 5, b.w + 10, b.h + 10); }
-      // the title, where it fits
-      const fs = Math.min(12, 11 * b.s * zoom); const top = kind === "constraint" || kind === "incident" ? band + 1 : 0;
-      if (b.w > 54 && fs >= 8.5) {
+      // the title, on every card that has room for a word: the type never shrinks below reading size, so a card far
+      // back shows its first words rather than nothing
+      const fs = Math.max(9.5, Math.min(12, 11 * b.s * zoom)); const top = kind === "constraint" || kind === "incident" ? band + 1 : 0;
+      if (b.w > 26 && b.h - 6 - top >= fs) {
         ctx.font = `${fs}px ${color("--font") || "sans-serif"}`; ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.fillStyle = sup ? color("--fg3") : color("--fg");
         ctx.setLineDash([]); const words = e.title.replace(/`/g, "").split(" "); const lines = []; let cur = "";
         for (const w of words) { const t = cur ? `${cur} ${w}` : w; if (ctx.measureText(t).width > b.w - 10 && cur) { lines.push(cur); cur = w; } else cur = t; if (lines.length >= 3) break; }
