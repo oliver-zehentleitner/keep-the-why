@@ -2703,11 +2703,13 @@ function runStage(canvas, o) {
   const baseK = () => Math.max(56, Math.min(190, (W - 40) / 5.6));
   const KY = () => Math.max(baseK(), Math.min(2 * baseK(), (H - 60) / 3.15)) * zoom; // up: the same in both arrangements, so the stage keeps its height by topic
   const K = () => (asGraph() ? KY() : Math.max(56, Math.min(190, (W - 40) / (cols + 1.2))) * zoom); // across: by topic the lanes' width
-  // what must fit on screen with the stage: the bars above it are scrolled away, but the legend and the note under it
-  // stay in view, so they, the page's fixed bars and the stage's margins are taken off the window's height
+  // what must fit on screen with the stage, without scrolling: everything above it on the page (the title, the text,
+  // the bars, the controls, the card), the legend and the note under it, the page's fixed bars, the margins — all of
+  // it comes off the window's height; only what is left lets the box grow
   const roomBelow = () => { let below = 32; for (let n = o.wrap.nextElementSibling, i = 0; n && i < 2; n = n.nextElementSibling, i++) below += n.offsetHeight + 12; return below; };
+  const roomAbove = () => { const main = o.wrap.closest("#main"); return main ? o.wrap.getBoundingClientRect().top - main.getBoundingClientRect().top + main.scrollTop : 0; };
   const chrome = () => (narrow() ? 60 : 108); // the top bar, the strip, the status bar
-  const fitHeight = () => { const base = baseK() * 3.15 + 60; const h = Math.round(Math.max(220, Math.min(1400, Math.max(base, Math.min(2 * base, window.innerHeight - chrome() - roomBelow()))))); if (Math.abs(h - o.wrap.getBoundingClientRect().height) > 2) o.wrap.style.height = `${h}px`; };
+  const fitHeight = () => { const base = baseK() * 3.15 + 60; const h = Math.round(Math.max(220, Math.min(1400, Math.max(base, Math.min(2 * base, window.innerHeight - chrome() - roomAbove() - roomBelow()))))); if (Math.abs(h - o.wrap.getBoundingClientRect().height) > 2) o.wrap.style.height = `${h}px`; };
   const horizon = () => H * 0.13 + panY; const cx = () => W / 2 + panX;
   const now = () => (CLOCK || o.span.to);
   const tNow = () => dayDiff(o.span.from, now()) + (PLAY.on ? PLAY.frac : 0); // days since the first day, fractional while playing
