@@ -2838,7 +2838,7 @@ function runStage(canvas, o) {
     for (const l of links) {
       if (!boxes.has(l.a) || !boxes.has(l.b) || !linkExistsAt(day, l.day)) continue;
       const onLit = pairs && (pairs.has(`${l.a.nid}|${l.b.nid}`) || pairs.has(`${l.b.nid}|${l.a.nid}`));
-      const near = hover && (l.a === hover || l.b === hover);
+      const near = (hover && (l.a === hover || l.b === hover)) || (held && (l.a === held || l.b === held)); // the card's lines stand out while it is pointed at or held
       const A = boxes.get(l.a), B = boxes.get(l.b);
       ctx.globalAlpha = onLit || near ? 0.95 : anyLit ? 0.08 : 0.35 * Math.min(A.s, B.s) + 0.1;
       ctx.strokeStyle = onLit || near ? color("--fg") : l.kind === "see" ? color("--accent2") : color("--fg3"); ctx.lineWidth = onLit || near ? 1.6 : 1; ctx.setLineDash(l.kind === "superseded" ? [5, 4] : []);
