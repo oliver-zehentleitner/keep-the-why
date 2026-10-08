@@ -2671,7 +2671,10 @@ function runStage(canvas, o) {
   let zoom = 1, panX = 0, panY = 0; // the camera: zoom around the near plane, pan in screen pixels
   const camY = 1.85; // the eye just above the upper shelf's top row: the floor runs up toward the horizon
   const floorY = -0.95; // the floor's height
-  const K = () => Math.max(56, Math.min(190, (W - 40) / (cols + 1.2))) * zoom; // pixels per lane unit on the near plane
+  // pixels per unit on the near plane: as the graph the plane is a fixed width in units, whatever the lane count —
+  // the friends' lanes would otherwise shrink the whole picture; by topic it is the lanes' width
+  const UNITS = () => (asGraph() ? 5.6 : cols + 1.2);
+  const K = () => Math.max(56, Math.min(190, (W - 40) / UNITS())) * zoom;
   // the box is as tall as the near plane needs — a narrow pane gets a low stage, a wide one a tall one
   const fitHeight = () => { const h = Math.round(Math.max(220, Math.min(760, K() / zoom * 3.15 + 60))); if (Math.abs(h - o.wrap.getBoundingClientRect().height) > 2) o.wrap.style.height = `${h}px`; };
   const horizon = () => H * 0.13 + panY; const cx = () => W / 2 + panX;
@@ -2689,7 +2692,7 @@ function runStage(canvas, o) {
   // the graph's plane onto the near plane: the box is the 4th to 96th percentile of the nodes, so a few outliers do
   // not squeeze the rest into the middle; what lies outside is held at the edge
   const clamp01 = (u) => Math.max(-0.08, Math.min(1.08, u));
-  const gmap = (n) => { const ux = clamp01((n.x - gbox.x0) / (gbox.x1 - gbox.x0 || 1)), uy = clamp01((n.y - gbox.y0) / (gbox.y1 - gbox.y0 || 1)); return { x: (ux - 0.5) * (cols + 0.2), y: SHELF[1] + 0.55 - uy * (SHELF[1] + 0.55 - (SHELF[0] - 0.5)) }; };
+  const gmap = (n) => { const ux = clamp01((n.x - gbox.x0) / (gbox.x1 - gbox.x0 || 1)), uy = clamp01((n.y - gbox.y0) / (gbox.y1 - gbox.y0 || 1)); return { x: (ux - 0.5) * (UNITS() - 1), y: SHELF[1] + 0.55 - uy * (SHELF[1] + 0.55 - (SHELF[0] - 0.5)) }; };
   const measureGraph = () => { const xs = [], ys = []; for (const c of cards) { const n = nodeOf(c); if (n) { xs.push(n.x); ys.push(n.y); } } if (xs.length < 2) return; xs.sort((a, b) => a - b); ys.sort((a, b) => a - b); const at = (arr, q) => arr[Math.round(q * (arr.length - 1))]; const x0 = at(xs, 0.04), x1 = at(xs, 0.96), y0 = at(ys, 0.04), y1 = at(ys, 0.96); if (x0 < x1 && y0 < y1) Object.assign(gbox, { x0, x1, y0, y1 }); };
   const basePos = (c) => { const n = asGraph() ? nodeOf(c) : null; return n ? gmap(n) : { x: c.x, y: c.y }; };
   const posOf = (c) => { const q = basePos(c); return { x: q.x + (c.ox || 0), y: q.y + (c.oy || 0) }; };
@@ -2754,8 +2757,8 @@ function runStage(canvas, o) {
     const zFar = zFarOf(); const byGraph = asGraph(); if (byGraph) measureGraph();
     // the floor: lane lines into the depth (by topic), a line per month across, the year at its first month
     ctx.lineWidth = 1; ctx.strokeStyle = color("--line"); ctx.globalAlpha = 0.9;
-    const xl = -cols / 2 - 0.1, xr = cols / 2 + 0.1;
-    for (let i = 0; i <= (byGraph ? 0 : cols); i++) { const x = byGraph ? 0 : i - cols / 2; const [ax, ay] = proj(byGraph ? xl : x, floorY, -0.4); const [bx, by] = proj(byGraph ? xl : x, floorY, zFar); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); if (byGraph) { const [cx2, cy2] = proj(xr, floorY, -0.4), [dx2, dy2] = proj(xr, floorY, zFar); ctx.beginPath(); ctx.moveTo(cx2, cy2); ctx.lineTo(dx2, dy2); ctx.stroke(); } }
+    const half = byGraph ? UNITS() / 2 - 0.5 : cols / 2; const xl = -half - 0.1, xr = half + 0.1;
+    for (let i = 0; i <= (byGraph ? 0 : cols); i++) { const x = byGraph ? 0 : i - half; const [ax, ay] = proj(byGraph ? xl : x, floorY, -0.4); const [bx, by] = proj(byGraph ? xl : x, floorY, zFar); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); if (byGraph) { const [cx2, cy2] = proj(xr, floorY, -0.4), [dx2, dy2] = proj(xr, floorY, zFar); ctx.beginPath(); ctx.moveTo(cx2, cy2); ctx.lineTo(dx2, dy2); ctx.stroke(); } }
     ctx.font = `10px ${color("--font") || "sans-serif"}`; ctx.textBaseline = "middle";
     let [yy, mm] = day.slice(0, 7).split("-").map(Number); // from the month of the day shown back to the first
     for (let guard = 0; guard < 600; guard++) {
@@ -2769,7 +2772,7 @@ function runStage(canvas, o) {
     { ctx.globalAlpha = 1; ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.font = `600 11px ${color("--mono") || "monospace"}`; ctx.fillStyle = color("--accent2"); ctx.fillText(`${day}${PLAY.on ? " ▶" : ""}`, 10, 9); ctx.textBaseline = "middle"; }
     // the lanes' names along the near edge — or, as the graph, the topics' names where their hubs stand, faint, behind the cards
     ctx.font = `10.5px ${color("--font") || "sans-serif"}`; ctx.textAlign = "center"; ctx.textBaseline = "top";
-    if (byGraph) for (const n of tnodes()) { const alive = cards.some((c) => c.e.file === n.file && (nodeOf(c)?.unit || "") === (n.unit || "") && existsAt(c.e, day)); if (!alive) continue; const q = gmap(n); const [x, y] = proj(q.x, q.y, 0); ctx.fillStyle = color("--fg3"); ctx.globalAlpha = 0.55; ctx.fillText(((n.ext && n.proj ? `${n.proj} · ` : "") + (n.label || n.file)).replace(/`/g, "").slice(0, 34), x, y); }
+    if (byGraph) for (const n of tnodes()) { if (n.ext) continue; const alive = cards.some((c) => c.e.file === n.file && (nodeOf(c)?.unit || "") === (n.unit || "") && existsAt(c.e, day)); if (!alive) continue; const q = gmap(n); const [x, y] = proj(q.x, q.y, 0); ctx.fillStyle = color("--fg3"); ctx.globalAlpha = 0.55; ctx.fillText(((n.ext && n.proj ? `${n.proj} · ` : "") + (n.label || n.file)).replace(/`/g, "").slice(0, 34), x, y); }
     else for (const L of lanes) { const alive = L.items.some((e) => existsAt(e, day)); if (!alive) continue; const [x, y, s] = proj(L.x, floorY, 0); const w = K() * s * 0.9 - 10; const t = L.title; let txt = t; while (txt.length > 3 && ctx.measureText(txt).width > w) txt = txt.slice(0, -2); if (txt !== t) txt = txt.slice(0, -1) + "…"; ctx.fillStyle = color("--fg2"); ctx.globalAlpha = L.shelf ? 0.9 : 0.65; ctx.fillText(`${L.shelf ? "▴" : "▾"} ${txt}`, x, y + (L.shelf ? 5 : 19)); }
     // the cards, far ones first
     const vis = cards.filter(shown).map((c) => ({ c, z: zCard(c) })).sort((a, b) => b.z - a.z);
