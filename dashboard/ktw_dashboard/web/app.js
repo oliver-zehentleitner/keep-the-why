@@ -2687,10 +2687,15 @@ function runStage(canvas, o) {
   // offset on the card (near-plane units). Nothing pulls an offset back on its own — a steady pull against the push
   // made the cards shiver — the offsets are halved when the day or the arrangement changes (relax), so stale room
   // is given up then, and the cards settle again. A frame with pushes left asks for another.
-  let unsettled = false;
-  const relax = () => { for (const c of cards) { c.ox = (c.ox || 0) * 0.5; c.oy = (c.oy || 0) * 0.5; } };
+  // Settling ends: after SETTLE_FRAMES frames of pushes the cards stay where they are until the next relax — two
+  // cards wedged between their bounds would otherwise trade places forever.
+  const SETTLE_FRAMES = 120; let unsettled = false, settleFrames = 0;
+  const relax = () => { for (const c of cards) { c.ox = (c.ox || 0) * 0.5; c.oy = (c.oy || 0) * 0.5; } settleFrames = 0; };
+  // how far a card may go: sideways within the room, up to just under the eye, down to just above the floor
+  const room = (c) => { const b = basePos(c); return { xlo: -1.3, xhi: 1.3, ylo: Math.max(-0.9, floorY + 0.3 - b.y), yhi: Math.min(0.9, camY - 0.35 - b.y) }; };
   function keepApart(vis, boxes) {
     unsettled = false;
+    if (settleFrames >= SETTLE_FRAMES) return;
     for (let i = 0; i < vis.length; i++) {
       const A = vis[i], a = boxes.get(A.c);
       for (let j = i + 1; j < vis.length; j++) {
@@ -2698,13 +2703,27 @@ function runStage(canvas, o) {
         const b = boxes.get(B.c);
         const dx = Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0), dy = Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0);
         if (dx <= 2 || dy <= 2) continue;
-        unsettled = true;
         const sx = Math.sign(a.cx - b.cx) || (i & 1 ? 1 : -1), sy = Math.sign(a.cy - b.cy) || (j & 1 ? 1 : -1);
-        if (dx < dy) { const u = dx * 0.5; const ua = u / (K() * a.s), ub = u / (K() * b.s); A.c.ox = (A.c.ox || 0) + sx * ua; B.c.ox = (B.c.ox || 0) - sx * ub; a.x0 += sx * u; a.x1 += sx * u; a.cx += sx * u; b.x0 -= sx * u; b.x1 -= sx * u; b.cx -= sx * u; }
-        else { const u = dy * 0.5; const ua = u / (K() * a.s), ub = u / (K() * b.s); A.c.oy = (A.c.oy || 0) - sy * ua; B.c.oy = (B.c.oy || 0) + sy * ub; a.y0 += sy * u; a.y1 += sy * u; a.cy += sy * u; b.y0 -= sy * u; b.y1 -= sy * u; b.cy -= sy * u; }
+        const ra = room(A.c), rb = room(B.c);
+        // the push, half the overlap each — a card at its bound gives its half to the other; both at theirs: they stay
+        if (dx < dy) {
+          const u = dx * 0.5; let ua = u / (K() * a.s), ub = u / (K() * b.s);
+          const fa = sx > 0 ? Math.max(0, ra.xhi - (A.c.ox || 0)) : Math.max(0, (A.c.ox || 0) - ra.xlo), fb = sx > 0 ? Math.max(0, (B.c.ox || 0) - rb.xlo) : Math.max(0, rb.xhi - (B.c.ox || 0));
+          if (fa < ua) { ub = Math.min(ub + (ua - fa) * (b.s / a.s), fb); ua = fa; } else if (fb < ub) { ua = Math.min(ua + (ub - fb) * (a.s / b.s), fa); ub = fb; }
+          if (ua + ub <= 1e-4) continue;
+          unsettled = true; const pa = ua * K() * a.s, pb = ub * K() * b.s;
+          A.c.ox = (A.c.ox || 0) + sx * ua; B.c.ox = (B.c.ox || 0) - sx * ub; a.x0 += sx * pa; a.x1 += sx * pa; a.cx += sx * pa; b.x0 -= sx * pb; b.x1 -= sx * pb; b.cx -= sx * pb;
+        } else {
+          const u = dy * 0.5; let ua = u / (K() * a.s), ub = u / (K() * b.s); // screen y grows downward: sy > 0 moves A down, i.e. its oy down
+          const fa = sy > 0 ? Math.max(0, (A.c.oy || 0) - ra.ylo) : Math.max(0, ra.yhi - (A.c.oy || 0)), fb = sy > 0 ? Math.max(0, rb.yhi - (B.c.oy || 0)) : Math.max(0, (B.c.oy || 0) - rb.ylo);
+          if (fa < ua) { ub = Math.min(ub + (ua - fa) * (b.s / a.s), fb); ua = fa; } else if (fb < ub) { ua = Math.min(ua + (ub - fb) * (a.s / b.s), fa); ub = fb; }
+          if (ua + ub <= 1e-4) continue;
+          unsettled = true; const pa = ua * K() * a.s, pb = ub * K() * b.s;
+          A.c.oy = (A.c.oy || 0) - sy * ua; B.c.oy = (B.c.oy || 0) + sy * ub; a.y0 += sy * pa; a.y1 += sy * pa; a.cy += sy * pa; b.y0 -= sy * pb; b.y1 -= sy * pb; b.cy -= sy * pb;
+        }
       }
     }
-    for (const { c } of vis) { const base = basePos(c); c.ox = Math.max(-1.3, Math.min(1.3, c.ox || 0)); c.oy = Math.max(Math.max(-0.9, floorY + 0.3 - base.y), Math.min(Math.min(0.9, camY - 0.35 - base.y), c.oy || 0)); }
+    if (unsettled) settleFrames++;
   }
   const depthAlpha = (z) => Math.max(0.14, Math.min(1, 1.08 - z / 16));
   const HATCH = new Map(); // colour -> pattern: diagonal lines, the fill of an inferred entry
