@@ -2483,7 +2483,7 @@ function viewTimeline(main, day) {
   const max = Math.max(1, ...all.map((k) => Object.values(months[k] || {}).reduce((a, b) => a + b, 0)));
   // the drawing is as wide as the column beside the card, so its text keeps its size (an SVG scales as a whole)
   const mainW = main.clientWidth || 900; const Wd = Math.max(360, Math.round(narrow() ? mainW - 28 : mainW - 64 - 18 - Math.min(420, Math.max(280, (mainW - 82) * 0.42))));
-  const Hd = 130, padL = 34, padB = 32, padT = 10; const colW = (Wd - padL) / all.length; const bw = colW - 2; // a bar spans its month, first day to last, a hair between months
+  const Hd = 130, padL = 34, padB = 32, padT = 18; // room above the bars for the day's label, clear of them const colW = (Wd - padL) / all.length; const bw = colW - 2; // a bar spans its month, first day to last, a hair between months
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.setAttribute("viewBox", `0 0 ${Wd} ${Hd}`);
   const ns = (tag, attrs, text) => { const n = document.createElementNS("http://www.w3.org/2000/svg", tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); if (text != null) n.textContent = text; return n; };
   const axis = ns("g", { class: "axis" }); svg.append(axis);
@@ -2494,7 +2494,7 @@ function viewTimeline(main, day) {
   const clamp = (d) => (d < span.from ? span.from : d > span.to ? span.to : d);
   const total = Math.max(1, dayDiff(span.from, span.to));
   const monthX = (d) => { const i = all.indexOf(d.slice(0, 7)); if (i < 0) return d < all[0] ? padL : Wd; const dim = new Date(Date.UTC(+d.slice(0, 4), +d.slice(5, 7), 0)).getUTCDate(); return padL + (i + (Math.min(+d.slice(8, 10), dim) - 1) / dim) * colW + 1; };
-  const marker = ns("line", { class: "now", x1: padL, x2: padL, y1: padT, y2: Hd - padB + 14 }); const markerLabel = ns("text", { class: "now-label", x: padL, y: padT + 4, "text-anchor": "start" }, "");
+  const marker = ns("line", { class: "now", x1: padL, x2: padL, y1: padT - 4, y2: Hd - padB + 14 }); const markerLabel = ns("text", { class: "now-label", x: padL, y: 9, "text-anchor": "start" }, "");
   const listBox = el("div", { class: "entry-list", style: "margin-top:16px" });
   all.forEach((k, i) => {
     const x = padL + i * colW + 1; let yTop = scaleY(0);
