@@ -2313,8 +2313,8 @@ function runGraph(canvas, g, opts = {}) {
   function step(now) {
     const dt = lastT && now ? Math.min(100, now - lastT) : 16; lastT = now || 0;
     const drifting = driftOn() && !hover && !drag && !pan && !pinch;
-    if (drifting) { const a = DRIFT_RATE * dt, c = Math.cos(a), sn = Math.sin(a); for (const n of g.nodes) { const x = n.x, y = n.y; n.x = x * c - y * sn; n.y = x * sn + y * c; } if (g === graph && STAGE?.follows?.()) STAGE.wake(); }
-    if (g === graph && g.alpha > 0.003 && STAGE?.follows?.()) STAGE.wake(); // settling: the stage settles with it
+    if (drifting) { const a = DRIFT_RATE * dt, c = Math.cos(a), sn = Math.sin(a); for (const n of g.nodes) { const x = n.x, y = n.y; n.x = x * c - y * sn; n.y = x * sn + y * c; } }
+    if (g === graph && g.alpha > 0.01 && STAGE?.follows?.()) STAGE.wake(); // settling: the stage settles with it, then keeps the positions
     // settled and only turning: every other frame is enough
     if (drifting && g.alpha <= 0.003 && (frame++ & 1)) { g.raf = canvas.isConnected ? requestAnimationFrame(step) : null; return; }
     const ns = g.nodes.filter(visible);
@@ -2463,6 +2463,10 @@ let STAGE_LINKS = (() => { try { return localStorage.getItem("ktw-stage-links") 
 // "graph": a card stands where its node stands in the graph beside, the stage is the graph with time pulled out as depth;
 // "topics": a lane per topic across the width. An experiment with a switch, kept per browser.
 let STAGE_ARRANGE = (() => { try { return localStorage.getItem("ktw-stage-arrange") || "graph"; } catch { return "graph"; } })();
+// other repositories' entries on the stage: "linked" — only the ones a chain of See or Superseded by joins to this
+// project's entries; "all" — every one the graph holds; "none"
+let STAGE_FOREIGN = (() => { try { return localStorage.getItem("ktw-stage-foreign") || "linked"; } catch { return "linked"; } })();
+function setStageForeign(v) { STAGE_FOREIGN = v; try { localStorage.setItem("ktw-stage-foreign", v); } catch {} STAGE?.relax?.(); STAGE?.wake?.(); }
 function setStageArrange(v) { STAGE_ARRANGE = v; try { localStorage.setItem("ktw-stage-arrange", v); } catch {} STAGE?.relax?.(); STAGE?.wake?.(); }
 function setStageLinks(v) { STAGE_LINKS = v; try { localStorage.setItem("ktw-stage-links", v); } catch {} STAGE?.wake?.(); }
 function stopPlay() { PLAY.on = false; if (PLAY.raf) cancelAnimationFrame(PLAY.raf); PLAY.raf = null; PLAY.last = 0; PLAY.acc = 0; PLAY.frac = 0; }
@@ -2566,7 +2570,9 @@ function viewTimeline(main, day) {
     ...[["all", "all links"], ["lit", "lit only"], ["none", "no links"]].map(([v, l]) => el("button", { type: "button", class: v === STAGE_LINKS ? "on" : "", onclick: (ev) => { setStageLinks(v); for (const b of ev.currentTarget.parentNode.children) b.classList.toggle("on", b === ev.currentTarget); } }, l)));
   const arrangeSeg = el("span", { class: "mini-seg stage-links stage-arrange", title: "where a card stands: where its node stands in the graph beside (the stage is the graph, time pulled out as depth), or in a lane per topic" },
     ...[["graph", "as the graph"], ["topics", "by topic"]].map(([v, l]) => el("button", { type: "button", class: v === STAGE_ARRANGE ? "on" : "", onclick: (ev) => { setStageArrange(v); for (const b of ev.currentTarget.parentNode.children) b.classList.toggle("on", b === ev.currentTarget); } }, l)));
-  wrap.append(canvas, tip, arrangeSeg, linksSeg);
+  const foreignSeg = el("span", { class: "mini-seg stage-links stage-foreign", title: "other repositories' entries — friends, family, path: only the ones a chain of See or Superseded by joins to this project's, every one the graph holds, or none" },
+    el("span", { class: "seg-label" }, "others"), ...[["linked", "linked"], ["all", "all"], ["none", "none"]].map(([v, l]) => el("button", { type: "button", class: v === STAGE_FOREIGN ? "on" : "", onclick: (ev) => { setStageForeign(v); for (const b of ev.currentTarget.parentNode.querySelectorAll("button")) b.classList.toggle("on", b === ev.currentTarget); } }, l)));
+  wrap.append(canvas, tip, arrangeSeg, foreignSeg, linksSeg);
   main.append(el("div", { class: "timeline-head" },
       el("div", { class: "timeline-head-text" }, sub, el("div", { class: "timeline" }, svg),
         el("div", { class: "legend" }, S.authors.map((a) => el("span", {}, el("i", { class: "sw", style: `background:${authorColor(a.name)}` }), a.name)), el("span", {}, el("i", { class: "sw", style: "background:var(--superseded)" }), "superseded that month")),
@@ -2638,6 +2644,11 @@ function runStage(canvas, o) {
   // thought that crosses repositories lights every step here; a card keeps its node's id and reads the node afresh
   // each frame (the graph rebuilds its nodes on every render, the ids stay)
   const nodeOf = (c) => (graph?.index?.[c.nid] != null ? graph.nodes[graph.index[c.nid]] : null);
+  // where the nodes stand, copied from the graph while it settles and then kept: the graph's slow turn would
+  // otherwise walk the cards around the stage without end
+  const POS = new Map(); // node id -> { x, y }
+  const syncPositions = () => { if (!graph) return; if (POS.size && graph.alpha <= 0.01) return; for (const n of graph.nodes) if (n.kind === "entry" || n.kind === "topic") POS.set(n.id, { x: n.x, y: n.y }); };
+  const posNode = (id) => POS.get(id) || null;
   const entryNodes = (graph?.nodes || []).filter((n) => n.kind === "entry" && n.entry);
   const projOfNode = (n) => n.ext ? (n.proj || "") : (n.entry.project || "");
   const laneOf = (n) => `${projOfNode(n)}|${n.entry.file}`;
@@ -2687,14 +2698,16 @@ function runStage(canvas, o) {
   // stage's near plane, so the eye finds a node here where it finds it there, and the stage turns with the graph;
   // "topics": its lane and row. A node the graph does not have (another project's entry) falls back to the lane.
   const asGraph = () => STAGE_ARRANGE === "graph" && !!graph;
-  const tnodes = () => (graph?.nodes || []).filter((n) => n.kind === "topic");
+  const tnodes = () => (graph?.nodes || []).filter((n) => n.kind === "topic" && POS.has(n.id)).map((n) => ({ ...n, ...POS.get(n.id) }));
   const gbox = { x0: 0, x1: 1, y0: 0, y1: 1 };
   // the graph's plane onto the near plane: the box is the 4th to 96th percentile of the nodes, so a few outliers do
   // not squeeze the rest into the middle; what lies outside is held at the edge
   const clamp01 = (u) => Math.max(-0.08, Math.min(1.08, u));
-  const gmap = (n) => { const ux = clamp01((n.x - gbox.x0) / (gbox.x1 - gbox.x0 || 1)), uy = clamp01((n.y - gbox.y0) / (gbox.y1 - gbox.y0 || 1)); return { x: (ux - 0.5) * (UNITS() - 1), y: SHELF[1] + 0.55 - uy * (SHELF[1] + 0.55 - (SHELF[0] - 0.5)) }; };
-  const measureGraph = () => { const xs = [], ys = []; for (const c of cards) { const n = nodeOf(c); if (n) { xs.push(n.x); ys.push(n.y); } } if (xs.length < 2) return; xs.sort((a, b) => a - b); ys.sort((a, b) => a - b); const at = (arr, q) => arr[Math.round(q * (arr.length - 1))]; const x0 = at(xs, 0.04), x1 = at(xs, 0.96), y0 = at(ys, 0.04), y1 = at(ys, 0.96); if (x0 < x1 && y0 < y1) Object.assign(gbox, { x0, x1, y0, y1 }); };
-  const basePos = (c) => { const n = asGraph() ? nodeOf(c) : null; return n ? gmap(n) : { x: c.x, y: c.y }; };
+  const gmap = (n) => { const ux = clamp01((n.x - gbox.x0) / (gbox.x1 - gbox.x0 || 1)), uy = clamp01((n.y - gbox.y0) / (gbox.y1 - gbox.y0 || 1)); return { x: (ux - 0.5) * (planeHalf() * 2 - 0.9), y: SHELF[1] + 0.55 - uy * (SHELF[1] + 0.55 - (SHELF[0] - 0.5)) }; };
+  // as the graph the near plane is as wide as the box, its edges at the bottom corners; by topic as wide as the lanes
+  const planeHalf = () => (asGraph() ? Math.max(1.5, (W / 2 - 12) / K()) : cols / 2);
+  const measureGraph = () => { syncPositions(); const xs = [], ys = []; for (const c of cards) { if (!shown(c)) continue; const q = posNode(c.nid); if (q) { xs.push(q.x); ys.push(q.y); } } if (xs.length < 2) return; xs.sort((a, b) => a - b); ys.sort((a, b) => a - b); const at = (arr, q) => arr[Math.round(q * (arr.length - 1))]; const x0 = at(xs, 0.04), x1 = at(xs, 0.96), y0 = at(ys, 0.04), y1 = at(ys, 0.96); if (x0 < x1 && y0 < y1) Object.assign(gbox, { x0, x1, y0, y1 }); };
+  const basePos = (c) => { const q = asGraph() ? posNode(c.nid) : null; return q ? gmap(q) : { x: c.x, y: c.y }; };
   const posOf = (c) => { const q = basePos(c); return { x: q.x + (c.ox || 0), y: q.y + (c.oy || 0) }; };
   // Cards keep apart: two cards at about one depth whose boxes overlap push each other off, by the smaller overlap,
   // half of it each frame until they touch, within bounds so no stack grows into a tower; the push is kept as an
@@ -2745,7 +2758,13 @@ function runStage(canvas, o) {
   const litIds = () => { const t = graph?.thought; const set = new Set(); if (t) for (const n of t.nodes) if (n.entry) set.add(n.entry.uuid || n.id); return set; };
   const litPairs = () => graph?.thought?.pairs || null;
   let hover = null, held = null, drag = null, moved = false, pinch = null, raf = null, lastDraw = 0;
-  const shown = (c) => existsAt(c.e, now()) && (!PLAY.on || zOf(c.day) >= -0.02);
+  // which foreign cards show: joined to one of ours by a chain of See or Superseded by (in either direction), all, or none
+  { const adj = new Map(); const addEdge = (a, b) => { (adj.get(a) || adj.set(a, []).get(a)).push(b); }; for (const l of links) { addEdge(l.a, l.b); addEdge(l.b, l.a); }
+    const seen = new Set(cards.filter((c) => !c.ext)); const queue = [...seen];
+    while (queue.length) { const c = queue.pop(); for (const d of adj.get(c) || []) if (!seen.has(d)) { seen.add(d); queue.push(d); } }
+    for (const c of cards) c.linked = !c.ext || seen.has(c); }
+  const foreignOn = (c) => !c.ext || STAGE_FOREIGN === "all" || (STAGE_FOREIGN === "linked" && c.linked);
+  const shown = (c) => foreignOn(c) && existsAt(c.e, now()) && (!PLAY.on || zOf(c.day) >= -0.02);
   const zFarOf = () => Math.max(1, depth(tNow() + 20));
   const rects = []; // screen boxes of the cards drawn, near ones last; each with its foot, the line down to the floor
   const nearFoot = (r, px, py) => { const [ax, ay, bx, by] = r.foot; const dx = bx - ax, dy = by - ay; const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy || 1))); return Math.hypot(px - (ax + t * dx), py - (ay + t * dy)) <= 4; };
@@ -2757,7 +2776,7 @@ function runStage(canvas, o) {
     const zFar = zFarOf(); const byGraph = asGraph(); if (byGraph) measureGraph();
     // the floor: lane lines into the depth (by topic), a line per month across, the year at its first month
     ctx.lineWidth = 1; ctx.strokeStyle = color("--line"); ctx.globalAlpha = 0.9;
-    const half = byGraph ? UNITS() / 2 - 0.5 : cols / 2; const xl = -half - 0.1, xr = half + 0.1;
+    const half = planeHalf(); const xl = -half - (byGraph ? 0 : 0.1), xr = half + (byGraph ? 0 : 0.1);
     for (let i = 0; i <= (byGraph ? 0 : cols); i++) { const x = byGraph ? 0 : i - half; const [ax, ay] = proj(byGraph ? xl : x, floorY, -0.4); const [bx, by] = proj(byGraph ? xl : x, floorY, zFar); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); if (byGraph) { const [cx2, cy2] = proj(xr, floorY, -0.4), [dx2, dy2] = proj(xr, floorY, zFar); ctx.beginPath(); ctx.moveTo(cx2, cy2); ctx.lineTo(dx2, dy2); ctx.stroke(); } }
     ctx.font = `10px ${color("--font") || "sans-serif"}`; ctx.textBaseline = "middle";
     let [yy, mm] = day.slice(0, 7).split("-").map(Number); // from the month of the day shown back to the first
@@ -2772,7 +2791,7 @@ function runStage(canvas, o) {
     { ctx.globalAlpha = 1; ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.font = `600 11px ${color("--mono") || "monospace"}`; ctx.fillStyle = color("--accent2"); ctx.fillText(`${day}${PLAY.on ? " ▶" : ""}`, 10, 9); ctx.textBaseline = "middle"; }
     // the lanes' names along the near edge — or, as the graph, the topics' names where their hubs stand, faint, behind the cards
     ctx.font = `10.5px ${color("--font") || "sans-serif"}`; ctx.textAlign = "center"; ctx.textBaseline = "top";
-    if (byGraph) for (const n of tnodes()) { if (n.ext) continue; const alive = cards.some((c) => c.e.file === n.file && (nodeOf(c)?.unit || "") === (n.unit || "") && existsAt(c.e, day)); if (!alive) continue; const q = gmap(n); const [x, y] = proj(q.x, q.y, 0); ctx.fillStyle = color("--fg3"); ctx.globalAlpha = 0.55; ctx.fillText(((n.ext && n.proj ? `${n.proj} · ` : "") + (n.label || n.file)).replace(/`/g, "").slice(0, 34), x, y); }
+    if (byGraph) for (const n of tnodes()) { if (n.ext) continue; const alive = cards.some((c) => !c.ext && c.e.file === n.file && existsAt(c.e, day)); if (!alive) continue; const q = gmap(n); const [x, y] = proj(q.x, q.y, 0); ctx.fillStyle = color("--fg3"); ctx.globalAlpha = 0.55; ctx.fillText(((n.ext && n.proj ? `${n.proj} · ` : "") + (n.label || n.file)).replace(/`/g, "").slice(0, 34), x, y); }
     else for (const L of lanes) { const alive = L.items.some((e) => existsAt(e, day)); if (!alive) continue; const [x, y, s] = proj(L.x, floorY, 0); const w = K() * s * 0.9 - 10; const t = L.title; let txt = t; while (txt.length > 3 && ctx.measureText(txt).width > w) txt = txt.slice(0, -2); if (txt !== t) txt = txt.slice(0, -1) + "…"; ctx.fillStyle = color("--fg2"); ctx.globalAlpha = L.shelf ? 0.9 : 0.65; ctx.fillText(`${L.shelf ? "▴" : "▾"} ${txt}`, x, y + (L.shelf ? 5 : 19)); }
     // the cards, far ones first
     const vis = cards.filter(shown).map((c) => ({ c, z: zCard(c) })).sort((a, b) => b.z - a.z);
