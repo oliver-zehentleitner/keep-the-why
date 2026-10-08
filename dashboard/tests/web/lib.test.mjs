@@ -330,3 +330,55 @@ test("hostAnchor: a heading's anchor as GitHub renders it, not the entry id", ()
   assert.equal(hostAnchor("Größe über alles"), "größe-über-alles");
   assert.equal(hostAnchor(null), "");
 });
+
+// the clock (timeline stage)
+import { todayISO, addDays, dayDiff, existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan } from "../../ktw_dashboard/web/lib.js";
+
+test("addDays and dayDiff count calendar days across month and year ends", () => {
+  assert.equal(addDays("2026-01-31", 1), "2026-02-01");
+  assert.equal(addDays("2025-12-31", 1), "2026-01-01");
+  assert.equal(addDays("2026-03-01", -1), "2026-02-28");
+  assert.equal(dayDiff("2026-01-01", "2026-02-01"), 31);
+  assert.equal(dayDiff("2026-02-01", "2026-01-01"), -31);
+});
+
+test("existsAt: from the day the heading first appeared; uncommitted only today; no clock means always", () => {
+  const e = { git: { created: { date: "2026-03-10" } } };
+  assert.ok(existsAt(e, "2026-03-10"));
+  assert.ok(!existsAt(e, "2026-03-09"));
+  assert.ok(existsAt(e, null));
+  const fresh = { git: { created: { date: "", author: "(uncommitted)" } } };
+  assert.ok(!existsAt(fresh, "2020-01-01"));
+  assert.ok(existsAt(fresh, todayISO()));
+  assert.ok(existsAt({ status: "active" }, "2020-01-01"), "no Git at all: it simply is");
+});
+
+test("statusAt follows the status history up to the day", () => {
+  const e = { status: "superseded", git: { created: { date: "2026-01-05" }, status_history: [
+    { status: "active", date: "2026-01-05" }, { status: "needs-review", date: "2026-02-01" }, { status: "superseded", date: "2026-03-01" }] } };
+  assert.equal(statusAt(e, "2026-01-04"), null, "not yet");
+  assert.equal(statusAt(e, "2026-01-05"), "active");
+  assert.equal(statusAt(e, "2026-02-15"), "needs-review");
+  assert.equal(statusAt(e, "2026-03-01"), "superseded");
+  assert.equal(statusAt(e, null), "superseded");
+  assert.equal(statusAt({ status: "open", git: { created: { date: "2026-01-05" } } }, "2026-06-01"), "open", "no history: the status as it is");
+});
+
+test("a See exists from its as-of day, never before the citing entry; a Superseded by from the status change", () => {
+  const from = { git: { created: { date: "2026-02-10" }, last_touched: { date: "2026-04-01" }, status_history: [{ status: "active", date: "2026-02-10" }, { status: "superseded", date: "2026-03-20" }] } };
+  assert.equal(seeDay(from, { date: "2026-03-01" }), "2026-03-01");
+  assert.equal(seeDay(from, { date: "2026-01-01" }), "2026-02-10", "an as-of before the entry: the entry's own day");
+  assert.equal(seeDay(from, {}), "2026-02-10");
+  assert.equal(supersededDay(from), "2026-03-20");
+  assert.equal(supersededDay({ git: { created: { date: "2026-02-10" }, last_touched: { date: "2026-04-01" } } }), "2026-04-01", "no superseded in the history: when it was last touched");
+  assert.ok(linkExistsAt("2026-03-01", "2026-03-01"));
+  assert.ok(!linkExistsAt("2026-02-28", "2026-03-01"));
+  assert.ok(linkExistsAt(null, "2026-03-01"));
+  assert.ok(linkExistsAt("2026-02-28", ""), "a link without a day is always there");
+});
+
+test("daySpan runs from the earliest creation to today", () => {
+  const s = daySpan([{ git: { created: { date: "2026-02-01" } } }, { git: { created: { date: "2025-11-15" } } }, { status: "active" }]);
+  assert.deepEqual(s, { from: "2025-11-15", to: todayISO() });
+  assert.equal(daySpan([{ status: "active" }]), null);
+});

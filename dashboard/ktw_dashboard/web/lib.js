@@ -374,3 +374,38 @@ export function mergeStates(groups) {
   out.anonymized = groups.some((G) => G.state?.anonymized);
   return out;
 }
+
+// The clock: what the project looked like on a day. Every date is a Git
+// date, `YYYY-MM-DD`; comparing the strings compares the days. An entry
+// exists from the day its heading first appeared in Git; its status on a day
+// is the last status change up to that day; a See exists from its `as of`
+// day (never before the citing entry), a Superseded by from the day the old
+// entry's status became superseded. An entry not yet committed has no
+// date: it exists today only. Without a clock (null) everything is as it is.
+export const todayISO = () => new Date().toISOString().slice(0, 10);
+export const addDays = (iso, n) => { const d = new Date(`${iso}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+export const dayDiff = (a, b) => Math.round((new Date(`${b}T00:00:00Z`) - new Date(`${a}T00:00:00Z`)) / 86400000);
+export const createdOn = (e) => e?.git?.created?.date || "";
+export function existsAt(e, day) {
+  if (!day || !e?.git) return true;
+  const c = createdOn(e);
+  return c ? c <= day : day >= todayISO();
+}
+export function statusAt(e, day) {
+  if (!day || !e?.git) return e?.status;
+  const h = (e.git.status_history || []).filter((x) => x.date && x.date <= day);
+  if (h.length) return h[h.length - 1].status;
+  return existsAt(e, day) ? e.status : null;
+}
+// the day a link came to be: a See from `from`'s reference `ref`, a Superseded by from the old entry `from`
+export function seeDay(from, ref) { const c = createdOn(from); const d = ref?.date || ""; return d && c ? (d > c ? d : c) : d || c; }
+export function supersededDay(from) {
+  const h = (from?.git?.status_history || []).find((x) => x.status === "superseded" && x.date);
+  return h?.date || from?.git?.last_touched?.date || createdOn(from);
+}
+export const linkExistsAt = (day, linkDay) => !day || !linkDay || linkDay <= day;
+// the first and last day the entries span: the earliest creation, today
+export function daySpan(entries) {
+  const days = entries.map(createdOn).filter(Boolean).sort();
+  return days.length ? { from: days[0], to: todayISO() } : null;
+}

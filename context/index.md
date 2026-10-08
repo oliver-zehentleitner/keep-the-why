@@ -33,7 +33,7 @@ Why this project is built the way it is.
 
 ## D
 
-- [dashboard.md](dashboard.md) — design of the read-only dashboard (`dashboard/`): why it exists beside the "no dashboard" line, why in this repo, the plain-JS page, the fingerprint/SSE live mode, Git authors as-is, tree-wide family search, a `See` into another repository followed through its published export, friends and thoughts in the graph, its slow turn, the path of a walk; a GitLab project read through the repository files API (CORS)
+- [dashboard.md](dashboard.md) — design of the read-only dashboard (`dashboard/`): why it exists beside the "no dashboard" line, why in this repo, the plain-JS page, the fingerprint/SSE live mode, Git authors as-is, tree-wide family search, a `See` into another repository followed through its published export, friends and thoughts in the graph, its slow turn, the path of a walk; a GitLab project read through the repository files API (CORS); the timeline's clock and stage, which every graph follows
 
 ## E
 

@@ -320,7 +320,7 @@ Evidence, references and `See` / `Superseded by` lines as edges; *friends*, the 
 cited outside the family, load into it by default (a checkbox turns that off) and are linked, never merged; going to a friend
 moves the page there and keeps the path walked, in memory only), topics and an entry reader with
 backlinks, queues of what needs a person (open, needs-review, pending-confirmation, unknown
-evidence, Revisit-when triggers), timeline by month and author, authors, the linter's findings,
+evidence, Revisit-when triggers), timeline by month and author with a clock every graph follows and a stage in perspective, authors, the linter's findings,
 the project's family tree, its friends, its thoughts, and every project known on the machine.
 Three ways projects and entries connect: a *family* is projects that belong together (a parent's
 `children` block, one scope line each — the routing; the family scope shows the tree as one);

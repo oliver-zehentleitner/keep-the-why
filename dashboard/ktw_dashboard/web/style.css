@@ -408,16 +408,16 @@ a.author { color: inherit; text-decoration: underline dotted; }
 a.author:hover { color: var(--accent2); }
 
 /* thoughts: chains of See and Superseded by, beside the graph */
-.details .thought { margin: 2px 0; }
-.details .thought-head { display: flex; align-items: baseline; gap: 6px; width: 100%; text-align: left; background: transparent; border: 1px solid transparent; border-radius: 5px; padding: 4px 6px; color: var(--fg2); font: inherit; font-size: 12px; cursor: pointer; }
-.details .thought-head:hover, .details .thought.on .thought-head { border-color: var(--line); background: var(--bg2); color: var(--fg); }
-.details .thought-head .count { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 600; min-width: 1.2em; }
-.details .thought-head .pill { margin-left: auto; }
-.details .thought-steps { margin: 4px 0 8px 22px; padding: 0; font-size: 12px; }
-.details .thought-steps li { margin: 2px 0; }
-.details .thought-min { float: right; font-size: 10px; font-weight: 400; color: var(--fg3); text-transform: none; letter-spacing: 0; }
-.details .thought-min button { background: transparent; border: 1px solid var(--line); color: var(--fg3); font-size: 10px; padding: 0 5px; margin-left: 2px; border-radius: 3px; cursor: pointer; }
-.details .thought-min button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+:is(.details, .timeline-thoughts) .thought { margin: 2px 0; }
+:is(.details, .timeline-thoughts) .thought-head { display: flex; align-items: baseline; gap: 6px; width: 100%; text-align: left; background: transparent; border: 1px solid transparent; border-radius: 5px; padding: 4px 6px; color: var(--fg2); font: inherit; font-size: 12px; cursor: pointer; }
+:is(.details, .timeline-thoughts) .thought-head:hover, .details .thought.on .thought-head { border-color: var(--line); background: var(--bg2); color: var(--fg); }
+:is(.details, .timeline-thoughts) .thought-head .count { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 600; min-width: 1.2em; }
+:is(.details, .timeline-thoughts) .thought-head .pill { margin-left: auto; }
+:is(.details, .timeline-thoughts) .thought-steps { margin: 4px 0 8px 22px; padding: 0; font-size: 12px; }
+:is(.details, .timeline-thoughts) .thought-steps li { margin: 2px 0; }
+:is(.details, .timeline-thoughts) .thought-min { float: right; font-size: 10px; font-weight: 400; color: var(--fg3); text-transform: none; letter-spacing: 0; }
+:is(.details, .timeline-thoughts) .thought-min button { background: transparent; border: 1px solid var(--line); color: var(--fg3); font-size: 10px; padding: 0 5px; margin-left: 2px; border-radius: 3px; cursor: pointer; }
+:is(.details, .timeline-thoughts) .thought-min button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
 
 /* the path: the projects walked through to get here */
 .path-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 4px; font-size: 12px; color: var(--fg2); padding: 6px 10px; margin: 0 0 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg2); }
@@ -431,9 +431,9 @@ a.author:hover { color: var(--accent2); }
 .graph-ui .ui-group + .ui-group { padding-left: 10px; border-left: 1px solid var(--line); }
 
 /* a whole thought in one view */
-.details .thought { position: relative; }
-.details .thought .thought-head { padding-right: 52px; }
-.details .thought-read { position: absolute; right: 6px; top: 5px; font-size: 11px; }
+:is(.details, .timeline-thoughts) .thought { position: relative; }
+:is(.details, .timeline-thoughts) .thought .thought-head { padding-right: 52px; }
+:is(.details, .timeline-thoughts) .thought-read { position: absolute; right: 6px; top: 5px; font-size: 11px; }
 .thought-reader .thought-step { border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 18px 6px; background: var(--bg2); }
 .thought-reader .thought-step h2 { font-size: 18px; line-height: 1.3; margin: 4px 0 0; }
 .thought-reader .thought-step h2 a { color: var(--fg); }
@@ -441,10 +441,10 @@ a.author:hover { color: var(--accent2); }
 .thought-reader .thought-step.superseded { opacity: .85; }
 .thought-reader .thought-step.missing { background: transparent; border-style: dashed; }
 .thought-reader .thought-link { color: var(--fg3); font-size: 12px; text-align: center; padding: 6px 0; letter-spacing: .04em; }
-.details .thought.open .thought-head .count { color: var(--accent2); }
-.details .thought-follow { display: block; font-size: 11px; margin: 0 0 4px 26px; text-align: left; }
-.details .thought-follow-all { display: block; font-size: 12px; margin: 0 0 8px; }
-.details .thought-open-head { margin-top: 16px; }
+:is(.details, .timeline-thoughts) .thought.open .thought-head .count { color: var(--accent2); }
+:is(.details, .timeline-thoughts) .thought-follow { display: block; font-size: 11px; margin: 0 0 4px 26px; text-align: left; }
+:is(.details, .timeline-thoughts) .thought-follow-all { display: block; font-size: 12px; margin: 0 0 8px; }
+:is(.details, .timeline-thoughts) .thought-open-head { margin-top: 16px; }
 .thought-reader .thought-beyond { border: 1px dashed var(--line); border-radius: var(--radius); padding: 8px 12px; margin: 8px 0; font-size: 12px; color: var(--fg2); }
 
 /* friends and thoughts pages */
@@ -549,3 +549,45 @@ a.author:hover { color: var(--accent2); }
 .nojs li { margin: 3px 0; }
 .nojs .nojs-meta { color: var(--fg3); font-size: 13px; }
 .nojs-about { margin-top: 36px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--fg2); }
+
+/* ---- timeline: the playhead and the stage */
+.timeline .now { stroke: var(--accent2); stroke-width: 1.5; stroke-dasharray: 3 3; }
+.timeline .now-label { fill: var(--accent2); font-size: 10px; font-family: var(--mono); }
+.playhead { display: flex; align-items: center; gap: 10px; margin: 4px 0 14px; font-size: 12px; color: var(--fg2); flex-wrap: wrap; }
+.playhead .play-btn, .playhead .play-jump { font: inherit; font-size: 13px; line-height: 1; width: 30px; height: 28px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg2); color: var(--fg); cursor: pointer; }
+.playhead .play-btn { width: 36px; }
+.playhead .play-btn.on, .playhead .play-btn:hover, .playhead .play-jump:hover { border-color: var(--accent); color: var(--accent2); }
+.playhead .playhead-range { flex: 1 1 200px; min-width: 120px; accent-color: var(--accent); margin: 0; }
+.playhead .playhead-day { font-family: var(--mono); font-size: 13px; color: var(--fg); min-width: 84px; }
+.playhead .play-speed { font: inherit; font-size: 11px; background: var(--bg2); color: var(--fg); border: 1px solid var(--line); border-radius: 5px; padding: 3px 4px; }
+.playhead .playhead-counts { color: var(--fg3); white-space: nowrap; }
+.stage-wrap { position: relative; height: 480px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); overflow: hidden; margin: 0 0 18px; }
+.stage-wrap canvas.stage { display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; }
+.stage-wrap canvas.stage.grabbing { cursor: grabbing; }
+.stage-wrap .stage-links { position: absolute; top: 8px; right: 8px; display: inline-flex; gap: 2px; background: color-mix(in srgb, var(--bg2) 85%, transparent); border: 1px solid var(--line); border-radius: 5px; padding: 1px; z-index: 5; }
+.stage-wrap .stage-links button { font: inherit; font-size: 10.5px; padding: 2px 7px; border: 0; border-radius: 4px; background: transparent; color: var(--fg2); cursor: pointer; }
+.stage-wrap .stage-links button.on { background: var(--accent); color: #fff; }
+.stage-note { margin: -10px 0 16px; font-size: 11.5px; }
+.stage-note .stage-hint-touch { display: none; }
+.stage-tip { position: absolute; z-index: 3; pointer-events: none; max-width: 280px; background: color-mix(in srgb, var(--bg2) 94%, transparent); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; font-size: 12px; box-shadow: 0 6px 20px rgba(0,0,0,.3); }
+.stage-tip b { display: block; color: var(--fg); margin-bottom: 2px; }
+.stage-tip .note, .stage-card .note { color: var(--fg3); font-size: 11px; }
+.stage-tip .pills, .stage-card .pills { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.stage-card { position: absolute; z-index: 4; left: 14px; bottom: 14px; width: min(400px, calc(100% - 28px)); max-height: 62%; overflow: auto; background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px 10px; box-shadow: 0 12px 36px rgba(0,0,0,.4); font-size: 13px; }
+.stage-card h3 { margin: 4px 0 0; font-size: 15px; line-height: 1.3; padding-right: 22px; }
+.stage-card h3 a { color: var(--fg); }
+.stage-card p { margin: 10px 0 0; color: var(--fg2); line-height: 1.45; }
+.stage-card .stage-card-x { position: absolute; top: 6px; right: 8px; font: inherit; font-size: 16px; line-height: 1; background: none; border: 0; color: var(--fg3); cursor: pointer; }
+.stage-card .stage-card-x:hover { color: var(--fg); }
+.stage-card .stage-card-foot { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-top: 10px; border-top: 1px solid var(--line); padding-top: 8px; }
+.timeline-thoughts { margin: 0 0 18px; }
+.timeline-thoughts h3 { margin: 0 0 4px; font-size: 13px; }
+.timeline-thoughts .thought-head { font: inherit; font-size: 13px; color: var(--fg2); cursor: pointer; }
+.timeline-thoughts .thought-read { font-size: 12px; margin-left: 32px; }
+@media (max-width: 900px) {
+  .stage-wrap { min-height: 0; } /* the stage sets its own height from its width */
+  .stage-note .stage-hint { display: none; }
+  .stage-note .stage-hint-touch { display: inline; }
+  .stage-card { left: 8px; right: 8px; bottom: 8px; width: auto; max-height: 55%; }
+  .playhead .playhead-counts { flex-basis: 100%; white-space: normal; }
+}
