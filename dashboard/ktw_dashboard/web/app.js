@@ -2831,7 +2831,7 @@ function runStage(canvas, o) {
     // the cards, far ones first
     const vis = cards.filter(shown).map((c) => ({ c, z: zCard(c) })).sort((a, b) => b.z - a.z);
     const cardScale = byGraph ? 0.66 : 1; // as the graph the cards stand closer: smaller, the tip tells the rest
-    const box = (c, z) => { const q = posOf(c); const [x, y, s] = proj(q.x, q.y, z); const w = K() * s * 0.78 * cardScale, h = Math.min(KY(), K() * 1.5) * s * 0.36 * cardScale; return { x0: x - w / 2, y0: y - h / 2, x1: x + w / 2, y1: y + h / 2, cx: x, cy: y, s, w, h }; };
+    const box = (c, z) => { const q = posOf(c); const [x, y, s] = proj(q.x, q.y, z); const grow = c === held ? 1.12 : 1; const w = K() * s * 0.78 * cardScale * grow, h = Math.min(KY(), K() * 1.5) * s * 0.36 * cardScale * grow; return { x0: x - w / 2, y0: y - h / 2, x1: x + w / 2, y1: y + h / 2, cx: x, cy: y, s, w, h }; };
     const boxes = new Map(); for (const { c, z } of vis) boxes.set(c, box(c, z));
     keepApart(vis, boxes);
     // the lines between cards — every See and Superseded by written by then; a lit thought's stand out, the rest fade
@@ -2850,7 +2850,7 @@ function runStage(canvas, o) {
       const isLit = lit.has(e.uuid || c.nid); const isStep = step && (e.uuid === step || c.nid === step);
       const faded = (anyLit && !isLit && c !== hover && c !== held) || (filterActive() && !matches(e));
       const fresh = dayDiff(c.day, day) <= 3 && !PLAY.frac; // arrived within three days of the day shown: it glows
-      const a = (faded ? 0.16 : 1) * depthAlpha(z);
+      const a = c === held ? 1 : (faded ? 0.16 : 1) * depthAlpha(z); // the held card at full strength, whatever its depth
       // a foot: the card's drop line to the floor
       const [fx, fy] = proj(posOf(c).x, floorY, z); const lit1 = c === hover || c === held; ctx.globalAlpha = a * (lit1 ? 0.9 : 0.35); ctx.strokeStyle = lit1 ? color("--fg") : color("--fg3"); ctx.lineWidth = lit1 ? 1.5 : 1; ctx.beginPath(); ctx.moveTo(b.cx, b.y1); ctx.lineTo(fx, fy); ctx.stroke();
       b.foot = [b.cx, b.y1, fx, fy];
@@ -2859,7 +2859,7 @@ function runStage(canvas, o) {
       // the card's outline: a rectangle, or one with its top-right corner folded
       const outline = () => { ctx.beginPath(); if (fold) { ctx.moveTo(b.x0, b.y0); ctx.lineTo(b.x1 - fold, b.y0); ctx.lineTo(b.x1, b.y0 + fold); ctx.lineTo(b.x1, b.y1); ctx.lineTo(b.x0, b.y1); ctx.closePath(); } else ctx.rect(b.x0, b.y0, b.w, b.h); };
       ctx.globalAlpha = a;
-      if (fresh || isLit || c === hover || c === held || isStep) { ctx.shadowColor = isStep ? color("--accent2") : isLit ? color("--fg") : evc; ctx.shadowBlur = isStep ? 22 : 14; }
+      if (fresh || isLit || c === hover || c === held || isStep) { ctx.shadowColor = c === held ? color("--accent2") : isStep ? color("--accent2") : isLit ? color("--fg") : evc; ctx.shadowBlur = c === held ? 36 : isStep ? 22 : 14; }
       // the body: a solid tint for confirmed, hatching for inferred, the background alone for unknown
       ctx.fillStyle = color("--bg2"); ctx.globalAlpha = a * 0.9; outline(); ctx.fill(); ctx.shadowBlur = 0;
       if (e.evidence === "confirmed") { ctx.fillStyle = evc; ctx.globalAlpha = a * (sup ? 0.12 : 0.3); outline(); ctx.fill(); }
@@ -2869,7 +2869,8 @@ function runStage(canvas, o) {
       if (kind === "constraint") { ctx.fillStyle = sup ? color("--fg3") : evc; ctx.globalAlpha = a * 0.9; ctx.fillRect(b.x0, b.y0, b.w, band); ctx.globalAlpha = a; }
       if (kind === "incident") { ctx.save(); ctx.beginPath(); ctx.rect(b.x0, b.y0, b.w, band); ctx.clip(); ctx.fillStyle = sup ? color("--fg3") : evc; ctx.globalAlpha = a * 0.9; const st = Math.max(3, band * 1.6); for (let x = b.x0 - band; x < b.x1 + band; x += st * 2) { ctx.beginPath(); ctx.moveTo(x, b.y0); ctx.lineTo(x + st, b.y0); ctx.lineTo(x + st - band, b.y0 + band); ctx.lineTo(x - band, b.y0 + band); ctx.closePath(); ctx.fill(); } ctx.restore(); ctx.globalAlpha = a; }
       if (fold) { ctx.fillStyle = color("--bg"); ctx.globalAlpha = a; ctx.beginPath(); ctx.moveTo(b.x1 - fold, b.y0); ctx.lineTo(b.x1 - fold, b.y0 + fold); ctx.lineTo(b.x1, b.y0 + fold); ctx.closePath(); ctx.fill(); ctx.strokeStyle = sup ? color("--fg3") : evc; ctx.lineWidth = 1; ctx.stroke(); }
-      ctx.lineWidth = c === hover || c === held ? 2 : 1.2; ctx.strokeStyle = sup ? color("--fg3") : evc; ctx.setLineDash(sup || kind === "workaround" ? [4, 3] : []); outline(); ctx.stroke(); ctx.setLineDash([]);
+      ctx.lineWidth = c === held ? 2.6 : c === hover ? 2 : 1.2; ctx.strokeStyle = c === held ? color("--fg") : sup ? color("--fg3") : evc; ctx.setLineDash(sup || kind === "workaround" ? [4, 3] : []); outline(); ctx.stroke(); ctx.setLineDash([]);
+      if (c === held) { ctx.strokeStyle = color("--accent2"); ctx.lineWidth = 2; ctx.globalAlpha = 0.9; ctx.strokeRect(b.x0 - 6, b.y0 - 6, b.w + 12, b.h + 12); ctx.globalAlpha = a; }
       if (kind && b.w > 30) { ctx.fillStyle = evc; ctx.strokeStyle = evc; const gs = Math.max(7, Math.min(11, b.h * 0.3)); typeGlyph(ctx, kind, b.x1 - gs - 4 - (fold ? fold * 0.6 : 0), b.y1 - gs - 3, gs); }
       if (e.evidence === "unknown" && b.w > 30) { ctx.fillStyle = color("--unknown"); ctx.font = `700 ${Math.max(8, Math.min(12, b.h * 0.32))}px ${color("--font") || "sans-serif"}`; ctx.textAlign = "left"; ctx.textBaseline = "bottom"; ctx.fillText("?", b.x0 + 5, b.y1 - 2); }
       if (st === "open" || st === "needs-review" || st === "pending-confirmation") { ctx.strokeStyle = color(`--${st}`); ctx.lineWidth = 1.2; ctx.strokeRect(b.x0 - 3, b.y0 - 3, b.w + 6, b.h + 6); }
