@@ -1225,7 +1225,7 @@ async function buildFamilyGraph() {
     }
     for (const e of G.state.entries || []) {
       const t = nodes[index[tid(G, e.file)]];
-      add({ id: eid(G, e.id), kind: "entry", fam: G.key !== "self", proj: G.g.member.name, label: e.title, file: e.file, entry: e, r: 4.2, href: G.key === "self" ? entryHref(e) : G.g.href(e) }, t || hub);
+      add({ id: eid(G, e.id), kind: "entry", fam: G.key !== "self", proj: G.g.member.name, state: G.g.state, label: e.title, file: e.file, entry: e, r: 4.2, href: G.key === "self" ? entryHref(e) : G.g.href(e) }, t || hub);
     }
     for (const e of G.state.entries || []) {
       const me = index[eid(G, e.id)];
@@ -1565,7 +1565,7 @@ function addLinkedLayer(g, prev, items) {
       }
       for (const e of own) {
         const act = it.entry(m);
-        const n = add({ id: `fe:${it.k}:${m.key}:${e.id}`, kind: "entry", kin, proj: m.name, label: e.title, file: e.file, entry: e, r: 4.2, href: m.href ? m.href(e) : "#graph", action: act ? () => act(e) : null }, nodes[tIdx[e.file]] || hub);
+        const n = add({ id: `fe:${it.k}:${m.key}:${e.id}`, kind: "entry", kin, proj: m.name, state: m.state, label: e.title, file: e.file, entry: e, r: 4.2, href: m.href ? m.href(e) : "#graph", action: act ? () => act(e) : null }, nodes[tIdx[e.file]] || hub);
         if (e.uuid) idx[e.uuid] = index[n.id];
         if (tIdx[e.file] != null) links.push({ s: index[n.id], t: tIdx[e.file], kind: "member", len: 40 });
         entriesShown.push(e);
@@ -2567,7 +2567,8 @@ function viewTimeline(main, day) {
       el("div", { class: "pills" }, ...typePills(e.type), statusPill(statusAt(e, d, c?.ext || hasRepo(e)) || e.status), evPill(e.evidence)),
       body ? el("div", { class: "body stage-card-body", html: renderMarkdown(body) }) : el("p", { class: "empty stage-card-body" }, typeof S.bodies === "string" ? "loading the text…" : "no text"),
       el("div", { class: "stage-card-foot" }, e.git?.created?.author ? el("span", { class: "note" }, `recorded by ${e.git.created.author}`) : el("span"), el("a", { href }, "open ›")));
-    if (typeof S.bodies === "string" && !c?.ext) ensureBodies(SELF).then(() => { if (card.isConnected && (HELD ? HELD === (e.uuid || e.id) : latestEntry(CLOCK || span.to) === e)) fillCard(e, held, c); });
+    // the bodies sit beside the export by default — this project's and a friend's alike: fetched once, on demand
+    const st = c?.state || SELF; if (st && typeof st.bodies === "string" && !st.bodiesLoaded && !st.bodiesError) ensureBodies(st).then(() => { if (card.isConnected && (HELD ? HELD === (e.uuid || e.id) : latestEntry(CLOCK || span.to) === e)) fillCard(e, held, c); });
   }
   const refreshCard = () => { if (HELD) return; const e = latestEntry(CLOCK || span.to); if (e) fillCard(e, false); else setKids(card, el("p", { class: "empty" }, "No entry by this day.")); };
   const slot = el("div", { class: "stage-card-slot" }, card);
@@ -2662,7 +2663,7 @@ function runStage(canvas, o) {
   const projOfNode = (n) => n.ext ? (n.proj || "") : (n.entry.project || "");
   // the cards, one per entry node, and the links between them by Id
   const cards = []; const byId = {};
-  for (const n of entryNodes) { const e = n.entry; const c = { e, nid: n.id, ext: !!n.ext, href: n.href, laneKey: `${projOfNode(n)}|${e.file}`, proj: projOfNode(n), day: createdOn(e) || o.span.to, x: 0, y: 0, dz: 0, lane: null }; cards.push(c); if (!n.ext) byId[e.id] = c; if (e.uuid) byId[e.uuid] = c; }
+  for (const n of entryNodes) { const e = n.entry; const c = { e, nid: n.id, ext: !!n.ext, href: n.href, state: n.ext ? n.state : SELF, laneKey: `${projOfNode(n)}|${e.file}`, proj: projOfNode(n), day: createdOn(e) || o.span.to, x: 0, y: 0, dz: 0, lane: null }; cards.push(c); if (!n.ext) byId[e.id] = c; if (e.uuid) byId[e.uuid] = c; }
   const links = [];
   for (const c of cards) {
     for (const r of c.e.see || []) { const t = r?.uuid && byId[r.uuid]; if (t && t !== c) links.push({ a: c, b: t, kind: "see", day: seeDay(c.e, r) }); }
