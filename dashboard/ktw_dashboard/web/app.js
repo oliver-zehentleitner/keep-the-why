@@ -2749,8 +2749,9 @@ function runStage(canvas, o) {
     ctx.globalAlpha = 1;
   }
   const wake = () => { if (!raf && canvas.isConnected) raf = requestAnimationFrame(draw); };
-  // pick: an entry chosen elsewhere on the page (a thought's step in the pane) is held like a clicked card
-  STAGE = { wake, close: closeCard, pick: (e) => { held = byId[e.id] || (e.uuid && byId[e.uuid]) || null; o.open(e); wake(); } };
+  // pick: an entry chosen elsewhere on the page (a thought's step in the pane) is held like a clicked card, and
+  // the day moves to the entry's, so it arrives at the front of the stage
+  STAGE = { wake, close: closeCard, pick: (e) => { held = byId[e.id] || (e.uuid && byId[e.uuid]) || null; o.play(false); o.open(e); o.setDay(createdOn(e) || o.span.to); wake(); } };
   // the tip under the pointer, the card panel on a click
   const place = (box, px, py) => { const r = canvas.getBoundingClientRect(); box.style.left = `${Math.min(r.width - 280, Math.max(8, px + 14))}px`; box.style.top = `${Math.min(r.height - 90, py + 14)}px`; };
   const showTip = (c, px, py) => { const e = c.e; setKids(o.tip, el("b", {}, e.title.replace(/`/g, "")), el("div", { class: "note" }, `${c.lane.title} · ${c.day}${e.git?.created?.author ? " · " + e.git.created.author : ""}`), el("div", { class: "pills" }, ...typePills(e.type), statusPill(statusAt(e, now()) || e.status), evPill(e.evidence))); o.tip.hidden = false; place(o.tip, px, py); };
