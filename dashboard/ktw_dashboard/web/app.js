@@ -2483,7 +2483,8 @@ function viewTimeline(main, day) {
   const max = Math.max(1, ...all.map((k) => Object.values(months[k] || {}).reduce((a, b) => a + b, 0)));
   // the drawing is as wide as the column beside the card, so its text keeps its size (an SVG scales as a whole)
   const mainW = main.clientWidth || 900; const Wd = Math.max(360, Math.round(narrow() ? mainW - 28 : mainW - 64 - 18 - Math.min(420, Math.max(280, (mainW - 82) * 0.42))));
-  const Hd = 130, padL = 34, padB = 32, padT = 18; // room above the bars for the day's label, clear of them const colW = (Wd - padL) / all.length; const bw = colW - 2; // a bar spans its month, first day to last, a hair between months
+  // padT: room above the bars for the day's label, clear of them
+  const Hd = 130, padL = 34, padB = 32, padT = 18; const colW = (Wd - padL) / all.length; const bw = colW - 2; // a bar spans its month, first day to last, a hair between months
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.setAttribute("viewBox", `0 0 ${Wd} ${Hd}`);
   const ns = (tag, attrs, text) => { const n = document.createElementNS("http://www.w3.org/2000/svg", tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); if (text != null) n.textContent = text; return n; };
   const axis = ns("g", { class: "axis" }); svg.append(axis);
