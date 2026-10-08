@@ -326,6 +326,7 @@ kbd { font-family: var(--mono); font-size: 11px; background: var(--bg3); border:
   .graph-toggle[aria-expanded="true"] { border-color: var(--accent); color: var(--accent2); }
   .ui-toggle { top: 10px; }
   .graph-wrap .graph-corner-reset { bottom: 40px; right: 10px; }
+  .graph-wrap .graph-corner-fit { right: 64px; }
   .legend-toggle { bottom: 10px; }
   .graph-wrap.ui-open .path-bar { display: none; }
   .graph-hint { display: none; }
@@ -576,6 +577,7 @@ a.author:hover { color: var(--accent2); }
 .stage-wrap .stage-foreign { right: auto; left: 290px; }
 .graph-wrap .graph-corner-reset { position: absolute; bottom: 40px; right: 18px; z-index: 3; font: inherit; font-size: 10.5px; padding: 3px 9px; border: 1px solid var(--line); border-radius: 5px; background: color-mix(in srgb, var(--bg2) 85%, transparent); color: var(--fg2); cursor: pointer; }
 .graph-wrap .graph-corner-reset:hover { border-color: var(--accent); color: var(--accent2); }
+.graph-wrap .graph-corner-fit { right: 72px; }
 .stage-wrap .stage-reset { position: absolute; top: 8px; right: 8px; z-index: 5; font: inherit; font-size: 10.5px; padding: 3px 9px; border: 1px solid var(--line); border-radius: 5px; background: color-mix(in srgb, var(--bg2) 85%, transparent); color: var(--fg2); cursor: pointer; }
 .stage-wrap .stage-reset:hover { border-color: var(--accent); color: var(--accent2); }
 .stage-wrap .stage-links .seg-label { padding: 2px 4px 2px 7px; font-size: 10.5px; color: var(--fg3); }

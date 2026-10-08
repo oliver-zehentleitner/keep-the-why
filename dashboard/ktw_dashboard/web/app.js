@@ -2204,7 +2204,9 @@ function viewGraph(main) {
     // the corner's reset lets go of the held thought and the pointed-at step: every node alike again; the bar's reset
     // (fit, let go of placed nodes) stays what it is
     const cornerReset = el("button", { type: "button", class: "graph-corner-reset", title: "let go of the held thought — every node alike again", onclick: () => { THOUGHT_PIN = null; focusStep(null); renderThoughts(g); g.wake?.(); } }, "reset");
-    wrap.replaceChildren(canvas, ui, legend, ...[pathBar()].filter(Boolean), toggle("ui", "Layers", "legend"), toggle("legend", "Legend", "ui"), cornerReset,
+    // fit: nothing changes but the view — zoomed and centred so that everything is in the box, and stays in it while the graph turns
+    const cornerFit = el("button", { type: "button", class: "graph-corner-reset graph-corner-fit", title: "fit the view: everything in the box, centred on the point the graph turns around", onclick: () => { g.userMoved = false; g.needFit = true; g.wake?.(); } }, "fit");
+    wrap.replaceChildren(canvas, ui, legend, ...[pathBar()].filter(Boolean), toggle("ui", "Layers", "legend"), toggle("legend", "Legend", "ui"), cornerFit, cornerReset,
       el("div", { class: "graph-hint" }, family ? "family — a project's name goes there, in place · drag nodes · wheel zoom · drag background to pan" : "drag nodes · wheel zoom · drag background to pan · click to open"),
       el("div", { class: "graph-hint-touch" }, "pinch to zoom · drag to pan · tap to open"));
     // on a phone the graph opens fitted to the screen, also one that settled earlier and was moved then
@@ -2348,7 +2350,10 @@ function runGraph(canvas, g, opts = {}) {
       let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
       for (const n of ns) { minX = Math.min(minX, n.x - n.r); maxX = Math.max(maxX, n.x + n.r); minY = Math.min(minY, n.y - n.r); maxY = Math.max(maxY, n.y + n.r + 18); }
       const pad = mini || narrow() ? 60 : 140;
-      if (ns.length) { const sw = Math.max(80, maxX - minX + pad), sh = Math.max(80, maxY - minY + pad); g.scale = Math.min(mini ? 2.2 : 1.2, Math.min(W / sw, H / sh)); g.fitScale = g.scale; g.ox = -((minX + maxX) / 2) * g.scale; g.oy = -((minY + maxY) / 2) * g.scale; }
+      // while the graph turns, the fit is centred on the point it turns around (the origin) and sized to the
+      // farthest node from it, so nothing leaves the box as it comes round; still, the fit is the nodes' box
+      if (ns.length && driftOn()) { let R = 0; for (const n of ns) R = Math.max(R, Math.hypot(n.x, n.y) + n.r + 18); const sw = Math.max(80, 2 * R + pad); g.scale = Math.min(mini ? 2.2 : 1.2, Math.min(W / sw, H / sw)); g.fitScale = g.scale; g.ox = 0; g.oy = 0; }
+      else if (ns.length) { const sw = Math.max(80, maxX - minX + pad), sh = Math.max(80, maxY - minY + pad); g.scale = Math.min(mini ? 2.2 : 1.2, Math.min(W / sw, H / sh)); g.fitScale = g.scale; g.ox = -((minX + maxX) / 2) * g.scale; g.oy = -((minY + maxY) / 2) * g.scale; }
       g.needFit = false;
     }
     // draw
