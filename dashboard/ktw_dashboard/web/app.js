@@ -2711,8 +2711,8 @@ function runStage(canvas, o) {
   const gbox = { x0: 0, x1: 1, y0: 0, y1: 1 };
   // the graph's plane onto the near plane: the box is the 4th to 96th percentile of the nodes, so a few outliers do
   // not squeeze the rest into the middle; what lies outside is held at the edge
-  const clamp01 = (u) => Math.max(-0.08, Math.min(1.08, u));
-  const gmap = (n) => { const ux = clamp01((n.x - gbox.x0) / (gbox.x1 - gbox.x0 || 1)), uy = clamp01((n.y - gbox.y0) / (gbox.y1 - gbox.y0 || 1)); return { x: (ux - 0.5) * (planeHalf() * 2 - 0.9), y: SHELF[1] + 0.55 - uy * (SHELF[1] + 0.55 - (SHELF[0] - 0.5)) }; };
+  const clamp01 = (u) => Math.max(0, Math.min(1, u)); // an outlier stands at the plane's edge, not beyond it
+  const gmap = (n) => { const ux = clamp01((n.x - gbox.x0) / (gbox.x1 - gbox.x0 || 1)), uy = clamp01((n.y - gbox.y0) / (gbox.y1 - gbox.y0 || 1)); return { x: (ux - 0.5) * (planeHalf() * 2 - 0.9), y: 1.3 - uy * (1.3 - (SHELF[0] - 0.45)) }; }; // the top row well under the eye, so no foot runs the whole height
   // as the graph the near plane is as wide as the box, its edges at the bottom corners; by topic as wide as the lanes
   const planeHalf = () => (asGraph() ? Math.max(1.5, (W / 2 - 12) / K()) : cols / 2);
   const measureGraph = () => { syncPositions(); const xs = [], ys = []; for (const c of cards) { if (!shown(c)) continue; const q = posNode(c.nid); if (q) { xs.push(q.x); ys.push(q.y); } } if (xs.length < 2) return; xs.sort((a, b) => a - b); ys.sort((a, b) => a - b); const at = (arr, q) => arr[Math.round(q * (arr.length - 1))]; const x0 = at(xs, 0.04), x1 = at(xs, 0.96), y0 = at(ys, 0.04), y1 = at(ys, 0.96); if (x0 < x1 && y0 < y1) Object.assign(gbox, { x0, x1, y0, y1 }); };
