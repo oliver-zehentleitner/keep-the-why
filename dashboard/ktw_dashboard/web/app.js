@@ -2477,7 +2477,7 @@ function viewTimeline(main, day) {
   const max = Math.max(1, ...all.map((k) => Object.values(months[k] || {}).reduce((a, b) => a + b, 0)));
   // the drawing is as wide as the column beside the card, so its text keeps its size (an SVG scales as a whole)
   const mainW = main.clientWidth || 900; const Wd = Math.max(360, Math.round(narrow() || mainW < 760 ? mainW - 28 : mainW - 64 - 18 - Math.min(400, Math.max(280, (mainW - 82) * 0.4))));
-  const Hd = 260, padL = 34, padB = 40, padT = 10; const colW = (Wd - padL) / all.length; const bw = Math.min(48, colW - 4);
+  const Hd = 260, padL = 34, padB = 40, padT = 10; const colW = (Wd - padL) / all.length; const bw = colW - 2; // a bar spans its month, first day to last, a hair between months
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"); svg.setAttribute("viewBox", `0 0 ${Wd} ${Hd}`);
   const ns = (tag, attrs, text) => { const n = document.createElementNS("http://www.w3.org/2000/svg", tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); if (text != null) n.textContent = text; return n; };
   const axis = ns("g", { class: "axis" }); svg.append(axis);
@@ -2487,11 +2487,11 @@ function viewTimeline(main, day) {
   const span = daySpan(S.entries) || { from: `${all[0]}-01`, to: todayISO() };
   const clamp = (d) => (d < span.from ? span.from : d > span.to ? span.to : d);
   const total = Math.max(1, dayDiff(span.from, span.to));
-  const monthX = (d) => { const i = all.indexOf(d.slice(0, 7)); if (i < 0) return d < all[0] ? padL : Wd; const dim = new Date(Date.UTC(+d.slice(0, 4), +d.slice(5, 7), 0)).getUTCDate(); return padL + (i + (Math.min(+d.slice(8, 10), dim) - 1) / dim) * colW + 2; };
+  const monthX = (d) => { const i = all.indexOf(d.slice(0, 7)); if (i < 0) return d < all[0] ? padL : Wd; const dim = new Date(Date.UTC(+d.slice(0, 4), +d.slice(5, 7), 0)).getUTCDate(); return padL + (i + (Math.min(+d.slice(8, 10), dim) - 1) / dim) * colW + 1; };
   const marker = ns("line", { class: "now", x1: padL, x2: padL, y1: padT + 8, y2: Hd - padB + 14 }); const markerLabel = ns("text", { class: "now-label", x: padL, y: padT + 4, "text-anchor": "middle" }, "");
   const listBox = el("div", { class: "entry-list", style: "margin-top:16px" });
   all.forEach((k, i) => {
-    const x = padL + i * colW + 2; let yTop = scaleY(0);
+    const x = padL + i * colW + 1; let yTop = scaleY(0);
     for (const a of S.authors.map((a) => a.name)) { const v = months[k]?.[a]; if (!v) continue; const h = scaleY(0) - scaleY(v); yTop -= h; const rect = ns("rect", { class: "b", x, y: yTop, width: bw, height: h, fill: authorColor(a), rx: 2 }); rect.append(ns("title", {}, `${k} · ${a}: ${v} — click: that month's entries, and the day moves to its end`)); rect.addEventListener("click", () => { listBox.replaceChildren(el("h2", {}, `${k}`), ...created.filter((e) => e.git.created.date.startsWith(k)).map(entryRow)); const last = new Date(Date.UTC(+k.slice(0, 4), +k.slice(5, 7), 0)).toISOString().slice(0, 10); setDay(clamp(last)); }); svg.append(rect); }
     if (sup[k]) for (let s = 0; s < sup[k]; s++) svg.append(ns("rect", { class: "sup", x: x + s * 5, y: Hd - padB + 6, width: 3, height: 6 }));
     if (all.length <= 18 || i % Math.ceil(all.length / 18) === 0) axis.append(ns("text", { x: x + bw / 2, y: Hd - padB + 24, "text-anchor": "middle" }, k));
