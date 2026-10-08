@@ -2312,7 +2312,8 @@ function runGraph(canvas, g, opts = {}) {
   function step(now) {
     const dt = lastT && now ? Math.min(100, now - lastT) : 16; lastT = now || 0;
     const drifting = driftOn() && !hover && !drag && !pan && !pinch;
-    if (drifting) { const a = DRIFT_RATE * dt, c = Math.cos(a), sn = Math.sin(a); for (const n of g.nodes) { const x = n.x, y = n.y; n.x = x * c - y * sn; n.y = x * sn + y * c; } }
+    if (drifting) { const a = DRIFT_RATE * dt, c = Math.cos(a), sn = Math.sin(a); for (const n of g.nodes) { const x = n.x, y = n.y; n.x = x * c - y * sn; n.y = x * sn + y * c; } if (g === graph && STAGE?.follows?.()) STAGE.wake(); }
+    if (g === graph && g.alpha > 0.003 && STAGE?.follows?.()) STAGE.wake(); // settling: the stage settles with it
     // settled and only turning: every other frame is enough
     if (drifting && g.alpha <= 0.003 && (frame++ & 1)) { g.raf = canvas.isConnected ? requestAnimationFrame(step) : null; return; }
     const ns = g.nodes.filter(visible);
@@ -2458,6 +2459,10 @@ const PLAY = { on: false, speed: 7, raf: null, last: 0, acc: 0, frac: 0 }; // sp
 const SPEEDS = [[1 / 24, "1 hour /s"], [1, "1 day /s"], [7, "1 week /s"], [30, "1 month /s"], [120, "4 months /s"]];
 let STAGE = null; // the stage on the page: { wake }
 let STAGE_LINKS = (() => { try { return localStorage.getItem("ktw-stage-links") || "lit"; } catch { return "lit"; } })(); // "all" | "lit" | "none": the lines between cards
+// "graph": a card stands where its node stands in the graph beside, the stage is the graph with time pulled out as depth;
+// "topics": a lane per topic across the width. An experiment with a switch, kept per browser.
+let STAGE_ARRANGE = (() => { try { return localStorage.getItem("ktw-stage-arrange") || "graph"; } catch { return "graph"; } })();
+function setStageArrange(v) { STAGE_ARRANGE = v; try { localStorage.setItem("ktw-stage-arrange", v); } catch {} STAGE?.wake?.(); }
 function setStageLinks(v) { STAGE_LINKS = v; try { localStorage.setItem("ktw-stage-links", v); } catch {} STAGE?.wake?.(); }
 function stopPlay() { PLAY.on = false; if (PLAY.raf) cancelAnimationFrame(PLAY.raf); PLAY.raf = null; PLAY.last = 0; PLAY.acc = 0; PLAY.frac = 0; }
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -2555,7 +2560,9 @@ function viewTimeline(main, day) {
   const tip = el("div", { class: "stage-tip", hidden: true });
   const linksSeg = el("span", { class: "mini-seg stage-links", title: "the See and Superseded by lines between cards: every one, only a thought pointed at or held, or none" },
     ...[["all", "all links"], ["lit", "lit only"], ["none", "no links"]].map(([v, l]) => el("button", { type: "button", class: v === STAGE_LINKS ? "on" : "", onclick: (ev) => { setStageLinks(v); for (const b of ev.currentTarget.parentNode.children) b.classList.toggle("on", b === ev.currentTarget); } }, l)));
-  wrap.append(canvas, tip, linksSeg);
+  const arrangeSeg = el("span", { class: "mini-seg stage-links stage-arrange", title: "where a card stands: where its node stands in the graph beside (the stage is the graph, time pulled out as depth), or in a lane per topic" },
+    ...[["graph", "as the graph"], ["topics", "by topic"]].map(([v, l]) => el("button", { type: "button", class: v === STAGE_ARRANGE ? "on" : "", onclick: (ev) => { setStageArrange(v); for (const b of ev.currentTarget.parentNode.children) b.classList.toggle("on", b === ev.currentTarget); } }, l)));
+  wrap.append(canvas, tip, arrangeSeg, linksSeg);
   main.append(el("div", { class: "playhead" }, jump(() => span.from, "the first day", "⏮"), playBtn, jump(() => span.to, "today", "⏭"), range, dayLabel, speedSel, counts),
     wrap,
     stageLegend(),
@@ -2648,7 +2655,7 @@ function runStage(canvas, o) {
   // depth is logarithmic in days: yesterday is a step away, last week two, a year ago fourteen — the last
   // days spread out where the eye is, the whole past stays in view
   const depth = (days) => 4 * Math.log1p(Math.max(0, days) / 10);
-  const F = 2.6; // focal length in lane units
+  const F = 4.2; // focal length in lane units: a month back is still half size, so the past spreads instead of piling at the centre
   let zoom = 1, panX = 0, panY = 0; // the camera: zoom around the near plane, pan in screen pixels
   const camY = 1.85; // the eye just above the upper shelf's top row: the floor runs up toward the horizon
   const K = () => Math.max(56, Math.min(190, (W - 40) / (cols + 1.2))) * zoom; // pixels per lane unit on the near plane
@@ -2660,7 +2667,17 @@ function runStage(canvas, o) {
   const zOf = (day) => depth(tNow() - dayDiff(o.span.from, day)); // depth units back from the day shown
   const zCard = (c) => zOf(c.day) + c.dz;
   const proj = (x, y, z) => { const s = F / (F + Math.max(z, -F * 0.9)); return [cx() + x * K() * s, horizon() + (camY - y) * K() * s, s]; };
-  const depthAlpha = (z) => Math.max(0.14, Math.min(1, 1.08 - z / 14));
+  // where a card stands. "graph": its node's place in the graph beside, read live — the graph's plane mapped onto the
+  // stage's near plane, so the eye finds a node here where it finds it there, and the stage turns with the graph;
+  // "topics": its lane and row. A node the graph does not have (another project's entry) falls back to the lane.
+  const asGraph = () => STAGE_ARRANGE === "graph" && !!graph;
+  const gnode = new Map(); for (const n of graph?.nodes || []) if (n.kind === "entry" && !n.ext) gnode.set(n.entry.id, n);
+  const tnodes = (graph?.nodes || []).filter((n) => n.kind === "topic" && !n.ext);
+  const gbox = { x0: 0, x1: 1, y0: 0, y1: 1 };
+  const gmap = (n) => { const ux = (n.x - gbox.x0) / (gbox.x1 - gbox.x0 || 1), uy = (n.y - gbox.y0) / (gbox.y1 - gbox.y0 || 1); return { x: (ux - 0.5) * (cols + 0.2), y: SHELF[1] + 0.55 - uy * (SHELF[1] + 0.55 - (SHELF[0] - 0.5)) }; };
+  const measureGraph = () => { let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; for (const n of gnode.values()) { x0 = Math.min(x0, n.x); x1 = Math.max(x1, n.x); y0 = Math.min(y0, n.y); y1 = Math.max(y1, n.y); } if (x0 < x1) Object.assign(gbox, { x0, x1, y0, y1 }); };
+  const posOf = (c) => { if (asGraph()) { const n = gnode.get(c.e.id); if (n) return gmap(n); } return { x: c.x, y: c.y }; };
+  const depthAlpha = (z) => Math.max(0.14, Math.min(1, 1.08 - z / 16));
   const HATCH = new Map(); // colour -> pattern: diagonal lines, the fill of an inferred entry
   const hatch = (col) => { if (!HATCH.has(col)) { const pc = document.createElement("canvas"); pc.width = pc.height = 6; const x = pc.getContext("2d"); if (x) { x.strokeStyle = col; x.lineWidth = 1.2; x.beginPath(); x.moveTo(-1, 7); x.lineTo(7, -1); x.moveTo(-1, 1); x.lineTo(1, -1); x.moveTo(5, 7); x.lineTo(7, 5); x.stroke(); } HATCH.set(col, ctx.createPattern(pc, "repeat")); } return HATCH.get(col); };
   const litIds = () => { const t = graph?.thought; const set = new Set(); if (t) for (const n of t.nodes) if (n.entry) { set.add(n.entry.id); if (n.entry.uuid) set.add(n.entry.uuid); } return set; };
@@ -2675,11 +2692,11 @@ function runStage(canvas, o) {
     raf = null; rects.length = 0;
     ctx.clearRect(0, 0, W, H);
     const day = now(); const lit = litIds(); const pairs = litPairs(); const anyLit = lit.size > 0; const step = STEP_FOCUS;
-    const zFar = zFarOf();
-    // the floor: lane lines into the depth, a line per month across, the year at its first month
+    const zFar = zFarOf(); const byGraph = asGraph(); if (byGraph) measureGraph();
+    // the floor: lane lines into the depth (by topic), a line per month across, the year at its first month
     ctx.lineWidth = 1; ctx.strokeStyle = color("--line"); ctx.globalAlpha = 0.9;
     const xl = -cols / 2 - 0.1, xr = cols / 2 + 0.1, floorY = -0.95;
-    for (let i = 0; i <= cols; i++) { const x = i - cols / 2; const [ax, ay] = proj(x, floorY, -0.4); const [bx, by] = proj(x, floorY, zFar); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); }
+    for (let i = 0; i <= (byGraph ? 0 : cols); i++) { const x = byGraph ? 0 : i - cols / 2; const [ax, ay] = proj(byGraph ? xl : x, floorY, -0.4); const [bx, by] = proj(byGraph ? xl : x, floorY, zFar); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); if (byGraph) { const [cx2, cy2] = proj(xr, floorY, -0.4), [dx2, dy2] = proj(xr, floorY, zFar); ctx.beginPath(); ctx.moveTo(cx2, cy2); ctx.lineTo(dx2, dy2); ctx.stroke(); } }
     ctx.font = `10px ${color("--font") || "sans-serif"}`; ctx.textBaseline = "middle";
     let [yy, mm] = day.slice(0, 7).split("-").map(Number); // from the month of the day shown back to the first
     for (let guard = 0; guard < 600; guard++) {
@@ -2691,12 +2708,14 @@ function runStage(canvas, o) {
     }
     // the day shown, in the corner
     { ctx.globalAlpha = 1; ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.font = `600 11px ${color("--mono") || "monospace"}`; ctx.fillStyle = color("--accent2"); ctx.fillText(`${day}${PLAY.on ? " ▶" : ""}`, 10, 9); ctx.textBaseline = "middle"; }
-    // the lanes' names along the near edge
+    // the lanes' names along the near edge — or, as the graph, the topics' names where their hubs stand, faint, behind the cards
     ctx.font = `10.5px ${color("--font") || "sans-serif"}`; ctx.textAlign = "center"; ctx.textBaseline = "top";
-    for (const L of lanes) { const alive = L.items.some((e) => existsAt(e, day)); if (!alive) continue; const [x, y, s] = proj(L.x, floorY, 0); const w = K() * s * 0.9 - 10; const t = L.title; let txt = t; while (txt.length > 3 && ctx.measureText(txt).width > w) txt = txt.slice(0, -2); if (txt !== t) txt = txt.slice(0, -1) + "…"; ctx.fillStyle = color("--fg2"); ctx.globalAlpha = L.shelf ? 0.9 : 0.65; ctx.fillText(`${L.shelf ? "▴" : "▾"} ${txt}`, x, y + (L.shelf ? 5 : 19)); }
+    if (byGraph) for (const n of tnodes) { const alive = !CLOCK || S.entries.some((e) => e.file === n.file && !e.project && existsAt(e, day)); if (!alive) continue; const q = gmap(n); const [x, y] = proj(q.x, q.y, 0); ctx.fillStyle = color("--fg3"); ctx.globalAlpha = 0.55; ctx.fillText((n.label || n.file).replace(/`/g, "").slice(0, 28), x, y); }
+    else for (const L of lanes) { const alive = L.items.some((e) => existsAt(e, day)); if (!alive) continue; const [x, y, s] = proj(L.x, floorY, 0); const w = K() * s * 0.9 - 10; const t = L.title; let txt = t; while (txt.length > 3 && ctx.measureText(txt).width > w) txt = txt.slice(0, -2); if (txt !== t) txt = txt.slice(0, -1) + "…"; ctx.fillStyle = color("--fg2"); ctx.globalAlpha = L.shelf ? 0.9 : 0.65; ctx.fillText(`${L.shelf ? "▴" : "▾"} ${txt}`, x, y + (L.shelf ? 5 : 19)); }
     // the cards, far ones first
     const vis = cards.filter(shown).map((c) => ({ c, z: zCard(c) })).sort((a, b) => b.z - a.z);
-    const box = (c, z) => { const [x, y, s] = proj(c.x, c.y, z); const w = K() * s * 0.78, h = K() * s * 0.36; return { x0: x - w / 2, y0: y - h / 2, x1: x + w / 2, y1: y + h / 2, cx: x, cy: y, s, w, h }; };
+    const cardScale = byGraph ? 0.66 : 1; // as the graph the cards stand closer: smaller, the tip tells the rest
+    const box = (c, z) => { const q = posOf(c); const [x, y, s] = proj(q.x, q.y, z); const w = K() * s * 0.78 * cardScale, h = K() * s * 0.36 * cardScale; return { x0: x - w / 2, y0: y - h / 2, x1: x + w / 2, y1: y + h / 2, cx: x, cy: y, s, w, h }; };
     const boxes = new Map(); for (const { c, z } of vis) boxes.set(c, box(c, z));
     // the lines between cards: every one, the lit thought's, or none
     if (STAGE_LINKS !== "none") for (const l of links) {
@@ -2717,7 +2736,7 @@ function runStage(canvas, o) {
       const fresh = dayDiff(c.day, day) <= 3 && !PLAY.frac; // arrived within three days of the day shown: it glows
       const a = (faded ? 0.16 : 1) * depthAlpha(z);
       // a foot: the card's drop line to the floor
-      const [fx, fy] = proj(c.x, floorY, z); const lit1 = c === hover || c === held; ctx.globalAlpha = a * (lit1 ? 0.9 : 0.35); ctx.strokeStyle = lit1 ? color("--fg") : color("--fg3"); ctx.lineWidth = lit1 ? 1.5 : 1; ctx.beginPath(); ctx.moveTo(b.cx, b.y1); ctx.lineTo(fx, fy); ctx.stroke();
+      const [fx, fy] = proj(posOf(c).x, floorY, z); const lit1 = c === hover || c === held; ctx.globalAlpha = a * (lit1 ? 0.9 : 0.35); ctx.strokeStyle = lit1 ? color("--fg") : color("--fg3"); ctx.lineWidth = lit1 ? 1.5 : 1; ctx.beginPath(); ctx.moveTo(b.cx, b.y1); ctx.lineTo(fx, fy); ctx.stroke();
       b.foot = [b.cx, b.y1, fx, fy];
       const kind = typeKind(e); const fold = kind === "workaround" ? Math.min(b.h * 0.45, b.w * 0.3) : 0;
       const evc = sup ? color("--fg3") : typeColor(kind, color("--muted")); // the type's colour; a superseded card goes grey
@@ -2756,7 +2775,7 @@ function runStage(canvas, o) {
   const wake = () => { if (!raf && canvas.isConnected) raf = requestAnimationFrame(draw); };
   // pick: an entry chosen elsewhere on the page (a thought's step in the pane) is held like a clicked card, and
   // the day moves to the entry's, so it arrives at the front of the stage
-  STAGE = { wake, close: closeCard, pick: (e) => { held = byId[e.id] || (e.uuid && byId[e.uuid]) || null; o.play(false); o.open(e); o.setDay(createdOn(e) || o.span.to); wake(); } };
+  STAGE = { wake, follows: asGraph, close: closeCard, pick: (e) => { held = byId[e.id] || (e.uuid && byId[e.uuid]) || null; o.play(false); o.open(e); o.setDay(createdOn(e) || o.span.to); wake(); } };
   // the tip under the pointer, the card panel on a click
   const place = (box, px, py) => { const r = canvas.getBoundingClientRect(); box.style.left = `${Math.min(r.width - 280, Math.max(8, px + 14))}px`; box.style.top = `${Math.min(r.height - 90, py + 14)}px`; };
   const showTip = (c, px, py) => { const e = c.e; setKids(o.tip, el("b", {}, e.title.replace(/`/g, "")), el("div", { class: "note" }, `${c.lane.title} · ${c.day}${e.git?.created?.author ? " · " + e.git.created.author : ""}`), el("div", { class: "pills" }, ...typePills(e.type), statusPill(statusAt(e, now()) || e.status), evPill(e.evidence))); o.tip.hidden = false; place(o.tip, px, py); };
