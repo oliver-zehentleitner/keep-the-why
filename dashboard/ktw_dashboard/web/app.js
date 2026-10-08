@@ -2798,12 +2798,20 @@ function runStage(canvas, o) {
     const half = planeHalf(); const xl = -half - (byGraph ? 0 : 0.1), xr = half + (byGraph ? 0 : 0.1);
     for (let i = 0; i <= (byGraph ? 0 : cols); i++) { const x = byGraph ? 0 : i - half; const [ax, ay] = proj(byGraph ? xl : x, floorY, -0.4); const [bx, by] = proj(byGraph ? xl : x, floorY, zFar); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); if (byGraph) { const [cx2, cy2] = proj(xr, floorY, -0.4), [dx2, dy2] = proj(xr, floorY, zFar); ctx.beginPath(); ctx.moveTo(cx2, cy2); ctx.lineTo(dx2, dy2); ctx.stroke(); } }
     ctx.font = `10px ${color("--font") || "sans-serif"}`; ctx.textBaseline = "middle";
+    // the days: a faint line across for every day back from the one shown, as long as the lines stay apart on screen
+    // (the depth is logarithmic, so the last days are wide apart and the old ones run together), the day of the month
+    // where there is room for a number; the first of a month is the month's line, drawn below
+    { let lastY = -1e9, lastLabelY = -1e9; ctx.textAlign = "left"; // the labels inside the floor's left edge: it runs out of the box at the front
+      for (let back = 0; back < 4000; back++) { const d = addDays(day, -back); if (d < o.span.from) break; if (d.endsWith("-01")) continue; const z = zOf(d); if (z > zFar) break;
+        const [ax, ay] = proj(xl, floorY, z), [bx, by] = proj(xr, floorY, z); if (Math.abs(ay - lastY) < 7) continue; lastY = ay;
+        ctx.globalAlpha = 0.25 + 0.4 * depthAlpha(z); ctx.strokeStyle = color("--line"); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+        if (Math.abs(ay - lastLabelY) >= 16 && ay > 8 && ay < H - 4) { lastLabelY = ay; ctx.fillStyle = color("--fg3"); ctx.globalAlpha = 0.5 + 0.4 * depthAlpha(z); ctx.fillText(String(Number(d.slice(8, 10))), ax + 6, ay); } } }
     let [yy, mm] = day.slice(0, 7).split("-").map(Number); // from the month of the day shown back to the first
     for (let guard = 0; guard < 600; guard++) {
       const first = `${yy}-${String(mm).padStart(2, "0")}-01`; const z = zOf(first); if (z > zFar) break;
       const [ax, ay] = proj(xl, floorY, z), [bx, by] = proj(xr, floorY, z);
       ctx.globalAlpha = 0.35 + 0.65 * depthAlpha(z); ctx.strokeStyle = mm === 1 ? color("--fg3") : color("--line"); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
-      ctx.fillStyle = mm === 1 ? color("--fg2") : color("--fg3"); ctx.textAlign = "right"; if (ay > 8 && ay < H - 4 && (mm === 1 || z < 9)) ctx.fillText(mm === 1 ? String(yy) : first.slice(0, 7), ax - 6, ay);
+      ctx.fillStyle = color("--fg2"); ctx.textAlign = "left"; ctx.font = `600 10px ${color("--font") || "sans-serif"}`; if (ay > 8 && ay < H - 4) ctx.fillText(mm === 1 ? `${yy}-01` : first.slice(0, 7), ax + 6, ay); ctx.font = `10px ${color("--font") || "sans-serif"}`;
       mm--; if (mm < 1) { mm = 12; yy--; }
     }
     // the day shown, in the corner
