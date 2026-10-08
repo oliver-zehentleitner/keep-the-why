@@ -2661,6 +2661,7 @@ function runStage(canvas, o) {
   const F = 4.2; // focal length in lane units: a month back is still half size, so the past spreads instead of piling at the centre
   let zoom = 1, panX = 0, panY = 0; // the camera: zoom around the near plane, pan in screen pixels
   const camY = 1.85; // the eye just above the upper shelf's top row: the floor runs up toward the horizon
+  const floorY = -0.95; // the floor's height
   const K = () => Math.max(56, Math.min(190, (W - 40) / (cols + 1.2))) * zoom; // pixels per lane unit on the near plane
   // the box is as tall as the near plane needs — a narrow pane gets a low stage, a wide one a tall one
   const fitHeight = () => { const h = Math.round(Math.max(220, Math.min(760, K() / zoom * 3.15 + 60))); if (Math.abs(h - o.wrap.getBoundingClientRect().height) > 2) o.wrap.style.height = `${h}px`; };
@@ -2679,7 +2680,8 @@ function runStage(canvas, o) {
   const gbox = { x0: 0, x1: 1, y0: 0, y1: 1 };
   const gmap = (n) => { const ux = (n.x - gbox.x0) / (gbox.x1 - gbox.x0 || 1), uy = (n.y - gbox.y0) / (gbox.y1 - gbox.y0 || 1); return { x: (ux - 0.5) * (cols + 0.2), y: SHELF[1] + 0.55 - uy * (SHELF[1] + 0.55 - (SHELF[0] - 0.5)) }; };
   const measureGraph = () => { let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; for (const n of gnode.values()) { x0 = Math.min(x0, n.x); x1 = Math.max(x1, n.x); y0 = Math.min(y0, n.y); y1 = Math.max(y1, n.y); } if (x0 < x1) Object.assign(gbox, { x0, x1, y0, y1 }); };
-  const posOf = (c) => { const q = asGraph() ? (gnode.get(c.e.id) ? gmap(gnode.get(c.e.id)) : { x: c.x, y: c.y }) : { x: c.x, y: c.y }; return { x: q.x + (c.ox || 0), y: q.y + (c.oy || 0) }; };
+  const basePos = (c) => (asGraph() && gnode.get(c.e.id) ? gmap(gnode.get(c.e.id)) : { x: c.x, y: c.y });
+  const posOf = (c) => { const q = basePos(c); return { x: q.x + (c.ox || 0), y: q.y + (c.oy || 0) }; };
   // Cards keep apart: two cards at about one depth whose boxes overlap push each other off, by the smaller overlap,
   // half of it each frame until they touch, within bounds so no stack grows into a tower; the push is kept as an
   // offset on the card (near-plane units). Nothing pulls an offset back on its own — a steady pull against the push
@@ -2702,7 +2704,7 @@ function runStage(canvas, o) {
         else { const u = dy * 0.5; const ua = u / (K() * a.s), ub = u / (K() * b.s); A.c.oy = (A.c.oy || 0) - sy * ua; B.c.oy = (B.c.oy || 0) + sy * ub; a.y0 += sy * u; a.y1 += sy * u; a.cy += sy * u; b.y0 -= sy * u; b.y1 -= sy * u; b.cy -= sy * u; }
       }
     }
-    for (const { c } of vis) { c.ox = Math.max(-1.3, Math.min(1.3, c.ox || 0)); c.oy = Math.max(-0.9, Math.min(0.9, c.oy || 0)); }
+    for (const { c } of vis) { const base = basePos(c); c.ox = Math.max(-1.3, Math.min(1.3, c.ox || 0)); c.oy = Math.max(Math.max(-0.9, floorY + 0.3 - base.y), Math.min(Math.min(0.9, camY - 0.35 - base.y), c.oy || 0)); }
   }
   const depthAlpha = (z) => Math.max(0.14, Math.min(1, 1.08 - z / 16));
   const HATCH = new Map(); // colour -> pattern: diagonal lines, the fill of an inferred entry
@@ -2722,7 +2724,7 @@ function runStage(canvas, o) {
     const zFar = zFarOf(); const byGraph = asGraph(); if (byGraph) measureGraph();
     // the floor: lane lines into the depth (by topic), a line per month across, the year at its first month
     ctx.lineWidth = 1; ctx.strokeStyle = color("--line"); ctx.globalAlpha = 0.9;
-    const xl = -cols / 2 - 0.1, xr = cols / 2 + 0.1, floorY = -0.95;
+    const xl = -cols / 2 - 0.1, xr = cols / 2 + 0.1;
     for (let i = 0; i <= (byGraph ? 0 : cols); i++) { const x = byGraph ? 0 : i - cols / 2; const [ax, ay] = proj(byGraph ? xl : x, floorY, -0.4); const [bx, by] = proj(byGraph ? xl : x, floorY, zFar); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); if (byGraph) { const [cx2, cy2] = proj(xr, floorY, -0.4), [dx2, dy2] = proj(xr, floorY, zFar); ctx.beginPath(); ctx.moveTo(cx2, cy2); ctx.lineTo(dx2, dy2); ctx.stroke(); } }
     ctx.font = `10px ${color("--font") || "sans-serif"}`; ctx.textBaseline = "middle";
     let [yy, mm] = day.slice(0, 7).split("-").map(Number); // from the month of the day shown back to the first
@@ -2806,7 +2808,7 @@ function runStage(canvas, o) {
   // the day moves to the entry's, so it arrives at the front of the stage
   STAGE = { wake, relax, follows: asGraph, close: closeCard, pick: (e) => { held = byId[e.id] || (e.uuid && byId[e.uuid]) || null; o.play(false); o.open(e); o.setDay(createdOn(e) || o.span.to); wake(); } };
   // the tip under the pointer, the card panel on a click
-  const place = (box, px, py) => { const r = canvas.getBoundingClientRect(); box.style.left = `${Math.min(r.width - 280, Math.max(8, px + 14))}px`; box.style.top = `${Math.min(r.height - 90, py + 14)}px`; };
+  const place = (box, px, py) => { const r = canvas.getBoundingClientRect(); const w = box.offsetWidth || 280, h = box.offsetHeight || 80; const left = px + 14 + w > r.width - 8 ? Math.max(8, px - 14 - w) : px + 14; const top = py + 14 + h > r.height - 8 ? Math.max(8, py - 14 - h) : py + 14; box.style.left = `${left}px`; box.style.top = `${top}px`; };
   const showTip = (c, px, py) => { const e = c.e; setKids(o.tip, el("b", {}, e.title.replace(/`/g, "")), el("div", { class: "note" }, `${c.lane.title} · ${c.day}${e.git?.created?.author ? " · " + e.git.created.author : ""}`), el("div", { class: "pills" }, ...typePills(e.type), statusPill(statusAt(e, now()) || e.status), evPill(e.evidence))); o.tip.hidden = false; place(o.tip, px, py); };
   const hideTip = () => { o.tip.hidden = true; };
   function openCard(c) { held = c; o.open(c.e); wake(); }
