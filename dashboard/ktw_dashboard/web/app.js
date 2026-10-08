@@ -2544,12 +2544,11 @@ function viewTimeline(main, day) {
   const latestEntry = (d) => { let best = null; for (const e of S.entries) { if (!existsAt(e, d)) continue; const c = createdOn(e) || span.to; if (!best || c >= best.c) best = { e, c }; } return best?.e || null; };
   function fillCard(e, held) {
     const d = CLOCK || span.to; const lane = (e.project ? `${e.project} · ` : "") + (topicOf(e.file)?.title || e.file).replace(/`/g, "");
-    const body = e.body?.text || ""; const reason = e.body?.reason || ""; const excerpt = (reason ? `Reason: ${reason}` : body).replace(/\s+/g, " ").trim();
-    const cut = excerpt.length > 520 ? excerpt.slice(0, 518).replace(/\s\S*$/, "") + "…" : excerpt;
+    const body = e.body?.text || "";
     setKids(card, el("div", { class: "stage-card-head" }, el("span", { class: "note mono" }, `${createdOn(e) || "today"} · ${lane}`), held ? el("button", { type: "button", class: "pill stage-card-held", title: "let go — back to the latest entry by the day shown", onclick: () => STAGE?.close?.() }, "picked ", el("b", {}, "×")) : el("span", { class: "pill" }, "latest by then")),
       el("h3", {}, el("a", { href: entryHref(e), title: "read the whole entry" }, e.title.replace(/`/g, ""))),
       el("div", { class: "pills" }, ...typePills(e.type), statusPill(statusAt(e, d) || e.status), evPill(e.evidence)),
-      el("p", {}, cut || el("span", { class: "empty" }, typeof S.bodies === "string" ? "loading the text…" : "no text")),
+      body ? el("div", { class: "body stage-card-body", html: renderMarkdown(body) }) : el("p", { class: "empty stage-card-body" }, typeof S.bodies === "string" ? "loading the text…" : "no text"),
       el("div", { class: "stage-card-foot" }, e.git?.created?.author ? el("span", { class: "note" }, `recorded by ${e.git.created.author}`) : el("span"), el("a", { href: entryHref(e) }, "open ›")));
     if (typeof S.bodies === "string") ensureBodies(SELF).then(() => { if (card.isConnected && (HELD ? HELD === e.id : latestEntry(CLOCK || span.to) === e)) fillCard(e, held); });
   }

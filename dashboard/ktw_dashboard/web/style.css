@@ -582,10 +582,15 @@ a.author:hover { color: var(--accent2); }
 .timeline-head-text .timeline { margin: 6px 0 4px; }
 .timeline-head-text .legend { margin: 0 0 10px; font-size: 11.5px; }
 .timeline-head-text .playhead { margin-bottom: 0; }
-.stage-card-slot { min-width: 0; }
+/* the card fills its slot and never sets the row's height — the column beside it does — so a short entry and a long one leave the stage where it is */
+.stage-card-slot { min-width: 0; position: relative; }
 /* head, title and pills at the top, the foot (who recorded it · let go · open) always at the bottom; only the text scrolls */
-.stage-card { height: 100%; min-height: 200px; max-height: 300px; display: flex; flex-direction: column; background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px 10px; font-size: 13px; }
-.stage-card p { flex: 1 1 auto; min-height: 2.6em; overflow: auto; }
+.stage-card { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px 10px; font-size: 13px; }
+.stage-card .stage-card-body { flex: 1 1 auto; min-height: 2.6em; overflow: auto; margin: 8px 0 0; color: var(--fg2); line-height: 1.45; font-size: 12.5px; }
+.stage-card .stage-card-body p { margin: 0 0 8px; }
+.stage-card .stage-card-body p:last-child { margin-bottom: 0; }
+.stage-card .stage-card-body b { color: var(--fg); }
+.stage-card .stage-card-body code { font-size: 11px; }
 .stage-card .stage-card-foot { flex: none; }
 .stage-card .stage-card-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
 .stage-card .stage-card-head .pill { flex: none; }
@@ -594,7 +599,6 @@ a.author:hover { color: var(--accent2); }
 .stage-card .stage-card-held:hover { background: var(--accent); color: #fff; }
 .stage-card h3 { margin: 6px 0 0; font-size: 15px; line-height: 1.3; text-transform: none; letter-spacing: 0; color: var(--fg); }
 .stage-card h3 a { color: var(--fg); }
-.stage-card p { margin: 10px 0 0; color: var(--fg2); line-height: 1.45; }
 .stage-card .stage-card-foot { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-top: 10px; border-top: 1px solid var(--line); padding-top: 8px; }
 .stage-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 11.5px; color: var(--fg2); margin: -10px 0 6px; align-items: center; }
 .stage-legend .type-glyph { vertical-align: -1px; margin-right: 2px; }
@@ -611,6 +615,6 @@ a.author:hover { color: var(--accent2); }
   .stage-note .stage-hint { display: none; }
   .stage-note .stage-hint-touch { display: inline; }
   .timeline-head { grid-template-columns: 1fr; }
-  .stage-card { height: auto; max-height: 300px; }
+  .stage-card-slot { height: 320px; }
   .playhead .playhead-counts { flex-basis: 100%; white-space: normal; }
 }
