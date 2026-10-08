@@ -2629,13 +2629,16 @@ function runStage(canvas, o) {
   lanes.sort((a, b) => a.first < b.first ? -1 : a.first > b.first ? 1 : a.title.localeCompare(b.title)); // the oldest topic on the left: the stage fills left to right
   // two shelves, the lanes alternating between them: half the width, and the picture gets a second height
   const nL = lanes.length || 1; const cols = Math.ceil(nL / 2);
-  const SHELF = [-0.25, 0.95]; // the rows' base height on the lower and the upper shelf
+  const SHELF = [-0.3, 1.0]; // the rows' base height on the lower and the upper shelf
   const cards = []; const byId = {};
+  const weekOf = (day) => { const d = new Date(`${day}T00:00:00Z`); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); };
   lanes.forEach((L, li) => {
     L.x = Math.floor(li / 2) - (cols - 1) / 2; L.shelf = li % 2;
-    const sameDay = {}; // entries of one day in one lane: spread a little, so they do not sit in one spot
-    L.items.forEach((e) => { const day = createdOn(e) || o.span.to; const k = (sameDay[day] = (sameDay[day] || 0) + 1) - 1;
-      const c = { e, lane: L, x: L.x + ((k % 3) - 1) * 0.14, y: SHELF[L.shelf] + ((k % 2) - 0.5) * 0.36, dz: (k % 4) * 0.09, day }; cards.push(c); byId[e.id] = c; if (e.uuid) byId[e.uuid] = c; });
+    // entries of one lane and one calendar week sit at nearly one depth: they take three rows and two columns in turn,
+    // and entries of one day a step of depth each, so a busy week stacks up instead of on top of itself
+    const sameWeek = {}, sameDay = {};
+    L.items.forEach((e) => { const day = createdOn(e) || o.span.to; const w = (sameWeek[weekOf(day)] = (sameWeek[weekOf(day)] || 0) + 1) - 1; const k = (sameDay[day] = (sameDay[day] || 0) + 1) - 1;
+      const c = { e, lane: L, x: L.x + ((Math.floor(w / 3) % 2) - 0.5) * 0.34, y: SHELF[L.shelf] + ((w % 3) - 1) * 0.44, dz: (k % 4) * 0.1, day }; cards.push(c); byId[e.id] = c; if (e.uuid) byId[e.uuid] = c; });
   });
   const links = [];
   for (const c of cards) {
@@ -2647,10 +2650,10 @@ function runStage(canvas, o) {
   const depth = (days) => 4 * Math.log1p(Math.max(0, days) / 10);
   const F = 2.6; // focal length in lane units
   let zoom = 1, panX = 0, panY = 0; // the camera: zoom around the near plane, pan in screen pixels
-  const camY = 1.62; // the eye just above the upper shelf: the floor runs up toward the horizon, the near plane fills the box
+  const camY = 1.85; // the eye just above the upper shelf's top row: the floor runs up toward the horizon
   const K = () => Math.max(56, Math.min(190, (W - 40) / (cols + 1.2))) * zoom; // pixels per lane unit on the near plane
   // the box is as tall as the near plane needs — a narrow pane gets a low stage, a wide one a tall one
-  const fitHeight = () => { const h = Math.round(Math.max(220, Math.min(720, K() / zoom * 2.75 + 60))); if (Math.abs(h - o.wrap.getBoundingClientRect().height) > 2) o.wrap.style.height = `${h}px`; };
+  const fitHeight = () => { const h = Math.round(Math.max(220, Math.min(760, K() / zoom * 3.15 + 60))); if (Math.abs(h - o.wrap.getBoundingClientRect().height) > 2) o.wrap.style.height = `${h}px`; };
   const horizon = () => H * 0.13 + panY; const cx = () => W / 2 + panX;
   const now = () => (CLOCK || o.span.to);
   const tNow = () => dayDiff(o.span.from, now()) + (PLAY.on ? PLAY.frac : 0); // days since the first day, fractional while playing
@@ -2665,8 +2668,9 @@ function runStage(canvas, o) {
   let hover = null, held = null, drag = null, moved = false, pinch = null, raf = null, lastDraw = 0;
   const shown = (c) => existsAt(c.e, now()) && (!PLAY.on || zOf(c.day) >= -0.02);
   const zFarOf = () => Math.max(1, depth(tNow() + 20));
-  const rects = []; // screen boxes of the cards drawn, near ones last
-  const pick = (px, py) => { for (let i = rects.length - 1; i >= 0; i--) { const r = rects[i]; if (px >= r.x0 && px <= r.x1 && py >= r.y0 && py <= r.y1) return r.c; } return null; };
+  const rects = []; // screen boxes of the cards drawn, near ones last; each with its foot, the line down to the floor
+  const nearFoot = (r, px, py) => { const [ax, ay, bx, by] = r.foot; const dx = bx - ax, dy = by - ay; const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy || 1))); return Math.hypot(px - (ax + t * dx), py - (ay + t * dy)) <= 4; };
+  const pick = (px, py) => { for (let i = rects.length - 1; i >= 0; i--) { const r = rects[i]; if (px >= r.x0 && px <= r.x1 && py >= r.y0 && py <= r.y1) return r.c; } for (let i = rects.length - 1; i >= 0; i--) if (nearFoot(rects[i], px, py)) return rects[i].c; return null; };
   function draw() {
     raf = null; rects.length = 0;
     ctx.clearRect(0, 0, W, H);
@@ -2674,7 +2678,7 @@ function runStage(canvas, o) {
     const zFar = zFarOf();
     // the floor: lane lines into the depth, a line per month across, the year at its first month
     ctx.lineWidth = 1; ctx.strokeStyle = color("--line"); ctx.globalAlpha = 0.9;
-    const xl = -cols / 2 - 0.1, xr = cols / 2 + 0.1, floorY = -0.75;
+    const xl = -cols / 2 - 0.1, xr = cols / 2 + 0.1, floorY = -0.95;
     for (let i = 0; i <= cols; i++) { const x = i - cols / 2; const [ax, ay] = proj(x, floorY, -0.4); const [bx, by] = proj(x, floorY, zFar); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); }
     ctx.font = `10px ${color("--font") || "sans-serif"}`; ctx.textBaseline = "middle";
     let [yy, mm] = day.slice(0, 7).split("-").map(Number); // from the month of the day shown back to the first
@@ -2713,7 +2717,8 @@ function runStage(canvas, o) {
       const fresh = dayDiff(c.day, day) <= 3 && !PLAY.frac; // arrived within three days of the day shown: it glows
       const a = (faded ? 0.16 : 1) * depthAlpha(z);
       // a foot: the card's drop line to the floor
-      const [fx, fy] = proj(c.x, floorY, z); ctx.globalAlpha = a * 0.35; ctx.strokeStyle = color("--fg3"); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(b.cx, b.y1); ctx.lineTo(fx, fy); ctx.stroke();
+      const [fx, fy] = proj(c.x, floorY, z); const lit1 = c === hover || c === held; ctx.globalAlpha = a * (lit1 ? 0.9 : 0.35); ctx.strokeStyle = lit1 ? color("--fg") : color("--fg3"); ctx.lineWidth = lit1 ? 1.5 : 1; ctx.beginPath(); ctx.moveTo(b.cx, b.y1); ctx.lineTo(fx, fy); ctx.stroke();
+      b.foot = [b.cx, b.y1, fx, fy];
       const kind = typeKind(e); const fold = kind === "workaround" ? Math.min(b.h * 0.45, b.w * 0.3) : 0;
       const evc = sup ? color("--fg3") : typeColor(kind, color("--muted")); // the type's colour; a superseded card goes grey
       // the card's outline: a rectangle, or one with its top-right corner folded
