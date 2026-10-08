@@ -2201,7 +2201,10 @@ function viewGraph(main) {
     // on a phone the switches and the legend sit behind two buttons, so the graph gets the screen (CSS shows them there only)
     const toggle = (cls, label, other) => el("button", { type: "button", class: `graph-toggle ${cls}-toggle`, "aria-expanded": "false",
       onclick: (ev) => { const open = wrap.classList.toggle(`${cls}-open`); wrap.classList.remove(`${other}-open`); ev.currentTarget.setAttribute("aria-expanded", String(open)); } }, label);
-    wrap.replaceChildren(canvas, ui, legend, ...[pathBar()].filter(Boolean), toggle("ui", "Layers", "legend"), toggle("legend", "Legend", "ui"),
+    // the corner's reset lets go of the held thought and the pointed-at step: every node alike again; the bar's reset
+    // (fit, let go of placed nodes) stays what it is
+    const cornerReset = el("button", { type: "button", class: "graph-corner-reset", title: "let go of the held thought — every node alike again", onclick: () => { THOUGHT_PIN = null; focusStep(null); renderThoughts(g); g.wake?.(); } }, "reset");
+    wrap.replaceChildren(canvas, ui, legend, ...[pathBar()].filter(Boolean), toggle("ui", "Layers", "legend"), toggle("legend", "Legend", "ui"), cornerReset,
       el("div", { class: "graph-hint" }, family ? "family — a project's name goes there, in place · drag nodes · wheel zoom · drag background to pan" : "drag nodes · wheel zoom · drag background to pan · click to open"),
       el("div", { class: "graph-hint-touch" }, "pinch to zoom · drag to pan · tap to open"));
     // on a phone the graph opens fitted to the screen, also one that settled earlier and was moved then
