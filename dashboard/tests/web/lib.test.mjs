@@ -384,3 +384,108 @@ test("daySpan runs from the earliest creation to today", () => {
   assert.deepEqual(s, { from: "2025-11-15", to: todayISO() });
   assert.equal(daySpan([{ status: "active" }]), null);
 });
+
+// the stage's scene and layout (timeline)
+import { TYPE_KINDS, typeKind, weekStart, SHELF, stageCards, stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight } from "../../ktw_dashboard/web/lib.js";
+
+const node = (id, entry, extra = {}) => ({ id, kind: "entry", entry, href: `#entry/${id}`, ...extra });
+const entry = (id, uuid, day, extra = {}) => ({ id, uuid, title: id, file: extra.file || "a.md", type: extra.type || ["decision"], status: "active", evidence: "confirmed", see: extra.see || [], superseded_by: extra.superseded_by || null, git: day ? { created: { date: day, author: "x" }, status_history: [{ status: "active", date: day }] } : undefined });
+const SCENE = () => {
+  const a = entry("a.md#one", "aaaaaaaa-0000-4000-8000-000000000001", "2026-01-12"); // a Monday
+  const b = entry("a.md#two", "aaaaaaaa-0000-4000-8000-000000000002", "2026-01-14", { see: [{ uuid: a.uuid, date: "2026-01-14" }] }); // the same week
+  const f1 = entry("h.md#f1", "ffffffff-0000-4000-8000-000000000001", "2025-12-01", { file: "h.md" });
+  const f2 = entry("h.md#f2", "ffffffff-0000-4000-8000-000000000002", "2025-12-20", { file: "h.md", see: [{ uuid: f1.uuid, date: "2025-12-20" }] });
+  const f3 = entry("h.md#f3", "ffffffff-0000-4000-8000-000000000003", "2025-12-25", { file: "h.md" }); // joined to nothing of ours
+  b.superseded_by = f2.uuid; b.git.status_history.push({ status: "superseded", date: "2026-02-01" });
+  const nodes = [node("e:a.md#one", a), node("e:a.md#two", b), node("fe:x:f1", f1, { ext: true, proj: "friend", state: { bodies: "state.body.json" } }), node("fe:x:f2", f2, { ext: true, proj: "friend" }), node("fe:x:f3", f3, { ext: true, proj: "friend" })];
+  const { cards, byId } = stageCards(nodes, { today: "2026-03-01", selfState: { me: true } });
+  const links = stageLinks(cards, byId); markLinked(cards, links);
+  return { cards, byId, links };
+};
+
+test("typeKind: the first of the four kinds an entry's Type names", () => {
+  assert.equal(typeKind({ type: ["decision"] }), "decision");
+  assert.equal(typeKind({ type: ["incident", "decision"] }), "incident");
+  assert.equal(typeKind({ type: ["undefined — none fit"] }), null);
+  assert.equal(typeKind({}), null);
+  assert.deepEqual(TYPE_KINDS, ["decision", "constraint", "workaround", "incident"]);
+});
+
+test("weekStart is the Monday of the week", () => {
+  assert.equal(weekStart("2026-10-08"), "2026-10-05"); // a Thursday
+  assert.equal(weekStart("2026-10-05"), "2026-10-05");
+  assert.equal(weekStart("2026-10-04"), "2026-09-28"); // a Sunday
+});
+
+test("stageCards: a card per node, foreign ones knowing their repository and state, ours the self state", () => {
+  const { cards, byId } = SCENE();
+  assert.equal(cards.length, 5);
+  const ours = cards.find((c) => c.nid === "e:a.md#one"), theirs = cards.find((c) => c.nid === "fe:x:f1");
+  assert.equal(ours.ext, false); assert.deepEqual(ours.state, { me: true }); assert.equal(ours.laneKey, "|a.md"); assert.equal(ours.day, "2026-01-12");
+  assert.equal(theirs.ext, true); assert.equal(theirs.proj, "friend"); assert.equal(theirs.laneKey, "friend|h.md"); assert.equal(theirs.state.bodies, "state.body.json");
+  assert.equal(byId[ours.e.uuid], ours, "by Id"); assert.equal(byId["a.md#one"], ours, "ours by entry id too"); assert.equal(byId["h.md#f1"], undefined, "a foreign entry id is not an address");
+  const noDate = stageCards([node("e:n", { id: "n", title: "n", file: "a.md" })], { today: "2026-03-01" }).cards[0];
+  assert.equal(noDate.day, "2026-03-01", "no Git date: today");
+});
+
+test("stageLinks: a See from its as-of day, a Superseded by from the status change; markLinked follows the chain", () => {
+  const { cards, links } = SCENE();
+  assert.equal(links.length, 3);
+  const see = links.find((l) => l.kind === "see" && l.a.nid === "e:a.md#two"); assert.equal(see.day, "2026-01-14"); assert.equal(see.b.nid, "e:a.md#one");
+  const sup = links.find((l) => l.kind === "superseded"); assert.equal(sup.a.nid, "e:a.md#two"); assert.equal(sup.b.nid, "fe:x:f2"); assert.equal(sup.day, "2026-02-01");
+  const linked = Object.fromEntries(cards.map((c) => [c.nid, c.linked]));
+  assert.deepEqual(linked, { "e:a.md#one": true, "e:a.md#two": true, "fe:x:f2": true, "fe:x:f1": true, "fe:x:f3": false }, "f1 is reached through f2, f3 is joined to nothing of ours");
+});
+
+test("stageLanes: one per topic per repository among the cards shown, oldest left, rows for a busy week", () => {
+  const { cards } = SCENE();
+  const all = stageLanes(cards, { topicTitle: (f) => (f === "a.md" ? "Alpha" : null) });
+  assert.deepEqual(all.lanes.map((L) => L.title), ["friend · h.md", "Alpha"]);
+  assert.equal(all.cols, 1);
+  const linkedOnly = stageLanes(cards, { show: (c) => !c.ext || c.linked });
+  assert.equal(linkedOnly.lanes.find((L) => L.key === "friend|h.md").items.length, 2, "f3 is not in the lane");
+  const ours = stageLanes(cards, { show: (c) => !c.ext });
+  assert.deepEqual(ours.lanes.map((L) => L.key), ["|a.md"]);
+  const [one, two] = ours.lanes[0].items;
+  assert.equal(one.lane, ours.lanes[0]); assert.equal(one.y, SHELF[0] - 0.44, "the first of the week on the lower row"); assert.equal(two.y, SHELF[0], "the second on the middle row");
+  assert.equal(one.x, ours.lanes[0].x - 0.17); assert.equal(one.dz, 0);
+});
+
+test("logDepth: zero today, growing with the days, the span's end at the far depth whatever the span", () => {
+  assert.equal(logDepth(0, 100, 6), 0);
+  assert.ok(logDepth(1, 100, 6) < logDepth(7, 100, 6) && logDepth(7, 100, 6) < logDepth(30, 100, 6));
+  assert.ok(Math.abs(logDepth(100, 100, 6) - 6) < 1e-9);
+  assert.ok(Math.abs(logDepth(1000, 1000, 6) - 6) < 1e-9);
+  assert.equal(logDepth(-5, 100, 6), 0, "the future is at the front");
+});
+
+test("percentileBox leaves the outliers out", () => {
+  const xs = [-1000, ...Array.from({ length: 50 }, (_, i) => 10 + i), 1000], ys = xs.map((x) => -x); // two outliers around fifty points
+  const b = percentileBox(xs, ys);
+  assert.ok(b.x0 >= 10 && b.x1 <= 59, `the box is the bulk, got ${b.x0}..${b.x1}`);
+  assert.ok(b.y0 >= -59 && b.y1 <= -10);
+  assert.equal(percentileBox([1], [1]), null);
+});
+
+test("pushApart separates two overlapping cards at one depth and respects a bound", () => {
+  const box = (cx, cy) => ({ x0: cx - 20, y0: cy - 10, x1: cx + 20, y1: cy + 10, cx, cy, s: 1 });
+  const c1 = { ox: 0, oy: 0 }, c2 = { ox: 0, oy: 0 };
+  const items = [{ c: c1, z: 1, box: box(100, 100) }, { c: c2, z: 1, box: box(110, 102) }]; // overlap 30 across, 18 up
+  const opts = { px: () => 100, py: () => 100, room: () => ({ xlo: -1, xhi: 1, ylo: -1, yhi: 1 }) };
+  assert.ok(pushApart(items, opts));
+  assert.ok(c1.oy > 0 && c2.oy < 0, "the smaller overlap is up: the first card goes up (oy grows), the second down");
+  assert.ok(Math.abs(items[0].box.cy - items[1].box.cy) >= 20 - 1e-9, "they touch now");
+  assert.ok(!pushApart(items, opts), "nothing left to push");
+  const far = [{ c: { ox: 0, oy: 0 }, z: 5, box: box(100, 100) }, { c: { ox: 0, oy: 0 }, z: 1, box: box(100, 100) }];
+  assert.ok(!pushApart(far, opts), "cards far apart in depth may cover each other");
+  const bound = { c: { ox: 0, oy: 0.95 }, z: 1, box: box(100, 100) }, other = { c: { ox: 0, oy: 0 }, z: 1, box: box(100, 102) };
+  pushApart([bound, other], { ...opts, room: () => ({ xlo: -1, xhi: 1, ylo: -1, yhi: 1 }) });
+  assert.ok(bound.c.oy <= 1 + 1e-9, "a card at its bound gives its half to the other");
+});
+
+test("stageHeight: the base at least, twice it at most, what the window leaves in between", () => {
+  assert.equal(stageHeight(500, 300), 500);
+  assert.equal(stageHeight(500, 800), 800);
+  assert.equal(stageHeight(500, 2000), 1000);
+  assert.equal(stageHeight(100, 50), 220);
+});

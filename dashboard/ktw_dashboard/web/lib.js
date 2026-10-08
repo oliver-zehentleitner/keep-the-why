@@ -412,3 +412,117 @@ export function daySpan(entries) {
   const days = entries.map(createdOn).filter(Boolean).sort();
   return days.length ? { from: days[0], to: todayISO() } : null;
 }
+
+// ---------------------------------------------------------------- the stage (timeline)
+// The scene the stage draws, built from the graph's entry nodes: a card per entry, the links between cards by Id,
+// which foreign cards a chain of links joins to this project's, and the lanes by topic. Pure — nodes in, a scene
+// out — so it can be tested without a canvas. A node is { id, entry, ext?, fam?, proj?, href?, state? } as the
+// graph builds it; `ext` marks a friend's or the path's entry, `fam` a family member's.
+export const TYPE_KINDS = ["decision", "constraint", "workaround", "incident"];
+export const TYPE_COLORS = { decision: "#835bec", constraint: "#4aa3df", workaround: "#e0a83a", incident: "#e0574f" };
+// the first of the four kinds an entry's Type names; null when none
+export const typeKind = (e) => (e.type || []).map((t) => typeName(t)).find((t) => TYPE_KINDS.includes(t)) || null;
+// the Monday that starts the week of a day
+export const weekStart = (day) => { const d = new Date(`${day}T00:00:00Z`); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); };
+export const SHELF = [-0.3, 1.0]; // the rows' base height on the lower and the upper shelf, in plane units
+
+// a card per entry node; a foreign card (a friend's, a family member's) knows its repository and its export's state
+export function stageCards(entryNodes, { today, selfState = null }) {
+  const cards = []; const byId = {};
+  for (const n of entryNodes) {
+    const e = n.entry; if (!e) continue;
+    const foreign = !!(n.ext || n.fam); const proj = foreign ? (n.proj || "") : (e.project || "");
+    const c = { e, nid: n.id, ext: foreign, href: n.href, state: foreign ? n.state : selfState, proj, laneKey: `${proj}|${e.file}`, day: createdOn(e) || today, x: 0, y: 0, dz: 0, ox: 0, oy: 0, lane: null, linked: !foreign };
+    cards.push(c); if (!foreign) byId[e.id] = c; if (e.uuid) byId[e.uuid] = c;
+  }
+  return { cards, byId };
+}
+// the links between cards: a See from its as-of day, a Superseded by from the day the old entry's status changed
+export function stageLinks(cards, byId) {
+  const links = [];
+  for (const c of cards) {
+    for (const r of c.e.see || []) { const t = r?.uuid && byId[r.uuid]; if (t && t !== c) links.push({ a: c, b: t, kind: "see", day: seeDay(c.e, r) }); }
+    const sb = c.e.superseded_by ? parseSupersededBy(c.e.superseded_by)?.uuid : null; const t = sb && byId[sb]; if (t && t !== c) links.push({ a: c, b: t, kind: "superseded", day: supersededDay(c.e) });
+  }
+  return links;
+}
+// `linked` on every card: this project's always; a foreign one when a chain of links, in either direction, joins it to ours
+export function markLinked(cards, links) {
+  const adj = new Map(); const add = (a, b) => { (adj.get(a) || adj.set(a, []).get(a)).push(b); };
+  for (const l of links) { add(l.a, l.b); add(l.b, l.a); }
+  const seen = new Set(cards.filter((c) => !c.ext)); const queue = [...seen];
+  while (queue.length) { const c = queue.pop(); for (const d of adj.get(c) || []) if (!seen.has(d)) { seen.add(d); queue.push(d); } }
+  for (const c of cards) c.linked = !c.ext || seen.has(c);
+  return cards;
+}
+// the lanes by topic among the cards that show: one per topic per repository, the oldest on the left, alternating
+// between two shelves; within a lane the entries of one calendar week take three rows and two columns in turn, and
+// the entries of one day a step of depth each, so a busy week stacks up instead of on top of itself
+export function stageLanes(cards, { show = () => true, topicTitle = (file) => file } = {}) {
+  const byLane = new Map();
+  for (const c of cards) {
+    if (!show(c)) continue;
+    if (!byLane.has(c.laneKey)) byLane.set(c.laneKey, { key: c.laneKey, file: c.e.file, project: c.proj, title: (c.proj ? `${c.proj} · ` : "") + ((c.ext ? null : topicTitle(c.e.file)) || c.e.file).replace(/`/g, ""), items: [], first: "" });
+    byLane.get(c.laneKey).items.push(c);
+  }
+  const lanes = [...byLane.values()];
+  for (const L of lanes) { L.items.sort((a, b) => (a.day < b.day ? -1 : 1)); L.first = L.items[0]?.day || "9"; }
+  lanes.sort((a, b) => (a.first < b.first ? -1 : a.first > b.first ? 1 : a.title.localeCompare(b.title)));
+  const cols = Math.ceil((lanes.length || 1) / 2);
+  lanes.forEach((L, li) => {
+    L.x = Math.floor(li / 2) - (cols - 1) / 2; L.shelf = li % 2;
+    const sameWeek = {}, sameDay = {};
+    for (const c of L.items) {
+      const w = (sameWeek[weekStart(c.day)] = (sameWeek[weekStart(c.day)] || 0) + 1) - 1; const k = (sameDay[c.day] = (sameDay[c.day] || 0) + 1) - 1;
+      Object.assign(c, { lane: L, x: L.x + ((Math.floor(w / 3) % 2) - 0.5) * 0.34, y: SHELF[L.shelf] + ((w % 3) - 1) * 0.44, dz: (k % 4) * 0.1 });
+    }
+  });
+  return { lanes, cols };
+}
+// depth is logarithmic in days and scaled to the span: `days` back is `far` deep at the span's end, so the last days
+// spread out where the eye is and the oldest entry stands at the same depth whether the span is months or years
+export const logDepth = (days, spanDays, far) => far * Math.log1p(Math.max(0, days) / 10) / Math.log1p(Math.max(14, spanDays) / 10);
+// the box from the `lo` to the `hi` percentile of the points, so a few outliers do not squeeze the rest; null below two points
+export function percentileBox(xs, ys, lo = 0.04, hi = 0.96) {
+  if (xs.length < 2) return null;
+  const sx = [...xs].sort((a, b) => a - b), sy = [...ys].sort((a, b) => a - b); const at = (arr, q) => arr[Math.round(q * (arr.length - 1))];
+  const box = { x0: at(sx, lo), x1: at(sx, hi), y0: at(sy, lo), y1: at(sy, hi) };
+  return box.x0 < box.x1 && box.y0 < box.y1 ? box : null;
+}
+// Cards keep apart: two items at about one depth whose boxes overlap push each other off, half the overlap each, along
+// the axis of the smaller overlap; a card at its bound gives its half to the other, both at theirs stay. `items` come
+// far to near, each { c, z, box: { x0, y0, x1, y1, cx, cy, s } }; the push lands on c.ox / c.oy in plane units
+// (px, py: pixels per unit for the card across and up) and on the box in pixels; `room(c)` bounds the offsets.
+// Returns whether anything was pushed. Screen y grows downward: a push "down" lowers oy.
+export function pushApart(items, { px, py, room, slice = 1.4 }) {
+  let pushed = false;
+  for (let i = 0; i < items.length; i++) {
+    const A = items[i], a = A.box;
+    for (let j = i + 1; j < items.length; j++) {
+      const B = items[j]; if (A.z - B.z > slice) break; // the rest are nearer still
+      const b = B.box;
+      const dx = Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0), dy = Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0);
+      if (dx <= 2 || dy <= 2) continue;
+      const sx = Math.sign(a.cx - b.cx) || (i & 1 ? 1 : -1), sy = Math.sign(a.cy - b.cy) || (j & 1 ? 1 : -1);
+      const ra = room(A.c), rb = room(B.c);
+      if (dx < dy) {
+        const u = dx * 0.5, pa0 = px(A.c), pb0 = px(B.c); let ua = u / pa0, ub = u / pb0;
+        const fa = sx > 0 ? Math.max(0, ra.xhi - A.c.ox) : Math.max(0, A.c.ox - ra.xlo), fb = sx > 0 ? Math.max(0, B.c.ox - rb.xlo) : Math.max(0, rb.xhi - B.c.ox);
+        if (fa < ua) { ub = Math.min(ub + (ua - fa) * (pa0 / pb0), fb); ua = fa; } else if (fb < ub) { ua = Math.min(ua + (ub - fb) * (pb0 / pa0), fa); ub = fb; }
+        if (ua + ub <= 1e-4) continue;
+        pushed = true; const pa = ua * pa0, pb = ub * pb0;
+        A.c.ox += sx * ua; B.c.ox -= sx * ub; a.x0 += sx * pa; a.x1 += sx * pa; a.cx += sx * pa; b.x0 -= sx * pb; b.x1 -= sx * pb; b.cx -= sx * pb;
+      } else {
+        const u = dy * 0.5, pa0 = py(A.c), pb0 = py(B.c); let ua = u / pa0, ub = u / pb0;
+        const fa = sy > 0 ? Math.max(0, A.c.oy - ra.ylo) : Math.max(0, ra.yhi - A.c.oy), fb = sy > 0 ? Math.max(0, rb.yhi - B.c.oy) : Math.max(0, B.c.oy - rb.ylo);
+        if (fa < ua) { ub = Math.min(ub + (ua - fa) * (pa0 / pb0), fb); ua = fa; } else if (fb < ub) { ua = Math.min(ua + (ub - fb) * (pb0 / pa0), fa); ub = fb; }
+        if (ua + ub <= 1e-4) continue;
+        pushed = true; const pa = ua * pa0, pb = ub * pb0;
+        A.c.oy -= sy * ua; B.c.oy += sy * ub; a.y0 += sy * pa; a.y1 += sy * pa; a.cy += sy * pa; b.y0 -= sy * pb; b.y1 -= sy * pb; b.cy -= sy * pb;
+      }
+    }
+  }
+  return pushed;
+}
+// the stage's box: as tall as the plane needs (`base`), up to twice that where the window has the room, never less
+export const stageHeight = (base, roomLeft) => Math.round(Math.max(220, Math.min(1400, Math.max(base, Math.min(2 * base, roomLeft)))));
