@@ -2542,7 +2542,7 @@ function viewTimeline(main, day) {
     ...[["all", "all links"], ["lit", "lit only"], ["none", "no links"]].map(([v, l]) => el("button", { type: "button", class: v === STAGE_LINKS ? "on" : "", onclick: (ev) => { setStageLinks(v); for (const b of ev.currentTarget.parentNode.children) b.classList.toggle("on", b === ev.currentTarget); } }, l)));
   wrap.append(canvas, tip, card, linksSeg);
   main.append(wrap,
-    el("div", { class: "stage-legend" }, ...["decision", "constraint", "workaround", "incident"].map((k) => el("span", { html: `${typeGlyphSvg(k)} ${k}` })), el("span", { class: "note" }, "— the card's shape is its Type; the colours are the graph's: Evidence fills, Status rings, superseded hollow")),
+    stageLegend(),
     el("p", { class: "note stage-note" }, el("span", { class: "stage-hint" }, "On the stage: wheel — a day forward or back, shift for a week · drag — look around · ctrl+wheel — zoom · double-click — reset the view · click a card to read it, the floor to let go. The thoughts beside: point at one to light its chain here and in the graph."), el("span", { class: "stage-hint-touch" }, "On the stage: drag — look around · pinch — zoom · tap a card to read it, the floor to let go. The slider sets the day.")),
     listBox);
   buildGraph(); // the thoughts beside the stage are the graph's; pointing at one lights it in the stage and in the graph alike
@@ -2565,6 +2565,17 @@ function viewTimeline(main, day) {
 // corner and a dashed edge, a folded square. incident: a striped band across the top, a triangle with a bar.
 const TYPE_KINDS = ["decision", "constraint", "workaround", "incident"];
 const typeKind = (e) => (e.type || []).map((t) => typeName(t)).find((t) => TYPE_KINDS.includes(t)) || null;
+// on the stage the colour is the Type (the graph colours by Evidence; here Evidence is the fill: solid confirmed,
+// hatched inferred, empty unknown), the Status the edge: dashed grey superseded, a ring for open / needs-review / pending
+const TYPE_COLORS = { decision: "#835bec", constraint: "#4aa3df", workaround: "#e0a83a", incident: "#e0574f" };
+const typeColor = (kind, fallback) => TYPE_COLORS[kind] || fallback;
+function stageLegend() {
+  const sw = (cls, style) => el("i", { class: `sw ${cls}`, style });
+  return el("div", { class: "stage-legend" },
+    el("span", { class: "grp" }, ...TYPE_KINDS.map((k) => el("span", { style: `color:${TYPE_COLORS[k]}`, html: `${typeGlyphSvg(k)} <span style="color:var(--fg2)">${k}</span>` })), el("span", {}, sw("", "color:var(--muted)"), el("span", {}, "no type"))),
+    el("span", { class: "grp", title: "Evidence is the fill" }, el("span", {}, sw("solid", "color:var(--fg2)"), "confirmed"), el("span", {}, sw("hatch", "color:var(--fg2)"), "inferred"), el("span", {}, sw("", "color:var(--fg2)"), "unknown")),
+    el("span", { class: "grp", title: "Status is the edge" }, el("span", {}, sw("dashed", "color:var(--fg3)"), "superseded"), el("span", {}, sw("ring", "color:var(--fg2)"), "open · needs review · pending")));
+}
 function typeGlyphSvg(kind) {
   const d = { decision: '<path d="M6 1 11 6 6 11 1 6z"/>', constraint: '<path d="M1.5 1.5h9v9h-9z" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M1.5 5h9v2h-9z"/>',
     workaround: '<path d="M1.5 1.5h6l3 3v6h-9z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="2 1.5"/><path d="M7.5 1.5v3h3" fill="none" stroke="currentColor" stroke-width="1.4"/>',
@@ -2627,7 +2638,8 @@ function runStage(canvas, o) {
   const zCard = (c) => zOf(c.day) + c.dz;
   const proj = (x, y, z) => { const s = F / (F + Math.max(z, -F * 0.9)); return [cx() + x * K() * s, horizon() + (camY - y) * K() * s, s]; };
   const depthAlpha = (z) => Math.max(0.14, Math.min(1, 1.08 - z / 14));
-  const evColor = { confirmed: color("--confirmed"), inferred: color("--inferred"), unknown: color("--unknown") };
+  const HATCH = new Map(); // colour -> pattern: diagonal lines, the fill of an inferred entry
+  const hatch = (col) => { if (!HATCH.has(col)) { const pc = document.createElement("canvas"); pc.width = pc.height = 6; const x = pc.getContext("2d"); if (x) { x.strokeStyle = col; x.lineWidth = 1.2; x.beginPath(); x.moveTo(-1, 7); x.lineTo(7, -1); x.moveTo(-1, 1); x.lineTo(1, -1); x.moveTo(5, 7); x.lineTo(7, 5); x.stroke(); } HATCH.set(col, ctx.createPattern(pc, "repeat")); } return HATCH.get(col); };
   const litIds = () => { const t = graph?.thought; const set = new Set(); if (t) for (const n of t.nodes) if (n.entry) { set.add(n.entry.id); if (n.entry.uuid) set.add(n.entry.uuid); } return set; };
   const litPairs = () => graph?.thought?.pairs || null;
   let hover = null, held = null, drag = null, moved = false, pinch = null, raf = null, lastDraw = 0;
@@ -2679,31 +2691,35 @@ function runStage(canvas, o) {
       const b = boxes.get(c); const e = c.e; const st = statusAt(e, day) || e.status; const sup = st === "superseded";
       const isLit = lit.has(e.id) || (e.uuid && lit.has(e.uuid)); const isStep = step && (e.uuid === step || e.id === step);
       const faded = (anyLit && !isLit && c !== hover && c !== held) || (filterActive() && !matches(e));
-      const fresh = dayDiff(c.day, day) <= 14 && !PLAY.frac; // arrived within two weeks of the day shown
+      const fresh = dayDiff(c.day, day) <= 3 && !PLAY.frac; // arrived within three days of the day shown: it glows
       const a = (faded ? 0.16 : 1) * depthAlpha(z);
       // a foot: the card's drop line to the floor
       const [fx, fy] = proj(c.x, floorY, z); ctx.globalAlpha = a * 0.35; ctx.strokeStyle = color("--fg3"); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(b.cx, b.y1); ctx.lineTo(fx, fy); ctx.stroke();
-      const evc = evColor[e.evidence] || color("--muted");
       const kind = typeKind(e); const fold = kind === "workaround" ? Math.min(b.h * 0.45, b.w * 0.3) : 0;
+      const evc = sup ? color("--fg3") : typeColor(kind, color("--muted")); // the type's colour; a superseded card goes grey
       // the card's outline: a rectangle, or one with its top-right corner folded
       const outline = () => { ctx.beginPath(); if (fold) { ctx.moveTo(b.x0, b.y0); ctx.lineTo(b.x1 - fold, b.y0); ctx.lineTo(b.x1, b.y0 + fold); ctx.lineTo(b.x1, b.y1); ctx.lineTo(b.x0, b.y1); ctx.closePath(); } else ctx.rect(b.x0, b.y0, b.w, b.h); };
       ctx.globalAlpha = a;
       if (fresh || isLit || c === hover || c === held || isStep) { ctx.shadowColor = isStep ? color("--accent2") : isLit ? color("--fg") : evc; ctx.shadowBlur = isStep ? 22 : 14; }
-      ctx.fillStyle = sup ? color("--bg2") : evc; ctx.globalAlpha = a * (sup ? 0.9 : 0.28); outline(); ctx.fill();
-      ctx.shadowBlur = 0; ctx.globalAlpha = a;
+      // the body: a solid tint for confirmed, hatching for inferred, the background alone for unknown
+      ctx.fillStyle = color("--bg2"); ctx.globalAlpha = a * 0.9; outline(); ctx.fill(); ctx.shadowBlur = 0;
+      if (e.evidence === "confirmed") { ctx.fillStyle = evc; ctx.globalAlpha = a * (sup ? 0.12 : 0.3); outline(); ctx.fill(); }
+      else if (e.evidence === "inferred") { ctx.fillStyle = hatch(evc) || evc; ctx.globalAlpha = a * (sup ? 0.3 : 0.6); outline(); ctx.fill(); }
+      ctx.globalAlpha = a;
       const band = Math.max(2, Math.min(5, b.h * 0.11));
       if (kind === "constraint") { ctx.fillStyle = sup ? color("--fg3") : evc; ctx.globalAlpha = a * 0.9; ctx.fillRect(b.x0, b.y0, b.w, band); ctx.globalAlpha = a; }
       if (kind === "incident") { ctx.save(); ctx.beginPath(); ctx.rect(b.x0, b.y0, b.w, band); ctx.clip(); ctx.fillStyle = sup ? color("--fg3") : evc; ctx.globalAlpha = a * 0.9; const st = Math.max(3, band * 1.6); for (let x = b.x0 - band; x < b.x1 + band; x += st * 2) { ctx.beginPath(); ctx.moveTo(x, b.y0); ctx.lineTo(x + st, b.y0); ctx.lineTo(x + st - band, b.y0 + band); ctx.lineTo(x - band, b.y0 + band); ctx.closePath(); ctx.fill(); } ctx.restore(); ctx.globalAlpha = a; }
       if (fold) { ctx.fillStyle = color("--bg"); ctx.globalAlpha = a; ctx.beginPath(); ctx.moveTo(b.x1 - fold, b.y0); ctx.lineTo(b.x1 - fold, b.y0 + fold); ctx.lineTo(b.x1, b.y0 + fold); ctx.closePath(); ctx.fill(); ctx.strokeStyle = sup ? color("--fg3") : evc; ctx.lineWidth = 1; ctx.stroke(); }
       ctx.lineWidth = c === hover || c === held ? 2 : 1.2; ctx.strokeStyle = sup ? color("--fg3") : evc; ctx.setLineDash(sup || kind === "workaround" ? [4, 3] : []); outline(); ctx.stroke(); ctx.setLineDash([]);
-      if (kind && b.w > 30) { ctx.fillStyle = sup ? color("--fg3") : evc; ctx.strokeStyle = ctx.fillStyle; const gs = Math.max(7, Math.min(11, b.h * 0.3)); typeGlyph(ctx, kind, b.x1 - gs - 4 - (fold ? fold * 0.6 : 0), b.y1 - gs - 3, gs); }
+      if (kind && b.w > 30) { ctx.fillStyle = evc; ctx.strokeStyle = evc; const gs = Math.max(7, Math.min(11, b.h * 0.3)); typeGlyph(ctx, kind, b.x1 - gs - 4 - (fold ? fold * 0.6 : 0), b.y1 - gs - 3, gs); }
+      if (e.evidence === "unknown" && b.w > 30) { ctx.fillStyle = color("--unknown"); ctx.font = `700 ${Math.max(8, Math.min(12, b.h * 0.32))}px ${color("--font") || "sans-serif"}`; ctx.textAlign = "left"; ctx.textBaseline = "bottom"; ctx.fillText("?", b.x0 + 5, b.y1 - 2); }
       if (st === "open" || st === "needs-review" || st === "pending-confirmation") { ctx.strokeStyle = color(`--${st}`); ctx.lineWidth = 1.2; ctx.strokeRect(b.x0 - 3, b.y0 - 3, b.w + 6, b.h + 6); }
       if (isStep) { ctx.strokeStyle = color("--accent2"); ctx.lineWidth = 2.5; ctx.strokeRect(b.x0 - 5, b.y0 - 5, b.w + 10, b.h + 10); }
       // the title, where it fits
       const fs = Math.min(12, 11 * b.s * zoom); const top = kind === "constraint" || kind === "incident" ? band + 1 : 0;
       if (b.w > 54 && fs >= 8.5) {
         ctx.font = `${fs}px ${color("--font") || "sans-serif"}`; ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.fillStyle = sup ? color("--fg3") : color("--fg");
-        const words = e.title.replace(/`/g, "").split(" "); const lines = []; let cur = "";
+        ctx.setLineDash([]); const words = e.title.replace(/`/g, "").split(" "); const lines = []; let cur = "";
         for (const w of words) { const t = cur ? `${cur} ${w}` : w; if (ctx.measureText(t).width > b.w - 10 && cur) { lines.push(cur); cur = w; } else cur = t; if (lines.length >= 3) break; }
         if (lines.length < 3 && cur) lines.push(cur);
         const lh = fs * 1.2; const maxLines = Math.max(1, Math.floor((b.h - 6 - top) / lh));
