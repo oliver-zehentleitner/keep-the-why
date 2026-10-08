@@ -2047,7 +2047,9 @@ function focusStep(ref) { STEP_FOCUS = ref || null; for (const g of ACTIVE_GRAPH
 const stepHover = (ref) => ({ onmouseenter: () => focusStep(ref), onmouseleave: () => focusStep(null) });
 function lightThought(g, t) {
   g.thought = t ? { nodes: new Set(t.steps), pairs: new Set(t.ids.slice(1).map((id, i) => `${id}|${t.ids[i]}`)) } : null;
-  g.alpha = Math.max(g.alpha, 0.02); g.wake?.(); STAGE?.wake?.();
+  // lighting a thought brings entries into view that may be hidden otherwise, so the layout settles again (and the
+  // small graph refits); letting go only redraws — a refit would move the view the person has set
+  if (t) g.alpha = Math.max(g.alpha, 0.02); g.wake?.(); STAGE?.wake?.();
 }
 // the thought being read (#thought/…) is held in every graph shown beside it, however the reader was reached —
 // read › without a click first, a link, a reload — the same as a thought clicked and then read
