@@ -2676,7 +2676,29 @@ function runStage(canvas, o) {
   const gbox = { x0: 0, x1: 1, y0: 0, y1: 1 };
   const gmap = (n) => { const ux = (n.x - gbox.x0) / (gbox.x1 - gbox.x0 || 1), uy = (n.y - gbox.y0) / (gbox.y1 - gbox.y0 || 1); return { x: (ux - 0.5) * (cols + 0.2), y: SHELF[1] + 0.55 - uy * (SHELF[1] + 0.55 - (SHELF[0] - 0.5)) }; };
   const measureGraph = () => { let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; for (const n of gnode.values()) { x0 = Math.min(x0, n.x); x1 = Math.max(x1, n.x); y0 = Math.min(y0, n.y); y1 = Math.max(y1, n.y); } if (x0 < x1) Object.assign(gbox, { x0, x1, y0, y1 }); };
-  const posOf = (c) => { if (asGraph()) { const n = gnode.get(c.e.id); if (n) return gmap(n); } return { x: c.x, y: c.y }; };
+  const posOf = (c) => { const q = asGraph() ? (gnode.get(c.e.id) ? gmap(gnode.get(c.e.id)) : { x: c.x, y: c.y }) : { x: c.x, y: c.y }; return { x: q.x + (c.ox || 0), y: q.y + (c.oy || 0) }; };
+  // Cards keep apart: two cards at about one depth whose boxes overlap push each other off, by the smaller overlap,
+  // a little each frame until they clear, within bounds so no stack grows into a tower; the push is kept as an
+  // offset on the card (near-plane units, bounded) and fades slowly, so a card drifts back when the room frees up
+  // (the day moves on, the graph turns). A frame with pushes left asks for another, so the picture settles in a moment.
+  let unsettled = false;
+  function keepApart(vis, boxes) {
+    unsettled = false;
+    for (let i = 0; i < vis.length; i++) {
+      const A = vis[i], a = boxes.get(A.c);
+      for (let j = i + 1; j < vis.length; j++) {
+        const B = vis[j]; if (Math.abs(A.z - B.z) > 1.4) continue;
+        const b = boxes.get(B.c);
+        const dx = Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0), dy = Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0);
+        if (dx <= 1 || dy <= 1) continue;
+        unsettled = true;
+        const sx = Math.sign(a.cx - b.cx) || (i & 1 ? 1 : -1), sy = Math.sign(a.cy - b.cy) || (j & 1 ? 1 : -1);
+        if (dx < dy) { const u = (dx + 2) * 0.3; const ua = u / (K() * a.s), ub = u / (K() * b.s); A.c.ox = (A.c.ox || 0) + sx * ua; B.c.ox = (B.c.ox || 0) - sx * ub; a.x0 += sx * u; a.x1 += sx * u; a.cx += sx * u; b.x0 -= sx * u; b.x1 -= sx * u; b.cx -= sx * u; }
+        else { const u = (dy + 2) * 0.3; const ua = u / (K() * a.s), ub = u / (K() * b.s); A.c.oy = (A.c.oy || 0) - sy * ua; B.c.oy = (B.c.oy || 0) + sy * ub; a.y0 += sy * u; a.y1 += sy * u; a.cy += sy * u; b.y0 -= sy * u; b.y1 -= sy * u; b.cy -= sy * u; }
+      }
+    }
+    for (const { c } of vis) { c.ox = Math.max(-1.3, Math.min(1.3, (c.ox || 0) * 0.98)); c.oy = Math.max(-0.9, Math.min(0.9, (c.oy || 0) * 0.98)); }
+  }
   const depthAlpha = (z) => Math.max(0.14, Math.min(1, 1.08 - z / 16));
   const HATCH = new Map(); // colour -> pattern: diagonal lines, the fill of an inferred entry
   const hatch = (col) => { if (!HATCH.has(col)) { const pc = document.createElement("canvas"); pc.width = pc.height = 6; const x = pc.getContext("2d"); if (x) { x.strokeStyle = col; x.lineWidth = 1.2; x.beginPath(); x.moveTo(-1, 7); x.lineTo(7, -1); x.moveTo(-1, 1); x.lineTo(1, -1); x.moveTo(5, 7); x.lineTo(7, 5); x.stroke(); } HATCH.set(col, ctx.createPattern(pc, "repeat")); } return HATCH.get(col); };
@@ -2717,6 +2739,7 @@ function runStage(canvas, o) {
     const cardScale = byGraph ? 0.66 : 1; // as the graph the cards stand closer: smaller, the tip tells the rest
     const box = (c, z) => { const q = posOf(c); const [x, y, s] = proj(q.x, q.y, z); const w = K() * s * 0.78 * cardScale, h = K() * s * 0.36 * cardScale; return { x0: x - w / 2, y0: y - h / 2, x1: x + w / 2, y1: y + h / 2, cx: x, cy: y, s, w, h }; };
     const boxes = new Map(); for (const { c, z } of vis) boxes.set(c, box(c, z));
+    keepApart(vis, boxes);
     // the lines between cards: every one, the lit thought's, or none
     if (STAGE_LINKS !== "none") for (const l of links) {
       if (!boxes.has(l.a) || !boxes.has(l.b) || !linkExistsAt(day, l.day)) continue;
@@ -2771,6 +2794,7 @@ function runStage(canvas, o) {
       rects.push({ ...b, c });
     }
     ctx.globalAlpha = 1;
+    if (unsettled) wake();
   }
   const wake = () => { if (!raf && canvas.isConnected) raf = requestAnimationFrame(draw); };
   // pick: an entry chosen elsewhere on the page (a thought's step in the pane) is held like a clicked card, and
