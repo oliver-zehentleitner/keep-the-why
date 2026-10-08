@@ -2540,11 +2540,11 @@ function viewTimeline(main, day) {
     const d = CLOCK || span.to; const lane = (e.project ? `${e.project} · ` : "") + (topicOf(e.file)?.title || e.file).replace(/`/g, "");
     const body = e.body?.text || ""; const reason = e.body?.reason || ""; const excerpt = (reason ? `Reason: ${reason}` : body).replace(/\s+/g, " ").trim();
     const cut = excerpt.length > 520 ? excerpt.slice(0, 518).replace(/\s\S*$/, "") + "…" : excerpt;
-    setKids(card, el("div", { class: "stage-card-head" }, el("span", { class: "note mono" }, `${createdOn(e) || "today"} · ${lane}`), el("span", { class: "pill" }, held ? "picked on the stage" : "latest by then")),
+    setKids(card, el("div", { class: "stage-card-head" }, el("span", { class: "note mono" }, `${createdOn(e) || "today"} · ${lane}`), held ? el("button", { type: "button", class: "pill stage-card-held", title: "let go — back to the latest entry by the day shown", onclick: () => STAGE?.close?.() }, "picked on the stage ", el("b", {}, "×")) : el("span", { class: "pill" }, "latest by then")),
       el("h3", {}, el("a", { href: entryHref(e), title: "read the whole entry" }, e.title.replace(/`/g, ""))),
       el("div", { class: "pills" }, ...typePills(e.type), statusPill(statusAt(e, d) || e.status), evPill(e.evidence)),
       el("p", {}, cut || el("span", { class: "empty" }, typeof S.bodies === "string" ? "loading the text…" : "no text")),
-      el("div", { class: "stage-card-foot" }, e.git?.created?.author ? el("span", { class: "note" }, `recorded by ${e.git.created.author}`) : el("span"), el("span", {}, held ? el("button", { type: "button", class: "link-btn", onclick: () => STAGE?.close?.() }, "let go · ") : null, el("a", { href: entryHref(e) }, "open ›"))));
+      el("div", { class: "stage-card-foot" }, e.git?.created?.author ? el("span", { class: "note" }, `recorded by ${e.git.created.author}`) : el("span"), el("a", { href: entryHref(e) }, "open ›")));
     if (typeof S.bodies === "string") ensureBodies(SELF).then(() => { if (card.isConnected && (HELD ? HELD === e.id : latestEntry(CLOCK || span.to) === e)) fillCard(e, held); });
   }
   const refreshCard = () => { if (HELD) return; const e = latestEntry(CLOCK || span.to); if (e) fillCard(e, false); else setKids(card, el("p", { class: "empty" }, "No entry by this day.")); };
