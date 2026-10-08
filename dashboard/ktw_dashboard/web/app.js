@@ -2678,8 +2678,11 @@ function runStage(canvas, o) {
   const gnode = new Map(); for (const n of graph?.nodes || []) if (n.kind === "entry" && !n.ext) gnode.set(n.entry.id, n);
   const tnodes = (graph?.nodes || []).filter((n) => n.kind === "topic" && !n.ext);
   const gbox = { x0: 0, x1: 1, y0: 0, y1: 1 };
-  const gmap = (n) => { const ux = (n.x - gbox.x0) / (gbox.x1 - gbox.x0 || 1), uy = (n.y - gbox.y0) / (gbox.y1 - gbox.y0 || 1); return { x: (ux - 0.5) * (cols + 0.2), y: SHELF[1] + 0.55 - uy * (SHELF[1] + 0.55 - (SHELF[0] - 0.5)) }; };
-  const measureGraph = () => { let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; for (const n of gnode.values()) { x0 = Math.min(x0, n.x); x1 = Math.max(x1, n.x); y0 = Math.min(y0, n.y); y1 = Math.max(y1, n.y); } if (x0 < x1) Object.assign(gbox, { x0, x1, y0, y1 }); };
+  // the graph's plane onto the near plane: the box is the 4th to 96th percentile of the nodes, so a few outliers do
+  // not squeeze the rest into the middle; what lies outside is held at the edge
+  const clamp01 = (u) => Math.max(-0.08, Math.min(1.08, u));
+  const gmap = (n) => { const ux = clamp01((n.x - gbox.x0) / (gbox.x1 - gbox.x0 || 1)), uy = clamp01((n.y - gbox.y0) / (gbox.y1 - gbox.y0 || 1)); return { x: (ux - 0.5) * (cols + 0.2), y: SHELF[1] + 0.55 - uy * (SHELF[1] + 0.55 - (SHELF[0] - 0.5)) }; };
+  const measureGraph = () => { const xs = [], ys = []; for (const n of gnode.values()) { xs.push(n.x); ys.push(n.y); } if (xs.length < 2) return; xs.sort((a, b) => a - b); ys.sort((a, b) => a - b); const at = (arr, q) => arr[Math.round(q * (arr.length - 1))]; const x0 = at(xs, 0.04), x1 = at(xs, 0.96), y0 = at(ys, 0.04), y1 = at(ys, 0.96); if (x0 < x1 && y0 < y1) Object.assign(gbox, { x0, x1, y0, y1 }); };
   const basePos = (c) => (asGraph() && gnode.get(c.e.id) ? gmap(gnode.get(c.e.id)) : { x: c.x, y: c.y });
   const posOf = (c) => { const q = basePos(c); return { x: q.x + (c.ox || 0), y: q.y + (c.oy || 0) }; };
   // Cards keep apart: two cards at about one depth whose boxes overlap push each other off, by the smaller overlap,
