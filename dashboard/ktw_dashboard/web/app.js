@@ -2706,7 +2706,7 @@ function runStage(canvas, o) {
   // what must fit on screen with the stage, without scrolling: everything above it on the page (the title, the text,
   // the bars, the controls, the card), the legend and the note under it, the page's fixed bars, the margins — all of
   // it comes off the window's height; only what is left lets the box grow
-  const roomBelow = () => { let below = 32; for (let n = o.wrap.nextElementSibling, i = 0; n && i < 2; n = n.nextElementSibling, i++) below += n.offsetHeight + 12; return below; };
+  const roomBelow = () => { let below = 24; for (let n = o.wrap.nextElementSibling; n; n = n.nextElementSibling) below += n.offsetHeight + 12; const main = o.wrap.closest("#main"); if (main) below += parseFloat(getComputedStyle(main).paddingBottom) || 0; return below; };
   const roomAbove = () => { const main = o.wrap.closest("#main"); return main ? o.wrap.getBoundingClientRect().top - main.getBoundingClientRect().top + main.scrollTop : 0; };
   const chrome = () => (narrow() ? 60 : 108); // the top bar, the strip, the status bar
   const fitHeight = () => { const base = baseK() * 3.15 + 60; const h = Math.round(Math.max(220, Math.min(1400, Math.max(base, Math.min(2 * base, window.innerHeight - chrome() - roomAbove() - roomBelow()))))); if (Math.abs(h - o.wrap.getBoundingClientRect().height) > 2) o.wrap.style.height = `${h}px`; };
