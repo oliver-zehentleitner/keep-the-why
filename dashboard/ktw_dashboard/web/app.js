@@ -2697,11 +2697,17 @@ function runStage(canvas, o) {
   const floorY = -0.95; // the floor's height
   // pixels per unit on the near plane: as the graph the plane is a fixed width in units, whatever the lane count —
   // the friends' lanes would otherwise shrink the whole picture; by topic it is the lanes' width
-  const UNITS = () => (asGraph() ? 5.6 : cols + 1.2);
-  const K = () => Math.max(56, Math.min(190, (W - 40) / UNITS())) * zoom; // across
-  const KY = () => Math.max(56, Math.min(190, (W - 40) / 5.6)) * zoom; // up: the same in both arrangements, so the stage keeps its height by topic
-  // the box is as tall as the near plane needs — a narrow pane gets a low stage, a wide one a tall one
-  const fitHeight = () => { const h = Math.round(Math.max(220, Math.min(760, KY() / zoom * 3.15 + 60))); if (Math.abs(h - o.wrap.getBoundingClientRect().height) > 2) o.wrap.style.height = `${h}px`; };
+  // the scale follows the width (a plane of 5.6 units across), and the box is as tall as that needs; where the window
+  // has the height to spare the box grows, up to twice, and the scale grows with it, so the room is used rather
+  // than left empty under the floor
+  const baseK = () => Math.max(56, Math.min(190, (W - 40) / 5.6));
+  const KY = () => Math.max(baseK(), Math.min(2 * baseK(), (H - 60) / 3.15)) * zoom; // up: the same in both arrangements, so the stage keeps its height by topic
+  const K = () => (asGraph() ? KY() : Math.max(56, Math.min(190, (W - 40) / (cols + 1.2))) * zoom); // across: by topic the lanes' width
+  // what must fit on screen with the stage: the bars above it are scrolled away, but the legend and the note under it
+  // stay in view, so they, the page's fixed bars and the stage's margins are taken off the window's height
+  const roomBelow = () => { let below = 32; for (let n = o.wrap.nextElementSibling, i = 0; n && i < 2; n = n.nextElementSibling, i++) below += n.offsetHeight + 12; return below; };
+  const chrome = () => (narrow() ? 60 : 108); // the top bar, the strip, the status bar
+  const fitHeight = () => { const base = baseK() * 3.15 + 60; const h = Math.round(Math.max(220, Math.min(1400, Math.max(base, Math.min(2 * base, window.innerHeight - chrome() - roomBelow()))))); if (Math.abs(h - o.wrap.getBoundingClientRect().height) > 2) o.wrap.style.height = `${h}px`; };
   const horizon = () => H * 0.13 + panY; const cx = () => W / 2 + panX;
   const now = () => (CLOCK || o.span.to);
   const tNow = () => dayDiff(o.span.from, now()) + (PLAY.on ? PLAY.frac : 0); // days since the first day, fractional while playing
