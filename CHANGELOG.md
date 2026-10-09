@@ -6,6 +6,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Added
 
+- FAQ: *Is this a knowledge base that connects Jira, Slack, Google Docs and the code?* — no, on purpose: the reason lives in the repository and links out; what it connects is repositories. Answers a reading that took the Jira question's *it can* for the whole picture.
 - Registry and badge pages: the same copy-paste sentence for the agent at the top — list the project in the registry; publish the dashboard and add its live badge to the README.
 - Linting and dashboard pages: a copy-paste sentence for the agent at the top of each — install the skill if it is missing, then set up the linter in CI, or publish the dashboard — and a pointer to the installation page, so the two component pages start the way the installation page does.
 - README, landing page, security page, the two PyPI pages and `llms.txt` say that the three packages go out through trusted publishing only — the registry trusts the release workflow, no token exists that could publish from anywhere else; the security page's bullet names the OIDC mechanism and the npm staging step.
