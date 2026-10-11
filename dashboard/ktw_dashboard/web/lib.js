@@ -462,7 +462,7 @@ export function stageLanes(cards, { show = () => true, topicTitle = (file) => fi
   const byLane = new Map();
   for (const c of cards) {
     if (!show(c)) continue;
-    if (!byLane.has(c.laneKey)) byLane.set(c.laneKey, { key: c.laneKey, file: c.e.file, project: c.proj, title: (c.proj ? `${c.proj} · ` : "") + ((c.ext ? null : topicTitle(c.e.file)) || c.e.file).replace(/`/g, ""), items: [], first: "" });
+    if (!byLane.has(c.laneKey)) byLane.set(c.laneKey, { key: c.laneKey, file: c.e.file, project: c.proj, title: (c.proj ? `${c.proj} · ` : "") + (topicTitle(c.e.file, c) || c.e.file).replace(/`/g, ""), items: [], first: "" });
     byLane.get(c.laneKey).items.push(c);
   }
   const lanes = [...byLane.values()];
