@@ -178,7 +178,8 @@ table.t tr.clickable { cursor: pointer; }
 .search-scope a { color: var(--fg3); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; padding: 3px 8px; border-radius: 4px; }
 .search-scope a:hover { text-decoration: none; color: var(--fg); }
 .search-scope a.on { background: var(--accent); color: #fff; }
-.search-results a.sr-scope { color: var(--fg2); font-weight: 500; padding: 6px 12px; }
+.search-results a.sr-scope, .search-results a.sr-registry { color: var(--fg2); font-weight: 500; padding: 6px 12px; }
+.search-results .sr-note { padding: 8px 12px; color: var(--fg3); font-size: 12px; } .search-results .sr-note.warn { color: var(--warn); }
 .search-results .sr-head { padding: 6px 12px 3px; color: var(--fg3); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; border-top: 1px solid var(--line); }
 .search-page { max-width: 980px; }
 .search-page .sgroup { margin: 0 0 22px; }

@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   esc, plural, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, canonicalOf,
-  parseSupersededBy, kindLabel, typeName, groupByFamily, searchTerms, searchHit, compareHits, snippetAt, highlight,
+  parseSupersededBy, kindLabel, typeName, groupByFamily, searchTerms, searchHit, registryMatches, compareHits, snippetAt, highlight,
   resolveLocation, bodyProse, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, HOSTS, hostOf, backlinksUrl, citingOf, hostAnchor,
 } from "../../ktw_dashboard/web/lib.js";
 
@@ -124,6 +124,21 @@ test("groupByFamily: children under their parent by canonical or path, cache aft
   const idx = (k) => flat.findIndex(([p]) => p.key === k);
   assert.equal(idx("/w/rest"), idx("/w/suite") + 1);
   assert.equal(idx("/w/mono/packages/widget"), idx("/w/mono") + 1);
+});
+
+test("registryMatches: every term in name, canonical or id; name hits first", () => {
+  const reg = [
+    { name: "zyvop-cli", canonical: "https://github.com/zyvop/zyvop-cli", id: "zyvop---zyvop-cli" },
+    { name: "unicorn-fy", canonical: "https://github.com/oliver-zehentleitner/unicorn-fy", id: "oliver-zehentleitner---unicorn-fy" },
+    { name: "keep-the-why", canonical: "https://github.com/oliver-zehentleitner/keep-the-why", id: "oliver-zehentleitner---keep-the-why" },
+  ];
+  assert.deepEqual(registryMatches(reg, "").map((p) => p.name), []);
+  assert.deepEqual(registryMatches(reg, "nosuch").map((p) => p.name), []);
+  assert.deepEqual(registryMatches(reg, "UNICORN").map((p) => p.name), ["unicorn-fy"]);
+  assert.deepEqual(registryMatches(reg, "oliver").map((p) => p.name), ["keep-the-why", "unicorn-fy"]); // url hits, by name
+  assert.deepEqual(registryMatches(reg, "zyvop cli").map((p) => p.name), ["zyvop-cli"]); // two terms, both somewhere
+  assert.deepEqual(registryMatches(reg, "oliver why").map((p) => p.name), ["keep-the-why"]);
+  assert.deepEqual(registryMatches([{ canonical: "https://x.org/a" }], "x.org").length, 1); // a listing without name or id
 });
 
 test("searchHit: every term somewhere, strength and snippet source", () => {

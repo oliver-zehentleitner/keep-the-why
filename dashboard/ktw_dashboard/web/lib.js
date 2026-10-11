@@ -131,6 +131,19 @@ export function groupByFamily(list) {
 // total) and where the snippet comes from: the first field after the title
 // that carries a term, or the title when no other field does.
 export const searchTerms = (query) => String(query || "").toLowerCase().split(/\s+/).filter(Boolean);
+// Projects of the registry's index that a query names: every term somewhere in the name, the canonical URL
+// or the id. Name hits first, then by name — the list is short (the index is one file), the order is for the eye.
+export function registryMatches(projects, query) {
+  const terms = searchTerms(query);
+  if (!terms.length) return [];
+  const rows = [];
+  for (const p of projects || []) {
+    const name = String(p.name || "").toLowerCase(); const url = String(p.canonical || "").toLowerCase(); const id = String(p.id || "").toLowerCase();
+    if (!terms.every((t) => name.includes(t) || url.includes(t) || id.includes(t))) continue;
+    rows.push({ p, inName: terms.filter((t) => name.includes(t)).length });
+  }
+  return rows.sort((a, b) => b.inName - a.inName || String(a.p.name || "").localeCompare(String(b.p.name || ""))).map((r) => r.p);
+}
 // the body without its field lines: those are searched as their own fields
 const FIELD_LINE = /^\*\*(Id|Type|Status|Evidence|Source|Verification|Revisit when|See|Superseded by):\*\*/;
 export const bodyProse = (text) => String(text || "").split("\n").filter((l) => !FIELD_LINE.test(l.trim())).join("\n").trim();

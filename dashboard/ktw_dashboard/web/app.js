@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-import { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, searchTerms, searchHit, compareHits, snippetAt, highlight, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf, backlinksUrl, citingOf, hostAnchor , todayISO, addDays, dayDiff, existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan, createdOn, TYPE_KINDS, TYPE_COLORS, typeKind, SHELF, stageCards, stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight, mergeAuthors } from "./lib.js";
+import { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, searchTerms, searchHit, registryMatches, compareHits, snippetAt, highlight, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf, backlinksUrl, citingOf, hostAnchor , todayISO, addDays, dayDiff, existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan, createdOn, TYPE_KINDS, TYPE_COLORS, typeKind, SHELF, stageCards, stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight, mergeAuthors } from "./lib.js";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const narrow = () => !!window.matchMedia?.("(max-width: 900px)").matches;
@@ -3254,7 +3254,29 @@ async function viewSearch(main, linkScope, q) {
 }
 function setupSearch() {
   const input = $("#search"); const box = $("#search-results"); let sel = -1; let seq = 0;
-  const close = () => { box.hidden = true; sel = -1; };
+  // "Find a project in the registry": a project rather than entries. The registry's index — one file — is read on
+  // the click and kept for the page's life; the box's words then filter its projects by name, repository URL and
+  // id, as they are typed, and a hit opens the project in public mode, from its published export. The entries of the
+  // listed projects are not searched (that is the globe's load, not a search). The row is forgotten with the dropdown.
+  const REG = { on: false, idx: null, error: null, loading: false };
+  const loadRegistry = async () => {
+    if (REG.idx || REG.loading) return;
+    REG.loading = true; REG.error = null;
+    try { REG.idx = JSON.parse(await fetchForeign(REGISTRY_URL)); } catch (err) { REG.error = err?.message || "network"; }
+    REG.loading = false;
+  };
+  const close = () => { box.hidden = true; sel = -1; REG.on = false; };
+  const registryRows = (q) => {
+    if (!REG.on) return [el("a", { class: "sr-all sr-registry", href: "#", title: `the Keep the Why registry's index, ${REGISTRY_URL}, read on the click — projects whose name, repository URL or id carry the words typed`, onclick: (ev) => { ev.preventDefault(); REG.on = true; input.focus(); run(); loadRegistry().then(run); } }, "Find a project in the registry")];
+    const head = (t) => el("div", { class: "sr-head" }, t);
+    if (!REG.idx) return [head("Projects in the registry"), el("div", { class: `sr-note${REG.loading ? "" : " warn"}` }, REG.loading ? `reading ${REGISTRY_URL}…` : `registry not reached — ${REG.error}`)];
+    const all = REG.idx.projects || []; const hits = registryMatches(all, q); const me = fkey(canonicalOf(S.project));
+    return [head(`Projects in the registry (${hits.length} of ${all.length})`),
+      ...(hits.length ? hits.map((p) => { const self = !!me && fkey(p.canonical) === me; return el("a", { href: self ? "#overview" : publicHref(p.canonical), onclick: close },
+        el("div", {}, p.name || repoLabel(p.canonical), self ? el("span", { class: "sr-file" }, " · this project") : null),
+        el("div", { class: "sr-file" }, [repoLabel(p.canonical), p.entries != null ? plural(p.entries, "entry") : null, p.cors === false ? "served without a CORS header — a browser will likely be refused" : null].filter(Boolean).join(" · "))); })
+        : [el("div", { class: "sr-note" }, "no project in the registry matches")])];
+  };
   const run = async () => {
     const q = input.value.trim(); if (q.length < 2 || !S) return close();
     const mine = ++seq;
@@ -3266,6 +3288,7 @@ function setupSearch() {
     const wider = Object.entries(SEARCH_SCOPES).filter(([k]) => k !== "project" && canSearch(k));
     // the wider scopes first, so they are in view however long the list of hits gets
     box.replaceChildren(...[...wider.map(([k, label]) => el("a", { class: "sr-all sr-scope", href: searchHref(k, q), onclick: close }, `Search in ${label}`)),
+      ...registryRows(q),
       el("div", { class: "sr-head" }, rows.length ? `Results in this project${all.length > rows.length ? ` (${rows.length} of ${all.length})` : ` (${all.length})`}` : "Results in this project"),
       ...(rows.length ? rows.map(({ e, hit, g }) => el("a", { href: g.href(e), onclick: close },
       el("div", { html: highlight(e.title.replace(/`/g, ""), hit.terms) }),
@@ -3288,7 +3311,10 @@ function setupSearch() {
       location.hash = searchHref("project", q);
     }
   };
-  document.addEventListener("click", (ev) => { if (!ev.target.closest(".topbar-right")) close(); });
+  // a click outside the top bar closes the dropdown. A row's own handler may have re-rendered the dropdown by the time
+  // the event reaches here (the registry row does, after an await): its target is then detached and belongs to no
+  // ancestor — a detached target was in the dropdown, not outside it.
+  document.addEventListener("click", (ev) => { if (ev.target.isConnected && !ev.target.closest(".topbar-right")) close(); });
   document.addEventListener("keydown", (ev) => {
     if (ev.target.matches("input,select,textarea") || ev.metaKey || ev.ctrlKey || ev.altKey) return;
     if (ev.key === "/") { ev.preventDefault(); input.focus(); input.select(); }

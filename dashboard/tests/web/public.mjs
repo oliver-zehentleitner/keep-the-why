@@ -143,6 +143,23 @@ const report = {};
   await tick(300);
   report.friendsDropdown = [...d.querySelectorAll("#search-results a.sr-scope")].map((a) => a.textContent);
   if (report.friendsDropdown.join("|") !== "Search in friends|Search in family & friends") errors.push("dropdown (refs): wider scopes wrong: " + JSON.stringify(report.friendsDropdown));
+  // "Find a project in the registry": the row reads the index on the click, the box's words then filter its projects
+  const regRow = d.querySelector("#search-results a.sr-registry");
+  if (!regRow) errors.push("dropdown: no registry row"); else {
+    regRow.click(); await tick(300);
+    const heads = [...d.querySelectorAll("#search-results .sr-head")].map((h) => h.textContent);
+    if (!heads.some((h) => /^Projects in the registry \(0 of 4\)/.test(h))) errors.push("registry row: index not read or needle matched a project: " + JSON.stringify(heads));
+    input.value = "farther"; input.dispatchEvent(new window.Event("input")); await tick(300);
+    const hits = [...d.querySelectorAll("#search-results a")].filter((a) => /farther/.test(a.textContent) && !a.classList.contains("sr-registry"));
+    report.registryHit = hits.map((a) => [a.getAttribute("href"), a.textContent]);
+    if (hits.length !== 1 || !hits[0].getAttribute("href").includes(`public=${encodeURIComponent(`${GH}/farther`)}`)) errors.push("registry row: farther not listed with a public-mode link: " + JSON.stringify(report.registryHit));
+    if (!/1 entry/.test(hits[0]?.textContent || "")) errors.push("registry row: the entry count is missing: " + JSON.stringify(report.registryHit));
+    input.value = "refs"; input.dispatchEvent(new window.Event("input")); await tick(300);
+    const me = [...d.querySelectorAll("#search-results a")].find((a) => /this project/.test(a.textContent));
+    if (!me || me.getAttribute("href") !== "#overview") errors.push("registry row: the project itself is not marked and linked to #overview: " + (me?.outerHTML || "none"));
+    input.value = "blocked"; input.dispatchEvent(new window.Event("input")); await tick(300);
+    if (!/without a CORS header/.test(d.getElementById("search-results").textContent)) errors.push("registry row: cors false not named");
+  }
   window.location.hash = "#search/friends/needle"; window.dispatchEvent(new window.Event("hashchange")); await tick(400);
   report.friendsGroups = [...main.querySelectorAll(".sgroup:not(.missing) .sg-head")].map((h) => h.textContent);
   report.friendsLinks = [...main.querySelectorAll(".sgroup .row")].map((a) => a.getAttribute("href"));
