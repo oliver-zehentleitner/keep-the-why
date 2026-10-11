@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- FAQ: *I already have an ADR folder. Can I carry those decisions into `context/`?* — the migration sentence, what the pass writes (one entry per record, `Source` naming the ADR file, Status and Evidence as the record states them, originals untouched) and the two ways that need no pass, next to the existing ADR comparison. The comparison said an ADR folder stays and Keep the Why fills the layer below it, but not how to bring the records over; the sentence lived only in the README, the installation page and `references/repository-structure.md`.
+
 ## [0.20.1] - 2026-10-11
 
 ### Added
