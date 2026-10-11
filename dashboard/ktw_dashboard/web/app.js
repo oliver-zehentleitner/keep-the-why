@@ -1965,6 +1965,21 @@ async function followChains(pick) {
 // in keepthewhy.com's registry, loaded as a wave of its own. Nothing of this is kept per browser: every load
 // from another host is a click, and a reload starts without it.
 const REGISTRY_URL = "https://keepthewhy.com/registry/index.json";
+// The registry's index, read once per page life for the search ("Find a project in the registry", its results
+// page); the globe reads it afresh on each of its loads. { idx, error, loading }.
+const REGISTRY = { idx: null, error: null, loading: false };
+async function loadRegistryIndex() {
+  if (REGISTRY.idx || REGISTRY.loading) return;
+  REGISTRY.loading = true; REGISTRY.error = null;
+  try { REGISTRY.idx = JSON.parse(await fetchForeign(REGISTRY_URL)); } catch (err) { REGISTRY.error = err?.message || "network"; }
+  REGISTRY.loading = false;
+}
+// a project of the registry as a search hit: its own link for this project, else its published export in public mode
+const registryHit = (p) => {
+  const self = !!canonicalOf(S?.project) && fkey(p.canonical) === fkey(canonicalOf(S.project));
+  const meta = [repoLabel(p.canonical), p.entries != null ? plural(p.entries, "entry") : null, p.cors === false ? "served without a CORS header — a browser will likely be refused" : null].filter(Boolean);
+  return { self, href: self ? "#overview" : publicHref(p.canonical), name: p.name || repoLabel(p.canonical), meta };
+};
 const GLOBE = { view: false, hops: 0, extra: new Map(), failed: new Map(), busy: false, registry: false, registryUrl: REGISTRY_URL, done: 0, log: [] }; // failed: canonical key -> { canonical, error, hop }
 function loadedCanonicals() {
   // what the page shows beside the project — not everything it ever fetched: a repository dropped from the
@@ -3203,14 +3218,13 @@ function hitSnippet(hit) {
 }
 let RESTORE_SCROLL = 0; // a live update re-renders the results page; its rows arrive after the scroll was restored
 async function viewSearch(main, linkScope, q) {
+  if (linkScope === "registry") return viewRegistrySearch(main, q);
   const scope = canSearch(linkScope) ? linkScope : "project"; // a shared link may carry a scope this project cannot search: it falls back
   if (scope !== linkScope) { history.replaceState(null, "", searchHref(scope, q)); }
   const input = $("#search"); if (document.activeElement !== input) input.value = q;
   const terms = searchTerms(q);
   const sub = el("p", { class: "sub" }, "Searching…");
-  const bar = el("span", { class: "search-scope", title: "where to search — the switch next to the project menu sets the graph and the lists, not the search" },
-    ...Object.entries(SEARCH_SCOPES).filter(([k]) => canSearch(k)).map(([k, label]) => el("a", { href: searchHref(k, q), class: k === scope ? "on" : "" }, label)));
-  main.append(el("div", { class: "search-head" }, el("h1", {}, "Search ", el("span", { class: "q" }, `“${q}”`)), bar), sub);
+  main.append(el("div", { class: "search-head" }, el("h1", {}, "Search ", el("span", { class: "q" }, `“${q}”`)), searchScopeBar(scope, q)), sub);
   if (terms.length === 0 || q.trim().length < 2) { sub.textContent = "Type at least two characters in the search field and press Enter."; return; }
   const pool = await searchPool(scope);
   if (location.hash !== searchHref(scope, q) && decodeURIComponent(location.hash) !== decodeURIComponent(searchHref(scope, q))) return; // navigated away meanwhile
@@ -3252,29 +3266,51 @@ async function viewSearch(main, linkScope, q) {
   main.append(box);
   if (RESTORE_SCROLL) main.scrollTop = RESTORE_SCROLL;
 }
+// the results page's bar: the entry scopes this project can search, and the registry's projects last
+const searchScopeBar = (scope, q) => el("span", { class: "search-scope", title: "where to search — the switch next to the project menu sets the graph and the lists, not the search; registry: a project rather than entries" },
+  ...Object.entries(SEARCH_SCOPES).filter(([k]) => canSearch(k)).map(([k, label]) => el("a", { href: searchHref(k, q), class: k === scope ? "on" : "" }, label)),
+  el("a", { href: searchHref("registry", q), class: scope === "registry" ? "on" : "" }, "registry"));
+// #search/registry/<q>: the projects of the registry the words name — name, repository URL, id — from the
+// registry's index, each opening in public mode. Entries are not searched here; the bar leads to the scopes that do.
+async function viewRegistrySearch(main, q) {
+  const input = $("#search"); if (document.activeElement !== input) input.value = q;
+  const terms = searchTerms(q);
+  const sub = el("p", { class: "sub" }, `Reading ${REGISTRY_URL}…`);
+  main.append(el("div", { class: "search-head" }, el("h1", {}, "Search ", el("span", { class: "q" }, `“${q}”`)), searchScopeBar("registry", q)), sub);
+  if (terms.length === 0 || q.trim().length < 2) { sub.textContent = "Type at least two characters in the search field and press Enter."; return; }
+  await loadRegistryIndex();
+  if (decodeURIComponent(location.hash) !== decodeURIComponent(searchHref("registry", q))) return; // navigated away meanwhile
+  if (!REGISTRY.idx) { sub.textContent = `registry not reached — ${REGISTRY.error}`; sub.classList.add("warn"); return; }
+  const all = REGISTRY.idx.projects || []; const hits = registryMatches(all, q);
+  sub.textContent = `${plural(hits.length, "project")} of ${all.length} in the registry` + (terms.length > 1 ? ` · all of: ${terms.join(", ")}` : "") +
+    ` · matched: name, repository URL, id — the projects' entries are not searched` + (REGISTRY.idx.checked ? ` · registry checked ${REGISTRY.idx.checked}` : "");
+  const box = el("div", { class: "search-page" });
+  if (hits.length) box.append(el("section", { class: "sgroup" }, el("div", { class: "sg-head" }, el("b", {}, "Projects in the registry"), el("span", { class: "count" }, plural(hits.length, "hit"))),
+    el("div", { class: "entry-list" }, hits.map((p) => { const h = registryHit(p); return el("a", { href: h.href, class: "row" },
+      el("div", { class: "rt" }, el("span", { html: highlight(h.name, terms) }), h.self ? pill("this project", "role") : null),
+      el("div", { class: "rs", html: highlight(p.canonical || "", terms) }),
+      el("div", { class: "rm" }, [...h.meta.slice(1), p.schema ? `schema ${p.schema}` : null, p.dashboard ? `dashboard ${p.dashboard}` : null, p.id ? `id ${p.id}` : null].filter(Boolean).join("  ·  "))); }))));
+  else box.append(el("p", { class: "center" }, `No project in the registry matches “${q}” — `, el("a", { href: searchHref("project", q) }, "search the entries of this project"), "."));
+  box.append(el("p", { class: "note" }, "The registry lists repositories with a published Keep the Why dashboard export; ", el("a", { href: "https://keepthewhy.com/registry/", target: "_blank", rel: "noopener" }, "keepthewhy.com/registry"), " says how to be listed."));
+  main.append(box);
+}
 function setupSearch() {
   const input = $("#search"); const box = $("#search-results"); let sel = -1; let seq = 0;
   // "Find a project in the registry": a project rather than entries. The registry's index — one file — is read on
   // the click and kept for the page's life; the box's words then filter its projects by name, repository URL and
   // id, as they are typed, and a hit opens the project in public mode, from its published export. The entries of the
   // listed projects are not searched (that is the globe's load, not a search). The row is forgotten with the dropdown.
-  const REG = { on: false, idx: null, error: null, loading: false };
-  const loadRegistry = async () => {
-    if (REG.idx || REG.loading) return;
-    REG.loading = true; REG.error = null;
-    try { REG.idx = JSON.parse(await fetchForeign(REGISTRY_URL)); } catch (err) { REG.error = err?.message || "network"; }
-    REG.loading = false;
-  };
+  const REG = { on: false };
   const close = () => { box.hidden = true; sel = -1; REG.on = false; };
   const registryRows = (q) => {
-    if (!REG.on) return [el("a", { class: "sr-all sr-registry", href: "#", title: `the Keep the Why registry's index, ${REGISTRY_URL}, read on the click — projects whose name, repository URL or id carry the words typed`, onclick: (ev) => { ev.preventDefault(); REG.on = true; input.focus(); run(); loadRegistry().then(run); } }, "Find a project in the registry")];
+    if (!REG.on) return [el("a", { class: "sr-all sr-registry", href: "#", title: `the Keep the Why registry's index, ${REGISTRY_URL}, read on the click — projects whose name, repository URL or id carry the words typed`, onclick: (ev) => { ev.preventDefault(); REG.on = true; input.focus(); run(); loadRegistryIndex().then(run); } }, "Find a project in the registry")];
     const head = (t) => el("div", { class: "sr-head" }, t);
-    if (!REG.idx) return [head("Projects in the registry"), el("div", { class: `sr-note${REG.loading ? "" : " warn"}` }, REG.loading ? `reading ${REGISTRY_URL}…` : `registry not reached — ${REG.error}`)];
-    const all = REG.idx.projects || []; const hits = registryMatches(all, q); const me = fkey(canonicalOf(S.project));
+    if (!REGISTRY.idx) return [head("Projects in the registry"), el("div", { class: `sr-note${REGISTRY.loading ? "" : " warn"}` }, REGISTRY.loading ? `reading ${REGISTRY_URL}…` : `registry not reached — ${REGISTRY.error}`)];
+    const all = REGISTRY.idx.projects || []; const hits = registryMatches(all, q);
     return [head(`Projects in the registry (${hits.length} of ${all.length})`),
-      ...(hits.length ? hits.map((p) => { const self = !!me && fkey(p.canonical) === me; return el("a", { href: self ? "#overview" : publicHref(p.canonical), onclick: close },
-        el("div", {}, p.name || repoLabel(p.canonical), self ? el("span", { class: "sr-file" }, " · this project") : null),
-        el("div", { class: "sr-file" }, [repoLabel(p.canonical), p.entries != null ? plural(p.entries, "entry") : null, p.cors === false ? "served without a CORS header — a browser will likely be refused" : null].filter(Boolean).join(" · "))); })
+      ...(hits.length ? hits.map((p) => { const h = registryHit(p); return el("a", { href: h.href, onclick: close },
+        el("div", {}, h.name, h.self ? el("span", { class: "sr-file" }, " · this project") : null),
+        el("div", { class: "sr-file" }, h.meta.join(" · "))); })
         : [el("div", { class: "sr-note" }, "no project in the registry matches")])];
   };
   const run = async () => {
@@ -3294,7 +3330,8 @@ function setupSearch() {
       el("div", { html: highlight(e.title.replace(/`/g, ""), hit.terms) }),
       el("div", { class: "sr-file" }, topicTitle(g.state, e.file)),
       el("div", { class: "sr-snip", html: hitSnippet(hit) }))) : [el("div", { style: "padding:10px 12px;color:var(--fg3)" }, "no matches in this project")]),
-      el("a", { class: "sr-all", href: searchHref("project", q), onclick: close }, all.length > rows.length ? `↵  all ${all.length} results in this project` : "↵  results page")].filter(Boolean)); // replaceChildren writes a null as the text "null"
+      REG.on ? el("a", { class: "sr-all", href: searchHref("registry", q), onclick: close }, "↵  projects in the registry, as a page")
+        : el("a", { class: "sr-all", href: searchHref("project", q), onclick: close }, all.length > rows.length ? `↵  all ${all.length} results in this project` : "↵  results page")].filter(Boolean)); // replaceChildren writes a null as the text "null"
     box.hidden = false; sel = -1;
   };
   input.oninput = run; input.onfocus = () => { if (input.value.trim().length >= 2 && !location.hash.startsWith("#search/")) run(); };
@@ -3307,8 +3344,8 @@ function setupSearch() {
       ev.preventDefault();
       if (!box.hidden && items[sel]) { items[sel].click(); input.blur(); return; }
       const q = input.value.trim(); if (q.length < 2) return;
-      seq++; close(); input.blur(); // Enter without a selection: the results page, this project
-      location.hash = searchHref("project", q);
+      const reg = REG.on; seq++; close(); input.blur(); // Enter without a selection: the results page — this project, or the registry's projects when that row is open
+      location.hash = searchHref(reg ? "registry" : "project", q);
     }
   };
   // a click outside the top bar closes the dropdown. A row's own handler may have re-rendered the dropdown by the time
