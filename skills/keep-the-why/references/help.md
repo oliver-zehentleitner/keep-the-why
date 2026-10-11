@@ -34,6 +34,7 @@ No database, no service, no account, no telemetry; MIT licensed; works with any 
 | Say | What happens |
 |---|---|
 | "Go through the git history, pull requests, issues and existing docs, and collect the reasoning that is already there into `context/`." | a retrospective pass; what cannot be backed up is marked `unknown`, never made up |
+| "Carry the decisions from our ADRs into `context/` — leave the ADR files untouched." | a migration pass over an existing decision-record folder: an entry per ADR that still matters, its `Source` naming the ADR file, the originals untouched (the third way in "Retrofitting an existing project", `references/repository-structure.md`) |
 | "Interview me about this project — ask about what the code can't explain." | targeted questions about the gaps found in the repository |
 | "I'll tell you about this project — listen, and record the decisions." | free narration; the decisions and their alternatives are extracted |
 | "Check `context/` for entries that are stale or contradict the code." | maintenance: contradictions surfaced, superseded entries marked, oversized files split |
