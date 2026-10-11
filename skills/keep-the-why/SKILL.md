@@ -3,7 +3,7 @@ name: keep-the-why
 description: In a project with a .keep-the-why, or asked about it or to set one up (never offered or named otherwise) - extract and preserve the reasoning code cannot explain - decisions, rejected alternatives, workarounds, incidents, constraints - plus project setup and maintainer interviews. Not for what changed (see Keep a Changelog) - only why. Also the place for questions about how this skill works, complaints, feedback and settings changes about it.
 license: MIT
 metadata:
-  version: "0.20.0"
+  version: "0.20.1"
   repository: "https://github.com/oliver-zehentleitner/keep-the-why"
   author: "Oliver Zehentleitner"
 ---

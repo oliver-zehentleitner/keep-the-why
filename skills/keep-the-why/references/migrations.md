@@ -6,6 +6,12 @@ What changed in each version that an existing project may need to know about or 
 
 Entries below assume 0.2.0 as the starting point — nothing before it tracked a `context-schema` at all, and 0.2.0 itself introduced no `context/` entry format change.
 
+## 0.20.1 — a sentence for projects that keep ADRs; the dashboard on GitLab Pages (informational, no action required)
+
+**What changed:** `references/help.md` and `references/repository-structure.md` carry the sentence for a project that already keeps ADRs — *"Carry the decisions from our ADRs into `context/` — leave the ADR files untouched."* — and what it does: one entry per record, `Source` naming the record's file, the records themselves untouched. `references/ci-linting.md` shows the dashboard on GitLab Pages. The dashboard went from 0.7.x to 0.10.0 in the meantime (timeline clock and stage, authors across projects, previews on the graph page, Esc as reset) — its own package, no schema change.
+
+**Existing projects:** nothing to migrate. Advance `context-schema` to 0.20.1 as usual.
+
 ## 0.20.0 — the skill explains itself; steadier wording; the eval judge on Opus (informational, no action required)
 
 **What changed:** `references/help.md` says what Keep the Why is — the format, the skill, the linter, the dashboard, the registry; what is required and what optional — and lists the sentences that start each mode, setup, an update and each optional component; the skill reads it before explaining itself, and its description names questions about how it works. Wording measured on `claude-sonnet-5-5`: the description opens with its scope, the pending-confirmation check may say "nothing pending" in one short line, a correction gets its own `CHANGELOG.md` line, an invalid or contradictory `confirmation-flow` is asked about alone, the project wizard always lists the CI-linting question. The eval judge is Claude Opus. A context cache is read with read commands only — not even a test file to probe whether it could be written.
