@@ -580,6 +580,14 @@ a.author:hover { color: var(--accent2); }
 .stage-wrap .stage-seg button.on { background: var(--accent); color: #fff; }
 .stage-wrap .stage-arrange { right: auto; left: 118px; }
 .stage-wrap .stage-foreign { right: auto; left: 290px; }
+/* the entry preview beside a clicked node: the timeline's card, placed by the script */
+.graph-wrap .graph-preview { inset: auto; width: min(400px, calc(100% - 16px)); max-height: 60%; height: auto; z-index: 4; box-shadow: 0 12px 36px rgba(0,0,0,.4); }
+.graph-wrap .graph-preview .stage-card-body { max-height: 40vh; }
+.stage-card .topic-entries { display: flex; flex-direction: column; gap: 2px; }
+.stage-card .topic-entry { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; font: inherit; font-size: 12.5px; color: var(--fg); background: transparent; border: 1px solid transparent; border-radius: 5px; padding: 4px 6px; cursor: pointer; }
+.stage-card .topic-entry:hover { border-color: var(--line); background: var(--bg3); }
+.stage-card .topic-entry .te-title { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stage-card .topic-entry .pill { flex: none; font-size: 10px; }
 .graph-wrap .graph-corner { position: absolute; bottom: 40px; right: 18px; z-index: 3; font: inherit; font-size: 10.5px; padding: 3px 9px; border: 1px solid var(--line); border-radius: 5px; background: color-mix(in srgb, var(--bg2) 85%, transparent); color: var(--fg2); cursor: pointer; }
 .graph-wrap .graph-corner:hover { border-color: var(--accent); color: var(--accent2); }
 .graph-wrap .graph-corner-fit { right: 72px; }
@@ -591,6 +599,8 @@ a.author:hover { color: var(--accent2); }
 .stage-tip { position: absolute; z-index: 3; pointer-events: none; max-width: 280px; background: color-mix(in srgb, var(--bg2) 94%, transparent); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; font-size: 12px; box-shadow: 0 6px 20px rgba(0,0,0,.3); }
 .stage-tip b { display: block; color: var(--fg); margin-bottom: 2px; }
 .stage-tip .note, .stage-card .note { color: var(--fg3); font-size: 11px; }
+.stage-card .card-topic { color: var(--fg2); text-decoration: none; border-bottom: 1px dotted var(--fg3); }
+.stage-card .card-topic:hover { color: var(--accent2); border-bottom-color: var(--accent2); }
 .stage-tip .pills, .stage-card .pills { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
 .timeline-head { display: grid; grid-template-columns: minmax(0, 1fr) clamp(280px, 42%, 420px); gap: 18px; align-items: stretch; margin-bottom: 0; }
 .timeline-head-text { min-width: 0; display: flex; flex-direction: column; justify-content: space-between; }
