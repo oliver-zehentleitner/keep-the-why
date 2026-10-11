@@ -163,6 +163,7 @@ A new `context/` starts empty and fills itself as you work. What the project alr
 | Say to your agent | What it does |
 |---|---|
 | "Go through the git history, pull requests, issues and existing docs, and collect the reasoning that is already there into `context/`." | A retrospective pass: reconstructs decisions, rejected alternatives and workarounds from what the repository already holds. What it cannot back up is marked `unknown`, never made up. |
+| "Carry the decisions from our ADRs into `context/` — leave the ADR files untouched." | A migration pass over an existing decision-record folder: one entry per ADR that still matters, its `Source` naming the ADR file it came from and its Status as the ADR states it; the originals stay as they are — nothing deleted, nothing retagged. |
 | "Interview me about this project — ask about what the code can't explain." | Analyzes the repository first, then asks targeted questions about the gaps it found. |
 | "I'll tell you about this project — listen, and record the decisions." | Free narration, for broad knowledge built up over years: the agent extracts the decisions and their alternatives, then closes the gaps with questions. |
 | "Check `context/` for entries that are stale or contradict the code." | Maintenance: contradictions surfaced, superseded entries marked, oversized files split. |

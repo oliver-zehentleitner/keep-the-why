@@ -6,6 +6,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Added
 
+- A sentence for a project that already keeps ADRs: *"Carry the decisions from our ADRs into `context/` — leave the ADR files untouched."* — a migration pass, one entry per record that still matters with its `Source` naming the record's file, the originals untouched; the third way in *Retrofitting an existing project* (`references/repository-structure.md`), listed in `references/help.md`, the README, the installation page and the landing page. The installation page's *Then fill it* and *Keep it current* are headings now, so they can be linked (`installation/#then-fill-it`, `installation/#keep-it-current`), as in the README.
 - `keep-the-why-dashboard`, next release: *1 entry /s* among the timeline's speeds — a step per second to the next day an entry appeared on, the stage sliding through the days between; several entries of one day are one step.
 - README: a *Security* section at the end, like the landing page's trust section — validation, the dogfood lint, the scanners, trusted publishing, pinned actions — linking the security page, the trust model and `SECURITY.md`; the trusted-publishing line under the badges moved into it.
 - FAQ: *Is this a knowledge base that connects Jira, Slack, Google Docs and the code?* — no, on purpose: the reason lives in the repository and links out; what it connects is repositories. Answers a reading that took the Jira question's *it can* for the whole picture.
