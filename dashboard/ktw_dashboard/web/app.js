@@ -2274,19 +2274,30 @@ function viewGraph(main) {
     // title goes to the entry's page; × on the badge, a click on the background or Esc closes it
     const preview = el("div", { class: "stage-card graph-preview", hidden: true }); wrap.append(preview);
     const closePreview = () => { if (preview.hidden) return; preview.hidden = true; selected = null; g.wake?.(); };
+    let place = null; // set below, before any click can happen
     const showPreview = (n, sx, sy) => {
       const e = n.entry; selected = e.id;
       fillEntryCard(preview, e, { lane: (n.proj ? `${n.proj} · ` : "") + (topicOf(e.file)?.title || e.file).replace(/`/g, ""), href: n.href, state: n.state || SELF, day: null,
         badge: el("button", { type: "button", class: "pill stage-card-held", title: "close the preview", onclick: closePreview }, "preview ", el("b", {}, "×")), again: () => { if (selected === e.id) showPreview(n, sx, sy); }, onOpen: n.action || null });
-      preview.hidden = false;
-      const W = wrap.clientWidth, H = wrap.clientHeight, w = preview.offsetWidth, h = preview.offsetHeight;
-      preview.style.left = `${Math.max(8, Math.min(W - w - 8, sx + 18 + w > W - 8 ? sx - 18 - w : sx + 18))}px`;
-      preview.style.top = `${Math.max(8, Math.min(H - h - 8, sy - h / 3))}px`;
-      g.wake?.();
+      preview.hidden = false; place(sx, sy); g.wake?.();
+    };
+    // a click on a topic opens its preview: the topic's name linking its page, and its entries — a click on one
+    // switches to that entry's preview, so a reader can walk a topic without leaving the graph
+    place = (sx, sy) => { const W = wrap.clientWidth, H = wrap.clientHeight, w = preview.offsetWidth, h = preview.offsetHeight; preview.style.left = `${Math.max(8, Math.min(W - w - 8, sx + 18 + w > W - 8 ? sx - 18 - w : sx + 18))}px`; preview.style.top = `${Math.max(8, Math.min(H - h - 8, sy - h / 3))}px`; };
+    const showTopicPreview = (n, sx, sy) => {
+      const members = g.nodes.filter((m) => m.kind === "entry" && m.entry && m.file === n.file && (m.unit || "") === (n.unit || ""));
+      const openTopic = n.action || null; const title = (n.label || n.file).replace(/`/g, "");
+      const link = (text, extra = {}) => el("a", { href: n.href, ...extra, onclick: openTopic ? (ev) => { ev.preventDefault(); openTopic(); } : null }, text);
+      selected = null;
+      setKids(preview, el("div", { class: "stage-card-head" }, el("span", { class: "note mono" }, `${n.proj ? `${n.proj} · ` : ""}topic · ${plural(members.length, "entry")}`), el("button", { type: "button", class: "pill stage-card-held", title: "close the preview", onclick: closePreview }, "preview ", el("b", {}, "×"))),
+        el("h3", {}, link(title, { title: "open the topic's page" })),
+        el("div", { class: "stage-card-body topic-entries" }, members.length ? members.map((m) => el("button", { type: "button", class: "topic-entry", title: "preview this entry", onclick: () => showPreview(m, sx, sy) }, el("span", { class: "te-title" }, m.entry.title.replace(/`/g, "")), statusPill(m.entry.status), evPill(m.entry.evidence))) : el("p", { class: "empty" }, "no entries shown — entries may be switched off in the graph")),
+        el("div", { class: "stage-card-foot" }, el("span"), link("open ›")));
+      preview.hidden = false; place(sx, sy); g.wake?.();
     };
     const onEsc = (ev) => { if (!wrap.isConnected) return document.removeEventListener("keydown", onEsc); if (ev.key === "Escape") closePreview(); };
     document.addEventListener("keydown", onEsc);
-    runGraph(canvas, g, { fit: family || GLOBE.view || narrow(), onTouch: () => wrap.classList.remove("ui-open", "legend-open"), onEntry: showPreview, onBlank: closePreview });
+    runGraph(canvas, g, { fit: family || GLOBE.view || narrow(), onTouch: () => wrap.classList.remove("ui-open", "legend-open"), onEntry: showPreview, onTopic: showTopicPreview, onBlank: closePreview });
     renderThoughts(g);
   };
   if (!family) return fill(buildGraph());
@@ -2351,7 +2362,7 @@ function runGraph(canvas, g, opts = {}) {
   // hub is where the reader already is: a click on it does nothing.
   const walkTo = (n) => (n.self ? null : n.walk ? n.walk() : go(n.href));
   const screenOf = (n) => [W / 2 + g.ox + n.x * g.scale, H / 2 + g.oy + n.y * g.scale];
-  const open = (n) => (n.kind === "project" ? walkTo(n) : n.kind === "entry" && opts.onEntry ? opts.onEntry(n, ...screenOf(n)) : n.action ? n.action() : go(n.href));
+  const open = (n) => (n.kind === "project" ? walkTo(n) : n.kind === "entry" && opts.onEntry ? opts.onEntry(n, ...screenOf(n)) : n.kind === "topic" && opts.onTopic ? opts.onTopic(n, ...screenOf(n)) : n.action ? n.action() : go(n.href));
   window.addEventListener("mouseup", () => { if (nameDown) { const n = nameDown; nameDown = null; walkTo(n); return; } if (drag && !moved) open(drag); else if (pan && !moved) opts.onBlank?.(); drag = null; pan = null; canvas.classList.remove("grabbing"); });
   canvas.onmouseleave = () => { hover = null; hoverName = null; };
   canvas.onwheel = (ev) => { ev.preventDefault(); g.userMoved = true; const r = canvas.getBoundingClientRect(); zoomTo(g.scale * Math.exp(-ev.deltaY * 0.0012), ev.clientX - r.left - W / 2, ev.clientY - r.top - H / 2); };
