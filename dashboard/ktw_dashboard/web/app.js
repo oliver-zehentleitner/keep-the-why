@@ -2270,7 +2270,23 @@ function viewGraph(main) {
       if (n) { g.ox = -n.x * g.scale; g.oy = -n.y * g.scale; g.userMoved = true; }
     }
     // the family graph and the globe keep everything in view; on a phone every graph does, until it is touched
-    runGraph(canvas, g, { fit: family || GLOBE.view || narrow(), onTouch: () => wrap.classList.remove("ui-open", "legend-open") });
+    // a click on an entry opens a preview beside it — the timeline's card — instead of leaving the graph; open › or the
+    // title goes to the entry's page; × on the badge, a click on the background or Esc closes it
+    const preview = el("div", { class: "stage-card graph-preview", hidden: true }); wrap.append(preview);
+    const closePreview = () => { if (preview.hidden) return; preview.hidden = true; selected = null; g.wake?.(); };
+    const showPreview = (n, sx, sy) => {
+      const e = n.entry; selected = e.id;
+      fillEntryCard(preview, e, { lane: (n.proj ? `${n.proj} · ` : "") + (topicOf(e.file)?.title || e.file).replace(/`/g, ""), href: n.href, state: n.state || SELF, day: null,
+        badge: el("button", { type: "button", class: "pill stage-card-held", title: "close the preview", onclick: closePreview }, "preview ", el("b", {}, "×")), again: () => { if (selected === e.id) showPreview(n, sx, sy); } });
+      preview.hidden = false;
+      const W = wrap.clientWidth, H = wrap.clientHeight, w = preview.offsetWidth, h = preview.offsetHeight;
+      preview.style.left = `${Math.max(8, Math.min(W - w - 8, sx + 18 + w > W - 8 ? sx - 18 - w : sx + 18))}px`;
+      preview.style.top = `${Math.max(8, Math.min(H - h - 8, sy - h / 3))}px`;
+      g.wake?.();
+    };
+    const onEsc = (ev) => { if (!wrap.isConnected) return document.removeEventListener("keydown", onEsc); if (ev.key === "Escape") closePreview(); };
+    document.addEventListener("keydown", onEsc);
+    runGraph(canvas, g, { fit: family || GLOBE.view || narrow(), onTouch: () => wrap.classList.remove("ui-open", "legend-open"), onEntry: showPreview, onBlank: closePreview });
     renderThoughts(g);
   };
   if (!family) return fill(buildGraph());
@@ -2334,8 +2350,9 @@ function runGraph(canvas, g, opts = {}) {
   // switches' job) or open an overview, and a click on a foreign hub seemed to do nothing. This project's own
   // hub is where the reader already is: a click on it does nothing.
   const walkTo = (n) => (n.self ? null : n.walk ? n.walk() : go(n.href));
-  const open = (n) => (n.kind === "project" ? walkTo(n) : n.action ? n.action() : go(n.href));
-  window.addEventListener("mouseup", () => { if (nameDown) { const n = nameDown; nameDown = null; walkTo(n); return; } if (drag && !moved) open(drag); drag = null; pan = null; canvas.classList.remove("grabbing"); });
+  const screenOf = (n) => [W / 2 + g.ox + n.x * g.scale, H / 2 + g.oy + n.y * g.scale];
+  const open = (n) => (n.kind === "project" ? walkTo(n) : n.kind === "entry" && opts.onEntry && !n.action ? opts.onEntry(n, ...screenOf(n)) : n.action ? n.action() : go(n.href));
+  window.addEventListener("mouseup", () => { if (nameDown) { const n = nameDown; nameDown = null; walkTo(n); return; } if (drag && !moved) open(drag); else if (pan && !moved) opts.onBlank?.(); drag = null; pan = null; canvas.classList.remove("grabbing"); });
   canvas.onmouseleave = () => { hover = null; hoverName = null; };
   canvas.onwheel = (ev) => { ev.preventDefault(); g.userMoved = true; const r = canvas.getBoundingClientRect(); zoomTo(g.scale * Math.exp(-ev.deltaY * 0.0012), ev.clientX - r.left - W / 2, ev.clientY - r.top - H / 2); };
   canvas.ondblclick = (ev) => { const r = canvas.getBoundingClientRect(); const n = pick(ev.clientX - r.left, ev.clientY - r.top); if (n) { n.fixed = false; g.alpha = 0.4; } };
@@ -2364,7 +2381,7 @@ function runGraph(canvas, g, opts = {}) {
   canvas.addEventListener("touchend", (ev) => {
     if (pinch) { if (!ev.touches.length) pinch = null; return; }
     if (nameDown) { const n = nameDown; nameDown = null; if (!moved) walkTo(n); return; }
-    if (drag && !moved) open(drag);
+    if (drag && !moved) open(drag); else if (pan && !moved) opts.onBlank?.();
     drag = null; pan = null;
   });
   const ev = (n) => n.entry.evidence;
@@ -2661,20 +2678,27 @@ function timelineBars(main, span, setDay) {
 // The card beside the bars: the entry that appeared last by the day shown, or the one held — clicked on the stage
 // or in the thoughts list — until let go. The whole body, rendered as the reader renders it; the bodies sit beside
 // an export by default, this project's and a friend's alike, and are fetched once, on demand.
+// An entry as a card: the day and topic, a badge, the title linking the entry, its pills, the whole body as the
+// reader renders it, who recorded it and open ›. The timeline's card beside the bars and the graph's preview are
+// the same card. `badge` is the head's right-hand element; `state` the export the entry came from, for the bodies
+// that sit beside an export and are fetched once, on demand (`again` is called when they arrived).
+function fillEntryCard(node, e, { lane, href, state, day, badge, again }) {
+  const body = e.body?.text || "";
+  setKids(node, el("div", { class: "stage-card-head" }, el("span", { class: "note mono" }, `${createdOn(e) || "today"} · ${lane}`), badge),
+    el("h3", {}, el("a", { href, title: "read the whole entry" }, e.title.replace(/`/g, ""))),
+    el("div", { class: "pills" }, ...typePills(e.type), statusPill((day ? statusAt(e, day, state !== SELF || hasRepo(e)) : null) || e.status), evPill(e.evidence)),
+    body ? el("div", { class: "body stage-card-body", html: renderMarkdown(body) }) : el("p", { class: "empty stage-card-body" }, typeof (state || S).bodies === "string" ? "loading the text…" : "no text"),
+    el("div", { class: "stage-card-foot" }, e.git?.created?.author ? el("span", { class: "note" }, `recorded by ${e.git.created.author}`) : el("span"), el("a", { href }, "open ›")));
+  const st = state || SELF;
+  if (st && typeof st.bodies === "string" && !st.bodiesLoaded && !st.bodiesError) ensureBodies(st).then(() => { if (node.isConnected) again?.(); });
+}
+const laneTitle = (e) => (e.project ? `${e.project} · ` : "") + (topicOf(e.file)?.title || e.file).replace(/`/g, "");
 function entryCard(span) {
   const node = el("div", { class: "stage-card" }); let held = null; // the held entry's Id
   const latest = (d) => { let best = null; for (const e of S.entries) { if (!existsAt(e, d, hasRepo(e))) continue; const c = createdOn(e) || span.to; if (!best || c >= best.c) best = { e, c }; } return best?.e || null; };
-  const fill = (e, isHeld, c = null) => {
-    const d = CLOCK || span.to; const lane = c?.lane?.title || (e.project ? `${e.project} · ` : "") + (topicOf(e.file)?.title || e.file).replace(/`/g, ""); const href = c?.href || entryHref(e);
-    const body = e.body?.text || "";
-    setKids(node, el("div", { class: "stage-card-head" }, el("span", { class: "note mono" }, `${createdOn(e) || "today"} · ${lane}`), isHeld ? el("button", { type: "button", class: "pill stage-card-held", title: "let go — back to the latest entry by the day shown", onclick: () => STAGE?.close?.() }, "picked ", el("b", {}, "×")) : el("span", { class: "pill" }, "latest by then")),
-      el("h3", {}, el("a", { href, title: "read the whole entry" }, e.title.replace(/`/g, ""))),
-      el("div", { class: "pills" }, ...typePills(e.type), statusPill(statusAt(e, d, c?.ext || hasRepo(e)) || e.status), evPill(e.evidence)),
-      body ? el("div", { class: "body stage-card-body", html: renderMarkdown(body) }) : el("p", { class: "empty stage-card-body" }, typeof S.bodies === "string" ? "loading the text…" : "no text"),
-      el("div", { class: "stage-card-foot" }, e.git?.created?.author ? el("span", { class: "note" }, `recorded by ${e.git.created.author}`) : el("span"), el("a", { href }, "open ›")));
-    const st = c?.state || SELF;
-    if (st && typeof st.bodies === "string" && !st.bodiesLoaded && !st.bodiesError) ensureBodies(st).then(() => { if (node.isConnected && (held ? held === (e.uuid || e.id) : latest(CLOCK || span.to) === e)) fill(e, isHeld, c); });
-  };
+  const fill = (e, isHeld, c = null) => fillEntryCard(node, e, { lane: c?.lane?.title || laneTitle(e), href: c?.href || entryHref(e), state: c?.state || SELF, day: CLOCK || span.to,
+    badge: isHeld ? el("button", { type: "button", class: "pill stage-card-held", title: "let go — back to the latest entry by the day shown", onclick: () => STAGE?.close?.() }, "picked ", el("b", {}, "×")) : el("span", { class: "pill" }, "latest by then"),
+    again: () => { if (held ? held === (e.uuid || e.id) : latest(CLOCK || span.to) === e) fill(e, isHeld, c); } });
   return { node,
     refresh: () => { if (held) return; const e = latest(CLOCK || span.to); if (e) fill(e, false); else setKids(node, el("p", { class: "empty" }, "No entry by this day.")); },
     hold: (e, c) => { held = e.uuid || e.id; selected = e.id; fill(e, true, c); },

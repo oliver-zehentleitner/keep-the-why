@@ -580,6 +580,9 @@ a.author:hover { color: var(--accent2); }
 .stage-wrap .stage-seg button.on { background: var(--accent); color: #fff; }
 .stage-wrap .stage-arrange { right: auto; left: 118px; }
 .stage-wrap .stage-foreign { right: auto; left: 290px; }
+/* the entry preview beside a clicked node: the timeline's card, placed by the script */
+.graph-wrap .graph-preview { inset: auto; width: min(400px, calc(100% - 16px)); max-height: 60%; height: auto; z-index: 4; box-shadow: 0 12px 36px rgba(0,0,0,.4); }
+.graph-wrap .graph-preview .stage-card-body { max-height: 40vh; }
 .graph-wrap .graph-corner { position: absolute; bottom: 40px; right: 18px; z-index: 3; font: inherit; font-size: 10.5px; padding: 3px 9px; border: 1px solid var(--line); border-radius: 5px; background: color-mix(in srgb, var(--bg2) 85%, transparent); color: var(--fg2); cursor: pointer; }
 .graph-wrap .graph-corner:hover { border-color: var(--accent); color: var(--accent2); }
 .graph-wrap .graph-corner-fit { right: 72px; }
