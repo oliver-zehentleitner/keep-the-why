@@ -1144,9 +1144,9 @@ function miniGraph(d, ctx) {
   const fillFilters = (g) => { if (mode !== "near") setKids(filters, ...graphControlGroups(g, mode === "family", miniView(g))); };
   // fit and reset beside it, for the graph this box runs: fit the view, let go of the held thought
   const corner = el("span", { class: "mini-corner" });
-  const cornerFor = (g) => setKids(corner,
+  const cornerFor = (g) => { const letGo = () => { THOUGHT_PIN = null; focusStep(null); lightThought(g, null); renderThoughts(g); g.wake?.(); }; ESC.pane = letGo; setKids(corner,
     el("button", { type: "button", class: "mini-corner-btn", title: "fit the view: everything in the box", onclick: () => { const v = miniView(g); v.userMoved = false; v.needFit = true; g.wake?.(); } }, "fit"),
-    el("button", { type: "button", class: "mini-corner-btn", title: "let go of the held thought — every node alike again", onclick: () => { THOUGHT_PIN = null; focusStep(null); lightThought(g, null); renderThoughts(g); g.wake?.(); } }, "reset"));
+    el("button", { type: "button", class: "mini-corner-btn", title: "let go of the held thought — every node alike again (Esc, on a page without a reset of its own)", onclick: letGo }, "reset")); };
   box.append(canvas, seg, el("span", { class: "mini-hint" }, mode === "near" ? "click to open" : "hover · click"), corner, full, mode !== "near" ? gear : null, filters);
   if (focusId) d.append(el("h3", {}, "Graph"));
   d.append(box);
@@ -2211,7 +2211,8 @@ function familyLegend(g) {
 }
 // the graph's control bar, in groups: this project (entries · labels) · family · friends · path · motion · select / unselect all · reset.
 // The same groups serve the side pane's small graph, so every switch is reachable from both.
-function graphControlGroups(g, family, view = g) { // `view`: the small graph's own, beside the side pane
+const resetGraphView = (g, family, view = g) => { view.scale = family ? 0.7 : 1; view.ox = 0; view.oy = 0; view.userMoved = false; for (const n of g.nodes) n.fixed = false; g.alpha = 1; g.wake?.(); }; // the bar's reset: the view as it opened, every placed node free; `view` the small graph's own beside the side pane
+function graphControlGroups(g, family, view = g) {
   const fui = friendsUi(g);
   const famUi = familyUi(g);
   const globe = globeUi(g);
@@ -2227,7 +2228,7 @@ function graphControlGroups(g, family, view = g) { // `view`: the small graph's 
     el("span", { class: "ui-group" },
       el("button", { class: "link-btn", title: "every switch in this bar on", onclick: () => selectAll(g, true) }, "select all"),
       el("button", { class: "link-btn", title: "every switch in this bar off — the project's topics alone", onclick: () => selectAll(g, false) }, "unselect all")),
-    el("span", { class: "ui-group" }, el("button", { class: "link-btn graph-reset", title: "fit the graph and let go of every node you placed", onclick: () => { view.scale = family ? 0.7 : 1; view.ox = 0; view.oy = 0; view.userMoved = false; for (const n of g.nodes) { n.fixed = false; } g.alpha = 1; g.wake?.(); } }, "reset")),
+    el("span", { class: "ui-group" }, el("button", { class: "link-btn graph-reset", title: "fit the graph and let go of every node you placed", onclick: () => resetGraphView(g, family, view) }, "reset")),
   ].filter(Boolean);
 }
 let TREE_ASKED = false;
@@ -2255,7 +2256,8 @@ function viewGraph(main) {
       onclick: (ev) => { const open = wrap.classList.toggle(`${cls}-open`); wrap.classList.remove(`${other}-open`); ev.currentTarget.setAttribute("aria-expanded", String(open)); } }, label);
     // the corner's reset lets go of the held thought and the pointed-at step: every node alike again; the bar's reset
     // (fit, let go of placed nodes) stays what it is
-    const cornerReset = el("button", { type: "button", class: "graph-corner graph-corner-reset", title: "let go of the held thought — every node alike again", onclick: () => { THOUGHT_PIN = null; focusStep(null); renderThoughts(g); g.wake?.(); } }, "reset");
+    const letGo = () => { THOUGHT_PIN = null; focusStep(null); renderThoughts(g); g.wake?.(); };
+    const cornerReset = el("button", { type: "button", class: "graph-corner graph-corner-reset", title: "let go of the held thought — every node alike again (Esc does this and the bar's reset)", onclick: letGo }, "reset");
     // fit: nothing changes but the view — zoomed and centred so that everything is in the box, and stays in it while the graph turns
     const cornerFit = el("button", { type: "button", class: "graph-corner graph-corner-fit", title: "fit the view: everything in the box, centred on the point the graph turns around", onclick: () => { g.userMoved = false; g.needFit = true; g.wake?.(); } }, "fit");
     wrap.replaceChildren(canvas, ui, legend, ...[pathBar()].filter(Boolean), toggle("ui", "Layers", "legend"), toggle("legend", "Legend", "ui"), cornerFit, cornerReset,
@@ -2297,8 +2299,7 @@ function viewGraph(main) {
         el("div", { class: "stage-card-foot" }, el("span"), link("open ›")));
       preview.hidden = false; place(sx, sy); g.wake?.();
     };
-    const onEsc = (ev) => { if (!wrap.isConnected) return document.removeEventListener("keydown", onEsc); if (ev.key === "Escape") closePreview(); };
-    document.addEventListener("keydown", onEsc);
+    ESC.page = () => { if (!preview.hidden) return closePreview(); letGo(); resetGraphView(g, family); }; // an open preview goes first; the next Esc resets
     runGraph(canvas, g, { fit: family || GLOBE.view || narrow(), onTouch: () => wrap.classList.remove("ui-open", "legend-open"), onEntry: showPreview, onTopic: showTopicPreview, onBlank: closePreview });
     renderThoughts(g);
   };
@@ -2558,6 +2559,7 @@ const authorColor = (name) => PALETTE[Math.max(0, S.authors.findIndex((a) => a.n
 const PLAY = { on: false, speed: 7, raf: null, last: 0, acc: 0, frac: 0, jump: 1 };
 const SPEEDS = [["entry", "1 entry /s"], [1 / 24, "1 hour /s"], [3 / 24, "3 hours /s"], [1, "1 day /s"], [7, "1 week /s"], [30, "1 month /s"], [120, "4 months /s"]];
 let STAGE = null; // the stage on the page: { wake, relax, reset, pick, close, graph, follows }
+const ESC = { page: null, pane: null }; // what Esc does: the page's reset button, else the side pane's graph's; the view sets it, render() clears it
 let TIMELINE_FAMILY_ASKED = false; // the family graph is being built for the timeline
 // "graph": a card stands where its node stands in the graph beside, the stage is the graph with time pulled out as depth;
 // "topics": a lane per topic across the width. Kept per browser.
@@ -2643,7 +2645,7 @@ function viewTimeline(main, day) {
   wrap.append(canvas, tip,
     stageSeg("stage-arrange", "where a card stands: where its node stands in the graph beside (the stage is the graph, time pulled out as depth), or in a lane per topic", [["graph", "as the graph"], ["topics", "by topic"]], STAGE_ARRANGE, setStageArrange),
     stageSeg("stage-foreign", "other repositories' entries — friends, family, path: only the ones a chain of See or Superseded by joins to this project's, every one the graph holds, or none", [["linked", "linked"], ["all", "all"], ["none", "none"]], STAGE_FOREIGN, setStageForeign, "others"),
-    el("button", { type: "button", class: "stage-reset", title: "let go of the held thought and card — every card alike again — and reset the view", onclick: () => STAGE?.reset?.() }, "reset"));
+    el("button", { type: "button", class: "stage-reset", title: "let go of the held thought and card — every card alike again — and reset the view (Esc)", onclick: () => STAGE?.reset?.() }, "reset"));
   main.append(el("div", { class: "timeline-head" },
       el("div", { class: "timeline-head-text" }, sub, bars.node, bars.legend,
         el("div", { class: "playhead" }, jump(() => span.from, "the first day", "⏮"), playBtn, jump(() => span.to, "today", "⏭"), range, dayLabel, speedSel, counts)),
@@ -2653,6 +2655,7 @@ function viewTimeline(main, day) {
     listBox);
   CLOCK = null; setClock(day && DAY_RE.test(day) ? clamp(day) : span.to); upd();
   runStage(canvas, { wrap, tip, span, graph: g, setDay, play, open: card.hold, close: card.release });
+  ESC.page = () => STAGE?.reset?.();
   // keys while the timeline is open: ← → a day, shift a week, space plays
   const onKey = (ev) => {
     if (!wrap.isConnected) return document.removeEventListener("keydown", onKey);
@@ -3282,6 +3285,7 @@ function setupSearch() {
   document.addEventListener("keydown", (ev) => {
     if (ev.target.matches("input,select,textarea") || ev.metaKey || ev.ctrlKey || ev.altKey) return;
     if (ev.key === "/") { ev.preventDefault(); input.focus(); input.select(); }
+    else if (ev.key === "Escape") (ESC.page || ESC.pane)?.();
     else if (ev.key === "g") location.hash = "#graph"; else if (ev.key === "l") location.hash = "#findings"; else if (ev.key === "o") location.hash = "#overview"; else if (ev.key === "q") location.hash = "#queues"; else if (ev.key === "t") location.hash = "#timeline"; else if (ev.key === "a") location.hash = "#authors";
   });
 }
@@ -3291,7 +3295,7 @@ function render() {
   if (!S) return;
   const main = $("#main"); main.replaceChildren();
   const route = location.hash.slice(1) || "overview";
-  selected = null;
+  selected = null; ESC.page = null; ESC.pane = null;
   if (!route.startsWith("timeline")) { CLOCK = null; CLOCK_N = -1; stopPlay(); STAGE = null; } // the clock lives in the timeline; everywhere else the page shows today
   GLOBE.view = route === "globe"; $("#app").classList.toggle("globe", GLOBE.view); // the globe: the graph alone, full width
   if (GLOBE.view) setTimeout(globeIntro, 0); else GLOBE_INTRO_SHOWN = false; // explained on the way in, once per visit
