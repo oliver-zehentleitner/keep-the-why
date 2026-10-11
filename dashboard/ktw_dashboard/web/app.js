@@ -2832,6 +2832,7 @@ function stagePainter(ctx, scene, cam, layout, v, o) {
   const litIds = () => { const t = scene.G?.thought; const set = new Set(); if (t) for (const n of t.nodes) if (n.entry) set.add(n.entry.uuid || n.id); return set; };
   const font = (size, weight = "") => `${weight ? weight + " " : ""}${size}px ${color("--font") || "sans-serif"}`;
   const rects = []; // the cards drawn this frame, near ones last, each with its foot (the line down to the floor)
+  const labels = []; // the topics' name pills drawn this frame (as the graph): pointed at, the topic's cards stand out
 
   function floor(day, xl, xr, zFar) {
     const { proj, floorY, depthAlpha, zOf } = cam;
@@ -2873,7 +2874,7 @@ function stagePainter(ctx, scene, cam, layout, v, o) {
     const groups = new Map();
     for (const { c } of vis) { if (c.ext) continue; const b = boxes.get(c); const g = groups.get(c.e.file) || groups.set(c.e.file, { x: 0, y: 0, n: 0 }).get(c.e.file); g.x += b.cx; g.y += b.cy; g.n++; }
     ctx.font = font(10.5, "600"); ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    for (const [file, g] of groups) { const t = (topicOf(file)?.title || file).replace(/`/g, "").slice(0, 34); const x = g.x / g.n, y = g.y / g.n; const w = ctx.measureText(t).width + 12; ctx.globalAlpha = 0.82; ctx.fillStyle = color("--bg"); ctx.fillRect(x - w / 2, y - 8, w, 16); ctx.globalAlpha = 0.9; ctx.fillStyle = color("--fg2"); ctx.fillText(t, x, y); }
+    for (const [file, g] of groups) { const t = (topicOf(file)?.title || file).replace(/`/g, "").slice(0, 34); const x = g.x / g.n, y = g.y / g.n; const w = ctx.measureText(t).width + 12; const on = v.hoverTopic === file; ctx.globalAlpha = on ? 0.95 : 0.82; ctx.fillStyle = on ? color("--bg3") : color("--bg"); ctx.fillRect(x - w / 2, y - 8, w, 16); ctx.globalAlpha = on ? 1 : 0.9; ctx.fillStyle = on ? color("--accent2") : color("--fg2"); ctx.fillText(t, x, y); labels.push({ file, x0: x - w / 2, y0: y - 8, x1: x + w / 2, y1: y + 8 }); }
   }
   function lines(day, boxes, lit) { // every See and Superseded by written by then; a lit thought's and the held or pointed-at card's stand out, the rest fade
     const pairs = scene.G?.thought?.pairs || null;
@@ -2892,7 +2893,7 @@ function stagePainter(ctx, scene, cam, layout, v, o) {
     const e = c.e; const st = statusAt(e, day, c.ext || hasRepo(e)) || e.status; const sup = st === "superseded";
     const held = c === v.held, hovered = c === v.hover;
     const isLit = lit.has(e.uuid || c.nid); const isStep = STEP_FOCUS && (e.uuid === STEP_FOCUS || c.nid === STEP_FOCUS);
-    const faded = (lit.size && !isLit && !hovered && !held) || (filterActive() && !matches(e));
+    const faded = (lit.size && !isLit && !hovered && !held) || (filterActive() && !matches(e)) || (v.hoverTopic && (c.ext || e.file !== v.hoverTopic)); // a topic's name pointed at: its cards alone stand out
     const fresh = dayDiff(c.day, day) <= 3 && !PLAY.frac; // arrived within three days of the day shown: it glows
     const a = held ? 1 : (faded ? 0.16 : 1) * cam.depthAlpha(z); // the held card at full strength, whatever its depth
     const [fx, fy] = cam.proj(layout.posOf(c).x, cam.floorY, z); // the foot
@@ -2931,7 +2932,7 @@ function stagePainter(ctx, scene, cam, layout, v, o) {
   }
   // one frame; true while the layout wants another
   function draw() {
-    rects.length = 0; ctx.clearRect(0, 0, v.W, v.H);
+    rects.length = 0; labels.length = 0; ctx.clearRect(0, 0, v.W, v.H);
     const day = cam.now(); const lit = litIds(); const byGraph = cam.asGraph();
     const vis = scene.cards.filter(layout.shown).map((c) => ({ c, z: cam.zOf(c.day) + c.dz })).sort((a, b) => b.z - a.z); // far ones first
     if (byGraph) cam.measureGraph(vis.map((i) => i.c));
@@ -2951,27 +2952,31 @@ function stagePainter(ctx, scene, cam, layout, v, o) {
   // the card under a point: its box, or its foot
   const nearFoot = (r, px, py) => { const [ax, ay, bx, by] = r.foot; const dx = bx - ax, dy = by - ay; const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy || 1))); return Math.hypot(px - (ax + t * dx), py - (ay + t * dy)) <= 4; };
   const pick = (px, py) => { for (let i = rects.length - 1; i >= 0; i--) { const r = rects[i]; if (px >= r.x0 && px <= r.x1 && py >= r.y0 && py <= r.y1) return r.c; } for (let i = rects.length - 1; i >= 0; i--) if (nearFoot(rects[i], px, py)) return rects[i].c; return null; };
-  return { draw, pick };
+  const pickLabel = (px, py) => labels.find((l) => px >= l.x0 && px <= l.x1 && py >= l.y0 && py <= l.y1)?.file || null; // the pills lie over the cards
+  return { draw, pick, pickLabel };
 }
 // The input: the pointer and the fingers. A card under the pointer is pointed at (its node lit in the graph, a tip
 // beside it); a click holds it (the card beside the bars shows it) and a click on the floor lets go; a drag looks
 // around; the wheel scrubs the days, with ctrl it zooms; a double-click resets the view. On touch: one finger looks
 // around, two pinch, a tap holds.
 function stageInput(canvas, st, v, o) {
-  const { pick, wake, openCard, closeCard, showTip, hideTip } = st;
+  const { pick, pickLabel, wake, openCard, closeCard, showTip, hideTip } = st;
   let drag = null, moved = false, pinch = null;
   const pos = (ev) => { const r = canvas.getBoundingClientRect(); return [ev.clientX - r.left, ev.clientY - r.top]; };
   canvas.onmousemove = (ev) => {
     const [px, py] = pos(ev);
     if (drag) { v.panX = drag.panX + (px - drag.px); v.panY = drag.panY + (py - drag.py); if (Math.hypot(px - drag.px, py - drag.py) > 4) moved = true; hideTip(); wake(); return; }
+    const t = pickLabel(px, py); // a topic's name: its cards stand out, nothing to open
+    if (t !== v.hoverTopic) { v.hoverTopic = t; wake(); }
+    if (t) { if (v.hover) { v.hover = null; focusStep(null); } canvas.style.cursor = "default"; hideTip(); return; }
     const c = pick(px, py);
     if (c !== v.hover) { v.hover = c; focusStep(c?.e.uuid || c?.e.id || null); wake(); }
     canvas.style.cursor = c ? "pointer" : "grab";
     if (c) showTip(c, px, py); else hideTip();
   };
-  canvas.onmouseleave = () => { if (v.hover) { v.hover = null; focusStep(null); wake(); } hideTip(); };
+  canvas.onmouseleave = () => { if (v.hover) { v.hover = null; focusStep(null); wake(); } if (v.hoverTopic) { v.hoverTopic = null; wake(); } hideTip(); };
   canvas.onmousedown = (ev) => { if (ev.button !== 0) return; const [px, py] = pos(ev); drag = { px, py, panX: v.panX, panY: v.panY }; moved = false; canvas.classList.add("grabbing"); };
-  const onUp = (ev) => { if (!drag) return; const [px, py] = pos(ev); drag = null; canvas.classList.remove("grabbing"); if (moved) return; const c = pick(px, py); if (c) openCard(c); else if (ev.target === canvas && v.held) closeCard(); };
+  const onUp = (ev) => { if (!drag) return; const [px, py] = pos(ev); drag = null; canvas.classList.remove("grabbing"); if (moved || pickLabel(px, py)) return; const c = pick(px, py); if (c) openCard(c); else if (ev.target === canvas && v.held) closeCard(); };
   window.addEventListener("mouseup", onUp);
   canvas.onwheel = (ev) => {
     ev.preventDefault();
@@ -2991,7 +2996,7 @@ function stageInput(canvas, st, v, o) {
 // view state, redrawn on demand (wake) — never idle-looping — and the API the rest of the page uses (STAGE).
 function runStage(canvas, o) {
   const ctx = canvas.getContext("2d"); if (!ctx) return;
-  const v = { W: 0, H: 0, zoom: 1, panX: 0, panY: 0, hover: null, held: null, raf: null }; // the view: the box, the camera's zoom and pan, what is pointed at and held
+  const v = { W: 0, H: 0, zoom: 1, panX: 0, panY: 0, hover: null, hoverTopic: null, held: null, raf: null }; // the view: the box, the camera's zoom and pan, what is pointed at and held
   const scene = stageScene(o.graph, o.span);
   canvas.dataset.lanes = scene.lanes.map((L) => L.title).join(" | "); // what the stage holds, readable from outside (tests)
   const cam = stageCamera(scene, v, o);
@@ -3007,7 +3012,7 @@ function runStage(canvas, o) {
   const hideTip = () => { o.tip.hidden = true; };
   const openCard = (c) => { v.held = c; o.open(c.e, c); wake(); };
   const closeCard = () => { if (!v.held) return; v.held = null; o.close(); wake(); };
-  const input = stageInput(canvas, { pick: painter.pick, wake, openCard, closeCard, showTip, hideTip }, v, o);
+  const input = stageInput(canvas, { pick: painter.pick, pickLabel: painter.pickLabel, wake, openCard, closeCard, showTip, hideTip }, v, o);
   STAGE = { wake, graph: scene.G, relax: layout.relax, follows: cam.asGraph, close: closeCard,
     // reset: let go of the held card and the held thought, every card alike again, the view as it opened
     reset: () => { THOUGHT_PIN = null; renderThoughts(scene.G); focusStep(null); closeCard(); v.zoom = 1; v.panX = 0; v.panY = 0; v.hover = null; hideTip(); cam.fitHeight(); wake(); },
