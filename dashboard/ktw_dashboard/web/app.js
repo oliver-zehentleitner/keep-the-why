@@ -2524,7 +2524,7 @@ const authorColor = (name) => PALETTE[Math.max(0, S.authors.findIndex((a) => a.n
 // slid through in that second (several entries of one day are one step); frac: the part of a step between two
 // whole ones, for the stage's motion; jump: the days the current step spans (1 for a speed in days)
 const PLAY = { on: false, speed: 7, raf: null, last: 0, acc: 0, frac: 0, jump: 1 };
-const SPEEDS = [[1 / 24, "1 hour /s"], [3 / 24, "3 hours /s"], [1, "1 day /s"], ["entry", "1 entry /s"], [7, "1 week /s"], [30, "1 month /s"], [120, "4 months /s"]];
+const SPEEDS = [["entry", "1 entry /s"], [1 / 24, "1 hour /s"], [3 / 24, "3 hours /s"], [1, "1 day /s"], [7, "1 week /s"], [30, "1 month /s"], [120, "4 months /s"]];
 let STAGE = null; // the stage on the page: { wake, relax, reset, pick, close, graph, follows }
 let TIMELINE_FAMILY_ASKED = false; // the family graph is being built for the timeline
 // "graph": a card stands where its node stands in the graph beside, the stage is the graph with time pulled out as depth;
