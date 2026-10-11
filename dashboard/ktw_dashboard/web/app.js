@@ -2287,12 +2287,14 @@ function viewGraph(main) {
       const tnode = g.nodes.find((m) => m.kind === "topic" && m.file === e.file && (m.unit || "") === (n.unit || "")); // the topic's node carries its title, a friend's too
       fillEntryCard(preview, e, { lane: (n.proj ? `${n.proj} · ` : "") + (tnode?.label || topicOf(e.file)?.title || e.file).replace(/`/g, ""), href: n.href, state: n.state || SELF, day: null,
         badge: el("button", { type: "button", class: "pill stage-card-held", title: "close the preview", onclick: closePreview }, "preview ", el("b", {}, "×")), again: () => { if (selected === e.id) showPreview(n, sx, sy); }, onOpen: n.action || null,
-        topic: tnode ? { title: "back to the topic's preview", onClick: () => showTopicPreview(tnode, sx, sy) } : null });
+        topic: tnode ? { title: "back to the topic's preview", onClick: () => showTopicPreview(tnode, null, null) } : null }); // from inside the preview: the card stays where it is
       preview.hidden = false; place(sx, sy); g.wake?.();
     };
     // a click on a topic opens its preview: the topic's name linking its page, and its entries — a click on one
     // switches to that entry's preview, so a reader can walk a topic without leaving the graph
-    place = (sx, sy) => { const W = wrap.clientWidth, H = wrap.clientHeight, w = preview.offsetWidth, h = preview.offsetHeight; preview.style.left = `${Math.max(8, Math.min(W - w - 8, sx + 18 + w > W - 8 ? sx - 18 - w : sx + 18))}px`; preview.style.top = `${Math.max(8, Math.min(H - h - 8, sy - h / 3))}px`; };
+    place = (sx, sy) => { const W = wrap.clientWidth, H = wrap.clientHeight, w = preview.offsetWidth, h = preview.offsetHeight;
+      if (sx == null) { preview.style.left = `${Math.max(0, Math.min(W - w, preview.offsetLeft))}px`; preview.style.top = `${Math.max(0, Math.min(H - h, preview.offsetTop))}px`; return; } // no node to stand beside: stay, inside the box — the person may have dragged the card out of the way
+      preview.style.left = `${Math.max(8, Math.min(W - w - 8, sx + 18 + w > W - 8 ? sx - 18 - w : sx + 18))}px`; preview.style.top = `${Math.max(8, Math.min(H - h - 8, sy - h / 3))}px`; };
     const showTopicPreview = (n, sx, sy) => {
       const members = g.nodes.filter((m) => m.kind === "entry" && m.entry && m.file === n.file && (m.unit || "") === (n.unit || ""));
       const openTopic = n.action || null; const title = (n.label || n.file).replace(/`/g, "");
@@ -2300,7 +2302,7 @@ function viewGraph(main) {
       selected = null;
       setKids(preview, el("div", { class: "stage-card-head" }, el("span", { class: "note mono" }, `${n.proj ? `${n.proj} · ` : ""}topic · ${plural(members.length, "entry")}`), el("button", { type: "button", class: "pill stage-card-held", title: "close the preview", onclick: closePreview }, "preview ", el("b", {}, "×"))),
         el("h3", {}, link(title, { title: "open the topic's page" })),
-        el("div", { class: "stage-card-body topic-entries" }, members.length ? members.map((m) => el("button", { type: "button", class: "topic-entry", title: "preview this entry", onclick: () => showPreview(m, sx, sy), ...stepHover(m.id) }, el("span", { class: "te-title" }, m.entry.title.replace(/`/g, "")), statusPill(m.entry.status), evPill(m.entry.evidence))) : el("p", { class: "empty" }, "no entries shown — entries may be switched off in the graph")),
+        el("div", { class: "stage-card-body topic-entries" }, members.length ? members.map((m) => el("button", { type: "button", class: "topic-entry", title: "preview this entry", onclick: () => showPreview(m, null, null), ...stepHover(m.id) }, el("span", { class: "te-title" }, m.entry.title.replace(/`/g, "")), statusPill(m.entry.status), evPill(m.entry.evidence))) : el("p", { class: "empty" }, "no entries shown — entries may be switched off in the graph")),
         el("div", { class: "stage-card-foot" }, el("span"), link("open ›")));
       preview.hidden = false; place(sx, sy); g.wake?.();
     };
