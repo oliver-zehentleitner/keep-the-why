@@ -583,6 +583,8 @@ a.author:hover { color: var(--accent2); }
 /* the entry preview beside a clicked node: the timeline's card, placed by the script */
 .graph-wrap .graph-preview { inset: auto; width: min(400px, calc(100% - 16px)); max-height: 60%; height: auto; z-index: 4; box-shadow: 0 12px 36px rgba(0,0,0,.4); }
 .graph-wrap .graph-preview .stage-card-body { max-height: 40vh; }
+.graph-wrap .graph-preview .stage-card-head { cursor: grab; user-select: none; touch-action: none; } /* the handle: drag the preview out of the way */
+.graph-wrap .graph-preview.dragging, .graph-wrap .graph-preview.dragging .stage-card-head { cursor: grabbing; }
 .stage-card .topic-entries { display: flex; flex-direction: column; gap: 2px; }
 .stage-card .topic-entry { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; font: inherit; font-size: 12.5px; color: var(--fg); background: transparent; border: 1px solid transparent; border-radius: 5px; padding: 4px 6px; cursor: pointer; }
 .stage-card .topic-entry:hover { border-color: var(--line); background: var(--bg3); }

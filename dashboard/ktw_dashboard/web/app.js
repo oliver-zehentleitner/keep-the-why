@@ -2275,6 +2275,11 @@ function viewGraph(main) {
     // a click on an entry opens a preview beside it — the timeline's card — instead of leaving the graph; open › or the
     // title goes to the entry's page; × on the badge, a click on the background or Esc closes it
     const preview = el("div", { class: "stage-card graph-preview", hidden: true }); wrap.append(preview);
+    // the preview can be in the way: its head is a handle, the card goes where it is dragged and stays inside the box
+    let grip = null; // { dx, dy }: where in the card the pointer took hold
+    preview.onpointerdown = (ev) => { if (!ev.target.closest(".stage-card-head") || ev.target.closest("button, a")) return; grip = { dx: ev.clientX - preview.offsetLeft, dy: ev.clientY - preview.offsetTop }; preview.classList.add("dragging"); preview.setPointerCapture(ev.pointerId); ev.preventDefault(); };
+    preview.onpointermove = (ev) => { if (!grip) return; const W = wrap.clientWidth, H = wrap.clientHeight; preview.style.left = `${Math.max(0, Math.min(W - preview.offsetWidth, ev.clientX - grip.dx))}px`; preview.style.top = `${Math.max(0, Math.min(H - preview.offsetHeight, ev.clientY - grip.dy))}px`; };
+    preview.onpointerup = preview.onpointercancel = () => { grip = null; preview.classList.remove("dragging"); };
     const closePreview = () => { if (preview.hidden) return; preview.hidden = true; selected = null; focusStep(null); g.wake?.(); }; // a row of the topic's list may still be pointed at when the list goes
     let place = null; // set below, before any click can happen
     const showPreview = (n, sx, sy) => {
