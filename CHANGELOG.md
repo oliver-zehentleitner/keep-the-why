@@ -7,7 +7,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 ### Added
 
 - FAQ: *I already have an ADR folder. Can I carry those decisions into `context/`?* — the migration sentence, what the pass writes (one entry per record, `Source` naming the ADR file, Status and Evidence as the record states them, originals untouched) and the two ways that need no pass, next to the existing ADR comparison. The comparison said an ADR folder stays and Keep the Why fills the layer below it, but not how to bring the records over; the sentence lived only in the README, the installation page and `references/repository-structure.md`.
-- `keep-the-why-dashboard`, next release: *Find a project in the registry*, a row in the search dropdown — a click reads the registry's index, one file, and the words in the box then filter its projects by name, repository URL and id as they are typed; a hit opens the project in public mode, from its published export, and Enter without a selection shows the hits as a page (`#search/registry/<query>`), which the results page's bar offers as *registry*. Projects, not entries: the listed projects' entries are not searched.
+- `keep-the-why-dashboard` 0.11.0: *Find a project in the registry*, a row in the search dropdown — a click reads the registry's index, one file, and the words in the box then filter its projects by name, repository URL and id as they are typed; a hit opens the project in public mode, from its published export, and Enter without a selection shows the hits as a page (`#search/registry/<query>`), which the results page's bar offers as *registry*. Projects, not entries: the listed projects' entries are not searched.
 
 ## [0.20.1] - 2026-10-11
 
