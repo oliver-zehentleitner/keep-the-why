@@ -2278,7 +2278,8 @@ function viewGraph(main) {
     const showPreview = (n, sx, sy) => {
       const e = n.entry; selected = e.id;
       fillEntryCard(preview, e, { lane: (n.proj ? `${n.proj} · ` : "") + (topicOf(e.file)?.title || e.file).replace(/`/g, ""), href: n.href, state: n.state || SELF, day: null,
-        badge: el("button", { type: "button", class: "pill stage-card-held", title: "close the preview", onclick: closePreview }, "preview ", el("b", {}, "×")), again: () => { if (selected === e.id) showPreview(n, sx, sy); }, onOpen: n.action || null });
+        badge: el("button", { type: "button", class: "pill stage-card-held", title: "close the preview", onclick: closePreview }, "preview ", el("b", {}, "×")), again: () => { if (selected === e.id) showPreview(n, sx, sy); }, onOpen: n.action || null,
+        topic: (() => { const t = g.nodes.find((m) => m.kind === "topic" && m.file === e.file && (m.unit || "") === (n.unit || "")); return t ? { title: "back to the topic's preview", onClick: () => showTopicPreview(t, sx, sy) } : null; })() });
       preview.hidden = false; place(sx, sy); g.wake?.();
     };
     // a click on a topic opens its preview: the topic's name linking its page, and its entries — a click on one
@@ -2693,11 +2694,13 @@ function timelineBars(main, span, setDay) {
 // reader renders it, who recorded it and open ›. The timeline's card beside the bars and the graph's preview are
 // the same card. `badge` is the head's right-hand element; `state` the export the entry came from, for the bodies
 // that sit beside an export and are fetched once, on demand (`again` is called when they arrived).
-function fillEntryCard(node, e, { lane, href, state, day, badge, again, onOpen = null }) {
+function fillEntryCard(node, e, { lane, href, state, day, badge, again, onOpen = null, topic = null }) {
   const body = e.body?.text || "";
   // a friend's entry opens by walking to that project in place (the node's action), not by a plain link
   const link = (text, extra = {}) => el("a", { href, ...extra, onclick: onOpen ? (ev) => { ev.preventDefault(); onOpen(); } : null }, text);
-  setKids(node, el("div", { class: "stage-card-head" }, el("span", { class: "note mono" }, `${createdOn(e) || "today"} · ${lane}`), badge),
+  // the topic in the head is a link where there is somewhere to go: the topic's preview in the graph, its page on the timeline
+  const topicLink = topic ? el("a", { class: "card-topic", href: topic.href || "#", title: topic.title || "the topic", onclick: topic.onClick ? (ev) => { ev.preventDefault(); topic.onClick(); } : null }, lane) : lane;
+  setKids(node, el("div", { class: "stage-card-head" }, el("span", { class: "note mono" }, `${createdOn(e) || "today"} · `, topicLink), badge),
     el("h3", {}, link(e.title.replace(/`/g, ""), { title: "read the whole entry" })),
     el("div", { class: "pills" }, ...typePills(e.type), statusPill((day ? statusAt(e, day, state !== SELF || hasRepo(e)) : null) || e.status), evPill(e.evidence)),
     body ? el("div", { class: "body stage-card-body", html: renderMarkdown(body) }) : el("p", { class: "empty stage-card-body" }, typeof (state || S).bodies === "string" ? "loading the text…" : "no text"),
@@ -2710,6 +2713,7 @@ function entryCard(span) {
   const node = el("div", { class: "stage-card" }); let held = null; // the held entry's Id
   const latest = (d) => { let best = null; for (const e of S.entries) { if (!existsAt(e, d, hasRepo(e))) continue; const c = createdOn(e) || span.to; if (!best || c >= best.c) best = { e, c }; } return best?.e || null; };
   const fill = (e, isHeld, c = null) => fillEntryCard(node, e, { lane: c?.lane?.title || laneTitle(e), href: c?.href || entryHref(e), state: c?.state || SELF, day: CLOCK || span.to,
+    topic: !(c?.ext) && !e.project ? { title: "open the topic's page", href: `#topic/${e.file}` } : null,
     badge: isHeld ? el("button", { type: "button", class: "pill stage-card-held", title: "let go — back to the latest entry by the day shown", onclick: () => STAGE?.close?.() }, "picked ", el("b", {}, "×")) : el("span", { class: "pill" }, "latest by then"),
     again: () => { if (held ? held === (e.uuid || e.id) : latest(CLOCK || span.to) === e) fill(e, isHeld, c); } });
   return { node,
