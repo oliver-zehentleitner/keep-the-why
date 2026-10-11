@@ -2551,8 +2551,11 @@ const authorColor = (name) => PALETTE[Math.max(0, S.authors.findIndex((a) => a.n
 // by lines between cards from the day they were written. Plain canvas, projected by hand: three numbers per point,
 // no library. The scene and the layout are pure functions in lib.js (stageCards … pushApart); this file holds the
 // page, the camera, the painter and the input. #timeline/<day> opens the page on that day.
-const PLAY = { on: false, speed: 7, raf: null, last: 0, acc: 0, frac: 0 }; // speed: days per second; frac: the part of a day between two whole ones, for the stage's motion
-const SPEEDS = [[1 / 24, "1 hour /s"], [3 / 24, "3 hours /s"], [1, "1 day /s"], [7, "1 week /s"], [30, "1 month /s"], [120, "4 months /s"]];
+// speed: days per second, or "entry" — a step per second to the next day an entry appeared on, the days between
+// slid through in that second (several entries of one day are one step); frac: the part of a step between two
+// whole ones, for the stage's motion; jump: the days the current step spans (1 for a speed in days)
+const PLAY = { on: false, speed: 7, raf: null, last: 0, acc: 0, frac: 0, jump: 1 };
+const SPEEDS = [["entry", "1 entry /s"], [1 / 24, "1 hour /s"], [3 / 24, "3 hours /s"], [1, "1 day /s"], [7, "1 week /s"], [30, "1 month /s"], [120, "4 months /s"]];
 let STAGE = null; // the stage on the page: { wake, relax, reset, pick, close, graph, follows }
 const ESC = { page: null, pane: null }; // what Esc does: the page's reset button, else the side pane's graph's; the view sets it, render() clears it
 let TIMELINE_FAMILY_ASKED = false; // the family graph is being built for the timeline
@@ -2565,7 +2568,7 @@ let STAGE_FOREIGN = (() => { try { return localStorage.getItem("ktw-stage-foreig
 function setStageArrange(v) { STAGE_ARRANGE = v; try { localStorage.setItem("ktw-stage-arrange", v); } catch {} STAGE?.relax?.(); STAGE?.wake?.(); }
 function setStageForeign(v) { STAGE_FOREIGN = v; try { localStorage.setItem("ktw-stage-foreign", v); } catch {} render(); } // the lanes are the shown cards': the view is rebuilt
 const foreignShown = (c) => !c.ext || STAGE_FOREIGN === "all" || (STAGE_FOREIGN === "linked" && c.linked);
-function stopPlay() { PLAY.on = false; if (PLAY.raf) cancelAnimationFrame(PLAY.raf); PLAY.raf = null; PLAY.last = 0; PLAY.acc = 0; PLAY.frac = 0; }
+function stopPlay() { PLAY.on = false; if (PLAY.raf) cancelAnimationFrame(PLAY.raf); PLAY.raf = null; PLAY.last = 0; PLAY.acc = 0; PLAY.frac = 0; PLAY.jump = 1; }
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 // a segment of buttons on the stage, one of them on
 const stageSeg = (cls, title, options, current, pick, label = null) => el("span", { class: `stage-seg ${cls}`, title }, label ? el("span", { class: "seg-label" }, label) : null,
@@ -2593,8 +2596,11 @@ function viewTimeline(main, day) {
   const dayLabel = el("b", { class: "playhead-day" }); const counts = el("span", { class: "playhead-counts" });
   const playBtn = el("button", { type: "button", class: "play-btn", title: "play the days — space" });
   const speedSel = el("select", { class: "play-speed", title: "how fast the days pass" }, SPEEDS.map(([v, l]) => el("option", { value: v }, l)));
-  speedSel.onchange = () => { PLAY.speed = Number(speedSel.value) || 7; };
-  for (const opt of speedSel.options) if (Math.abs(Number(opt.value) - PLAY.speed) < 1e-9) opt.selected = true;
+  speedSel.onchange = () => { PLAY.speed = speedSel.value === "entry" ? "entry" : Number(speedSel.value) || 7; PLAY.acc = 0; PLAY.frac = 0; PLAY.jump = 1; };
+  for (const opt of speedSel.options) if (opt.value === String(PLAY.speed) || (opt.value !== "entry" && Math.abs(Number(opt.value) - PLAY.speed) < 1e-9)) opt.selected = true;
+  // the days entries appeared on, for the "1 entry /s" speed: ours and the graph's foreign ones, as the span counts them
+  const entryDays = [...new Set([...S.entries, ...g.nodes.filter((n) => n.kind === "entry" && n.entry).map((n) => n.entry)].map(createdOn).filter(Boolean))].sort();
+  const nextEntryDay = (d) => entryDays.find((x) => x > d) || span.to;
   const upd = () => {
     const d = CLOCK || span.to;
     range.value = dayDiff(span.from, d); dayLabel.textContent = d; bars.mark(d);
@@ -2613,10 +2619,17 @@ function viewTimeline(main, day) {
     const step = (now) => {
       if (!PLAY.on || !range.isConnected) { stopPlay(); return; }
       const dt = PLAY.last ? Math.min(0.1, (now - PLAY.last) / 1000) : 0; PLAY.last = now;
-      PLAY.acc += dt * PLAY.speed;
-      const whole = Math.floor(PLAY.acc); PLAY.frac = PLAY.acc - whole;
-      if (whole >= 1) { PLAY.acc -= whole; const d = addDays(CLOCK, whole); if (d >= span.to) { setClock(span.to); stopPlay(); upd(); return; } setDay(d); }
-      else STAGE?.wake?.();
+      if (PLAY.speed === "entry") {
+        // one step per second to the next day with an entry; the stage slides through the days between
+        const target = nextEntryDay(CLOCK); PLAY.jump = Math.max(1, dayDiff(CLOCK, target)); PLAY.acc += dt; PLAY.frac = Math.min(1, PLAY.acc);
+        if (PLAY.acc >= 1) { PLAY.acc = 0; PLAY.frac = 0; if (target >= span.to) { setClock(span.to); stopPlay(); upd(); return; } setDay(target); }
+        else STAGE?.wake?.();
+      } else {
+        PLAY.jump = 1; PLAY.acc += dt * PLAY.speed;
+        const whole = Math.floor(PLAY.acc); PLAY.frac = PLAY.acc - whole;
+        if (whole >= 1) { PLAY.acc -= whole; const d = addDays(CLOCK, whole); if (d >= span.to) { setClock(span.to); stopPlay(); upd(); return; } setDay(d); }
+        else STAGE?.wake?.();
+      }
       PLAY.raf = requestAnimationFrame(step);
     };
     upd(); PLAY.raf = requestAnimationFrame(step);
@@ -2782,7 +2795,7 @@ function stageCamera(scene, v, o) {
   const planeHalf = () => (asGraph() ? Math.max(1.5, (v.W / 2 - 12) / K()) : scene.cols / 2); // as the graph the plane spans the box, its edges at the bottom corners
   const horizon = () => v.H * 0.13 + v.panY; const cx = () => v.W / 2 + v.panX;
   const now = () => (CLOCK || o.span.to);
-  const tNow = () => dayDiff(o.span.from, now()) + (PLAY.on ? PLAY.frac : 0); // days since the first day, fractional while playing
+  const tNow = () => dayDiff(o.span.from, now()) + (PLAY.on ? PLAY.frac * PLAY.jump : 0); // days since the first day, fractional while playing (a whole jump at the entry speed)
   const zOf = (day) => logDepth(tNow() - dayDiff(o.span.from, day), spanDays, DEPTH_FAR);
   const proj = (x, y, z) => { const s = F / (F + Math.max(z, -F * 0.9)); return [cx() + x * K() * s, horizon() + (camY - y) * KY() * s, s]; };
   const depthAlpha = (z) => Math.max(0.2, Math.min(1, 1.1 - z / (DEPTH_FAR * 1.6)));
