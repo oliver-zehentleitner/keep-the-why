@@ -19,8 +19,6 @@
 [![Mastodon](https://img.shields.io/badge/mastodon-%40keep__the__why-6364FF?logo=mastodon&logoColor=white)](https://mastodon.social/@keep_the_why)
 [![Keep the Why · live](https://keepthewhy.com/dashboard/live/badge-entries.svg)](https://keepthewhy.com/dashboard/live/)
 
-The three packages — `keep-the-why` on npm, `keep-the-why-lint` and `keep-the-why-dashboard` on PyPI — go out through [trusted publishing](https://keepthewhy.com/security/#how-this-repository-is-protected) only: each registry trusts this repository's release workflow, no token exists that could publish from anywhere else.
-
 <a href="https://keepthewhy.com"><img src="https://keepthewhy.com/assets/logo.png" alt="Keep the Why — because &quot;ask Bob&quot; is not documentation."></a>
 
 # Keep the Why
@@ -334,6 +332,12 @@ See [CONTRIBUTING.md](https://github.com/oliver-zehentleitner/keep-the-why/blob/
 [![Contributors](https://contributors-img.web.app/image?repo=oliver-zehentleitner/keep-the-why)](https://github.com/oliver-zehentleitner/keep-the-why/graphs/contributors)
 
 We ♥️ open source!
+
+## Security
+
+The skill is validated against the Agent Skills spec on every push; this repository's own `context/` is [linted by its own linter](https://keepthewhy.com/linting/), in strict mode; the package is scanned by two independent registries — one of them, the [HOL AI Plugin Scanner](https://keepthewhy.com/security/#what-automated-scanners-report-and-why), on every push in this repository's own CI, where the workflow fails below 80 or on any high finding. The three packages — `keep-the-why` on npm, `keep-the-why-lint` and `keep-the-why-dashboard` on PyPI — go out through [trusted publishing](https://keepthewhy.com/security/#how-this-repository-is-protected) only: each registry trusts this repository's release workflow, no token exists that could publish from anywhere else. Every workflow action is pinned to a commit SHA, `main` takes reviewed pull requests only.
+
+What Keep the Why adds to your attack surface, what it deliberately does not harden, and how to report a vulnerability: [Security](https://keepthewhy.com/security/) · [Trust model](https://keepthewhy.com/trust-model/) · [SECURITY.md](SECURITY.md).
 
 ## License
 

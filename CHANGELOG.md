@@ -6,6 +6,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Added
 
+- README: a *Security* section at the end, like the landing page's trust section — validation, the dogfood lint, the scanners, trusted publishing, pinned actions — linking the security page, the trust model and `SECURITY.md`; the trusted-publishing line under the badges moved into it.
 - FAQ: *Is this a knowledge base that connects Jira, Slack, Google Docs and the code?* — no, on purpose: the reason lives in the repository and links out; what it connects is repositories. Answers a reading that took the Jira question's *it can* for the whole picture.
 - Registry and badge pages: the same copy-paste sentence for the agent at the top — list the project in the registry; publish the dashboard and add its live badge to the README.
 - Linting and dashboard pages: a copy-paste sentence for the agent at the top of each — install the skill if it is missing, then set up the linter in CI, or publish the dashboard — and a pointer to the installation page, so the two component pages start the way the installation page does.
