@@ -2275,7 +2275,7 @@ function viewGraph(main) {
     // a click on an entry opens a preview beside it — the timeline's card — instead of leaving the graph; open › or the
     // title goes to the entry's page; × on the badge, a click on the background or Esc closes it
     const preview = el("div", { class: "stage-card graph-preview", hidden: true }); wrap.append(preview);
-    const closePreview = () => { if (preview.hidden) return; preview.hidden = true; selected = null; g.wake?.(); };
+    const closePreview = () => { if (preview.hidden) return; preview.hidden = true; selected = null; focusStep(null); g.wake?.(); }; // a row of the topic's list may still be pointed at when the list goes
     let place = null; // set below, before any click can happen
     const showPreview = (n, sx, sy) => {
       const e = n.entry; selected = e.id;
@@ -2295,7 +2295,7 @@ function viewGraph(main) {
       selected = null;
       setKids(preview, el("div", { class: "stage-card-head" }, el("span", { class: "note mono" }, `${n.proj ? `${n.proj} · ` : ""}topic · ${plural(members.length, "entry")}`), el("button", { type: "button", class: "pill stage-card-held", title: "close the preview", onclick: closePreview }, "preview ", el("b", {}, "×"))),
         el("h3", {}, link(title, { title: "open the topic's page" })),
-        el("div", { class: "stage-card-body topic-entries" }, members.length ? members.map((m) => el("button", { type: "button", class: "topic-entry", title: "preview this entry", onclick: () => showPreview(m, sx, sy) }, el("span", { class: "te-title" }, m.entry.title.replace(/`/g, "")), statusPill(m.entry.status), evPill(m.entry.evidence))) : el("p", { class: "empty" }, "no entries shown — entries may be switched off in the graph")),
+        el("div", { class: "stage-card-body topic-entries" }, members.length ? members.map((m) => el("button", { type: "button", class: "topic-entry", title: "preview this entry", onclick: () => showPreview(m, sx, sy), ...stepHover(m.id) }, el("span", { class: "te-title" }, m.entry.title.replace(/`/g, "")), statusPill(m.entry.status), evPill(m.entry.evidence))) : el("p", { class: "empty" }, "no entries shown — entries may be switched off in the graph")),
         el("div", { class: "stage-card-foot" }, el("span"), link("open ›")));
       preview.hidden = false; place(sx, sy); g.wake?.();
     };
