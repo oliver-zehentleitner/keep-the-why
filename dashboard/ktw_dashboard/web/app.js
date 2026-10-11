@@ -2277,9 +2277,10 @@ function viewGraph(main) {
     let place = null; // set below, before any click can happen
     const showPreview = (n, sx, sy) => {
       const e = n.entry; selected = e.id;
-      fillEntryCard(preview, e, { lane: (n.proj ? `${n.proj} · ` : "") + (topicOf(e.file)?.title || e.file).replace(/`/g, ""), href: n.href, state: n.state || SELF, day: null,
+      const tnode = g.nodes.find((m) => m.kind === "topic" && m.file === e.file && (m.unit || "") === (n.unit || "")); // the topic's node carries its title, a friend's too
+      fillEntryCard(preview, e, { lane: (n.proj ? `${n.proj} · ` : "") + (tnode?.label || topicOf(e.file)?.title || e.file).replace(/`/g, ""), href: n.href, state: n.state || SELF, day: null,
         badge: el("button", { type: "button", class: "pill stage-card-held", title: "close the preview", onclick: closePreview }, "preview ", el("b", {}, "×")), again: () => { if (selected === e.id) showPreview(n, sx, sy); }, onOpen: n.action || null,
-        topic: (() => { const t = g.nodes.find((m) => m.kind === "topic" && m.file === e.file && (m.unit || "") === (n.unit || "")); return t ? { title: "back to the topic's preview", onClick: () => showTopicPreview(t, sx, sy) } : null; })() });
+        topic: tnode ? { title: "back to the topic's preview", onClick: () => showTopicPreview(tnode, sx, sy) } : null });
       preview.hidden = false; place(sx, sy); g.wake?.();
     };
     // a click on a topic opens its preview: the topic's name linking its page, and its entries — a click on one
@@ -2756,7 +2757,7 @@ function stageScene(G, span) {
   const entryNodes = (G?.nodes || []).filter((n) => n.kind === "entry" && n.entry);
   const { cards, byId } = stageCards(entryNodes, { today: span.to, selfState: SELF });
   const links = stageLinks(cards, byId); markLinked(cards, links);
-  const { lanes, cols } = stageLanes(cards, { show: foreignShown, topicTitle: (file) => topicOf(file)?.title });
+  const { lanes, cols } = stageLanes(cards, { show: foreignShown, topicTitle: (file, c) => ((c.state?.topics || S.topics).find((t) => t.file === file)?.title) }); // a foreign entry's topic title from its own export
   return { G, cards, byId, links, lanes, cols, nodeOf: (c) => (G?.index?.[c.nid] != null ? G.nodes[G.index[c.nid]] : null) };
 }
 // The camera: the scale, the depth and the projection. World units: x across the near plane, y up, z the depth —
