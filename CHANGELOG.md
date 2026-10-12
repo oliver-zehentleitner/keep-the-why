@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Changed
+
+- FAQ: *Does it link entries to a Jira/GitHub issue or post-mortem?* now ends on a live example — an entry in this repository whose `Source` is the issue it came from, opened in the dashboard. The answer described the field without showing one.
+
 ### Fixed
 
 - `keep-the-why-dashboard` 0.11.1: an entry's `Source`, `Verification` and `Revisit when` are rendered as inline Markdown in the reader's pills and in the side pane — a `[#192](https://…)` link is a link, code is code — as the body and the title already were; the side pane showed the raw `[text](url)`.
