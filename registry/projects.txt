@@ -15,6 +15,7 @@
 # globe finds repositories by their citations without it. A listing is an
 # invitation to be found from anywhere, including from projects that cite
 # nothing of yours.
+https://github.com/oliver-zehentleitner-aigent/ordersync
 https://github.com/oliver-zehentleitner/keep-the-why
 https://github.com/oliver-zehentleitner/repo-native-project-memory
 https://github.com/oliver-zehentleitner/ubdcc-dashboard
