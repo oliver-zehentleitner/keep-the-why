@@ -30,20 +30,20 @@ Says that a project uses Keep the Why — for any project, with or without a pub
 
 [![Keep the Why · live](https://keepthewhy.com/dashboard/live/badge-entries.svg)](https://keepthewhy.com/dashboard/live/)
 
-A project that publishes its dashboard with its docs gets a badge with its own numbers, linking to its own dashboard — the one above is this repository's. It can stand in for the static badge (one badge is enough) or join it. `ktw-dashboard --export` writes it beside `index.html` and `state.json`, rendered at export time — the build step and the `dashboard-state` line that go with it: [CI linting setup, "The dashboard export"](ci-linting.md#the-dashboard-export); the project wizard offers both when a docs build exists. `https://example.org/dashboard/live/` below is wherever the build puts the export.
+A project that publishes its dashboard with its docs gets a badge with its own numbers, linking to its own dashboard — the one above is this repository's. It can stand in for the static badge (one badge is enough) or join it. `ktw-dashboard --export` writes it beside `index.html` and `state.json`, rendered at export time — the build step and the `dashboard-state` line that go with it: [CI linting setup, "The dashboard export"](ci-linting.md#the-dashboard-export); the project wizard offers both when a docs build exists. `https://example.org/keep-the-why-dashboard/` below is wherever the build puts the export.
 
 In Keep the Why's style — the static badge's wordmark, extended by the numbers:
 
 === "Markdown"
 
     ```markdown
-    [![Keep the Why · live](https://example.org/dashboard/live/badge-entries.svg)](https://example.org/dashboard/live/)
+    [![Keep the Why · live](https://example.org/keep-the-why-dashboard/badge-entries.svg)](https://example.org/keep-the-why-dashboard/)
     ```
 
 === "HTML"
 
     ```html
-    <a href="https://example.org/dashboard/live/"><img alt="Keep the Why · live" src="https://example.org/dashboard/live/badge-entries.svg"></a>
+    <a href="https://example.org/keep-the-why-dashboard/"><img alt="Keep the Why · live" src="https://example.org/keep-the-why-dashboard/badge-entries.svg"></a>
     ```
 
 ## The same numbers, flat: `badge-entries-flat.svg`
@@ -55,13 +55,13 @@ For a badge row in the flat style the badge services draw, where the styled one 
 === "Markdown"
 
     ```markdown
-    [![keep the why](https://example.org/dashboard/live/badge-entries-flat.svg)](https://example.org/dashboard/live/)
+    [![keep the why](https://example.org/keep-the-why-dashboard/badge-entries-flat.svg)](https://example.org/keep-the-why-dashboard/)
     ```
 
 === "HTML"
 
     ```html
-    <a href="https://example.org/dashboard/live/"><img alt="keep the why" src="https://example.org/dashboard/live/badge-entries-flat.svg"></a>
+    <a href="https://example.org/keep-the-why-dashboard/"><img alt="keep the why" src="https://example.org/keep-the-why-dashboard/badge-entries-flat.svg"></a>
     ```
 
 Both live badges are static SVG written by the export: as current as the docs build, no request to any service when a README is viewed. Before dashboard 0.4.0 the export wrote one badge, `badge.svg`, in the flat style; it is gone — a README that still names it shows a broken image until the line names one of the two above.

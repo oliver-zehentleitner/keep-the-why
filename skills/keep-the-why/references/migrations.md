@@ -6,6 +6,12 @@ What changed in each version that an existing project may need to know about or 
 
 Entries below assume 0.2.0 as the starting point — nothing before it tracked a `context-schema` at all, and 0.2.0 itself introduced no `context/` entry format change.
 
+## 0.20.2 — the dashboard export's path is `keep-the-why-dashboard/` (informational, no action required)
+
+**What changed:** the path `references/ci-linting.md` and `setup.md` give the dashboard export on a project's site is `<site>/keep-the-why-dashboard/` — the badge, `dashboard-state` and the snippets for a docs build, GitHub Pages and GitLab Pages with it. It was `<site>/dashboard/live/`: a generic name that can collide with a dashboard of the project's own, and says nothing about what is there.
+
+**Existing projects:** nothing to migrate. An export already published under `/dashboard/live/` stays where it is — the path is a convention, `dashboard-state` and the badge name whatever path a project uses, and nothing reads the old one by name. Advance `context-schema` to 0.20.2 as usual.
+
 ## 0.20.1 — a sentence for projects that keep ADRs; the dashboard on GitLab Pages (informational, no action required)
 
 **What changed:** `references/help.md` and `references/repository-structure.md` carry the sentence for a project that already keeps ADRs — *"Carry the decisions from our ADRs into `context/` — leave the ADR files untouched."* — and what it does: one entry per record, `Source` naming the record's file, the records themselves untouched. `references/ci-linting.md` shows the dashboard on GitLab Pages. The dashboard went from 0.7.x to 0.10.0 in the meantime (timeline clock and stage, authors across projects, previews on the graph page, Esc as reset) — its own package, no schema change.

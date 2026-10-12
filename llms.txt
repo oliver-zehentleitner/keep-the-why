@@ -47,7 +47,7 @@ get thrown away, not creating separate documentation effort. It isn't magic, tho
 prevents knowledge from decaying on its own. This lowers the friction of the discipline that
 keeps documentation honest; it doesn't replace it.
 
-Version: 0.20.1.
+Version: 0.20.2.
 
 ## Authorship & License
 
@@ -458,7 +458,7 @@ Show that a project uses Keep the Why:
 ```
 
 A project that publishes its dashboard export can add a live badge with its own numbers,
-`[![Keep the Why · live](<site>/dashboard/live/badge-entries.svg)](<site>/dashboard/live/)` — or
+`[![Keep the Why · live](<site>/keep-the-why-dashboard/badge-entries.svg)](<site>/keep-the-why-dashboard/)` — or
 `badge-entries-flat.svg` for the flat style.
 
 HTML equivalent and details: https://keepthewhy.com/badge/

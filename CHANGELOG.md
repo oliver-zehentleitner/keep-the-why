@@ -4,6 +4,8 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.20.2] - 2026-10-12
+
 ### Added
 
 - Evals: the 0.20.1 series — 102, 101 and 104 of 104 across three consecutive full runs on the `v0.20.1` tag (2026-10-11, CLI 2.1.296, agent `claude-sonnet-5-5`, judge `claude-opus-5-5`), 100 cases 3/3, measured after the release and published as `docs/evals/0.20.1.md`. The series rule misses two lines — `organic-activation-no-config-proposes-nothing` 1 of 3 (the skill never loaded, the closing offer names it) and run 2 with three failed cases; guards clean. Documented as it came out; nothing is worked on from it.
@@ -12,6 +14,8 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Changed
 
+- The dashboard export on a project's site is published under `<site>/keep-the-why-dashboard/` — the badge, `dashboard-state` and the snippets for a docs build, GitHub Pages and GitLab Pages in `references/ci-linting.md`, `setup.md`, `llms.txt`, the badge and dashboard pages and the eval that sets a Pages workflow up. It was `<site>/dashboard/live/`: a generic name that can collide with a dashboard of the project's own and says nothing about what is there; the new one does both. A convention, not a migration — an export already published under the old path stays, `dashboard-state` and the badge name whatever path a project uses. keepthewhy.com itself keeps `/dashboard/live/`.
+- `keep-the-why-lint` 0.20.2: knows `context-schema` 0.20.2; nothing structural changed.
 - Registry page: a paragraph on the search's *Find a project in the registry* row and the `#search/registry/<query>` page, beside the globe — the page named the globe as the only way into the registry from the dashboard.
 
 ## [0.20.1] - 2026-10-11
@@ -1011,7 +1015,8 @@ Initial release.
 - Logo, wordmark, and favicon.
 - `context/repo-conventions.md`, dogfooding the skill on its own repository from day one.
 
-[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.20.1...HEAD
+[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.20.2...HEAD
+[0.20.2]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.20.1...v0.20.2
 [0.20.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.20.0...v0.20.1
 [0.20.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.19.0...v0.20.0
 [0.19.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.18.2...v0.19.0
