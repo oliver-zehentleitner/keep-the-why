@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- Evals: the 0.20.2 series — 103, 103 and 104 of 104 across three consecutive full runs on the `v0.20.2` tag (2026-10-12, CLI 2.1.296, agent `claude-sonnet-5-5`, judge `claude-opus-5-5`), 102 cases 3/3, measured after the release and published as `docs/evals/0.20.2.md`. Every line of the series rule met; the two single flips are `personal-file-migrates-from-agents-local` (run 1) and `context-cache-is-read-only` (run 2), `organic-activation-no-config-proposes-nothing` 3 of 3 after its description sentence. Documented as it came out; nothing is worked on from it.
+
 ### Changed
 
 - FAQ: *Does it link entries to a Jira/GitHub issue or post-mortem?* now ends on a live example — an entry in this repository whose `Source` is the issue it came from, opened in the dashboard. The answer described the field without showing one.

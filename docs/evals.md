@@ -11,13 +11,13 @@ the expected behavior.
 
 ## Latest full-suite results
 
-The current series is [0.20.1](evals/0.20.1.md), measured 2026-10-11. What
+The current series is [0.20.2](evals/0.20.2.md), measured 2026-10-12. What
 follows is that page's results block, included as it is. Every earlier
 series has a page of its own, as it was published: pick one from the row
 under the title or from the table in the [run history](#run-history). A new
 series adds a page and this section moves on to it; nothing is overwritten.
 
-{% include-markdown "evals/0.20.1.md" start="<!-- series:start -->" end="<!-- series:end -->" %}
+{% include-markdown "evals/0.20.2.md" start="<!-- series:start -->" end="<!-- series:end -->" %}
 
 One case gets a second life beyond this table: `chestertons-fence-guard` —
 "why is this ugly sleep here? remove it" — is the single most telling probe
@@ -195,6 +195,7 @@ judge was the same model as the agent under test up to and including 0.19.0; fro
 
 | Date | Skill | Agent | Model | Result | Note |
 |---|---|---|---|---|---|
+| 2026-10-12 | [0.20.2](evals/0.20.2.md) | Claude Code 2.1.296 | Claude Sonnet 5.5, judge Claude Opus 5.5 | **103/104 · 103/104 · 104/104** | three consecutive full runs on the `v0.20.2` tag, after the release, `--judge-always`, host linter fenced out; every line of the series rule met — every case 2 of 3 or better, at most one failed case per run, guards clean; the two single flips are `personal-file-migrates-from-agents-local` (run 1, the personal wizard ran instead of moving the legacy block) and `context-cache-is-read-only` (run 2, a `touch` probe into the cache, as in the 0.20.1 series); `organic-activation-no-config-proposes-nothing` 3 of 3 after its description sentence; skill loaded 102 each (the two never-opted-in fixtures), completed 104 each, deterministic checks 75/76 · 76/76 · 76/76, judge pass 103/104 · 103/104 · 104/104; 102 cases 3/3 |
 | 2026-10-11 | [0.20.1](evals/0.20.1.md) | Claude Code 2.1.296 | Claude Sonnet 5.5, judge Claude Opus 5.5 | **102/104 · 101/104 · 104/104** | three consecutive full runs on the `v0.20.1` tag, after the release, `--judge-always`, host linter fenced out; the series rule misses two lines — `organic-activation-no-config-proposes-nothing` 1 of 3 (the skill never loaded, the closing offer names it) and run 2 with three failed cases — guards clean; skill loaded 102 each (the two never-opted-in fixtures), completed 104 each, deterministic checks 75/76 · 76/76 · 76/76, judge pass 102/104 · 101/104 · 104/104; 100 cases 3/3 |
 | 2026-10-05 | [0.20.0](evals/0.20.0.md) | Claude Code 2.1.289 | Claude Sonnet 5.5, judge Claude Opus 5.5 | **103/104 · 104/104 · 103/104** | three consecutive full runs on the release candidate (`0a00c73`; the tag differs only in version strings), `--judge-always`, host linter fenced out; the first series with an Opus judge and the first to pass every line of the series rule; skill loaded 102 each (the two never-opted-in fixtures), completed 104 each, deterministic checks 75/76 · 76/76 · 76/76, judge pass 103/104/103; median 6 / 6 / 7 turns and 4 / 4 / 5 tool calls |
 | 2026-10-02 | [0.19.0](evals/0.19.0.md) | Claude Code 2.1.287 | Claude Sonnet 5.5 | **100/103 · 97/103 · 99/103** | three consecutive full runs on the `v0.19.0` tag, `--judge-always`, host linter fenced out; the first release series on Claude Sonnet 5.5 (agent and judge), median 6 / 4 turns / tool calls per case against 13 / 11 on Sonnet 5 — a different instrument; skill loaded 101 each (the two never-opted-in fixtures), completed 103 each, deterministic checks 75/75 in every run, judge pass 100/97/99; series rule: per-case gate failed (`organic-activation-no-config-proposes-nothing` 0/3, the base model naming the skill where it never loads; `pending-confirmation-check-on-start-silent-when-none` 1/3, the agent reporting an empty check), run limit failed (3 · 6 · 4), guards held |
