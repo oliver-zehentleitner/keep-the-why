@@ -538,3 +538,18 @@ Under the text, the bars, the slider and the card sits the stage (the order chan
 **Rejected alternative:** a switch for the lines between cards (all, a lit chain's only, none). Built first, dropped by the maintainer: every line is drawn, the lit chain's stand out, the rest fade — the lines are what the stage is for.
 
 **Rejected alternative:** squeezing the months in which nothing happened while playing. Not taken, the implementer's choice: the days pass at one pace so a pause reads as a pause, and the speed setting covers the rest. The maintainer was asked and has not ruled on it.
+
+## The dashboard export is published under `keep-the-why-dashboard/`, not `dashboard/live/`
+
+**Id:** 581c6c1f-a1da-477a-9172-4d1273ba48b1
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer decision, 2026-10-12, while setting the dashboard up on a third project's site
+**Revisit when:** the export writes more than one page, or a host serves a reserved path by that name
+
+The path the skill gives a project's dashboard export — in the badge, in `dashboard-state`, in the snippets for a docs build, GitHub Pages and GitLab Pages — is `<site>/keep-the-why-dashboard/`. keepthewhy.com keeps its own export on `/dashboard/live/`.
+
+**Reason:** on another project's site `dashboard/live/` is a generic name: it can collide with a dashboard of the project's own, and it says nothing about what is there. `keep-the-why-dashboard/` says it, and the name in the URL tells a reader what produced the page before it opens. On keepthewhy.com the context is the site itself, so the generic path is fine there and nothing has to move.
+
+**Rejected alternative:** change every published export, keepthewhy.com's and the few projects that already carry `/dashboard/live/`, with a migration step. Rejected: the old path works, `dashboard-state` and the badge name whatever path a project uses and nothing reads the old one by name; whoever wants the new path says one sentence to their agent. The default changed, the deployed sites were left alone.
