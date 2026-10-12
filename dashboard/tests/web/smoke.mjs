@@ -54,6 +54,15 @@ const main = window.document.getElementById("main");
 await go("#graph/family");
 if (!main.querySelector(".graph-wrap canvas")) errors.push("graph/family in an export: no graph rendered");
 if (window.document.getElementById("scope").hidden === exportFamily) errors.push(`export: the this-project/family switch is ${exportFamily ? "missing for a family member" : "shown without a family"}`);
+// an entry's Source is inline Markdown: a [text](url) in it is a link in the reader's pill and in the side pane, not raw brackets
+const withSourceLink = S.entries.find((e) => /\]\(https?:\/\//.test(e.source || ""));
+if (withSourceLink) {
+  await go(`#entry/${encodeURIComponent(withSourceLink.id)}`);
+  const pane = [...window.document.querySelectorAll("#details .kv .v")].find((v) => v.textContent.includes(withSourceLink.source.match(/\[([^\]]+)\]/)[1]));
+  if (!pane || !pane.querySelector("a[href^='http']") || /\]\(/.test(pane.textContent)) errors.push("entry side pane: Source shows raw Markdown instead of a link");
+  const pill = [...window.document.querySelectorAll("#main .fields .pill")].find((x) => x.textContent.startsWith("Source"));
+  if (!pill || !pill.querySelector("a[href^='http']")) errors.push("entry reader: the Source pill shows raw Markdown instead of a link");
+}
 // an author name links to the host (the commit page until a click has looked up the profile)
 if (S.project.git?.available && /^github\.com\//.test(S.project.git.remote || "") && !S.anonymized) {
   await go(`#entry/${encodeURIComponent(S.entries[0].id)}`);

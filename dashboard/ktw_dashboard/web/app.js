@@ -624,7 +624,7 @@ function viewEntry(main, id) {
   const r = el("div", { class: `reader ${e.status}` },
     el("div", { class: "crumbs" }, el("a", { href: "#overview" }, "Overview"), " / ", el("a", { href: `#topic/${e.file}` }, t?.title || e.file), ` / line ${e.line}`, shareButton(e)),
     el("h1", { html: inline(e.title) }),
-    el("div", { class: "fields" }, ...entryPills(e), e.source ? pill(`Source: ${e.source}`, "") : null, e.verification ? pill(`Verification: ${e.verification.split(/\s[—-]\s/)[0]}`, "") : null),
+    el("div", { class: "fields" }, ...entryPills(e), e.source ? el("span", { class: "pill", html: `Source: ${inline(e.source)}` }) : null, e.verification ? el("span", { class: "pill", html: `Verification: ${inline(e.verification.split(/\s[—-]\s/)[0])}` }) : null),
     el("div", { class: "body", html: renderMarkdown(e.body.text || "_(no body)_") }),
     e.revisit_when ? el("div", { class: "body" }, el("div", { class: "label", html: `<b>Revisit when</b><p>${inline(e.revisit_when)}</p>` })) : null,
     refsBox(e),
@@ -1053,9 +1053,9 @@ function renderDetailsEntry(e) {
     el("span", { class: "k" }, "type"), el("span", { class: "v" }, (e.type || []).join(", ") || "—"),
     el("span", { class: "k" }, "status"), el("span", { class: "v" }, statusPill(e.status)),
     el("span", { class: "k" }, "evidence"), el("span", { class: "v" }, evPill(e.evidence)),
-    e.source ? [el("span", { class: "k" }, "source"), el("span", { class: "v" }, e.source)] : null,
-    e.verification ? [el("span", { class: "k" }, "verification"), el("span", { class: "v" }, e.verification)] : null,
-    e.revisit_when ? [el("span", { class: "k" }, "revisit when"), el("span", { class: "v" }, e.revisit_when)] : null,
+    e.source ? [el("span", { class: "k" }, "source"), el("span", { class: "v", html: inline(e.source) })] : null,
+    e.verification ? [el("span", { class: "k" }, "verification"), el("span", { class: "v", html: inline(e.verification) })] : null,
+    e.revisit_when ? [el("span", { class: "k" }, "revisit when"), el("span", { class: "v", html: inline(e.revisit_when) })] : null,
   ));
   d.append(el("h3", {}, "Git"));
   if (!g) d.append(el("p", { class: "empty" }, S.project.git?.available ? "not in Git yet" : "no repository"));

@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+### Fixed
+
+- `keep-the-why-dashboard` 0.11.1: an entry's `Source`, `Verification` and `Revisit when` are rendered as inline Markdown in the reader's pills and in the side pane — a `[#192](https://…)` link is a link, code is code — as the body and the title already were; the side pane showed the raw `[text](url)`.
+
 ## [0.20.2] - 2026-10-12
 
 ### Added
