@@ -7,6 +7,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 ### Changed
 
 - FAQ: *Does it link entries to a Jira/GitHub issue or post-mortem?* now ends on a live example — an entry in this repository whose `Source` is the issue it came from, opened in the dashboard. The answer described the field without showing one.
+- This repository's `.keep-the-why` sets `source-reference: always`: every new `context/` entry is asked for the issue, pull request or post-mortem it traces to, and carries it as `Source` when there is one. "Nothing tracks this" stays a complete answer.
 
 ### Fixed
 

@@ -10,7 +10,7 @@ README, for what Keep the Why actually is.
 - init: complete
 - context-schema: 0.20.2
 - capture-confirmation: automatic
-- source-reference: never
+- source-reference: always
 <!-- /keep-the-why:config -->
 
 <!-- keep-the-why:personal-defaults -->
