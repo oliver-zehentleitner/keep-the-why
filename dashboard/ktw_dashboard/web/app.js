@@ -1516,11 +1516,16 @@ const entryRefs = (e) => [...(e.see || []).map((x) => x && { uuid: x.uuid, remot
 function friendUnits(g) {
   // friends of one family are one unit: the Ids cited in any of its repositories together
   const units = new Map();
+  // this project's family is drawn already — the whole tree in the family graph, the members beside the project
+  // graph — so a repository of it reached by a thought, a wave or a citation is not drawn again as a neighbour,
+  // nor as part of a neighbour's family
+  const projectKey = (m) => `${fkey(m.canonical)}|${m.root || m.state?.project?.root || ""}`;
+  const drawn = new Set((g === fgraph ? g.groups || [] : g === graph ? familyMembers() : []).map(projectKey));
   const add = (f, via) => {
     const r = FRIENDS.loaded[fkey(f.canonical)];
     const centre = fkey(canonicalOf(SELF?.project));
-    if (!r?.state || onPath(f.canonical) || fkey(f.canonical) === centre) return; // the centre is drawn as itself, never again as a neighbour
-    const members = (FRIEND_FAMILIES ? r.members || [r] : [r]).filter((m) => fkey(m.canonical) !== centre || m === r);
+    if (!r?.state || onPath(f.canonical) || fkey(f.canonical) === centre || drawn.has(projectKey(r))) return; // the centre is drawn as itself, never again as a neighbour
+    const members = (FRIEND_FAMILIES ? r.members || [r] : [r]).filter((m) => (fkey(m.canonical) !== centre || m === r) && !drawn.has(projectKey(m)));
     const k = unitKey(members);
     if (!units.has(k)) units.set(k, { k, r, members, uuids: new Set(), via });
     const u = units.get(k); if (via === "friend") u.via = "friend"; if (via === "cited") u.citing = true;
