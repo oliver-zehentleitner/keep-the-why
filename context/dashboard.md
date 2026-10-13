@@ -383,6 +383,8 @@ Going to a friend — its name in the legend, its hub's entries, a link to it an
 
 **Consequence (2026-10-01, maintainer decision, dashboard 0.4.3):** *all their entries* opens a path step too. A step was drawn with the entries that link it, always — a reader who had walked from Keep the Why to the suite, switched on *all their entries* and saw picows open up but not Keep the Why read that as a bug, and it is one in effect: in the graph a step is a hub with a number and a dotted ring, otherwise a neighbour like a friend, and the checkbox promises every entry of every neighbour. The other reading — keep a step lean because the reader has just been there — was weaker: whoever opens the context wants the whole neighbour, whichever way it came into the graph. The path has its own *all their entries* beside its switch, as friends and the family have theirs. That switch hides and shows the path (0.4.4); it had turned *keeping* off, which discarded the walk — a filter that destroys what it filters is not a filter, and the path bar's *discard* already does the forgetting.
 
+**Consequence (2026-10-13, maintainer decision, dashboard 0.11.8):** a move between members of the project's own family is not a step of the path — by the project menu, a family hub or a link alike. The family is drawn as one, its parent once, so moving inside it added steps that only repeated what the graph already shows; the path stays as it is and grows only when the walk leaves the family. "Own family" is what the page knows of it: the declared parent and children and every tree it has loaded.
+
 **Rejected alternative:** the path in the URL (`&trail=A,B,D`), shareable and surviving a reload. Rejected by the maintainer — a link leads to an entry; a shared link that loaded a stranger's walk would fetch other hosts nobody asked for.
 
 **Rejected alternative:** keep the path across a reload in the tab's session storage. Rejected by the maintainer: a reload starts fresh, which is the simplest thing to understand.
@@ -398,11 +400,13 @@ Going to a friend — its name in the legend, its hub's entries, a link to it an
 **Source:** maintainer request, 2026-10-13; pull request #704
 **See:** dashboard.md#a-walk-to-a-friend-moves-the-centre-in-place-and-the-page-keeps-the-path-in-memory — 4b41fbe0-d50c-4209-9028-14b8a5ad0a48 — as of 2026-10-13
 
-An export of a family member has a project menu where the bare project id stood: the family's tree from the members' published exports, ordered as the Family view orders it. Choosing a member moves the centre in place, as a click on its hub in the graph does — the project left joins the path, nothing reloads. A member without a published export is listed and cannot be chosen.
+An export of a family member has a project menu where the bare project id stood: the family's tree from the members' published exports, ordered as the Family view orders it. Choosing a member moves the centre in place, as a click on its hub in the graph does — nothing reloads. A member without a published export is listed and cannot be chosen.
 
 **Reason:** the path is how the page is walked; a second way of going to a member that bypassed it would leave two kinds of move on one page, one of them without a way back. The member's state is already in memory for the graph beside the overview, so the move costs no fetch.
 
 **Rejected alternative:** the menu as a link to the member's own export page, a new page on its own site. The assisting agent's proposal, rejected by the maintainer for consistency with the path — it would reload what is already loaded and drop the walk.
+
+**Consequence (2026-10-13, maintainer decision, dashboard 0.11.8):** a choice in the menu no longer adds a path step — see the path entry's consequence of the same day: a move inside the family is not a step of the path.
 
 ## A fork checkout is shown from the remotes and `canonical`, not from the host's API
 
