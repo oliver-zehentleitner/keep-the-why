@@ -20,6 +20,8 @@ A list of repositories with a published Keep the Why dashboard export, kept in [
 
 The globe — the [🌐](https://keepthewhy.com/dashboard/live/#globe) right of the search in the top bar — opens the graph alone, full width, and loads repositories in waves: hop 1 is what the loaded entries cite outside the page, hop 2 what those cite, up to ten, each wave asked for with its count and its list before anything is fetched. *registry* loads every listed project as a wave of its own, asked for the same way. Nothing of it is kept per browser: every load from another host is a click, and a reload starts without it.
 
+A registry with many projects loads in portions, so that one click never fetches the whole list: 100 projects by default, 500 or 1000 chosen in the dialog. The dialog lists the next portion and counts the rest; after each portion the graph is drawn, and the next one is asked for again. The projects come in random order, so a portion is a sample of the registry, not its first letters. *No, stop here* keeps what came, and *next* beside the *registry* switch goes on with the projects this pass has not tried yet — a project that did not answer is tried again only when the switch is turned off and on. A large hop loads the same way: *go on* continues a hop stopped part-way.
+
 The search knows the registry too: *Find a project in the registry*, the last row of the search dropdown, reads the index on the click and lists the projects whose name, repository URL or id carry the words typed, each opening in public mode from its published export — a project, not its entries. Enter shows them as a page (`#search/registry/<query>`), which the results page's bar offers as *registry* on every search.
 
 <figure class="ktw-shot-small" markdown>
