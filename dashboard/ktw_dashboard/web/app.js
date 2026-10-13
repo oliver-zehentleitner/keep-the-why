@@ -1183,7 +1183,7 @@ function miniGraph(d, ctx) {
   if (mode === "project") { const g = buildGraph(ctx.entry?.project || ctx.topic?.project || null); holdReading(g); fillFilters(g); cornerFor(g); /* friends are in the gear's groups */ return requestAnimationFrame(() => runGraph(canvas, g, opts)); }
   // family: the family graph's nodes, with switches of their own (entries shown); the zoom is the small graph's own either way
   const note = el("span", { class: "mini-hint", style: "top:28px;bottom:auto" }, "loading the family…"); box.append(note);
-  const show = (fg) => { note.remove(); if (!canvas.isConnected) return; const mg = { ...fg, showEntries: SHOW_ENTRIES, showLabels: true, raf: null, wake: null, alpha: Math.max(fg.alpha, 0.3) }; holdReading(mg); fillFilters(mg); cornerFor(mg); runGraph(canvas, mg, opts); };
+  const show = (fg) => { note.remove(); if (!canvas.isConnected) return; const mg = { ...fg, showEntries: SHOW_ENTRIES, showLabels: true, raf: null, wake: null, alpha: Math.max(fg.alpha, 0.3), of: fg }; fg.runner = mg; holdReading(mg); fillFilters(mg); cornerFor(mg); runGraph(canvas, mg, opts); };
   if (fgraph && Date.now() - fgraph.at < 30000) requestAnimationFrame(() => show(fgraph));
   else buildFamilyGraph().then(show);
 }
@@ -2449,7 +2449,7 @@ function runGraph(canvas, g, opts = {}) {
     const dt = lastT && now ? Math.min(100, now - lastT) : 16; lastT = now || 0;
     const drifting = driftOn() && !hover && !drag && !pan && !pinch;
     if (drifting) { const a = DRIFT_RATE * dt, c = Math.cos(a), sn = Math.sin(a); for (const n of g.nodes) { const x = n.x, y = n.y; n.x = x * c - y * sn; n.y = x * sn + y * c; } }
-    if (g === STAGE?.graph && g.alpha > 0.01 && STAGE.follows?.()) STAGE.wake(); // settling: the stage settles with it, then keeps the positions
+    if (STAGE && (g === STAGE.graph || (g.of && g.of === STAGE.graph)) && g.alpha > 0.01 && STAGE.follows?.()) STAGE.wake(); // settling: the stage settles with it, then keeps the positions
     // settled and only turning: every other frame is enough
     if (drifting && g.alpha <= 0.003 && (frame++ & 1)) { g.raf = canvas.isConnected ? requestAnimationFrame(step) : null; return; }
     const ns = g.nodes.filter(visible);
@@ -2845,9 +2845,11 @@ function stageCamera(scene, v, o) {
   const depthAlpha = (z) => Math.max(0.2, Math.min(1, 1.1 - z / (DEPTH_FAR * 1.6)));
   // the graph's positions, copied while it settles and then kept
   // (copied until the graph has settled once; from then on only a node not yet known is added — the graph is nudged
-  // awake by a pointed-at thought, and following that would walk the cards along its turn a step per hover)
+  // awake by a pointed-at thought, and following that would walk the cards along its turn a step per hover). The
+  // family graph runs as the side pane's copy (`runner`), which shares its nodes but settles with an alpha of its
+  // own: the family graph's own never falls, and read alone it kept the cards following the turn for good
   const POS = new Map(); let settled = false; // node id -> { x, y }
-  const syncPositions = () => { const G = scene.G; if (!G) return; for (const n of G.nodes) if ((n.kind === "entry" || n.kind === "topic") && (!settled || !POS.has(n.id))) POS.set(n.id, { x: n.x, y: n.y }); if (G.alpha <= 0.01) settled = true; };
+  const syncPositions = () => { const G = scene.G; if (!G) return; for (const n of G.nodes) if ((n.kind === "entry" || n.kind === "topic") && (!settled || !POS.has(n.id))) POS.set(n.id, { x: n.x, y: n.y }); if (Math.min(G.alpha, G.runner?.alpha ?? 1) <= 0.01) settled = true; o.wrap.dataset.settled = settled ? "1" : ""; };
   const gbox = { x0: 0, x1: 1, y0: 0, y1: 1 };
   const measureGraph = (shownCards) => { syncPositions(); const xs = [], ys = []; for (const c of shownCards) { const q = POS.get(c.nid); if (q) { xs.push(q.x); ys.push(q.y); } } const b = percentileBox(xs, ys); if (b) Object.assign(gbox, b); };
   const clamp01 = (u) => Math.max(0, Math.min(1, u));

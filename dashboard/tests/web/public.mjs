@@ -19,7 +19,7 @@ const app = fs.readFileSync(W + "app.js", "utf8").replace(/^import \{[^}]*\} fro
 // jsdom runs no module scripts: lib and app go into the page as one classic
 // script, which jsdom runs itself (as in smoke.mjs; this file runs no code
 // strings). split/join, not replace: the sources contain `$&`-like sequences.
-const html = fs.readFileSync(W + "index.html", "utf8").split('<script type="module" src="/static/app.js"></script>').join("<script>" + lib + "\n" + app + "\nwindow.__fg = () => fgraph; window.__g = () => graph; // test hooks</script>");
+const html = fs.readFileSync(W + "index.html", "utf8").split('<script type="module" src="/static/app.js"></script>').join("<script>" + lib + "\n" + app + "\nwindow.__fg = () => fgraph; window.__g = () => graph; window.__stage = () => STAGE; // test hooks</script>");
 
 const GH = "https://github.com/acme";
 const config = (id, lines) => `<!-- keep-the-why:config -->\n- id: ${id}\n${lines.join("\n")}\n<!-- /keep-the-why:config -->\n`;
@@ -858,6 +858,23 @@ const report = {};
   const tsrc = window.document.querySelector("main .crumbs a.source-link")?.getAttribute("href") || "";
   if (tsrc !== `${GH}/suite/blob/HEAD/docs/context/design.md`) errors.push("topic in a mono repository member: open source is " + tsrc);
   if (!window.document.querySelector("main .crumbs button.share-btn")) errors.push("topic in a mono repository member: no copy-link button");
+}
+{
+  // the timeline of a family member's export: the stage stands on the family graph, which runs as the side pane's copy.
+  // The stage must see that copy settle and keep the positions from then on — read off the family graph alone it
+  // never settled, and every hover copied the turning graph's positions: the cards walked in a circle
+  const web = FILES["https://acme.github.io/web/state.json"]; // the timeline needs dated entries
+  const dated = { ...web, exported: true, entries: web.entries.map((e) => ({ ...e, git: { created: { date: "2026-09-20", author: "Web Author" } } })) };
+  const page = html.replace("<script>", `<script>window.__KTW_STATE__ = ${JSON.stringify(dated).replace(/</g, "\\u003c")};</script><script>`);
+  const window = await open("http://localhost/web/keep-the-why-dashboard/#timeline", page);
+  const d = window.document;
+  let settled = false;
+  for (let i = 0; i < 60 && !settled; i++) { await tick(250); settled = d.querySelector(".stage-wrap")?.dataset.settled === "1"; }
+  report.stageFamilySettled = settled;
+  if (window.__stage?.()?.graph !== window.__fg?.()) errors.push("timeline (family export): the stage does not stand on the family graph — the test does not cover the case");
+  if (!window.__fg?.()?.runner) errors.push("timeline (family export): the family graph has no running copy in the side pane — the test does not cover the case");
+  if (!settled) errors.push("timeline (family export): the stage never saw the family graph settle — a hover would move every card");
+  window.close();
 }
 console.log(JSON.stringify(report, null, 1));
 console.log("ERRORS:", errors.length); for (const e of errors) console.log("  " + e);
