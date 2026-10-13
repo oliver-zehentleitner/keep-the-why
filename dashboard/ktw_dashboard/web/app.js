@@ -979,7 +979,7 @@ function familyDeclared() {
 function publicMemberRow(m, r) {
   const st = r?.state;
   const title = st ? el("a", { href: publicHref(m.canonical, m.root || "") }, m.name) : el("b", {}, m.name);
-  return el("div", { class: `member ${m.role} ${st ? "public" : "none"}`, onmouseenter: () => spotProject(m.canonical), onmouseleave: () => spotProject(null) },
+  return el("div", { class: `member ${m.role} ${st ? "public" : "none"}`, onmouseenter: () => spotProject(m.canonical, m.root || ""), onmouseleave: () => spotProject(null) },
     el("div", { class: "mr" }, el("span", { class: "role" }, m.role), title, el("span", { class: `pill kind-${st ? "public" : "none"}` }, st ? "published export" : "no public export"),
       st ? el("span", { class: "pill" }, `generated ${st.generated || "?"}`) : null),
     m.scope ? el("div", { class: "ms" }, m.scope) : (m.role === "parent" ? el("div", { class: "ms note" }, "holds what is family-wide") : null),
@@ -988,7 +988,7 @@ function publicMemberRow(m, r) {
 function memberRow(m) {
   const here = m.role === "self";
   const title = m.key && !here ? el("a", { href: `${location.pathname}?project=${encodeURIComponent(m.key)}#overview` }, m.name) : el("b", {}, m.name);
-  return el("div", { class: `member ${m.role} ${m.available}`, onmouseenter: () => spotProject(m.canonical), onmouseleave: () => spotProject(null) },
+  return el("div", { class: `member ${m.role} ${m.available}`, onmouseenter: () => spotProject(m.canonical, m.root || ""), onmouseleave: () => spotProject(null) },
     el("div", { class: "mr" }, el("span", { class: "role" }, m.role), title, el("span", { class: `pill kind-${m.available}` }, here ? "this project" : kindLabel(m.available))),
     m.scope ? el("div", { class: "ms" }, m.scope) : (m.role === "parent" ? el("div", { class: "ms note" }, "holds what is family-wide") : null),
     el("div", { class: "mm mono" }, hostMark(m.canonical), m.canonical || m.location || "", m.path && !here ? ` · ${m.path}` : ""),
@@ -1013,14 +1013,14 @@ async function viewFamily(main) {
     const byNode = new Map(members.map((m, i) => [m.node, results[i]]));
     if (!box.isConnected) return;
     box.replaceChildren(...treeRows(members, (m) => m.role === "self"
-      ? memberRow({ role: "self", name: p.id || p.name, location: "", scope: m.scope || "", canonical: canonicalOf(p), available: "public" })
+      ? memberRow({ role: "self", name: p.id || p.name, location: "", scope: m.scope || "", canonical: canonicalOf(p), root: p.root || "", available: "public" })
       : publicMemberRow(m, byNode.get(m.node))));
     return;
   }
   if (!LIVE()) {
     // an export knows only its own config: parent and children as declared
     if (p.parent) box.append(memberRow({ role: "parent", name: p.parent.replace(/^https:\/\//, ""), location: p.parent, scope: "", canonical: p.parent.startsWith("https://") ? p.parent : "", available: "none", fetch: null }));
-    box.append(memberRow({ role: "self", name: p.id || p.name, location: "", scope: "", canonical: canonicalOf(p), available: "repository" }));
+    box.append(memberRow({ role: "self", name: p.id || p.name, location: "", scope: "", canonical: canonicalOf(p), root: p.root || "", available: "repository" }));
     for (const c of p.children || []) box.append(memberRow({ role: "child", name: c.name, location: c.location, scope: c.scope, canonical: c.location.startsWith("https://") ? c.location : "", available: "none", fetch: null }));
     return;
   }
@@ -1287,7 +1287,7 @@ async function buildFamilyGraph() {
   groups.forEach((G, i) => {
     const ang = (2 * Math.PI * (i - 1)) / Math.max(1, groups.length - 1);
     const at = G.key === "self" ? { x: 0, y: 0 } : { x: R * Math.cos(ang), y: R * Math.sin(ang) };
-    const hub = add({ id: `p:${G.key}`, kind: "project", self: G.key === "self", label: G.g.member.name, canonical: G.canonical, r: 15, color: G.color, href: memberLink(G.g.member, "#overview"),
+    const hub = add({ id: `p:${G.key}`, kind: "project", self: G.key === "self", label: G.g.member.name, canonical: G.canonical, root: G.root, r: 15, color: G.color, href: memberLink(G.g.member, "#overview"),
       walk: () => (G.key === "self" ? go("#overview") : moveTo({ centre: memberCentre(G.g.member), state: G.state }, "#graph")) }, at);
     for (const t of G.state.topics || []) {
       const n = add({ id: tid(G, t.file), kind: "topic", fam: G.key !== "self", label: t.title, file: t.file, color: G.color, r: 8 + Math.sqrt(t.entries || 0) * 2.8, href: memberLink(G.g.member, `#topic/${t.file}`) }, hub);
@@ -1580,7 +1580,7 @@ function addLinkedLayer(g, prev, items) {
   let selfHub = null;
   if (items.length && !nodes.some((n) => n.kind === "project" && !n.ext)) {
     const p = SELF?.project || S.project || {};
-    selfHub = add({ id: "p:self", kind: "project", self: true, label: p.id || p.name || "this project", canonical: canonicalOf(p), r: 15, color: color0(), href: "#overview" }, { x: 0, y: 0 });
+    selfHub = add({ id: "p:self", kind: "project", self: true, label: p.id || p.name || "this project", canonical: canonicalOf(p), root: p.root || "", r: 15, color: color0(), href: "#overview" }, { x: 0, y: 0 });
     selfHub.ext = false; selfHub.unit = null;
     for (const n of nodes) if (n.kind === "topic" && !n.ext) links.push({ s: index[selfHub.id], t: index[n.id], kind: "hub", len: 90 });
   }
@@ -1616,7 +1616,7 @@ function addLinkedLayer(g, prev, items) {
       const off = it.members.length > 1 ? { x: centre.x + 110 * Math.cos((2 * Math.PI * j) / it.members.length), y: centre.y + 110 * Math.sin((2 * Math.PI * j) / it.members.length) } : centre;
       // the hub and its name both go to that project (back along the path for a step of it)
       const walk = it.kind === "trail" ? it.hub : m.centre ? () => moveTo({ centre: m.centre, state: m.state }, "#graph") : m.open ? () => go(m.open) : null;
-      const hub = add({ id: `f:${it.k}:${m.key}`, kind: "project", friend: it.kind === "friend", chain: !!it.chain, hop: it.hop ?? null, citing: j === 0 && !!it.citing, citedOnly: j === 0 && !!it.citedOnly, trail: it.kind === "trail", family: it.kind === "family", label: m.name, canonical: m.canonical, r: it.kind === "family" ? 13 : j === 0 ? 13 : 10, color: mcol, href: m.open || "#graph", action: it.hub, walk }, off);
+      const hub = add({ id: `f:${it.k}:${m.key}`, kind: "project", friend: it.kind === "friend", chain: !!it.chain, hop: it.hop ?? null, citing: j === 0 && !!it.citing, citedOnly: j === 0 && !!it.citedOnly, trail: it.kind === "trail", family: it.kind === "family", label: m.name, canonical: m.canonical, root: m.state?.project?.root || m.root || "", r: it.kind === "family" ? 13 : j === 0 ? 13 : 10, color: mcol, href: m.open || "#graph", action: it.hub, walk }, off);
       if (selfHub && it.kind === "family" && m.role === "child") links.push({ s: index[hub.id], t: index[selfHub.id], kind: "family", len: 260 });
       if (selfHub && it.kind === "family" && m.role === "parent") links.push({ s: index[selfHub.id], t: index[hub.id], kind: "family", len: 260 });
       hubs[m.key] = index[hub.id];
@@ -1709,7 +1709,7 @@ function centreUrl(c) {
   return location.pathname;
 }
 function remember(c, state) {
-  const e = { key: centreKey(c), centre: c, state, name: state.project?.id || state.project?.name || repoLabel(canonicalOf(state.project) || ""), canonical: canonicalOf(state.project), url: centreUrl(c) };
+  const e = { key: centreKey(c), centre: c, state, name: state.project?.id || state.project?.name || repoLabel(canonicalOf(state.project) || ""), canonical: canonicalOf(state.project), root: state.project?.root || "", url: centreUrl(c) };
   VISITED.set(e.key, e); return e;
 }
 // Everything that belongs to one centre starts over when the centre moves; the
@@ -1770,7 +1770,7 @@ function onLinkClick(ev) {
 function pathBar() {
   if (!KEEP_PATH || !TRAIL.length) return null;
   const here = SELF?.project?.id || SELF?.project?.name || "";
-  const steps = TRAIL.map((t, i) => [el("a", { href: t.url + "#graph", title: `back to ${t.name} — the path shortens to here`, onclick: (ev) => { ev.preventDefault(); moveTo(t, "#graph"); }, onmouseenter: () => spotProject(t.canonical), onmouseleave: () => spotProject(null) }, `${i + 1} · ${t.name}`), el("span", { class: "sep" }, " › ")]).flat();
+  const steps = TRAIL.map((t, i) => [el("a", { href: t.url + "#graph", title: `back to ${t.name} — the path shortens to here`, onclick: (ev) => { ev.preventDefault(); moveTo(t, "#graph"); }, onmouseenter: () => spotProject(t.canonical, t.root), onmouseleave: () => spotProject(null) }, `${i + 1} · ${t.name}`), el("span", { class: "sep" }, " › ")]).flat();
   return el("div", { class: "path-bar" }, el("span", { class: "label" }, "Path "), ...steps, el("b", {}, here),
     el("span", { class: "grow" }),
     el("label", { title: "show the path's projects in the graph" }, el("input", { type: "checkbox", checked: TRAIL_SHOW, onchange: (ev) => { setTrailShow(ev.target.checked); if (fgraph) fgraph.at = 0; render(); } }), "in graph"),
@@ -2230,9 +2230,13 @@ function projectNodes(g, hub) {
   return out;
 }
 // light a project in every graph on the page — the path bar and the Family view point at projects the way the legend does
-function spotProject(canonical) {
+// A project pointed at outside the graph (a Family row, a step of the path): its nodes stay, the rest fades.
+// The projects of one repository share the canonical and differ by root, so both are compared; a caller
+// that knows no root (undefined) matches by the canonical alone.
+function spotProject(canonical, root) {
+  const same = (n) => n.kind === "project" && n.canonical && fkey(n.canonical) === fkey(canonical) && (root === undefined || (n.root || "") === (root || ""));
   for (const G of ACTIVE_GRAPHS) {
-    const hub = canonical ? G.nodes.find((n) => n.kind === "project" && n.canonical && fkey(n.canonical) === fkey(canonical)) : null;
+    const hub = canonical ? G.nodes.find(same) : null;
     G.spot = hub ? projectNodes(G, hub) : null; G.alpha = Math.max(G.alpha, 0.02); G.wake?.();
   }
 }
