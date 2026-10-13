@@ -971,6 +971,34 @@ const report = {};
   if (report.pathInFamily.bar) errors.push("path in the family: moves inside the family added path steps: " + report.pathInFamily.bar);
   window.close();
 }
+{
+  // the globe's hops start from everything drawn, the registry's projects too: hopx, listed in the registry, cites hopy,
+  // which nothing else here cites — after the registry, hop 1 must offer hopy
+  const IDX = "https://keepthewhy.com/registry/index.json"; const saved = FILES[IDX];
+  const HOPY = "5a1e5a1e-0000-4000-8000-0000000000a2";
+  FILES["https://raw.githubusercontent.com/acme/hopx/HEAD/.keep-the-why"] = config("acme---hopx", ["- dashboard-state: https://acme.github.io/hopx/state.json"]);
+  FILES["https://acme.github.io/hopx/state.json"] = state("acme---hopx", { canonical: `${GH}/hopx` }, [entry("Hop x", "Cites hopy.", { uuid: "5a1e5a1e-0000-4000-8000-0000000000a1", see: [{ remote: `${GH}/hopy`, uuid: HOPY, date: "2026-10-13" }] })]);
+  FILES["https://raw.githubusercontent.com/acme/hopy/HEAD/.keep-the-why"] = config("acme---hopy", ["- dashboard-state: https://acme.github.io/hopy/state.json"]);
+  FILES["https://acme.github.io/hopy/state.json"] = state("acme---hopy", { canonical: `${GH}/hopy` }, [entry("Hop y", "Cited by hopx.", { uuid: HOPY })]);
+  FILES[IDX] = JSON.stringify({ checked: "2026-10-13", projects: [{ canonical: `${GH}/hopx`, state: "https://acme.github.io/hopx/state.json", id: "acme---hopx", entries: 1 }] });
+  // from a project without a family (the project graph) and from one with a family in the family scope (the family graph)
+  for (const [who, family] of [["farther", false], ["web", true]]) {
+    const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/${who}`)}#globe`, html, { "ktw-globe-intro": "off" });
+    const d = window.document;
+    const btn = (box, re) => [...(box?.querySelectorAll("button") || [])].find((b) => re.test(b.textContent));
+    if (family) { d.querySelector('#scope button[data-scope="family"]').click(); await tick(600); }
+    d.querySelector(".graph-ui .globe-ctl input[type=checkbox]").click(); await tick(300);
+    btn(d.querySelector(".globe-dialog"), /^load/)?.click(); await tick(600);
+    const sel = d.querySelector(".graph-ui .globe-ctl select"); sel.value = "2"; sel.dispatchEvent(new window.Event("change")); await tick(300);
+    btn(d.querySelector(".graph-ui .globe-ctl"), /^go/)?.click(); await tick(400);
+    const dlg = d.querySelector(".globe-dialog");
+    report[`hopAfterRegistry_${who}`] = [dlg?.querySelector("h3")?.textContent || "(no dialog)", (dlg?.querySelector(".globe-list")?.textContent || "").slice(0, 300)];
+    if (!/acme\/hopy/.test(dlg?.textContent || "")) errors.push(`globe (${who}${family ? ", family scope" : ""}): hop 1 after the registry does not offer what a registry project cites: ` + JSON.stringify(report[`hopAfterRegistry_${who}`]));
+    if (/acme\/(suite|web|plugin)\b/.test(dlg?.querySelector(".globe-list")?.textContent || "")) errors.push(`globe (${who}): hop 1 offers a repository of the own family: ` + JSON.stringify(report[`hopAfterRegistry_${who}`]));
+    window.close();
+  }
+  FILES[IDX] = saved;
+}
 console.log(JSON.stringify(report, null, 1));
 console.log("ERRORS:", errors.length); for (const e of errors) console.log("  " + e);
 process.exit(errors.length ? 1 : 0);

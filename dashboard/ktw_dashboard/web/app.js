@@ -2026,14 +2026,17 @@ const registryHit = (p) => {
 const GLOBE = { view: false, hops: 0, extra: new Map(), failed: new Map(), busy: false, registry: false, registryLeft: false, registryTried: new Set(), registryUrl: REGISTRY_URL, done: 0, log: [] }; // failed: canonical key -> { canonical, error, hop }
 // the registry switched off: the next switch-on is a new pass, which tries the failed projects again
 function registryOff() { GLOBE.registry = false; GLOBE.registryLeft = false; GLOBE.registryTried.clear(); }
+// the graph the page shows: the family graph with the family scope, else the project graph
+const shownGraph = () => (familyGraphShown() && fgraph ? fgraph : graph);
 function loadedCanonicals() {
   // what the page shows beside the project — not everything it ever fetched: a repository dropped from the
   // globe (clear, the registry switched off) is offered again, its state coming from memory
   const out = new Set([fkey(canonicalOf(S?.project))]);
   for (const m of familyMembers()) out.add(fkey(m.canonical));
+  if (shownGraph() === fgraph) for (const G of fgraph.groups || []) out.add(fkey(G.canonical)); // the family tree, drawn in the family graph
   for (const t of TRAIL) out.add(fkey(t.canonical));
   const unit = (k) => { const r = FRIENDS.loaded[k]; if (r?.state) { out.add(k); for (const m of r.members || []) out.add(fkey(m.canonical)); } };
-  if (FRIENDS.on) for (const f of graph?.friends || fgraph?.friends || []) unit(fkey(f.canonical));
+  if (FRIENDS.on) for (const f of shownGraph()?.friends || []) unit(fkey(f.canonical));
   for (const k of CHAIN.extra.keys()) unit(k);
   for (const k of GLOBE.extra.keys()) unit(k);
   return out;
@@ -2044,9 +2047,11 @@ function globeCandidates() {
   const scan = (entries) => { for (const e of entries || []) for (const x of entryRefs(e)) { if (!x.remote) continue; const k = fkey(x.remote); if (have.has(k) || FRIENDS.loaded[k]?.error) continue; if (!out.has(k)) out.set(k, { canonical: x.remote.replace(/\/+$/, ""), uuids: new Set() }); out.get(k).uuids.add(x.uuid); } };
   // from what is drawn — the project, its family, the path's steps, the units beside it — not from everything
   // ever fetched: a project walked away from is not where the next hop starts
+  const g = shownGraph();
   scan(S?.entries); for (const m of familyMembers()) scan(m.state?.entries);
+  if (g === fgraph) for (const G of fgraph.groups || []) scan(G.state?.entries); // the family tree in the family graph
   if (pathShown()) for (const t of TRAIL) scan(t.state?.entries);
-  if (graph) for (const u of friendUnits(graph)) for (const m of u.members) scan(m.state?.entries);
+  if (g) for (const u of friendUnits(g)) for (const m of u.members) scan(m.state?.entries);
   return [...out.values()].map((c) => ({ ...c, uuids: [...c.uuids] }));
 }
 // A wave is loaded in portions: one click fetches at most this many repositories, the dialog asks again for
