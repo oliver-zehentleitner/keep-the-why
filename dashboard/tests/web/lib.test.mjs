@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   esc, plural, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf,
-  parseSupersededBy, kindLabel, typeName, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, compareHits, snippetAt, highlight,
+  parseSupersededBy, kindLabel, typeName, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, shuffled, compareHits, snippetAt, highlight,
   resolveLocation, bodyProse, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, HOSTS, hostOf, backlinksUrl, citingOf, hostAnchor,
 } from "../../ktw_dashboard/web/lib.js";
 
@@ -558,4 +558,14 @@ test("familyOrder: the root first, each member under the one that lists it, sibl
   assert.equal(familyOrder(loop).length, 2);
   assert.ok(familyRank({ role: "self" }) < familyRank({ role: "ancestor", depth: 3 }));
   assert.ok(familyRank({ role: "sibling" }) < familyRank({ role: "child" }));
+});
+
+test("shuffled: a permutation in a new array, the input untouched", () => {
+  const list = [1, 2, 3, 4, 5, 6];
+  let s = 1; const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+  const out = shuffled(list, rnd);
+  assert.deepEqual(list, [1, 2, 3, 4, 5, 6]);
+  assert.deepEqual([...out].sort((a, b) => a - b), list);
+  assert.notDeepEqual(out, list);
+  assert.deepEqual(shuffled([], rnd), []);
 });

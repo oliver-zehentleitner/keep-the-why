@@ -166,6 +166,13 @@ export function groupByFamily(list) {
   return flat;
 }
 
+// A list in random order, the input untouched (Fisher–Yates). `rnd` returns [0, 1), Math.random by default.
+export function shuffled(list, rnd = Math.random) {
+  const out = [...list];
+  for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; }
+  return out;
+}
+
 // Search. A query is a set of terms, all of which must occur somewhere in the
 // entry: its title, body, Revisit when, Source, Id, file, type, status or
 // evidence. The hit says how strong it is (terms in the title, occurrences in

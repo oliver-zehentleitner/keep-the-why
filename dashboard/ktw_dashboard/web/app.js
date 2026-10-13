@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-import { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, compareHits, snippetAt, highlight, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf, backlinksUrl, citingOf, hostAnchor , todayISO, addDays, dayDiff, existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan, createdOn, TYPE_KINDS, TYPE_COLORS, typeKind, SHELF, stageCards, stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight, mergeAuthors } from "./lib.js";
+import { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, shuffled, compareHits, snippetAt, highlight, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf, backlinksUrl, citingOf, hostAnchor , todayISO, addDays, dayDiff, existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan, createdOn, TYPE_KINDS, TYPE_COLORS, typeKind, SHELF, stageCards, stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight, mergeAuthors } from "./lib.js";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const narrow = () => !!window.matchMedia?.("(max-width: 900px)").matches;
@@ -1719,7 +1719,7 @@ function setCentre(c, state) {
   graph = null; fgraph = null; TREE = null; TREE_AT = 0; TREE_ASKED = false; PUBLIC_TREE = null; LAST_POOL = null;
   FRIENDS.on = false; FRIENDS.expanded.clear(); THOUGHT_PIN = null; MINI = null; CHAIN.extra.clear(); CHAIN.tried.clear();
   FAMILY_NB = { groups: null, missing: [], loading: false }; // the family beside the graph is the new centre's
-  GLOBE.extra.clear(); GLOBE.failed.clear(); GLOBE.done = 0; GLOBE.registry = false; // the globe's waves were counted from the old centre; what was fetched stays in memory
+  GLOBE.extra.clear(); GLOBE.failed.clear(); GLOBE.done = 0; registryOff(); // the globe's waves were counted from the old centre; what was fetched stays in memory
   CITED.on = false; CITED.loading = false; CITED.error = null; CITED.list = []; CITED.elsewhere = 0; CITED.checked = ""; CITED.url = null; // who cites the old centre
   if (MODE === "public") state.exported = true;
   connectLive();
@@ -2000,7 +2000,9 @@ const registryHit = (p) => {
   const meta = [repoLabel(p.canonical), p.entries != null ? plural(p.entries, "entry") : null, p.cors === false ? "served without a CORS header — a browser will likely be refused" : null].filter(Boolean);
   return { self, href: self ? "#overview" : publicHref(p.canonical), name: p.name || repoLabel(p.canonical), meta };
 };
-const GLOBE = { view: false, hops: 0, extra: new Map(), failed: new Map(), busy: false, registry: false, registryUrl: REGISTRY_URL, done: 0, log: [] }; // failed: canonical key -> { canonical, error, hop }
+const GLOBE = { view: false, hops: 0, extra: new Map(), failed: new Map(), busy: false, registry: false, registryLeft: false, registryTried: new Set(), registryUrl: REGISTRY_URL, done: 0, log: [] }; // failed: canonical key -> { canonical, error, hop }
+// the registry switched off: the next switch-on is a new pass, which tries the failed projects again
+function registryOff() { GLOBE.registry = false; GLOBE.registryLeft = false; GLOBE.registryTried.clear(); }
 function loadedCanonicals() {
   // what the page shows beside the project — not everything it ever fetched: a repository dropped from the
   // globe (clear, the registry switched off) is offered again, its state coming from memory
@@ -2024,16 +2026,40 @@ function globeCandidates() {
   if (graph) for (const u of friendUnits(graph)) for (const m of u.members) scan(m.state?.entries);
   return [...out.values()].map((c) => ({ ...c, uuids: [...c.uuids] }));
 }
-// a small dialog in the page: what would load, how many files, yes or no
+// A wave is loaded in portions: one click fetches at most this many repositories, the dialog asks again for
+// the next. Chosen in the dialog, kept for the page (nothing is fetched by it, but the globe keeps nothing either).
+const GLOBE_PORTIONS = [100, 500, 1000];
+let GLOBE_PORTION = GLOBE_PORTIONS[0];
+// a small dialog in the page: what would load, how many files, yes or no. A list longer than a portion shows
+// the next portion and counts the rest; the answer is how many to load now, or false.
 function globeDialog({ title, lines, note }) {
   return new Promise((resolve) => {
     const close = (v) => { box.remove(); resolve(v); };
-    const box = el("div", { class: "globe-dialog" }, el("div", { class: "globe-card" },
-      el("h3", {}, title), note ? el("p", { class: "note" }, note) : null,
-      el("div", { class: "globe-list" }, ...lines.map((l) => el("div", {}, l))),
-      el("div", { class: "globe-actions" }, el("button", { type: "button", class: "link-btn", onclick: () => close(false) }, "no, stop here"), el("button", { type: "button", class: "primary", onclick: () => close(true) }, "load them"))));
+    const list = el("div", { class: "globe-list" }); const noteEl = el("p", { class: "note" }); const actions = el("div", { class: "globe-actions" });
+    const fill = () => {
+      const n = Math.min(GLOBE_PORTION, lines.length); const rest = lines.length - n;
+      noteEl.textContent = note(n);
+      setKids(list, ...lines.slice(0, n).map((l) => el("div", {}, l)), rest ? el("div", { class: "note" }, `… and ${rest} more — offered after these`) : null);
+      const size = lines.length > GLOBE_PORTIONS[0] ? el("label", { class: "note portion", title: "how many repositories one click loads" }, "per portion ",
+        el("select", { onchange: (ev) => { GLOBE_PORTION = Number(ev.target.value); fill(); } }, ...GLOBE_PORTIONS.map((p) => el("option", { value: String(p), selected: p === GLOBE_PORTION }, String(p))))) : null;
+      setKids(actions, size, el("button", { type: "button", class: "link-btn", onclick: () => close(false) }, "no, stop here"), el("button", { type: "button", class: "primary", onclick: () => close(n) }, rest ? `load next ${n}` : "load them"));
+    };
+    const box = el("div", { class: "globe-dialog" }, el("div", { class: "globe-card" }, el("h3", {}, title), noteEl, list, actions));
+    fill();
     document.body.append(box);
   });
+}
+// Load `items` portion by portion, the graph redrawn after each: `ask(left)` opens the dialog over what is
+// left and returns how many to take, `load(part)` fetches and records a portion. Stops on a no; what came
+// stays. Returns how many were taken.
+async function globePortions(items, ask, load) {
+  let at = 0;
+  while (at < items.length) {
+    const n = await ask(items.slice(at)); if (!n) break;
+    await load(items.slice(at, at + n)); at += n;
+    globeRefit(); if (fgraph) fgraph.at = 0; render();
+  }
+  return at;
 }
 async function globeRun(hops) {
   if (GLOBE.busy) return;
@@ -2042,13 +2068,14 @@ async function globeRun(hops) {
     for (let hop = GLOBE.done + 1; hop <= hops; hop++) {
       const cands = globeCandidates();
       if (!cands.length) { GLOBE.log.push(`hop ${hop}: nothing left to load — the web ends here`); break; }
-      const yes = await globeDialog({ title: `Hop ${hop}: ${plural(cands.length, "repository")}`, note: `${plural(cands.length * 2, "file")} — a .keep-the-why and a state.json each${FRIEND_FAMILIES ? ", plus their families, if any (friends families is on)" : ""} — from their hosts, in the browser.`, lines: cands.map((c) => `${repoLabel(c.canonical)} — cited by ${plural(c.uuids.length, "entry")}`) });
-      if (!yes) break;
-      await Promise.all(cands.map(loadFriend));
-      let ok = 0; for (const c of cands) { const k = fkey(c.canonical); const r = FRIENDS.loaded[k]; if (r?.state) { GLOBE.extra.set(k, { ...c, hop }); GLOBE.failed.delete(k); ok++; } else GLOBE.failed.set(k, { canonical: c.canonical, error: r?.error || "could not be loaded", hop }); }
-      GLOBE.done = hop; GLOBE.log.push(`hop ${hop}: ${ok} of ${cands.length} loaded`);
-      globeRefit();
-      if (fgraph) fgraph.at = 0; render();
+      let ok = 0;
+      // a hop stopped part-way stays open: the next go offers what of it is left
+      const took = await globePortions(cands,
+        (left) => globeDialog({ title: `Hop ${hop}: ${plural(left.length, "repository")}${left.length < cands.length ? ` — ${cands.length - left.length} tried` : ""}`, note: (n) => `${plural(n * 2, "file")} — a .keep-the-why and a state.json each${FRIEND_FAMILIES ? ", plus their families, if any (friends families is on)" : ""} — from their hosts, in the browser.`, lines: left.map((c) => `${repoLabel(c.canonical)} — cited by ${plural(c.uuids.length, "entry")}`) }),
+        async (part) => { await Promise.all(part.map(loadFriend)); for (const c of part) { const k = fkey(c.canonical); const r = FRIENDS.loaded[k]; if (r?.state) { GLOBE.extra.set(k, { ...c, hop }); GLOBE.failed.delete(k); ok++; } else GLOBE.failed.set(k, { canonical: c.canonical, error: r?.error || "could not be loaded", hop }); } });
+      if (took) GLOBE.log.push(`hop ${hop}: ${ok} of ${cands.length} loaded`);
+      if (took < cands.length) break;
+      GLOBE.done = hop;
     }
   } finally { GLOBE.busy = false; if (fgraph) fgraph.at = 0; render(); }
 }
@@ -2058,16 +2085,21 @@ async function globeRegistry() {
   try {
     const idx = JSON.parse(await fetchForeign(GLOBE.registryUrl));
     const have = loadedCanonicals();
+    // "next" goes on with what this pass has not tried; a new pass (the switch off and on) tries the failed ones again
+    const goOn = GLOBE.registry && GLOBE.registryLeft;
+    if (!goOn) GLOBE.registryTried.clear();
+    // in random order: with many listed, a portion is a sample of the registry, not its first letters
+    const list = shuffled((idx.projects || []).filter((p) => p.canonical && !have.has(fkey(p.canonical)) && !GLOBE.registryTried.has(fkey(p.canonical))));
     // a project that failed before is offered again — much of that is temporary; its old error is forgotten for the try
-    const list = (idx.projects || []).filter((p) => p.canonical && !have.has(fkey(p.canonical)));
     for (const p of list) { const k = fkey(p.canonical); if (FRIENDS.loaded[k]?.error) { delete FRIENDS.loaded[k]; delete FRIENDS.pending[k]; delete PUBLIC_STATES[`${p.canonical}|`]; } }
-    if (!list.length) { GLOBE.log.push("registry: everything listed is already here"); GLOBE.registry = true; return; }
-    const yes = await globeDialog({ title: `The registry: ${plural(list.length, "project")}`, note: `${plural(list.length * 2, "file")} — a .keep-the-why and a state.json each${FRIEND_FAMILIES ? ", plus their families, if any" : ""} — from their hosts, in the browser. The registry is ${GLOBE.registryUrl}, checked ${idx.checked || "—"}.`, lines: list.map((p) => `${repoLabel(p.canonical)}${p.id ? ` — ${p.id}` : ""}${p.entries != null ? ` · ${plural(p.entries, "entry")}` : ""}${p.failed_since ? ` · not answering since ${p.failed_since}, tried anyway` : ""}${p.cors === false ? " · served without a CORS header — a browser will likely be refused" : ""}`) });
-    if (!yes) return;
-    const cands = list.map((p) => ({ canonical: p.canonical, uuids: [] }));
-    await Promise.all(cands.map(loadFriend));
-    let ok = 0; for (const c of cands) { const k = fkey(c.canonical); const r = FRIENDS.loaded[k]; if (r?.state) { GLOBE.extra.set(k, { ...c, hop: 0, registry: true }); GLOBE.failed.delete(k); ok++; } else GLOBE.failed.set(k, { canonical: c.canonical, error: r?.error || "could not be loaded", hop: "registry" }); }
-    GLOBE.registry = true; GLOBE.log.push(`registry: ${ok} of ${list.length} loaded`);
+    if (!list.length) { GLOBE.log.push(goOn ? "registry: every listed project has been tried" : "registry: everything listed is already here"); GLOBE.registry = true; GLOBE.registryLeft = false; return; }
+    let ok = 0;
+    const took = await globePortions(list,
+      (left) => globeDialog({ title: `The registry: ${plural(left.length, "project")}${left.length < list.length ? ` — ${list.length - left.length} tried` : ""}`, note: (n) => `${plural(n * 2, "file")} — a .keep-the-why and a state.json each${FRIEND_FAMILIES ? ", plus their families, if any" : ""} — from their hosts, in the browser. The registry is ${GLOBE.registryUrl}, checked ${idx.checked || "—"}.`, lines: left.map((p) => `${repoLabel(p.canonical)}${p.id ? ` — ${p.id}` : ""}${p.entries != null ? ` · ${plural(p.entries, "entry")}` : ""}${p.failed_since ? ` · not answering since ${p.failed_since}, tried anyway` : ""}${p.cors === false ? " · served without a CORS header — a browser will likely be refused" : ""}`) }),
+      async (part) => { const cands = part.map((p) => ({ canonical: p.canonical, uuids: [] })); await Promise.all(cands.map(loadFriend)); for (const c of cands) { const k = fkey(c.canonical); GLOBE.registryTried.add(k); const r = FRIENDS.loaded[k]; if (r?.state) { GLOBE.extra.set(k, { ...c, hop: 0, registry: true }); GLOBE.failed.delete(k); ok++; } else GLOBE.failed.set(k, { canonical: c.canonical, error: r?.error || "could not be loaded", hop: "registry" }); } });
+    if (!took) return;
+    // a registry stopped part-way stays on with what came; "next" beside the switch offers the rest
+    GLOBE.registry = true; GLOBE.registryLeft = took < list.length; GLOBE.log.push(`registry: ${ok} of ${list.length} loaded`);
     globeRefit();
   } catch (err) { GLOBE.log.push(`registry: could not be read (${err?.message || "network"})`); }
   finally { GLOBE.busy = false; if (fgraph) fgraph.at = 0; render(); }
@@ -2093,12 +2125,13 @@ function globeIntro() {
 }
 // what a wave brought in may lie outside the view: frame the whole graph again, whatever the reader had moved
 function globeRefit() { for (const x of [graph, fgraph]) if (x) { x.userMoved = false; x.alpha = Math.max(x.alpha, 0.5); } }
-function globeClear() { globeRefit(); GLOBE.extra.clear(); GLOBE.failed.clear(); GLOBE.done = 0; GLOBE.registry = false; GLOBE.log = []; if (fgraph) fgraph.at = 0; render(); }
+function globeClear() { globeRefit(); GLOBE.extra.clear(); GLOBE.failed.clear(); GLOBE.done = 0; registryOff(); GLOBE.log = []; if (fgraph) fgraph.at = 0; render(); }
 function globeUi(g) {
   if (!GLOBE.view) return null;
   const sel = el("select", { title: "how many hops out from what is loaded — each wave is asked for with its count", onchange: (ev) => { GLOBE.hops = Number(ev.target.value); if (GLOBE.hops === 0) globeClear(); else render(); } }, ...Array.from({ length: 11 }, (_, i) => el("option", { value: String(i), selected: i === GLOBE.hops }, `${i} hop${i === 1 ? "" : "s"}`)));
   const go = el("button", { type: "button", class: "link-btn", disabled: GLOBE.busy || GLOBE.hops <= GLOBE.done, title: "load the next waves, one asked after the other", onclick: () => globeRun(GLOBE.hops) }, GLOBE.busy ? "loading…" : GLOBE.done ? `go on (${GLOBE.done} done)` : "go");
-  const reg = el("label", { title: `every project listed in the registry — ${GLOBE.registryUrl}` }, el("input", { type: "checkbox", checked: GLOBE.registry, disabled: GLOBE.busy, onchange: (ev) => { if (ev.target.checked) globeRegistry(); else { for (const [k, f] of GLOBE.extra) if (f.registry) GLOBE.extra.delete(k); GLOBE.registry = false; render(); } } }), "registry");
+  const reg = el("label", { title: `every project listed in the registry — ${GLOBE.registryUrl}` }, el("input", { type: "checkbox", checked: GLOBE.registry, disabled: GLOBE.busy, onchange: (ev) => { if (ev.target.checked) globeRegistry(); else { for (const [k, f] of GLOBE.extra) if (f.registry) GLOBE.extra.delete(k); registryOff(); render(); } } }), "registry");
+  const regNext = GLOBE.registry && GLOBE.registryLeft ? el("button", { type: "button", class: "link-btn", disabled: GLOBE.busy, title: "the registry was stopped part-way: offer the projects this pass has not tried", onclick: globeRegistry }, "next") : null;
   // an ⓘ beside the switch: what the registry is, and that one line in a pull request puts a project on it
   const info = el("span", { class: "globe-info", tabindex: "0" }, "ⓘ",
     el("span", { class: "globe-info-box" },
@@ -2107,7 +2140,7 @@ function globeUi(g) {
       el("p", {}, "To be listed, open a pull request that adds one line to ", el("code", {}, "registry/projects.txt"), ": your repository's canonical URL. A workflow follows its ", el("code", {}, ".keep-the-why"), " to the ", el("code", {}, "dashboard-state"), " export and checks that the export names your repository — move the export later and the listing follows. A family is listed by its root project: its members come with it through their parent/children lines (with friends families on)."),
       el("p", {}, el("a", { href: "https://keepthewhy.com/registry/", target: "_blank", rel: "noopener" }, "keepthewhy.com/registry"), " · ", el("a", { href: "https://github.com/oliver-zehentleitner/keep-the-why/blob/main/registry/projects.txt", target: "_blank", rel: "noopener" }, "registry/projects.txt on GitHub"))));
   const clear = GLOBE.extra.size ? el("button", { type: "button", class: "link-btn", title: "drop everything the globe loaded; friends, family and path stay", onclick: globeClear }, "clear") : null;
-  return el("span", { class: "ui-group globe-ctl" }, el("a", { class: "globe-mark", href: "https://keepthewhy.com/registry/", target: "_blank", rel: "noopener", title: "the registry — what the globe can load, and how to be listed" }, "🌐"), sel, go, reg, info, clear);
+  return el("span", { class: "ui-group globe-ctl" }, el("a", { class: "globe-mark", href: "https://keepthewhy.com/registry/", target: "_blank", rel: "noopener", title: "the registry — what the globe can load, and how to be listed" }, "🌐"), sel, go, reg, regNext, info, clear);
 }
 const followAll = () => followChains((g) => { const t = graphThoughts(g); return [...t.thoughts, ...t.open].flatMap((c) => c.ends); });
 // one chain, found again after each hop by its newest entry's Id
