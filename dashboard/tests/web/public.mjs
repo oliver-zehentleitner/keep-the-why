@@ -859,6 +859,45 @@ const report = {};
   if (tsrc !== `${GH}/suite/blob/HEAD/docs/context/design.md`) errors.push("topic in a mono repository member: open source is " + tsrc);
   if (!window.document.querySelector("main .crumbs button.share-btn")) errors.push("topic in a mono repository member: no copy-link button");
 }
+{
+  // a large registry loads in portions: 100 at a time by default, asked again after each, stoppable, continued by "next"
+  const IDX = "https://keepthewhy.com/registry/index.json"; const saved = FILES[IDX];
+  const many = Array.from({ length: 127 }, (_, i) => ({ canonical: `${GH}/bulk-${String(i).padStart(3, "0")}`, state: `https://acme.github.io/bulk-${i}/state.json`, id: `acme---bulk-${i}`, entries: 1 }));
+  FILES[IDX] = JSON.stringify({ checked: "2026-10-13", projects: [...JSON.parse(saved).projects, ...many] });
+  const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/refs`)}#globe`, html, { "ktw-globe-intro": "off" });
+  const d = window.document;
+  const regBox = () => d.querySelector(".graph-ui .globe-ctl input[type=checkbox]");
+  const btn = (box, re) => [...(box?.querySelectorAll("button") || [])].find((b) => re.test(b.textContent));
+  regBox().click(); await tick(300);
+  let dlg = d.querySelector(".globe-dialog");
+  report.portionFirst = [dlg?.querySelector("h3")?.textContent, dlg?.querySelectorAll(".globe-list > div:not(.note)").length, btn(dlg, /^load/)?.textContent];
+  if (!/^The registry: 130 projects$/.test(report.portionFirst[0] || "")) errors.push("portions: the first dialog should offer all 130: " + report.portionFirst[0]);
+  if (report.portionFirst[1] !== 100) errors.push("portions: the first dialog should list 100, lists " + report.portionFirst[1]);
+  if (!/and 30 more/.test(dlg?.querySelector(".globe-list")?.textContent || "")) errors.push("portions: the rest is not counted under the list");
+  if (report.portionFirst[2] !== "load next 100") errors.push("portions: the button should say 'load next 100': " + report.portionFirst[2]);
+  if (!dlg?.querySelector(".globe-actions select")) errors.push("portions: no choice of the portion size");
+  const before = fetched.length;
+  btn(dlg, /^load next/).click(); await tick(800);
+  const bulkFetched = new Set(fetched.slice(before).filter((u) => /acme\/bulk-/.test(u)).map((u) => u.match(/bulk-(\d+)/)[1])).size;
+  dlg = d.querySelector(".globe-dialog");
+  report.portionSecond = [dlg?.querySelector("h3")?.textContent, btn(dlg, /^load/)?.textContent];
+  if (!/^The registry: 30 projects — 100 tried$/.test(report.portionSecond[0] || "")) errors.push("portions: the second dialog should offer the 30 left: " + report.portionSecond[0]);
+  if (report.portionSecond[1] !== "load them") errors.push("portions: the last portion should say 'load them': " + report.portionSecond[1]);
+  if (bulkFetched > 100) errors.push(`portions: the first portion fetched ${bulkFetched} registry projects, more than 100`);
+  btn(dlg, /^no, stop here/).click(); await tick(300);
+  if (!regBox()?.checked) errors.push("portions: a registry stopped part-way should stay on with what came");
+  const next = btn(d.querySelector(".graph-ui .globe-ctl"), /^next$/);
+  if (!next) errors.push("portions: no 'next' beside the registry after a stop part-way"); else {
+    next.click(); await tick(300);
+    dlg = d.querySelector(".globe-dialog");
+    report.portionNext = dlg?.querySelector("h3")?.textContent;
+    if (!/^The registry: 30 projects$/.test(report.portionNext || "")) errors.push("portions: 'next' should offer the 30 not loaded: " + report.portionNext);
+    btn(dlg, /^load them/)?.click(); await tick(600);
+    if (btn(d.querySelector(".graph-ui .globe-ctl"), /^next$/)) errors.push("portions: 'next' is still offered with the whole registry loaded");
+  }
+  window.close();
+  FILES[IDX] = saved;
+}
 console.log(JSON.stringify(report, null, 1));
 console.log("ERRORS:", errors.length); for (const e of errors) console.log("  " + e);
 process.exit(errors.length ? 1 : 0);
