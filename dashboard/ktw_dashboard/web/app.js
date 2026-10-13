@@ -1259,7 +1259,7 @@ function buildSubgraph(e) {
 // its topics and entries around it, parent and child projects joined, and
 // the See and Superseded by lines between entries drawn across projects.
 let fgraph = null; // kept across re-renders so positions survive live updates
-// where a family member is, for a move in place (the path grows, nothing reloads)
+// where a family member is, for a move in place (nothing reloads; inside the family the path stays as it is)
 const memberCentre = (m) => (m.role === "self" ? currentCentre() : PUBLISHED() ? { mode: "public", canonical: m.canonical, root: m.root || "" } : { mode: "live", project: m.key });
 const memberLink = (m, hash) => m.role === "self" ? hash : PUBLISHED() ? publicHref(m.canonical, m.root || "", hash) : `${location.pathname}?project=${encodeURIComponent(m.key)}${hash}`;
 async function buildFamilyGraph() {
@@ -1732,14 +1732,32 @@ function setCentre(c, state) {
   if (sel && !sel.hidden && MODE === "live") sel.value = PROJECT || SELECTED_DEFAULT || sel.value;
   applyState(state);
 }
+// The projects of this project's family, as canonical|root: from whichever tree the page holds (the live
+// tree, the published one, the members beside the graph, the family graph) and what the config declares.
+function familyKeys() {
+  const out = new Set(); const add = (c, r) => { if (c) out.add(`${fkey(c)}|${r || ""}`); };
+  const p = SELF?.project || {}; const base = canonicalOf(p); const root = p.root || "";
+  add(base, root);
+  for (const l of [p.parent, ...(p.children || []).map((c) => c.location)]) { const loc = l && resolveLocation(l, base, root); if (loc) add(loc.canonical, loc.root); }
+  for (const m of TREE || []) add(m.canonical, m.root);
+  for (const x of [...(PUBLIC_TREE?.groups || []), ...(PUBLIC_TREE?.missing || [])]) add(x.member.canonical, x.member.root);
+  for (const m of familyMembers()) add(m.canonical, m.root);
+  for (const G of fgraph?.groups || []) add(G.canonical, G.root);
+  return out;
+}
 // Go to another centre whose state is loaded: the path grows by the centre
-// left, or — when the target is already on it — goes back to it.
+// left, or — when the target is already on it — goes back to it. A move inside
+// the family leaves the path as it is: the family is drawn as one, its parent
+// once, however often the reader moves between its members.
 function moveTo(t, hash = "#graph", { push = true } = {}) {
   const target = t.key ? t : remember(t.centre, t.state);
   const here = remember(currentCentre(), SELF);
   if (target.key === here.key) { if (location.hash !== hash) location.hash = hash; return; }
+  const tp = target.state?.project || {};
+  const inFamily = familyKeys().has(`${fkey(canonicalOf(tp))}|${tp.root || ""}`);
   const i = TRAIL.findIndex((x) => x.key === target.key);
   if (i >= 0) TRAIL = TRAIL.slice(0, i);
+  else if (inFamily) { /* the path stays */ }
   else if (KEEP_PATH) { TRAIL = TRAIL.filter((x) => x.key !== here.key); TRAIL.push(here); }
   else TRAIL = [];
   if (push) history.pushState({ ktw: target.key }, "", target.url + hash);
@@ -3640,8 +3658,8 @@ async function setupProjects() {
 // An export in a family: the project menu lists the tree from the members'
 // published exports, the root first and each member under the one that lists
 // it, as the live menu lists this machine's projects. A choice walks to the
-// member in place, as a click on its hub in the graph does: the path grows,
-// nothing reloads. A member without a published export is named, not offered.
+// member in place, as a click on its hub in the graph does: nothing reloads,
+// and the path stays — a move inside the family is not a step of it. A member without a published export is named, not offered.
 let FAMILY_MENU = 0; // counts the builds: a move before the tree arrives makes the older build stale
 async function setupFamilyMenu() {
   const sel = $("#project-select"); const p = S.project;

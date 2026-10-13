@@ -316,7 +316,7 @@ const report = {};
   report.staticMenuMove = window.location.search;
   if (navigations.length !== navBefore) errors.push("static export: choosing a member in the project menu reloaded the page");
   if (!/public=https%3A%2F%2Fgithub\.com%2Facme%2Fplugin/.test(window.location.search)) errors.push("static export: the project menu did not move to plugin — " + window.location.search);
-  if (!d.querySelector(".path-bar, #path")?.textContent?.includes("acme---web")) errors.push("static export: the walk from the project menu left no path step for acme---web");
+  if (d.querySelector(".path-bar")) errors.push("static export: a move inside the family from the project menu added a path step: " + d.querySelector(".path-bar").textContent);
   const sel2 = d.getElementById("project-select");
   if (!sel2.selectedOptions[0]?.textContent.includes("plugin")) errors.push("static export: after the move the project menu does not mark plugin");
   window.close();
@@ -951,6 +951,24 @@ const report = {};
   report.chainIntoFamilyTree = chainHubs(window.__fg());
   if (!window.__fg()) errors.push("thought into the family: no family graph after the family scope — the test does not cover the case");
   if (report.chainIntoFamilyTree.length) errors.push("thought into the family (family graph): the family is drawn again via a thought: " + JSON.stringify(report.chainIntoFamilyTree));
+  window.close();
+}
+{
+  // the path: a move inside the family is not a step of it — from web to its child plugin and on to the parent suite,
+  // the path stays empty; leaving the family (refs is a friend of nobody here, opened by its link) is a step
+  const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/web`)}#graph`);
+  await tick(600);
+  const d = window.document;
+  d.querySelector('#scope button[data-scope="family"]').click(); await tick(600);
+  const hub = (label) => (window.__fg()?.nodes || []).find((n) => n.kind === "project" && n.label === label);
+  for (const name of ["plugin", "github.com/acme/suite"]) {
+    let h = null; for (let i = 0; i < 30 && !h?.walk; i++) { h = hub(name); if (!h?.walk) await tick(200); }
+    if (!h?.walk) { errors.push(`path in the family: no walkable hub for ${name}: ` + (window.__fg()?.nodes || []).filter((n) => n.kind === "project").map((n) => n.label).join()); break; }
+    h.walk(); await tick(500);
+  }
+  report.pathInFamily = { title: d.title, bar: d.querySelector(".path-bar")?.textContent || "" };
+  if (!/acme---suite/.test(d.title)) errors.push("path in the family: the walk did not reach suite: " + d.title);
+  if (report.pathInFamily.bar) errors.push("path in the family: moves inside the family added path steps: " + report.pathInFamily.bar);
   window.close();
 }
 console.log(JSON.stringify(report, null, 1));

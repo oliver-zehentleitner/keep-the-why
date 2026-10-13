@@ -14,6 +14,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Changed
 
+- `keep-the-why-dashboard` 0.11.8: a move between members of the project's own family — by the project menu, a family hub or a link — is no longer a step of the path. The family is drawn as one, its parent once; the path grows only when the walk leaves the family.
 - Security page: the skills.sh results as audited 2026-10-11 for 0.20.1 — Socket *Pass*, Gen Agent Trust Hub *Pass* (safe), Snyk *Warn* (medium, W011 third-party content exposure: the skill reads repository history and threads, which is its job; the trust model is the mitigation the Trust Hub audit cites for the same category). The page said *Pass* for all three, from the 0.17.1 audit.
 - FAQ: *Does it link entries to a Jira/GitHub issue or post-mortem?* now ends on a live example — an entry in this repository whose `Source` is the issue it came from, opened in the dashboard. The answer described the field without showing one.
 - This repository's `.keep-the-why` sets `source-reference: always`: every new `context/` entry is asked for the issue, pull request or post-mortem it traces to, and carries it as `Source` when there is one. "Nothing tracks this" stays a complete answer.
