@@ -389,6 +389,21 @@ Going to a friend — its name in the legend, its hub's entries, a link to it an
 
 **Rejected alternative:** keep the page loads (every move a new page) and carry the path along. Rejected — every step would load again what is already in memory, and the path would have to be rebuilt from storage on each page.
 
+## An export's project menu walks the family in place, along the path
+
+**Id:** 78c4870e-24bd-4b68-b0b8-e13232133d66
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer request, 2026-10-13; pull request #704
+**See:** dashboard.md#a-walk-to-a-friend-moves-the-centre-in-place-and-the-page-keeps-the-path-in-memory — 4b41fbe0-d50c-4209-9028-14b8a5ad0a48 — as of 2026-10-13
+
+An export of a family member has a project menu where the bare project id stood: the family's tree from the members' published exports, ordered as the Family view orders it. Choosing a member moves the centre in place, as a click on its hub in the graph does — the project left joins the path, nothing reloads. A member without a published export is listed and cannot be chosen.
+
+**Reason:** the path is how the page is walked; a second way of going to a member that bypassed it would leave two kinds of move on one page, one of them without a way back. The member's state is already in memory for the graph beside the overview, so the move costs no fetch.
+
+**Rejected alternative:** the menu as a link to the member's own export page, a new page on its own site. The assisting agent's proposal, rejected by the maintainer for consistency with the path — it would reload what is already loaded and drop the walk.
+
 ## A fork checkout is shown from the remotes and `canonical`, not from the host's API
 
 **Id:** 5230467d-0d33-478a-acdb-2c9226c4f578
