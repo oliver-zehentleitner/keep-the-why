@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   esc, plural, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf,
-  parseSupersededBy, kindLabel, typeName, groupByFamily, searchTerms, searchHit, registryMatches, compareHits, snippetAt, highlight,
+  parseSupersededBy, kindLabel, typeName, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, compareHits, snippetAt, highlight,
   resolveLocation, bodyProse, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, HOSTS, hostOf, backlinksUrl, citingOf, hostAnchor,
 } from "../../ktw_dashboard/web/lib.js";
 
@@ -544,4 +544,18 @@ test("mergeAuthors: an anonymized name stays one row per project, labelled with 
   assert.deepEqual(rows.map((r) => r.label), ["author-1 (alpha)", "author-1", "author-1 (beta)"]);
   assert.ok(rows[0].anonymized && !rows[1].anonymized);
   assert.deepEqual(mergeAuthors([]), []);
+});
+
+test("familyOrder: the root first, each member under the one that lists it, siblings by rank then name", () => {
+  const m = (node, role, name, up = null) => ({ node, role, name, up });
+  const members = [
+    m("web", "self", "acme---web", "suite"), m("suite", "parent", "suite"), m("plugin", "child", "plugin", "web"),
+    m("docs", "sibling", "docs", "suite"), m("cli", "sibling", "cli", "suite"),
+  ];
+  assert.deepEqual(familyOrder(members).map(([x, d]) => `${d}:${x.name}`), ["0:suite", "1:acme---web", "2:plugin", "1:cli", "1:docs"]);
+  // a cycle drops no row
+  const loop = [m("a", "parent", "a", "b"), m("b", "child", "b", "a")];
+  assert.equal(familyOrder(loop).length, 2);
+  assert.ok(familyRank({ role: "self" }) < familyRank({ role: "ancestor", depth: 3 }));
+  assert.ok(familyRank({ role: "sibling" }) < familyRank({ role: "child" }));
 });

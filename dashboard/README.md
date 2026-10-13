@@ -68,7 +68,7 @@ ktw-dashboard [PATH] [--host 127.0.0.1] [--port 8765] [--no-browser] [--interval
 
 ### Several projects
 
-Started inside a project, the dashboard shows that one. The project menu shows families grouped, a parent with its children indented, and each project's type; one switch next to it sets *this project* or *family* for search and graph. The project menu in the top bar lists the ten most recently opened projects (from the history file — one project id can appear at several paths, clones and worktrees included), projects found two levels under the parent directory or under `--scan DIR`, and ids that have a personal file in `~/.keep-the-why/` but no known location yet. Opening a project moves it to the top. `--no-history` leaves the file alone.
+Started inside a project, the dashboard shows that one. The project menu shows families grouped, a parent with its children indented, and each project's type; one switch next to it sets *this project* or *family* for search and graph. The project menu in the top bar lists the ten most recently opened projects (from the history file — one project id can appear at several paths, clones and worktrees included), projects found two levels under the parent directory or under `--scan DIR`, and ids that have a personal file in `~/.keep-the-why/` but no known location yet. Opening a project moves it to the top. An export of a family member has a project menu as well, in place of the bare id: the family's tree from the members' published exports, the root first, each member under the one that lists it; choosing one walks there in place, as the graph does — the path grows, nothing reloads. A member without a published export is listed and cannot be chosen. `--no-history` leaves the file alone.
 
 ## What it shows
 

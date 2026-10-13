@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-import { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, searchTerms, searchHit, registryMatches, compareHits, snippetAt, highlight, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf, backlinksUrl, citingOf, hostAnchor , todayISO, addDays, dayDiff, existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan, createdOn, TYPE_KINDS, TYPE_COLORS, typeKind, SHELF, stageCards, stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight, mergeAuthors } from "./lib.js";
+import { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, compareHits, snippetAt, highlight, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf, backlinksUrl, citingOf, hostAnchor , todayISO, addDays, dayDiff, existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan, createdOn, TYPE_KINDS, TYPE_COLORS, typeKind, SHELF, stageCards, stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight, mergeAuthors } from "./lib.js";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const narrow = () => !!window.matchMedia?.("(max-width: 900px)").matches;
@@ -998,21 +998,7 @@ function memberRow(m) {
 }
 // the tree as nested rows: every member under the one whose children block lists it
 function treeRows(members, rowOf) {
-  const ids = new Set(members.map((m) => m.node));
-  const kids = new Map(); const roots = [];
-  for (const m of members) {
-    if (m.up && ids.has(m.up) && m.up !== m.node) { if (!kids.has(m.up)) kids.set(m.up, []); kids.get(m.up).push(m); }
-    else roots.push(m);
-  }
-  const out = []; const seen = new Set();
-  const walk = (m, d) => {
-    if (seen.has(m.node)) return; seen.add(m.node);
-    out.push(el("div", { class: "tree-row", style: `padding-left:${Math.min(d, 6) * 26}px` }, d ? el("span", { class: "tree-mark" }, "└") : null, rowOf(m)));
-    for (const c of (kids.get(m.node) || []).sort((a, b) => familyRank(a) - familyRank(b) || String(a.name).localeCompare(String(b.name)))) walk(c, d + 1);
-  };
-  for (const r of roots) walk(r, 0);
-  for (const m of members) walk(m, 0); // a cycle would otherwise drop rows
-  return out;
+  return familyOrder(members).map(([m, d]) => el("div", { class: "tree-row", style: `padding-left:${Math.min(d, 6) * 26}px` }, d ? el("span", { class: "tree-mark" }, "└") : null, rowOf(m)));
 }
 async function viewFamily(main) {
   const p = S.project;
@@ -3101,7 +3087,6 @@ function runStage(canvas, o) {
 // What a search runs over: this project, or every member of its tree — the
 // whole family from the root down, not only the parent chain. Shared by the
 // dropdown under the search field and the results page (#search/<scope>/<q>).
-const familyRank = (m) => (m.role === "self" ? -100 : m.role === "ancestor" || m.role === "grandparent" ? -(m.depth || 2) : { parent: 0, sibling: 2, child: 3, relative: 4 }[m.role] ?? 5);
 let TREE = null; let TREE_AT = 0; // /api/family?tree=1, live mode
 async function fetchTree() {
   if (!LIVE()) return null;
@@ -3505,6 +3490,7 @@ function applyState(state) {
   FAMILY = null;
   if (LIVE()) $("#nav-projects").hidden = false;
   setupMode(); markScope();
+  if (STATIC) setupFamilyMenu();
   const main = $("#main"); const scroll = main.scrollTop;
   RESTORE_SCROLL = scroll;
   if (scope() === "family") { if (LAST_POOL) mergeWith(LAST_POOL); showScope(); }
@@ -3606,6 +3592,35 @@ async function setupProjects() {
   if (S) { const t = $("#project-title").querySelector("b"); if (t) t.remove(); }
   sel.onchange = () => { location.href = `${location.pathname}?project=${encodeURIComponent(sel.value)}${location.hash || "#overview"}`; };
   SELECTED_DEFAULT = data.selected;
+}
+// An export in a family: the project menu lists the tree from the members'
+// published exports, the root first and each member under the one that lists
+// it, as the live menu lists this machine's projects. A choice walks to the
+// member in place, as a click on its hub in the graph does: the path grows,
+// nothing reloads. A member without a published export is named, not offered.
+let FAMILY_MENU = 0; // counts the builds: a move before the tree arrives makes the older build stale
+async function setupFamilyMenu() {
+  const sel = $("#project-select"); const p = S.project;
+  const build = ++FAMILY_MENU;
+  if (!(p.parent || (p.children || []).length) || !canonicalOf(p)) { sel.hidden = true; return; }
+  const t = await publicTree();
+  if (build !== FAMILY_MENU) return;
+  const loaded = new Map(t.groups.map((g) => [g.member.node, g]));
+  const members = [...t.groups.map((g) => g.member), ...t.missing.map((x) => x.member)];
+  sel.replaceChildren(...familyOrder(members).map(([m, d]) => {
+    const g = loaded.get(m.node);
+    return el("option", { value: m.node, selected: m.role === "self", disabled: !g, title: g ? m.canonical + (m.root ? ` · ${m.root}` : "") : "no published export — nothing to walk to" },
+      `${"\u00a0\u00a0".repeat(d)}${d ? "└ " : ""}${m.name}${g ? "" : "  (no published export)"}`);
+  }));
+  sel.hidden = false;
+  fitSelect(sel);
+  $("#project-title").querySelector("b")?.remove();
+  // an entry, a topic or a search belong to the project left; the views carry over
+  sel.onchange = () => {
+    const g = loaded.get(sel.value); if (!g || g.member.role === "self") return;
+    const hash = /^#(entry|topic|search)\//.test(location.hash) ? "#overview" : location.hash || "#overview";
+    moveTo({ centre: memberCentre(g.member), state: g.state }, hash);
+  };
 }
 function setupMode() {
   const box = $("#mode"); const p = S.project;

@@ -120,6 +120,32 @@ export const typeName = (t) => String(t ?? "").split(/\s+[—–-]\s+/)[0].trim(
 
 export const kindLabel = (k) => k === "cache" ? "cache, read only" : k === "repository" ? "repository, read and write" : k === "public" ? "published export" : "not available here";
 
+// A family member's place among its siblings: this project first, the ancestors from the top, then
+// parent, siblings, children and the rest of the tree.
+export const familyRank = (m) => (m.role === "self" ? -100 : m.role === "ancestor" || m.role === "grandparent" ? -(m.depth || 2) : { parent: 0, sibling: 2, child: 3, relative: 4 }[m.role] ?? 5);
+
+// A family tree in reading order, as [member, depth]: every member under the
+// one whose children block lists it (`up` names that member's `node`), the
+// root first, siblings by rank, then by name. For the Family view's rows and
+// an export's project menu alike; a cycle drops no row.
+export function familyOrder(members) {
+  const ids = new Set(members.map((m) => m.node));
+  const kids = new Map(); const roots = [];
+  for (const m of members) {
+    if (m.up && ids.has(m.up) && m.up !== m.node) { if (!kids.has(m.up)) kids.set(m.up, []); kids.get(m.up).push(m); }
+    else roots.push(m);
+  }
+  const out = []; const seen = new Set();
+  const walk = (m, d) => {
+    if (seen.has(m.node)) return; seen.add(m.node);
+    out.push([m, d]);
+    for (const c of (kids.get(m.node) || []).sort((a, b) => familyRank(a) - familyRank(b) || String(a.name).localeCompare(String(b.name)))) walk(c, d + 1);
+  };
+  for (const r of roots) walk(r, 0);
+  for (const m of members) walk(m, 0);
+  return out;
+}
+
 // Families in a project list: every row with its depth, a parent first and
 // its children under it. A child names its parent by canonical (the parent's
 // working tree wins over its cache) or by a path relative to its own

@@ -112,7 +112,7 @@ First used for [tarasko/picows#111](https://github.com/tarasko/picows/pull/111),
 
 ## Several projects
 
-Started inside a project, the dashboard shows that one. The project menu shows families grouped — a parent, its children indented below it — and each project's type, repository or cache; the **Projects** view is the same list with the details and the *forget* control. The project menu in the top bar lists the ten most recently opened projects (one project id can appear at several paths — clones, worktrees), projects found near the start directory, and ids that have a personal file in `~/.keep-the-why/` but no known location yet; opening a project moves it to the top of the history.
+Started inside a project, the dashboard shows that one. The project menu shows families grouped — a parent, its children indented below it — and each project's type, repository or cache; the **Projects** view is the same list with the details and the *forget* control. The project menu in the top bar lists the ten most recently opened projects (one project id can appear at several paths — clones, worktrees), projects found near the start directory, and ids that have a personal file in `~/.keep-the-why/` but no known location yet; opening a project moves it to the top of the history. An export of a family member has a project menu as well, in place of the bare id: the family's tree from the members' published exports, the root first, each member under the one that lists it; choosing one walks there in place, as the graph does — the path grows, nothing reloads. A member without a published export is listed and cannot be chosen.
 
 ## What it shows
 

@@ -303,6 +303,22 @@ const report = {};
   await tick(300);
   report.staticMerged = [...d.querySelectorAll("#strip a.stat")][0]?.textContent;
   if (report.staticMerged !== "4entries") errors.push("static export, family scope: the family is not merged — " + report.staticMerged);
+  // the project menu: the published tree, root first, in place of the bare id; a choice walks in place
+  const sel = d.getElementById("project-select");
+  report.staticMenu = [...sel.options].map((o) => o.textContent.replace(/\u00a0/g, " ").trim() + (o.disabled ? " [off]" : "") + (o.selected ? " *" : ""));
+  const wantMenu = ["github.com/acme/suite", "└ acme---web *", "└ plugin", "└ cli  (no published export) [off]", "└ docs"];
+  if (sel.hidden) errors.push("static export of a family member: no project menu");
+  if (report.staticMenu.join("|") !== wantMenu.join("|")) errors.push("static export: project menu wrong " + JSON.stringify(report.staticMenu));
+  if (d.querySelector("#project-title b")) errors.push("static export: the bare id is still shown beside the project menu");
+  const navBefore = navigations.length;
+  sel.value = [...sel.options].find((o) => o.textContent.includes("plugin")).value;
+  sel.dispatchEvent(new window.Event("change")); await tick(400);
+  report.staticMenuMove = window.location.search;
+  if (navigations.length !== navBefore) errors.push("static export: choosing a member in the project menu reloaded the page");
+  if (!/public=https%3A%2F%2Fgithub\.com%2Facme%2Fplugin/.test(window.location.search)) errors.push("static export: the project menu did not move to plugin — " + window.location.search);
+  if (!d.querySelector(".path-bar, #path")?.textContent?.includes("acme---web")) errors.push("static export: the walk from the project menu left no path step for acme---web");
+  const sel2 = d.getElementById("project-select");
+  if (!sel2.selectedOptions[0]?.textContent.includes("plugin")) errors.push("static export: after the move the project menu does not mark plugin");
   window.close();
 }
 {
