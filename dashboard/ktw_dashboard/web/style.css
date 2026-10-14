@@ -138,6 +138,7 @@ h3 { font-size: 13px; margin: 18px 0 8px; text-transform: uppercase; letter-spac
 .tile .l { color: var(--fg2); font-size: 12px; }
 .tile.warn .n { color: var(--warn); } .tile.bad .n { color: var(--bad); } .tile.ok .n { color: var(--ok); }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.overview-stats { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 @media (max-width: 1100px) { .grid2 { grid-template-columns: 1fr; } }
 .card { background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
 .bars { display: grid; grid-template-columns: minmax(0, max-content) 1fr max-content; gap: 6px 10px; align-items: center; }

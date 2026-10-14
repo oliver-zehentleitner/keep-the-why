@@ -14,6 +14,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Changed
 
+- `keep-the-why-dashboard` 0.11.11: the Overview stacks the Type, Status and Evidence cards in one column with the Config card beside them. The four cards stood in a two-by-two grid, so Evidence sat under Type with a gap beside it as tall as the Config card; on a narrow window the order is the same as before, one card under the other.
 - `keep-the-why-dashboard` 0.11.10: the Authors view lists the authors A–Z by name, and a click on a column's name — author, projects, created, touched, superseded, first, last — sorts every table on the page by it: counts and dates from the most, a second click the other way round, an author without a date last either way. The tables were sorted by entries created, with no way to change it.
 - `keep-the-why-dashboard` 0.11.8: a move between members of the project's own family — by the project menu, a family hub or a link — is no longer a step of the path. The family is drawn as one, its parent once; the path grows only when the walk leaves the family.
 - Security page: the skills.sh results as audited 2026-10-11 for 0.20.1 — Socket *Pass*, Gen Agent Trust Hub *Pass* (safe), Snyk *Warn* (medium, W011 third-party content exposure: the skill reads repository history and threads, which is its job; the trust model is the mitigation the Trust Hub audit cites for the same category). The page said *Pass* for all three, from the 0.17.1 audit.
