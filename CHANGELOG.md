@@ -14,6 +14,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Changed
 
+- `keep-the-why-dashboard` 0.11.10: the Authors view lists the authors A–Z by name, and a click on a column's name — author, projects, created, touched, superseded, first, last — sorts every table on the page by it: counts and dates from the most, a second click the other way round, an author without a date last either way. The tables were sorted by entries created, with no way to change it.
 - `keep-the-why-dashboard` 0.11.8: a move between members of the project's own family — by the project menu, a family hub or a link — is no longer a step of the path. The family is drawn as one, its parent once; the path grows only when the walk leaves the family.
 - Security page: the skills.sh results as audited 2026-10-11 for 0.20.1 — Socket *Pass*, Gen Agent Trust Hub *Pass* (safe), Snyk *Warn* (medium, W011 third-party content exposure: the skill reads repository history and threads, which is its job; the trust model is the mitigation the Trust Hub audit cites for the same category). The page said *Pass* for all three, from the 0.17.1 audit.
 - FAQ: *Does it link entries to a Jira/GitHub issue or post-mortem?* now ends on a live example — an entry in this repository whose `Source` is the issue it came from, opened in the dashboard. The answer described the field without showing one.

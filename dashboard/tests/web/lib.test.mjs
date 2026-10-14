@@ -517,7 +517,7 @@ test("stageHeight: the base at least, twice it at most, what the window leaves i
 });
 
 // authors across the loaded projects
-import { mergeAuthors } from "../../ktw_dashboard/web/lib.js";
+import { mergeAuthors, sortAuthors } from "../../ktw_dashboard/web/lib.js";
 
 test("mergeAuthors: one row per name across projects with the sums, each project with its own numbers", () => {
   const groups = [
@@ -525,7 +525,7 @@ test("mergeAuthors: one row per name across projects with the sums, each project
     { name: "beta", canonical: "https://github.com/x/beta", authors: [{ name: "Ann", created: 2, touched: 2, superseded: 0, first: "2026-01-15", last: "2026-04-01", evidence: { unknown: 2 } }] },
   ];
   const rows = mergeAuthors(groups);
-  assert.deepEqual(rows.map((r) => r.label), ["Ann", "Bo"], "by entries created");
+  assert.deepEqual(rows.map((r) => r.label), ["Ann", "Bo"], "A–Z by name");
   const ann = rows[0];
   assert.equal(ann.created, 5); assert.equal(ann.touched, 6); assert.equal(ann.superseded, 1);
   assert.equal(ann.first, "2026-01-15"); assert.equal(ann.last, "2026-04-01");
@@ -541,9 +541,23 @@ test("mergeAuthors: an anonymized name stays one row per project, labelled with 
     { name: "gamma", authors: [{ name: "author-1", created: 1, evidence: {} }] }, // a real name that happens to read like one: its own row
   ];
   const rows = mergeAuthors(groups);
-  assert.deepEqual(rows.map((r) => r.label), ["author-1 (alpha)", "author-1", "author-1 (beta)"]);
-  assert.ok(rows[0].anonymized && !rows[1].anonymized);
+  assert.deepEqual(rows.map((r) => r.label), ["author-1", "author-1 (alpha)", "author-1 (beta)"]);
+  assert.ok(!rows[0].anonymized && rows[1].anonymized);
   assert.deepEqual(mergeAuthors([]), []);
+});
+
+test("sortAuthors: by any column, ties A–Z by name, a missing date last either way", () => {
+  const row = (label, created, last, projects = 1) => ({ label, created, touched: created, superseded: 0, first: last, last, per: Array(projects).fill({}) });
+  const rows = [row("bea", 1, "2026-10-01"), row("Ann", 5, "2026-09-01", 2), row("Cy", 1, ""), row("al", 1, "2026-09-01")];
+  const by = (key, dir) => sortAuthors(rows, key, dir).map((r) => r.label).join();
+  assert.equal(by("author", "asc"), "al,Ann,bea,Cy", "A–Z, case aside");
+  assert.equal(by("author", "desc"), "Cy,bea,Ann,al");
+  assert.equal(by("created", "desc"), "Ann,al,bea,Cy", "ties by name");
+  assert.equal(by("created", "asc"), "al,bea,Cy,Ann");
+  assert.equal(by("projects", "desc"), "Ann,al,bea,Cy");
+  assert.equal(by("last", "desc"), "bea,al,Ann,Cy", "no date last");
+  assert.equal(by("last", "asc"), "al,Ann,bea,Cy", "no date last the other way round too");
+  assert.deepEqual(rows.map((r) => r.label), ["bea", "Ann", "Cy", "al"], "the input is left as it was");
 });
 
 test("familyOrder: the root first, each member under the one that lists it, siblings by rank then name", () => {

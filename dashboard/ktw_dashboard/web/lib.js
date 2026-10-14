@@ -593,7 +593,7 @@ export const stageHeight = (base, roomLeft) => Math.round(Math.max(220, Math.min
 // [{ name, canonical, anonymized, authors }] — a project's name, its address, whether its export anonymized the
 // names, and its authors as the state carries them. A Git author's name that recurs across projects is one row
 // with the sums, its projects listed with their own numbers; an anonymized name (author-1) is a stand-in that says
-// nothing across projects, so it stays one row per project, labelled with the project. Sorted by entries created.
+// nothing across projects, so it stays one row per project, labelled with the project. Sorted A–Z by name.
 export function mergeAuthors(groups) {
   const rows = new Map();
   for (const G of groups) {
@@ -609,5 +609,21 @@ export function mergeAuthors(groups) {
       cur.per.push(per);
     }
   }
-  return [...rows.values()].sort((a, b) => b.created - a.created || a.label.localeCompare(b.label));
+  return sortAuthors([...rows.values()], "author", "asc");
+}
+
+// The Authors view's columns that sort, and the way each one sorts first: names A–Z, counts and dates from the most.
+export const AUTHOR_SORTS = { author: "asc", projects: "desc", created: "desc", touched: "desc", superseded: "desc", first: "desc", last: "desc" };
+// Authors rows (mergeAuthors) sorted by one column, ties by name A–Z; a row without a date sorts last either way.
+export function sortAuthors(rows, key, dir) {
+  const byName = (a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: "base" }) || a.label.localeCompare(b.label);
+  const sign = dir === "desc" ? -1 : 1;
+  const value = (r) => key === "projects" ? r.per.length : r[key];
+  const cmp = (a, b) => {
+    if (key === "author") return sign * byName(a, b);
+    const x = value(a), y = value(b);
+    if (key === "first" || key === "last") { if (!x !== !y) return x ? -1 : 1; return (x === y ? 0 : sign * (x < y ? -1 : 1)) || byName(a, b); }
+    return sign * ((x || 0) - (y || 0)) || byName(a, b);
+  };
+  return [...rows].sort(cmp);
 }

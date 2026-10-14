@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-import { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, shuffled, compareHits, snippetAt, highlight, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf, backlinksUrl, citingOf, hostAnchor , todayISO, addDays, dayDiff, existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan, createdOn, TYPE_KINDS, TYPE_COLORS, typeKind, SHELF, stageCards, stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight, mergeAuthors } from "./lib.js";
+import { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, shuffled, compareHits, snippetAt, highlight, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf, backlinksUrl, citingOf, hostAnchor , todayISO, addDays, dayDiff, existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan, createdOn, TYPE_KINDS, TYPE_COLORS, typeKind, SHELF, stageCards, stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight, mergeAuthors, sortAuthors, AUTHOR_SORTS } from "./lib.js";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const narrow = () => !!window.matchMedia?.("(max-width: 900px)").matches;
@@ -897,15 +897,26 @@ function authorCommitIn(name, state) {
 // The Authors view: every Git author of every project the page holds — this one, the family, the friends, the
 // path — in one table with the sums and a pill per project, and a table per project under it. Names are Git
 // authors as the projects' .mailmap files map them; one name across projects is one row, an anonymized name
-// (author-1) a row per project. A click on a row filters every view to that author.
+// (author-1) a row per project. A click on a row filters every view to that author. Rows go A–Z by name; a click on
+// a column's name sorts every table by it, from the most for counts and dates, again to turn the order round.
+const AUTHOR_SORT = { key: "author", dir: "asc" };
 function viewAuthors(main) {
   main.append(el("h1", {}, "Authors"), el("p", { class: "sub" }, "Git authors of the entries — who created, touched, or superseded what, in every project this page holds: this one, its family, the friends in the graph, the path. Git knows names, not who was driving."));
   if (!S.project.git?.available) return main.append(el("p", { class: "center" }, "No Git repository — nothing to attribute."));
   const projects = authorProjects();
-  const rows = mergeAuthors(projects.map((P) => ({ name: P.name, canonical: P.canonical, anonymized: P.anonymized, authors: P.state.authors || [] })));
+  const sorted = (list) => sortAuthors(list, AUTHOR_SORT.key, AUTHOR_SORT.dir);
+  const rows = sorted(mergeAuthors(projects.map((P) => ({ name: P.name, canonical: P.canonical, anonymized: P.anonymized, authors: P.state.authors || [] }))));
   const byName = Object.fromEntries(projects.map((P) => [P.name, P]));
   const projPill = (per) => { const P = byName[per.project]; const t = `${per.project}: ${per.created} created · ${per.touched} touched · ${per.superseded} superseded${per.first ? ` · ${per.first} → ${per.last}` : ""}`; return P?.open ? el("a", { class: "pill proj-pill", href: P.open, title: t, onclick: (ev) => ev.stopPropagation() }, per.project) : el("span", { class: "pill proj-pill", title: t }, per.project); };
-  const head = (cols) => el("thead", {}, el("tr", {}, cols.map((h) => el("th", {}, h))));
+  const sortBy = (key) => { AUTHOR_SORT.dir = AUTHOR_SORT.key === key ? (AUTHOR_SORT.dir === "asc" ? "desc" : "asc") : AUTHOR_SORTS[key]; AUTHOR_SORT.key = key; render(); };
+  const th = (h) => {
+    const key = h.toLowerCase();
+    if (!(key in AUTHOR_SORTS)) return el("th", {}, h);
+    const on = AUTHOR_SORT.key === key;
+    return el("th", { class: "sortable", "aria-sort": on ? (AUTHOR_SORT.dir === "asc" ? "ascending" : "descending") : "none" },
+      el("button", { type: "button", class: "sort-btn", title: `Sort by ${key}`, onclick: () => sortBy(key) }, h, el("span", { class: "sort-mark" }, on ? (AUTHOR_SORT.dir === "asc" ? " ▲" : " ▼") : "")));
+  };
+  const head = (cols) => el("thead", {}, el("tr", {}, cols.map(th)));
   const numCells = (a) => [el("td", {}, a.created), el("td", {}, a.touched), el("td", {}, a.superseded), el("td", {}, el("div", { style: "min-width:160px" }, stack(a.evidence, EV_ORDER))), el("td", { class: "mono" }, fmtDate(a.first)), el("td", { class: "mono" }, fmtDate(a.last))];
   const rowOf = (a, nameCell) => el("tr", { class: `clickable ${filter.author === a.name ? "sel" : ""}`, onclick: () => { filter.author = filter.author === a.name ? "" : a.name; rerender(); } }, nameCell, ...numCells(a));
   // what was counted, and the friends not loaded yet
@@ -916,11 +927,11 @@ function viewAuthors(main) {
   const many = projects.length > 1;
   const all = el("table", { class: "t" }, head(["Author", ...(many ? ["Projects"] : []), "Created", "Touched", "Superseded", "Evidence of created entries", "First", "Last"]),
     el("tbody", {}, rows.map((a) => { const P = byName[a.per[0].project]; const link = a.anonymized ? el("span", {}, a.label) : authorLink(a.name, authorCommitIn(a.name, P?.state), P?.state?.project); return rowOf(a, [el("td", {}, link), ...(many ? [el("td", {}, el("div", { class: "proj-pills" }, a.per.map(projPill)))] : [])]); })));
-  main.append(el("div", { class: "table-wrap" }, all), el("p", { class: "note", style: "margin-top:10px" }, "Click a name to open the author's profile on the host; click elsewhere in the row to filter every view to that author, again to clear.", many ? " A name that recurs across projects is one row with the sums; a name an export anonymized (author-1) says nothing across projects and stays a row per project." : ""));
+  main.append(el("div", { class: "table-wrap" }, all), el("p", { class: "note", style: "margin-top:10px" }, "Click a name to open the author's profile on the host; click elsewhere in the row to filter every view to that author, again to clear. Click a column's name to sort by it, again to turn the order round.", many ? " A name that recurs across projects is one row with the sums; a name an export anonymized (author-1) says nothing across projects and stays a row per project." : ""));
   if (many) {
     main.append(el("h2", {}, "By project"));
     for (const P of projects) {
-      const prow = mergeAuthors([{ name: P.name, canonical: P.canonical, anonymized: P.anonymized, authors: P.state.authors || [] }]);
+      const prow = sorted(mergeAuthors([{ name: P.name, canonical: P.canonical, anonymized: P.anonymized, authors: P.state.authors || [] }]));
       const d = el("details", { class: "authors-project", open: P.role === "self" });
       d.append(el("summary", {}, el("span", { class: "tt" }, P.name), el("span", { class: "pill" }, P.role === "self" ? "this project" : P.role), el("span", { class: "count" }, plural(prow.length, "author")), P.open && P.role !== "self" ? el("a", { class: "backlink", href: P.open, onclick: (ev) => ev.stopPropagation() }, "open ›") : null));
       d.append(el("div", { class: "table-wrap" }, el("table", { class: "t" }, head(["Author", "Created", "Touched", "Superseded", "Evidence of created entries", "First", "Last"]),

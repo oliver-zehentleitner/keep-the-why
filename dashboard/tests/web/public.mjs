@@ -999,6 +999,31 @@ const report = {};
   }
   FILES[IDX] = saved;
 }
+{
+  // the Authors view: A–Z by name (case aside), a click on a column's name sorts by it — counts from the most,
+  // again the other way round; a row without a date sorts last
+  FILES["https://raw.githubusercontent.com/acme/authsort/HEAD/.keep-the-why"] = config("acme---authsort", ["- dashboard-state: https://acme.github.io/authsort/state.json"]);
+  FILES["https://acme.github.io/authsort/state.json"] = { ...state("acme---authsort", { canonical: `${GH}/authsort`, git: { available: true } }, [entry("Sorted", "Three authors.")]), authors: [
+    { name: "bea", created: 1, touched: 4, superseded: 0, first: "2026-09-20", last: "2026-10-01", evidence: { confirmed: 1 } },
+    { name: "Ann", created: 5, touched: 5, superseded: 2, first: "2026-08-01", last: "2026-09-01", evidence: { confirmed: 5 } },
+    { name: "Cy", created: 3, touched: 3, superseded: 1, first: "", last: "", evidence: { inferred: 3 } }] };
+  const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/authsort`)}#authors`);
+  await tick(300);
+  const d = window.document;
+  const names = () => [...d.querySelectorAll("main table.t tbody tr")].map((tr) => tr.querySelector("td")?.textContent.trim());
+  const click = async (col) => { [...d.querySelectorAll("main table.t th .sort-btn")].find((b) => b.textContent.replace(/[▲▼]/g, "").trim() === col)?.click(); await tick(100); };
+  const order = { initial: names() };
+  await click("Created"); order.created = names(); order.createdSort = d.querySelector('main table.t th[aria-sort="descending"]')?.textContent || "";
+  await click("Created"); order.createdAgain = names();
+  await click("Last"); order.last = names();
+  await click("Author"); order.author = names();
+  report.authorsSort = order;
+  const want = { initial: "Ann,bea,Cy", created: "Ann,Cy,bea", createdAgain: "bea,Cy,Ann", last: "bea,Ann,Cy", author: "Ann,bea,Cy" };
+  for (const [k, v] of Object.entries(want)) if (order[k]?.join() !== v) errors.push(`authors sort (${k}): ${order[k]?.join()} — want ${v}`);
+  if (!/Created/.test(order.createdSort)) errors.push("authors sort: the sorted column is not marked: " + order.createdSort);
+  if ([...d.querySelectorAll("main table.t th")].find((th) => /Evidence/.test(th.textContent))?.querySelector(".sort-btn")) errors.push("authors sort: the evidence column should not sort");
+  window.close();
+}
 console.log(JSON.stringify(report, null, 1));
 console.log("ERRORS:", errors.length); for (const e of errors) console.log("  " + e);
 process.exit(errors.length ? 1 : 0);
