@@ -558,6 +558,10 @@ Under the text, the bars, the slider and the card sits the stage (the order chan
 
 **Rejected alternative:** squeezing the months in which nothing happened while playing. Not taken, the implementer's choice: the days pass at one pace so a pause reads as a pause, and the speed setting covers the rest. The maintainer was asked and has not ruled on it.
 
+**Consequence (2026-10-18, maintainer report):** a day was the clock's finest step — the export carried Git's day alone — so the hour speeds stood still for a day and then showed it at once, and a project built in a few days played in a few jumps. The export now carries the moment beside the day (`time`, the author time to the second, UTC), and with entries spanning two weeks or less the clock moves by the hour, labelled in the reader's time zone; a longer span, and an export without `time`, keep the days.
+
+**Rejected alternative:** the committer time. Rejected: a rebase or a cherry-pick rewrites it to when the commit landed, the author time keeps when the entry was written. A squash merge gives every entry of the pull request one moment either way — coarser, not wrong, and nothing in the repository knows better.
+
 ## The dashboard export is published under `keep-the-why-dashboard/`, not `dashboard/live/`
 
 **Id:** 581c6c1f-a1da-477a-9172-4d1273ba48b1
