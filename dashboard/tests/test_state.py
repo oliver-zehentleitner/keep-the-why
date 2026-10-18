@@ -139,8 +139,12 @@ class StateTest(unittest.TestCase):
         self.assertEqual(snap["git"]["created"]["author"], "Alice")
         self.assertEqual(snap["git"]["created"]["date"], "2026-05-01")
         # the moment beside the day, UTC to the second: the timeline's clock goes by it
-        self.assertRegex(snap["git"]["created"]["time"], r"^2026-0[45]-\d\dT\d\d:00:00Z$")
-        self.assertRegex(snap["git"]["last_touched"]["time"], r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$")
+        self.assertRegex(
+            snap["git"]["created"]["time"], r"^2026-0[45]-\d\dT\d\d:00:00Z$"
+        )
+        self.assertRegex(
+            snap["git"]["last_touched"]["time"], r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$"
+        )
         self.assertEqual(snap["git"]["last_touched"]["author"], "Bob")
         self.assertEqual(
             [h["status"] for h in snap["git"]["status_history"]],
