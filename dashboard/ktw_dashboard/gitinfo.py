@@ -210,7 +210,12 @@ def status_history(repo: Repo, path: str, line: int):
     for raw in out.splitlines():
         if raw.startswith("@@commit "):
             sha, author, ts = (raw[9:].split("|", 2) + ["", ""])[:3]
-            commit = {"author": author, "date": _date(ts), "time": _time(ts), "commit": sha}
+            commit = {
+                "author": author,
+                "date": _date(ts),
+                "time": _time(ts),
+                "commit": sha,
+            }
             continue
         m = _STATUS_ADD_RE.match(raw)
         if m and commit is not None:

@@ -488,7 +488,12 @@ class StateBuilder:
         last = None
         for bl in span:
             if bl.author == gitinfo.UNCOMMITTED:
-                last = {"author": gitinfo.UNCOMMITTED, "date": "", "time": "", "commit": ""}
+                last = {
+                    "author": gitinfo.UNCOMMITTED,
+                    "date": "",
+                    "time": "",
+                    "commit": "",
+                }
                 break
             if last is None or (bl.time and bl.time > last["_t"]):
                 last = {
@@ -503,7 +508,12 @@ class StateBuilder:
         created = git_file["created"].get(e.line)
         heading = blame[e.line - 1] if e.line - 1 < len(blame) else None
         if heading and heading.author == gitinfo.UNCOMMITTED:
-            created = {"author": gitinfo.UNCOMMITTED, "date": "", "time": "", "commit": ""}
+            created = {
+                "author": gitinfo.UNCOMMITTED,
+                "date": "",
+                "time": "",
+                "commit": "",
+            }
         history = list(git_file["history"].get(e.line, []))
         return {"created": created, "last_touched": last, "status_history": history}
 
