@@ -37,11 +37,16 @@ def _run(args, cwd, timeout=20):
     return proc.stdout
 
 
-def _date(ts: str) -> str:
+def _date(ts: str, fmt: str = "%Y-%m-%d") -> str:
     try:
-        return datetime.fromtimestamp(int(ts), tz=timezone.utc).strftime("%Y-%m-%d")
+        return datetime.fromtimestamp(int(ts), tz=timezone.utc).strftime(fmt)
     except (ValueError, OverflowError, OSError):
         return ""
+
+
+# the moment beside the day: the author time to the second, UTC — the timeline's clock goes by it
+def _time(ts: str) -> str:
+    return _date(ts, "%Y-%m-%dT%H:%M:%SZ")
 
 
 @dataclass
@@ -185,7 +190,7 @@ def first_commit_with(repo: Repo, path: str, needle: str):
         return None
     first = out.strip().splitlines()[0]
     sha, author, ts = (first.split("|", 2) + ["", ""])[:3]
-    return {"author": author, "date": _date(ts), "commit": sha}
+    return {"author": author, "date": _date(ts), "time": _time(ts), "commit": sha}
 
 
 _STATUS_ADD_RE = re.compile(r"^\+\*\*Status:\*\*\s*(\S+)")
@@ -205,7 +210,7 @@ def status_history(repo: Repo, path: str, line: int):
     for raw in out.splitlines():
         if raw.startswith("@@commit "):
             sha, author, ts = (raw[9:].split("|", 2) + ["", ""])[:3]
-            commit = {"author": author, "date": _date(ts), "commit": sha}
+            commit = {"author": author, "date": _date(ts), "time": _time(ts), "commit": sha}
             continue
         m = _STATUS_ADD_RE.match(raw)
         if m and commit is not None:
@@ -228,3 +233,7 @@ def blob_hash(repo: Repo, path: str) -> str:
 
 def line_date(bl: BlameLine) -> str:
     return _date(bl.time) if bl.time else ""
+
+
+def line_time(bl: BlameLine) -> str:
+    return _time(bl.time) if bl.time else ""

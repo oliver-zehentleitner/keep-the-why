@@ -407,8 +407,43 @@ test("a See exists from its as-of day, never before the citing entry; a Supersed
 
 test("daySpan runs from the earliest creation to today", () => {
   const s = daySpan([{ git: { created: { date: "2026-02-01" } } }, { git: { created: { date: "2025-11-15" } } }, { status: "active" }]);
-  assert.deepEqual(s, { from: "2025-11-15", to: todayISO() });
+  assert.deepEqual(s, { from: "2025-11-15", to: todayISO(), timed: false });
   assert.equal(daySpan([{ status: "active" }]), null);
+});
+
+// Git's moments beside the days (`time`), for a timeline finer than a day
+import { isMoment, nowISO, timeGrid, stampLabel } from "../../ktw_dashboard/web/lib.js";
+test("moments: an entry exists from its moment, a bare day from the day's start; addDays and dayDiff keep the kind", () => {
+  const e = { git: { created: { date: "2026-10-12", time: "2026-10-12T14:03:11Z" }, status_history: [{ status: "active", date: "2026-10-12", time: "2026-10-12T14:03:11Z" }, { status: "superseded", date: "2026-10-12", time: "2026-10-12T18:00:00Z" }] }, status: "superseded" };
+  assert.ok(!existsAt(e, "2026-10-12T14:00:00Z"));
+  assert.ok(existsAt(e, "2026-10-12T14:59:59Z"));
+  assert.equal(statusAt(e, "2026-10-12T17:59:59Z"), "active");
+  assert.equal(statusAt(e, "2026-10-12T18:00:00Z"), "superseded");
+  assert.equal(supersededDay(e), "2026-10-12T18:00:00Z");
+  assert.ok(existsAt({ git: { created: { date: "2026-10-12" } } }, "2026-10-12T00:59:59Z"), "an older export's day: from its start");
+  assert.equal(addDays("2026-10-12T14:00:00Z", 1), "2026-10-13T14:00:00Z");
+  assert.equal(addDays("2026-10-12", 1), "2026-10-13");
+  assert.equal(dayDiff("2026-10-12T00:00:00Z", "2026-10-12T06:00:00Z"), 0.25);
+  assert.equal(dayDiff("2026-10-12", "2026-10-14"), 2);
+  assert.ok(isMoment(nowISO()) && nowISO().endsWith("Z"));
+  const s = daySpan([{ git: { created: { date: "2026-10-12", time: "2026-10-12T14:03:11Z" } } }, { git: { created: { date: "2026-10-13" } } }]);
+  assert.equal(s.from, "2026-10-12T14:03:11Z"); assert.ok(s.timed && isMoment(s.to));
+});
+
+test("timeGrid: hours over a span of two weeks or less, days beyond, the old days without moments", () => {
+  const g = timeGrid({ from: "2026-10-12T14:03:11Z", to: "2026-10-14T09:30:00Z", timed: true });
+  assert.ok(g.hours); assert.equal(g.unit, 1 / 24);
+  assert.equal(g.at(0), "2026-10-12T14:59:59Z", "a step shows everything by its last second");
+  assert.equal(g.stepOf(g.at(5)), 5);
+  assert.equal(g.at(g.steps), "2026-10-14T09:30:00Z", "never past the end");
+  assert.equal(g.toClock("2026-10-13"), "2026-10-13T23:59:59Z");
+  assert.equal(g.toClock("2026-10-13T08"), "2026-10-13T08:59:59Z");
+  assert.equal(g.url(g.at(3)), "2026-10-12T17");
+  assert.equal(g.label(g.at(3)), stampLabel("2026-10-12T17:00:00Z"), "an hour's step labelled by its start");
+  const d = timeGrid({ from: "2026-01-01T10:00:00Z", to: "2026-03-01T00:00:00Z", timed: true });
+  assert.ok(!d.hours); assert.equal(d.at(0), "2026-01-01T23:59:59Z"); assert.equal(d.label(d.at(1)), "2026-01-02");
+  const old = timeGrid({ from: "2026-01-01", to: "2026-01-10", timed: false });
+  assert.equal(old.at(3), "2026-01-04"); assert.equal(old.steps, 9); assert.equal(old.toClock("2026-01-05"), "2026-01-05");
 });
 
 // the stage's scene and layout (timeline)

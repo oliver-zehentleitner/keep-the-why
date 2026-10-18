@@ -437,7 +437,9 @@ export function mergeStates(groups) {
 }
 
 // The clock: what the project looked like on a day. Every date is a Git
-// date, `YYYY-MM-DD`; comparing the strings compares the days. An entry
+// date, `YYYY-MM-DD`, or — from an export that carries Git's `time` beside
+// the day — the moment, `YYYY-MM-DDTHH:MM:SSZ`; comparing the strings
+// compares them, a bare day standing for its first moment. An entry
 // exists from the day its heading first appeared in Git; its status on a day
 // is the last status change up to that day; a See exists from its `as of`
 // day (never before the citing entry), a Superseded by from the day the old
@@ -447,9 +449,15 @@ export function mergeStates(groups) {
 // means there are no days to go by and everything simply is. Without a
 // clock (null) everything is as it is.
 export const todayISO = () => new Date().toISOString().slice(0, 10);
-export const addDays = (iso, n) => { const d = new Date(`${iso}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
-export const dayDiff = (a, b) => Math.round((new Date(`${b}T00:00:00Z`) - new Date(`${a}T00:00:00Z`)) / 86400000);
-export const createdOn = (e) => e?.git?.created?.date || "";
+export const nowISO = () => isoAt(Date.now());
+export const isMoment = (s) => typeof s === "string" && s.length > 10;
+export const msOf = (s) => Date.parse(isMoment(s) ? s : `${s}T00:00:00Z`);
+export const isoAt = (ms) => new Date(ms).toISOString().replace(/\.\d+Z$/, "Z");
+// a day stays a day, a moment a moment; between two days whole days, otherwise the fraction
+export const addDays = (iso, n) => { if (isMoment(iso)) return isoAt(msOf(iso) + n * 86400000); const d = new Date(`${iso}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+export const dayDiff = (a, b) => { const d = (msOf(b) - msOf(a)) / 86400000; return isMoment(a) || isMoment(b) ? d : Math.round(d); };
+const when = (x) => x?.time || x?.date || "";
+export const createdOn = (e) => when(e?.git?.created);
 export function existsAt(e, day, repo = true) {
   if (!day || !repo) return true;
   const c = createdOn(e);
@@ -457,21 +465,44 @@ export function existsAt(e, day, repo = true) {
 }
 export function statusAt(e, day, repo = true) {
   if (!day || !e?.git) return e?.status;
-  const h = (e.git.status_history || []).filter((x) => x.date && x.date <= day);
+  const h = (e.git.status_history || []).filter((x) => when(x) && when(x) <= day);
   if (h.length) return h[h.length - 1].status;
   return existsAt(e, day, repo) ? e.status : null;
 }
 // the day a link came to be: a See from `from`'s reference `ref`, a Superseded by from the old entry `from`
 export function seeDay(from, ref) { const c = createdOn(from); const d = ref?.date || ""; return d && c ? (d > c ? d : c) : d || c; }
 export function supersededDay(from) {
-  const h = (from?.git?.status_history || []).find((x) => x.status === "superseded" && x.date);
-  return h?.date || from?.git?.last_touched?.date || createdOn(from);
+  const h = (from?.git?.status_history || []).find((x) => x.status === "superseded" && when(x));
+  return when(h) || when(from?.git?.last_touched) || createdOn(from);
 }
 export const linkExistsAt = (day, linkDay) => !day || !linkDay || linkDay <= day;
-// the first and last day the entries span: the earliest creation, today
+// the first and last day the entries span: the earliest creation, today — or, when the entries carry Git's moments,
+// the earliest moment and now; `timed` says which
 export function daySpan(entries) {
   const days = entries.map(createdOn).filter(Boolean).sort();
-  return days.length ? { from: days[0], to: todayISO() } : null;
+  if (!days.length) return null;
+  const timed = days.some(isMoment);
+  return timed ? { from: isMoment(days[0]) ? days[0] : `${days[0]}T00:00:00Z`, to: nowISO(), timed } : { from: days[0], to: todayISO(), timed };
+}
+// the timeline's grid: the step a playhead moves by — an hour when the moments span two weeks or less, else a day —
+// and the moment each step shows, its last second (what existed by then), never past the span's end. Without moments
+// the steps are the days themselves, as before.
+export function timeGrid(span) {
+  if (!span?.timed) return { unit: 1, hours: false, steps: Math.max(1, dayDiff(span.from, span.to)), at: (k) => addDays(span.from, k), stepOf: (d) => dayDiff(span.from, d), toClock: (d) => d, label: (d) => d, url: (d) => d };
+  const hours = dayDiff(span.from, span.to) <= 14; const U = (hours ? 3600 : 86400) * 1000; const g0 = Math.floor(msOf(span.from) / U) * U; const end = msOf(span.to);
+  const at = (k) => isoAt(Math.min(g0 + (k + 1) * U - 1000, end));
+  const stepOf = (d) => Math.max(0, Math.floor((msOf(d) - g0) / U));
+  // an hour's step shows as its start, a moment off the grid (the entry speed stops on one) as itself
+  const label = (d) => { if (!hours) return d.slice(0, 10); const ms = msOf(d); return stampLabel(isoAt((ms + 1000) % U === 0 ? ms + 1000 - U : ms)); };
+  return { unit: U / 86400000, hours, steps: Math.max(1, stepOf(span.to)), at, stepOf, label,
+    toClock: (d) => (!d ? d : d.length === 10 ? `${d}T23:59:59Z` : d.length === 13 ? `${d}:59:59Z` : d), // a bare day or hour: all of it
+    url: (d) => (hours ? d.slice(0, 13) : d.slice(0, 10)) };
+}
+// a moment for a person: the day, and the time of day in the reader's zone when there is one
+export function stampLabel(d) {
+  if (!isMoment(d)) return d || "";
+  const t = new Date(msOf(d)); const pad = (n) => String(n).padStart(2, "0");
+  return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())} ${pad(t.getHours())}:${pad(t.getMinutes())}`;
 }
 
 // ---------------------------------------------------------------- the stage (timeline)
@@ -484,7 +515,7 @@ export const TYPE_COLORS = { decision: "#835bec", constraint: "#4aa3df", workaro
 // the first of the four kinds an entry's Type names; null when none
 export const typeKind = (e) => (e.type || []).map((t) => typeName(t)).find((t) => TYPE_KINDS.includes(t)) || null;
 // the Monday that starts the week of a day
-export const weekStart = (day) => { const d = new Date(`${day}T00:00:00Z`); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); };
+export const weekStart = (day) => { const d = new Date(`${day.slice(0, 10)}T00:00:00Z`); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); };
 export const SHELF = [-0.3, 1.0]; // the rows' base height on the lower and the upper shelf, in plane units
 
 // a card per entry node; a foreign card (a friend's, a family member's) knows its repository and its export's state
@@ -534,7 +565,7 @@ export function stageLanes(cards, { show = () => true, topicTitle = (file) => fi
     L.x = Math.floor(li / 2) - (cols - 1) / 2; L.shelf = li % 2;
     const sameWeek = {}, sameDay = {};
     for (const c of L.items) {
-      const w = (sameWeek[weekStart(c.day)] = (sameWeek[weekStart(c.day)] || 0) + 1) - 1; const k = (sameDay[c.day] = (sameDay[c.day] || 0) + 1) - 1;
+      const w = (sameWeek[weekStart(c.day)] = (sameWeek[weekStart(c.day)] || 0) + 1) - 1; const dk = c.day.slice(0, 10); const k = (sameDay[dk] = (sameDay[dk] || 0) + 1) - 1;
       Object.assign(c, { lane: L, x: L.x + ((Math.floor(w / 3) % 2) - 0.5) * 0.34, y: SHELF[L.shelf] + ((w % 3) - 1) * 0.44, dz: (k % 4) * 0.1 });
     }
   });
