@@ -425,20 +425,22 @@ The page marks a checkout as a fork — *fork of host/owner/repo*, linking the r
 
 **Consequence:** a mirror — `origin` points at a copy, `canonical` at the original — is marked a fork by the second signal; the tooltip says "fork or mirror" for that one. Comparison is case-insensitive on the normalized form, so `git@github.com:Acme/widget.git` and `https://github.com/acme/widget/` are one repository.
 
-## An export carries its title and description in the static head, the project's id in the title
+## An export carries its title, description and preview image in the static head, the repository in the title
 
 **Id:** f1798af9-40d1-493a-9edc-6fb29b97e11c
 **Type:** decision
-**Status:** needs-review
+**Status:** active
 **Evidence:** confirmed
-**Source:** maintainer request, 2026-10-05, after a search result for `/dashboard/live/` showed the bare id as title and a random sentence from an entry body as snippet; the static-head form was the assisting agent's proposal, accepted
+**Source:** maintainer request, 2026-10-05, after a search result for `/dashboard/live/` showed the bare id as title and a random sentence from an entry body as snippet; the static-head form was the assisting agent's proposal, accepted. Revised 2026-10-20 after a shared link previewed as *… · oliver-zehentleitner---lasteverLM* beside a cropped icon; the image is the maintainer's choice
 **Revisit when:** search engines or link previews show the exports badly again, or the registry lists so many projects that the description needs more than the repository and its counts
 
-An exported page writes `<title>Keep the Why Dashboard · <id></title>`, a `description` and `og:title` / `og:description` into its head at export time; the description names `owner/repo` (from `canonical`, else the remote, else the id), the entry and topic counts, and what the entries are. The script sets the same title.
+An exported page writes `<title>Keep the Why Dashboard · <owner/repo></title>`, a `description`, `og:title` / `og:description`, `og:image` and the `twitter:` card into its head at export time. `owner/repo` comes from `canonical`, else the remote, else the project's id; the description names it too, with the entry and topic counts and what the entries are. The script sets the same title. The image is `https://keepthewhy.com/assets/logo-crop-safe.png`, the card the docs site uses, the same for every export.
 
-**Reason:** the exports are meant to be found — every published dashboard is a public showcase of a project's reasoning — and there will be many of them, so the title has to say which project it is. A crawler reading the static head gets the right text without running the script; before, the head said only *Keep the Why — dashboard* and had no description, so the search result took the script-set id as title and picked a sentence out of the embedded state.
+**Reason:** the exports are meant to be found — every published dashboard is a public showcase of a project's reasoning — and there will be many of them, so the title has to say which project it is. A crawler reading the static head gets the right text without running the script; before, the head said only *Keep the Why — dashboard* and had no description, so the search result took the script-set id as title and picked a sentence out of the embedded state. The id is a file-safe form (`owner---repo`), readable to the machine and not to the person the link is shared with. A preview needs an absolute image URL, which an export does not know about itself; the site's card is absolute already and was made to be cropped by previews.
 
 **Rejected alternative:** `noindex` on the export, leaving the docs page `/dashboard/` as the entry point. Rejected: the exports are what should show up in search, not be hidden from it.
+
+**Rejected alternative:** an image per export, with the project's own numbers, at the URL derived from `dashboard-state`. Rejected: rendering a PNG would make an image library a dependency of the export, an export without `dashboard-state` would still have none, and the preview's job is to say what kind of page it is — the title and description already say which project.
 
 ## A repository's platform is read from its URL alone, its mark drawn from paths the page carries
 
