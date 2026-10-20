@@ -429,7 +429,7 @@ The page marks a checkout as a fork — *fork of host/owner/repo*, linking the r
 
 **Id:** f1798af9-40d1-493a-9edc-6fb29b97e11c
 **Type:** decision
-**Status:** active
+**Status:** needs-review
 **Evidence:** confirmed
 **Source:** maintainer request, 2026-10-05, after a search result for `/dashboard/live/` showed the bare id as title and a random sentence from an entry body as snippet; the static-head form was the assisting agent's proposal, accepted
 **Revisit when:** search engines or link previews show the exports badly again, or the registry lists so many projects that the description needs more than the repository and its counts
