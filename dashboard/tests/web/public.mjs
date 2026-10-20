@@ -422,9 +422,9 @@ const report = {};
   const at = (n) => ({ clientX: n.x * gg.scale + gg.ox, clientY: n.y * gg.scale + gg.oy });
   const clickNode = async (n) => { cv.dispatchEvent(new window.MouseEvent("mousedown", { ...at(n), bubbles: true })); window.dispatchEvent(new window.MouseEvent("mouseup", at(n))); await tick(300); };
   const own = gg.nodes.find((n) => n.kind === "project" && n.self);
-  if (own) { const h = window.location.hash; await clickNode(own); if (window.location.hash !== h || !/acme---refs/.test(d.title)) errors.push("hub click: the own hub moved the page: " + window.location.hash + " " + d.title); }
+  if (own) { const h = window.location.hash; await clickNode(own); if (window.location.hash !== h || !/acme\/refs/.test(d.title)) errors.push("hub click: the own hub moved the page: " + window.location.hash + " " + d.title); }
   await clickNode(gg.nodes.find((n) => n.friend && n.label === "acme/notes"));
-  if (window.location.search !== `?public=${encodeURIComponent(`${GH}/notes`)}` || !/acme---notes/.test(d.title)) errors.push("hub click: a click on the friend's circle did not go there: " + window.location.search + " " + d.title);
+  if (window.location.search !== `?public=${encodeURIComponent(`${GH}/notes`)}` || !/acme\/notes/.test(d.title)) errors.push("hub click: a click on the friend's circle did not go there: " + window.location.search + " " + d.title);
   window.close();
 }
 {
@@ -459,15 +459,15 @@ const report = {};
   if (trailHub?.label !== "1 · acme---refs") errors.push("path: the project walked from is not a hub in the graph: " + trailHub?.label);
   if (!/the path — the way you walked here, not a citation/.test(d.querySelector(".graph-legend")?.textContent || "")) errors.push("path: the legend does not explain the path's line");
   if (!g?.links.some((l) => l.kind === "see" && g.nodes[l.s].label === "Cites elsewhere")) errors.push("path: the See from the path's project to this one is not drawn");
-  if (!/acme---notes/.test(d.title)) errors.push("path: the page did not switch to the friend: " + d.title);
+  if (!/acme\/notes/.test(d.title)) errors.push("path: the page did not switch to the friend: " + d.title);
   // back along the path: in place, and the path shortens
   window.history.back(); await tick(300);
-  if (!/acme---refs/.test(d.title) || window.location.search !== `?public=${encodeURIComponent(`${GH}/refs`)}`) errors.push("path: back did not return to the project walked from: " + d.title + " " + window.location.search);
+  if (!/acme\/refs/.test(d.title) || window.location.search !== `?public=${encodeURIComponent(`${GH}/refs`)}`) errors.push("path: back did not return to the project walked from: " + d.title + " " + window.location.search);
   if (d.querySelector(".path-bar")) errors.push("path: back at the start, a path bar is still shown");
   if (navigations.length !== navBefore) errors.push("path: back loaded a page instead of moving in place");
   // forward again, then discard
   window.history.forward(); await tick(300);
-  if (!/acme---notes/.test(d.title)) errors.push("path: forward did not return to the friend: " + d.title);
+  if (!/acme\/notes/.test(d.title)) errors.push("path: forward did not return to the friend: " + d.title);
   window.location.hash = "#overview"; window.dispatchEvent(new window.Event("hashchange")); await tick(150);
   if (!d.querySelector("#main .path-bar")) errors.push("path: no path bar above the overview");
   [...d.querySelectorAll("#main .path-bar button")].find((b) => b.textContent === "discard")?.click(); await tick(100);
@@ -657,7 +657,7 @@ const report = {};
   if (fetched.slice(open0, nav0).some((u) => /notes\/state\.body\.json/.test(u))) errors.push("lean export: notes' bodies were fetched for the graph, before the walk");
   window.location.hash = `#entry/${NOTES_ID}`; window.dispatchEvent(new window.Event("hashchange")); await tick(300);
   if (!/No needle here either\./.test(d.getElementById("main").textContent)) errors.push("lean export: the entry's body is not shown after the walk");
-  if (window.location.search !== `?public=${encodeURIComponent(`${GH}/notes`)}` || !/acme---notes/.test(d.title)) errors.push("hub names: a click on the friend's name did not go there: " + window.location.search);
+  if (window.location.search !== `?public=${encodeURIComponent(`${GH}/notes`)}` || !/acme\/notes/.test(d.title)) errors.push("hub names: a click on the friend's name did not go there: " + window.location.search);
   if (navigations.length !== nav) errors.push("hub names: the walk loaded a page instead of moving in place");
   window.close();
 }
@@ -747,9 +747,9 @@ const report = {};
     if (farHub?.walk) { farHub.walk(); await tick(500);
       const hubs2 = window.__g().nodes.filter((n) => n.kind === "project").map((n) => n.label);
       if (hubs2.includes("acme/far")) errors.push("globe: after the move to acme/far it is drawn again as a neighbour of itself: " + hubs2.join());
-      if (!/acme---far/.test(d.title)) errors.push("globe: the move to acme/far did not happen: " + d.title);
+      if (!/acme\/far/.test(d.title)) errors.push("globe: the move to acme/far did not happen: " + d.title);
       window.history.back(); await tick(500);
-      if (!/acme---refs/.test(d.title)) errors.push("globe: back did not return to refs: " + d.title);
+      if (!/acme\/refs/.test(d.title)) errors.push("globe: back did not return to refs: " + d.title);
       window.history.forward(); await tick(500);
       window.location.hash = "#globe"; window.dispatchEvent(new window.Event("hashchange")); await tick(300);
       if (d.querySelectorAll(".path-bar").length !== 1) errors.push("globe with a path: expected one path bar, got " + d.querySelectorAll(".path-bar").length);
@@ -967,7 +967,7 @@ const report = {};
     h.walk(); await tick(500);
   }
   report.pathInFamily = { title: d.title, bar: d.querySelector(".path-bar")?.textContent || "" };
-  if (!/acme---suite/.test(d.title)) errors.push("path in the family: the walk did not reach suite: " + d.title);
+  if (!/acme\/suite/.test(d.title)) errors.push("path in the family: the walk did not reach suite: " + d.title);
   if (report.pathInFamily.bar) errors.push("path in the family: moves inside the family added path steps: " + report.pathInFamily.bar);
   window.close();
 }

@@ -18,23 +18,31 @@ from .server import WEB_DIR
 TITLE_PREFIX = "Keep the Why Dashboard"
 
 
-def page_title(state: dict) -> str:
-    """`Keep the Why Dashboard · <id>` — the same in app.js, so a search
-    result names the project and many exports stay told apart."""
-    p = state.get("project", {})
-    return f"{TITLE_PREFIX} · {p.get('id') or p.get('name') or 'project'}"
+PREVIEW_IMAGE = "https://keepthewhy.com/assets/logo-crop-safe.png"
 
 
-def page_description(state: dict) -> str:
-    """One sentence for search results and link previews: whose repository,
-    how many entries, what they are. `owner/repo` from `canonical`, else
-    from the remote; without either, the project's id."""
+def project_label(state: dict) -> str:
+    """`owner/repo` from `canonical`, else from the remote; without either,
+    the project's id — `projectLabel` in lib.js. The id is a file-safe form
+    (`owner---repo`), not a name to show where a repository is known."""
     p = state.get("project", {})
     remote = gitinfo.normalize_remote(
         p.get("canonical") or (p.get("git") or {}).get("remote") or ""
     )
     repo = remote.split("/", 1)[1] if "/" in remote else ""
-    whose = repo or p.get("id") or p.get("name") or "a project"
+    return repo or p.get("id") or p.get("name") or ""
+
+
+def page_title(state: dict) -> str:
+    """`Keep the Why Dashboard · <owner/repo>` — the same in app.js, so a
+    search result names the project and many exports stay told apart."""
+    return f"{TITLE_PREFIX} · {project_label(state) or 'project'}"
+
+
+def page_description(state: dict) -> str:
+    """One sentence for search results and link previews: whose repository,
+    how many entries, what they are."""
+    whose = project_label(state) or "a project"
     entries = len(state.get("entries", []))
     topics = len(state.get("topics", []))
     e_noun = "entry" if entries == 1 else "entries"
@@ -125,7 +133,14 @@ def _head_meta(state: dict) -> str:
         f'<meta name="description" content="{desc}">\n'
         f'<meta property="og:type" content="website">\n'
         f'<meta property="og:title" content="{title}">\n'
-        f'<meta property="og:description" content="{desc}">'
+        f'<meta property="og:description" content="{desc}">\n'
+        # absolute, as previews require; the project's own site serves it, so
+        # every export shows the same card without knowing its own URL
+        f'<meta property="og:image" content="{PREVIEW_IMAGE}">\n'
+        f'<meta name="twitter:card" content="summary_large_image">\n'
+        f'<meta name="twitter:title" content="{title}">\n'
+        f'<meta name="twitter:description" content="{desc}">\n'
+        f'<meta name="twitter:image" content="{PREVIEW_IMAGE}">'
     )
 
 

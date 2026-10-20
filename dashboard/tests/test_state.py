@@ -258,9 +258,19 @@ class StateTest(unittest.TestCase):
                 "Keep the Why dashboard of acme/widget: "
             )
         )
+        self.assertIn(
+            "<title>Keep the Why Dashboard · acme/widget</title>", render_page(state)
+        )
         state["project"]["canonical"] = ""
         state["project"]["git"]["remote"] = "gitlab.com/acme/sub/widget"
         self.assertIn("of acme/sub/widget:", page_description(state))
+        # one card for every export, absolute as previews require
+        for tag in (
+            '<meta property="og:image" content="https://keepthewhy.com/assets/logo-crop-safe.png">',
+            '<meta name="twitter:card" content="summary_large_image">',
+        ):
+            self.assertIn(tag, html)
+        state["project"]["git"]["remote"] = ""
         state["project"]["id"] = 'a"b<c'
         html = render_page(state)
         self.assertIn("Keep the Why Dashboard · a&quot;b&lt;c</title>", html)

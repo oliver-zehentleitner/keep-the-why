@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  esc, plural, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf,
+  esc, plural, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf, projectLabel,
   parseSupersededBy, kindLabel, typeName, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, shuffled, compareHits, snippetAt, highlight,
   resolveLocation, bodyProse, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, HOSTS, hostOf, backlinksUrl, citingOf, hostAnchor,
 } from "../../ktw_dashboard/web/lib.js";
@@ -86,6 +86,14 @@ test("canonicalOf prefers the stored locator over the git remote", () => {
   assert.equal(canonicalOf({ canonical: "https://github.com/a/b", git: { remote: "github.com/c/d" } }), "https://github.com/a/b");
   assert.equal(canonicalOf({ git: { remote: "github.com/c/d" } }), "https://github.com/c/d");
   assert.equal(canonicalOf({}), "");
+});
+
+test("projectLabel names owner/repo, the id only without a repository", () => {
+  assert.equal(projectLabel({ id: "a---b", canonical: "https://github.com/a/b", git: { remote: "github.com/c/d" } }), "a/b");
+  assert.equal(projectLabel({ id: "a---b", canonical: "git@github.com:acme/widget.git" }), "acme/widget");
+  assert.equal(projectLabel({ id: "x", git: { remote: "gitlab.com/acme/sub/widget" } }), "acme/sub/widget");
+  assert.equal(projectLabel({ id: "acme---widget", name: "widget", git: { remote: "" } }), "acme---widget");
+  assert.equal(projectLabel({ name: "widget" }), "widget");
 });
 
 test("parseSupersededBy: id, cross-project reference, none with reason, free text", () => {

@@ -103,6 +103,13 @@ export function hostOf(url) {
 
 export const canonicalOf = (p) => p?.canonical || (p?.git?.remote ? `https://${p.git.remote}` : "");
 
+// `owner/repo` from canonical, else the remote; without either, the id — `project_label` in export.py
+export function projectLabel(p) {
+  const r = (p?.canonical || p?.git?.remote || "").trim().replace(/^[a-z+]+:\/\//, "").replace(/^[^@/]+@/, "").replace(/^([^/:]+):/, "$1/").replace(/\/+$/, "").replace(/\.git$/, "");
+  const i = r.indexOf("/");
+  return (i > 0 && r.slice(i + 1)) || p?.id || p?.name || "";
+}
+
 export function parseSupersededBy(value) {
   if (!value) return null;
   const v = value.trim();
