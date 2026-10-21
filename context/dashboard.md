@@ -588,7 +588,7 @@ The path the skill gives a project's dashboard export — in the badge, in `dash
 **Source:** maintainer request, 2026-10-21; the URL's source and the migration step were the assisting agent's proposal, accepted
 **Revisit when:** the export moves away from `state.json` beside `index.html`, or projects report the line overwriting a README of their own
 
-When a project publishes its dashboard, the last line of `context/README.md` reads *Start with the [context index](index.md), or browse it all in the [dashboard](<url>).* The agent writes it in the same change that writes `dashboard-state` — at setup, or when the dashboard is published later — and `<url>` is `dashboard-state` without its `state.json`. An existing project gets it as a one-pass migration (0.20.3); a README that does not end on the template's line is left alone.
+When a project publishes its dashboard, the last line of `context/README.md` reads `Start with the [context index](index.md), or browse it all in the [dashboard](<url>).` The agent writes it in the same change that writes `dashboard-state` — at setup, or when the dashboard is published later — and `<url>` is `dashboard-state` without its `state.json`. An existing project gets it as a one-pass migration (0.20.3); a README that does not end on the template's line is left alone.
 
 **Reason:** the folder's README is what a reader landing in `context/` on the code host sees first, and the dashboard is the readable way into the same entries — the graph, the history, what is open. `dashboard-state` is the one place that already says where the export lives, so the link cannot drift from it and nothing is guessed from the host.
 
