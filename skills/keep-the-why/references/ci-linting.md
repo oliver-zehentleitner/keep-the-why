@@ -125,7 +125,7 @@ The last line of `context/README.md` — the one the setup template ends on — 
 Start with the [context index](index.md), or browse it all in the [dashboard](https://example.org/keep-the-why-dashboard/).
 ```
 
-The URL is `dashboard-state` without its `state.json`, never guessed from the host; without `dashboard-state`, the line stays *Start with the [context index](index.md).* When `dashboard-state` changes, the link changes with it, in the same edit. A README that does not end on the template's line is the project's own and is left as it is.
+The URL is `dashboard-state` without its `state.json`, never guessed from the host; without `dashboard-state`, the line stays `Start with the [context index](index.md).` When `dashboard-state` changes, the link changes with it, in the same edit. A README that does not end on the template's line is the project's own and is left as it is.
 
 **No docs build, remote on GitHub:** a workflow of its own publishes the export to the repository's GitHub Pages — `.github/workflows/ktw-dashboard.yml`, after checking that no workflow already deploys Pages (one that does gets the step above instead, never a second deploy):
 

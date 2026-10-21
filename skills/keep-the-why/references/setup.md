@@ -271,7 +271,7 @@ Reached only via the second bullet above — an explicit request to set up or in
     Start with the [context index](index.md).
     ```
 
-    When the dashboard is published (step 1), the last line points at it too — *Start with the [context index](index.md), or browse it all in the [dashboard](<site>/keep-the-why-dashboard/).*, the URL being `dashboard-state` without its `state.json` ("The dashboard export" in `references/ci-linting.md`).
+    When the dashboard is published (step 1), the last line points at it too — `Start with the [context index](index.md), or browse it all in the [dashboard](<site>/keep-the-why-dashboard/).`, the URL being `dashboard-state` without its `state.json` ("The dashboard export" in `references/ci-linting.md`).
 
     GitHub (and most code hosts) render a folder's `README.md` automatically when browsing it, so this is what someone sees first landing in the folder cold, without needing to already know what Keep the Why is. Skip this step if adopting an existing folder that already has its own README or equivalent — don't overwrite it. Also add `AGENTS.md` and `CLAUDE.md` inside the folder — see "Guarding `context/` itself" below — again skipping either one that already exists doing an equivalent job.
 5. If CI linting was accepted: write the workflow, job, or hook per `references/ci-linting.md` — after checking nothing equivalent already exists. Don't author config for a CI platform whose format the evidence doesn't confirm; the generic snippet is the honest answer there. Staged in the working tree like every other file setup writes, not committed.

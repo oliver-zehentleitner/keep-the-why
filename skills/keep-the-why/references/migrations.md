@@ -8,9 +8,9 @@ Entries below assume 0.2.0 as the starting point — nothing before it tracked a
 
 ## 0.20.3 — `context/README.md` links the published dashboard (mechanical, one pass by the agent)
 
-**What changed:** when a project publishes its dashboard (`dashboard-state` in `.keep-the-why`), the last line of `context/README.md` points at it: *Start with the [context index](index.md), or browse it all in the [dashboard](<url>).* — `<url>` being `dashboard-state` without its `state.json` (`references/ci-linting.md`, "The dashboard export"). The setup template and the steps that publish the dashboard write it from now on.
+**What changed:** when a project publishes its dashboard (`dashboard-state` in `.keep-the-why`), the last line of `context/README.md` points at it: `Start with the [context index](index.md), or browse it all in the [dashboard](<url>).` — `<url>` being `dashboard-state` without its `state.json` (`references/ci-linting.md`, "The dashboard export"). The setup template and the steps that publish the dashboard write it from now on.
 
-**Existing projects:** with `dashboard-state` set and `context/README.md` ending on *Start with the [context index](index.md).*, replace that line with the linked one. Without `dashboard-state`, or with a README of the project's own, nothing to do. Advance `context-schema` to 0.20.3.
+**Existing projects:** with `dashboard-state` set and `context/README.md` ending on `Start with the [context index](index.md).`, replace that line with the linked one. Without `dashboard-state`, or with a README of the project's own, nothing to do. Advance `context-schema` to 0.20.3.
 
 ## 0.20.2 — the dashboard export's path is `keep-the-why-dashboard/` (informational, no action required)
 
