@@ -578,3 +578,18 @@ The path the skill gives a project's dashboard export — in the badge, in `dash
 **Reason:** on another project's site `dashboard/live/` is a generic name: it can collide with a dashboard of the project's own, and it says nothing about what is there. `keep-the-why-dashboard/` says it, and the name in the URL tells a reader what produced the page before it opens. On keepthewhy.com the context is the site itself, so the generic path is fine there and nothing has to move.
 
 **Rejected alternative:** change every published export, keepthewhy.com's and the few projects that already carry `/dashboard/live/`, with a migration step. Rejected: the old path works, `dashboard-state` and the badge name whatever path a project uses and nothing reads the old one by name; whoever wants the new path says one sentence to their agent. The default changed, the deployed sites were left alone.
+
+## `context/README.md` ends on a link to the published dashboard, written by the agent from `dashboard-state`
+
+**Id:** 8fec091b-b010-45ec-b2d6-e98369d7ef44
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer request, 2026-10-21; the URL's source and the migration step were the assisting agent's proposal, accepted
+**Revisit when:** the export moves away from `state.json` beside `index.html`, or projects report the line overwriting a README of their own
+
+When a project publishes its dashboard, the last line of `context/README.md` reads *Start with the [context index](index.md), or browse it all in the [dashboard](<url>).* The agent writes it in the same change that writes `dashboard-state` — at setup, or when the dashboard is published later — and `<url>` is `dashboard-state` without its `state.json`. An existing project gets it as a one-pass migration (0.20.3); a README that does not end on the template's line is left alone.
+
+**Reason:** the folder's README is what a reader landing in `context/` on the code host sees first, and the dashboard is the readable way into the same entries — the graph, the history, what is open. `dashboard-state` is the one place that already says where the export lives, so the link cannot drift from it and nothing is guessed from the host.
+
+**Rejected alternative:** a linter warning when `dashboard-state` is set and the README's link is missing or points elsewhere. Rejected: the README is free text the project may rewrite; the linter checks the structure of `context/` entries and `.keep-the-why`, and a warning would make the README a checked file for one line.
