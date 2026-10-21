@@ -4,6 +4,8 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ## [Unreleased]
 
+## [0.20.3] - 2026-10-21
+
 ### Added
 
 - Registry page: how the globe loads a large registry — in portions of 100, 500 or 1000 projects, in random order, *next* to go on after a stop.
@@ -14,6 +16,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Changed
 
+- `keep-the-why-lint` 0.20.3: knows `context-schema` 0.20.3; nothing structural changed.
 - Skill: when a project publishes its dashboard, `context/README.md` ends on `Start with the [context index](index.md), or browse it all in the [dashboard](<url>).` — the agent writes the link in the same change that writes `dashboard-state`, the URL being `dashboard-state` without its `state.json` (`references/setup.md`, `references/ci-linting.md`); an existing project with `dashboard-state` gets it as a one-pass migration (`references/migrations.md`, 0.20.3). This repository's own `context/README.md` links `https://keepthewhy.com/dashboard/live/`.
 - `keep-the-why-dashboard` 0.11.13: an export's title names the repository as `owner/repo` — *Keep the Why Dashboard · acme/widget* — in the static head and in the browser tab, the project's id only where neither `canonical` nor a remote names one; the head carries `og:image` and `twitter:card` with the Keep the Why card from keepthewhy.com, so a shared link previews with the logo. The title showed the file-safe id (`acme---widget`), and a preview, with no image named, cropped the page's icon.
 - `keep-the-why-dashboard` 0.11.12: the Timeline goes by the moment an entry appeared, not only its day. `state.json` carries Git's author time to the second as `time` beside each `date` (created, last touched, every status change); with entries spanning two weeks or less the slider, the arrow keys and the wheel move by the hour, the label shows the hour in the reader's time zone, the URL holds it (`#timeline/<day>T<hour>`), and the card and the stage's tooltip show the time of day. A playback speed below a day per second moves the clock by that much, and *1 entry /s* stops on each moment an entry appeared. Until now the finest step was a day: at *3 hours /s* the clock stood still for eight seconds and then showed the whole day at once, and a project built in a few days played in a few jumps. An older export, without `time`, plays by the day as before.
@@ -1045,7 +1048,8 @@ Initial release.
 - Logo, wordmark, and favicon.
 - `context/repo-conventions.md`, dogfooding the skill on its own repository from day one.
 
-[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.20.2...HEAD
+[Unreleased]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.20.3...HEAD
+[0.20.3]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.20.2...v0.20.3
 [0.20.2]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.20.1...v0.20.2
 [0.20.1]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.20.0...v0.20.1
 [0.20.0]: https://github.com/oliver-zehentleitner/keep-the-why/compare/v0.19.0...v0.20.0
