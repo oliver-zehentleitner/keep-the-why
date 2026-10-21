@@ -119,6 +119,14 @@ Offered by the project wizard when a docs build exists (a GitHub Pages workflow,
 
 with the site's URL (the docs site's address; for a Pages workflow of its own, derived as below), and `dashboard-state: https://example.org/keep-the-why-dashboard/state.json` in `.keep-the-why` — the line another dashboard reads, in its *public* mode, to show this project's export in place of a checkout (the family web across repositories, `docs/dashboard.md`). `badge-entries.svg` is rendered at export time with the project's numbers (and `badge-entries-flat.svg` shows the same in the flat style badge services draw) ("42 entries · 3 open" — open, needs-review and pending-confirmation count as open), so README → the project's own SVG → the project's own dashboard, and no badge service in between. Staged, not committed, like everything else setup writes.
 
+The last line of `context/README.md` — the one the setup template ends on — points at the export as well, in the same change that writes `dashboard-state`:
+
+```markdown
+Start with the [context index](index.md), or browse it all in the [dashboard](https://example.org/keep-the-why-dashboard/).
+```
+
+The URL is `dashboard-state` without its `state.json`, never guessed from the host; without `dashboard-state`, the line stays *Start with the [context index](index.md).* When `dashboard-state` changes, the link changes with it, in the same edit. A README that does not end on the template's line is the project's own and is left as it is.
+
 **No docs build, remote on GitHub:** a workflow of its own publishes the export to the repository's GitHub Pages — `.github/workflows/ktw-dashboard.yml`, after checking that no workflow already deploys Pages (one that does gets the step above instead, never a second deploy):
 
 ```yaml
@@ -161,7 +169,7 @@ jobs:
         uses: actions/deploy-pages@v5
 ```
 
-`branches:` names the repository's default branch. The site is then `https://<owner>.github.io/<repo>/`, the dashboard `<site>/keep-the-why-dashboard/`. In the same change, write `dashboard-state: <site>/keep-the-why-dashboard/state.json` into `.keep-the-why` and offer the live badge with the same `<site>` — both derived from the remote now. The URL answers only after the first deploy; that is expected and no reason to wait. A custom domain changes only the host: when the repository's Pages already uses one (a `CNAME`, or the person names it), use that host instead. A workflow can only deploy once the repository's Pages source is *GitHub Actions*: tell the person to set it at `https://github.com/<owner>/<repo>/settings/pages`, under "Build and deployment" → "Source" → "GitHub Actions". If Pages already serves something from a branch, switching the source replaces that site — say so and ask instead of writing the workflow. Changing the setting is the person's; the agent does it (`gh api -X POST repos/<owner>/<repo>/pages -f build_type=workflow`, or `-X PUT` when Pages exists) only when asked to. The first deploy runs on the push after the workflow is merged.
+`branches:` names the repository's default branch. The site is then `https://<owner>.github.io/<repo>/`, the dashboard `<site>/keep-the-why-dashboard/`. In the same change, write `dashboard-state: <site>/keep-the-why-dashboard/state.json` into `.keep-the-why`, the dashboard link into `context/README.md` (above), and offer the live badge with the same `<site>` — both derived from the remote now. The URL answers only after the first deploy; that is expected and no reason to wait. A custom domain changes only the host: when the repository's Pages already uses one (a `CNAME`, or the person names it), use that host instead. A workflow can only deploy once the repository's Pages source is *GitHub Actions*: tell the person to set it at `https://github.com/<owner>/<repo>/settings/pages`, under "Build and deployment" → "Source" → "GitHub Actions". If Pages already serves something from a branch, switching the source replaces that site — say so and ask instead of writing the workflow. Changing the setting is the person's; the agent does it (`gh api -X POST repos/<owner>/<repo>/pages -f build_type=workflow`, or `-X PUT` when Pages exists) only when asked to. The first deploy runs on the push after the workflow is merged.
 
 **No docs build, remote on GitLab:** a `pages` job in `.gitlab-ci.yml` publishes the export to the project's GitLab Pages, after checking that no job already deploys Pages (one that does gets the export step instead, never a second `pages` job). If the file defines `stages:`, add `deploy` to it; with no `.gitlab-ci.yml` at all, this job would be the project's first pipeline — say that plainly before writing it:
 
@@ -184,7 +192,7 @@ pages:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 ```
 
-The site is then `https://<namespace>.gitlab.io/<project>/` (a group's or user's namespace, subgroups as further path segments), the dashboard `<site>/keep-the-why-dashboard/`; write `dashboard-state` and offer the live badge from it, as above. Three settings on GitLab's side are the person's, and the agent names them: on gitlab.com, CI runs on the shared runners only once the account is verified (a pipeline otherwise fails with *the user not being verified*, before any job runs); the project's Pages visibility must be *Everyone* (Settings → General → Visibility, project features, permissions → Pages), or every visitor is sent to a GitLab sign-in; and when *Use unique domain* is on (Deploy → Pages), the site is served under a generated domain instead, which then is the `<site>` to use. A custom domain changes the host, as on GitHub.
+The site is then `https://<namespace>.gitlab.io/<project>/` (a group's or user's namespace, subgroups as further path segments), the dashboard `<site>/keep-the-why-dashboard/`; write `dashboard-state` and the link in `context/README.md`, and offer the live badge from it, as above. Three settings on GitLab's side are the person's, and the agent names them: on gitlab.com, CI runs on the shared runners only once the account is verified (a pipeline otherwise fails with *the user not being verified*, before any job runs); the project's Pages visibility must be *Everyone* (Settings → General → Visibility, project features, permissions → Pages), or every visitor is sent to a GitLab sign-in; and when *Use unique domain* is on (Deploy → Pages), the site is served under a generated domain instead, which then is the `<site>` to use. A custom domain changes the host, as on GitHub.
 
 ## The registry
 
