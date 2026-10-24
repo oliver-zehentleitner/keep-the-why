@@ -16,6 +16,7 @@
 # invitation to be found from anywhere, including from projects that cite
 # nothing of yours.
 https://github.com/hasansezertasan/copier-pyproject
+https://github.com/hasansezertasan/copier-rust
 https://github.com/oliver-zehentleitner-aigent/ordersync
 https://github.com/oliver-zehentleitner/keep-the-why
 https://github.com/oliver-zehentleitner/lasteverLM
