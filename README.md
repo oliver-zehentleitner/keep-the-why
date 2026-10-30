@@ -17,7 +17,7 @@
 [![Bluesky](https://img.shields.io/badge/bluesky-%40keep--the--why-0285FF?logo=bluesky&logoColor=white)](https://bsky.app/profile/keep-the-why.bsky.social)
 [![Mastodon](https://img.shields.io/badge/mastodon-%40keep__the__why-6364FF?logo=mastodon&logoColor=white)](https://mastodon.social/@keep_the_why)
 [![Keep the Why · live](https://keepthewhy.com/dashboard/live/badge-entries.svg)](https://keepthewhy.com/dashboard/live/)
-[![maity](https://maity.team/badge/keep-the-why.svg)](https://maity.team/#/p/keep-the-why/overview)
+[![maity](https://maity.team/badge/oliver-zehentleitner/keepthewhy.svg)](https://maity.team/oliver-zehentleitner/keepthewhy/overview)
 
 <a href="https://keepthewhy.com"><img src="https://keepthewhy.com/assets/logo.png" alt="Keep the Why — because &quot;ask Bob&quot; is not documentation."></a>
 
