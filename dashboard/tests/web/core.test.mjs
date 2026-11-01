@@ -733,3 +733,10 @@ test("a See into another repository: the live server's project first, the publis
   assert.match(resolveSee(U, {}).error, /no published export/);
   assert.equal(resolveSee(U, { published: {} }).error, "its published export could not be read"); // neither state nor error: still a failure
 });
+
+test("hostAnchor: the linter's anchor rule, over the shared vectors read from rendered files", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { vectors } = JSON.parse(readFileSync(new URL("../../../lint/tests/anchors.json", import.meta.url), "utf8"));
+  for (const v of vectors) assert.equal(core.hostAnchor(v.title), v.anchor, v.title);
+  assert.equal(core.slug, core.hostAnchor); // an entry's fallback id is its anchor too
+});

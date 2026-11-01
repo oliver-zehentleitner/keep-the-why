@@ -21,7 +21,7 @@ from datetime import datetime, timezone
 from ktw_lint import __version__ as LINT_VERSION
 from ktw_lint.checks import Linter
 from ktw_lint.cli import _load_config
-from ktw_lint.entries import KNOWN_FIELDS, parse_topic_text
+from ktw_lint.entries import KNOWN_FIELDS, anchor, parse_topic_text
 from ktw_lint.findings import ERROR
 
 from . import __version__, gitinfo
@@ -69,12 +69,14 @@ def parse_reference(value: str) -> dict | None:
     return ref
 
 
-_SLUG_RE = re.compile(r"[^a-z0-9]+")
 _FENCE_RE = re.compile(r"^\s*(```|~~~)")
 
 
 def slugify(title: str) -> str:
-    return _SLUG_RE.sub("-", title.lower()).strip("-")
+    """An entry's id after its file: the heading's anchor as the host renders it
+    (ktw_lint.entries.anchor), so `<file>#<anchor>` is the same address a `See`
+    locator writes and the host links to."""
+    return anchor(title)
 
 
 def _topic_title(text: str, fallback: str) -> str:

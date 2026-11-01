@@ -446,7 +446,11 @@ class StateTest(unittest.TestCase):
     def test_slugify(self):
         self.assertEqual(
             slugify("`WSUpgradeRequest` / `WSUpgradeResponse` keep a shape"),
-            "wsupgraderequest-wsupgraderesponse-keep-a-shape",
+            "wsupgraderequest--wsupgraderesponse-keep-a-shape",
+        )
+        # an entry's id is the host's anchor: inline HTML is markup, not text
+        self.assertEqual(
+            slugify("Pasted <b>markup</b> stays text"), "pasted-markup-stays-text"
         )
 
 
