@@ -654,7 +654,7 @@ Maity, the coordination hub for coding agents, is to show nearly everything the 
 **Revisit when:** the canvas views move to the DOM, or the state format changes so that the fixture has to be rebuilt
 **See:** dashboard.md#the-page-becomes-a-library-a-second-host-builds-on-core-views-and-a-host-maity-the-first-other-host — 24e1ef21-ebf8-4d5b-ab63-c8ccbe82f7ab — as of 2026-11-01
 
-`dashboard/tests/web/snapshot.mjs` loads a page rendered from `tests/web/fixture/state.json` in jsdom, drives every route that renders without a network, and compares `#main` and `#details` of each — and the shell once — with the files in `tests/web/snapshots/`. Each one is an element tree, one node per line, attributes sorted. The clock stands at the fixture's day, the time zone is UTC, and `Math.random` is a seeded sequence. The fixture is an invented project, built by `fixture/make_fixture.py` as a Git history with fixed dates and authors, read by the dashboard's own state builder, then frozen. A pull request in the series keeps every snapshot identical, or names each changed snapshot with its reason. What a canvas draws is not in the DOM: a change there carries before-and-after screenshots instead.
+`dashboard/tests/web/snapshot.mjs` loads a page rendered from `tests/web/fixture/state.json` in jsdom, drives every route that renders without a network, and compares `#main` and `#details` of each — and the shell once — with the files in `tests/web/snapshots/`. Each one is an element tree, one node per line, attributes sorted. The clock stands at the fixture's day, the time zone is UTC, and `Math.random` is a seeded sequence. The fixture is an invented project, built by `fixture/make_fixture.py` as a Git history with fixed dates and authors, read by the dashboard's own state builder, then frozen. A pull request in the series keeps every snapshot identical, or names each changed snapshot with its reason. What a canvas draws is not in the DOM: a change there carries before-and-after screenshots instead. (Changed 2026-11-01: canvas traces took the screenshots' place — see the entry `135df818-879e-4f9c-a42b-303c2811b678`.)
 
 **Reason:** the series moves almost all of `app.js` into other files. "Looks the same" has to be checked by a machine on every one of those pull requests, because a reviewer cannot hold 3800 lines in view. A frozen state keeps the snapshots still while this repository's own `context/`, the dashboard's version or the date changes; an export of the repository itself would move with every commit. One node per line makes a changed snapshot a readable diff.
 
@@ -740,3 +740,20 @@ Every setting a reader makes — the graph's switches and labels, the pane width
 **Reason:** the prefix is where the host comes in. Each host keeps the settings under its own name (Maity under `maity.ktw.`), so the views must not carry the dashboard's `ktw-` in every key. Keeping the stored strings exactly as they were is what lets the dashboard switch to `prefs` without a migration. A blocked or full storage now reads as the fallback everywhere; before, the theme switch was the one place that read storage unguarded.
 
 **Rejected alternative:** the full keys (`"ktw-friends"`) as the prefs names — another host would store `maity.ktw.ktw-friends` or have to strip the dashboard's prefix. Typed values (booleans, numbers) in the interface — every reader of an existing setting would then need converting code, for no gain the views can see.
+
+## What the canvases draw is checked as a trace of drawing calls, not with screenshots
+
+**Id:** 135df818-879e-4f9c-a42b-303c2811b678
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** the pull request that moved the graph's forces into `ktw-core.js` (2026-11-01). The plan's rule, before-and-after screenshots for a change to the graph or the stage, could not be followed where the work was done, and the trace was put in its place; the choice is the implementer's, and the review of that pull request is where it is examined
+**Revisit when:** the graph or the stage leaves the canvas, or a change is meant to look different and a trace diff is too hard to read to judge it
+**See:** dashboard.md#the-refactoring-is-guarded-by-dom-snapshots-of-a-frozen-fixture-one-per-route — c31d2d4a-abdd-4368-9601-e887718afa6e — as of 2026-11-01
+
+`dashboard/tests/web/canvas-trace.mjs` opens the frozen fixture's page at `#graph` and at `#timeline`, each in a fresh jsdom with its canvas 800 × 500, the motion off, and the clock and `Math.random` held as in the DOM snapshots. It runs frames back to back until the layout has settled, then writes every call the canvases' contexts received in their last frame — method, arguments rounded to three decimals, property sets — into `tests/web/canvas-snapshots/`. CI compares, as it does the DOM snapshots.
+
+**Reason:** a screenshot needs a browser, and the machine the series is built on cannot start one. A screenshot is also a judgement by eye: two images that look alike pass. The trace is exact. Moving the forces into the core was checked against it — 1,509 calls, identical — and a change to one damping constant changes it from the first edge drawn. One page per route because the graph keeps its positions across a move between views: a move made while it settles left it wherever the timing had got it to, and two runs drew differently.
+
+**Rejected alternative:** before-and-after screenshots, the plan's rule (see above). Pixel diffs in a headless browser — the reason the DOM snapshots were chosen over them holds here too.
+
