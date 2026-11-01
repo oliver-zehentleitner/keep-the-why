@@ -429,7 +429,7 @@ const { el, setKids, pill, statusPill, evPill, typePills, entryPills, typeGlyphS
 const SCENE = globalThis.KeepTheWhy.scene.create({ scope: prefs.get("scope") || prefs.get("search-scope") || "project" }); // search-scope: the name before the scope switched the graph too
 // The graph view (ktw-graph.js): it draws what the host builds, given the scene, navigation and settings only.
 const GRAPH = globalThis.KeepTheWhy.views.graph.create({ scene: SCENE, nav, prefs });
-const { run: runGraph, lightThought, spotIn, projectNodes, miniView, publishLayout, driftOn, setDrift, setLabels } = GRAPH;
+const { run: runGraph, lightThought, spotIn, projectNodes, miniView, driftOn, setDrift, setLabels } = GRAPH;
 // The timeline's stage (ktw-timeline.js): the same three, and the page around it stays here.
 const TIMELINE = globalThis.KeepTheWhy.views.timeline.create({ scene: SCENE, nav, prefs });
 let PROJECT = QUERY.get("project"); // null: the server's SCENE.selected one

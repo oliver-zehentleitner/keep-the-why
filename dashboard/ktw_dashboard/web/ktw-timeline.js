@@ -19,7 +19,6 @@ let ROOT_STYLE = null;
 const token = (name) => (ROOT_STYLE ||= getComputedStyle(document.documentElement)).getPropertyValue(name).trim();
 const isShownByFilter = (e) => entryMatches(e, shared.filter);
 const topicOf = (file) => shared.state.topics.find((t) => t.file === file);
-const byId = () => Object.fromEntries(shared.state.entries.map((e) => [e.id, e]));
 // where a card stands: where its node stands in the graph beside, or in a lane per topic — kept per browser
 let ARRANGE = prefs.get("stage-arrange") || "graph";
 const setArrange = (v) => { ARRANGE = v; prefs.set("stage-arrange", v); };
