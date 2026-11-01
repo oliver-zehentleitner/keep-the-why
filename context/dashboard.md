@@ -42,10 +42,11 @@ Same shape as the linter: developed in `dashboard/` with its own `pyproject.toml
 
 **Id:** df1af5b5-8180-49e2-bdeb-97bf4e4aa030
 **Type:** decision
-**Status:** active
+**Status:** superseded
 **Evidence:** confirmed
 **Source:** maintainer conversation, 2026-09-11
 **Revisit when:** a view needs more than a hand-written force layout and SVG histogram can carry, or the module passes a size where one file stops being reviewable
+**Superseded by:** daab47f5-add1-4ba2-ae24-38162c43af90
 
 One ES module served as-is, CSS bars, a canvas force layout of about a hundred lines, an SVG histogram. `--export` inlines the same module and stylesheet into one HTML file with the state embedded.
 
@@ -658,3 +659,21 @@ Maity, the coordination hub for coding agents, is to show nearly everything the 
 **Reason:** the series moves almost all of `app.js` into other files. "Looks the same" has to be checked by a machine on every one of those pull requests, because a reviewer cannot hold 3800 lines in view. A frozen state keeps the snapshots still while this repository's own `context/`, the dashboard's version or the date changes; an export of the repository itself would move with every commit. One node per line makes a changed snapshot a readable diff.
 
 **Rejected alternative:** an export of this repository's own `context/` as the fixture — it changes with every entry written. Pixel screenshots in a headless browser — a browser toolchain in CI and font rendering that differs between machines, for what the DOM already says. The serialised HTML as one string — a one-character change shows up as a changed line thousands of characters long.
+
+## The page's library is classic scripts on one namespace; the page is otherwise still plain JavaScript without a build
+
+**Id:** daab47f5-add1-4ba2-ae24-38162c43af90
+**Type:** decision
+**Type:** constraint
+**Status:** active
+**Evidence:** confirmed
+**Source:** design proposal (revision 3.1) agreed by the maintainer, 2026-11-01; the manifest's shape and the safety rules are the implementer's, in the pull request that made the change
+**Revisit when:** browsers load module scripts from `file://`, or no host that vendors the library opens from the file system any more
+**See:** dashboard.md#the-page-becomes-a-library-a-second-host-builds-on-core-views-and-a-host-maity-the-first-other-host — 24e1ef21-ebf8-4d5b-ab63-c8ccbe82f7ab — as of 2026-11-01
+
+The page's pure part, `lib.js`, became `ktw-core.js`: a classic script that puts its functions on `globalThis.KeepTheWhy.core` and nothing else on the global object. The views that follow it will be classic scripts of the same form. `app.js`, the dashboard's own host, stays an ES module and reads the namespace. `web/ktw-views.json` lists the library's files in load order, with `api`, the major version of what they offer, and `state`, the `state.json` major they read. The server writes their tags into `index.html` in place of a placeholder, the export inlines them in that order ahead of the module, and a host that vendors them reads the same list from the wheel. The files are plain names with a `ktw-` prefix in `web/`, because the server serves `/static/` by basename and the package ships `web/*`. A test holds every listed file to the rendering-safety rules a vendoring host enforces: no HTML sinks, no `eval`, no `html:` or `style=` attributes. Everything else of the superseded entry stands: no framework, no build step, no CDN, `--export` one file that works offline, `node --check` and jsdom in CI, `tsc --checkJs` over JSDoc as the typed fallback, D3 only vendored if ever.
+
+**Reason:** Maity's page also opens from `file://`, where browsers refuse module scripts, and it vendors the dashboard's library rather than porting it. A classic script runs in both pages unchanged, while an ES module does not run in that one. The export no longer rewrites the library's text with a regular expression to drop `export`, because there is none to drop.
+
+**Rejected alternative:** ES modules in the repository, plus a generated classic copy for other hosts. That is a build step, and the two pages would run different bytes. A `views/` subdirectory instead of the prefix was also rejected: the server, the package glob and the export would each have needed a change, where the prefix plus the manifest needs none.
+

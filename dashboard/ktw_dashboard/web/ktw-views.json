@@ -1,0 +1,9 @@
+{
+  "comment": "The page's library files, in load order: classic scripts on globalThis.KeepTheWhy, served by the dashboard, inlined into an export, vendored by other hosts. `api` is the major version of what they offer, `state` the state.json major they read.",
+  "api": 0,
+  "state": 2,
+  "scripts": [
+    "ktw-core.js"
+  ],
+  "styles": []
+}

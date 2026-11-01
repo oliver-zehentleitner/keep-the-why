@@ -1,12 +1,13 @@
-// Unit tests for the page's pure part (lib.js): node --test, no jsdom, no npm.
+// Unit tests for the page's pure part (ktw-core.js): node --test, no jsdom, no npm.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import {
+import core from "./core.mjs";
+const {
   esc, plural, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf, projectLabel,
   parseSupersededBy, kindLabel, typeName, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, shuffled, compareHits, snippetAt, highlight,
   resolveLocation, bodyProse, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, HOSTS, hostOf, backlinksUrl, citingOf, hostAnchor, ownerOf,
   TYPE_TOKENS, PALETTE_SIZE, paletteToken,
-} from "../../ktw_dashboard/web/lib.js";
+} = core;
 
 test("esc escapes the five HTML characters and nothing else", () => {
   assert.equal(esc(`<a href="x">&'`), "&lt;a href=&quot;x&quot;&gt;&amp;&#39;");
@@ -367,7 +368,7 @@ test("hostAnchor: a heading's anchor as GitHub renders it, not the entry id", ()
 });
 
 // the clock (timeline stage)
-import { todayISO, addDays, dayDiff, existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan } from "../../ktw_dashboard/web/lib.js";
+const { todayISO, addDays, dayDiff, existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan } = core;
 
 test("addDays and dayDiff count calendar days across month and year ends", () => {
   assert.equal(addDays("2026-01-31", 1), "2026-02-01");
@@ -421,7 +422,7 @@ test("daySpan runs from the earliest creation to today", () => {
 });
 
 // Git's moments beside the days (`time`), for a timeline finer than a day
-import { isMoment, nowISO, timeGrid, stampLabel } from "../../ktw_dashboard/web/lib.js";
+const { isMoment, nowISO, timeGrid, stampLabel } = core;
 test("moments: an entry exists from its moment, a bare day from the day's start; addDays and dayDiff keep the kind", () => {
   const e = { git: { created: { date: "2026-10-12", time: "2026-10-12T14:03:11Z" }, status_history: [{ status: "active", date: "2026-10-12", time: "2026-10-12T14:03:11Z" }, { status: "superseded", date: "2026-10-12", time: "2026-10-12T18:00:00Z" }] }, status: "superseded" };
   assert.ok(!existsAt(e, "2026-10-12T14:00:00Z"));
@@ -456,7 +457,7 @@ test("timeGrid: hours over a span of two weeks or less, days beyond, the old day
 });
 
 // the stage's scene and layout (timeline)
-import { TYPE_KINDS, typeKind, weekStart, SHELF, stageCards, stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight } from "../../ktw_dashboard/web/lib.js";
+const { TYPE_KINDS, typeKind, weekStart, SHELF, stageCards, stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight } = core;
 
 const node = (id, entry, extra = {}) => ({ id, kind: "entry", entry, href: `#entry/${id}`, ...extra });
 const entry = (id, uuid, day, extra = {}) => ({ id, uuid, title: id, file: extra.file || "a.md", type: extra.type || ["decision"], status: "active", evidence: "confirmed", see: extra.see || [], superseded_by: extra.superseded_by || null, git: day ? { created: { date: day, author: "x" }, status_history: [{ status: "active", date: day }] } : undefined });
@@ -561,7 +562,7 @@ test("stageHeight: the base at least, twice it at most, what the window leaves i
 });
 
 // authors across the loaded projects
-import { mergeAuthors, sortAuthors } from "../../ktw_dashboard/web/lib.js";
+const { mergeAuthors, sortAuthors } = core;
 
 test("mergeAuthors: one row per name across projects with the sums, each project with its own numbers", () => {
   const groups = [

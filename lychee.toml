@@ -47,6 +47,10 @@ exclude = [
   "^https://x\\.com/",
   "^https://keepthewhy\\.com/dashboard/",
   "^https://github\\.com/oliver-zehentleitner/keep-the-why/tree/main/dashboard",
+  # dashboard 0.11.17 renamed web/lib.js to web/ktw-core.js; docs/dashboard.md links the
+  # new name on main, which exists there only after the merge. Drop this line once it does.
+  # Matched in its raw form: the remap below rewrites blob URLs before the exclusions apply.
+  "^https://raw\\.githubusercontent\\.com/oliver-zehentleitner/keep-the-why/main/dashboard/ktw_dashboard/web/ktw-core\\.js$",
 ]
 
 # github.com answers a burst of blob-page requests from an Actions runner with

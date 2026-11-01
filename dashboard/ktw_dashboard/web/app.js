@@ -1,8 +1,8 @@
-/* Keep the Why dashboard — plain modules (this and lib.js), no dependencies.
+/* Keep the Why dashboard — this module and the classic scripts in ktw-views.json (ktw-core.js), no dependencies.
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-import { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, shuffled, compareHits, snippetAt, highlight, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf, projectLabel, backlinksUrl, citingOf, hostAnchor , todayISO, addDays, dayDiff, timeGrid, stampLabel, existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan, createdOn, TYPE_KINDS, TYPE_TOKENS, paletteToken, typeKind, SHELF, stageCards, stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight, mergeAuthors, sortAuthors, AUTHOR_SORTS, ownerOf } from "./lib.js";
+const { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, shuffled, compareHits, snippetAt, highlight, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf, projectLabel, backlinksUrl, citingOf, hostAnchor , todayISO, addDays, dayDiff, timeGrid, stampLabel, existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan, createdOn, TYPE_KINDS, TYPE_TOKENS, paletteToken, typeKind, SHELF, stageCards, stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight, mergeAuthors, sortAuthors, AUTHOR_SORTS, ownerOf } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const narrow = () => !!window.matchMedia?.("(max-width: 900px)").matches;
@@ -20,7 +20,7 @@ const el = (tag, attrs = {}, ...kids) => {
 };
 const setKids = (node, ...kids) => node.replaceChildren(...kids.flat(Infinity).filter((k) => k != null && k !== false));
 const fmtDate = (d) => d || "—";
-// the platform's mark before a repository's name, from its URL (lib.js HOSTS);
+// the platform's mark before a repository's name, from its URL (ktw-core.js HOSTS);
 // none for a host no row knows
 function hostMark(url) {
   const h = hostOf(url); if (!h) return null;
@@ -253,7 +253,7 @@ function ensureBodies(state) {
 const publicHref = (canonical, root = "", hash = "#overview") => `${location.pathname}?public=${encodeURIComponent(canonical)}${root ? `&root=${encodeURIComponent(root)}` : ""}${hash}`;
 
 // ---------------------------------------------------------------- state
-let S = null; // what the page shows: this project, or with the family scope the whole family merged (lib.js, mergeStates)
+let S = null; // what the page shows: this project, or with the family scope the whole family merged (ktw-core.js, mergeStates)
 let SELF = null; // this project's own state, always
 let PROJECT = new URLSearchParams(location.search).get("project"); // null: the server's selected one
 const api = (path) => PROJECT ? `${path}?project=${encodeURIComponent(PROJECT)}` : path;
@@ -261,7 +261,7 @@ let filter = { status: "", evidence: "", author: "" };
 let selected = null; // entry id shown in the details pane
 // The clock: the day the page shows — the timeline's playhead. Set while the timeline is open, null
 // everywhere else. Every graph on the page follows it: only what existed on that day, with the status it
-// had then, and the See and Superseded by lines that had been written by then (lib.js, existsAt and friends).
+// had then, and the See and Superseded by lines that had been written by then (ktw-core.js, existsAt and friends).
 let CLOCK = null; let CLOCK_N = -1;
 // an entry of this project goes by this project's repository: with one, an entry without a Git date is not committed
 // yet and exists today only; without one there are no days to go by. A foreign entry's export came from a repository.
@@ -2714,7 +2714,7 @@ const authorColor = (name) => palette(Math.max(0, S.authors.findIndex((a) => a.n
 // into the depth — the day shown is the near plane, what came before recedes, what a day brings arrives at the
 // front — a card per entry in the colours of its Type, filled by Evidence, edged by Status, the See and Superseded
 // by lines between cards from the day they were written. Plain canvas, projected by hand: three numbers per point,
-// no library. The scene and the layout are pure functions in lib.js (stageCards … pushApart); this file holds the
+// no library. The scene and the layout are pure functions in ktw-core.js (stageCards … pushApart); this file holds the
 // page, the camera, the painter and the input. #timeline/<day> opens the page on that day.
 // speed: days per second, or "entry" — a step per second to the next day an entry appeared on, the days between
 // slid through in that second (several entries of one day are one step); frac: the part of a step between two
