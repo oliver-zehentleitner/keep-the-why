@@ -791,3 +791,19 @@ The stage's positions come from the scene. When the host draws a graph beside th
 
 **Rejected alternative:** passing the filter and the selection to the graph as callbacks. Those would be two more interfaces beside the four the proposal allows, for state that other views (lists, the stage) read as well. Moving `miniGraph()` with the view was also rejected: it would pull the graph builders, the friends and the family layers along, which is a later step.
 
+## Every view builds its DOM from one stateless helper file; the clock's view of an entry is the scene's
+
+**Id:** cba9a299-113c-41b6-96c1-8385a68d9135
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** proposed by the implementer while moving the timeline (PR 9) and agreed by the series' lead the same day (2026-11-01): `ktw-ui.js` to hold only DOM helpers and no state, the clock lookups on the scene
+**Revisit when:** a helper in `ktw-ui.js` needs state or the page, or a host wants its own pills
+**See:** dashboard.md#the-graph-view-takes-the-scene-nav-and-prefs-only-the-page-state-it-reads-moved-into-the-scene — 3b9cacf9-4e62-48b7-943e-a1650e09f3ce — as of 2026-11-01
+
+`web/ktw-ui.js` holds what every view builds from: `el` (an element, its attributes, handlers and children), `setKids`, the pills for a Type, a Status and an Evidence, and a Type's glyph as SVG. It holds nodes only — no state, nothing read from the page — and stands in the manifest after the core, under the same safety rules. The clock's view of an entry — whether it is there on the day shown (`atClock`), with which status (`statusNow`), and whether it goes by a repository (`hasRepo`) — is three methods on the scene. The graph view and the page use them, instead of each keeping a copy.
+
+**Reason:** the timeline, the thoughts list and the pages each need `el` and the pills. Moved one view at a time, each library file would have grown its own copy, and two coders moving views in parallel would have made two. The clock lookups read only the scene's day and state, so the scene is where they belong. A copy in each view was the first form the graph view took, and the copies would have drifted.
+
+**Rejected alternative:** each view file carrying its own `el` and pills — the drift above. Folding them into `ktw-core.js` was also rejected: the core has no DOM, and its node tests run without one.
+
