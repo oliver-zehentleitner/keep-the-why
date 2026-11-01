@@ -48,16 +48,16 @@
       "author: all"
     <option value="Alice Example">
       "Alice Example"
-    <option value="Bob Example">
-      "Bob Example"
     <option value="Carol Example">
       "Carol Example"
+    <option value="Bob Example">
+      "Bob Example"
   <button class="link-btn" hidden id="f-clear">
     "clear"
 <div class="tree-head">
   "Topics"
   <span class="count" id="tree-count">
-    "3 · 11 entries"
+    "3 · 12 entries"
 <div class="tree" id="tree">
   <details open>
     <summary data-file="api.md">
@@ -90,7 +90,7 @@
       <span class="tt">
         "Storage"
       <span class="count">
-        "3"
+        "4"
     <a class="leaf " data-id="storage.md#writes-retry-three-times-on-a-busy-lock" href="#entry/682e7ab6-125c-459f-9c67-a3c6b217d8ef" title="Writes retry three times on a busy lock">
       <i class="dot unknown open">
       <span>
@@ -103,6 +103,10 @@
       <i class="dot unknown active">
       <span>
         "Temporary files live beside the database"
+    <a class="leaf " data-id="storage.md#pasted-b-markup-b-stays-text" href="#entry/050ea108-42f3-4f0f-9ea9-dd2156f206d7" title="Pasted <b>markup</b> stays text">
+      <i class="dot inferred active">
+      <span>
+        "Pasted <b>markup</b> stays text"
   <details open>
     <summary data-file="sync.md">
       <span class="tw">
@@ -131,7 +135,7 @@
 ## #strip
 <a class="stat  " href="#overview" title>
   <b>
-    "11"
+    "12"
   "entries"
 <a class="stat  " href="#overview" title>
   <b>
@@ -186,8 +190,8 @@
   <a class="gh" href="https://github.com/acme/widget/tree/main" rel="noopener" target="_blank">
     "main"
   "@"
-  <a class="gh" href="https://github.com/acme/widget/commit/50c2216953a44b41c24297dd8aa28bb57e199977" rel="noopener" target="_blank" title="50c2216953a44b41c24297dd8aa28bb57e199977">
-    "50c2216"
+  <a class="gh" href="https://github.com/acme/widget/commit/9b269efd6cb77c2921fd4c7077058160739b02d5" rel="noopener" target="_blank" title="9b269efd6cb77c2921fd4c7077058160739b02d5">
+    "9b269ef"
 <span class="pill">
   <a class="gh" href="https://github.com/acme/widget" rel="noopener" target="_blank">
     <svg aria-label="GitHub" class="host-mark" role="img" viewBox="0 0 24 24">

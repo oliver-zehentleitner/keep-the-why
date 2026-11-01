@@ -245,14 +245,17 @@ function snippetAt(text, i, len, before = 60, after = 160) {
   return (from > 0 ? "…" : "") + text.slice(from, to).replace(/\s+/g, " ").trim() + (to < text.length ? "…" : "");
 }
 // HTML-escaped text with every term marked, case-insensitively
-function highlight(text, terms) {
+// a text cut where search terms match, longest term first, case-insensitive:
+// [{ text, mark }] — the page makes a <mark> of each marked part, text of the rest
+function highlightParts(text, terms) {
   const ts = (terms || []).filter(Boolean);
   const s = String(text ?? "");
-  if (!ts.length) return esc(s);
+  if (!ts.length) return s ? [{ text: s, mark: false }] : [];
   const re = new RegExp([...ts].sort((a, b) => b.length - a.length).map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|"), "gi");
-  let out = ""; let at = 0;
-  for (const m of s.matchAll(re)) { out += esc(s.slice(at, m.index)) + `<mark>${esc(m[0])}</mark>`; at = m.index + m[0].length; }
-  return out + esc(s.slice(at));
+  const out = []; let at = 0;
+  for (const m of s.matchAll(re)) { if (m.index > at) out.push({ text: s.slice(at, m.index), mark: false }); out.push({ text: m[0], mark: true }); at = m.index + m[0].length; }
+  if (at < s.length) out.push({ text: s.slice(at), mark: false });
+  return out;
 }
 
 // A family location as the published side reads it: an https URL is another
@@ -691,7 +694,7 @@ KTW.core = Object.freeze({
   esc, plural, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug,
   hostAnchor, hostFileLink, hostTreeLink, HOSTS, hostOf, canonicalOf, ownerOf, projectLabel,
   parseSupersededBy, typeName, kindLabel, familyRank, familyOrder, groupByFamily, shuffled, searchTerms,
-  registryMatches, bodyProse, searchHit, compareHits, snippetAt, highlight, resolveLocation, backlinksUrl,
+  registryMatches, bodyProse, searchHit, compareHits, snippetAt, highlightParts, resolveLocation, backlinksUrl,
   citingOf, friendsOf, thoughtsOf, SHAKY, thoughtInsights, linkFamily, authorLookup, mergeStates,
   todayISO, nowISO, isMoment, msOf, isoAt, addDays, dayDiff, createdOn,
   existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan, timeGrid, stampLabel,

@@ -130,28 +130,28 @@
   <span class="k">
     "created"
   <span class="v">
-    <a class="author" href="https://github.com/acme/widget/commit/5913347" rel="noopener" target="_blank" title="Carol Example — open the profile on the host (looked up from commit 5913347)">
+    <a class="author" href="https://github.com/acme/widget/commit/51344a6" rel="noopener" target="_blank" title="Carol Example — open the profile on the host (looked up from commit 51344a6)">
       "Carol Example"
     "· 2026-05-10 ·"
     <code>
-      "5913347"
+      "51344a6"
   <span class="k">
     "last touched"
   <span class="v">
-    <a class="author" href="https://github.com/acme/widget/commit/5913347" rel="noopener" target="_blank" title="Carol Example — open the profile on the host (looked up from commit 5913347)">
+    <a class="author" href="https://github.com/acme/widget/commit/51344a6" rel="noopener" target="_blank" title="Carol Example — open the profile on the host (looked up from commit 51344a6)">
       "Carol Example"
     "· 2026-05-10 ·"
     <code>
-      "5913347"
+      "51344a6"
 <h3>
   "Status history"
 <ul class="hist">
   <li class="active">
     "active"
     <div class="d">
-      <a class="author" href="https://github.com/acme/widget/commit/5913347" rel="noopener" target="_blank" title="Carol Example — open the profile on the host (looked up from commit 5913347)">
+      <a class="author" href="https://github.com/acme/widget/commit/51344a6" rel="noopener" target="_blank" title="Carol Example — open the profile on the host (looked up from commit 51344a6)">
         "Carol Example"
-      "· 2026-05-10 · 5913347"
+      "· 2026-05-10 · 51344a6"
 <h3>
   "Backlinks (1)"
 <a class="backlink" href="#entry/190b1989-a347-471b-8463-4f83b3cfff92">

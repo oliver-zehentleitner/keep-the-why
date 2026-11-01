@@ -3,7 +3,8 @@
   "api": 0,
   "state": 2,
   "scripts": [
-    "ktw-core.js"
+    "ktw-core.js",
+    "ktw-markdown.js"
   ],
   "styles": []
 }

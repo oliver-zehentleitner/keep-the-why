@@ -99,7 +99,7 @@ def raw_url(canonical):
     if m:
         return f"https://raw.githubusercontent.com/{m.group(1)}/{m.group(2)}/HEAD/.keep-the-why"
     # GitLab: the repository files API, which sends Access-Control-Allow-Origin — the /-/raw/ path does not,
-    # so a browser on another site (the globe, public mode) could not read it. Same rule as lib.js rawFileUrl.
+    # so a browser on another site (the globe, public mode) could not read it. Same rule as rawFileUrl in the dashboard's ktw-core.js.
     gl = re.match(r"^(https://gitlab\.[^/]+)/(.+)$", canonical.rstrip("/"))
     if gl:
         project = urllib.parse.quote(gl.group(2), safe="")

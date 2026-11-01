@@ -60,7 +60,7 @@
           "2026-04-15"
       <tr class="clickable ">
         <td>
-          <a class="author" href="https://github.com/acme/widget/commit/50c2216" rel="noopener" target="_blank" title="Bob Example — open the profile on the host (looked up from commit 50c2216)">
+          <a class="author" href="https://github.com/acme/widget/commit/9b269ef" rel="noopener" target="_blank" title="Bob Example — open the profile on the host (looked up from commit 9b269ef)">
             "Bob Example"
         <td>
           "3"
@@ -79,20 +79,20 @@
           "2026-06-01"
       <tr class="clickable ">
         <td>
-          <a class="author" href="https://github.com/acme/widget/commit/5913347" rel="noopener" target="_blank" title="Carol Example — open the profile on the host (looked up from commit 5913347)">
+          <a class="author" href="https://github.com/acme/widget/commit/51344a6" rel="noopener" target="_blank" title="Carol Example — open the profile on the host (looked up from commit 51344a6)">
             "Carol Example"
         <td>
-          "3"
+          "4"
         <td>
-          "6"
+          "7"
         <td>
           "1"
         <td>
           <div style="min-width:160px">
             <div class="stack">
-              <i style="width:33.333333333333336%;background:var(--confirmed)" title="confirmed: 1">
-              <i style="width:33.333333333333336%;background:var(--inferred)" title="inferred: 1">
-              <i style="width:33.333333333333336%;background:var(--unknown)" title="unknown: 1">
+              <i style="width:25%;background:var(--confirmed)" title="confirmed: 1">
+              <i style="width:50%;background:var(--inferred)" title="inferred: 2">
+              <i style="width:25%;background:var(--unknown)" title="unknown: 1">
         <td class="mono">
           "2026-05-10"
         <td class="mono">

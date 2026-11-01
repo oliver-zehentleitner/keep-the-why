@@ -101,6 +101,19 @@ A, B, C, D, E, F, G, H, I, J, K = (
 )
 
 
+# An entry whose text is hostile on purpose: tags, an event handler, a script, a javascript:
+# link. The snapshots show it as text — the page builds no markup from what an entry says.
+X = "050ea108-42f3-4f0f-9ea9-dd2156f206d7"
+HOSTILE_BODY = """
+Someone pasted <script>alert("body")</script> and <img src=x onerror=alert(3)> into a body.
+
+**Reason:** a log line that reads `<b>bold</b>` must reach the reader as written, and
+[a link](javascript:alert(4)) or [another](data:text/html,x) must not become one.
+
+- <i onclick="alert(5)">list item</i>
+"""
+
+
 def see(file, title, uid, day):
     anchor = title.lower().replace(" ", "-")
     return f"{file}#{anchor} — {uid} — as of {day}"
@@ -291,6 +304,16 @@ def commits():
             "active",
             "unknown",
             "Temporary files are written next to the database file, not to the system's temp directory.",
+        )
+        + "\n"
+        + entry(
+            "Pasted <b>markup</b> stays text",
+            X,
+            ["constraint"],
+            "active",
+            "inferred",
+            HOSTILE_BODY,
+            source="<img src=x onerror=alert(1)> [report](javascript:alert(2))",
         )
     )
     api_v2 = topic(

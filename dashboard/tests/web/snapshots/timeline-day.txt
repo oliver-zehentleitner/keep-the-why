@@ -30,17 +30,17 @@
         <rect class="b" fill="#835bec" height="40" rx="2" width="108" x="35" y="58">
           <title>
             "2026-03 · Alice Example: 2 — click: that month's entries, and the day moves to its end"
-        <rect class="b" fill="#4aa3df" height="40" rx="2" width="108" x="35" y="18">
+        <rect class="b" fill="#4fbf7a" height="40" rx="2" width="108" x="35" y="18">
           <title>
             "2026-03 · Bob Example: 2 — click: that month's entries, and the day moves to its end"
         <rect class="b" fill="#835bec" height="60" rx="2" width="108" x="145" y="38">
           <title>
             "2026-04 · Alice Example: 3 — click: that month's entries, and the day moves to its end"
-        <rect class="b" fill="#4fbf7a" height="60" rx="2" width="108" x="255" y="38">
+        <rect class="b" fill="#4aa3df" height="80" rx="2" width="108" x="255" y="18">
           <title>
-            "2026-05 · Carol Example: 3 — click: that month's entries, and the day moves to its end"
+            "2026-05 · Carol Example: 4 — click: that month's entries, and the day moves to its end"
         <rect class="sup" height="6" width="3" x="255" y="104">
-        <rect class="b" fill="#4aa3df" height="20" rx="2" width="108" x="365" y="78">
+        <rect class="b" fill="#4fbf7a" height="20" rx="2" width="108" x="365" y="78">
           <title>
             "2026-06 · Bob Example: 1 — click: that month's entries, and the day moves to its end"
         <line class="now" x1="196.33333333333334" x2="196.33333333333334" y1="14" y2="112">
@@ -52,10 +52,10 @@
         "Alice Example"
       <span>
         <i class="sw" style="background:#4aa3df">
-        "Bob Example"
+        "Carol Example"
       <span>
         <i class="sw" style="background:#4fbf7a">
-        "Carol Example"
+        "Bob Example"
       <span>
         <i class="sw" style="background:var(--superseded)">
         "superseded that month"

@@ -26,7 +26,7 @@
       "confirmed"
     <span class="pill">
       "Source:"
-      <a href="https://github.com/acme/widget/issues/12" rel="noopener" target="_blank">
+      <a href="https://github.com/acme/widget/issues/12" rel="noopener noreferrer" target="_blank">
         "issue 12"
   <div class="body">
     <p>
@@ -93,7 +93,7 @@
   <span class="k">
     "source"
   <span class="v">
-    <a href="https://github.com/acme/widget/issues/12" rel="noopener" target="_blank">
+    <a href="https://github.com/acme/widget/issues/12" rel="noopener noreferrer" target="_blank">
       "issue 12"
 <h3>
   "Git"
@@ -101,28 +101,28 @@
   <span class="k">
     "created"
   <span class="v">
-    <a class="author" href="https://github.com/acme/widget/commit/50c2216" rel="noopener" target="_blank" title="Bob Example — open the profile on the host (looked up from commit 50c2216)">
+    <a class="author" href="https://github.com/acme/widget/commit/9b269ef" rel="noopener" target="_blank" title="Bob Example — open the profile on the host (looked up from commit 9b269ef)">
       "Bob Example"
     "· 2026-06-01 ·"
     <code>
-      "50c2216"
+      "9b269ef"
   <span class="k">
     "last touched"
   <span class="v">
-    <a class="author" href="https://github.com/acme/widget/commit/50c2216" rel="noopener" target="_blank" title="Bob Example — open the profile on the host (looked up from commit 50c2216)">
+    <a class="author" href="https://github.com/acme/widget/commit/9b269ef" rel="noopener" target="_blank" title="Bob Example — open the profile on the host (looked up from commit 9b269ef)">
       "Bob Example"
     "· 2026-06-01 ·"
     <code>
-      "50c2216"
+      "9b269ef"
 <h3>
   "Status history"
 <ul class="hist">
   <li class="active">
     "active"
     <div class="d">
-      <a class="author" href="https://github.com/acme/widget/commit/50c2216" rel="noopener" target="_blank" title="Bob Example — open the profile on the host (looked up from commit 50c2216)">
+      <a class="author" href="https://github.com/acme/widget/commit/9b269ef" rel="noopener" target="_blank" title="Bob Example — open the profile on the host (looked up from commit 9b269ef)">
         "Bob Example"
-      "· 2026-06-01 · 50c2216"
+      "· 2026-06-01 · 9b269ef"
 <h3>
   "Backlinks (0)"
 <p class="empty">

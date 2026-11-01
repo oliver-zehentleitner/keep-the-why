@@ -30,7 +30,8 @@
   <div class="pager">
     <a href="#entry/190b1989-a347-471b-8463-4f83b3cfff92">
       "← The 2026-03 lock storm"
-    <span>
+    <a href="#entry/050ea108-42f3-4f0f-9ea9-dd2156f206d7">
+      "Pasted <b>markup</b> stays text →"
 
 ## #details
 <div class="pane-width" title="the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details">
@@ -77,28 +78,28 @@
   <span class="k">
     "created"
   <span class="v">
-    <a class="author" href="https://github.com/acme/widget/commit/5913347" rel="noopener" target="_blank" title="Carol Example — open the profile on the host (looked up from commit 5913347)">
+    <a class="author" href="https://github.com/acme/widget/commit/51344a6" rel="noopener" target="_blank" title="Carol Example — open the profile on the host (looked up from commit 51344a6)">
       "Carol Example"
     "· 2026-05-10 ·"
     <code>
-      "5913347"
+      "51344a6"
   <span class="k">
     "last touched"
   <span class="v">
-    <a class="author" href="https://github.com/acme/widget/commit/5913347" rel="noopener" target="_blank" title="Carol Example — open the profile on the host (looked up from commit 5913347)">
+    <a class="author" href="https://github.com/acme/widget/commit/51344a6" rel="noopener" target="_blank" title="Carol Example — open the profile on the host (looked up from commit 51344a6)">
       "Carol Example"
     "· 2026-05-10 ·"
     <code>
-      "5913347"
+      "51344a6"
 <h3>
   "Status history"
 <ul class="hist">
   <li class="active">
     "active"
     <div class="d">
-      <a class="author" href="https://github.com/acme/widget/commit/5913347" rel="noopener" target="_blank" title="Carol Example — open the profile on the host (looked up from commit 5913347)">
+      <a class="author" href="https://github.com/acme/widget/commit/51344a6" rel="noopener" target="_blank" title="Carol Example — open the profile on the host (looked up from commit 51344a6)">
         "Carol Example"
-      "· 2026-05-10 · 5913347"
+      "· 2026-05-10 · 51344a6"
 <h3>
   "Backlinks (2)"
 <a class="backlink" href="#entry/cc7ef11a-f83d-4d95-b45c-d43639003f41">
