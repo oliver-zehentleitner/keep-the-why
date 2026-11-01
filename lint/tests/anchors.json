@@ -1,0 +1,25 @@
+{
+  "comment": "Heading anchors as GitHub renders them, the shared vectors of ktw_lint.entries.anchor and ktw-core.js hostAnchor. `host` marks the ones read from a rendered file on GitHub and GitLab (2026-11-01, probe branches since deleted): both hosts agreed on every one but `<script>`, which GitLab drops (tags-alert1-here) and GitHub shows as text. `legacy` is what the linter derived before 0.20.3.1, where it differs.",
+  "vectors": [
+    { "title": "Pasted <b>markup</b> stays text", "anchor": "pasted-markup-stays-text", "legacy": "pasted-bmarkupb-stays-text", "host": true },
+    { "title": "`id` is validated as a file-name alphabet, not a shape", "anchor": "id-is-validated-as-a-file-name-alphabet-not-a-shape", "host": true },
+    { "title": "Retry cap on a specific error code", "anchor": "retry-cap-on-a-specific-error-code", "host": true },
+    { "title": "Snapshot-before-buffer ordering", "anchor": "snapshot-before-buffer-ordering", "host": true },
+    { "title": "A & B: <i>why</i> \"quotes\" (and) 'apostrophes'", "anchor": "a--b-why-quotes-and-apostrophes", "legacy": "a--b-iwhyi-quotes-and-apostrophes", "host": true },
+    { "title": "Ünïcödé — em dash – en dash", "anchor": "ünïcödé--em-dash--en-dash", "host": true },
+    { "title": "Tags <script>alert(1)</script> here", "anchor": "tags-scriptalert1script-here", "host": true },
+    { "title": "Dots.and_underscores__double", "anchor": "dotsand_underscores__double", "host": true },
+    { "title": "Trailing punctuation?!", "anchor": "trailing-punctuation", "host": true },
+    { "title": "100% <br> line break", "anchor": "100--line-break", "legacy": "100-br-line-break", "host": true },
+    { "title": "<span>only html</span>", "anchor": "only-html", "legacy": "spanonly-htmlspan", "host": true },
+    { "title": "Emoji 🚀 rocket", "anchor": "emoji--rocket", "host": true },
+    { "title": "Plus+sign and slash/path and colon: here", "anchor": "plussign-and-slashpath-and-colon-here", "host": true },
+    { "title": "Children lines are `<name>: <location> — <scope>`, in the block grammar", "anchor": "children-lines-are-name-location--scope-in-the-block-grammar" },
+    { "title": "Settings are kept as ktw-<name>, values unchanged", "anchor": "settings-are-kept-as-ktw-name-values-unchanged" },
+    { "title": "A [linked](https://example.org) word", "anchor": "a-linked-word", "legacy": "a-linkedhttpsexampleorg-word" },
+    { "title": "An image ![logo](logo.png) here", "anchor": "an-image--here", "legacy": "an-image-logologopng-here" },
+    { "title": "Use _emphasis_ and __strong__ here", "anchor": "use-emphasis-and-strong-here", "legacy": "use-_emphasis_-and-__strong__-here" },
+    { "title": "  Spaces around  ", "anchor": "spaces-around" },
+    { "title": "`WSUpgradeRequest` / `WSUpgradeResponse` keep a shape", "anchor": "wsupgraderequest--wsupgraderesponse-keep-a-shape" }
+  ]
+}

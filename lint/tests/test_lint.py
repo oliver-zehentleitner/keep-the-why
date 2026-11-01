@@ -973,6 +973,27 @@ class EntryIdentity(_ProjectFixture):
             [], self.codes(findings), msg=[f.format_text() for f in findings]
         )
 
+    def test_anchor_follows_the_rendered_heading(self):
+        # inline HTML is markup, not text: the host's anchor leaves it out
+        title = "Pasted <b>markup</b> stays text"
+        for locator in ("pasted-markup-stays-text", "pasted-bmarkupb-stays-text"):
+            # the host's anchor, and the one the linter derived before 0.20.3.1
+            with self.subTest(locator=locator):
+                see = f"**See:** auth.md#{locator} — {ID_B} — as of 2026-11-01\n"
+                self.project_0_18(
+                    sync_extra=see,
+                    more_files={"auth.md": "# Auth\n\n" + entry(title, ID_B)},
+                )
+                findings, _ = self.run_lint()
+                self.assertEqual([], self.codes(findings))
+        see = f"**See:** auth.md#pasted-stays-text — {ID_B} — as of 2026-11-01\n"
+        self.project_0_18(
+            sync_extra=see, more_files={"auth.md": "# Auth\n\n" + entry(title, ID_B)}
+        )
+        findings, _ = self.run_lint()
+        self.assertEqual(["E119"], self.codes(findings))
+        self.assertIn("#pasted-markup-stays-text", findings[0].message)
+
     def test_remote_see_is_shape_only(self):
         see = f"**See:** https://github.com/acme/other — {ID_C} — as of 2026-09-27\n"
         self.project_0_18(sync_extra=see)
@@ -1541,3 +1562,28 @@ class LintSetup(_ProjectFixture):
             )
             findings, _ = self.run_lint()
             self.assertEqual(self.codes(findings), expected, msg=value)
+
+
+class AnchorVectors(unittest.TestCase):
+    """The shared vectors (tests/anchors.json): read from a rendered file on
+    GitHub where marked, and checked by ktw-core.js's hostAnchor too."""
+
+    def test_anchor_and_legacy_anchor(self):
+        import json
+
+        from ktw_lint.entries import anchor, legacy_anchor
+
+        with open(
+            os.path.join(os.path.dirname(__file__), "anchors.json"), encoding="utf-8"
+        ) as fh:
+            vectors = json.load(fh)["vectors"]
+        for v in vectors:
+            with self.subTest(title=v["title"]):
+                self.assertEqual(anchor(v["title"]), v["anchor"])
+                self.assertEqual(
+                    legacy_anchor(v["title"]), v.get("legacy", v["anchor"])
+                )
+
+
+if __name__ == "__main__":
+    unittest.main()

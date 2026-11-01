@@ -30,7 +30,13 @@ from .config import (
     parse_home_block,
     parse_semver,
 )
-from .entries import anchor, parse_index_headings, parse_index_text, parse_topic_text
+from .entries import (
+    anchor,
+    legacy_anchor,
+    parse_index_headings,
+    parse_index_text,
+    parse_topic_text,
+)
 from .findings import ERROR, WARNING, Finding
 
 GATE_STATUS_EVIDENCE = (0, 3, 0)
@@ -1188,7 +1194,9 @@ class Linter:
         want_file = os.path.basename(found_path)
         got_file, got_anchor = locator
         if got_file != want_file or (
-            got_anchor is not None and got_anchor != anchor(found_entry.title)
+            got_anchor is not None
+            and got_anchor != anchor(found_entry.title)
+            and got_anchor != legacy_anchor(found_entry.title)
         ):
             self.add(
                 ERROR,
