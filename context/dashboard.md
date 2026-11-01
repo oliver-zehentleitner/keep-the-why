@@ -740,3 +740,18 @@ Every setting a reader makes — the graph's switches and labels, the pane width
 **Reason:** the prefix is where the host comes in. Each host keeps the settings under its own name (Maity under `maity.ktw.`), so the views must not carry the dashboard's `ktw-` in every key. Keeping the stored strings exactly as they were is what lets the dashboard switch to `prefs` without a migration. A blocked or full storage now reads as the fallback everywhere; before, the theme switch was the one place that read storage unguarded.
 
 **Rejected alternative:** the full keys (`"ktw-friends"`) as the prefs names — another host would store `maity.ktw.ktw-friends` or have to strip the dashboard's prefix. Typed values (booleans, numbers) in the interface — every reader of an existing setting would then need converting code, for no gain the views can see.
+
+## One heading-anchor rule, the host's: the linter holds it, the page mirrors it, and an entry's id is its anchor
+
+**Id:** e8766afe-6da7-45ca-87ab-af4fd01ec891
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** anchors read from rendered files on GitHub and GitLab, 2026-11-01 (probe branches, since deleted; the vectors in `lint/tests/anchors.json`); maintainer decision the same day that the entry ids follow the rule too ("nobody has bookmarks"); the legacy acceptance in `E119` and GitHub's side on disallowed tags are the implementer's choices
+**Revisit when:** GitHub or GitLab changes how it derives a heading's anchor, or a project's titles start using HTML the two hosts render differently
+
+A heading's anchor is derived the way the hosts derive it, from the heading's text as rendered: a code span as written, a link as its text, an image as nothing, underscore emphasis without its underscores, and the markup of an inline HTML tag left out. Then: lowercase, everything but letters, digits, `_`, `-` and spaces dropped, each space a hyphen. `ktw_lint.entries.anchor` is the rule. `E119` uses it for `See` locators, the dashboard uses it for an entry's id (`<file>#<anchor>`) and for the page without JavaScript, and `hostAnchor` in `ktw-core.js` mirrors it for host links. Both implementations are tested against one vector file. `E119` also accepts the anchor the linter derived from the raw title before, which differs only for titles with inline HTML, a link or underscore emphasis.
+
+**Reason:** five copies of the rule had drifted apart. The four that followed GitHub never looked at HTML, so a title with `<b>` pointed links at the top of the file. The dashboard's id had a rule of its own (anything outside a-z0-9 a hyphen), so the address the page showed for an entry differed from the one a `See` line writes in about one title in five. With one rule, the locator the skill writes, the id the page uses and the host's anchor are the same string. The legacy acceptance keeps every locator written before the change from becoming an error in a project's CI.
+
+**Rejected alternative:** keeping the dashboard's ids on their own rule and fixing only the host links — two addresses for one entry stay. Following GitLab for a disallowed tag such as `<script>` (it drops the tag; GitHub shows it as text) — GitHub is the host the locator convention was written against, and no real title carries such a tag. Rendering titles with a Markdown library to read the anchor — a dependency for both the linter and the page, for a rule this short.
