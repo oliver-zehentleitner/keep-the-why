@@ -96,6 +96,7 @@ const routes = [
   ["entry-contradicted", `#entry/${byTitle("capped at one megabyte").uuid}`],
   ["entry-source-link", `#entry/${byTitle("stable code").uuid}`],
   ["entry-undefined-type", `#entry/${byTitle("Temporary files").uuid}`],
+  ["entry-hostile-text", `#entry/${byTitle("Pasted").uuid}`],
   ["search", "#search/self/snapshot"],
 ];
 const results = new Map();

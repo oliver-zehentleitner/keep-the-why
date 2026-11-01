@@ -24,13 +24,13 @@
       <span class="k">
         "active"
       <div class="bar">
-        <i class="active" style="width:66.66666666666667%">
+        <i class="active" style="width:75%">
       <span class="v">
-        "2"
+        "3"
       <span class="k">
         "open"
       <div class="bar">
-        <i class="open" style="width:33.333333333333336%">
+        <i class="open" style="width:25%">
       <span class="v">
         "1"
   <div class="card">
@@ -40,13 +40,19 @@
       <span class="k">
         "confirmed"
       <div class="bar">
-        <i class="confirmed" style="width:33.333333333333336%">
+        <i class="confirmed" style="width:25%">
+      <span class="v">
+        "1"
+      <span class="k">
+        "inferred"
+      <div class="bar">
+        <i class="inferred" style="width:25%">
       <span class="v">
         "1"
       <span class="k">
         "unknown"
       <div class="bar">
-        <i class="unknown" style="width:66.66666666666667%">
+        <i class="unknown" style="width:50%">
       <span class="v">
         "2"
 <h2>
@@ -94,6 +100,20 @@
       "Temporary files are written next to the database file, not to the system's temp directory."
     <div class="rm">
       "Storage · Carol Example · 2026-05-10"
+  <a class="row " href="#entry/050ea108-42f3-4f0f-9ea9-dd2156f206d7">
+    <div class="rt">
+      <span>
+        "Pasted <b>markup</b> stays text"
+      <span class="pill type">
+        "constraint"
+      <span class="pill status-active">
+        "active"
+      <span class="pill ev-inferred">
+        "inferred"
+    <div class="rs">
+      "a log line that reads <b>bold</b> must reach the reader as written, and [a link](javascript:alert(4)) or [another](data:text/html,x) must not become one."
+    <div class="rm">
+      "Storage · Carol Example · 2026-05-10"
 
 ## #details
 <div class="pane-width" title="the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details">
@@ -118,7 +138,7 @@
   <span class="k">
     "entries"
   <span class="v">
-    "3"
+    "4"
 <h3>
   "References out (1)"
 <a class="backlink" href="#topic/sync.md">

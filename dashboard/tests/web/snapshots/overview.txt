@@ -10,8 +10,8 @@
     <a class="gh" href="https://github.com/acme/widget/tree/main" rel="noopener" target="_blank">
       "main"
     "@"
-    <a class="gh" href="https://github.com/acme/widget/commit/50c2216953a44b41c24297dd8aa28bb57e199977" rel="noopener" target="_blank" title="50c2216953a44b41c24297dd8aa28bb57e199977">
-      "50c2216"
+    <a class="gh" href="https://github.com/acme/widget/commit/9b269efd6cb77c2921fd4c7077058160739b02d5" rel="noopener" target="_blank" title="9b269efd6cb77c2921fd4c7077058160739b02d5">
+      "9b269ef"
   "·"
   <a class="gh" href="https://github.com/acme/widget" rel="noopener" target="_blank">
     <svg aria-label="GitHub" class="host-mark" role="img" viewBox="0 0 24 24">
@@ -26,31 +26,31 @@
         <span class="k">
           "decision"
         <div class="bar">
-          <i class="decision" style="width:50%">
+          <i class="decision" style="width:46.15384615384615%">
         <span class="v">
           "6"
         <span class="k">
           "constraint"
         <div class="bar">
-          <i class="constraint" style="width:25%">
+          <i class="constraint" style="width:30.76923076923077%">
         <span class="v">
-          "3"
+          "4"
         <span class="k">
           "workaround"
         <div class="bar">
-          <i class="workaround" style="width:8.333333333333334%">
+          <i class="workaround" style="width:7.6923076923076925%">
         <span class="v">
           "1"
         <span class="k">
           "incident"
         <div class="bar">
-          <i class="incident" style="width:8.333333333333334%">
+          <i class="incident" style="width:7.6923076923076925%">
         <span class="v">
           "1"
         <span class="k">
           "undefined"
         <div class="bar">
-          <i class="undefined" style="width:8.333333333333334%">
+          <i class="undefined" style="width:7.6923076923076925%">
         <span class="v">
           "1"
     <div class="card">
@@ -60,25 +60,25 @@
         <span class="k">
           "active"
         <div class="bar">
-          <i class="active" style="width:72.72727272727273%">
+          <i class="active" style="width:75%">
         <span class="v">
-          "8"
+          "9"
         <span class="k">
           "open"
         <div class="bar">
-          <i class="open" style="width:9.090909090909092%">
+          <i class="open" style="width:8.333333333333334%">
         <span class="v">
           "1"
         <span class="k">
           "pending-confirmation"
         <div class="bar">
-          <i class="pending-confirmation" style="width:9.090909090909092%">
+          <i class="pending-confirmation" style="width:8.333333333333334%">
         <span class="v">
           "1"
         <span class="k">
           "superseded"
         <div class="bar">
-          <i class="superseded" style="width:9.090909090909092%">
+          <i class="superseded" style="width:8.333333333333334%">
         <span class="v">
           "1"
     <div class="card">
@@ -88,19 +88,19 @@
         <span class="k">
           "confirmed"
         <div class="bar">
-          <i class="confirmed" style="width:54.54545454545455%">
+          <i class="confirmed" style="width:50%">
         <span class="v">
           "6"
         <span class="k">
           "inferred"
         <div class="bar">
-          <i class="inferred" style="width:27.272727272727273%">
+          <i class="inferred" style="width:33.333333333333336%">
         <span class="v">
-          "3"
+          "4"
         <span class="k">
           "unknown"
         <div class="bar">
-          <i class="unknown" style="width:18.181818181818183%">
+          <i class="unknown" style="width:16.666666666666668%">
         <span class="v">
           "2"
   <div class="card">
@@ -168,12 +168,13 @@
     <div class="tt">
       "Storage"
       <span class="count">
-        "3 entries"
+        "4 entries"
     <div class="td">
       "locks, retries and where files live"
     <div class="stack">
-      <i style="width:33.333333333333336%;background:var(--confirmed)" title="confirmed: 1">
-      <i style="width:66.66666666666667%;background:var(--unknown)" title="unknown: 2">
+      <i style="width:25%;background:var(--confirmed)" title="confirmed: 1">
+      <i style="width:25%;background:var(--inferred)" title="inferred: 1">
+      <i style="width:50%;background:var(--unknown)" title="unknown: 2">
     <div class="refs">
       "storage.md · → 1 · ← 2"
   <a class="topic-card" href="#topic/sync.md">
@@ -291,18 +292,18 @@
       "applying buffered events before the snapshot landed caused duplicate-then-overwritten state. The ordering is not visible in the code."
     <div class="rm">
       "Sync · Alice Example · 2026-03-02 · touched 2026-05-10"
-  <a class="row " href="#entry/c1c37ec2-933b-4ca3-8c16-0a61f908f4bd">
+  <a class="row " href="#entry/050ea108-42f3-4f0f-9ea9-dd2156f206d7">
     <div class="rt">
       <span>
-        "Temporary files live beside the database"
-      <span class="pill type" title="undefined — no category fits a file location">
-        "undefined"
+        "Pasted <b>markup</b> stays text"
+      <span class="pill type">
+        "constraint"
       <span class="pill status-active">
         "active"
-      <span class="pill ev-unknown">
-        "unknown"
+      <span class="pill ev-inferred">
+        "inferred"
     <div class="rs">
-      "Temporary files are written next to the database file, not to the system's temp directory."
+      "a log line that reads <b>bold</b> must reach the reader as written, and [a link](javascript:alert(4)) or [another](data:text/html,x) must not become one."
     <div class="rm">
       "Storage · Carol Example · 2026-05-10"
 

@@ -14,6 +14,19 @@
    "touched": 1
   },
   {
+   "created": 4,
+   "evidence": {
+    "confirmed": 1,
+    "inferred": 2,
+    "unknown": 1
+   },
+   "first": "2026-05-10",
+   "last": "2026-05-10",
+   "name": "Carol Example",
+   "superseded": 1,
+   "touched": 7
+  },
+  {
    "created": 3,
    "evidence": {
     "confirmed": 2,
@@ -24,19 +37,6 @@
    "name": "Bob Example",
    "superseded": 0,
    "touched": 4
-  },
-  {
-   "created": 3,
-   "evidence": {
-    "confirmed": 1,
-    "inferred": 1,
-    "unknown": 1
-   },
-   "first": "2026-05-10",
-   "last": "2026-05-10",
-   "name": "Carol Example",
-   "superseded": 1,
-   "touched": 6
   }
  ],
  "dashboard": "0.0.0-fixture",
@@ -125,7 +125,7 @@
     },
     "last_touched": {
      "author": "Bob Example",
-     "commit": "50c2216",
+     "commit": "9b269ef",
      "date": "2026-06-01",
      "time": "2026-06-01T08:00:00Z"
     },
@@ -139,7 +139,7 @@
      },
      {
       "author": "Bob Example",
-      "commit": "50c2216",
+      "commit": "9b269ef",
       "date": "2026-06-01",
       "status": "active",
       "time": "2026-06-01T08:00:00Z"
@@ -185,7 +185,7 @@
     },
     "last_touched": {
      "author": "Bob Example",
-     "commit": "50c2216",
+     "commit": "9b269ef",
      "date": "2026-06-01",
      "time": "2026-06-01T08:00:00Z"
     },
@@ -239,20 +239,20 @@
    "git": {
     "created": {
      "author": "Bob Example",
-     "commit": "50c2216",
+     "commit": "9b269ef",
      "date": "2026-06-01",
      "time": "2026-06-01T08:00:00Z"
     },
     "last_touched": {
      "author": "Bob Example",
-     "commit": "50c2216",
+     "commit": "9b269ef",
      "date": "2026-06-01",
      "time": "2026-06-01T08:00:00Z"
     },
     "status_history": [
      {
       "author": "Bob Example",
-      "commit": "50c2216",
+      "commit": "9b269ef",
       "date": "2026-06-01",
       "status": "active",
       "time": "2026-06-01T08:00:00Z"
@@ -356,7 +356,7 @@
     },
     "last_touched": {
      "author": "Carol Example",
-     "commit": "5913347",
+     "commit": "51344a6",
      "date": "2026-05-10",
      "time": "2026-05-10T16:45:00Z"
     },
@@ -405,27 +405,27 @@
     "text": "Temporary files are written next to the database file, not to the system's temp directory.",
     "why_open": null
    },
-   "end_line": 35,
+   "end_line": 36,
    "evidence": "unknown",
    "file": "storage.md",
    "findings": [],
    "git": {
     "created": {
      "author": "Carol Example",
-     "commit": "5913347",
+     "commit": "51344a6",
      "date": "2026-05-10",
      "time": "2026-05-10T16:45:00Z"
     },
     "last_touched": {
      "author": "Carol Example",
-     "commit": "5913347",
+     "commit": "51344a6",
      "date": "2026-05-10",
      "time": "2026-05-10T16:45:00Z"
     },
     "status_history": [
      {
       "author": "Carol Example",
-      "commit": "5913347",
+      "commit": "51344a6",
       "date": "2026-05-10",
       "status": "active",
       "time": "2026-05-10T16:45:00Z"
@@ -445,6 +445,57 @@
     "undefined — no category fits a file location"
    ],
    "uuid": "c1c37ec2-933b-4ca3-8c16-0a61f908f4bd",
+   "verification": null
+  },
+  {
+   "body": {
+    "consequence": null,
+    "considered": null,
+    "reason": "a log line that reads `<b>bold</b>` must reach the reader as written, and\n[a link](javascript:alert(4)) or [another](data:text/html,x) must not become one.",
+    "rejected": [],
+    "text": "Someone pasted <script>alert(\"body\")</script> and <img src=x onerror=alert(3)> into a body.\n\n**Reason:** a log line that reads `<b>bold</b>` must reach the reader as written, and\n[a link](javascript:alert(4)) or [another](data:text/html,x) must not become one.\n\n- <i onclick=\"alert(5)\">list item</i>",
+    "why_open": null
+   },
+   "end_line": 50,
+   "evidence": "inferred",
+   "file": "storage.md",
+   "findings": [],
+   "git": {
+    "created": {
+     "author": "Carol Example",
+     "commit": "51344a6",
+     "date": "2026-05-10",
+     "time": "2026-05-10T16:45:00Z"
+    },
+    "last_touched": {
+     "author": "Carol Example",
+     "commit": "51344a6",
+     "date": "2026-05-10",
+     "time": "2026-05-10T16:45:00Z"
+    },
+    "status_history": [
+     {
+      "author": "Carol Example",
+      "commit": "51344a6",
+      "date": "2026-05-10",
+      "status": "active",
+      "time": "2026-05-10T16:45:00Z"
+     }
+    ]
+   },
+   "id": "storage.md#pasted-b-markup-b-stays-text",
+   "line": 37,
+   "refs": [],
+   "revisit_when": null,
+   "see": [],
+   "source": "<img src=x onerror=alert(1)> [report](javascript:alert(2))",
+   "status": "active",
+   "superseded_by": null,
+   "title": "Pasted <b>markup</b> stays text",
+   "type": [
+    "constraint"
+   ],
+   "uuid": "050ea108-42f3-4f0f-9ea9-dd2156f206d7",
    "verification": null
   },
   {
@@ -471,7 +522,7 @@
     },
     "last_touched": {
      "author": "Carol Example",
-     "commit": "5913347",
+     "commit": "51344a6",
      "date": "2026-05-10",
      "time": "2026-05-10T16:45:00Z"
     },
@@ -485,7 +536,7 @@
      },
      {
       "author": "Carol Example",
-      "commit": "5913347",
+      "commit": "51344a6",
       "date": "2026-05-10",
       "status": "superseded",
       "time": "2026-05-10T16:45:00Z"
@@ -531,7 +582,7 @@
     },
     "last_touched": {
      "author": "Carol Example",
-     "commit": "5913347",
+     "commit": "51344a6",
      "date": "2026-05-10",
      "time": "2026-05-10T16:45:00Z"
     },
@@ -576,20 +627,20 @@
    "git": {
     "created": {
      "author": "Carol Example",
-     "commit": "5913347",
+     "commit": "51344a6",
      "date": "2026-05-10",
      "time": "2026-05-10T16:45:00Z"
     },
     "last_touched": {
      "author": "Carol Example",
-     "commit": "5913347",
+     "commit": "51344a6",
      "date": "2026-05-10",
      "time": "2026-05-10T16:45:00Z"
     },
     "status_history": [
      {
       "author": "Carol Example",
-      "commit": "5913347",
+      "commit": "51344a6",
       "date": "2026-05-10",
       "status": "active",
       "time": "2026-05-10T16:45:00Z"
@@ -636,20 +687,20 @@
    "git": {
     "created": {
      "author": "Carol Example",
-     "commit": "5913347",
+     "commit": "51344a6",
      "date": "2026-05-10",
      "time": "2026-05-10T16:45:00Z"
     },
     "last_touched": {
      "author": "Carol Example",
-     "commit": "5913347",
+     "commit": "51344a6",
      "date": "2026-05-10",
      "time": "2026-05-10T16:45:00Z"
     },
     "status_history": [
      {
       "author": "Carol Example",
-      "commit": "5913347",
+      "commit": "51344a6",
       "date": "2026-05-10",
       "status": "active",
       "time": "2026-05-10T16:45:00Z"
@@ -733,8 +784,8 @@
    "available": true,
    "branch": "main",
    "fork": null,
-   "head": "50c2216",
-   "head_full": "50c2216953a44b41c24297dd8aa28bb57e199977",
+   "head": "9b269ef",
+   "head_full": "9b269efd6cb77c2921fd4c7077058160739b02d5",
    "project_subdir": "",
    "remote": "github.com/acme/widget",
    "shallow": false,
@@ -768,9 +819,10 @@
    "title": "API"
   },
   {
-   "entries": 3,
+   "entries": 4,
    "evidence": {
     "confirmed": 1,
+    "inferred": 1,
     "unknown": 2
    },
    "file": "storage.md",
@@ -783,7 +835,7 @@
     "sync.md"
    ],
    "status": {
-    "active": 2,
+    "active": 3,
     "open": 1
    },
    "title": "Storage"
