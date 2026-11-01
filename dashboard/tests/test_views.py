@@ -36,6 +36,10 @@ FORBIDDEN = [
     (r"\bhtml\s*:", "an html: attribute"),
     (r"\bstyle\s*=", "a style= attribute"),
     (r"setAttribute\(\s*['\"]style['\"]", 'setAttribute("style")'),
+    (r"\bon[a-z]+\s*=\s*['\"\\]", "an on*= event-handler attribute in a string"),
+    (r"setAttribute\(\s*['\"]on[a-z]+['\"]", "setAttribute of an on* event handler"),
+    (r"\bsrcdoc\b", "srcdoc"),
+    (r"['\"`]\s*javascript:", "a javascript: URL literal"),
 ]
 
 
@@ -89,6 +93,16 @@ class ManifestTest(unittest.TestCase):
 class LibraryFilesTest(unittest.TestCase):
     def files(self):
         return views.manifest()["scripts"]
+
+    def test_app_module_keeps_to_the_safety_subset_too(self):
+        # app.js is no library file and no host vendors it, but it builds no markup from
+        # text either since the DOM renderer; this keeps it that way
+        for lineno, line in enumerate(_read("app.js").splitlines(), 1):
+            for pattern, what in FORBIDDEN:
+                with self.subTest(line=lineno, rule=what):
+                    self.assertIsNone(
+                        re.search(pattern, line), f"app.js:{lineno}: {what}"
+                    )
 
     def test_classic_scripts_on_one_namespace(self):
         for name in self.files():
