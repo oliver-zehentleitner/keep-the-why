@@ -258,6 +258,39 @@ function highlightParts(text, terms) {
   return out;
 }
 
+// A published export, judged by what it says — the provider fetches, this decides what came back.
+// Two addresses name the same repository whatever their case and trailing slashes.
+const sameCanonical = (a, b) => String(a || "").replace(/\/+$/, "").toLowerCase() === String(b || "").replace(/\/+$/, "").toLowerCase();
+// From a repository's published .keep-the-why: the address of its export, or why there is none.
+function exportStateUrl(configText, raw) {
+  const url = configLine(String(configText ?? ""), "dashboard-state");
+  if (!url) return { error: `no dashboard-state line in the published .keep-the-why (${raw}) — this project has no published export yet`, missingLine: true };
+  if (!/^https:\/\//.test(url)) return { error: `dashboard-state is not an https URL: ${url}` };
+  return { url };
+}
+// An export fetched for `canonical`: shown as that repository, as a fork of the one it names, or refused.
+// A fork's export was made in a checkout whose origin is the cited repository, and declares the
+// repository it was forked from as its canonical; an export that claims another repository otherwise
+// is not shown as this one.
+function exportVerdict(state, canonical, url) {
+  const claimed = state?.project?.canonical;
+  const origin = state?.project?.git?.remote ? `https://${state.project.git.remote}` : "";
+  if (claimed && !sameCanonical(claimed, canonical) && origin && sameCanonical(origin, canonical)) return { forkOf: claimed };
+  if (claimed && !sameCanonical(claimed, canonical)) return { error: `the export at ${url} belongs to ${claimed}, not to ${canonical}` };
+  return {};
+}
+// A See into another repository, resolved the way the page shows it: the project the live server knows
+// carries the Id first (`known`, a provider resolveEntry result, absent outside live mode), else the
+// repository's published export (`published`, a provider exportState result). Returns { entry, via } —
+// via "live" or "export", the host makes the link — or { error } with the reason to show.
+function resolveSee(uuid, { known = null, published = null } = {}) {
+  if (known && !known.error) return { entry: known.entry || {}, via: "live", project: known.project };
+  if (!published) return { error: "not known here, and no published export was asked for" };
+  if (!published.state) return { error: published.error || "its published export could not be read" }; // a host's result with neither is still a failure
+  const entry = (published.state.entries || []).find((e) => e.uuid === uuid);
+  if (!entry) return { error: `its published export (generated ${published.state.generated || "?"}) has no entry with this Id — the reference may be newer than the export, or the entry lives below the repository's top level` };
+  return { entry, via: "export" };
+}
 // A family location as the published side reads it: an https URL is another
 // repository (its own root), a relative path is a directory in the same
 // repository, resolved against the root the location was read from.
@@ -689,8 +722,45 @@ function sortAuthors(rows, key, dir) {
   return [...rows].sort(cmp);
 }
 
+// The page's places, as a route object, and the hash grammar the dashboard
+// writes them in. Views name places by route ({ view: "entry", uuid }); the
+// host's nav turns a route into a URL and back — the dashboard's nav writes
+// this grammar into the page's hash, another host maps routes into its own router.
+// The grammar is the one every link and bookmark already uses:
+// #entry/<uuid>, #topic/<file>, #timeline/<day>, #search/<scope>/<q>,
+// #thought/<a,b,…>, #ref/<canonical>/<uuid>, a page by its name (#graph),
+// and #graph/family, an old link to the family graph (alias: "family").
+const PAGES = ["overview", "graph", "globe", "timeline", "authors", "queues", "findings", "family", "projects", "friends", "thoughts"];
+const decodePart = (s) => { try { return decodeURIComponent(s); } catch { return s; } }; // a malformed escape stays as written
+function parseRoute(hash) {
+  const r = String(hash || "").replace(/^#/, "");
+  if (!r) return { view: "overview" };
+  if (PAGES.includes(r)) return { view: r };
+  if (r === "graph/family") return { view: "graph", alias: "family" };
+  if (r.startsWith("timeline/")) return { view: "timeline", day: r.slice(9) || null };
+  if (r.startsWith("topic/")) return { view: "topic", file: r.slice(6) };
+  if (r.startsWith("entry/")) return { view: "entry", uuid: decodePart(r.slice(6)) };
+  if (r.startsWith("thought/")) return { view: "thought", refs: r.slice(8).split(",").filter(Boolean).map(decodePart) };
+  if (r.startsWith("ref/")) { const cut = r.lastIndexOf("/"); return { view: "ref", canonical: decodePart(r.slice(4, cut)), uuid: r.slice(cut + 1) }; }
+  if (r.startsWith("search/")) { const [, scope, ...q] = r.split("/"); return { view: "search", scope, q: decodePart(q.join("/")) }; }
+  return { view: "overview", unknown: r }; // a hash no place answers to shows the overview, as it always has
+}
+function formatRoute(route) {
+  const v = route?.view || "overview";
+  if (v === "timeline") return route.day ? `#timeline/${route.day}` : "#timeline";
+  if (v === "graph" && route.alias === "family") return "#graph/family";
+  if (v === "topic") return `#topic/${route.file}`;
+  if (v === "entry") return `#entry/${encodeURIComponent(route.uuid)}`;
+  if (v === "thought") return `#thought/${(route.refs || []).map(encodeURIComponent).join(",")}`;
+  if (v === "ref") return `#ref/${encodeURIComponent(route.canonical)}/${route.uuid}`;
+  if (v === "search") return `#search/${route.scope}/${encodeURIComponent(route.q)}`;
+  return PAGES.includes(v) ? `#${v}` : "#overview";
+}
+const routes = Object.freeze({ PAGES, parse: parseRoute, format: formatRoute });
+
 const KTW = (root.KeepTheWhy = root.KeepTheWhy || {});
 KTW.core = Object.freeze({
+  sameCanonical, exportStateUrl, exportVerdict, resolveSee,
   esc, plural, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug,
   hostAnchor, hostFileLink, hostTreeLink, HOSTS, hostOf, canonicalOf, ownerOf, projectLabel,
   parseSupersededBy, typeName, kindLabel, familyRank, familyOrder, groupByFamily, shuffled, searchTerms,
@@ -700,6 +770,6 @@ KTW.core = Object.freeze({
   existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan, timeGrid, stampLabel,
   TYPE_KINDS, TYPE_TOKENS, PALETTE_SIZE, paletteToken, typeKind, weekStart, SHELF, stageCards,
   stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight, mergeAuthors,
-  AUTHOR_SORTS, sortAuthors,
+  AUTHOR_SORTS, sortAuthors, routes,
 });
 })(globalThis);

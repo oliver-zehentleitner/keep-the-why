@@ -730,6 +730,11 @@ const report = {};
   report.monitorFailed = failedRows;
   if (!failedRows.some((r) => /acme\/blocked — state/.test(r) && /blocked by CORS/.test(r) && /acme\.github\.io\/blocked\/state\.json/.test(r))) errors.push("monitor: blocked's state is not in the failures with its reason and address");
   if (!failedRows.some((r) => /acme\/gone/.test(r))) errors.push("monitor: gone is not in the failures");
+  // files that were read and then refused stay among the failures: a .keep-the-why without a dashboard-state
+  // line, an export that claims another repository (noted as loaded first, refused after)
+  if (!failedRows.some((r) => /acme\/cli — config/.test(r) && /no dashboard-state line/.test(r))) errors.push("monitor: cli's .keep-the-why without a dashboard-state line is not in the failures");
+  if (!failedRows.some((r) => /acme\/impostor — state/.test(r) && /belongs to https:\/\/github\.com\/acme\/suite/.test(r))) errors.push("monitor: impostor's export, which claims another repository, is not in the failures");
+  if (failedRows.length !== 4) errors.push(`monitor: expected 4 failures (blocked, gone, impostor, cli), got ${failedRows.length}`);
   if (!/⚠ \d+ not loaded ↓/.test(d.querySelector(".loaded-pop .loaded-head")?.textContent || "")) errors.push("monitor: the header does not link to the failures");
   d.querySelector("#loaded > a").click(); await tick(50);
   const blocked = [...d.querySelectorAll(".graph-legend .warn")].find((x) => /acme\/blocked not loaded/.test(x.textContent));

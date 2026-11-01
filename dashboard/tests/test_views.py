@@ -90,6 +90,47 @@ class ManifestTest(unittest.TestCase):
             views.page("<html></html>")
 
 
+# what makes a request; the views get their data from a provider, the dashboard's
+# lives in one block of app.js. A textual net for regressions, not a proof: a call
+# spelled indirectly (a computed name, a dynamic import, an image's src) passes it.
+REQUESTS = r"\bfetch\s*\(|\bEventSource\b|\bXMLHttpRequest\b|\bsendBeacon\b|\bWebSocket\b|\bimportScripts\b"
+PROVIDER_START = "// ---------------------------------------------------------------- provider: every request the page makes"
+PROVIDER_END = (
+    "// ---------------------------------------------------------------- provider end"
+)
+
+
+class RequestsTest(unittest.TestCase):
+    def test_the_library_makes_no_request(self):
+        for name in views.manifest()["scripts"]:
+            for lineno, line in enumerate(_read(name).splitlines(), 1):
+                with self.subTest(name=name, line=lineno):
+                    self.assertIsNone(
+                        re.search(REQUESTS, line),
+                        f"{name}:{lineno}: a request in the library",
+                    )
+
+    def test_app_requests_only_inside_its_provider_block(self):
+        # the whole file, the block's lines skipped, so a finding names the real line of app.js
+        lines = _read("app.js").splitlines()
+        starts = [n for n, line in enumerate(lines) if line.startswith(PROVIDER_START)]
+        ends = [n for n, line in enumerate(lines) if line.startswith(PROVIDER_END)]
+        self.assertEqual((len(starts), len(ends)), (1, 1))
+        start, end = starts[0], ends[0]
+        for n, line in enumerate(lines):
+            if start <= n <= end:
+                continue
+            with self.subTest(line=n + 1):
+                self.assertIsNone(
+                    re.search(REQUESTS, line),
+                    f"app.js:{n + 1} (outside the provider): {line.strip()[:80]}",
+                )
+        self.assertTrue(
+            any(re.search(r"\bfetch\s*\(", line) for line in lines[start:end]),
+            "the provider block makes the requests",
+        )
+
+
 class LibraryFilesTest(unittest.TestCase):
     def files(self):
         return views.manifest()["scripts"]
@@ -103,6 +144,28 @@ class LibraryFilesTest(unittest.TestCase):
                     self.assertIsNone(
                         re.search(pattern, line), f"app.js:{lineno}: {what}"
                     )
+
+    def test_routing_goes_through_nav(self):
+        # the page's place lives behind nav: the library files never touch the address, and
+        # app.js reads or writes the hash and the history only in its nav (host) block
+        # the page's own address, not a parameter that happens to be called location
+        address = r"\bwindow\.location\b|\blocation\.(hash|href|search|pathname|origin|reload|assign)\b|\bhistory\.(pushState|replaceState|back|forward|go)\b"
+        routing = re.compile(
+            r"\blocation\.hash\b|\bhistory\.|[\"']hashchange[\"']|[\"']popstate[\"']"
+        )
+        for name in self.files():
+            with self.subTest(name=name):
+                self.assertIsNone(re.search(address, _read(name)))
+        lines = _read("app.js").splitlines()
+        start = next(i for i, l in enumerate(lines) if l.endswith(" nav (host)"))
+        end = next(i for i, l in enumerate(lines) if l.endswith(" end of nav (host)"))
+        for lineno, line in enumerate(lines, 1):
+            if start < lineno <= end:
+                continue
+            with self.subTest(line=lineno):
+                self.assertIsNone(
+                    routing.search(line), f"app.js:{lineno}: routing outside nav"
+                )
 
     def test_settings_go_through_prefs(self):
         # what a reader sets is kept behind prefs: the library files keep nothing in the

@@ -693,6 +693,37 @@ The page's pure part, `lib.js`, became `ktw-core.js`: a classic script that puts
 
 **Rejected alternative:** a proper tokenizer that reads emphasis and links as CommonMark does. It would render some existing bodies differently, and the series promises a page that looks the same after every step. A third-party Markdown library plus a sanitiser was also rejected: its output is an HTML string, so it needs the very sink this removes.
 
+## The page's data comes through one provider; a method the mode cannot answer is absent, and the shell's own requests stay beside it
+
+**Id:** 4ec4240f-f651-4559-9067-8d3c966a9690
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** design proposal (revision 3.1) agreed by the maintainer, 2026-11-01 (the provider's methods, optional but `state`, provenance on every result, meaning checks in the core); the per-mode `provider()`, the separate `HOST` and `loaded` as the monitor's input are the implementer's, in the pull requests that made the change; review found the first of them short of the proposal on provenance and on See resolution
+**Revisit when:** a view needs data no provider method gives, or a second host implements the provider and finds a method shaped for this server only
+**See:** dashboard.md#the-page-becomes-a-library-a-second-host-builds-on-core-views-and-a-host-maity-the-first-other-host — 24e1ef21-ebf8-4d5b-ab63-c8ccbe82f7ab — as of 2026-11-01
+
+Every request the page makes is in one block of `app.js`. `DASHBOARD` implements the provider the views will read: `state`, `subscribe`, `bodies`, `family`, `memberState`, `exportState`, `resolveEntry`, `authorProfile` and `backlinks`. `provider()` returns the methods the current mode can answer, and leaves out `subscribe`, `family`, `memberState` and `resolveEntry` outside the live server. A call site asks whether the method is there instead of asking which mode the page is in. `HOST` holds what only the dashboard's own shell asks for — the project menu, *forget*, the update check, the registry index for the globe and its search — and no view calls it. Every result says where it came from: `url`, and for a project `canonical`, `root` and `forkOf` as they apply. A failure is an `error` beside them, never a throw. The files read to make a result come back with it (`loaded`), and so do the files read and then refused (`failed`: a `.keep-the-why` without a `dashboard-state` line, an export that claims another repository). `provider()` hands both to the state monitor, the loaded ones first, because noting a file as loaded clears it from the failures; the methods themselves do not write to the monitor. Whether a published export is shown, as itself or as a fork, or refused, is decided in `ktw-core.js`, and so is how a `See` into another repository is resolved: the live server's project first, the published export after it (`resolveSee`). The request and the link stay with the host. Timeouts, size caps and CORS wording stay with the request. A textual test catches a request written outside the block or in the library's files. It is a net for regressions, not a proof: a call spelled indirectly would pass it.
+
+**Reason:** another host answers the same questions in its own way — through a hub, with private members — and may not answer some of them at all. A view that asks for a method can run under any host, while a view that asks for the mode cannot. The shell's requests concern this server only, such as the machine's project list and a write to its mapping file, so they stay out of the interface a second host would have to implement. The meaning checks are the same for every host, and the core is where both hosts get them.
+
+**Rejected alternative:** one provider object with every method always present, returning an error outside live mode. A feature would then have to try the method and read the failure before it knew whether to show itself, and a host could not say "never" apart from "not now". The shell's requests as optional provider methods were also rejected: that would advertise as part of the interface what only this server can do.
+
+## A place is a route; the page's own address lives in one nav block, closed by a test
+
+**Id:** 7ad72848-f138-4f0b-97c2-f6ecb047ceb1
+**Type:** decision
+**Status:** active
+**Evidence:** inferred
+**Source:** the pull request that moved the routing behind `nav` (series PR 5, design proposal revision 3.1, §3); the click handling and the test are the implementer's choices
+**Revisit when:** a host's router needs to see a click on a Markdown link as a move, or a view has to read the address for something that is not a place
+**See:** dashboard.md#the-page-becomes-a-library-a-second-host-builds-on-core-views-and-a-host-maity-the-first-other-host — 24e1ef21-ebf8-4d5b-ab63-c8ccbe82f7ab — as of 2026-11-01
+
+The page's places are route objects (`{ view: "entry", uuid }`), and `KeepTheWhy.core.routes` parses and writes today's hash grammar. The dashboard's `nav` (`href`, `go`, `current`, `onChange`) and the host's own moves — following an address `nav.href` made, the walk to another centre with `pushState`, back and forward between centres, a reload — sit in one block of `app.js`. A test fails when `location.hash`, `history`, `hashchange` or `popstate` appear outside that block, or when a library file touches the page's address at all. A link to a place is built by `navLink`: a real anchor whose `href` comes from `nav.href`, in the same position among the attributes as before, so the DOM snapshots stay identical. A plain left click calls `nav.go`, while a modified click, a middle click or a link with a target is left to the browser. Links inside entry bodies (`ktw-markdown.js`) get their `href` from `nav.href` and no click handler.
+
+**Reason:** "the views reach the address only through nav" has to stay true over the series' later pull requests. Those move code out of `app.js`, and a reviewer would otherwise have to search every move for a stray `location.hash`. A real anchor keeps a new tab, copying the address and screen readers working in every host. A click through `nav.go` gives a host whose router does not follow its own `href`s the move as a call. Markdown links stay plain: `nav.href` already gives the host's own address, and a click handler would mean changing the renderer's interface for a case no host has yet.
+
+**Rejected alternative:** one click handler on the document that turns every hash link into `nav.go` — in another host it would also catch that host's own anchors. Leaving the views on hash strings and letting another host rewrite them — that host would have to know the dashboard's grammar, which the design rules out.
 
 ## Settings go through prefs by a short name; the dashboard keeps them as ktw-<name>, values unchanged
 
