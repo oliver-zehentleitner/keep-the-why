@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-import { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, shuffled, compareHits, snippetAt, highlight, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf, projectLabel, backlinksUrl, citingOf, hostAnchor , todayISO, addDays, dayDiff, timeGrid, stampLabel, existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan, createdOn, TYPE_KINDS, TYPE_COLORS, typeKind, SHELF, stageCards, stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight, mergeAuthors, sortAuthors, AUTHOR_SORTS, ownerOf } from "./lib.js";
+import { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, shuffled, compareHits, snippetAt, highlight, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf, projectLabel, backlinksUrl, citingOf, hostAnchor , todayISO, addDays, dayDiff, timeGrid, stampLabel, existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan, createdOn, TYPE_KINDS, TYPE_TOKENS, paletteToken, typeKind, SHELF, stageCards, stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight, mergeAuthors, sortAuthors, AUTHOR_SORTS, ownerOf } from "./lib.js";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const narrow = () => !!window.matchMedia?.("(max-width: 900px)").matches;
@@ -1282,7 +1282,7 @@ async function buildFamilyGraph() {
     g, key: g.member.role === "self" ? "self" : g.member.key || `${g.member.canonical}|${g.member.root || ""}`,
     canonical: g.state.project?.canonical || g.member.canonical || (g.member.role === "self" ? canonicalOf(S.project) : ""),
     root: g.state.project?.root || g.member.root || (g.member.role === "self" ? MY_ROOT() : ""),
-    role: g.member.role, state: g.state, color: i === 0 ? color0() : PALETTE[i % PALETTE.length],
+    role: g.member.role, state: g.state, color: i === 0 ? color0() : palette(i),
   }));
   const { parentOf, xrefs } = linkFamily(groups);
   const prev = fgraph ? Object.fromEntries(fgraph.nodes.map((n) => [n.id, n])) : {};
@@ -1343,7 +1343,11 @@ async function buildFamilyGraph() {
   fgraph.alpha = Math.max(fgraph.alpha, 0.6);
   return fgraph;
 }
-const color0 = () => getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#835bec";
+// a colour token's value (style.css :root); the computed style is live, so a theme switch is read too
+let ROOT_STYLE = null;
+const token = (name) => (ROOT_STYLE ||= getComputedStyle(document.documentElement)).getPropertyValue(name).trim();
+const palette = (i) => token(paletteToken(i));
+const color0 = () => palette(0);
 // ---------------------------------------------------------------- friends
 // Friends: repositories outside the family that the entries in the graph
 // cite by a cross-project See or Superseded by. Nothing is loaded until a
@@ -1415,8 +1419,8 @@ function autoFriends(g) {
   setTimeout(() => loadFriends(FRIENDS.on ? waiting : list).finally(() => { FRIENDS.loading = false; }), 0); // after the graph that asked is drawn
 } // loaded: key -> {state, name, href(e), topicHref(file), open} | {error}
 const fkey = (c) => String(c || "").replace(/\/+$/, "").toLowerCase();
-const friendColor = (i) => PALETTE[(i + 5) % PALETTE.length];
-const familyColor = () => PALETTE[8];
+const friendColor = (i) => palette(i + 5);
+const familyColor = () => palette(8);
 // The project's own family as neighbours of the project graph — the parent, the
 // children, the siblings as hubs joined the way the family graph joins them,
 // each with the entries linked to this project (all of them under "all their
@@ -1444,7 +1448,7 @@ function autoFamily() {
 const familyCount = () => (FAMILY_NB.groups ? FAMILY_NB.groups.length + (FAMILY_NB.missing?.length || 0) : TREE ? TREE.filter((m) => m.role !== "self").length : PUBLIC_TREE?.groups ? PUBLIC_TREE.groups.filter((x) => x.member.role !== "self").length + (PUBLIC_TREE.missing?.length || 0) : null);
 function familyMembers() {
   if (!FAMILY_NB_ON || !canFamily() || !FAMILY_NB.groups?.length) return [];
-  return FAMILY_NB.groups.map((x, i) => ({ ...(PUBLISHED() ? publicMember(x.member, x.state) : liveMember(x.member, x.state)), color: PALETTE[(i + 1) % PALETTE.length] })).filter((m) => m.state && !onPath(m.canonical));
+  return FAMILY_NB.groups.map((x, i) => ({ ...(PUBLISHED() ? publicMember(x.member, x.state) : liveMember(x.member, x.state)), color: palette(i + 1) })).filter((m) => m.state && !onPath(m.canonical));
 }
 function friendCandidates(entries, family = []) {
   const p = SELF?.project || {}; const base = canonicalOf(p); const root = MY_ROOT();
@@ -1560,7 +1564,7 @@ function addFriendLayer(g, prev) {
   const items = [];
   const trail = pathShown() ? TRAIL.filter((t) => !sameCentreAsGraph(g, t)) : [];
   trail.forEach((t, i) => items.push({
-    k: `trail:${t.key}`, kind: "trail", color: PALETTE[(i + 2) % PALETTE.length], cited: PATH_ENTRIES ? null : "linked", // a path step is a neighbour like a friend: its own "all their entries" opens it
+    k: `trail:${t.key}`, kind: "trail", color: palette(i + 2), cited: PATH_ENTRIES ? null : "linked", // a path step is a neighbour like a friend: its own "all their entries" opens it
     members: [{ key: t.key, name: `${i + 1} · ${t.name}`, state: t.state, canonical: t.canonical, root: t.state.project?.root || "", href: (e) => t.url + entryHref(e), topicHref: (file) => `${t.url}#topic/${file}`, open: `${t.url}#graph` }],
     hub: () => moveTo(t, "#graph"), entry: () => (e) => moveTo(t, entryHref(e)), topic: () => (file) => moveTo(t, `#topic/${file}`),
     next: i + 1 < trail.length ? `trail:${trail[i + 1].key}` : null,
@@ -2703,8 +2707,7 @@ function runGraph(canvas, g, opts = {}) {
 }
 
 // ---------------------------------------------------------------- timeline (SVG)
-const PALETTE = ["#835bec", "#4aa3df", "#4fbf7a", "#e0a83a", "#e0574f", "#d66fd6", "#3fbfbf", "#b0b04a", "#ff8c5a", "#8b8b98"];
-const authorColor = (name) => PALETTE[Math.max(0, S.authors.findIndex((a) => a.name === name)) % PALETTE.length];
+const authorColor = (name) => palette(Math.max(0, S.authors.findIndex((a) => a.name === name)));
 // ---------------------------------------------------------------- timeline: the clock, the playhead, the stage
 // The Timeline owns the clock. The slider, the play button, the keys and a wheel over the stage set the day, and
 // every graph on the page follows it (setClock). The stage is a perspective view of the graph's entries: time runs
@@ -2907,7 +2910,7 @@ function entryCard(span) {
 function stageLegend() {
   const sw = (cls, style) => el("i", { class: `sw ${cls}`, style });
   return el("div", { class: "stage-legend" },
-    el("span", { class: "grp" }, ...TYPE_KINDS.map((k) => el("span", { style: `color:${TYPE_COLORS[k]}`, html: `${typeGlyphSvg(k)} <span style="color:var(--fg2)">${k}</span>` })), el("span", {}, sw("", "color:var(--muted)"), el("span", {}, "no type"))),
+    el("span", { class: "grp" }, ...TYPE_KINDS.map((k) => el("span", { style: `color:${token(TYPE_TOKENS[k])}`, html: `${typeGlyphSvg(k)} <span style="color:var(--fg2)">${k}</span>` })), el("span", {}, sw("", "color:var(--muted)"), el("span", {}, "no type"))),
     el("span", { class: "grp", title: "Evidence is the fill" }, el("span", {}, sw("solid", "color:var(--fg2)"), "confirmed"), el("span", {}, sw("hatch", "color:var(--fg2)"), "inferred"), el("span", {}, sw("", "color:var(--fg2)"), "unknown")),
     el("span", { class: "grp", title: "Status is the edge" }, el("span", {}, sw("dashed", "color:var(--fg3)"), "superseded"), el("span", {}, sw("ring", "color:var(--fg2)"), "open · needs review · pending")));
 }
@@ -3083,7 +3086,7 @@ function stagePainter(ctx, scene, cam, layout, v, o) {
     ctx.globalAlpha = a * (held || hovered ? 0.9 : 0.35); ctx.strokeStyle = held || hovered ? color("--fg") : color("--fg3"); ctx.lineWidth = held || hovered ? 1.5 : 1; ctx.beginPath(); ctx.moveTo(b.cx, b.y1); ctx.lineTo(fx, fy); ctx.stroke();
     b.foot = [b.cx, b.y1, fx, fy];
     const kind = typeKind(e); const fold = kind === "workaround" ? Math.min(b.h * 0.45, b.w * 0.3) : 0;
-    const evc = sup ? color("--fg3") : TYPE_COLORS[kind] || color("--muted"); // the type's colour; a superseded card goes grey
+    const evc = sup ? color("--fg3") : (TYPE_TOKENS[kind] ? color(TYPE_TOKENS[kind]) : "") || color("--muted"); // the type's colour; a superseded card goes grey
     const outline = () => { ctx.beginPath(); if (fold) { ctx.moveTo(b.x0, b.y0); ctx.lineTo(b.x1 - fold, b.y0); ctx.lineTo(b.x1, b.y0 + fold); ctx.lineTo(b.x1, b.y1); ctx.lineTo(b.x0, b.y1); ctx.closePath(); } else ctx.rect(b.x0, b.y0, b.w, b.h); };
     ctx.globalAlpha = a;
     if (fresh || isLit || hovered || held || isStep) { ctx.shadowColor = held || isStep ? color("--accent2") : isLit ? color("--fg") : evc; ctx.shadowBlur = held ? 36 : isStep ? 22 : 14; }

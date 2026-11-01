@@ -19,7 +19,9 @@ const app = fs.readFileSync(W + "app.js", "utf8").replace(/^import \{[^}]*\} fro
 // jsdom runs no module scripts: lib and app go into the page as one classic
 // script, which jsdom runs itself (as in smoke.mjs; this file runs no code
 // strings). split/join, not replace: the sources contain `$&`-like sequences.
-const html = fs.readFileSync(W + "index.html", "utf8").split('<script type="module" src="/static/app.js"></script>').join("<script>" + lib + "\n" + app + "\nwindow.__fg = () => fgraph; window.__g = () => graph; window.__stage = () => STAGE; window.__active = () => [...ACTIVE_GRAPHS]; window.__chainAdd = async (canonical, uuid) => { const f = { canonical, uuids: [uuid] }; CHAIN.extra.set(fkey(canonical), f); await loadFriend(f); if (fgraph) fgraph.at = 0; render(); }; // test hooks</script>");
+// the stylesheet inlined as the export does: the page reads its colour tokens (--ktw-*) from it
+const css = fs.readFileSync(W + "style.css", "utf8");
+const html = fs.readFileSync(W + "index.html", "utf8").split('<link rel="stylesheet" href="/static/style.css">').join("<style>\n" + css + "\n</style>").split('<script type="module" src="/static/app.js"></script>').join("<script>" + lib + "\n" + app + "\nwindow.__fg = () => fgraph; window.__g = () => graph; window.__stage = () => STAGE; window.__active = () => [...ACTIVE_GRAPHS]; window.__chainAdd = async (canonical, uuid) => { const f = { canonical, uuids: [uuid] }; CHAIN.extra.set(fkey(canonical), f); await loadFriend(f); if (fgraph) fgraph.at = 0; render(); }; // test hooks</script>");
 
 const GH = "https://github.com/acme";
 const config = (id, lines) => `<!-- keep-the-why:config -->\n- id: ${id}\n${lines.join("\n")}\n<!-- /keep-the-why:config -->\n`;

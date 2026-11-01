@@ -5,6 +5,7 @@ import {
   esc, plural, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf, projectLabel,
   parseSupersededBy, kindLabel, typeName, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, shuffled, compareHits, snippetAt, highlight,
   resolveLocation, bodyProse, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, HOSTS, hostOf, backlinksUrl, citingOf, hostAnchor, ownerOf,
+  TYPE_TOKENS, PALETTE_SIZE, paletteToken,
 } from "../../ktw_dashboard/web/lib.js";
 
 test("esc escapes the five HTML characters and nothing else", () => {
@@ -634,4 +635,23 @@ test("ownerOf: the owner of a repository, subgroups included", () => {
   assert.equal(ownerOf("github.com/acme/widget").label, "acme");
   assert.equal(ownerOf("https://github.com/acme"), null);
   assert.equal(ownerOf(""), null);
+});
+
+test("colours are named, not given: a Type's token, and the palette's slot wrapped around its size", () => {
+  assert.deepEqual(Object.keys(TYPE_TOKENS), ["decision", "constraint", "workaround", "incident"]);
+  for (const t of Object.values(TYPE_TOKENS)) assert.match(t, /^--ktw-type-[a-z]+$/);
+  assert.equal(PALETTE_SIZE, 10);
+  assert.equal(paletteToken(0), "--ktw-palette-0");
+  assert.equal(paletteToken(9), "--ktw-palette-9");
+  assert.equal(paletteToken(10), "--ktw-palette-0");
+  assert.equal(paletteToken(23), "--ktw-palette-3");
+  assert.equal(paletteToken(-1), "--ktw-palette-9");
+});
+
+test("every colour token the pure part names is defined in the stylesheet's :root", async () => {
+  const { readFileSync } = await import("node:fs");
+  const css = readFileSync(new URL("../../ktw_dashboard/web/style.css", import.meta.url), "utf8");
+  const root = css.slice(css.indexOf(":root {"), css.indexOf("}", css.indexOf(":root {")));
+  const names = [...Object.values(TYPE_TOKENS), ...Array.from({ length: PALETTE_SIZE }, (_, i) => paletteToken(i))];
+  for (const n of names) assert.match(root, new RegExp(`${n}:\\s*#[0-9a-f]{6};`), `${n} missing or not a literal colour in :root`);
 });
