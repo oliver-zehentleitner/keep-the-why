@@ -860,7 +860,7 @@ function viewThought(main, refs) {
 // view shows, laid out as lists.
 const graphForScope = async () => (familyGraphShown() ? buildFamilyGraph() : buildGraph());
 const projOf = (n) => n.proj || n.entry?.project || SCENE.self?.project?.id || SCENE.self?.project?.name || "";
-const lightAll = (t) => SCENE.setThought(t); // every graph lights it (runGraph)
+const lightAll = (t) => SCENE.light(t); // every graph lights it (runGraph)
 async function viewFriends(main) {
   main.append(el("h1", {}, "Friends"), el("p", { class: "sub" }, "Repositories the entries here cite outside the family — linked into the graph, never merged into search, queues or counts. A friend in a family comes as the whole family. One hop: a friend's own friends are not loaded; walk there to see them."));
   const box = el("div", { class: "friends-page" }, el("p", { class: "center" }, "Loading…")); main.append(box);
@@ -1287,7 +1287,7 @@ function miniGraph(d, ctx) {
   const fillFilters = (g) => { if (mode !== "near") setKids(filters, ...graphControlGroups(g, mode === "family", miniView(g))); };
   // fit and reset beside it, for the graph this box runs: fit the view, let go of the held thought
   const corner = el("span", { class: "mini-corner" });
-  const cornerFor = (g) => { const letGo = () => { THOUGHT_PIN = null; focusStep(null); lightThought(g, null); renderThoughts(g); g.wake?.(); }; ESC.pane = letGo; setKids(corner,
+  const cornerFor = (g) => { const letGo = () => { SCENE.setThought(null); focusStep(null); lightThought(g, null); g.wake?.(); }; ESC.pane = letGo; setKids(corner,
     el("button", { type: "button", class: "mini-corner-btn", title: "fit the view: everything in the box", onclick: () => { const v = miniView(g); v.userMoved = false; v.needFit = true; g.wake?.(); } }, "fit"),
     el("button", { type: "button", class: "mini-corner-btn", title: "let go of the held thought — every node alike again (Esc, on a page without a reset of its own)", onclick: letGo }, "reset")); };
   box.append(canvas, seg, el("span", { class: "mini-hint" }, mode === "near" ? "click to open" : "hover · click"), corner, full, mode !== "near" ? gear : null, filters);
@@ -1878,7 +1878,7 @@ function remember(c, state) {
 function setCentre(c, state) {
   MODE = c.mode; PUBLIC = c.mode === "public" ? c.canonical : null; PUBLIC_ROOT = c.mode === "public" ? c.root || "" : ""; PROJECT = c.mode === "live" ? c.project || null : null;
   graph = null; fgraph = null; TREE = null; TREE_AT = 0; TREE_ASKED = false; PUBLIC_TREE = null; LAST_POOL = null;
-  FRIENDS.on = false; FRIENDS.expanded.clear(); THOUGHT_PIN = null; MINI = null; CHAIN.extra.clear(); CHAIN.tried.clear();
+  FRIENDS.on = false; FRIENDS.expanded.clear(); SCENE.setThought(null); MINI = null; CHAIN.extra.clear(); CHAIN.tried.clear();
   FAMILY_NB = { groups: null, missing: [], loading: false }; // the family beside the graph is the new centre's
   GLOBE.extra.clear(); GLOBE.failed.clear(); GLOBE.done = 0; registryOff(); // the globe's waves were counted from the old centre; what was fetched stays in memory
   CITED.on = false; CITED.loading = false; CITED.error = null; CITED.list = []; CITED.elsewhere = 0; CITED.checked = ""; CITED.url = null; // who cites the old centre
@@ -2332,7 +2332,10 @@ function followThought(t, then) {
   return followChains((g) => { last = graphChains(g).filter((c) => c.steps.some((n) => n.entry.uuid === anchor)).sort((a, b) => b.steps.length - a.steps.length)[0] || null; return last ? last.ends : []; })
     .then(() => then?.(last));
 }
-let THOUGHT_PIN = null; // the ids of the held thought, joined
+// the thought held is the scene's (SCENE.pin, set by SCENE.setThought); the list beside the graph follows it.
+// Until the thoughts view moves into the library, the host redraws its list when the pin changes.
+let THOUGHTS_FOR = null; // the graph whose thoughts the list shows
+SCENE.on("pin", () => renderThoughts(THOUGHTS_FOR));
 // One step pointed at — in a thought's list of steps, in the reader, on the
 // Thoughts page — is marked in every graph on the page.
 const focusStep = (ref) => SCENE.setFocus(ref); // every graph redraws (runGraph), and the stage
@@ -2344,24 +2347,25 @@ function holdReading(g) {
   const here = ROUTES.format(nav.current());
   const t = graphThoughts(g).all.find((x) => thoughtHref(x) === here);
   if (!t) return;
-  THOUGHT_PIN = t.ids.join("|");
+  SCENE.setThought(t);
   lightThought(g, t);
 }
 function renderThoughts(g) {
   const box = $("#thoughts");
+  THOUGHTS_FOR = g;
   if (!box || !g) return;
   const { all, thoughts: list, open } = graphThoughts(g);
   const short = (n) => { const t = (n?.label || "").replace(/`/g, ""); return t.length > 34 ? t.slice(0, 32) + "…" : t; };
-  const held = [...list, ...open].find((t) => t.ids.join("|") === THOUGHT_PIN) || null;
+  const held = [...list, ...open].find((t) => t.ids.join("|") === SCENE.pin) || null;
   lightThought(g, held);
-  const minSeg = thoughtMinSeg(all, () => { THOUGHT_PIN = null; renderThoughts(g); });
+  const minSeg = thoughtMinSeg(all, () => { SCENE.setThought(null); renderThoughts(g); }); // a new minimum: the list is another, held or not
   const repos = (ends) => [...new Set(ends.map((e) => repoLabel(e.canonical)))];
   const row = (t) => {
-    const key = t.ids.join("|"); const on = key === THOUGHT_PIN;
+    const key = t.ids.join("|"); const on = key === SCENE.pin;
     return el("div", { class: `thought ${on ? "on" : ""} ${t.ends.length ? "open" : ""}` },
       el("button", { type: "button", class: "thought-head", title: t.steps.map((n) => n.label).join("\n→ ") + (t.ends.length ? `\n… goes on in ${repos(t.ends).join(", ")}` : ""),
         onmouseenter: () => lightThought(g, t), onmouseleave: () => lightThought(g, held), // a held thought gives way while another is pointed at, and comes back
-        onclick: () => { THOUGHT_PIN = on ? null : key; renderThoughts(g); } },
+        onclick: () => SCENE.setThought(on ? null : t) },
         el("span", { class: "count" }, String(t.steps.length)), `${short(t.steps[0])} → ${short(t.steps[t.steps.length - 1])}`, t.evolution ? el("span", { class: "pill" }, "evolution") : null, ...insightPills(t)),
       navLink({ class: "thought-read", href: thoughtRoute(t), title: "read the whole thought — every entry in order, in full" }, "read ›"),
       t.ends.length ? el("button", { type: "button", class: "thought-follow link-btn", disabled: CHAIN.busy, title: `load the repositories this chain goes on into — ${repos(t.ends).join(", ")} — hop by hop, until it ends`, onclick: () => followThought(t) }, `continues ↗ ${repos(t.ends).join(", ")}`) : null,
@@ -2487,7 +2491,7 @@ function viewGraph(main) {
       onclick: (ev) => { const open = wrap.classList.toggle(`${cls}-open`); wrap.classList.remove(`${other}-open`); ev.currentTarget.setAttribute("aria-expanded", String(open)); } }, label);
     // the corner's reset lets go of the held thought and the pointed-at step: every node alike again; the bar's reset
     // (fit, let go of placed nodes) stays what it is
-    const letGo = () => { THOUGHT_PIN = null; focusStep(null); renderThoughts(g); g.wake?.(); };
+    const letGo = () => { SCENE.setThought(null); focusStep(null); g.wake?.(); };
     const cornerReset = el("button", { type: "button", class: "graph-corner graph-corner-reset", title: "let go of the held thought — every node alike again (Esc does this and the bar's reset)", onclick: letGo }, "reset");
     // fit: nothing changes but the view — zoomed and centred so that everything is in the box, and stays in it while the graph turns
     const cornerFit = el("button", { type: "button", class: "graph-corner graph-corner-fit", title: "fit the view: everything in the box, centred on the point the graph turns around", onclick: () => { g.userMoved = false; g.needFit = true; g.wake?.(); } }, "fit");
@@ -3042,7 +3046,7 @@ function runStage(canvas, o) {
   const input = stageInput(canvas, { pick: painter.pick, pickLabel: painter.pickLabel, wake, openCard, closeCard, showTip, hideTip }, v, o);
   STAGE = { wake, graph: scene.G, relax: layout.relax, follows: cam.asGraph, close: closeCard,
     // reset: let go of the held card and the held thought, every card alike again, the view as it opened
-    reset: () => { THOUGHT_PIN = null; renderThoughts(scene.G); focusStep(null); closeCard(); v.zoom = 1; v.panX = 0; v.panY = 0; v.hover = null; hideTip(); cam.fitHeight(); wake(); },
+    reset: () => { SCENE.setThought(null); focusStep(null); closeCard(); v.zoom = 1; v.panX = 0; v.panY = 0; v.hover = null; hideTip(); cam.fitHeight(); wake(); },
     // pick: an entry chosen elsewhere on the page (a thought's step in the pane) is held like a clicked card, and the day moves to its, so it arrives at the front
     pick: (e) => { v.held = (e.uuid && scene.byId[e.uuid]) || scene.byId[e.id] || null; o.play(false); o.open(e, v.held); o.setDay(createdOn(e) || o.span.to); wake(); } };
   resize();

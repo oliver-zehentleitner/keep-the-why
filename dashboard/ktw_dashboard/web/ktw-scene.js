@@ -10,7 +10,8 @@
 // Events a view can subscribe to, and what comes with them:
 //   day      (day, { grew })  the clock moved; `grew`: the set of entries shown changed, so a layout may settle again
 //   focus    (ref)            an entry pointed at (an Id or a node id), or null
-//   thought  (t)              a thought chain lit, or null
+//   thought  (t)              a thought chain lit while pointed at, or null (light)
+//   pin      (key)            the thought held — its ids joined by "|" — changed, or let go (null) (setThought)
 //   spot     (canonical, root) a project pointed at outside the graph, or null
 //   scope    (scope)          "project" or "family"
 //   layout   ()               the layout source published positions
@@ -22,6 +23,7 @@ function create({ state = null, self = null, day = null, scope = "project" } = {
   const scene = {
     state, self, day, scope,
     focus: null, thought: null,
+    pin: null, // the thought held, by its ids joined with "|" (setThought); lighting one in passing does not change it
     selected: null, // the entry the page shows in its details, by id
     filter: { status: "", evidence: "", author: "" }, // the sidebar's: what is not matched is dimmed (core entryMatches)
     layout, layoutSettled: false,
@@ -40,7 +42,9 @@ function create({ state = null, self = null, day = null, scope = "project" } = {
     statusNow(e) { return scene.day ? root.KeepTheWhy.core.statusAt(e, scene.day, scene.hasRepo(e)) || e.status : e.status; },
     setDay(d, { grew = false } = {}) { scene.day = d; emit("day", d, { grew }); },
     setFocus(ref) { scene.focus = ref || null; emit("focus", scene.focus); },
-    setThought(t) { scene.thought = t || null; emit("thought", scene.thought); },
+    light(t) { scene.thought = t || null; emit("thought", scene.thought); }, // pointed at: lit in every graph, held by none
+    // hold a thought, or let go of the one held (null); the views that list or light the held one hear `pin`
+    setThought(t) { const key = t ? t.ids.join("|") : null; if (key === scene.pin) return; scene.pin = key; emit("pin", key); },
     spot(canonical, rt) { emit("spot", canonical, rt); },
     setScope(v) { scene.scope = v; emit("scope", v); },
     wake() { emit("wake"); },
