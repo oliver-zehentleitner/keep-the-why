@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-const { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, shuffled, compareHits, snippetAt, highlightParts, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf, projectLabel, backlinksUrl, citingOf, hostAnchor , todayISO, addDays, dayDiff, timeGrid, stampLabel, existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan, createdOn, TYPE_KINDS, TYPE_TOKENS, paletteToken, typeKind, SHELF, stageCards, stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight, mergeAuthors, sortAuthors, AUTHOR_SORTS, ownerOf, exportStateUrl, exportVerdict, resolveSee , layoutTick} = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
+const { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, shuffled, compareHits, snippetAt, highlightParts, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf, projectLabel, backlinksUrl, citingOf, hostAnchor, todayISO, addDays, dayDiff, timeGrid, stampLabel, existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan, createdOn, TYPE_KINDS, TYPE_TOKENS, paletteToken, typeKind, SHELF, stageCards, stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight, mergeAuthors, sortAuthors, AUTHOR_SORTS, ownerOf, exportStateUrl, exportVerdict, resolveSee, layoutTick } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
 const MD = globalThis.KeepTheWhy.markdown; // ktw-markdown.js
 
 // ---------------------------------------------------------------- prefs (host)
@@ -133,7 +133,7 @@ const LIVE = () => MODE === "live";
 // when someone asks for the family, never before.
 const STATIC = !!window.__KTW_STATE__;
 const PUBLISHED = () => MODE === "public" || MODE === "export";
-const MY_ROOT = () => (MODE === "export" ? SELF?.project?.root || "" : PUBLIC_ROOT);
+const MY_ROOT = () => (MODE === "export" ? SCENE.self?.project?.root || "" : PUBLIC_ROOT);
 const PUBLIC_STATES = {}; // `${canonical}|${root}` -> Promise<{state, url} | {error}>, one fetch per project however many ask at once
 // A published file of another project: whoever owns that repository chose the
 // URL, so no referrer and no credentials go with the request, a slow host
@@ -181,7 +181,7 @@ function loadedProjects() {
   const entries = [...LOADED.entries()];
   for (const [url, r] of entries) if (r.kind === "state" || r.kind === "page") {
     const G = group(r.project || url); G.files.state = { url, ...r }; G.project ||= r.project; byDir.set(dirOf(url), G);
-    G.own ||= !!r.own || (!!r.project && r.project === SELF?.project?.id); // the centre, however it arrived (embedded, local server, public mode)
+    G.own ||= !!r.own || (!!r.project && r.project === SCENE.self?.project?.id); // the centre, however it arrived (embedded, local server, public mode)
     const m = String(url).match(/\/api\/state\.json\?project=([^&#]+)/);
     G.dashboard = G.own ? null : m ? `${pagePath()}?project=${m[1]}#overview` : dirOf(url);
   }
@@ -431,8 +431,10 @@ const ensureBodies = (state) => provider().bodies(state).then((r) => r.state);
 const publicHref = (canonical, root = "", hash = "#overview") => centreUrl({ mode: "public", canonical, root }) + hash;
 
 // ---------------------------------------------------------------- state
-let S = null; // what the page shows: this project, or with the family scope the whole family merged (ktw-core.js, mergeStates)
-let SELF = null; // this project's own state, always
+// The scene (ktw-scene.js): what every view on the page shares — SCENE.state, what the page shows (this project,
+// or with the family scope the whole family merged, ktw-core.js mergeStates); SCENE.self, this project's own
+// state, always; SCENE.day, the clock; SCENE.focus, SCENE.scope, the layout — and the events views follow.
+const SCENE = globalThis.KeepTheWhy.scene.create({ scope: prefs.get("scope") || prefs.get("search-scope") || "project" }); // search-scope: the name before the scope switched the graph too
 let PROJECT = QUERY.get("project"); // null: the server's selected one
 const api = (path) => PROJECT ? `${path}?project=${encodeURIComponent(PROJECT)}` : path;
 let filter = { status: "", evidence: "", author: "" };
@@ -440,28 +442,26 @@ let selected = null; // entry id shown in the details pane
 // The clock: the day the page shows — the timeline's playhead. Set while the timeline is open, null
 // everywhere else. Every graph on the page follows it: only what existed on that day, with the status it
 // had then, and the See and Superseded by lines that had been written by then (ktw-core.js, existsAt and friends).
-let CLOCK = null; let CLOCK_N = -1;
+let CLOCK_N = -1; // how many entries the clock's day shows: a layout settles again only when that changes
 // an entry of this project goes by this project's repository: with one, an entry without a Git date is not committed
 // yet and exists today only; without one there are no days to go by. A foreign entry's export came from a repository.
-const hasRepo = (e) => (e?.origin || e?.project ? true : !!S?.project?.git?.available);
-const atClock = (e, ext = false) => existsAt(e, CLOCK, ext || hasRepo(e));
-const statusNow = (e) => (CLOCK ? statusAt(e, CLOCK, hasRepo(e)) || e.status : e.status);
+const hasRepo = (e) => (e?.origin || e?.project ? true : !!SCENE.state?.project?.git?.available);
+const atClock = (e, ext = false) => existsAt(e, SCENE.day, ext || hasRepo(e));
+const statusNow = (e) => (SCENE.day ? statusAt(e, SCENE.day, hasRepo(e)) || e.status : e.status);
 function setClock(day) {
-  if (day === CLOCK) return;
-  CLOCK = day;
+  if (day === SCENE.day) return;
   // the layout settles again only when the set of nodes changed, not on every day the playhead passes
-  const n = S ? S.entries.filter(atClock).length : 0; const grew = n !== CLOCK_N; CLOCK_N = n;
-  for (const g of ACTIVE_GRAPHS) { if (grew && g.alpha < 0.2) g.alpha = 0.2; g.wake?.(); }
-  if (grew) STAGE?.relax?.(); STAGE?.wake?.();
+  const n = SCENE.state ? SCENE.state.entries.filter((e) => existsAt(e, day, hasRepo(e))).length : 0; const grew = n !== CLOCK_N; CLOCK_N = n;
+  SCENE.setDay(day, { grew }); // every graph follows (runGraph), and the stage
 }
-const byId = () => Object.fromEntries(S.entries.map((e) => [e.id, e]));
-const byUuid = () => Object.fromEntries(S.entries.filter((e) => e.uuid).map((e) => [e.uuid, e]));
+const byId = () => Object.fromEntries(SCENE.state.entries.map((e) => [e.id, e]));
+const byUuid = () => Object.fromEntries(SCENE.state.entries.filter((e) => e.uuid).map((e) => [e.uuid, e]));
 // an entry's address is its Id, so a copied link survives a renamed heading or a moved entry; file#anchor only without one
 const entryRoute = (e) => ({ view: "entry", uuid: e.uuid || e.id });
 const entryHref = (e) => nav.href(entryRoute(e));
 const entryOf = (ref) => byId()[ref] || (isUuid(ref) ? byUuid()[ref] : null);
-const topicOf = (file) => S.topics.find((t) => t.file === file);
-const entriesOf = (file) => S.entries.filter((e) => e.file === file);
+const topicOf = (file) => SCENE.state.topics.find((t) => t.file === file);
+const entriesOf = (file) => SCENE.state.entries.filter((e) => e.file === file);
 const authorOf = (e) => e.git?.created?.author || e.git?.last_touched?.author || "";
 const matches = (e) =>
   (!filter.status || e.status === filter.status) &&
@@ -469,12 +469,12 @@ const matches = (e) =>
   (!filter.author || authorOf(e) === filter.author || e.git?.last_touched?.author === filter.author);
 const filterActive = () => !!(filter.status || filter.evidence || filter.author);
 const queues = () => ({
-  open: S.entries.filter((e) => e.status === "open"),
-  "needs-review": S.entries.filter((e) => e.status === "needs-review"),
-  "pending-confirmation": S.entries.filter((e) => e.status === "pending-confirmation"),
+  open: SCENE.state.entries.filter((e) => e.status === "open"),
+  "needs-review": SCENE.state.entries.filter((e) => e.status === "needs-review"),
+  "pending-confirmation": SCENE.state.entries.filter((e) => e.status === "pending-confirmation"),
   // Evidence is its own axis (Core rule 5): an open question with an untraced origin counts here and under open
-  unknown: S.entries.filter((e) => e.evidence === "unknown" && e.status !== "superseded"),
-  revisit: S.entries.filter((e) => e.revisit_when && e.status !== "superseded"),
+  unknown: SCENE.state.entries.filter((e) => e.evidence === "unknown" && e.status !== "superseded"),
+  revisit: SCENE.state.entries.filter((e) => e.revisit_when && e.status !== "superseded"),
 });
 // every entry that needs a person, once — an entry can wait in two queues
 const queueTotal = () => { const q = queues(); return new Set([...q.open, ...q["needs-review"], ...q["pending-confirmation"], ...q.unknown]).size; };
@@ -528,25 +528,25 @@ function entryRow(e) {
 function renderStrip() {
   const q = queues(); const s = $("#strip"); s.replaceChildren();
   const stat = (label, n, href, cls = "", title = "") => el("a", { class: `stat ${cls} ${n ? "" : "zero"}`, href, title }, el("b", {}, n), label);
-  const f = S.findings;
+  const f = SCENE.state.findings;
   s.append(
-    stat("entries", S.entries.length, "#overview"), stat("topics", S.topics.length, "#overview"), stat("authors", S.authors.length, "#authors"),
+    stat("entries", SCENE.state.entries.length, "#overview"), stat("topics", SCENE.state.topics.length, "#overview"), stat("authors", SCENE.state.authors.length, "#authors"),
     el("span", { class: "sep" }), el("span", { class: "lbl" }, "needs a person"),
     stat("open", q.open.length, "#queues", "q-open"), stat("needs review", q["needs-review"].length, "#queues", "q-needs-review"),
     stat("pending", q["pending-confirmation"].length, "#queues", "q-pending-confirmation"), stat("unknown evidence", q.unknown.length, "#queues", "q-unknown"),
     stat("revisit-when", q.revisit.length, "#queues", "", "Revisit-when triggers on record"),
     el("span", { class: "sep" }), el("span", { class: "lbl" }, "lint"),
-    stat("errors", f.errors, "#findings", f.errors ? "lint-bad hot" : "lint-ok", `keep-the-why-lint ${S.linter}`),
-    stat("warnings", f.warnings, "#findings", f.warnings ? "lint-warn" : "lint-ok", `keep-the-why-lint ${S.linter}`),
+    stat("errors", f.errors, "#findings", f.errors ? "lint-bad hot" : "lint-ok", `keep-the-why-lint ${SCENE.state.linter}`),
+    stat("warnings", f.warnings, "#findings", f.warnings ? "lint-warn" : "lint-ok", `keep-the-why-lint ${SCENE.state.linter}`),
   );
 }
 function viewFindings(main) {
-  const f = S.findings;
-  main.append(el("h1", {}, "Linter findings"), el("p", { class: "sub" }, `keep-the-why-lint ${S.linter} · ${f.errors} error(s), ${f.warnings} warning(s) · structure only, never content`));
+  const f = SCENE.state.findings;
+  main.append(el("h1", {}, "Linter findings"), el("p", { class: "sub" }, `keep-the-why-lint ${SCENE.state.linter} · ${f.errors} error(s), ${f.warnings} warning(s) · structure only, never content`));
   if (!f.items.length) return main.append(el("p", { class: "center" }, "Clean — nothing to show."));
   main.append(el("div", { class: "table-wrap" }, el("table", { class: "t findings" }, el("thead", {}, el("tr", {}, ["Severity", "Code", "Where", "Message"].map((h) => el("th", {}, h)))),
     el("tbody", {}, f.items.map((x) => {
-      const entry = S.entries.find((e) => (e.project || null) === (x.project || null) && `${(e.origin?.state?.project || S.project).context}${e.localFile || e.file}` === (x.localPath || x.path) && e.line <= x.line && x.line <= e.end_line + 1);
+      const entry = SCENE.state.entries.find((e) => (e.project || null) === (x.project || null) && `${(e.origin?.state?.project || SCENE.state.project).context}${e.localFile || e.file}` === (x.localPath || x.path) && e.line <= x.line && x.line <= e.end_line + 1);
       return el("tr", {}, el("td", {}, pill(x.severity, `sev-${x.severity}`)), el("td", { class: "mono" }, x.code),
         el("td", { class: "mono" }, entry ? navLink({ href: entryRoute(entry) }, `${x.path}:${x.line}`) : `${x.path}${x.line ? ":" + x.line : ""}`), el("td", {}, x.message));
     })))));
@@ -558,10 +558,10 @@ function renderSidebar() {
   tree.replaceChildren();
   const openState = JSON.parse(sessionStorage.getItem("ktw-tree") || "{}");
   let lastProject;
-  for (const t of S.topics) {
-    if (S.merged && t.project !== lastProject) { lastProject = t.project; tree.append(el("div", { class: "tree-project" }, t.project || (SELF.project.name || SELF.project.id))); }
+  for (const t of SCENE.state.topics) {
+    if (SCENE.state.merged && t.project !== lastProject) { lastProject = t.project; tree.append(el("div", { class: "tree-project" }, t.project || (SCENE.self.project.name || SCENE.self.project.id))); }
     const list = entriesOf(t.file);
-    const d = el("details", { open: openState[t.file] ?? (S.topics.length <= 6) });
+    const d = el("details", { open: openState[t.file] ?? (SCENE.state.topics.length <= 6) });
     d.addEventListener("toggle", () => { openState[t.file] = d.open; sessionStorage.setItem("ktw-tree", JSON.stringify(openState)); });
     d.append(el("summary", { "data-file": t.file, onclick: (ev) => { if (ev.target.closest(".tw")) return; ev.preventDefault(); nav.go({ view: "topic", file: t.file }); d.open = true; } },
       el("span", { class: "tw" }, "▶"), el("span", { class: "tt" }, t.title), el("span", { class: "count" }, list.length)));
@@ -569,7 +569,7 @@ function renderSidebar() {
       el("i", { class: `dot ${e.evidence} ${e.status}` }), el("span", {}, e.title.replace(/`/g, ""))));
     tree.append(d);
   }
-  $("#tree-count").textContent = `${S.topics.length} · ${plural(S.entries.length, "entry")}`;
+  $("#tree-count").textContent = `${SCENE.state.topics.length} · ${plural(SCENE.state.entries.length, "entry")}`;
   $("#queue-count").textContent = queueTotal() || "";
   // filters
   const fill = (id, key, values, label) => {
@@ -578,9 +578,9 @@ function renderSidebar() {
     sel.classList.toggle("set", !!cur);
     sel.onchange = () => { filter[key] = sel.value; rerender(); };
   };
-  fill("#f-status", "status", STATUS_ORDER.filter((s) => S.entries.some((e) => e.status === s)), "status");
-  fill("#f-evidence", "evidence", EV_ORDER.filter((s) => S.entries.some((e) => e.evidence === s)), "evidence");
-  fill("#f-author", "author", S.authors.map((a) => a.name), "author");
+  fill("#f-status", "status", STATUS_ORDER.filter((s) => SCENE.state.entries.some((e) => e.status === s)), "status");
+  fill("#f-evidence", "evidence", EV_ORDER.filter((s) => SCENE.state.entries.some((e) => e.evidence === s)), "evidence");
+  fill("#f-author", "author", SCENE.state.authors.map((a) => a.name), "author");
   $("#f-clear").hidden = !filterActive();
   $("#f-clear").onclick = () => { filter = { status: "", evidence: "", author: "" }; rerender(); };
   markActive();
@@ -611,11 +611,11 @@ function configValue(p, key, v) {
 }
 
 function viewOverview(main) {
-  const list = S.entries;
-  const p = S.project; const g = p.git;
-  if (S.merged) main.append(el("div", { class: "family-banner" }, el("b", {}, `Family · ${plural(S.family.length, "project")}`), " — ",
-    S.family.map((m, i) => [i ? " · " : "", m.project ? el("span", {}, m.project, el("span", { class: "note" }, ` ${S.entries.filter((e) => e.project === m.project).length}`)) : el("span", {}, m.name, el("span", { class: "note" }, ` ${S.entries.filter((e) => !e.project).length}`))]),
-    S.missing?.length ? el("span", { class: "warn" }, ` · ${plural(S.missing.length, "member")} not available here`) : null));
+  const list = SCENE.state.entries;
+  const p = SCENE.state.project; const g = p.git;
+  if (SCENE.state.merged) main.append(el("div", { class: "family-banner" }, el("b", {}, `Family · ${plural(SCENE.state.family.length, "project")}`), " — ",
+    SCENE.state.family.map((m, i) => [i ? " · " : "", m.project ? el("span", {}, m.project, el("span", { class: "note" }, ` ${SCENE.state.entries.filter((e) => e.project === m.project).length}`)) : el("span", {}, m.name, el("span", { class: "note" }, ` ${SCENE.state.entries.filter((e) => !e.project).length}`))]),
+    SCENE.state.missing?.length ? el("span", { class: "warn" }, ` · ${plural(SCENE.state.missing.length, "member")} not available here`) : null));
   main.append(
     el("h1", {}, p.id || p.name),
     el("p", { class: "sub" }, `${p.context} · schema ${p.schema} · ${p.config["capture-confirmation"] || "?"} · source-reference ${p.config["source-reference"] || "?"}`,
@@ -630,7 +630,7 @@ function viewOverview(main) {
         Object.keys(p.personal_defaults || {}).length ? [el("h3", {}, "Personal defaults offered"), el("div", { class: "kv" }, Object.entries(p.personal_defaults).map(([k, v]) => [el("span", { class: "k" }, k), el("span", { class: "v mono" }, v)]))] : null),
     ),
     el("h2", {}, "Topics"),
-    el("div", { class: "topic-cards" }, S.topics.map(topicCard)),
+    el("div", { class: "topic-cards" }, SCENE.state.topics.map(topicCard)),
     el("h2", {}, "Recently touched"),
     el("div", { class: "entry-list" }, [...list].filter((e) => e.git?.last_touched?.date !== undefined).sort((a, b) => ((b.git?.last_touched?.date || "") > (a.git?.last_touched?.date || "") ? 1 : -1)).slice(0, 8).map(entryRow)),
   );
@@ -747,13 +747,13 @@ function shareUrlFor(hash, project) {
   const local = isLocalPage();
   const here = pageUrl() + hash;
   if (PUBLISHED() && !local) return { url: here, where: "this page" };
-  const st = project ? null : (SELF?.project?.dashboard_state || S?.project?.dashboard_state || "");
+  const st = project ? null : (SCENE.self?.project?.dashboard_state || SCENE.state?.project?.dashboard_state || "");
   if (st && /^https:\/\//.test(st)) return { url: st.replace(/state\.json$/, "") + hash, where: "the project's published dashboard" };
   return { url: here, where: local ? "this machine only — the project publishes no dashboard" : "this page" };
 }
 const shareUrlOf = (e) => shareUrlFor(entryHref(e), e.project);
 // the entry's or topic's file on the host, in the repository it lives in (a merged member's in its own)
-const hostProjectOf = (x) => x.origin?.state?.project || S.project;
+const hostProjectOf = (x) => x.origin?.state?.project || SCENE.state.project;
 // the context directory as a path in the repository: under the root in a mono repository (core/context/)
 const hostContextDir = (P) => `${P.root ? P.root.replace(/\/$/, "") + "/" : ""}${P.context || "context/"}`;
 const entryHostHref = (e) => { const P = hostProjectOf(e); return hostFileLink(canonicalOf(P), P.git?.branch, hostContextDir(P), e.localFile || e.file, hostAnchor(e.title)); }; // GitHub's anchor, not the entry id
@@ -773,7 +773,7 @@ function copyLinkButton(s, what) {
 }
 function viewEntry(main, id) {
   const e = entryOf(id);
-  if (!e && isUuid(id) && (LIVE() || (PUBLISHED() && canonicalOf(S.project)))) return viewEntryElsewhere(main, id);
+  if (!e && isUuid(id) && (LIVE() || (PUBLISHED() && canonicalOf(SCENE.state.project)))) return viewEntryElsewhere(main, id);
   if (!e) return main.append(el("p", { class: "center" }, "No such entry"));
   if (ROUTES.format(nav.current()) !== entryHref(e)) nav.go(entryRoute(e), { replace: true }); // an old file#anchor link shows the Id address from here on
   const list = entriesOf(e.file); const idx = list.indexOf(e);
@@ -873,8 +873,8 @@ function viewThought(main, refs) {
 // friends, the path and the followed chains it has — the same data the Graph
 // view shows, laid out as lists.
 const graphForScope = async () => (familyGraphShown() ? buildFamilyGraph() : buildGraph());
-const projOf = (n) => n.proj || n.entry?.project || SELF?.project?.id || SELF?.project?.name || "";
-const lightAll = (t) => { for (const G of ACTIVE_GRAPHS) lightThought(G, t); };
+const projOf = (n) => n.proj || n.entry?.project || SCENE.self?.project?.id || SCENE.self?.project?.name || "";
+const lightAll = (t) => SCENE.setThought(t); // every graph lights it (runGraph)
 async function viewFriends(main) {
   main.append(el("h1", {}, "Friends"), el("p", { class: "sub" }, "Repositories the entries here cite outside the family — linked into the graph, never merged into search, queues or counts. A friend in a family comes as the whole family. One hop: a friend's own friends are not loaded; walk there to see them."));
   const box = el("div", { class: "friends-page" }, el("p", { class: "center" }, "Loading…")); main.append(box);
@@ -886,7 +886,7 @@ async function viewFriends(main) {
   const waiting = list.filter((f) => !FRIENDS.loaded[fkey(f.canonical)]);
   const kids = [];
   if (!list.length && !units.length) kids.push(el("p", { class: "empty" }, "No entry here cites a repository outside the family yet. A See line into another project — its canonical and an entry's Id — makes it a friend."));
-  if (!CITED.on && !CITED.loading && backlinksUrl(REGISTRY_URL, canonicalOf(SELF?.project))) kids.push(el("p", {}, el("button", { type: "button", class: "link-btn", title: "who in the Keep the Why registry cites this project — one file from the registry, loaded on this click", onclick: () => { CITED.url = backlinksUrl(REGISTRY_URL, canonicalOf(SELF?.project)); loadCited(); } }, "who in the registry cites this project?")));
+  if (!CITED.on && !CITED.loading && backlinksUrl(REGISTRY_URL, canonicalOf(SCENE.self?.project))) kids.push(el("p", {}, el("button", { type: "button", class: "link-btn", title: "who in the Keep the Why registry cites this project — one file from the registry, loaded on this click", onclick: () => { CITED.url = backlinksUrl(REGISTRY_URL, canonicalOf(SCENE.self?.project)); loadCited(); } }, "who in the registry cites this project?")));
   if (list.length && (!FRIENDS.on || waiting.length)) kids.push(el("p", {}, FRIENDS.loading ? "Loading friends…" : el("button", { type: "button", class: "link-btn", onclick: () => { setFriendsAuto(true); loadFriends(FRIENDS.on ? waiting : list); } }, `load the ${plural(FRIENDS.on ? waiting.length : list.length, "friend")}`)));
   const ours = g.nodes.filter((n) => n.kind === "entry" && !n.ext);
   const ourByUuid = Object.fromEntries(ours.filter((n) => n.entry.uuid).map((n) => [n.entry.uuid, n]));
@@ -1007,7 +1007,7 @@ function viewQueues(main) {
 function authorProjects() {
   const out = []; const seen = new Set();
   const add = (name, canonical, state, open, role) => { const k = `${fkey(canonical || name)}\u0000${state?.project?.id || ""}`; if (!state || seen.has(k)) return; seen.add(k); out.push({ name, canonical: canonical || "", state, open, role, anonymized: !!state.anonymized }); };
-  add(SELF?.project?.id || SELF?.project?.name || "this project", canonicalOf(SELF?.project), SELF, "#authors", "self");
+  add(SCENE.self?.project?.id || SCENE.self?.project?.name || "this project", canonicalOf(SCENE.self?.project), SCENE.self, "#authors", "self");
   for (const G of (LAST_POOL?.groups || []).slice(1)) add(G.member?.name, G.member?.canonical || canonicalOf(G.state?.project), G.state, memberLink(G.member, "#authors"), "family");
   for (const m of familyMembers()) add(m.name, m.canonical, m.state, m.open?.replace("#graph", "#authors") || "#graph", "family");
   for (const r of Object.values(FRIENDS.loaded)) { if (!r?.state) continue; for (const m of r.members || [r]) add(m.name || repoLabel(m.canonical), m.canonical, m.state, (m.open || r.open || "").replace("#graph", "#authors") || null, "friend"); }
@@ -1028,7 +1028,7 @@ function authorCommitIn(name, state) {
 const AUTHOR_SORT = { key: "author", dir: "asc" };
 function viewAuthors(main) {
   main.append(el("h1", {}, "Authors"), el("p", { class: "sub" }, "Git authors of the entries — who created, touched, or superseded what, in every project this page holds: this one, its family, the friends in the graph, the path. Git knows names, not who was driving."));
-  if (!S.project.git?.available) return main.append(el("p", { class: "center" }, "No Git repository — nothing to attribute."));
+  if (!SCENE.state.project.git?.available) return main.append(el("p", { class: "center" }, "No Git repository — nothing to attribute."));
   const projects = authorProjects();
   const sorted = (list) => sortAuthors(list, AUTHOR_SORT.key, AUTHOR_SORT.dir);
   const rows = sorted(mergeAuthors(projects.map((P) => ({ name: P.name, canonical: P.canonical, anonymized: P.anonymized, authors: P.state.authors || [] }))));
@@ -1065,24 +1065,24 @@ function viewAuthors(main) {
       main.append(d);
     }
   }
-  if (filter.author) main.append(el("h2", {}, `Entries created by ${filter.author}`), el("div", { class: "entry-list" }, S.entries.filter((e) => authorOf(e) === filter.author).map(entryRow)));
+  if (filter.author) main.append(el("h2", {}, `Entries created by ${filter.author}`), el("div", { class: "entry-list" }, SCENE.state.entries.filter((e) => authorOf(e) === filter.author).map(entryRow)));
 }
 
-const supersedersOf = (e) => e.uuid ? S.entries.filter((x) => x.superseded_by && parseSupersededBy(x.superseded_by)?.uuid === e.uuid) : [];
+const supersedersOf = (e) => e.uuid ? SCENE.state.entries.filter((x) => x.superseded_by && parseSupersededBy(x.superseded_by)?.uuid === e.uuid) : [];
 const seenFrom = (e, list) => e.uuid ? list.filter((x) => (x.see || []).some((r) => r?.uuid === e.uuid)) : [];
 // See and Superseded by of an entry, and the other way round: what supersedes
 // or points at it — here, and with the family scope anywhere in the tree
 function refsBox(e) {
   const back = (label, rows) => rows.length ? [el("h3", {}, label), ...rows] : null;
   const localRow = (x) => el("div", { class: "ref" }, navLink({ href: entryRoute(x) }, x.title), el("span", { class: "note" }, ` · ${x.project ? x.project + " · " : ""}${topicOf(x.file)?.title || x.file}`));
-  const sup = supersedersOf(e), seen = seenFrom(e, S.entries);
+  const sup = supersedersOf(e), seen = seenFrom(e, SCENE.state.entries);
   const box = el("div", { class: "body refs-box" },
     e.see?.length ? [el("h3", {}, "See"), ...e.see.map((r) => refLine(r))] : null,
     e.superseded_by ? [el("h3", {}, "Superseded by"), (() => { const sb = parseSupersededBy(e.superseded_by); return sb.none != null ? el("div", { class: "ref" }, el("i", {}, "none"), el("span", { class: "note" }, ` — ${sb.none}`)) : refLine(sb); })()] : null,
     back("Supersedes", sup.map(localRow)), back("Referenced by (See)", seen.map(localRow)));
-  if (S.merged) return box.childNodes.length ? box : null; // the merged family holds every reference
+  if (SCENE.state.merged) return box.childNodes.length ? box : null; // the merged family holds every reference
   const family = e.uuid && canFamily();
-  if (family && scope() === "family" && !S.merged) {
+  if (family && scope() === "family" && !SCENE.state.merged) {
     const more = el("div", {}, el("p", { class: "note" }, "Looking for references from the rest of the family…")); box.append(more);
     searchPool("family").then((pool) => {
       const sups = [], sees = [];
@@ -1108,7 +1108,7 @@ async function fetchFamily() {
 }
 // the family as .keep-the-why declares it — what an export or a public dump knows
 function familyDeclared() {
-  const p = S.project; const out = [];
+  const p = SCENE.state.project; const out = [];
   if (p.parent) out.push({ role: "parent", name: p.parent.replace(/^https:\/\//, ""), location: p.parent, scope: "", canonical: p.parent.startsWith("https://") ? p.parent : "", root: "" });
   for (const c of p.children || []) out.push({ role: "child", name: c.name, location: c.location, scope: c.scope, canonical: c.location.startsWith("https://") ? c.location : "", root: "" });
   return out;
@@ -1138,7 +1138,7 @@ function treeRows(members, rowOf) {
   return familyOrder(members).map(([m, d]) => el("div", { class: "tree-row", style: `padding-left:${Math.min(d, 6) * 26}px` }, d ? el("span", { class: "tree-mark" }, "└") : null, rowOf(m)));
 }
 async function viewFamily(main) {
-  const p = S.project;
+  const p = SCENE.state.project;
   main.append(el("h1", {}, "Family"), el("p", { class: "sub" }, "The whole tree this project belongs to, from the root down: each project under the one whose children block lists it. That block is the routing — where an entry about something belongs; what is wider than a level goes one level up, to the root at most. Every member can be read; a member checked out here can be written to. Not a dependency graph."));
   if (!p.parent && !(p.children || []).length) return main.append(el("p", { class: "center" }, "This project is not part of a family: no parent line, no children block in .keep-the-why."));
   const box = el("div", { class: "family" }); main.append(box);
@@ -1215,7 +1215,7 @@ function renderDetailsEntry(e) {
     e.revisit_when ? [el("span", { class: "k" }, "revisit when"), el("span", { class: "v" }, inline(e.revisit_when))] : null,
   ));
   d.append(el("h3", {}, "Git"));
-  if (!g) d.append(el("p", { class: "empty" }, S.project.git?.available ? "not in Git yet" : "no repository"));
+  if (!g) d.append(el("p", { class: "empty" }, SCENE.state.project.git?.available ? "not in Git yet" : "no repository"));
   else {
     const who = (c) => c ? [authorLink(c.author, c.commit, P), `${c.date ? " · " + c.date : ""}${c.commit ? " · " : ""}`, c.commit ? el("code", {}, c.commit) : null] : ["—"];
     d.append(el("div", { class: "kv" },
@@ -1223,7 +1223,7 @@ function renderDetailsEntry(e) {
       el("span", { class: "k" }, "last touched"), el("span", { class: "v" }, ...who(g.last_touched))));
     if (g.status_history?.length) d.append(el("h3", {}, "Status history"), el("ul", { class: "hist" }, g.status_history.map((h) => el("li", { class: h.status }, `${h.status}`, el("div", { class: "d" }, authorLink(h.author, h.commit, P), ` · ${h.date} · ${h.commit}`)))));
   }
-  const back = S.entries.filter((x) => x.id !== e.id && x.refs.includes(e.file));
+  const back = SCENE.state.entries.filter((x) => x.id !== e.id && x.refs.includes(e.file));
   d.append(el("h3", {}, `Backlinks (${back.length})`), ...(back.length ? back.map((x) => navLink({ class: "backlink", href: entryRoute(x) }, x.title, el("div", { class: "note" }, topicOf(x.file)?.title || x.file))) : [el("p", { class: "empty" }, `nothing references ${e.file}`)]));
   // the thoughts this entry is a step of — in the graph of the scope, friends and path included
   const mine = entryThoughts(e);
@@ -1292,7 +1292,7 @@ function miniGraph(d, ctx) {
     onclick: () => {
       if (mode === "family") setScope("family", { rerender: false });
       GRAPH_CENTER = ctx.entry ? { entry: ctx.entry } : ctx.topic ? { topic: ctx.topic } : null;
-      if (ctx.entry?.uuid) { focusStep(ctx.entry.uuid); setTimeout(() => { if (STEP_FOCUS === ctx.entry.uuid) focusStep(null); }, 4000); }
+      if (ctx.entry?.uuid) { focusStep(ctx.entry.uuid); setTimeout(() => { if (SCENE.focus === ctx.entry.uuid) focusStep(null); }, 4000); }
       nav.go({ view: "graph" });
     } }, "⤢ full graph");
   // the full graph's switches, folded into the small one: a ⚙ opens the same groups
@@ -1310,7 +1310,7 @@ function miniGraph(d, ctx) {
   const opts = { mini: true, focusId };
   if (mode === "near") {
     // friends live at the project level: the control switches there (the family level with the family scope) and loads them
-    const n = friendCandidates(S.entries.filter((e) => (e.project || null) === (ctx.entry?.project || ctx.topic?.project || null))).length;
+    const n = friendCandidates(SCENE.state.entries.filter((e) => (e.project || null) === (ctx.entry?.project || ctx.topic?.project || null))).length;
     const up = modes.includes("family") && familyGraphShown() ? "family" : "project";
     if (n || hasFamily()) box.append(el("span", { class: "mini-seg mini-friends" }, el("button", { type: "button", title: `show the friends — switches to the ${up} level`,
       onclick: () => { MINI = up; FRIENDS.load = true; setFriendsAuto(true); render(); } }, n ? `friends (${n})` : "friends")));
@@ -1364,8 +1364,8 @@ const pointsAt = (e) => [...(e.see || []).map((r) => r?.uuid), e.superseded_by ?
 const linkedTo = (e, list) => list.filter((x) => x !== e && ((e.uuid && pointsAt(x).includes(e.uuid)) || (x.uuid && pointsAt(e).includes(x.uuid))));
 function buildGraph(project = null) {
   const prev = graph ? Object.fromEntries(graph.nodes.map((n) => [n.id, n])) : {};
-  const entries = S.entries.filter((e) => (e.project || null) === project);
-  graph = Object.assign(graph || { scale: 1, ox: 0, oy: 0, showEntries: SHOW_ENTRIES, showLabels: true, alpha: 1 }, assemble(S.topics.filter((t) => (t.project || null) === project), entries, prev));
+  const entries = SCENE.state.entries.filter((e) => (e.project || null) === project);
+  graph = Object.assign(graph || { scale: 1, ox: 0, oy: 0, showEntries: SHOW_ENTRIES, showLabels: true, alpha: 1 }, assemble(SCENE.state.topics.filter((t) => (t.project || null) === project), entries, prev));
   graph.friends = project ? [] : friendCandidates(entries);
   autoFriends(graph);
   if (!project) autoFamily();
@@ -1377,19 +1377,19 @@ function buildGraph(project = null) {
 function buildTopicSubgraph(t) {
   // the topic with its entries, plus the topics it references and the ones referencing it (with the entries that do)
   const files = new Set([t.file, ...t.refs_out, ...t.refs_in]);
-  const topics = S.topics.filter((x) => files.has(x.file));
-  const entries = S.entries.filter((x) => x.file === t.file || x.refs.includes(t.file));
+  const topics = SCENE.state.topics.filter((x) => files.has(x.file));
+  const entries = SCENE.state.entries.filter((x) => x.file === t.file || x.refs.includes(t.file));
   const prev = graph ? Object.fromEntries(graph.nodes.map((n) => [n.id, n])) : {};
   return Object.assign({ scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true, alpha: 1 }, assemble(topics, entries, prev));
 }
 function buildSubgraph(e) {
   // the entry, its topic and siblings, the topics it references, and the entries elsewhere that reference its topic
   const files = new Set([e.file, ...e.refs]);
-  const back = S.entries.filter((x) => x.refs.includes(e.file));
-  const linked = linkedTo(e, S.entries); // See / Superseded by, either direction
+  const back = SCENE.state.entries.filter((x) => x.refs.includes(e.file));
+  const linked = linkedTo(e, SCENE.state.entries); // See / Superseded by, either direction
   for (const b of [...back, ...linked]) files.add(b.file);
-  const topics = S.topics.filter((t) => files.has(t.file));
-  const entries = S.entries.filter((x) => x.file === e.file || x.id === e.id || back.includes(x) || linked.includes(x));
+  const topics = SCENE.state.topics.filter((t) => files.has(t.file));
+  const entries = SCENE.state.entries.filter((x) => x.file === e.file || x.id === e.id || back.includes(x) || linked.includes(x));
   const prev = graph ? Object.fromEntries(graph.nodes.map((n) => [n.id, n])) : {};
   return Object.assign({ scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true, alpha: 1 }, assemble(topics, entries, prev));
 }
@@ -1404,7 +1404,7 @@ async function buildFamilyGraph() {
   const pool = await searchPool("family");
   const groups = pool.groups.map((g, i) => ({
     g, key: g.member.role === "self" ? "self" : g.member.key || `${g.member.canonical}|${g.member.root || ""}`,
-    canonical: g.state.project?.canonical || g.member.canonical || (g.member.role === "self" ? canonicalOf(S.project) : ""),
+    canonical: g.state.project?.canonical || g.member.canonical || (g.member.role === "self" ? canonicalOf(SCENE.state.project) : ""),
     root: g.state.project?.root || g.member.root || (g.member.role === "self" ? MY_ROOT() : ""),
     role: g.member.role, state: g.state, color: i === 0 ? color0() : palette(i),
   }));
@@ -1575,7 +1575,7 @@ function familyMembers() {
   return FAMILY_NB.groups.map((x, i) => ({ ...(PUBLISHED() ? publicMember(x.member, x.state) : liveMember(x.member, x.state)), color: palette(i + 1) })).filter((m) => m.state && !onPath(m.canonical));
 }
 function friendCandidates(entries, family = []) {
-  const p = SELF?.project || {}; const base = canonicalOf(p); const root = MY_ROOT();
+  const p = SCENE.self?.project || {}; const base = canonicalOf(p); const root = MY_ROOT();
   const declared = [p.parent, ...(p.children || []).map((c) => c.location)].map((l) => resolveLocation(l, base, root)?.canonical);
   return friendsOf(entries, [base, ...declared, ...(TREE || []).map((m) => m.canonical), ...family]);
 }
@@ -1674,7 +1674,7 @@ function friendUnits(g) {
   const drawn = new Set((g === fgraph ? g.groups || [] : g === graph ? familyMembers() : []).map(projectKey));
   const add = (f, via) => {
     const r = FRIENDS.loaded[fkey(f.canonical)];
-    const centre = fkey(canonicalOf(SELF?.project));
+    const centre = fkey(canonicalOf(SCENE.self?.project));
     if (!r?.state || onPath(f.canonical) || fkey(f.canonical) === centre || drawn.has(projectKey(r))) return; // the centre is drawn as itself, never again as a neighbour
     const members = (FRIEND_FAMILIES ? r.members || [r] : [r]).filter((m) => (fkey(m.canonical) !== centre || m === r) && !drawn.has(projectKey(m)));
     const k = unitKey(members);
@@ -1735,7 +1735,7 @@ function addLinkedLayer(g, prev, items) {
   // reads as one project among the others instead of a loose cloud of topics
   let selfHub = null;
   if (items.length && !nodes.some((n) => n.kind === "project" && !n.ext)) {
-    const p = SELF?.project || S.project || {};
+    const p = SCENE.self?.project || SCENE.state.project || {};
     selfHub = add({ id: "p:self", kind: "project", self: true, label: p.id || p.name || "this project", canonical: canonicalOf(p), root: p.root || "", r: 15, color: color0(), href: "#overview" }, { x: 0, y: 0 });
     selfHub.ext = false; selfHub.unit = null;
     for (const n of nodes) if (n.kind === "topic" && !n.ext) links.push({ s: index[selfHub.id], t: index[n.id], kind: "hub", len: 90 });
@@ -1914,7 +1914,7 @@ function setCentre(c, state) {
 // tree, the published one, the members beside the graph, the family graph) and what the config declares.
 function familyKeys() {
   const out = new Set(); const add = (c, r) => { if (c) out.add(`${fkey(c)}|${r || ""}`); };
-  const p = SELF?.project || {}; const base = canonicalOf(p); const root = p.root || "";
+  const p = SCENE.self?.project || {}; const base = canonicalOf(p); const root = p.root || "";
   add(base, root);
   for (const l of [p.parent, ...(p.children || []).map((c) => c.location)]) { const loc = l && resolveLocation(l, base, root); if (loc) add(loc.canonical, loc.root); }
   for (const m of TREE || []) add(m.canonical, m.root);
@@ -1929,7 +1929,7 @@ function familyKeys() {
 // once, however often the reader moves between its members.
 function moveTo(t, hash = "#graph", { push = true } = {}) {
   const target = t.key ? t : remember(t.centre, t.state);
-  const here = remember(currentCentre(), SELF);
+  const here = remember(currentCentre(), SCENE.self);
   if (target.key === here.key) { nav.go(ROUTES.parse(hash)); return; }
   const tp = target.state?.project || {};
   const inFamily = familyKeys().has(`${fkey(canonicalOf(tp))}|${tp.root || ""}`);
@@ -1971,7 +1971,7 @@ function onLinkClick(ev) {
 }
 function pathBar() {
   if (!KEEP_PATH || !TRAIL.length) return null;
-  const here = SELF?.project?.id || SELF?.project?.name || "";
+  const here = SCENE.self?.project?.id || SCENE.self?.project?.name || "";
   const steps = TRAIL.map((t, i) => [el("a", { href: t.url + "#graph", title: `back to ${t.name} — the path shortens to here`, onclick: (ev) => { ev.preventDefault(); moveTo(t, "#graph"); }, onmouseenter: () => spotProject(t.canonical, t.root), onmouseleave: () => spotProject(null) }, `${i + 1} · ${t.name}`), el("span", { class: "sep" }, " › ")]).flat();
   return el("div", { class: "path-bar" }, el("span", { class: "label" }, "Path "), ...steps, el("b", {}, here),
     el("span", { class: "grow" }),
@@ -2003,17 +2003,17 @@ function friendsUi(g) {
 }
 // what this project and its family are, for "cited by": drawn already, so not again as a citing repository
 function citedExclude() {
-  const p = SELF?.project || {}; const base = canonicalOf(p); const root = MY_ROOT();
+  const p = SCENE.self?.project || {}; const base = canonicalOf(p); const root = MY_ROOT();
   const declared = [p.parent, ...(p.children || []).map((c) => c.location)].map((l) => resolveLocation(l, base, root)?.canonical);
   return [base, ...declared, ...(TREE || []).map((m) => m.canonical), ...familyMembers().map((m) => m.canonical), ...(PUBLIC_TREE?.groups || []).map((x) => x.member.canonical)];
 }
 async function loadCited() {
   CITED.loading = true; CITED.error = null; render();
   try {
-    const bl = await provider().backlinks(canonicalOf(SELF?.project)); // no file is an answer: nobody cites it
+    const bl = await provider().backlinks(canonicalOf(SCENE.self?.project)); // no file is an answer: nobody cites it
     if (bl.error) throw new Error(bl.error);
     const file = bl.file;
-    const r = citingOf(file, (SELF?.entries || []).map((e) => e.uuid).filter(Boolean), [canonicalOf(SELF?.project)]);
+    const r = citingOf(file, (SCENE.self?.entries || []).map((e) => e.uuid).filter(Boolean), [canonicalOf(SCENE.self?.project)]);
     CITED.list = r.citing; CITED.elsewhere = r.elsewhere; CITED.checked = file.checked || "";
     await Promise.all(CITED.list.map(loadFriend));
     CITED.on = true;
@@ -2025,7 +2025,7 @@ async function loadCited() {
 // "cited by": who in the registry cites this project — asked for on the click, one file from the registry
 function citedUi(g) {
   if (g !== graph && g !== fgraph) return null;
-  const url = backlinksUrl(REGISTRY_URL, canonicalOf(SELF?.project));
+  const url = backlinksUrl(REGISTRY_URL, canonicalOf(SCENE.self?.project));
   if (!url) return null; // no repository URL the registry could hold
   CITED.url = url;
   const title = `who in the Keep the Why registry cites this project — the registry's backlink file, ${url}, loaded on the click and not remembered${CITED.checked ? `; built ${CITED.checked}` : ""}. Citations from repositories outside the registry are not in it.`;
@@ -2153,7 +2153,7 @@ function graphThoughts(g) {
 const CHAIN = { extra: new Map(), tried: new Set(), busy: false }; // canonical key -> { canonical, uuids }
 const graphNow = async () => (familyGraphShown() ? buildFamilyGraph() : buildGraph());
 async function loadEnds(ends) {
-  const own = new Set([fkey(canonicalOf(SELF?.project)), ...((fgraph?.groups || []).map((G) => fkey(G.canonical)))]);
+  const own = new Set([fkey(canonicalOf(SCENE.self?.project)), ...((fgraph?.groups || []).map((G) => fkey(G.canonical)))]);
   const fresh = [];
   for (const x of ends) {
     const k = fkey(x.canonical);
@@ -2195,7 +2195,7 @@ async function loadRegistryIndex() {
 }
 // a project of the registry as a search hit: its own link for this project, else its published export in public mode
 const registryHit = (p) => {
-  const self = !!canonicalOf(S?.project) && fkey(p.canonical) === fkey(canonicalOf(S.project));
+  const self = !!canonicalOf(SCENE.state?.project) && fkey(p.canonical) === fkey(canonicalOf(SCENE.state.project));
   const meta = [repoLabel(p.canonical), p.entries != null ? plural(p.entries, "entry") : null, p.cors === false ? "served without a CORS header — a browser will likely be refused" : null].filter(Boolean);
   return { self, href: self ? "#overview" : publicHref(p.canonical), name: p.name || repoLabel(p.canonical), meta };
 };
@@ -2207,7 +2207,7 @@ const shownGraph = () => (familyGraphShown() && fgraph ? fgraph : graph);
 function loadedCanonicals() {
   // what the page shows beside the project — not everything it ever fetched: a repository dropped from the
   // globe (clear, the registry switched off) is offered again, its state coming from memory
-  const out = new Set([fkey(canonicalOf(S?.project))]);
+  const out = new Set([fkey(canonicalOf(SCENE.state?.project))]);
   for (const m of familyMembers()) out.add(fkey(m.canonical));
   if (shownGraph() === fgraph) for (const G of fgraph.groups || []) out.add(fkey(G.canonical)); // the family tree, drawn in the family graph
   for (const t of TRAIL) out.add(fkey(t.canonical));
@@ -2224,7 +2224,7 @@ function globeCandidates() {
   // from what is drawn — the project, its family, the path's steps, the units beside it — not from everything
   // ever fetched: a project walked away from is not where the next hop starts
   const g = shownGraph();
-  scan(S?.entries); for (const m of familyMembers()) scan(m.state?.entries);
+  scan(SCENE.state?.entries); for (const m of familyMembers()) scan(m.state?.entries);
   if (g === fgraph) for (const G of fgraph.groups || []) scan(G.state?.entries); // the family tree in the family graph
   if (pathShown()) for (const t of TRAIL) scan(t.state?.entries);
   if (g) for (const u of friendUnits(g)) for (const m of u.members) scan(m.state?.entries);
@@ -2357,15 +2357,13 @@ function followThought(t, then) {
 let THOUGHT_PIN = null; // the ids of the held thought, joined
 // One step pointed at — in a thought's list of steps, in the reader, on the
 // Thoughts page — is marked in every graph on the page.
-let STEP_FOCUS = null; // an entry's Id (or node id)
-const ACTIVE_GRAPHS = new Set();
-function focusStep(ref) { STEP_FOCUS = ref || null; for (const g of ACTIVE_GRAPHS) g.wake?.(); STAGE?.wake?.(); }
+const focusStep = (ref) => SCENE.setFocus(ref); // every graph redraws (runGraph), and the stage
 const stepHover = (ref) => ({ onmouseenter: () => focusStep(ref), onmouseleave: () => focusStep(null) });
 function lightThought(g, t) {
   g.thought = t ? { nodes: new Set(t.steps), pairs: new Set(t.ids.slice(1).map((id, i) => `${id}|${t.ids[i]}`)) } : null;
   // lighting a thought brings entries into view that may be hidden otherwise, so the layout settles again (and the
   // small graph refits); letting go only redraws — a refit would move the view the person has set
-  if (t) g.alpha = Math.max(g.alpha, 0.02); g.wake?.(); STAGE?.wake?.();
+  if (t) g.alpha = Math.max(g.alpha, 0.02); g.wake?.(); SCENE.wake(); // the stage, too, shows what is lit (it follows the scene)
 }
 // the thought being read (#thought/…) is held in every graph shown beside it, however the reader was reached —
 // read › without a click first, a link, a reload — the same as a thought clicked and then read
@@ -2438,15 +2436,14 @@ function projectNodes(g, hub) {
 // A project pointed at outside the graph (a Family row, a step of the path): its nodes stay, the rest fades.
 // The projects of one repository share the canonical and differ by root, so both are compared; a caller
 // that knows no root (undefined) matches by the canonical alone.
-function spotProject(canonical, root) {
+const spotProject = (canonical, root) => SCENE.spot(canonical, root); // every graph spots it (spotIn, from runGraph)
+function spotIn(G, canonical, root) {
   const same = (n) => n.kind === "project" && n.canonical && fkey(n.canonical) === fkey(canonical) && (root === undefined || (n.root || "") === (root || ""));
-  for (const G of ACTIVE_GRAPHS) {
-    const hub = canonical ? G.nodes.find(same) : null;
-    G.spot = hub ? projectNodes(G, hub) : null; G.alpha = Math.max(G.alpha, 0.02); G.wake?.();
-  }
+  const hub = canonical ? G.nodes.find(same) : null;
+  G.spot = hub ? projectNodes(G, hub) : null; G.alpha = Math.max(G.alpha, 0.02); G.wake?.();
 }
 function projectsLegend(g) {
-  const p = S?.project || {};
+  const p = SCENE.state?.project || {};
   const hubs = g.nodes.filter((n) => n.kind === "project");
   const out = [];
   if (!hubs.some((n) => n.self)) out.push(el("span", { class: "family" }, el("i", { class: "dot", style: "background:var(--accent);width:10px;height:10px" }), el("b", {}, p.id || p.name || "this project")));
@@ -2563,7 +2560,7 @@ function viewGraph(main) {
     const showPreview = (n, sx, sy) => {
       const e = n.entry; selected = e.id;
       const tnode = g.nodes.find((m) => m.kind === "topic" && m.file === e.file && (m.unit || "") === (n.unit || "")); // the topic's node carries its title, a friend's too
-      fillEntryCard(preview, e, { lane: (n.proj ? `${n.proj} · ` : "") + (tnode?.label || topicOf(e.file)?.title || e.file).replace(/`/g, ""), href: n.href, state: n.state || SELF, day: null,
+      fillEntryCard(preview, e, { lane: (n.proj ? `${n.proj} · ` : "") + (tnode?.label || topicOf(e.file)?.title || e.file).replace(/`/g, ""), href: n.href, state: n.state || SCENE.self, day: null,
         badge: el("button", { type: "button", class: "pill stage-card-held", title: "close the preview", onclick: closePreview }, "preview ", el("b", {}, "×")), again: () => { if (selected === e.id) showPreview(n, sx, sy); }, onOpen: n.action || null,
         topic: tnode ? { title: "back to the topic's preview", onClick: () => showTopicPreview(tnode, null, null) } : null }); // from inside the preview: the card stays where it is
       preview.hidden = false; place(sx, sy); g.wake?.();
@@ -2610,6 +2607,14 @@ function hostPath(url) {
   return HOST_PATHS.get(h.name);
 }
 const miniView = (g) => (g.miniView ||= { scale: 1, ox: 0, oy: 0, userMoved: false, needFit: true, fitScale: 0 }); // the small graph's own view of a graph the page may show too
+// A graph that is the scene's layout source — the stage's, or a copy that shares its nodes (`runner`, `of`) —
+// publishes its positions after every step; it counts as settled once both it and its copy have.
+function publishLayout(g, { force = false } = {}) {
+  const src = SCENE.layoutSource;
+  if (!src || (g !== src && g.of !== src)) return;
+  if (!force && g.alpha <= 0.003 && SCENE.layoutSettled) return;
+  SCENE.publishLayout(src.nodes, { settled: Math.min(src.alpha, src.runner?.alpha ?? 1) <= 0.01 });
+}
 function runGraph(canvas, g, opts = {}) {
   const mini = !!opts.mini;
   const V = mini ? miniView(g) : g; // the view — zoom and offset — belongs to the canvas: the side pane's small graph keeps its own, the page's survives a visit elsewhere
@@ -2627,12 +2632,12 @@ function runGraph(canvas, g, opts = {}) {
   const minScale = () => Math.min(0.15, (V.fitScale || 0.15) / 2);
   const zoomTo = (ns, px, py) => { ns = Math.min(6, Math.max(minScale(), ns)); const k = ns / V.scale; V.ox = px - (px - V.ox) * k; V.oy = py - (py - V.oy) * k; V.scale = ns; };
   // under the clock an entry is there from the day it was created, a topic from its first entry's day
-  const topicAlive = (n) => !CLOCK || g.nodes.some((m) => m.kind === "entry" && m.file === n.file && (m.unit || "") === (n.unit || "") && atClock(m.entry, !!m.ext));
+  const topicAlive = (n) => !SCENE.day || g.nodes.some((m) => m.kind === "entry" && m.file === n.file && (m.unit || "") === (n.unit || "") && atClock(m.entry, !!m.ext));
   // under the clock every entry follows it, a friend's or a family member's as much as our own (their exports carry
   // the same Git days); one without Git is simply there
   const visible = (n) => n.kind === "topic" ? topicAlive(n) : n.kind !== "entry" ? true : atClock(n.entry, !!n.ext) && (g.showEntries || !!g.thought?.nodes.has(n));
   // a topic-level reference stands in for entry references only while entries are hidden
-  const linkOn = (l) => visible(g.nodes[l.s]) && visible(g.nodes[l.t]) && (l.kind !== "xtopic" || !g.showEntries) && linkExistsAt(CLOCK, l.day);
+  const linkOn = (l) => visible(g.nodes[l.s]) && visible(g.nodes[l.t]) && (l.kind !== "xtopic" || !g.showEntries) && linkExistsAt(SCENE.day, l.day);
   const dim = (n) => n.kind === "entry" && filterActive() && !matches(n.entry);
   const pick = (px, py) => { const [x, y] = toWorld(px, py); let best = null, bd = 1e9; for (const n of g.nodes) { if (!visible(n)) continue; const d = Math.hypot(n.x - x, n.y - y); if (d < Math.max(n.r + 4, 8) / Math.min(V.scale, 1) && d < bd) { best = n; bd = d; } } return best; };
   // a project's name under its hub is a link: pointed at, underlined; clicked, it goes there
@@ -2691,11 +2696,11 @@ function runGraph(canvas, g, opts = {}) {
     const dt = lastT && now ? Math.min(100, now - lastT) : 16; lastT = now || 0;
     const drifting = driftOn() && !hover && !drag && !pan && !pinch;
     if (drifting) { const a = DRIFT_RATE * dt, c = Math.cos(a), sn = Math.sin(a); for (const n of g.nodes) { const x = n.x, y = n.y; n.x = x * c - y * sn; n.y = x * sn + y * c; } }
-    if (STAGE && (g === STAGE.graph || (g.of && g.of === STAGE.graph)) && g.alpha > 0.01 && STAGE.follows?.()) STAGE.wake(); // settling: the stage settles with it, then keeps the positions
     // settled and only turning: every other frame is enough
     if (drifting && g.alpha <= 0.003 && (frame++ & 1)) { g.raf = canvas.isConnected ? requestAnimationFrame(step) : null; return; }
     const ns = g.nodes.filter(visible);
     if (g.alpha > 0.003) g.alpha = layoutTick(g.nodes, g.links, g.alpha, { visible, linkOn }); // the forces are ktw-core.js's
+    publishLayout(g);
     // keep the canvas framed on the nodes while they settle: the small one always, the family graph until the person moves it
     if ((mini || ((opts.fit || V.needFit) && !V.userMoved)) && (g.alpha > 0.01 || V.needFit) && W && H) {
       let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
@@ -2716,7 +2721,7 @@ function runGraph(canvas, g, opts = {}) {
     const neigh = new Set(); if (focus) { neigh.add(focus); for (const l of g.links) { if (!linkOn(l)) continue; if (g.nodes[l.s] === focus) neigh.add(g.nodes[l.t]); if (g.nodes[l.t] === focus) neigh.add(g.nodes[l.s]); } }
     if (th) for (const n of th.nodes) neigh.add(n);
     if (sp) for (const n of sp) neigh.add(n);
-    const stepNode = STEP_FOCUS ? ns.find((n) => n.kind === "entry" && (n.entry?.uuid === STEP_FOCUS || n.id === STEP_FOCUS)) : null;
+    const stepNode = SCENE.focus ? ns.find((n) => n.kind === "entry" && (n.entry?.uuid === SCENE.focus || n.id === SCENE.focus)) : null;
     if (stepNode) neigh.add(stepNode);
     const onThought = (l) => !!th && (l.kind === "see" || l.kind === "superseded") && (th.pairs.has(`${g.nodes[l.s].id}|${g.nodes[l.t].id}`) || th.pairs.has(`${g.nodes[l.t].id}|${g.nodes[l.s].id}`));
     const LW = { topic: 1.6, ref: 1, family: 2.6, see: 1.5, xtopic: 1.5, superseded: 1.3, trail: 1.4, owner: 1.6 };
@@ -2794,12 +2799,19 @@ function runGraph(canvas, g, opts = {}) {
       }
     }
     ctx.restore();
-    if (!canvas.isConnected) { ro.disconnect(); g.raf = null; ACTIVE_GRAPHS.delete(g); return; }
+    if (!canvas.isConnected) { ro.disconnect(); g.raf = null; for (const off of listening) off(); return; }
     const busy = g.alpha > 0.003 || drag || pan || pinch || hover || driftOn();
     g.raf = busy ? requestAnimationFrame(step) : null; // idle: no frames until something happens
   }
   const wake = () => { if (!g.raf && canvas.isConnected) g.raf = requestAnimationFrame(step); };
-  ACTIVE_GRAPHS.add(g);
+  // the scene's changes this graph follows, until its canvas leaves the page
+  const listening = [
+    SCENE.on("day", (day, { grew }) => { if (grew && g.alpha < 0.2) g.alpha = 0.2; g.wake?.(); }),
+    SCENE.on("focus", () => g.wake?.()),
+    SCENE.on("thought", (t) => lightThought(g, t)),
+    SCENE.on("spot", (canonical, root) => spotIn(g, canonical, root)),
+    SCENE.on("wake", () => g.wake?.()),
+  ];
   for (const evn of ["mousemove", "mousedown", "wheel", "dblclick", "touchstart", "touchmove", "mouseleave"]) canvas.addEventListener(evn, wake, { passive: true });
   window.addEventListener("mouseup", wake);
   g.wake = wake;
@@ -2810,7 +2822,7 @@ function runGraph(canvas, g, opts = {}) {
 }
 
 // ---------------------------------------------------------------- timeline (SVG)
-const authorColor = (name) => palette(Math.max(0, S.authors.findIndex((a) => a.name === name)));
+const authorColor = (name) => palette(Math.max(0, SCENE.state.authors.findIndex((a) => a.name === name)));
 // ---------------------------------------------------------------- timeline: the clock, the playhead, the stage
 // The Timeline owns the clock. The slider, the play button, the keys and a wheel over the stage set the day, and
 // every graph on the page follows it (setClock). The stage is a perspective view of the graph's entries: time runs
@@ -2844,8 +2856,8 @@ const stageSeg = (cls, title, options, current, pick, label = null) => el("span"
 
 function viewTimeline(main, day) {
   main.append(el("h1", {}, "Timeline"));
-  if (!S.project.git?.available) return main.append(el("p", { class: "center" }, "No Git repository — no dates to draw."));
-  if (S.project.git.shallow) main.append(el("p", { class: "sub warn" }, "Shallow clone: the history stops at the clone's edge, so every entry older than that appears to start there. Fetch the full history (git fetch --unshallow) for real dates."));
+  if (!SCENE.state.project.git?.available) return main.append(el("p", { class: "center" }, "No Git repository — no dates to draw."));
+  if (SCENE.state.project.git.shallow) main.append(el("p", { class: "sub warn" }, "Shallow clone: the history stops at the clone's edge, so every entry older than that appears to start there. Fetch the full history (git fetch --unshallow) for real dates."));
   const sub = el("p", { class: "sub" }, "The project day by day. The stage shows what existed on the day shown, the graph beside it the same; the playhead sets the day. The card shows the entry that appeared last by then, or the one clicked on the stage. The bars count the entries by the month their heading first appeared in Git, stacked by author, grey ticks for entries superseded that month.");
   // the graph the stage is a view of and the thoughts beside it are drawn from: the family graph with the family
   // scope (built once it is asked for, the view rendered again when it arrives), else this project's
@@ -2853,7 +2865,7 @@ function viewTimeline(main, day) {
   if (family && !familyFresh && !TIMELINE_FAMILY_ASKED) { TIMELINE_FAMILY_ASKED = true; buildFamilyGraph().then(() => { TIMELINE_FAMILY_ASKED = false; if (nav.current().view === "timeline") render(); }); }
   const g = family && familyFresh ? fgraph : buildGraph();
   // the clock runs from the first day of any entry on the page — ours, or one a friend, the family or the path brought — to today
-  const span = daySpan([...S.entries, ...g.nodes.filter((n) => n.kind === "entry" && n.entry).map((n) => n.entry)]);
+  const span = daySpan([...SCENE.state.entries, ...g.nodes.filter((n) => n.kind === "entry" && n.entry).map((n) => n.entry)]);
   if (!span) return main.append(sub, el("p", { class: "center" }, "Nothing dated yet."));
   const clamp = (d) => (d < span.from ? span.from : d > span.to ? span.to : d);
   const bars = timelineBars(main, span, (d) => setDay(d));
@@ -2868,12 +2880,12 @@ function viewTimeline(main, day) {
   speedSel.onchange = () => { PLAY.speed = speedSel.value === "entry" ? "entry" : Number(speedSel.value) || 7; PLAY.acc = 0; PLAY.frac = 0; PLAY.jump = 1; };
   for (const opt of speedSel.options) if (opt.value === String(PLAY.speed) || (opt.value !== "entry" && Math.abs(Number(opt.value) - PLAY.speed) < 1e-9)) opt.selected = true;
   // the days entries appeared on, for the "1 entry /s" speed: ours and the graph's foreign ones, as the span counts them
-  const entryDays = [...new Set([...S.entries, ...g.nodes.filter((n) => n.kind === "entry" && n.entry).map((n) => n.entry)].map(createdOn).filter(Boolean).map(grid.toClock))].sort();
+  const entryDays = [...new Set([...SCENE.state.entries, ...g.nodes.filter((n) => n.kind === "entry" && n.entry).map((n) => n.entry)].map(createdOn).filter(Boolean).map(grid.toClock))].sort();
   const nextEntryDay = (d) => entryDays.find((x) => x > d) || span.to;
   const upd = () => {
-    const d = CLOCK || span.to;
+    const d = SCENE.day || span.to;
     range.value = grid.stepOf(d); dayLabel.textContent = grid.label(d); bars.mark(d, grid.label(d));
-    const here = S.entries.filter((e) => atClock(e)); const st = count(here.map((e) => ({ s: statusNow(e) })), "s"); const open = (st.open || 0) + (st["needs-review"] || 0) + (st["pending-confirmation"] || 0);
+    const here = SCENE.state.entries.filter((e) => atClock(e)); const st = count(here.map((e) => ({ s: statusNow(e) })), "s"); const open = (st.open || 0) + (st["needs-review"] || 0) + (st["pending-confirmation"] || 0);
     setKids(counts, `${plural(here.length, "entry")} by then`, st.active ? ` · ${st.active} active` : "", st.superseded ? ` · ${st.superseded} superseded` : "", open ? ` · ${open} in question` : "");
     playBtn.textContent = PLAY.on ? "⏸" : "▶"; playBtn.classList.toggle("on", PLAY.on);
     card.refresh();
@@ -2884,21 +2896,21 @@ function viewTimeline(main, day) {
   function play(on) {
     if (on === PLAY.on) return;
     if (!on) { stopPlay(); upd(); return; }
-    if ((CLOCK || span.to) >= span.to) setClock(span.from); // at the end: once more from the start
+    if ((SCENE.day || span.to) >= span.to) setClock(span.from); // at the end: once more from the start
     PLAY.on = true; PLAY.last = 0; PLAY.acc = 0;
     const step = (now) => {
       if (!PLAY.on || !range.isConnected) { stopPlay(); return; }
       const dt = PLAY.last ? Math.min(0.1, (now - PLAY.last) / 1000) : 0; PLAY.last = now;
       if (PLAY.speed === "entry") {
         // one step per second to the next day with an entry; the stage slides through the days between
-        const target = nextEntryDay(CLOCK); PLAY.jump = span.timed ? dayDiff(CLOCK, target) : Math.max(1, dayDiff(CLOCK, target)); PLAY.acc += dt; PLAY.frac = Math.min(1, PLAY.acc);
+        const target = nextEntryDay(SCENE.day); PLAY.jump = span.timed ? dayDiff(SCENE.day, target) : Math.max(1, dayDiff(SCENE.day, target)); PLAY.acc += dt; PLAY.frac = Math.min(1, PLAY.acc);
         if (PLAY.acc >= 1) { PLAY.acc = 0; PLAY.frac = 0; if (target >= span.to) { setClock(span.to); stopPlay(); upd(); return; } setDay(target); }
         else STAGE?.wake?.();
       } else {
         // the speed in days a second, the clock in steps of the grid's unit — an hour or a day
         const U = grid.unit; PLAY.jump = U; PLAY.acc += dt * PLAY.speed;
         const whole = Math.floor(PLAY.acc / U); PLAY.frac = (PLAY.acc - whole * U) / U;
-        if (whole >= 1) { PLAY.acc -= whole * U; const d = stepBy(CLOCK, whole); if (d >= span.to) { setClock(span.to); stopPlay(); upd(); return; } setDay(d); }
+        if (whole >= 1) { PLAY.acc -= whole * U; const d = stepBy(SCENE.day, whole); if (d >= span.to) { setClock(span.to); stopPlay(); upd(); return; } setDay(d); }
         else STAGE?.wake?.();
       }
       PLAY.raf = requestAnimationFrame(step);
@@ -2922,14 +2934,14 @@ function viewTimeline(main, day) {
     wrap, stageLegend(),
     el("p", { class: "note stage-note" }, el("span", { class: "stage-hint" }, (grid.hours ? "On the stage: wheel — an hour forward or back, shift for a day ·" : "On the stage: wheel — a day forward or back, shift for a week ·") + " drag — look around · ctrl+wheel — zoom · double-click — reset the view · click a card to read it, the floor to let go. The thoughts beside: point at one to light its chain here and in the graph."), el("span", { class: "stage-hint-touch" }, "On the stage: drag — look around · pinch — zoom · tap a card to read it, the floor to let go. The slider sets the day.")),
     listBox);
-  CLOCK = null; setClock(day && DAY_RE.test(day) ? clamp(grid.toClock(day)) : span.to); upd();
-  runStage(canvas, { wrap, tip, span, graph: g, setDay, stepBy, big, play, open: card.hold, close: card.release });
+  SCENE.day = null; setClock(day && DAY_RE.test(day) ? clamp(grid.toClock(day)) : span.to); upd();
+  runStage(canvas, { wrap, tip, span, graph: g, graphBeside: !narrow(), setDay, stepBy, big, play, open: card.hold, close: card.release }); // the side pane draws no graph on a narrow screen (miniGraph)
   ESC.page = () => STAGE?.reset?.();
   // keys while the timeline is open: ← → a day, shift a week, space plays
   const onKey = (ev) => {
     if (!wrap.isConnected) return document.removeEventListener("keydown", onKey);
     if (/^(INPUT|SELECT|TEXTAREA)$/.test(ev.target?.tagName) && ev.target !== range) return;
-    const d = CLOCK || span.to;
+    const d = SCENE.day || span.to;
     if (ev.key === "ArrowLeft") { play(false); setDay(stepBy(d, ev.shiftKey ? -big : -1)); ev.preventDefault(); }
     else if (ev.key === "ArrowRight") { play(false); setDay(stepBy(d, ev.shiftKey ? big : 1)); ev.preventDefault(); }
     else if (ev.key === " " && ev.target !== range) { play(!PLAY.on); ev.preventDefault(); }
@@ -2940,10 +2952,10 @@ function viewTimeline(main, day) {
 // superseded that month, a marker for the day shown. Returns the SVG, the authors' legend, `mark(day)` and a click
 // on a month (`onMonth(month, entries)` to set, and the day moves to the month's end through `setDay`).
 function timelineBars(main, span, setDay) {
-  const created = S.entries.filter((e) => e.git?.created?.date && matches(e));
+  const created = SCENE.state.entries.filter((e) => e.git?.created?.date && matches(e));
   const months = {}; const sup = {};
   for (const e of created) { const m = e.git.created.date.slice(0, 7); (months[m] ||= {})[e.git.created.author] = ((months[m] || {})[e.git.created.author] || 0) + 1; }
-  for (const e of S.entries) for (const h of e.git?.status_history || []) if (h.status === "superseded" && h.date) sup[h.date.slice(0, 7)] = (sup[h.date.slice(0, 7)] || 0) + 1;
+  for (const e of SCENE.state.entries) for (const h of e.git?.status_history || []) if (h.status === "superseded" && h.date) sup[h.date.slice(0, 7)] = (sup[h.date.slice(0, 7)] || 0) + 1;
   // every month from the first dated one to this month
   const all = []; let [y, m] = (Object.keys({ ...months, ...sup }).sort()[0] || span.from.slice(0, 7)).split("-").map(Number); const [ey, em] = todayISO().slice(0, 7).split("-").map(Number);
   while (y < ey || (y === ey && m <= em)) { all.push(`${y}-${String(m).padStart(2, "0")}`); m++; if (m > 12) { m = 1; y++; } }
@@ -2959,11 +2971,11 @@ function timelineBars(main, span, setDay) {
   const monthX = (d) => { const i = all.indexOf(d.slice(0, 7)); if (i < 0) return d < all[0] ? padL : Wd; const dim = new Date(Date.UTC(+d.slice(0, 4), +d.slice(5, 7), 0)).getUTCDate(); return padL + (i + (Math.min(+d.slice(8, 10), dim) - 1) / dim) * colW + 1; };
   const marker = ns("line", { class: "now", x1: padL, x2: padL, y1: padT - 4, y2: Hd - padB + 14 }); const markerLabel = ns("text", { class: "now-label", x: padL, y: 9, "text-anchor": "start" }, "");
   const out = { node: el("div", { class: "timeline" }, svg), onMonth: null,
-    legend: el("div", { class: "legend" }, S.authors.map((a) => el("span", {}, el("i", { class: "sw", style: `background:${authorColor(a.name)}` }), a.name)), el("span", {}, el("i", { class: "sw", style: "background:var(--superseded)" }), "superseded that month")),
+    legend: el("div", { class: "legend" }, SCENE.state.authors.map((a) => el("span", {}, el("i", { class: "sw", style: `background:${authorColor(a.name)}` }), a.name)), el("span", {}, el("i", { class: "sw", style: "background:var(--superseded)" }), "superseded that month")),
     mark: (d, label = d) => { const x = monthX(d); marker.setAttribute("x1", x); marker.setAttribute("x2", x); markerLabel.setAttribute("x", Math.min(Wd - 64, x + 4)); markerLabel.textContent = label; } };
   all.forEach((k, i) => {
     const x = padL + i * colW + 1; let yTop = scaleY(0);
-    for (const a of S.authors.map((a) => a.name)) {
+    for (const a of SCENE.state.authors.map((a) => a.name)) {
       const v = months[k]?.[a]; if (!v) continue; const h = scaleY(0) - scaleY(v); yTop -= h;
       const rect = ns("rect", { class: "b", x, y: yTop, width: bw, height: h, fill: authorColor(a), rx: 2 }); rect.append(ns("title", {}, `${k} · ${a}: ${v} — click: that month's entries, and the day moves to its end`));
       rect.addEventListener("click", () => { out.onMonth?.(k, created.filter((e) => e.git.created.date.startsWith(k))); const last = new Date(Date.UTC(+k.slice(0, 4), +k.slice(5, 7), 0)).toISOString().slice(0, 10); setDay(last < span.from ? span.from : last > span.to ? span.to : last); });
@@ -2990,24 +3002,24 @@ function fillEntryCard(node, e, { lane, href, state, day, badge, again, onOpen =
   const topicLink = topic ? el("a", { class: "card-topic", href: topic.href || "#", title: topic.title || "the topic", onclick: topic.onClick ? (ev) => { ev.preventDefault(); topic.onClick(); } : null }, lane) : lane;
   setKids(node, el("div", { class: "stage-card-head" }, el("span", { class: "note mono" }, `${stampLabel(createdOn(e)) || "today"} · `, topicLink), badge),
     el("h3", {}, link(e.title.replace(/`/g, ""), { title: "read the whole entry" })),
-    el("div", { class: "pills" }, ...typePills(e.type), statusPill((day ? statusAt(e, day, state !== SELF || hasRepo(e)) : null) || e.status), evPill(e.evidence)),
-    body ? el("div", { class: "body stage-card-body" }, renderMarkdown(body)) : el("p", { class: "empty stage-card-body" }, typeof (state || S).bodies === "string" ? "loading the text…" : "no text"),
+    el("div", { class: "pills" }, ...typePills(e.type), statusPill((day ? statusAt(e, day, state !== SCENE.self || hasRepo(e)) : null) || e.status), evPill(e.evidence)),
+    body ? el("div", { class: "body stage-card-body" }, renderMarkdown(body)) : el("p", { class: "empty stage-card-body" }, typeof (state || SCENE.state).bodies === "string" ? "loading the text…" : "no text"),
     el("div", { class: "stage-card-foot" }, e.git?.created?.author ? el("span", { class: "note" }, `recorded by ${e.git.created.author}`) : el("span"), link("open ›")));
-  const st = state || SELF;
+  const st = state || SCENE.self;
   if (st && typeof st.bodies === "string" && !st.bodiesLoaded && !st.bodiesError) ensureBodies(st).then(() => { if (node.isConnected) again?.(); });
 }
 const laneTitle = (e) => (e.project ? `${e.project} · ` : "") + (topicOf(e.file)?.title || e.file).replace(/`/g, "");
 function entryCard(span) {
   const node = el("div", { class: "stage-card" }); let held = null; // the held entry's Id
-  const latest = (d) => { let best = null; for (const e of S.entries) { if (!existsAt(e, d, hasRepo(e))) continue; const c = createdOn(e) || span.to; if (!best || c >= best.c) best = { e, c }; } return best?.e || null; };
-  const fill = (e, isHeld, c = null) => fillEntryCard(node, e, { lane: c?.lane?.title || laneTitle(e), href: c?.href || entryHref(e), state: c?.state || SELF, day: CLOCK || span.to,
+  const latest = (d) => { let best = null; for (const e of SCENE.state.entries) { if (!existsAt(e, d, hasRepo(e))) continue; const c = createdOn(e) || span.to; if (!best || c >= best.c) best = { e, c }; } return best?.e || null; };
+  const fill = (e, isHeld, c = null) => fillEntryCard(node, e, { lane: c?.lane?.title || laneTitle(e), href: c?.href || entryHref(e), state: c?.state || SCENE.self, day: SCENE.day || span.to,
     topic: !(c?.ext) && !e.project ? { title: "open the topic's page", href: nav.href({ view: "topic", file: e.file }) } : null,
     badge: isHeld ? el("button", { type: "button", class: "pill stage-card-held", title: "let go — back to the latest entry by the day shown", onclick: () => STAGE?.close?.() }, "picked ", el("b", {}, "×")) : el("span", { class: "pill" }, "latest by then"),
-    again: () => { if (held ? held === (e.uuid || e.id) : latest(CLOCK || span.to) === e) fill(e, isHeld, c); } });
+    again: () => { if (held ? held === (e.uuid || e.id) : latest(SCENE.day || span.to) === e) fill(e, isHeld, c); } });
   return { node,
-    refresh: () => { if (held) return; const e = latest(CLOCK || span.to); if (e) fill(e, false); else setKids(node, el("p", { class: "empty" }, "No entry by this day.")); },
+    refresh: () => { if (held) return; const e = latest(SCENE.day || span.to); if (e) fill(e, false); else setKids(node, el("p", { class: "empty" }, "No entry by this day.")); },
     hold: (e, c) => { held = e.uuid || e.id; selected = e.id; fill(e, true, c); },
-    release: () => { held = null; selected = null; const e = latest(CLOCK || span.to); if (e) fill(e, false); } };
+    release: () => { held = null; selected = null; const e = latest(SCENE.day || span.to); if (e) fill(e, false); } };
 }
 // the legend under the stage: the kinds, the fills, the edges
 function stageLegend() {
@@ -3050,9 +3062,9 @@ function typeGlyph(ctx, kind, x, y, s) { // `s` its size in pixels, at (x, y) to
 // render, the ids stay). Built once per view; a live update renders the view again.
 function stageScene(G, span) {
   const entryNodes = (G?.nodes || []).filter((n) => n.kind === "entry" && n.entry);
-  const { cards, byId } = stageCards(entryNodes, { today: span.to, selfState: SELF });
+  const { cards, byId } = stageCards(entryNodes, { today: span.to, selfState: SCENE.self });
   const links = stageLinks(cards, byId); markLinked(cards, links);
-  const { lanes, cols } = stageLanes(cards, { show: foreignShown, topicTitle: (file, c) => ((c.state?.topics || S.topics).find((t) => t.file === file)?.title) }); // a foreign entry's topic title from its own export
+  const { lanes, cols } = stageLanes(cards, { show: foreignShown, topicTitle: (file, c) => ((c.state?.topics || SCENE.state.topics).find((t) => t.file === file)?.title) }); // a foreign entry's topic title from its own export
   return { G, cards, byId, links, lanes, cols, nodeOf: (c) => (G?.index?.[c.nid] != null ? G.nodes[G.index[c.nid]] : null) };
 }
 // The camera: the scale, the depth and the projection. World units: x across the near plane, y up, z the depth —
@@ -3073,7 +3085,7 @@ function stageCamera(scene, v, o) {
   const K = () => (asGraph() ? KY() : Math.max(56, Math.min(190, (v.W - 40) / (scene.cols + 1.2))) * v.zoom); // across: by topic the lanes' width
   const planeHalf = () => (asGraph() ? Math.max(1.5, (v.W / 2 - 12) / K()) : scene.cols / 2); // as the graph the plane spans the box, its edges at the bottom corners
   const horizon = () => v.H * 0.13 + v.panY; const cx = () => v.W / 2 + v.panX;
-  const now = () => (CLOCK || o.span.to);
+  const now = () => (SCENE.day || o.span.to);
   const tNow = () => dayDiff(o.span.from, now()) + (PLAY.on ? PLAY.frac * PLAY.jump : 0); // days since the first day, fractional while playing (a whole jump at the entry speed)
   const zOf = (day) => logDepth(tNow() - dayDiff(o.span.from, day), spanDays, DEPTH_FAR);
   const proj = (x, y, z) => { const s = F / (F + Math.max(z, -F * 0.9)); return [cx() + x * K() * s, horizon() + (camY - y) * KY() * s, s]; };
@@ -3083,20 +3095,22 @@ function stageCamera(scene, v, o) {
   // awake by a pointed-at thought, and following that would walk the cards along its turn a step per hover). The
   // family graph runs as the side pane's copy (`runner`), which shares its nodes but settles with an alpha of its
   // own: the family graph's own never falls, and read alone it kept the cards following the turn for good
-  const POS = new Map(); let settled = false; // node id -> { x, y }
-  const syncPositions = () => { const G = scene.G; if (!G) return; for (const n of G.nodes) if ((n.kind === "entry" || n.kind === "topic") && (!settled || !POS.has(n.id))) POS.set(n.id, { x: n.x, y: n.y }); if (Math.min(G.alpha, G.runner?.alpha ?? 1) <= 0.01) settled = true; o.wrap.dataset.settled = settled ? "1" : ""; };
+  // the positions: the scene's layout (ktw-scene.js) — the graph beside the stage publishes them while it settles,
+  // and the scene keeps them from then on; with no graph drawn beside the stage, the scene settles them itself
+  let sawSettled = false; // the stage follows the layout until it has drawn it settled once
+  const positions = () => { const G = scene.G; if (!G) return SCENE.layout; const L = SCENE.layoutSource ? SCENE.layout : SCENE.layoutFor(G.nodes, G.links); sawSettled = SCENE.layoutSettled; o.wrap.dataset.settled = sawSettled ? "1" : ""; return L; };
   const gbox = { x0: 0, x1: 1, y0: 0, y1: 1 };
-  const measureGraph = (shownCards) => { syncPositions(); const xs = [], ys = []; for (const c of shownCards) { const q = POS.get(c.nid); if (q) { xs.push(q.x); ys.push(q.y); } } const b = percentileBox(xs, ys); if (b) Object.assign(gbox, b); };
+  const measureGraph = (shownCards) => { const P = positions(); const xs = [], ys = []; for (const c of shownCards) { const q = P.get(c.nid); if (q) { xs.push(q.x); ys.push(q.y); } } const b = percentileBox(xs, ys); if (b) Object.assign(gbox, b); };
   const clamp01 = (u) => Math.max(0, Math.min(1, u));
   const gmap = (n) => { const ux = clamp01((n.x - gbox.x0) / (gbox.x1 - gbox.x0 || 1)), uy = clamp01((n.y - gbox.y0) / (gbox.y1 - gbox.y0 || 1)); return { x: (ux - 0.5) * (planeHalf() * 2 - 0.9), y: 1.3 - uy * (1.3 - (SHELF[0] - 0.45)) }; }; // the top row well under the eye
-  const basePos = (c) => { const q = asGraph() ? POS.get(c.nid) : null; return q ? gmap(q) : { x: c.x, y: c.y }; };
+  const basePos = (c) => { const q = asGraph() ? SCENE.layout.get(c.nid) : null; return q ? gmap(q) : { x: c.x, y: c.y }; };
   // the box's height: what the window has left under everything above the stage and over the legend and note under it
   const roomBelow = () => { let below = 24; for (let n = o.wrap.nextElementSibling; n; n = n.nextElementSibling) below += n.offsetHeight + 12; const main = o.wrap.closest("#main"); if (main) below += parseFloat(getComputedStyle(main).paddingBottom) || 0; return below; };
   const roomAbove = () => { const main = o.wrap.closest("#main"); return main ? o.wrap.getBoundingClientRect().top - main.getBoundingClientRect().top + main.scrollTop : 0; };
   const chrome = () => (narrow() ? 60 : 108); // the top bar, the strip, the status bar
   const fitHeight = () => { const h = stageHeight(baseK() * 3.15 + 60, window.innerHeight - chrome() - roomAbove() - roomBelow()); if (Math.abs(h - o.wrap.getBoundingClientRect().height) > 2) o.wrap.style.height = `${h}px`; };
   const zFar = () => Math.max(1, logDepth(tNow() + 20, spanDays, DEPTH_FAR)); // the floor's far edge: a little beyond the first day
-  return { camY, floorY, asGraph, K, KY, planeHalf, now, zOf, zFar, proj, depthAlpha, measureGraph, basePos, fitHeight };
+  return { camY, floorY, asGraph, K, KY, planeHalf, now, zOf, zFar, proj, depthAlpha, measureGraph, basePos, fitHeight, following: () => asGraph() && !sawSettled };
 }
 // The layout: which cards show, where each stands, and the pushes that keep them apart. A push is an offset on the
 // card (ox, oy in plane units); nothing pulls an offset back on its own — a steady pull against the push made the
@@ -3189,7 +3203,7 @@ function stagePainter(ctx, scene, cam, layout, v, o) {
   function card(c, z, b, day, lit) { // a card in its Type's colour and shape, filled by Evidence, edged by Status, with its foot and its title
     const e = c.e; const st = statusAt(e, day, c.ext || hasRepo(e)) || e.status; const sup = st === "superseded";
     const held = c === v.held, hovered = c === v.hover;
-    const isLit = lit.has(e.uuid || c.nid); const isStep = STEP_FOCUS && (e.uuid === STEP_FOCUS || c.nid === STEP_FOCUS);
+    const isLit = lit.has(e.uuid || c.nid); const isStep = SCENE.focus && (e.uuid === SCENE.focus || c.nid === SCENE.focus);
     const faded = (lit.size && !isLit && !hovered && !held) || (filterActive() && !matches(e)) || (v.hoverTopic && (c.ext || e.file !== v.hoverTopic)); // a topic's name pointed at: its cards alone stand out
     const fresh = dayDiff(c.day, day) <= 3 && !PLAY.frac; // arrived within three days of the day shown: it glows
     const a = held ? 1 : (faded ? 0.16 : 1) * cam.depthAlpha(z); // the held card at full strength, whatever its depth
@@ -3279,7 +3293,7 @@ function stageInput(canvas, st, v, o) {
     ev.preventDefault();
     if (ev.ctrlKey || ev.metaKey) { v.zoom = Math.min(4, Math.max(0.5, v.zoom * Math.exp(-ev.deltaY * 0.0015))); wake(); return; }
     const d = Math.sign(ev.deltaY || ev.deltaX) * (ev.shiftKey ? o.big : 1); if (!d) return;
-    o.play(false); o.setDay(o.stepBy(CLOCK || o.span.to, d)); hideTip();
+    o.play(false); o.setDay(o.stepBy(SCENE.day || o.span.to, d)); hideTip();
   };
   canvas.ondblclick = () => { v.zoom = 1; v.panX = 0; v.panY = 0; wake(); };
   const tpos = (t) => { const r = canvas.getBoundingClientRect(); return [t.clientX - r.left, t.clientY - r.top]; };
@@ -3295,6 +3309,10 @@ function runStage(canvas, o) {
   const ctx = canvas.getContext("2d"); if (!ctx) return;
   const v = { W: 0, H: 0, zoom: 1, panX: 0, panY: 0, hover: null, hoverTopic: null, held: null, raf: null }; // the view: the box, the camera's zoom and pan, what is pointed at and held
   const scene = stageScene(o.graph, o.span);
+  // the stage stands its cards where the graph beside it stands its nodes: that graph is the scene's layout source,
+  // and its positions so far are the start (a graph already settled publishes nothing more on its own)
+  SCENE.resetLayout(o.graph && o.graphBeside ? o.graph : null);
+  if (SCENE.layoutSource) publishLayout(o.graph, { force: true });
   canvas.dataset.lanes = scene.lanes.map((L) => L.title).join(" | "); // what the stage holds, readable from outside (tests)
   const cam = stageCamera(scene, v, o);
   const layout = stageLayout(scene, cam, v);
@@ -3316,7 +3334,16 @@ function runStage(canvas, o) {
     // pick: an entry chosen elsewhere on the page (a thought's step in the pane) is held like a clicked card, and the day moves to its, so it arrives at the front
     pick: (e) => { v.held = (e.uuid && scene.byId[e.uuid]) || scene.byId[e.id] || null; o.play(false); o.open(e, v.held); o.setDay(createdOn(e) || o.span.to); wake(); } };
   resize();
-  const ro = new ResizeObserver(() => { if (!canvas.isConnected) { ro.disconnect(); input.release(); if (STAGE?.wake === wake) STAGE = null; return; } resize(); cam.fitHeight(); wake(); }); ro.observe(canvas);
+  // the scene's changes the stage follows, until its canvas leaves the page: the clock, the focus, a lit thought,
+  // the graph's layout while it settles (the cards stand where its nodes stand), and anything every view redraws for
+  const listening = [
+    SCENE.on("day", (day, { grew }) => { if (grew) layout.relax(); wake(); }),
+    SCENE.on("focus", () => wake()),
+    SCENE.on("thought", () => wake()),
+    SCENE.on("layout", () => { if (cam.following()) wake(); }),
+    SCENE.on("wake", () => wake()),
+  ];
+  const ro = new ResizeObserver(() => { if (!canvas.isConnected) { ro.disconnect(); input.release(); for (const off of listening) off(); if (STAGE?.wake === wake) STAGE = null; return; } resize(); cam.fitHeight(); wake(); }); ro.observe(canvas);
   cam.fitHeight(); wake();
 }
 
@@ -3344,7 +3371,7 @@ function memberState(key) {
 let PUBLIC_TREE = null; // the tree read from published exports, public mode
 async function publicTree() {
   if (PUBLIC_TREE) return PUBLIC_TREE;
-  PUBLIC_TREE = await publicTreeFrom({ state: SELF, canonical: canonicalOf(S.project), root: MY_ROOT(), name: S.project.id || S.project.name, href: (e) => entryHref(e) });
+  PUBLIC_TREE = await publicTreeFrom({ state: SCENE.self, canonical: canonicalOf(SCENE.state.project), root: MY_ROOT(), name: SCENE.state.project.id || SCENE.state.project.name, href: (e) => entryHref(e) });
   await Promise.all(PUBLIC_TREE.groups.map((g) => ensureBodies(g.state))); // merged into search and lists: the bodies are needed
   return PUBLIC_TREE;
 }
@@ -3393,7 +3420,7 @@ async function publicTreeFrom(start) {
 // not the search — Enter in the search field always searches this project.
 const SEARCH_SCOPES = { project: "this project", family: "family", friends: "friends", all: "family & friends" };
 async function searchPool(scope) {
-  const self = { member: { role: "self", name: S.project.name || S.project.id, canonical: canonicalOf(S.project) }, state: SELF, href: (e) => entryHref(e) };
+  const self = { member: { role: "self", name: SCENE.state.project.name || SCENE.state.project.id, canonical: canonicalOf(SCENE.state.project) }, state: SCENE.self, href: (e) => entryHref(e) };
   if (!(scope in SEARCH_SCOPES) || scope === "project") return { groups: [self], missing: [] };
   const fam = scope === "friends" ? { groups: [self], missing: [] } : await familyPool(self);
   if (scope === "family") return fam;
@@ -3436,17 +3463,16 @@ function searchRows(pool, q) {
   for (const g of pool.groups) for (const e of g.state.entries || []) { const hit = searchHit(e, q); if (hit) rows.push({ e, hit, g }); }
   return rows.sort((a, b) => compareHits(a.hit, b.hit));
 }
-const searchScopes = () => (LIVE() || MODE === "public" || (MODE === "export" && !!canonicalOf(S?.project)) ? ["project", "family"] : ["project"]);
+const searchScopes = () => (LIVE() || MODE === "public" || (MODE === "export" && !!canonicalOf(SCENE.state?.project)) ? ["project", "family"] : ["project"]);
 // One setting for every view that can span projects (search, graph): this
 // project, or the whole family tree. Kept per browser; a results-page link
 // carries its own scope and sets it.
-const hasFamily = () => !!(S?.project?.parent || (S?.project?.children || []).length);
+const hasFamily = () => !!(SCENE.state?.project?.parent || (SCENE.state?.project?.children || []).length);
 const canFamily = () => searchScopes().includes("family") && hasFamily();
 // friends can be searched where the family can be read, and there are any: entries citing outside the family
-const canFriends = () => searchScopes().includes("family") && !!SELF && friendCandidates(SELF.entries || []).length > 0;
+const canFriends = () => searchScopes().includes("family") && !!SCENE.self && friendCandidates(SCENE.self.entries || []).length > 0;
 const canSearch = (s) => s === "project" || (s === "family" ? canFamily() : s === "friends" ? canFriends() : s === "all" ? canFamily() || canFriends() : false);
-let SCOPE = prefs.get("scope") || prefs.get("search-scope") || "project"; // search-scope: the name before the scope switched the graph too
-const scope = () => (canFamily() && SCOPE === "family" ? "family" : "project");
+const scope = () => (canFamily() && SCENE.scope === "family" ? "family" : "project");
 function markScope() {
   const box = $("#scope"); if (!box) return;
   box.hidden = !canFamily();
@@ -3454,7 +3480,7 @@ function markScope() {
 }
 function setScope(v, { rerender: again = true } = {}) {
   if (v !== "project" && v !== "family") return;
-  const changed = SCOPE !== v; SCOPE = v;
+  const changed = SCENE.scope !== v; SCENE.setScope(v);
   if (changed) MINI = null; // the side pane's graph follows the new scope
   prefs.set("scope", v);
   markScope();
@@ -3572,7 +3598,7 @@ function setupSearch() {
         : [el("div", { class: "sr-note" }, "no project in the registry matches")])];
   };
   const run = async () => {
-    const q = input.value.trim(); if (q.length < 2 || !S) return close();
+    const q = input.value.trim(); if (q.length < 2 || !SCENE.state) return close();
     const mine = ++seq;
     // the dropdown searches this project alone — on hand, nothing to fetch; the wider scopes are its last rows
     const pool = await searchPool("project");
@@ -3620,11 +3646,11 @@ function setupSearch() {
 
 // ---------------------------------------------------------------- router + live
 function render() {
-  if (!S) return;
+  if (!SCENE.state) return;
   const main = $("#main"); main.replaceChildren();
   const route = nav.current(); const v = route.view;
   selected = null; ESC.page = null; ESC.pane = null;
-  if (v !== "timeline") { CLOCK = null; CLOCK_N = -1; stopPlay(); STAGE = null; } // the clock lives in the timeline; everywhere else the page shows today
+  if (v !== "timeline") { SCENE.day = null; CLOCK_N = -1; stopPlay(); STAGE = null; } // the clock lives in the timeline; everywhere else the page shows today
   GLOBE.view = v === "globe"; $("#app").classList.toggle("globe", GLOBE.view); // the globe: the graph alone, full width
   if (GLOBE.view) setTimeout(globeIntro, 0); else GLOBE_INTRO_SHOWN = false; // explained on the way in, once per visit
   $("#details").dataset.pane = "other";
@@ -3653,18 +3679,18 @@ function rerender() { renderSidebar(); renderStrip(); renderCounts(); render(); 
 // the members' states, so it runs after them — the last merge is kept, so a
 // live update of this project re-merges at once and refreshes behind it.
 let LAST_POOL = null; let MERGE_SEQ = 0;
-function mergeWith(pool) { S = mergeStates([{ ...pool.groups[0], state: SELF }, ...pool.groups.slice(1)]); S.missing = pool.missing; }
+function mergeWith(pool) { SCENE.state = mergeStates([{ ...pool.groups[0], state: SCENE.self }, ...pool.groups.slice(1)]); SCENE.state.missing = pool.missing; }
 async function showScope() {
   const mine = ++MERGE_SEQ;
-  if (!SELF) return; // no state yet: the first applyState merges when it arrives
-  if (scope() !== "family") { S = SELF; LAST_POOL = null; return rerender(); }
+  if (!SCENE.self) return; // no state yet: the first applyState merges when it arrives
+  if (scope() !== "family") { SCENE.state = SCENE.self; LAST_POOL = null; return rerender(); }
   if (LAST_POOL) { mergeWith(LAST_POOL); rerender(); }
   const pool = await searchPool("family");
   if (mine !== MERGE_SEQ || scope() !== "family") return;
   LAST_POOL = pool; const keep = $("#main").scrollTop; mergeWith(pool); rerender(); $("#main").scrollTop = keep;
 }
 // the numbers in the status bar follow what is shown
-function renderCounts() { const c = $("#counts"); if (c) c.textContent = `${S.entries.length} entries · ${S.topics.length} topics · ${S.authors.length} authors${S.merged ? ` · family of ${S.family.length}` : ""}`; }
+function renderCounts() { const c = $("#counts"); if (c) c.textContent = `${SCENE.state.entries.length} entries · ${SCENE.state.topics.length} topics · ${SCENE.state.authors.length} authors${SCENE.state.merged ? ` · family of ${SCENE.state.family.length}` : ""}`; }
 // A Git author as a link to their profile on the host: the host's API names
 // the account behind one of their commits (asked on click, in the browser);
 // when it cannot, the commit's page opens, where the host links the author.
@@ -3672,11 +3698,11 @@ const AUTHOR_URLS = {};
 function authorCommit(name) {
   // the newest commit of this author among the entries shown, and the project it is in
   let best = null;
-  for (const e of S.entries) for (const c of [e.git?.created, e.git?.last_touched, ...(e.git?.status_history || [])]) if (c?.author === name && c.commit && (!best || (c.date || "") > (best.c.date || ""))) best = { c, e };
-  return best ? [best.c.commit, best.e.origin?.state?.project || SELF.project] : [null, null];
+  for (const e of SCENE.state.entries) for (const c of [e.git?.created, e.git?.last_touched, ...(e.git?.status_history || [])]) if (c?.author === name && c.commit && (!best || (c.date || "") > (best.c.date || ""))) best = { c, e };
+  return best ? [best.c.commit, best.e.origin?.state?.project || SCENE.self.project] : [null, null];
 }
 function authorLink(name, commit, project) {
-  const look = !S.anonymized && project ? authorLookup(canonicalOf(project), commit) : null;
+  const look = !SCENE.state.anonymized && project ? authorLookup(canonicalOf(project), commit) : null;
   if (!name || !look) return el("span", {}, name || "—");
   const key = `${canonicalOf(project)}|${name}`;
   return el("a", { class: "author", href: AUTHOR_URLS[key] || look.fallback, target: "_blank", rel: "noopener", title: `${name} — open the profile on the host (looked up from commit ${commit})`, onclick: async (ev) => {
@@ -3694,13 +3720,13 @@ function authorLink(name, commit, project) {
 // The badges, ready to paste: the static one, and the two live ones from this project's published export
 // (`dashboard-state`), each as Markdown and HTML with a copy button. Pointed at, the ⚙ beside the search shows them.
 function renderBadges() {
-  const pop = $("#badges-pop"); if (!pop || !S) return;
-  const st = SELF?.project?.dashboard_state || S.project?.dashboard_state || "";
+  const pop = $("#badges-pop"); if (!pop || !SCENE.state) return;
+  const st = SCENE.self?.project?.dashboard_state || SCENE.state.project?.dashboard_state || "";
   const base = /^https:\/\//.test(st) ? st.replace(/state\.json$/, "") : "";
   const list = [{ name: "Keep the Why", img: "https://keepthewhy.com/assets/badge.svg", href: "https://keepthewhy.com", alt: "Keep the Why" }];
   if (base) list.push({ name: "live", img: `${base}badge-entries.svg`, href: base, alt: "Keep the Why · live" }, { name: "live, flat", img: `${base}badge-entries-flat.svg`, href: base, alt: "keep the why" });
   // a family root whose members all live in this repository: the family's numbers, from the same export
-  const fam = (SELF || S).project?.family_badge;
+  const fam = (SCENE.self || SCENE.state).project?.family_badge;
   if (base && fam && !fam.missing?.length) list.push({ name: "family", img: `${base}badge-family.svg`, href: base, alt: "Keep the Why · family" }, { name: "family, flat", img: `${base}badge-family-flat.svg`, href: base, alt: "keep the why · family" });
   const famNote = fam?.missing?.length
     ? el("p", { class: "note" }, `No family badge: ${fam.missing.map((m) => `${m.name} (${m.reason})`).join(", ")} — a member outside this repository has no numbers when this project is exported, and a total without it would be wrong.`)
@@ -3717,15 +3743,15 @@ function renderBadges() {
     base ? null : el("p", { class: "note" }, "The live badges come with a published export — a dashboard-state line in .keep-the-why."), famNote);
 }
 function applyState(state) {
-  SELF = state; S = state;
-  const p = S.project;
+  SCENE.self = state; SCENE.state = state;
+  const p = SCENE.state.project;
   setKids($("#project-title"), $("#project-select").hidden ? el("b", {}, p.id || p.name) : null, schemaPill(p), headPill(p.git), p.git?.remote ? el("span", { class: "pill" }, remoteLink(p.git.remote)) : null, forkPill(p.git));
   document.title = `Keep the Why Dashboard · ${projectLabel(p)}`;
   setKids($("#statusbar"),
-    el("span", { id: "pkg-dashboard" }, el("a", { href: "https://pypi.org/project/keep-the-why-dashboard/", target: "_blank", rel: "noopener", title: "keep-the-why-dashboard on PyPI" }, `keep-the-why-dashboard ${S.dashboard}`)),
-    el("span", { id: "pkg-lint" }, el("a", { href: "https://pypi.org/project/keep-the-why-lint/", target: "_blank", rel: "noopener", title: "keep-the-why-lint on PyPI" }, `keep-the-why-lint ${S.linter}`)),
-    el("span", {}, MODE === "public" ? `public export · generated ${S.generated}` : S.exported ? `exported ${S.generated}` : `state ${S.generated}`),
-    el("span", { id: "counts" }, `${S.entries.length} entries · ${S.topics.length} topics · ${S.authors.length} authors`),
+    el("span", { id: "pkg-dashboard" }, el("a", { href: "https://pypi.org/project/keep-the-why-dashboard/", target: "_blank", rel: "noopener", title: "keep-the-why-dashboard on PyPI" }, `keep-the-why-dashboard ${SCENE.state.dashboard}`)),
+    el("span", { id: "pkg-lint" }, el("a", { href: "https://pypi.org/project/keep-the-why-lint/", target: "_blank", rel: "noopener", title: "keep-the-why-lint on PyPI" }, `keep-the-why-lint ${SCENE.state.linter}`)),
+    el("span", {}, MODE === "public" ? `public export · generated ${SCENE.state.generated}` : SCENE.state.exported ? `exported ${SCENE.state.generated}` : `state ${SCENE.state.generated}`),
+    el("span", { id: "counts" }, `${SCENE.state.entries.length} entries · ${SCENE.state.topics.length} topics · ${SCENE.state.authors.length} authors`),
     liveUi(), loadedUi(),
     el("span", { class: "grow" }, el("a", { href: "https://keepthewhy.com", target: "_blank", rel: "noopener" }, "keepthewhy.com")));
   renderBadges();
@@ -3784,7 +3810,7 @@ function applySide() {
   const d = $("#details");
   if (d && !d.querySelector(":scope > .pane-width")) d.prepend(paneWidthBar());
   for (const b of document.querySelectorAll(".mini-width button")) b.classList.toggle("on", b.textContent === sideLabel(v));
-  for (const G of ACTIVE_GRAPHS) G.wake?.();
+  SCENE.wake();
 }
 function setSide(v) { const k = paneKind(); SIDE[k] = v; prefs.set(`side-${k}`, v); applySide(); }
 // the choice sits at the top of the pane, above whatever it holds, on every page
@@ -3828,7 +3854,7 @@ async function setupProjects() {
   sel.replaceChildren(...groups.filter(([, items]) => items.length).map(([label, items]) => el("optgroup", { label }, items.map(([p, d]) => opt(p, "\u00a0\u00a0".repeat(d) + (d ? "└ " : ""))))));
   sel.hidden = false;
   fitSelect(sel);
-  if (S) { const t = $("#project-title").querySelector("b"); if (t) t.remove(); }
+  if (SCENE.state) { const t = $("#project-title").querySelector("b"); if (t) t.remove(); }
   sel.onchange = () => { nav.go({ ...nav.current(), centre: { mode: "live", project: sel.value } }); };
   SELECTED_DEFAULT = data.selected;
 }
@@ -3839,7 +3865,7 @@ async function setupProjects() {
 // and the path stays — a move inside the family is not a step of it. A member without a published export is named, not offered.
 let FAMILY_MENU = 0; // counts the builds: a move before the tree arrives makes the older build stale
 async function setupFamilyMenu() {
-  const sel = $("#project-select"); const p = S.project;
+  const sel = $("#project-select"); const p = SCENE.state.project;
   const build = ++FAMILY_MENU;
   if (!(p.parent || (p.children || []).length) || !canonicalOf(p)) { sel.hidden = true; return; }
   const t = await publicTree();
@@ -3862,7 +3888,7 @@ async function setupFamilyMenu() {
   };
 }
 function setupMode() {
-  const box = $("#mode"); const p = S.project;
+  const box = $("#mode"); const p = SCENE.state.project;
   const canonical = canonicalOf(p);
   // two sources exist only on the live server: this machine's clones, or the
   // published exports. A static page has one — it is published — so no switch
@@ -3879,7 +3905,7 @@ function setupMode() {
       nav.go({ ...nav.current(), centre: b.dataset.mode === "public" ? { mode: "public", canonical, root: p.root || "" } : { mode: "live" } });
     };
   }
-  $("#mode-note").textContent = MODE === "public" ? `generated ${S.generated}` : "";
+  $("#mode-note").textContent = MODE === "public" ? `generated ${SCENE.state.generated}` : "";
 }
 async function boot() {
   setupTheme(); setupSearch(); setupScope(); setupSideToggle();

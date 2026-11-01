@@ -757,3 +757,21 @@ Every setting a reader makes — the graph's switches and labels, the pane width
 
 **Rejected alternative:** before-and-after screenshots, the plan's rule (see above). Pixel diffs in a headless browser — the reason the DOM snapshots were chosen over them holds here too.
 
+## The views share one scene: state, clock, focus, scope and layout, and the events that carry their changes
+
+**Id:** 350c514d-f042-40a7-88fb-255307561f50
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** design proposal (revision 3.1) agreed by the maintainer, 2026-11-01 (a scene for day, focus, hover, layout and scope with subscriptions, the stage's positions from it, a headless layout); the event names, `layoutSource` and the host keeping the clock's entry count are the implementer's, in the pull request that made the change
+**Revisit when:** two views need to disagree about the day or the focus, or a view needs to know which other views are on the page
+**See:** dashboard.md#the-page-becomes-a-library-a-second-host-builds-on-core-views-and-a-host-maity-the-first-other-host — 24e1ef21-ebf8-4d5b-ab63-c8ccbe82f7ab — as of 2026-11-01
+
+`ktw-scene.js` makes the scene, one per page. It holds the state shown and the project's own (`state`, `self`), the clock's day, the entry in focus, the lit thought, the scope and the layout. A view subscribes to what it follows: `day` (with whether the set of entries shown changed), `focus`, `thought`, `spot` (a project pointed at outside the graph), `scope`, `layout` and `wake`. The page's globals `S`, `SELF`, `CLOCK`, `STEP_FOCUS`, `SCOPE` and the set of active graphs are gone. A graph subscribes when its canvas starts and lets go when the canvas leaves. Lighting a thought, pointing at a project and moving the clock reach every graph through the scene, instead of through a loop over a set the page kept.
+
+The stage's positions come from the scene. When the host draws a graph beside the stage, that graph is the scene's `layoutSource`; it publishes its positions after each step, and the scene copies them while it settles and from then on only adds a node it does not know, the rule the stage kept before. The stage follows the scene's `layout` event until it has drawn the layout settled once. With no graph drawn — a narrow screen, where the side pane shows none, or a host that shows the stage alone — there is no source, and `layoutFor` settles the layout at once without a canvas (`settleLayout` in the core). The stage subscribes to the scene the way a graph does, and nothing reaches into the stage from outside to wake it.
+
+**Reason:** a view in a library cannot reach into the page's globals or loop over the other views. Through the scene it hears what changed and does its own redraw, and a host that shows one view or five needs nothing else. The stage needs positions with or without a graph beside it, and the scene is the one place both cases meet. The canvas traces of the graph and the stage are identical before and after the change.
+
+**Rejected alternative:** a registry of views that the scene calls by name (wake, relax). It would turn the scene back into the loop over the page's graphs, with a list to keep. Events in which a view decides what to do keep the scene free of drawing. Keeping the clock's entry count in the scene was also rejected: it is the page's measure of when a layout should settle again, so the host computes it and passes it on with the day.
+
