@@ -232,6 +232,15 @@ if (S.project.git?.available && /^github\.com\//.test(S.project.git.remote || ""
   report.familyAlias = window.location.hash;
   if (report.familyAlias !== "#graph") errors.push("nav: #graph/family was not replaced by #graph — " + report.familyAlias);
 }
+{
+  // a switch the reader sets is kept under its name of old — ktw-<name> in localStorage — so nobody's settings reset
+  await go("#graph");
+  const box = [...window.document.querySelectorAll(".graph-ui label")].find((l) => l.textContent.trim() === "motion")?.querySelector("input");
+  const before = window.localStorage.getItem("ktw-motion");
+  if (box) { box.checked = !box.checked; box.dispatchEvent(new window.Event("change")); }
+  report.prefs = { before, after: window.localStorage.getItem("ktw-motion"), checked: box?.checked };
+  if (!box || report.prefs.after !== (box.checked ? "on" : "off")) errors.push("prefs: the motion switch was not kept as ktw-motion — " + JSON.stringify(report.prefs));
+}
 const input = window.document.getElementById("search"); input.value = "retry"; input.dispatchEvent(new window.Event("input"));
 await tick(50);
 report.search = window.document.querySelectorAll("#search-results a").length;

@@ -5,6 +5,20 @@
 const { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, shuffled, compareHits, snippetAt, highlightParts, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf, projectLabel, backlinksUrl, citingOf, hostAnchor , todayISO, addDays, dayDiff, timeGrid, stampLabel, existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan, createdOn, TYPE_KINDS, TYPE_TOKENS, paletteToken, typeKind, SHELF, stageCards, stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight, mergeAuthors, sortAuthors, AUTHOR_SORTS, ownerOf, exportStateUrl, exportVerdict, resolveSee } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
 const MD = globalThis.KeepTheWhy.markdown; // ktw-markdown.js
 
+// ---------------------------------------------------------------- prefs (host)
+// The settings a reader makes — the graph's switches, the pane widths, the
+// timeline's arrangement, the theme — kept per browser. The views ask prefs by
+// a short name ("friends") for a string or the fallback they name, and set a
+// string; this dashboard keeps each in localStorage as ktw-<name>, the names
+// they have always had, so nobody's settings are reset. Storage that is
+// blocked or full (a private window, a preview) reads as the fallback and
+// keeps nothing. Another host hands the views a prefs of its own.
+const prefs = {
+  get(key, fallback) { try { const v = localStorage.getItem(`ktw-${key}`); return v == null ? fallback : v; } catch { return fallback; } },
+  set(key, value) { try { localStorage.setItem(`ktw-${key}`, value); } catch {} },
+};
+// ---------------------------------------------------------------- end of prefs (host)
+
 // ---------------------------------------------------------------- nav (host)
 // The dashboard's navigation, and the one place the page reads or writes its
 // own address. The views name places by route (ktw-core.js, routes) and ask nav
@@ -1475,32 +1489,32 @@ const CITED = { on: false, loading: false, error: null, list: [], elsewhere: 0, 
 // Loaded as soon as a graph shows them, by default (few projects have many
 // friends yet); *friends* unchecked turns that off, kept per browser — then a
 // click on *friends (N)* loads them.
-let FRIENDS_AUTO = (() => { try { return localStorage.getItem("ktw-friends") !== "off"; } catch { return true; } })();
+let FRIENDS_AUTO = prefs.get("friends") !== "off";
 // every entry of every friend, not only what links to this graph — off by default, kept per browser
 // "all their entries" per kind of neighbour — friends, the path's steps, the family — each kept per browser
-const readEntriesSetting = (key, dflt = false) => { try { const v = localStorage.getItem(key); return v == null ? dflt : v === "all"; } catch { return dflt; } };
-let FRIEND_ENTRIES = readEntriesSetting("ktw-friend-entries", true); // every "… entries" is on by default: neighbours come whole; each is kept per browser
+const readEntriesSetting = (key, dflt = false) => { const v = prefs.get(key); return v == null ? dflt : v === "all"; };
+let FRIEND_ENTRIES = readEntriesSetting("friend-entries", true); // every "… entries" is on by default: neighbours come whole; each is kept per browser
 // a friend that has a family comes with it — the members beside the cited repository — unless this is off; their entries and labels have switches of their own
-let FRIEND_FAMILIES = (() => { try { return localStorage.getItem("ktw-friend-families") !== "off"; } catch { return true; } })();
-function setFriendFamilies(on) { FRIEND_FAMILIES = on; try { localStorage.setItem("ktw-friend-families", on ? "on" : "off"); } catch {} }
-let FRIEND_FAM_ENTRIES = readEntriesSetting("ktw-friend-family-entries", true);
-function setFriendFamEntries(on) { FRIEND_FAM_ENTRIES = on; try { localStorage.setItem("ktw-friend-family-entries", on ? "all" : "linked"); } catch {} }
-let PATH_ENTRIES = readEntriesSetting("ktw-path-entries", true);
-let FAMILY_ENTRIES = readEntriesSetting("ktw-family-entries", true);
-function setFriendEntries(on) { FRIEND_ENTRIES = on; try { localStorage.setItem("ktw-friend-entries", on ? "all" : "linked"); } catch {} }
-function setPathEntries(on) { PATH_ENTRIES = on; try { localStorage.setItem("ktw-path-entries", on ? "all" : "linked"); } catch {} }
-function setFamilyEntries(on) { FAMILY_ENTRIES = on; try { localStorage.setItem("ktw-family-entries", on ? "all" : "linked"); } catch {} }
+let FRIEND_FAMILIES = prefs.get("friend-families") !== "off";
+function setFriendFamilies(on) { FRIEND_FAMILIES = on; prefs.set("friend-families", on ? "on" : "off"); }
+let FRIEND_FAM_ENTRIES = readEntriesSetting("friend-family-entries", true);
+function setFriendFamEntries(on) { FRIEND_FAM_ENTRIES = on; prefs.set("friend-family-entries", on ? "all" : "linked"); }
+let PATH_ENTRIES = readEntriesSetting("path-entries", true);
+let FAMILY_ENTRIES = readEntriesSetting("family-entries", true);
+function setFriendEntries(on) { FRIEND_ENTRIES = on; prefs.set("friend-entries", on ? "all" : "linked"); }
+function setPathEntries(on) { PATH_ENTRIES = on; prefs.set("path-entries", on ? "all" : "linked"); }
+function setFamilyEntries(on) { FAMILY_ENTRIES = on; prefs.set("family-entries", on ? "all" : "linked"); }
 // "owners": the projects of one owner bundled around a node for the owner — off by default, kept per browser
-let OWNER_GROUPS = (() => { try { return localStorage.getItem("ktw-owner-groups") === "on"; } catch { return false; } })();
-function setOwnerGroups(on) { OWNER_GROUPS = on; try { localStorage.setItem("ktw-owner-groups", on ? "on" : "off"); } catch {} }
+let OWNER_GROUPS = prefs.get("owner-groups") === "on";
+function setOwnerGroups(on) { OWNER_GROUPS = on; prefs.set("owner-groups", on ? "on" : "off"); }
 // "entries" of the main graph, kept per browser like every other switch in the bar — a move to another centre builds a new graph and must not reset it
-let SHOW_ENTRIES = (() => { try { return localStorage.getItem("ktw-entries") !== "off"; } catch { return true; } })();
-function setShowEntries(on) { SHOW_ENTRIES = on; try { localStorage.setItem("ktw-entries", on ? "on" : "off"); } catch {} }
+let SHOW_ENTRIES = prefs.get("entries") !== "off";
+function setShowEntries(on) { SHOW_ENTRIES = on; prefs.set("entries", on ? "on" : "off"); }
 // labels per group too — the project's own nodes, the family, the friends, the path — kept per browser, all on by default;
 // on a phone only this project's names: the other groups' topic names pile up on a small screen (hub names always show)
 const LABEL_DEFAULTS = (() => { const all = !narrow(); return { project: true, family: all, friends: all, friendsFamilies: all, path: all }; })();
-let LABELS = (() => { try { return { ...LABEL_DEFAULTS, ...JSON.parse(localStorage.getItem("ktw-labels") || "{}") }; } catch { return { ...LABEL_DEFAULTS }; } })();
-function setLabels(group, on) { LABELS = { ...LABELS, [group]: on }; try { localStorage.setItem("ktw-labels", JSON.stringify(LABELS)); } catch {} }
+let LABELS = (() => { try { return { ...LABEL_DEFAULTS, ...JSON.parse(prefs.get("labels", "{}")) }; } catch { return { ...LABEL_DEFAULTS }; } })(); // a value that is no JSON: the defaults
+function setLabels(group, on) { LABELS = { ...LABELS, [group]: on }; prefs.set("labels", JSON.stringify(LABELS)); }
 const labelGroupOf = (n) => (n.ext ? (n.unit === "family" ? "family" : String(n.unit || "").startsWith("trail:") ? "path" : n.kin ? "friendsFamilies" : "friends") : n.fam ? "family" : "project");
 const labelsOn = (n) => LABELS[labelGroupOf(n)] !== false;
 const labelsUi = (g, group, what) => el("label", { title: `the names of ${what} — topics, and entries when zoomed in` }, el("input", { type: "checkbox", checked: LABELS[group] !== false, onchange: (ev) => { setLabels(group, ev.target.checked); g.wake?.(); } }), group === "project" ? "labels" : group === "friendsFamilies" ? "friends families labels" : `${group} labels`);
@@ -1519,7 +1533,7 @@ function selectAll(g, on) {
   if (fgraph) fgraph.at = 0;
   render();
 }
-function setFriendsAuto(on) { FRIENDS_AUTO = on; try { localStorage.setItem("ktw-friends", on ? "on" : "off"); } catch {} }
+function setFriendsAuto(on) { FRIENDS_AUTO = on; prefs.set("friends", on ? "on" : "off"); }
 function autoFriends(g) {
   if (!FRIENDS_AUTO || FRIENDS.loading) return;
   const list = g.friends || []; if (!list.length) return;
@@ -1539,8 +1553,8 @@ const familyColor = () => palette(8);
 // its own when the graph is first drawn, like friends — one export per member
 // in public mode, which is the cost to watch as families grow.
 let FAMILY_NB = { groups: null, missing: [], loading: false };
-let FAMILY_NB_ON = (() => { try { return localStorage.getItem("ktw-family-neighbours") !== "off"; } catch { return true; } })(); // the family beside the graph; off per browser
-function setFamilyNeighbours(on) { FAMILY_NB_ON = on; try { localStorage.setItem("ktw-family-neighbours", on ? "on" : "off"); } catch {} }
+let FAMILY_NB_ON = prefs.get("family-neighbours") !== "off"; // the family beside the graph; off per browser
+function setFamilyNeighbours(on) { FAMILY_NB_ON = on; prefs.set("family-neighbours", on ? "on" : "off"); }
 // How much of the family the graph shows — the graph's own setting, apart from the scope switch, which
 // merges search, queues and counts: "off" (the project alone, with friends and path), "linked" (the
 // members beside it with the entries linked here), "all" (the family graph, every member whole).
@@ -1861,11 +1875,11 @@ function addOwnerGroups(g, prev) {
 // the graph, joined in the order walked, with the entries that link them.
 let TRAIL = []; // [{ key, centre, state, name, canonical, url }], oldest first; the centre shown is not in it
 const VISITED = new Map(); // key -> the same, every centre of this page, for back and forward
-let TRAIL_SHOW = (() => { try { return localStorage.getItem("ktw-path-show") !== "off"; } catch { return true; } })(); // the path drawn in the graph; off hides it, the path itself stays
-function setTrailShow(on) { TRAIL_SHOW = on; try { localStorage.setItem("ktw-path-show", on ? "on" : "off"); } catch {} }
-let KEEP_PATH = (() => { try { return localStorage.getItem("ktw-path") !== "off"; } catch { return true; } })();
+let TRAIL_SHOW = prefs.get("path-show") !== "off"; // the path drawn in the graph; off hides it, the path itself stays
+function setTrailShow(on) { TRAIL_SHOW = on; prefs.set("path-show", on ? "on" : "off"); }
+let KEEP_PATH = prefs.get("path") !== "off";
 const keepPath = () => KEEP_PATH;
-function setKeepPath(on) { KEEP_PATH = on; if (!on) TRAIL = []; try { localStorage.setItem("ktw-path", on ? "on" : "off"); } catch {} }
+function setKeepPath(on) { KEEP_PATH = on; if (!on) TRAIL = []; prefs.set("path", on ? "on" : "off"); }
 const pathShown = () => KEEP_PATH && TRAIL_SHOW && TRAIL.length > 0;
 const onPath = (canonical) => pathShown() && TRAIL.some((t) => fkey(t.canonical) === fkey(canonical));
 // a step of the path that the graph already shows — a member of the family graph — is not drawn twice
@@ -2056,7 +2070,7 @@ function miniFriends(g) {
 // friends). Listed beside the graph; pointing at one lights its path, a click
 // holds it and lists its steps in reading order, origin first. A chain made
 // only of Superseded by is how one decision changed over time: an evolution.
-let THOUGHT_MIN = (() => { try { return Number(localStorage.getItem("ktw-thought-min")) || 4; } catch { return 4; } })(); // entries a thought has at least, kept per browser
+let THOUGHT_MIN = Number(prefs.get("thought-min")) || 4; // entries a thought has at least, kept per browser
 // the choices go from 2 (one link) up to the longest chain in the graph on the page, and grow with
 // it when a friend or a path brings a longer one; a kept choice above the longest here is drawn
 // down to it, so a sparse project shows its chains instead of an empty list
@@ -2065,7 +2079,7 @@ const thoughtMin = (all) => Math.min(THOUGHT_MIN, longestChain(all));
 function thoughtMinSeg(all, onpick = render) {
   const top = longestChain(all), cur = thoughtMin(all);
   return el("span", { class: "thought-min", title: "entries a thought has at least — from one link up to the longest chain here" }, "from ",
-    ...Array.from({ length: top - 1 }, (_, i) => i + 2).map((m) => el("button", { type: "button", class: m === cur ? "on" : "", onclick: () => { THOUGHT_MIN = m; try { localStorage.setItem("ktw-thought-min", String(m)); } catch {} onpick(); } }, String(m))));
+    ...Array.from({ length: top - 1 }, (_, i) => i + 2).map((m) => el("button", { type: "button", class: m === cur ? "on" : "", onclick: () => { THOUGHT_MIN = m; prefs.set("thought-min", String(m)); onpick(); } }, String(m))));
 }
 // Every chain in the graph, at least two entries long: the entry-to-entry
 // edges in reading order (later → earlier), plus an edge to a placeholder for
@@ -2297,12 +2311,12 @@ async function globeRegistry() {
 // The way into the globe: what it does, and that nothing loads by itself — the graph starts as the project
 // alone and grows only by a choice. "Don't show this again" is kept per browser, a convenience and nothing more.
 let GLOBE_INTRO_SHOWN = false;
-const globeIntroOff = () => { try { return localStorage.getItem("ktw-globe-intro") === "off"; } catch { return false; } };
+const globeIntroOff = () => prefs.get("globe-intro") === "off";
 function globeIntro() {
   if (GLOBE_INTRO_SHOWN || globeIntroOff() || !GLOBE.view) return;
   GLOBE_INTRO_SHOWN = true;
   const never = el("input", { type: "checkbox" });
-  const close = () => { if (never.checked) { try { localStorage.setItem("ktw-globe-intro", "off"); } catch {} } box.remove(); };
+  const close = () => { if (never.checked) { prefs.set("globe-intro", "off"); } box.remove(); };
   const box = el("div", { class: "globe-dialog globe-intro", onclick: (ev) => { if (ev.target === box) close(); } }, el("div", { class: "globe-card" },
     el("h3", {}, "🌐 The globe"),
     el("p", {}, "This project's graph, full width — and from here as far out as you choose. Nothing loads by itself: the graph grows only when you ask, with the controls at the top left."),
@@ -2584,10 +2598,10 @@ function viewGraph(main) {
 // reduced-motion setting, or with *motion* in the graph (kept per browser).
 const DRIFT_RATE = (2 * Math.PI) / 360000; // radians per millisecond
 // motion: on by default, off on a phone (a turning graph is hard to tap, and it keeps the battery busy); a stored choice wins
-let DRIFT = (() => { try { const v = localStorage.getItem("ktw-motion"); return v ? v !== "off" : !narrow(); } catch { return !narrow(); } })();
+let DRIFT = (() => { const v = prefs.get("motion"); return v ? v !== "off" : !narrow(); })();
 const reducedMotion = () => { try { return !!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches; } catch { return false; } };
 const driftOn = () => DRIFT && !reducedMotion();
-function setDrift(on) { DRIFT = on; try { localStorage.setItem("ktw-motion", on ? "on" : "off"); } catch {} }
+function setDrift(on) { DRIFT = on; prefs.set("motion", on ? "on" : "off"); }
 // the platform's mark for a hub's name on the canvas, one Path2D per platform
 const HOST_PATHS = new Map();
 function hostPath(url) {
@@ -2833,12 +2847,12 @@ const ESC = { page: null, pane: null }; // what Esc does: the page's reset butto
 let TIMELINE_FAMILY_ASKED = false; // the family graph is being built for the timeline
 // "graph": a card stands where its node stands in the graph beside, the stage is the graph with time pulled out as depth;
 // "topics": a lane per topic across the width. Kept per browser.
-let STAGE_ARRANGE = (() => { try { return localStorage.getItem("ktw-stage-arrange") || "graph"; } catch { return "graph"; } })();
+let STAGE_ARRANGE = prefs.get("stage-arrange") || "graph";
 // other repositories' entries on the stage: "linked" — only the ones a chain of See or Superseded by joins to this
 // project's entries; "all" — every one the graph holds; "none". Kept per browser.
-let STAGE_FOREIGN = (() => { try { return localStorage.getItem("ktw-stage-foreign") || "linked"; } catch { return "linked"; } })();
-function setStageArrange(v) { STAGE_ARRANGE = v; try { localStorage.setItem("ktw-stage-arrange", v); } catch {} STAGE?.relax?.(); STAGE?.wake?.(); }
-function setStageForeign(v) { STAGE_FOREIGN = v; try { localStorage.setItem("ktw-stage-foreign", v); } catch {} render(); } // the lanes are the shown cards': the view is rebuilt
+let STAGE_FOREIGN = prefs.get("stage-foreign") || "linked";
+function setStageArrange(v) { STAGE_ARRANGE = v; prefs.set("stage-arrange", v); STAGE?.relax?.(); STAGE?.wake?.(); }
+function setStageForeign(v) { STAGE_FOREIGN = v; prefs.set("stage-foreign", v); render(); } // the lanes are the shown cards': the view is rebuilt
 const foreignShown = (c) => !c.ext || STAGE_FOREIGN === "all" || (STAGE_FOREIGN === "linked" && c.linked);
 function stopPlay() { PLAY.on = false; if (PLAY.raf) cancelAnimationFrame(PLAY.raf); PLAY.raf = null; PLAY.last = 0; PLAY.acc = 0; PLAY.frac = 0; PLAY.jump = 1; }
 const DAY_RE = /^\d{4}-\d{2}-\d{2}(T\d{2})?$/; // a day, or an hour of it
@@ -3449,7 +3463,7 @@ const canFamily = () => searchScopes().includes("family") && hasFamily();
 // friends can be searched where the family can be read, and there are any: entries citing outside the family
 const canFriends = () => searchScopes().includes("family") && !!SELF && friendCandidates(SELF.entries || []).length > 0;
 const canSearch = (s) => s === "project" || (s === "family" ? canFamily() : s === "friends" ? canFriends() : s === "all" ? canFamily() || canFriends() : false);
-let SCOPE = (() => { try { return localStorage.getItem("ktw-scope") || localStorage.getItem("ktw-search-scope") || "project"; } catch { return "project"; } })();
+let SCOPE = prefs.get("scope") || prefs.get("search-scope") || "project"; // search-scope: the name before the scope switched the graph too
 const scope = () => (canFamily() && SCOPE === "family" ? "family" : "project");
 function markScope() {
   const box = $("#scope"); if (!box) return;
@@ -3460,7 +3474,7 @@ function setScope(v, { rerender: again = true } = {}) {
   if (v !== "project" && v !== "family") return;
   const changed = SCOPE !== v; SCOPE = v;
   if (changed) MINI = null; // the side pane's graph follows the new scope
-  try { localStorage.setItem("ktw-scope", v); } catch {}
+  prefs.set("scope", v);
   markScope();
   if (!changed) return;
   if (!again) { setTimeout(showScope); return; } // the caller renders now; the merge follows
@@ -3777,8 +3791,8 @@ function connectLive() {
 // the reader), one where it holds something else (an entry's or a topic's
 // details, the graph view's legend).
 const SIDE_WIDTHS = ["1", "2", "3", "half"];
-const readSide = (key, fallback = "2") => { try { const v = localStorage.getItem(key); return SIDE_WIDTHS.includes(v) ? v : fallback; } catch { return fallback; } };
-const SIDE = { graph: readSide("ktw-side-graph", readSide("ktw-side")), other: readSide("ktw-side-other"), timeline: readSide("ktw-side-timeline", "1") };
+const readSide = (key, fallback = "2") => { const v = prefs.get(key); return SIDE_WIDTHS.includes(v) ? v : fallback; };
+const SIDE = { graph: readSide("side-graph", readSide("side")), other: readSide("side-other"), timeline: readSide("side-timeline", "1") };
 // three kinds of pane, each with its own remembered width: the graph beside a page, the graph beside the timeline (narrower by default — the stage wants the room), anything else
 const paneKind = () => ($("#details")?.dataset.pane === "graph" ? (nav.current().view === "timeline" ? "timeline" : "graph") : "other");
 const sideLabel = (v) => (v === "half" ? "½" : `${v}×`);
@@ -3790,7 +3804,7 @@ function applySide() {
   for (const b of document.querySelectorAll(".mini-width button")) b.classList.toggle("on", b.textContent === sideLabel(v));
   for (const G of ACTIVE_GRAPHS) G.wake?.();
 }
-function setSide(v) { const k = paneKind(); SIDE[k] = v; try { localStorage.setItem(`ktw-side-${k}`, v); } catch {} applySide(); }
+function setSide(v) { const k = paneKind(); SIDE[k] = v; prefs.set(`side-${k}`, v); applySide(); }
 // the choice sits at the top of the pane, above whatever it holds, on every page
 function paneWidthBar() {
   return el("div", { class: "pane-width", title: "the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details" },
@@ -3803,10 +3817,10 @@ function setupSideToggle() {
   nav.onChange(() => { if (narrow() && app.classList.contains("side-open")) btn.click(); });
 }
 function setupTheme() {
-  const saved = localStorage.getItem("ktw-theme");
+  const saved = prefs.get("theme");
   const prefersLight = window.matchMedia?.("(prefers-color-scheme: light)").matches;
   if (saved === "light" || (!saved && prefersLight)) document.documentElement.dataset.theme = "light";
-  $("#theme").onclick = () => { const light = document.documentElement.dataset.theme === "light"; if (light) delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = "light"; localStorage.setItem("ktw-theme", light ? "dark" : "light"); if (graph) { graph.alpha = Math.max(graph.alpha, 0.05); graph.wake?.(); } };
+  $("#theme").onclick = () => { const light = document.documentElement.dataset.theme === "light"; if (light) delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = "light"; prefs.set("theme", light ? "dark" : "light"); if (graph) { graph.alpha = Math.max(graph.alpha, 0.05); graph.wake?.(); } };
 }
 function fitSelect(sel) {
   // size the select to its current option's text, not the browser's default width

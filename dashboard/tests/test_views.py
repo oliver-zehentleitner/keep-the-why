@@ -167,6 +167,24 @@ class LibraryFilesTest(unittest.TestCase):
                     routing.search(line), f"app.js:{lineno}: routing outside nav"
                 )
 
+    def test_settings_go_through_prefs(self):
+        # what a reader sets is kept behind prefs: the library files keep nothing in the
+        # browser, and app.js reaches localStorage only in its prefs (host) block
+        storage = re.compile(r"\b(localStorage|sessionStorage|indexedDB)\b")
+        for name in self.files():
+            with self.subTest(name=name):
+                self.assertIsNone(storage.search(_read(name)))
+        lines = _read("app.js").splitlines()
+        start = next(i for i, l in enumerate(lines) if l.endswith(" prefs (host)"))
+        end = next(i for i, l in enumerate(lines) if l.endswith(" end of prefs (host)"))
+        for lineno, line in enumerate(lines, 1):
+            if start < lineno <= end:
+                continue
+            with self.subTest(line=lineno):
+                self.assertNotIn(
+                    "localStorage", line, f"app.js:{lineno}: a setting outside prefs"
+                )
+
     def test_classic_scripts_on_one_namespace(self):
         for name in self.files():
             src = _read(name)
