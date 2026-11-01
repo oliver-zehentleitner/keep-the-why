@@ -90,6 +90,42 @@ class ManifestTest(unittest.TestCase):
             views.page("<html></html>")
 
 
+# what makes a request; the views get their data from a provider, the dashboard's
+# lives in one block of app.js
+REQUESTS = r"\bfetch\s*\(|\bEventSource\b|\bXMLHttpRequest\b|\bsendBeacon\b|\bWebSocket\b|\bimportScripts\b"
+PROVIDER_START = "// ---------------------------------------------------------------- provider: every request the page makes"
+PROVIDER_END = (
+    "// ---------------------------------------------------------------- provider end"
+)
+
+
+class RequestsTest(unittest.TestCase):
+    def test_the_library_makes_no_request(self):
+        for name in views.manifest()["scripts"]:
+            for lineno, line in enumerate(_read(name).splitlines(), 1):
+                with self.subTest(name=name, line=lineno):
+                    self.assertIsNone(
+                        re.search(REQUESTS, line),
+                        f"{name}:{lineno}: a request in the library",
+                    )
+
+    def test_app_requests_only_inside_its_provider_block(self):
+        src = _read("app.js")
+        self.assertEqual(src.count(PROVIDER_START), 1)
+        self.assertEqual(src.count(PROVIDER_END), 1)
+        start, end = src.index(PROVIDER_START), src.index(PROVIDER_END)
+        outside = src[:start] + src[end:]
+        for lineno, line in enumerate(outside.splitlines(), 1):
+            with self.subTest(line=lineno):
+                self.assertIsNone(
+                    re.search(REQUESTS, line),
+                    f"app.js (outside the provider): {line.strip()[:80]}",
+                )
+        self.assertRegex(
+            src[start:end], r"\bfetch\s*\(", "the provider block makes the requests"
+        )
+
+
 class LibraryFilesTest(unittest.TestCase):
     def files(self):
         return views.manifest()["scripts"]

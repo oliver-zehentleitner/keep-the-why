@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-const { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, shuffled, compareHits, snippetAt, highlightParts, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf, projectLabel, backlinksUrl, citingOf, hostAnchor , todayISO, addDays, dayDiff, timeGrid, stampLabel, existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan, createdOn, TYPE_KINDS, TYPE_TOKENS, paletteToken, typeKind, SHELF, stageCards, stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight, mergeAuthors, sortAuthors, AUTHOR_SORTS, ownerOf } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
+const { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, shuffled, compareHits, snippetAt, highlightParts, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf, projectLabel, backlinksUrl, citingOf, hostAnchor , todayISO, addDays, dayDiff, timeGrid, stampLabel, existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan, createdOn, TYPE_KINDS, TYPE_TOKENS, paletteToken, typeKind, SHELF, stageCards, stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight, mergeAuthors, sortAuthors, AUTHOR_SORTS, ownerOf, exportStateUrl, exportVerdict } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
 const MD = globalThis.KeepTheWhy.markdown; // ktw-markdown.js
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -180,6 +180,15 @@ function loadedUi() {
   box.append(a, pop);
   return box;
 }
+// ---------------------------------------------------------------- provider: every request the page makes
+// The views read data only through the provider interface (context/dashboard.md, the library entry):
+// state, subscribe, bodies, family, memberState, exportState, resolveEntry, authorProfile, backlinks.
+// Every method but state is optional: provider() leaves out what the current mode cannot answer — a
+// family, a member's state and an Id's project need the live server — and a feature whose method is
+// absent hides. What a result means (an export that claims another repository, a fork) is decided in
+// ktw-core.js; how it travels (timeouts, size caps, CORS wording, the state monitor) stays here. HOST
+// holds what only the dashboard's own shell asks for: the project menu, forget, the update check, the
+// registry for the globe and its search. Nothing else in this file makes a request (test_views.py).
 async function fetchForeign(url) {
   const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), FOREIGN_TIMEOUT_MS);
   try {
@@ -202,54 +211,119 @@ async function fetchForeign(url) {
   }
   finally { clearTimeout(timer); }
 }
-const sameCanonical = (a, b) => String(a || "").replace(/\/+$/, "").toLowerCase() === String(b || "").replace(/\/+$/, "").toLowerCase();
+const DASHBOARD = {
+  // this page's own project: the state embedded in an export, or the live server's
+  async state() {
+    if (window.__KTW_STATE__) { noteLoaded(location.href.split("#")[0], JSON.stringify(window.__KTW_STATE__), "page", { own: true }); return normalizeState(window.__KTW_STATE__); }
+    const url = api("/api/state.json");
+    const text = await (await fetch(url, { cache: "no-store" })).text();
+    noteLoaded(new URL(url, location.href).href, text, "state", { own: true });
+    return normalizeState(JSON.parse(text));
+  },
+  // every change of this project, as the server sends it; returns the function that stops listening
+  subscribe(onState, onStatus) {
+    const es = new EventSource(api("/api/events"));
+    es.addEventListener("state", (ev) => { try { onState(normalizeState(JSON.parse(ev.data))); } catch (err) { console.error(err); } });
+    es.onopen = () => onStatus("open");
+    es.onerror = () => onStatus("error");
+    return () => es.close();
+  },
+  // An export since dashboard 0.6.0 keeps its entries' bodies in state.body.json beside state.json (`bodies`
+  // names it) — three quarters of the file, read only when an entry is shown. The graph, the globe and the
+  // registry never need them; the centre, the merged family's search and the thought reader do, and ask here
+  // first. An older export carries its bodies inline and has no `bodies` field; nothing to fetch then.
+  bodies(state) {
+    if (!state || typeof state.bodies !== "string" || !state.__url) return Promise.resolve(state);
+    if (state.__bodies) return state.__bodies;
+    const url = new URL(state.bodies, state.__url).href;
+    state.__bodies = fetchForeign(url).then((text) => {
+      const got = JSON.parse(text).bodies || {};
+      for (const e of state.entries) { const b = got[e.id]; if (b != null) e.body = b && typeof b === "object" ? b : { text: String(b || ""), reason: "" }; }
+      state.bodiesLoaded = true;
+      return state;
+    }).catch((err) => { state.bodiesError = err?.message || "could not fetch the bodies"; return state; });
+    return state.__bodies;
+  },
+  // the family the live server knows: this project's (or `project`'s), the whole tree with `tree`
+  async family({ project = PROJECT, tree = false } = {}) {
+    const q = [project ? `project=${encodeURIComponent(project)}` : "", tree ? "tree=1" : ""].filter(Boolean).join("&");
+    return (await (await fetch(`/api/family${q ? `?${q}` : ""}`, { cache: "no-store" })).json()).members || [];
+  },
+  // a project the live server knows, by its key: { state } or { error }
+  memberState(key) {
+    const url = `/api/state.json?project=${encodeURIComponent(key)}`;
+    return fetch(url, { cache: "no-store" })
+      .then(async (r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); const text = await r.text(); noteLoaded(new URL(url, location.href).href, text, "state"); return JSON.parse(text); })
+      .then((st) => ({ state: normalizeState(st) }), (err) => ({ error: `could not load its state (${err?.message || "server gone"})` }));
+  },
+  // A repository's published export, found through its .keep-the-why at HEAD: { state, url, canonical, root,
+  // raw, forkOf? } or { error, raw, missingLine? }. The verdicts are ktw-core.js's (exportStateUrl, exportVerdict).
+  async exportState(canonical, root = "") {
+    let result, url = "";
+    const raw = rawFileUrl(canonical, root, ".keep-the-why");
+    try {
+      const found = exportStateUrl(await fetchForeign(raw), raw);
+      if (found.error) { result = { ...found, raw }; noteFailed(raw, found.error, { canonical }); }
+      else {
+        url = found.url;
+        const state = normalizeState(JSON.parse(await fetchForeign(url)));
+        state.__url = url; // where it came from: its bodies, if kept beside it, resolve against this
+        const verdict = exportVerdict(state, canonical, url);
+        if (verdict.error) { result = { error: verdict.error, raw }; noteFailed(url, verdict.error, { canonical }); }
+        else result = { state, url, canonical, root, raw, ...(verdict.forkOf ? { forkOf: verdict.forkOf } : {}) };
+      }
+    } catch (err) {
+      result = { error: `could not fetch the export: ${err?.message || "network error or blocked by CORS"}`, raw };
+      for (const u of [raw, url]) { const f = u && FAILED.get(u); if (f) f.canonical = canonical; } // the failed fetch belongs to this repository
+      renderLoaded();
+    }
+    return result;
+  },
+  // which project the live server knows carries this Id: { project, entry }, or null
+  async resolveEntry(uuid) {
+    const r = await fetch(`/api/entry?uuid=${encodeURIComponent(uuid)}${PROJECT ? `&project=${encodeURIComponent(PROJECT)}` : ""}`, { cache: "no-store" });
+    return r.ok ? r.json() : null;
+  },
+  // a commit author's profile on the host, looked up when asked for; null when the host's API does not say
+  async authorProfile(canonical, sha) {
+    const look = authorLookup(canonical, sha);
+    if (!look?.api) return null;
+    const r = await fetch(look.api, { headers: { Accept: "application/json" } });
+    return r.ok ? look.pick(await r.json()) || null : null;
+  },
+  // who in the registry cites this repository; no file is an answer (nobody does), not a failure
+  async backlinks(canonical) {
+    const url = backlinksUrl(REGISTRY_URL, canonical);
+    try { return JSON.parse(await fetchForeign(url)); } catch (err) {
+      if (!/HTTP 404/.test(err?.message || "")) throw err;
+      FAILED.delete(url);
+      return { cited_by: [] };
+    }
+  },
+};
+// the methods the current mode can answer; the rest are absent
+function provider() {
+  const live = LIVE();
+  return {
+    state: DASHBOARD.state, bodies: DASHBOARD.bodies, exportState: DASHBOARD.exportState, authorProfile: DASHBOARD.authorProfile, backlinks: DASHBOARD.backlinks,
+    subscribe: live ? DASHBOARD.subscribe : undefined, family: live ? DASHBOARD.family : undefined,
+    memberState: live ? DASHBOARD.memberState : undefined, resolveEntry: live ? DASHBOARD.resolveEntry : undefined,
+  };
+}
+// what only the dashboard's shell asks for — no view does
+const HOST = {
+  async projects() { return (await fetch("/api/projects", { cache: "no-store" })).json(); },
+  async forget(key) { await fetch("/api/projects/forget", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key }) }); },
+  async updates() { return (await fetch("/api/updates", { cache: "no-store" })).json(); },
+  async registryIndex(url) { return JSON.parse(await fetchForeign(url)); },
+};
+// ---------------------------------------------------------------- provider end
+// the page's caches over the provider: one request per project, however many ask at once
 function fetchPublicState(canonical, root = "") {
   const key = `${canonical}|${root}`;
-  return (PUBLIC_STATES[key] ||= loadPublicState(canonical, root));
+  return (PUBLIC_STATES[key] ||= provider().exportState(canonical, root));
 }
-async function loadPublicState(canonical, root) {
-  let result, url = "";
-  const raw = rawFileUrl(canonical, root, ".keep-the-why");
-  try {
-    url = configLine(await fetchForeign(raw), "dashboard-state");
-    if (!url) { result = { error: `no dashboard-state line in the published .keep-the-why (${raw}) — this project has no published export yet`, raw, missingLine: true }; noteFailed(raw, result.error, { canonical }); }
-    else if (!/^https:\/\//.test(url)) { result = { error: `dashboard-state is not an https URL: ${url}`, raw }; noteFailed(raw, result.error, { canonical }); }
-    else {
-      const state = normalizeState(JSON.parse(await fetchForeign(url)));
-      state.__url = url; // where it came from: its bodies, if kept beside it, resolve against this
-      // an export names the project it was made from; one that claims another repository is not shown as this one
-      const claimed = state.project?.canonical;
-      // a fork's export: made in a checkout whose origin is the cited repository, declaring the repository it was
-      // forked from as its canonical — shown as that fork, with what it says it is a fork of
-      const origin = state.project?.git?.remote ? `https://${state.project.git.remote}` : "";
-      if (claimed && !sameCanonical(claimed, canonical) && origin && sameCanonical(origin, canonical)) result = { state, url, canonical, root, raw, forkOf: claimed };
-      else if (claimed && !sameCanonical(claimed, canonical)) { result = { error: `the export at ${url} belongs to ${claimed}, not to ${canonical}`, raw }; noteFailed(url, result.error, { canonical }); }
-      else result = { state, url, canonical, root, raw };
-    }
-  } catch (err) {
-    result = { error: `could not fetch the export: ${err?.message || "network error or blocked by CORS"}`, raw };
-    for (const u of [raw, url]) { const f = u && FAILED.get(u); if (f) f.canonical = canonical; } // the failed fetch belongs to this repository
-    renderLoaded();
-  }
-  return result;
-}
-// An export since dashboard 0.6.0 keeps its entries' bodies in state.body.json beside state.json (`bodies` names
-// it) — three quarters of the file, read only when an entry is shown. The graph, the globe and the registry
-// never need them; the centre, the merged family's search and the thought reader do, and ask here first.
-// An older export carries its bodies inline and has no `bodies` field; nothing to fetch then.
-const BODIES = new Map(); // state -> Promise
-function ensureBodies(state) {
-  if (!state || typeof state.bodies !== "string" || !state.__url) return Promise.resolve(state);
-  if (state.__bodies) return state.__bodies;
-  const url = new URL(state.bodies, state.__url).href;
-  state.__bodies = fetchForeign(url).then((text) => {
-    const got = JSON.parse(text).bodies || {};
-    for (const e of state.entries) { const b = got[e.id]; if (b != null) e.body = b && typeof b === "object" ? b : { text: String(b || ""), reason: "" }; }
-    state.bodiesLoaded = true;
-    return state;
-  }).catch((err) => { state.bodiesError = err?.message || "could not fetch the bodies"; return state; });
-  return state.__bodies;
-}
+const ensureBodies = (state) => provider().bodies(state);
 const publicHref = (canonical, root = "", hash = "#overview") => `${location.pathname}?public=${encodeURIComponent(canonical)}${root ? `&root=${encodeURIComponent(root)}` : ""}${hash}`;
 
 // ---------------------------------------------------------------- state
@@ -495,9 +569,9 @@ async function viewEntryElsewhere(main, uuid) {
   // an Id this project does not carry: ask the server which known project does
   main.append(el("p", { class: "center" }, `Looking for ${uuid} in the other projects known here…`));
   try {
-    const r = await fetch(`/api/entry?uuid=${encodeURIComponent(uuid)}${PROJECT ? `&project=${encodeURIComponent(PROJECT)}` : ""}`, { cache: "no-store" });
-    if (!r.ok) throw new Error();
-    const hit = await r.json();
+    const P = provider(); if (!P.resolveEntry) throw new Error();
+    const hit = await P.resolveEntry(uuid);
+    if (!hit) throw new Error();
     if (hit.project === (PROJECT || null)) return;
     location.href = `${location.pathname}?project=${encodeURIComponent(hit.project)}#entry/${uuid}`;
   } catch { setKids(main, el("p", { class: "center" }, `No entry with Id ${uuid} in this project, nor in any other project known here. A family member that is not checked out can be cloned or cached — see Family.`)); }
@@ -524,10 +598,11 @@ const REMOTE_REFS = {}; // `${canonical}|${uuid}` -> Promise<{entry, href} | {er
 function resolveRemoteRef(canonical, uuid) {
   const key = `${canonical}|${uuid}`;
   if (!REMOTE_REFS[key]) REMOTE_REFS[key] = (async () => {
-    if (LIVE()) {
+    const P = provider();
+    if (P.resolveEntry) {
       try {
-        const r = await fetch(`/api/entry?uuid=${encodeURIComponent(uuid)}${PROJECT ? `&project=${encodeURIComponent(PROJECT)}` : ""}`, { cache: "no-store" });
-        if (r.ok) { const hit = await r.json(); return { entry: hit.entry || {}, href: `${location.pathname}?project=${encodeURIComponent(hit.project)}#entry/${uuid}` }; }
+        const hit = await P.resolveEntry(uuid);
+        if (hit) return { entry: hit.entry || {}, href: `${location.pathname}?project=${encodeURIComponent(hit.project)}#entry/${uuid}` };
       } catch { /* not known here: the published export */ }
     }
     const r = await fetchPublicState(canonical, "");
@@ -928,8 +1003,8 @@ function refsBox(e) {
 // ---------------------------------------------------------------- family and projects
 let FAMILY = null; // /api/family result for the current project (live mode only)
 async function fetchFamily() {
-  if (!LIVE()) return null;
-  try { FAMILY = (await (await fetch(api("/api/family"), { cache: "no-store" })).json()).members || []; } catch { FAMILY = null; }
+  const P = provider(); if (!P.family) return null;
+  try { FAMILY = await P.family(); } catch { FAMILY = null; }
   return FAMILY;
 }
 // the family as .keep-the-why declares it — what an export or a public dump knows
@@ -996,7 +1071,7 @@ let SELECTED_DEFAULT = null; // the server's own project, for the menu when the 
 async function viewProjects(main) {
   main.append(el("h1", {}, "Projects"), el("p", { class: "sub" }, "Every project this machine knows — from ~/.keep-the-why/projects.json, the folder next to this one, and the personal files. Families grouped, parent first. Forgetting a row removes it from the mapping; a cache directory goes with it, a working tree is never touched."));
   if (!LIVE()) return main.append(el("p", { class: "center" }, "Static export — the project list is a live-server view."));
-  let data; try { data = await (await fetch("/api/projects", { cache: "no-store" })).json(); } catch { return main.append(el("p", { class: "center" }, "Could not load the project list.")); }
+  let data; try { data = await HOST.projects(); } catch { return main.append(el("p", { class: "center" }, "Could not load the project list.")); }
   PROJECTS = data.projects || [];
   const current = PROJECT || data.selected;
   const list = PROJECTS;
@@ -1005,7 +1080,7 @@ async function viewProjects(main) {
     const label = p.path ? el("a", { href: `${location.pathname}?project=${encodeURIComponent(p.key)}#overview` }, p.name) : el("span", {}, p.id);
     const forget = p.source === "unresolved" ? null : el("button", { class: "link-btn danger", title: p.kind === "cache" ? "forget this cache and delete its directory (a cache is never the only copy of anything)" : "forget this path — the working tree itself is not touched", onclick: async () => {
       if (!confirm(p.kind === "cache" ? `Forget the cache of ${p.id} and delete ${p.path}?` : `Forget ${p.path}? The directory stays; only the mapping row goes.`)) return;
-      try { await fetch("/api/projects/forget", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key: p.key }) }); } catch {}
+      try { await HOST.forget(p.key); } catch {}
       if (here) location.href = location.pathname; else render();
     } }, "forget");
     return el("div", { class: `prow depth-${Math.min(depth, 3)} ${here ? "here" : ""}` },
@@ -1410,11 +1485,12 @@ function loadFriend(f) {
   if (FRIENDS.loaded[k]) return Promise.resolve(FRIENDS.loaded[k]);
   return (FRIENDS.pending[k] ||= (async () => {
     let r = null;
-    if (LIVE() && f.uuids?.length) {
+    const P = provider();
+    if (P.resolveEntry && P.memberState && f.uuids?.length) {
       try {
-        const res = await fetch(`/api/entry?uuid=${encodeURIComponent(f.uuids[0])}${PROJECT ? `&project=${encodeURIComponent(PROJECT)}` : ""}`, { cache: "no-store" });
-        if (res.ok) {
-          const hit = await res.json(); const m = await memberState(hit.project);
+        const hit = await P.resolveEntry(f.uuids[0]);
+        if (hit) {
+          const m = await memberState(hit.project);
           if (m.state) r = { ...liveMember({ key: hit.project, name: m.state.project?.id, role: "self" }, m.state), name: m.state.project?.id || repoLabel(f.canonical) };
         }
       } catch { /* not known here: the published export */ }
@@ -1447,9 +1523,10 @@ async function friendUnit(r) {
   const self = { ...r };
   if (!p.parent && !(p.children || []).length) return [self];
   const out = [self];
-  if (r.centre?.mode === "live") {
+  const P = provider();
+  if (r.centre?.mode === "live" && P.family && P.memberState) {
     try {
-      const members = ((await (await fetch(`/api/family?project=${encodeURIComponent(r.centre.project)}&tree=1`, { cache: "no-store" })).json()).members || []).filter((m) => m.role !== "self" && m.key);
+      const members = (await P.family({ project: r.centre.project, tree: true })).filter((m) => m.role !== "self" && m.key);
       const states = await Promise.all(members.map((m) => memberState(m.key)));
       members.forEach((m, i) => { if (states[i].state) out.push(liveMember(m, states[i].state)); });
       return out;
@@ -1836,12 +1913,7 @@ function citedExclude() {
 async function loadCited() {
   CITED.loading = true; CITED.error = null; render();
   try {
-    let file = { cited_by: [] };
-    try { file = JSON.parse(await fetchForeign(CITED.url)); } catch (err) {
-      // no file: nothing in the registry cites this repository — an answer, not a failure
-      if (!/HTTP 404/.test(err?.message || "")) throw err;
-      FAILED.delete(CITED.url);
-    }
+    const file = await provider().backlinks(canonicalOf(SELF?.project)); // no file is an answer: nobody cites it
     const r = citingOf(file, (SELF?.entries || []).map((e) => e.uuid).filter(Boolean), [canonicalOf(SELF?.project)]);
     CITED.list = r.citing; CITED.elsewhere = r.elsewhere; CITED.checked = file.checked || "";
     await Promise.all(CITED.list.map(loadFriend));
@@ -2019,7 +2091,7 @@ const REGISTRY = { idx: null, error: null, loading: false };
 async function loadRegistryIndex() {
   if (REGISTRY.idx || REGISTRY.loading) return;
   REGISTRY.loading = true; REGISTRY.error = null;
-  try { REGISTRY.idx = JSON.parse(await fetchForeign(REGISTRY_URL)); } catch (err) { REGISTRY.error = err?.message || "network"; }
+  try { REGISTRY.idx = await HOST.registryIndex(REGISTRY_URL); } catch (err) { REGISTRY.error = err?.message || "network"; }
   REGISTRY.loading = false;
 }
 // a project of the registry as a search hit: its own link for this project, else its published export in public mode
@@ -2116,7 +2188,7 @@ async function globeRegistry() {
   if (GLOBE.busy) return;
   GLOBE.busy = true; render();
   try {
-    const idx = JSON.parse(await fetchForeign(GLOBE.registryUrl));
+    const idx = await HOST.registryIndex(GLOBE.registryUrl);
     const have = loadedCanonicals();
     // "next" goes on with what this pass has not tried; a new pass (the switch off and on) tries the failed ones again
     const goOn = GLOBE.registry && GLOBE.registryLeft;
@@ -3173,19 +3245,17 @@ function runStage(canvas, o) {
 // dropdown under the search field and the results page (#search/<scope>/<q>).
 let TREE = null; let TREE_AT = 0; // /api/family?tree=1, live mode
 async function fetchTree() {
-  if (!LIVE()) return null;
+  const P = provider(); if (!P.family) return null;
   if (TREE && Date.now() - TREE_AT < 30000) return TREE;
-  try { TREE = (await (await fetch(`${api("/api/family")}${PROJECT ? "&" : "?"}tree=1`, { cache: "no-store" })).json()).members || []; TREE_AT = Date.now(); } catch { TREE = null; }
+  try { TREE = await P.family({ tree: true }); TREE_AT = Date.now(); } catch { TREE = null; }
   return TREE;
 }
 const MEMBER_STATES = {}; // project key -> { at, p: Promise<{state}|{error}> }, live mode
 function memberState(key) {
   const c = MEMBER_STATES[key];
   if (c && Date.now() - c.at < 30000) return c.p;
-  const url = `/api/state.json?project=${encodeURIComponent(key)}`;
-  const p = fetch(url, { cache: "no-store" })
-    .then(async (r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); const text = await r.text(); noteLoaded(new URL(url, location.href).href, text, "state"); return JSON.parse(text); })
-    .then((st) => ({ state: normalizeState(st) }), (err) => ({ error: `could not load its state (${err?.message || "server gone"})` }));
+  const P = provider();
+  const p = P.memberState ? P.memberState(key) : Promise.resolve({ error: "a member's state needs the live server" });
   MEMBER_STATES[key] = { at: Date.now(), p };
   return p;
 }
@@ -3534,7 +3604,7 @@ function authorLink(name, commit, project) {
     ev.preventDefault();
     const w = window.open("about:blank", "_blank"); if (w) w.opener = null;
     let url = look.fallback;
-    try { const r = await fetch(look.api, { headers: { Accept: "application/json" } }); if (r.ok) url = look.pick(await r.json()) || look.fallback; } catch { /* offline or rate-limited: the commit page names the author too */ }
+    try { url = (await provider().authorProfile(canonicalOf(project), commit)) || look.fallback; } catch { /* offline or rate-limited: the commit page names the author too */ }
     if (url !== look.fallback) AUTHOR_URLS[key] = url;
     ev.target.closest("a").href = url;
     if (w) w.location.href = url; else window.open(url, "_blank", "noopener");
@@ -3604,21 +3674,17 @@ function markUpdates() {
 window.__ktwApplyUpdates = (u) => { UPDATES = u; markUpdates(); }; // test hook (jsdom smoke), not used by the page
 async function pollUpdates() {
   if (window.__KTW_STATE__) return;
-  try { UPDATES = await (await fetch("/api/updates", { cache: "no-store" })).json(); markUpdates(); } catch { /* server gone; the live dot says so */ }
+  try { UPDATES = await HOST.updates(); markUpdates(); } catch { /* server gone; the live dot says so */ }
 }
-let LIVE_ES = null;
+let LIVE_ES = null; // stops listening
 function connectLive() {
-  if (LIVE_ES) { LIVE_ES.close(); LIVE_ES = null; }
+  if (LIVE_ES) { LIVE_ES(); LIVE_ES = null; }
   if (window.__KTW_STATE__ && MODE === "export") { setLive("export", "export", "static export — the state when it was exported, no live updates"); return; }
-  if (!LIVE()) { setLive("export", "public export", "public export — read from the published state.json, no live updates"); return; }
-  let es;
-  const open = () => {
-    es = LIVE_ES = new EventSource(api("/api/events"));
-    es.addEventListener("state", (ev) => { try { applyState(normalizeState(JSON.parse(ev.data))); setLive("on", "live", `live — last update ${new Date().toLocaleTimeString()}`); } catch (err) { console.error(err); } });
-    es.onopen = () => setLive("on", "live", "live — the server watches the project and sends every change");
-    es.onerror = () => setLive("off", "offline", "connection lost — the server is gone; retrying");
-  };
-  open();
+  const P = provider();
+  if (!P.subscribe) { setLive("export", "public export", "public export — read from the published state.json, no live updates"); return; }
+  LIVE_ES = P.subscribe(
+    (state) => { applyState(state); setLive("on", "live", `live — last update ${new Date().toLocaleTimeString()}`); },
+    (status) => (status === "open" ? setLive("on", "live", "live — the server watches the project and sends every change") : setLive("off", "offline", "connection lost — the server is gone; retrying")));
 }
 // The side pane's width: 1×, 2× (the default), 3×, or half the page beside
 // the text — kept per browser, ignored on a narrow screen. Two widths: one
@@ -3667,7 +3733,7 @@ function fitSelect(sel) {
 async function setupProjects() {
   if (window.__KTW_STATE__) return;
   let data;
-  try { data = await (await fetch("/api/projects", { cache: "no-store" })).json(); } catch { return; }
+  try { data = await HOST.projects(); } catch { return; }
   const sel = $("#project-select");
   const list = data.projects || [];
   if (list.filter((p) => p.path).length < 2 && !list.some((p) => !p.path)) return;
@@ -3749,7 +3815,7 @@ async function boot() {
       if (r.missingLine) {
         // the live server may know a local checkout that already carries the line, on a branch the default branch has not merged
         try {
-          const local = ((await (await fetch("/api/projects", { cache: "no-store" })).json()).projects || []).find((p) => p.canonical === PUBLIC && p.dashboard_state);
+          const local = ((await HOST.projects()).projects || []).find((p) => p.canonical === PUBLIC && p.dashboard_state);
           if (local) msg.append(el("p", { class: "note" }, `Your checkout at ${local.path} names ${local.dashboard_state} — on a branch that is not on the default branch yet. Public mode reads what is published: the line counts once it is merged, and the family once the published export carries it.`));
         } catch { /* not served by a live dashboard */ }
       }
@@ -3761,9 +3827,9 @@ async function boot() {
     return;
   }
   setupProjects();
-  if (window.__KTW_STATE__) { noteLoaded(location.href.split("#")[0], JSON.stringify(window.__KTW_STATE__), "page", { own: true }); applyState(normalizeState(window.__KTW_STATE__)); }
+  if (window.__KTW_STATE__) applyState(await provider().state());
   else {
-    try { const text = await (await fetch(api("/api/state.json"), { cache: "no-store" })).text(); noteLoaded(new URL(api("/api/state.json"), location.href).href, text, "state", { own: true }); applyState(normalizeState(JSON.parse(text))); }
+    try { applyState(await provider().state()); }
     catch (err) { $("#main").append(el("p", { class: "center" }, PROJECT ? `No state for project "${PROJECT}" — unknown id or unknown location.` : "Could not load the state — is the server running?")); }
   }
   connectLive();
