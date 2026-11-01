@@ -775,3 +775,19 @@ The stage's positions come from the scene. When the host draws a graph beside th
 
 **Rejected alternative:** a registry of views that the scene calls by name (wake, relax). It would turn the scene back into the loop over the page's graphs, with a list to keep. Events in which a view decides what to do keep the scene free of drawing. Keeping the clock's entry count in the scene was also rejected: it is the page's measure of when a layout should settle again, so the host computes it and passes it on with the day.
 
+## The graph view takes the scene, nav and prefs only; the page state it reads moved into the scene
+
+**Id:** 3b9cacf9-4e62-48b7-943e-a1650e09f3ce
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** design proposal (revision 3.1) agreed by the maintainer, 2026-11-01 (only host interfaces cross into a view); what moved into the scene, `nav.open`, the pane's composition staying with the host and the tests' scoped app are the implementer's, in the pull request that moved the graph
+**Revisit when:** the graph's model builders (which projects, friends, family and path are in a graph) move into the library, or another view needs page state the scene does not carry
+**See:** dashboard.md#the-views-share-one-scene-state-clock-focus-scope-and-layout-and-the-events-that-carry-their-changes — 350c514d-f042-40a7-88fb-255307561f50 — as of 2026-11-01
+
+`web/ktw-graph.js` holds the graph view: `runGraph` with its drawing, pointing and dragging, the name placement, a thought lit, a project spotted, the small graph's own view, the motion and the names per group. `create({ scene, nav, prefs })` is all it is given. Two pieces of page state the graph read from the page's globals are now the scene's: the entry shown in the details (`selected`) and the sidebar's filter, whose matching moved into the core (`entryMatches`). A node's address is followed through `nav.open`, which joins `nav`'s interface. `miniGraph()`, which decides which graph the side pane shows and builds its switches, stays with the host, because it composes the host's graph builders; the canvas it puts there is the view's. The tests run `app.js` as a strict function rather than a global script (`tests/web/classic.mjs`), as a browser runs a module, so a library file that reached for one of its names fails in the test as it would in the browser.
+
+**Reason:** a view that read the page's globals would run only on this page. With the filter and the selection in the scene, a host that has neither leaves them empty and the graph dims and marks nothing. The pane's composition is page logic — this dashboard's choice of graphs and switches — and it moves only when the builders it calls do. The test change closes a gap the series would otherwise hide: the tests inlined `app.js` as a classic script, and every one of its names was global to the library, which in a browser it is not.
+
+**Rejected alternative:** passing the filter and the selection to the graph as callbacks. Those would be two more interfaces beside the four the proposal allows, for state that other views (lists, the stage) read as well. Moving `miniGraph()` with the view was also rejected: it would pull the graph builders, the friends and the family layers along, which is a later step.
+
