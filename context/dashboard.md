@@ -623,3 +623,38 @@ The export of a family root — a `.keep-the-why` with a children block and no `
 **Reason:** the address is the one place every project in the graph names its owner, whether it is the centre, a family member, a friend or a globe wave, so nothing has to be fetched. A GitLab subgroup is an owner in its own right, with its own members and its own page. A hub stands for a project wherever else the graph counts, so the members of a family in one repository count here too. The owner follows the family's structure instead of running past it: the root alone carries the family to its owner, as the review of the demo asked.
 
 **Rejected alternative:** the top-level group only on GitLab — it merges subgroups that are organised apart on the host, and the node's page would not be the subgroup's. Counting distinct repositories instead of projects — a family in one repository would then be one project and get no owner node, though the graph draws it as several. Wiring the owner to every member of a family — what the first demo did; rejected in its review in favour of the family's own structure.
+
+## The page becomes a library a second host builds on: core, views and a host, Maity the first other host
+
+**Id:** 24e1ef21-ebf8-4d5b-ab63-c8ccbe82f7ab
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** design proposal (revision 3.1) agreed by the maintainer, 2026-11-01
+**Revisit when:** a second outside host asks for the views, or the views need something only one host can give
+**See:** dashboard.md#the-page-is-plain-javascript--no-framework-no-build-step-no-cdn — df1af5b5-8180-49e2-bdeb-97bf4e4aa030 — as of 2026-11-01
+**See:** dashboard.md#a-dashboard-exists-despite-the-no-dashboard-line-as-a-read-only-lens-that-stores-nothing — 55e36439-f311-48b9-9279-0197af4d5601 — as of 2026-11-01
+
+Maity, the coordination hub for coding agents, is to show nearly everything the dashboard shows — Overview, Queues, Graph, Thoughts, Timeline, Authors, Search, entry and topic pages, Family and Friends — in its own look, and an update of the dashboard is to reach it without anyone porting it. The page is split into three layers. *Core* is pure: what `lib.js` holds today, plus the route grammar, the force layout without its canvas and a Markdown parser. *Views* are every page and panel, mounted into a container the host hands them, tied together by a shared scene (the day, the focus, the layout, the scope). They reach the outside only through four host interfaces: a data `provider`, `nav` for links and the history, `prefs` for settings, and `--ktw-*` CSS tokens for the look. The *host* is what remains of `app.js` for the dashboard — the shell, the live mode, the export, the Projects menu, the update check, the globe and the registry search — and Maity's own scripts on the other side. Maity vendors the view files from the published wheel at a pinned version and digest; an update arrives there as a pull request. The migration runs in small pull requests, each released on its own, with the dashboard looking the same after every one.
+
+**Reason:** a view that fetches, writes the URL or keeps settings by itself works in one page only. Behind the interfaces the same files run in a page that may not fetch from other hosts (Maity's `default-src 'self'`), has a router of its own, and gets private projects through a server. Both hosts then run the same bytes, so a fix lands once. The globe and the registry search stay with the dashboard on the maintainer's call: they discover the public web of projects, and through a hub they would become fan-out requests on behalf of a session.
+
+**Rejected alternative:** the published dashboard in an `<iframe>` — not Maity's look, navigation or sign-in, a CSP exception, and public exports only. Copying the views into Maity and restyling them — a fork, which is what the request rules out. An npm package or a CDN — neither side has a Node toolchain, and Maity's CSP forbids foreign script hosts. Release assets on GitHub — the releases page stays the skill's. Graph and timeline only — the first scope, widened by the maintainer.
+
+**Consequence:** the page's modules become classic scripts on one namespace, because Maity's page also opens from `file://`, where browsers refuse module scripts; that revises the plain-JavaScript entry above and is recorded with the change that makes it. The views render text only, through the DOM, with a renderer for entry bodies that builds nodes instead of HTML strings, so neither host keeps an `innerHTML` sink.
+
+## The refactoring is guarded by DOM snapshots of a frozen fixture, one per route
+
+**Id:** c31d2d4a-abdd-4368-9601-e887718afa6e
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** design proposal (revision 3.1) agreed by the maintainer, 2026-11-01; the fixture and the serialisation are the implementer's choices in the pull request that added the harness
+**Revisit when:** the canvas views move to the DOM, or the state format changes so that the fixture has to be rebuilt
+**See:** dashboard.md#the-page-becomes-a-library-a-second-host-builds-on-core-views-and-a-host-maity-the-first-other-host — 24e1ef21-ebf8-4d5b-ab63-c8ccbe82f7ab — as of 2026-11-01
+
+`dashboard/tests/web/snapshot.mjs` loads a page rendered from `tests/web/fixture/state.json` in jsdom, drives every route that renders without a network, and compares `#main` and `#details` of each — and the shell once — with the files in `tests/web/snapshots/`. Each one is an element tree, one node per line, attributes sorted. The clock stands at the fixture's day, the time zone is UTC, and `Math.random` is a seeded sequence. The fixture is an invented project, built by `fixture/make_fixture.py` as a Git history with fixed dates and authors, read by the dashboard's own state builder, then frozen. A pull request in the series keeps every snapshot identical, or names each changed snapshot with its reason. What a canvas draws is not in the DOM: a change there carries before-and-after screenshots instead.
+
+**Reason:** the series moves almost all of `app.js` into other files. "Looks the same" has to be checked by a machine on every one of those pull requests, because a reviewer cannot hold 3800 lines in view. A frozen state keeps the snapshots still while this repository's own `context/`, the dashboard's version or the date changes; an export of the repository itself would move with every commit. One node per line makes a changed snapshot a readable diff.
+
+**Rejected alternative:** an export of this repository's own `context/` as the fixture — it changes with every entry written. Pixel screenshots in a headless browser — a browser toolchain in CI and font rendering that differs between machines, for what the DOM already says. The serialised HTML as one string — a one-character change shows up as a changed line thousands of characters long.
