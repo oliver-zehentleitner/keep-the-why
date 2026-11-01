@@ -8,8 +8,8 @@
    on globalThis.KeepTheWhy.views.timeline, listed in ktw-views.json, traced on the canvas (canvas-trace.mjs). */
 (function (root) {
 "use strict";
-const { TYPE_KINDS, TYPE_TOKENS, SHELF, addDays, createdOn, dayDiff, existsAt, statusAt, linkExistsAt, logDepth, markLinked, percentileBox, pushApart, stageCards, stageHeight, stageLanes, stageLinks, stampLabel, typeKind, filterActive, entryMatches } = root.KeepTheWhy.core;
-const { el, setKids, statusPill, evPill, typeGlyphSvg } = root.KeepTheWhy.ui;
+const { TYPE_KINDS, TYPE_TOKENS, SHELF, addDays, createdOn, dayDiff, daySpan, existsAt, statusAt, linkExistsAt, logDepth, markLinked, percentileBox, pushApart, stageCards, stageHeight, stageLanes, stageLinks, stampLabel, typeKind, filterActive, entryMatches, plural, timeGrid, todayISO, paletteToken } = root.KeepTheWhy.core;
+const { el, setKids, pill, statusPill, evPill, typePills, typeGlyphSvg } = root.KeepTheWhy.ui;
 
 // One stage view per page: create({ scene, nav, prefs }). The page's scene is `shared` here: `scene` is the stage's
 // own (stageScene — its cards, lanes and links), as it always was.
@@ -20,8 +20,6 @@ const token = (name) => (ROOT_STYLE ||= getComputedStyle(document.documentElemen
 const isShownByFilter = (e) => entryMatches(e, shared.filter);
 const topicOf = (file) => shared.state.topics.find((t) => t.file === file);
 const byId = () => Object.fromEntries(shared.state.entries.map((e) => [e.id, e]));
-// the host's play state, read while the stage draws (runStage's `playing`): on, how far into the next step, how big a step
-let PLAY = { on: false, frac: 0, jump: 1 };
 // where a card stands: where its node stands in the graph beside, or in a lane per topic — kept per browser
 let ARRANGE = prefs.get("stage-arrange") || "graph";
 const setArrange = (v) => { ARRANGE = v; prefs.set("stage-arrange", v); };
@@ -307,7 +305,6 @@ function stageInput(canvas, st, v, o) {
 // The stage on the page: the scene from the graph, the camera, the layout, the painter and the input wired to one
 // view state, redrawn on demand (wake) — never idle-looping — and the API the rest of the page uses (STAGE).
 function runStage(canvas, o) {
-  PLAY = o.playing || PLAY; // the host's play state: whether it plays, and how far into the next step
   const ctx = canvas.getContext("2d"); if (!ctx) return;
   const v = { W: 0, H: 0, zoom: 1, panX: 0, panY: 0, hover: null, hoverTopic: null, held: null, raf: null }; // the view: the box, the camera's zoom and pan, what is pointed at and held
   const scene = stageScene(o.graph, o.span);
@@ -350,7 +347,222 @@ function runStage(canvas, o) {
   return handle;
 }
 
-return Object.freeze({ runStage, stageLegend, typeGlyph, arrange: () => ARRANGE, setArrange, foreign: () => FOREIGN, setForeign, foreignShown });
+// ---- the timeline page around the stage: the clock and its play loop, the bars, the slider, the card
+// What the host gives the page when it shows it (view's `host`): which graph the stage stands on (`graph`, the
+// host's builders), a row for an entry in a list (`entryRow`), a body as nodes (`renderBody`, the host's
+// Markdown with its topic links), an export's bodies loaded (`bodies`, the provider's), and a redraw of the
+// whole page (`render`). Until a page is shown, a body is plain text and nothing loads.
+let HOST = { graph: () => null, entryRow: (e) => el("div", {}, e.title), renderBody: (md) => document.createTextNode(String(md || "")), bodies: (st) => Promise.resolve(st), render: () => {} };
+let STAGE = null; // the stage on the page (runStage's handle), null when there is none
+const count = (list, key) => list.reduce((m, e) => ((m[e[key] || ""] = (m[e[key] || ""] || 0) + 1), m), {});
+const palette = (i) => token(paletteToken(i));
+const entryHref = (e) => nav.href({ view: "entry", uuid: e.uuid || e.id });
+
+let CLOCK_N = -1; // how many entries the clock's day shows: a layout settles again only when that changes
+function setClock(day) {
+  if (day === shared.day) return;
+  // the layout settles again only when the set of nodes changed, not on every day the playhead passes
+  const n = shared.state ? shared.state.entries.filter((e) => existsAt(e, day, shared.hasRepo(e))).length : 0; const grew = n !== CLOCK_N; CLOCK_N = n;
+  shared.setDay(day, { grew }); // every graph follows (runGraph), and the stage
+}
+
+// ---------------------------------------------------------------- timeline (SVG)
+const authorColor = (name) => palette(Math.max(0, shared.state.authors.findIndex((a) => a.name === name)));
+// ---------------------------------------------------------------- timeline: the clock, the playhead, the stage
+// The Timeline owns the clock. The slider, the play button, the keys and a wheel over the stage set the day, and
+// every graph on the page follows it (setClock). The stage is a perspective view of the graph's entries: time runs
+// into the depth — the day shown is the near plane, what came before recedes, what a day brings arrives at the
+// front — a card per entry in the colours of its Type, filled by Evidence, edged by Status, the See and Superseded
+// by lines between cards from the day they were written. Plain canvas, projected by hand: three numbers per point,
+// no library. The scene and the layout are pure functions in ktw-core.js (stageCards … pushApart); this file holds the
+// page, the camera, the painter and the input. #timeline/<day> opens the page on that day.
+// speed: days per second, or "entry" — a step per second to the next day an entry appeared on, the days between
+// slid through in that second (several entries of one day are one step); frac: the part of a step between two
+// whole ones, for the stage's motion; jump: the days the current step spans (1 for a speed in days)
+const PLAY = { on: false, speed: 7, raf: null, last: 0, acc: 0, frac: 0, jump: 1 };
+const SPEEDS = [["entry", "1 entry /s"], [1 / 24, "1 hour /s"], [3 / 24, "3 hours /s"], [1, "1 day /s"], [7, "1 week /s"], [30, "1 month /s"], [120, "4 months /s"]];
+// The stage (ktw-timeline.js) keeps its two settings — where a card stands ("graph" or "topics"), which other
+// repositories' entries show ("linked", "all", "none") — per browser; the page's switches set them and redraw.
+function setStageArrange(v) { setArrange(v); STAGE?.relax?.(); STAGE?.wake?.(); }
+function setStageForeign(v) { setForeign(v); HOST.render(); } // the lanes are the shown cards': the view is rebuilt
+function stopPlay() { PLAY.on = false; if (PLAY.raf) cancelAnimationFrame(PLAY.raf); PLAY.raf = null; PLAY.last = 0; PLAY.acc = 0; PLAY.frac = 0; PLAY.jump = 1; }
+const DAY_RE = /^\d{4}-\d{2}-\d{2}(T\d{2})?$/; // a day, or an hour of it
+// a segment of buttons on the stage, one of them on
+const stageSeg = (cls, title, options, current, pick, label = null) => el("span", { class: `stage-seg ${cls}`, title }, label ? el("span", { class: "seg-label" }, label) : null,
+  ...options.map(([v, l]) => el("button", { type: "button", class: v === current ? "on" : "", onclick: (ev) => { pick(v); for (const b of ev.currentTarget.parentNode.querySelectorAll("button")) b.classList.toggle("on", b === ev.currentTarget); } }, l)));
+
+function view(main, day, host) {
+  HOST = host;
+  main.append(el("h1", {}, "Timeline"));
+  if (!shared.state.project.git?.available) return main.append(el("p", { class: "center" }, "No Git repository — no dates to draw."));
+  if (shared.state.project.git.shallow) main.append(el("p", { class: "sub warn" }, "Shallow clone: the history stops at the clone's edge, so every entry older than that appears to start there. Fetch the full history (git fetch --unshallow) for real dates."));
+  const sub = el("p", { class: "sub" }, "The project day by day. The stage shows what existed on the day shown, the graph beside it the same; the playhead sets the day. The card shows the entry that appeared last by then, or the one clicked on the stage. The bars count the entries by the month their heading first appeared in Git, stacked by author, grey ticks for entries superseded that month.");
+  // the graph the stage is a view of and the thoughts beside it are drawn from: the family graph with the family
+  // scope (built once it is asked for, the view rendered again when it arrives), else this project's
+  const g = host.graph(); // the host's graph builders: which graph the stage stands on (the family's, when it is shown and built)
+  // the clock runs from the first day of any entry on the page — ours, or one a friend, the family or the path brought — to today
+  const span = daySpan([...shared.state.entries, ...g.nodes.filter((n) => n.kind === "entry" && n.entry).map((n) => n.entry)]);
+  if (!span) return main.append(sub, el("p", { class: "center" }, "Nothing dated yet."));
+  const clamp = (d) => (d < span.from ? span.from : d > span.to ? span.to : d);
+  const bars = timelineBars(main, span, (d) => setDay(d));
+  const listBox = el("div", { class: "entry-list", style: "margin-top:16px" });
+  bars.onMonth = (k, entries) => { listBox.replaceChildren(el("h2", {}, k), ...entries.map(HOST.entryRow)); };
+  // the playhead: a slider over the days, play with a speed, the counts of the day
+  const grid = timeGrid(span); const big = grid.hours ? 24 : 7; // a step: an hour or a day; shift: a day or a week
+  const range = el("input", { type: "range", min: 0, max: grid.steps, step: 1, class: "playhead-range", title: grid.hours ? "the hour the page shows — drag, or ← → (an hour), shift ← → (a day), space plays" : "the day the page shows — drag, or ← → (a day), shift ← → (a week), space plays" });
+  const dayLabel = el("b", { class: "playhead-day" }); const counts = el("span", { class: "playhead-counts" });
+  const playBtn = el("button", { type: "button", class: "play-btn", title: "play the days — space" });
+  const speedSel = el("select", { class: "play-speed", title: "how fast the days pass" }, SPEEDS.map(([v, l]) => el("option", { value: v }, l)));
+  speedSel.onchange = () => { PLAY.speed = speedSel.value === "entry" ? "entry" : Number(speedSel.value) || 7; PLAY.acc = 0; PLAY.frac = 0; PLAY.jump = 1; };
+  for (const opt of speedSel.options) if (opt.value === String(PLAY.speed) || (opt.value !== "entry" && Math.abs(Number(opt.value) - PLAY.speed) < 1e-9)) opt.selected = true;
+  // the days entries appeared on, for the "1 entry /s" speed: ours and the graph's foreign ones, as the span counts them
+  const entryDays = [...new Set([...shared.state.entries, ...g.nodes.filter((n) => n.kind === "entry" && n.entry).map((n) => n.entry)].map(createdOn).filter(Boolean).map(grid.toClock))].sort();
+  const nextEntryDay = (d) => entryDays.find((x) => x > d) || span.to;
+  const upd = () => {
+    const d = shared.day || span.to;
+    range.value = grid.stepOf(d); dayLabel.textContent = grid.label(d); bars.mark(d, grid.label(d));
+    const here = shared.state.entries.filter((e) => shared.atClock(e)); const st = count(here.map((e) => ({ s: shared.statusNow(e) })), "s"); const open = (st.open || 0) + (st["needs-review"] || 0) + (st["pending-confirmation"] || 0);
+    setKids(counts, `${plural(here.length, "entry")} by then`, st.active ? ` · ${st.active} active` : "", st.superseded ? ` · ${st.superseded} superseded` : "", open ? ` · ${open} in question` : "");
+    playBtn.textContent = PLAY.on ? "⏸" : "▶"; playBtn.classList.toggle("on", PLAY.on);
+    card.refresh();
+    try { nav.go({ view: "timeline", day: d === span.to ? null : grid.url(d) }, { replace: true }); } catch {}
+  };
+  const setDay = (d) => { setClock(clamp(grid.toClock(d))); upd(); };
+  const stepBy = (d, n) => (span.timed ? grid.at(grid.stepOf(d) + n) : addDays(d, n));
+  function play(on) {
+    if (on === PLAY.on) return;
+    if (!on) { stopPlay(); upd(); return; }
+    if ((shared.day || span.to) >= span.to) setClock(span.from); // at the end: once more from the start
+    PLAY.on = true; PLAY.last = 0; PLAY.acc = 0;
+    const step = (now) => {
+      if (!PLAY.on || !range.isConnected) { stopPlay(); return; }
+      const dt = PLAY.last ? Math.min(0.1, (now - PLAY.last) / 1000) : 0; PLAY.last = now;
+      if (PLAY.speed === "entry") {
+        // one step per second to the next day with an entry; the stage slides through the days between
+        const target = nextEntryDay(shared.day); PLAY.jump = span.timed ? dayDiff(shared.day, target) : Math.max(1, dayDiff(shared.day, target)); PLAY.acc += dt; PLAY.frac = Math.min(1, PLAY.acc);
+        if (PLAY.acc >= 1) { PLAY.acc = 0; PLAY.frac = 0; if (target >= span.to) { setClock(span.to); stopPlay(); upd(); return; } setDay(target); }
+        else STAGE?.wake?.();
+      } else {
+        // the speed in days a second, the clock in steps of the grid's unit — an hour or a day
+        const U = grid.unit; PLAY.jump = U; PLAY.acc += dt * PLAY.speed;
+        const whole = Math.floor(PLAY.acc / U); PLAY.frac = (PLAY.acc - whole * U) / U;
+        if (whole >= 1) { PLAY.acc -= whole * U; const d = stepBy(shared.day, whole); if (d >= span.to) { setClock(span.to); stopPlay(); upd(); return; } setDay(d); }
+        else STAGE?.wake?.();
+      }
+      PLAY.raf = requestAnimationFrame(step);
+    };
+    upd(); PLAY.raf = requestAnimationFrame(step);
+  }
+  playBtn.onclick = () => play(!PLAY.on);
+  range.oninput = () => { play(false); setDay(grid.at(Number(range.value))); };
+  const jump = (to, title, label) => el("button", { type: "button", class: "play-jump", title, onclick: () => { play(false); setDay(to()); } }, label);
+  const card = entryCard(span);
+  // the stage and its switches
+  const wrap = el("div", { class: "stage-wrap" }); const canvas = el("canvas", { class: "stage" }); const tip = el("div", { class: "stage-tip", hidden: true });
+  wrap.append(canvas, tip,
+    stageSeg("stage-arrange", "where a card stands: where its node stands in the graph beside (the stage is the graph, time pulled out as depth), or in a lane per topic", [["graph", "as the graph"], ["topics", "by topic"]], ARRANGE, setStageArrange),
+    stageSeg("stage-foreign", "other repositories' entries — friends, family, path: only the ones a chain of See or Superseded by joins to this project's, every one the graph holds, or none", [["linked", "linked"], ["all", "all"], ["none", "none"]], FOREIGN, setStageForeign, "others"),
+    el("button", { type: "button", class: "stage-reset", title: "let go of the held thought and card — every card alike again — and reset the view (Esc)", onclick: () => STAGE?.reset?.() }, "reset"));
+  main.append(el("div", { class: "timeline-head" },
+      el("div", { class: "timeline-head-text" }, sub, bars.node, bars.legend,
+        el("div", { class: "playhead" }, jump(() => span.from, "the first day", "⏮"), playBtn, jump(() => span.to, "today", "⏭"), range, dayLabel, speedSel, counts)),
+      el("div", { class: "stage-card-slot" }, card.node)),
+    wrap, stageLegend(),
+    el("p", { class: "note stage-note" }, el("span", { class: "stage-hint" }, (grid.hours ? "On the stage: wheel — an hour forward or back, shift for a day ·" : "On the stage: wheel — a day forward or back, shift for a week ·") + " drag — look around · ctrl+wheel — zoom · double-click — reset the view · click a card to read it, the floor to let go. The thoughts beside: point at one to light its chain here and in the graph."), el("span", { class: "stage-hint-touch" }, "On the stage: drag — look around · pinch — zoom · tap a card to read it, the floor to let go. The slider sets the day.")),
+    listBox);
+  shared.day = null; setClock(day && DAY_RE.test(day) ? clamp(grid.toClock(day)) : span.to); upd();
+  STAGE = runStage(canvas, { wrap, tip, span, graph: g, graphBeside: !narrow(), setDay, stepBy, big, play, playing: PLAY, open: card.hold, close: card.release, onClose: (h) => { if (STAGE === h) STAGE = null; } }); // the side pane draws no graph on a narrow screen (miniGraph)
+  // keys while the timeline is open: ← → a day, shift a week, space plays
+  const onKey = (ev) => {
+    if (!wrap.isConnected) return document.removeEventListener("keydown", onKey);
+    if (/^(INPUT|SELECT|TEXTAREA)$/.test(ev.target?.tagName) && ev.target !== range) return;
+    const d = shared.day || span.to;
+    if (ev.key === "ArrowLeft") { play(false); setDay(stepBy(d, ev.shiftKey ? -big : -1)); ev.preventDefault(); }
+    else if (ev.key === "ArrowRight") { play(false); setDay(stepBy(d, ev.shiftKey ? big : 1)); ev.preventDefault(); }
+    else if (ev.key === " " && ev.target !== range) { play(!PLAY.on); ev.preventDefault(); }
+  };
+  document.addEventListener("keydown", onKey);
+}
+// The bars: entries by the month their heading first appeared in Git, stacked by author, grey ticks for entries
+// superseded that month, a marker for the day shown. Returns the SVG, the authors' legend, `mark(day)` and a click
+// on a month (`onMonth(month, entries)` to set, and the day moves to the month's end through `setDay`).
+function timelineBars(main, span, setDay) {
+  const created = shared.state.entries.filter((e) => e.git?.created?.date && isShownByFilter(e));
+  const months = {}; const sup = {};
+  for (const e of created) { const m = e.git.created.date.slice(0, 7); (months[m] ||= {})[e.git.created.author] = ((months[m] || {})[e.git.created.author] || 0) + 1; }
+  for (const e of shared.state.entries) for (const h of e.git?.status_history || []) if (h.status === "superseded" && h.date) sup[h.date.slice(0, 7)] = (sup[h.date.slice(0, 7)] || 0) + 1;
+  // every month from the first dated one to this month
+  const all = []; let [y, m] = (Object.keys({ ...months, ...sup }).sort()[0] || span.from.slice(0, 7)).split("-").map(Number); const [ey, em] = todayISO().slice(0, 7).split("-").map(Number);
+  while (y < ey || (y === ey && m <= em)) { all.push(`${y}-${String(m).padStart(2, "0")}`); m++; if (m > 12) { m = 1; y++; } }
+  const max = Math.max(1, ...all.map((k) => Object.values(months[k] || {}).reduce((a, b) => a + b, 0)));
+  // the drawing is as wide as the column beside the card, so its text keeps its size (an SVG scales as a whole);
+  // padT leaves room above the bars for the day's label, clear of them; a bar spans its month, a hair between two
+  const mainW = main.clientWidth || 900; const Wd = Math.max(360, Math.round(narrow() ? mainW - 28 : mainW - 64 - 18 - Math.min(420, Math.max(280, (mainW - 82) * 0.42))));
+  const Hd = 130, padL = 34, padB = 32, padT = 18; const colW = (Wd - padL) / all.length; const bw = colW - 2;
+  const ns = (tag, attrs, text) => { const n = document.createElementNS("http://www.w3.org/2000/svg", tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); if (text != null) n.textContent = text; return n; };
+  const svg = ns("svg", { viewBox: `0 0 ${Wd} ${Hd}` }); const axis = ns("g", { class: "axis" }); svg.append(axis);
+  const scaleY = (v) => padT + (Hd - padB - padT) * (1 - v / max);
+  for (const tick of [0, Math.ceil(max / 2), max]) { axis.append(ns("line", { x1: padL, x2: Wd, y1: scaleY(tick), y2: scaleY(tick) })); axis.append(ns("text", { x: padL - 6, y: scaleY(tick) + 3, "text-anchor": "end" }, tick)); }
+  const monthX = (d) => { const i = all.indexOf(d.slice(0, 7)); if (i < 0) return d < all[0] ? padL : Wd; const dim = new Date(Date.UTC(+d.slice(0, 4), +d.slice(5, 7), 0)).getUTCDate(); return padL + (i + (Math.min(+d.slice(8, 10), dim) - 1) / dim) * colW + 1; };
+  const marker = ns("line", { class: "now", x1: padL, x2: padL, y1: padT - 4, y2: Hd - padB + 14 }); const markerLabel = ns("text", { class: "now-label", x: padL, y: 9, "text-anchor": "start" }, "");
+  const out = { node: el("div", { class: "timeline" }, svg), onMonth: null,
+    legend: el("div", { class: "legend" }, shared.state.authors.map((a) => el("span", {}, el("i", { class: "sw", style: `background:${authorColor(a.name)}` }), a.name)), el("span", {}, el("i", { class: "sw", style: "background:var(--superseded)" }), "superseded that month")),
+    mark: (d, label = d) => { const x = monthX(d); marker.setAttribute("x1", x); marker.setAttribute("x2", x); markerLabel.setAttribute("x", Math.min(Wd - 64, x + 4)); markerLabel.textContent = label; } };
+  all.forEach((k, i) => {
+    const x = padL + i * colW + 1; let yTop = scaleY(0);
+    for (const a of shared.state.authors.map((a) => a.name)) {
+      const v = months[k]?.[a]; if (!v) continue; const h = scaleY(0) - scaleY(v); yTop -= h;
+      const rect = ns("rect", { class: "b", x, y: yTop, width: bw, height: h, fill: authorColor(a), rx: 2 }); rect.append(ns("title", {}, `${k} · ${a}: ${v} — click: that month's entries, and the day moves to its end`));
+      rect.addEventListener("click", () => { out.onMonth?.(k, created.filter((e) => e.git.created.date.startsWith(k))); const last = new Date(Date.UTC(+k.slice(0, 4), +k.slice(5, 7), 0)).toISOString().slice(0, 10); setDay(last < span.from ? span.from : last > span.to ? span.to : last); });
+      svg.append(rect);
+    }
+    if (sup[k]) for (let s = 0; s < sup[k]; s++) svg.append(ns("rect", { class: "sup", x: x + s * 5, y: Hd - padB + 6, width: 3, height: 6 }));
+    if (all.length <= 18 || i % Math.ceil(all.length / 18) === 0) axis.append(ns("text", { x: x + bw / 2, y: Hd - padB + 22, "text-anchor": "middle" }, k));
+  });
+  svg.append(marker, markerLabel);
+  return out;
+}
+// The card beside the bars: the entry that appeared last by the day shown, or the one held — clicked on the stage
+// or in the thoughts list — until let go. The whole body, rendered as the reader renders it; the bodies sit beside
+// an export by default, this project's and a friend's alike, and are fetched once, on demand.
+// An entry as a card: the day and topic, a badge, the title linking the entry, its pills, the whole body as the
+// reader renders it, who recorded it and open ›. The timeline's card beside the bars and the graph's preview are
+// the same card. `badge` is the head's right-hand element; `state` the export the entry came from, for the bodies
+// that sit beside an export and are fetched once, on demand (`again` is called when they arrived).
+function fillEntryCard(node, e, { lane, href, state, day, badge, again, onOpen = null, topic = null, renderBody = HOST.renderBody, bodies = HOST.bodies }) {
+  const body = e.body?.text || "";
+  // a friend's entry opens by walking to that project in place (the node's action), not by a plain link
+  const link = (text, extra = {}) => el("a", { href, ...extra, onclick: onOpen ? (ev) => { ev.preventDefault(); onOpen(); } : null }, text);
+  // the topic in the head is a link where there is somewhere to go: the topic's preview in the graph, its page on the timeline
+  const topicLink = topic ? el("a", { class: "card-topic", href: topic.href || "#", title: topic.title || "the topic", onclick: topic.onClick ? (ev) => { ev.preventDefault(); topic.onClick(); } : null }, lane) : lane;
+  setKids(node, el("div", { class: "stage-card-head" }, el("span", { class: "note mono" }, `${stampLabel(createdOn(e)) || "today"} · `, topicLink), badge),
+    el("h3", {}, link(e.title.replace(/`/g, ""), { title: "read the whole entry" })),
+    el("div", { class: "pills" }, ...typePills(e.type), statusPill((day ? statusAt(e, day, state !== shared.self || shared.hasRepo(e)) : null) || e.status), evPill(e.evidence)),
+    body ? el("div", { class: "body stage-card-body" }, renderBody(body)) : el("p", { class: "empty stage-card-body" }, typeof (state || shared.state).bodies === "string" ? "loading the text…" : "no text"),
+    el("div", { class: "stage-card-foot" }, e.git?.created?.author ? el("span", { class: "note" }, `recorded by ${e.git.created.author}`) : el("span"), link("open ›")));
+  const st = state || shared.self;
+  if (st && typeof st.bodies === "string" && !st.bodiesLoaded && !st.bodiesError) bodies(st).then(() => { if (node.isConnected) again?.(); });
+}
+const laneTitle = (e) => (e.project ? `${e.project} · ` : "") + (topicOf(e.file)?.title || e.file).replace(/`/g, "");
+function entryCard(span) {
+  const node = el("div", { class: "stage-card" }); let held = null; // the held entry's Id
+  const latest = (d) => { let best = null; for (const e of shared.state.entries) { if (!existsAt(e, d, shared.hasRepo(e))) continue; const c = createdOn(e) || span.to; if (!best || c >= best.c) best = { e, c }; } return best?.e || null; };
+  const fill = (e, isHeld, c = null) => fillEntryCard(node, e, { lane: c?.lane?.title || laneTitle(e), href: c?.href || entryHref(e), state: c?.state || shared.self, day: shared.day || span.to,
+    topic: !(c?.ext) && !e.project ? { title: "open the topic's page", href: nav.href({ view: "topic", file: e.file }) } : null,
+    badge: isHeld ? el("button", { type: "button", class: "pill stage-card-held", title: "let go — back to the latest entry by the day shown", onclick: () => STAGE?.close?.() }, "picked ", el("b", {}, "×")) : el("span", { class: "pill" }, "latest by then"),
+    again: () => { if (held ? held === (e.uuid || e.id) : latest(shared.day || span.to) === e) fill(e, isHeld, c); } });
+  return { node,
+    refresh: () => { if (held) return; const e = latest(shared.day || span.to); if (e) fill(e, false); else setKids(node, el("p", { class: "empty" }, "No entry by this day.")); },
+    hold: (e, c) => { held = e.uuid || e.id; shared.selected = e.id; fill(e, true, c); },
+    release: () => { held = null; shared.selected = null; const e = latest(shared.day || span.to); if (e) fill(e, false); } };
+}
+
+
+
+// leaving the timeline: the page shows today again, the clock and its playing stop, the stage is gone
+const leave = () => { shared.day = null; CLOCK_N = -1; stopPlay(); STAGE = null; };
+
+return Object.freeze({ view, leave, stage: () => STAGE, setClock, stopPlay, fillEntryCard, runStage, stageLegend, typeGlyph, arrange: () => ARRANGE, setArrange, foreign: () => FOREIGN, setForeign, foreignShown });
 }
 
 const KTW = (root.KeepTheWhy = root.KeepTheWhy || {});
