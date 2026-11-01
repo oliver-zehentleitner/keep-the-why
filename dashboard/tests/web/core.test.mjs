@@ -695,4 +695,5 @@ test("a See into another repository: the live server's project first, the publis
   assert.deepEqual(resolveSee(U, { published: { error: "could not fetch the export: x" } }), { error: "could not fetch the export: x" });
   assert.match(resolveSee(U, { published: { state: { generated: "2026-10-01", entries: [] } } }).error, /generated 2026-10-01\) has no entry with this Id/);
   assert.match(resolveSee(U, {}).error, /no published export/);
+  assert.equal(resolveSee(U, { published: {} }).error, "its published export could not be read"); // neither state nor error: still a failure
 });

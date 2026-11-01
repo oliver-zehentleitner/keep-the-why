@@ -286,7 +286,7 @@ function exportVerdict(state, canonical, url) {
 function resolveSee(uuid, { known = null, published = null } = {}) {
   if (known && !known.error) return { entry: known.entry || {}, via: "live", project: known.project };
   if (!published) return { error: "not known here, and no published export was asked for" };
-  if (!published.state) return { error: published.error };
+  if (!published.state) return { error: published.error || "its published export could not be read" }; // a host's result with neither is still a failure
   const entry = (published.state.entries || []).find((e) => e.uuid === uuid);
   if (!entry) return { error: `its published export (generated ${published.state.generated || "?"}) has no entry with this Id — the reference may be newer than the export, or the entry lives below the repository's top level` };
   return { entry, via: "export" };
