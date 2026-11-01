@@ -54,3 +54,14 @@ test("nothing written becomes markup: tags, entities and the renderer's own mark
   assert.equal(out, '<img src=x onerror=alert(1)><script>alert(2)</script> &lt; x {a:a})'); // the target ends at the first ")", as before
   for (const b of parse(`${evil}\n\n- ${evil}`, opts)) assert.ok(["p", "ul"].includes(b.k));
 });
+
+test("crossing delimiters and links in links resolve as the HTML parser resolved the old string", () => {
+  // formatting across a code delimiter: what is still open is reopened after the close
+  assert.deepEqual(parseInline("**x `y** z`", opts), [{ t: "b", c: [T("x "), { t: "code", c: [T("y")] }] }, { t: "code", c: [T(" z")] }]);
+  assert.deepEqual(parseInline("`a **b` c**", opts), [{ t: "code", c: [T("a "), { t: "b", c: [T("b")] }] }, { t: "b", c: [T(" c")] }]);
+  // a topic name inside an external link: sibling links, never nested, the outer one not reopened
+  assert.deepEqual(parseInline("[see auth.md notes](https://example.org)", opts), [
+    { t: "a", href: "https://example.org", external: true, c: [T("see ")] },
+    { t: "a", href: "#topic/auth.md", external: false, c: [T("auth.md")] }, T(" notes"),
+  ]);
+});

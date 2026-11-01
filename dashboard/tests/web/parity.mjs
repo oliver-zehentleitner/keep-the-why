@@ -4,6 +4,8 @@
 //
 //   node parity.mjs STATE.json [STATE.json ...]
 //
+// Besides the states' own texts, a fixed set of edge inputs (EDGES) is compared every run.
+//
 // A state's bodies are read inline or from the state.body.json it names. Two differences are
 // intended and normalised away before comparing: an external link now carries
 // rel="noopener noreferrer" (was "noopener"), and a plain http:// link keeps its text but no
@@ -46,6 +48,30 @@ function newTree(frag) { const box = doc.createElement("div"); box.appendChild(f
 const files = process.argv.slice(2);
 if (!files.length) { console.error("usage: node parity.mjs STATE.json [STATE.json ...]"); process.exit(2); }
 let checked = 0; const failures = [];
+function compare(where, text, block, opts) {
+  checked++;
+  const want = oldTree(block ? renderMarkdown(text) : inline(text));
+  const got = newTree(block ? md.render(doc, text, opts) : md.renderInline(doc, text, opts));
+  if (want !== got) failures.push({ where, want, got });
+}
+
+// Inputs no real body may hold yet, where the HTML string's tags crossed and the parser's repair
+// rules decided the tree: formatting across a code delimiter, links across emphasis, a topic name
+// inside a link. Each one inline and as a body, with auth.md and sync.md known topics.
+const EDGES = [
+  "**x `y** z`", "a **b` c**", "`a **b` c** d", "*a **b* c**", "**a *b** c*", "_a **b_ c**",
+  "[see auth.md notes](https://example.org)", "[see auth.md and sync.md](https://example.org) after",
+  "[**a](https://example.org) b**", "**a [b** c](https://example.org) d", "[`auth.md`](https://example.org)",
+  "[x `y](https://example.org) z`", "[auth.md](auth.md) and [sync.md](https://example.org/sync.md)",
+  "**`auth.md`** and `auth.md`", "*`a` b*", "** a ** b", "`` ` ``", "[a](https://e.org) [b](auth.md#x) [c](other)",
+  "- **a `b** c`\n- [see auth.md](https://e.org)\n\n**Reason:** **x `y** z`",
+];
+{
+  const known = new Set(["auth.md", "sync.md"]);
+  setTopics((name) => known.has(name));
+  const opts = { topicHref: (name) => (known.has(name) ? `#topic/${name}` : null) };
+  EDGES.forEach((text, n) => { compare(`edge ${n + 1} inline: ${JSON.stringify(text)}`, text, false, opts); compare(`edge ${n + 1} body: ${JSON.stringify(text)}`, text, true, opts); });
+}
 for (const f of files) {
   const state = JSON.parse(fs.readFileSync(f, "utf8"));
   let bodies = null;
@@ -61,10 +87,7 @@ for (const f of files) {
     const cases = [["body", body, true], ["title", e.title, false], ["source", e.source, false], ["verification", e.verification, false], ["revisit_when", e.revisit_when, false]];
     for (const [field, text, block] of cases) {
       if (text == null || text === "") continue;
-      checked++;
-      const want = oldTree(block ? renderMarkdown(text) : inline(text));
-      const got = newTree(block ? md.render(doc, text, opts) : md.renderInline(doc, text, opts));
-      if (want !== got) failures.push({ where: `${path.basename(path.dirname(f))}/${path.basename(f)} ${e.id} ${field}`, want, got });
+      compare(`${path.basename(path.dirname(f))}/${path.basename(f)} ${e.id} ${field}`, text, block, opts);
     }
   }
 }

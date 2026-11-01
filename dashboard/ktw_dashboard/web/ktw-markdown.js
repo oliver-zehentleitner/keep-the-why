@@ -65,25 +65,47 @@ function parseInline(md, { topicHref = () => null } = {}) {
   return readMarked(s, links);
 }
 
-// the marked string to the tree; a closer without its opener is dropped, an
-// opener left open is closed at the end
+// The marked string to the tree, the way an HTML parser builds the tree from
+// the string the page used to make. All four elements are what HTML calls
+// formatting elements, and the parser's rules for them are what kept bodies
+// looking as they did, so they are followed here:
+// - a closer pops every element above its own and closes it; those above stay
+//   "active" and are reopened, as fresh copies, before the next text or element
+//   (`**x `y** z`` is <b>x <code>y</code></b><code> z</code>);
+// - a closer whose element is not open is dropped, or only cancels a reopening
+//   still waiting;
+// - a link opened inside a link first closes the outer one, which is not
+//   reopened after it: the two are siblings, never nested;
+// - an opener left open is closed at the end.
 function readMarked(s, links) {
   const top = { c: [] }; const stack = [top];
+  let pending = []; // elements to reopen before the next content, outermost first
   let text = "";
-  const flush = () => { if (text) { stack[stack.length - 1].c.push({ t: "text", v: text }); text = ""; } };
+  const copy = (n) => ({ ...n, c: [] });
+  const reopen = () => { for (const d of pending) { const n = copy(d); stack[stack.length - 1].c.push(n); stack.push(n); } pending = []; };
+  const flush = () => { if (text) { reopen(); stack[stack.length - 1].c.push({ t: "text", v: text }); text = ""; } };
+  const close = (want) => {
+    const at = stack.map((n) => n.t).lastIndexOf(want);
+    if (at > 0) { const above = stack.slice(at + 1); stack.length = at; pending = [...pending, ...above]; return; }
+    const p = pending.map((n) => n.t).lastIndexOf(want);
+    if (p >= 0) pending.splice(p, 1);
+  };
   for (let i = 0; i < s.length; i++) {
     const ch = s[i];
     if (OPENERS.has(ch)) {
       flush();
       let node;
-      if (ch === LINK) { const end = s.indexOf(LINK_END, i); const l = links[Number(s.slice(i + 1, end))]; node = { t: "a", href: l.href, external: l.external, c: [] }; i = end; }
-      else node = { t: ch === CODE ? "code" : ch === B ? "b" : "i", c: [] };
+      if (ch === LINK) {
+        const end = s.indexOf(LINK_END, i); const l = links[Number(s.slice(i + 1, end))]; i = end;
+        close("a"); // an open link is closed first, and not reopened
+        pending = pending.filter((n) => n.t !== "a");
+        node = { t: "a", href: l.href, external: l.external, c: [] };
+      } else node = { t: ch === CODE ? "code" : ch === B ? "b" : "i", c: [] };
+      reopen();
       stack[stack.length - 1].c.push(node); stack.push(node);
     } else if (CLOSER_OF[ch]) {
       flush();
-      const want = CLOSER_OF[ch];
-      const at = stack.map((n) => n.t).lastIndexOf(want);
-      if (at > 0) stack.length = at;
+      close(CLOSER_OF[ch]);
     } else text += ch;
   }
   flush();
