@@ -53,8 +53,19 @@ def index(lines):
     return "\n".join(out)
 
 
-def entry(title, uid, types, status, evidence, body, source=None, verification=None,
-          revisit=None, see=(), superseded_by=None):
+def entry(
+    title,
+    uid,
+    types,
+    status,
+    evidence,
+    body,
+    source=None,
+    verification=None,
+    revisit=None,
+    see=(),
+    superseded_by=None,
+):
     lines = [f"## {title}", "", f"**Id:** {uid}"]
     lines += [f"**Type:** {t}" for t in types]
     lines += [f"**Status:** {status}", f"**Evidence:** {evidence}"]
@@ -76,11 +87,16 @@ def topic(title, *entries):
 
 # The entries, by role. Ids are fixed: they are addresses the snapshots name.
 A, B, C, D, E, F, G, H, I, J, K = (
-    "3c80c624-2274-497a-a1f0-d8ff65b0e0c3", "4bc883fc-f8ef-4d90-b90d-0a669f375a70",
-    "682e7ab6-125c-459f-9c67-a3c6b217d8ef", "190b1989-a347-471b-8463-4f83b3cfff92",
-    "cc7ef11a-f83d-4d95-b45c-d43639003f41", "65568f64-aa13-4915-878d-d5cfe3479e64",
-    "f5383416-90c8-4c5c-affc-01c3c67d0518", "756f14cb-61c6-4ff2-8dea-29f28c030ca5",
-    "c1c37ec2-933b-4ca3-8c16-0a61f908f4bd", "f5ac4f25-a9f1-490a-a4ca-62d5f0db4a06",
+    "3c80c624-2274-497a-a1f0-d8ff65b0e0c3",
+    "4bc883fc-f8ef-4d90-b90d-0a669f375a70",
+    "682e7ab6-125c-459f-9c67-a3c6b217d8ef",
+    "190b1989-a347-471b-8463-4f83b3cfff92",
+    "cc7ef11a-f83d-4d95-b45c-d43639003f41",
+    "65568f64-aa13-4915-878d-d5cfe3479e64",
+    "f5383416-90c8-4c5c-affc-01c3c67d0518",
+    "756f14cb-61c6-4ff2-8dea-29f28c030ca5",
+    "c1c37ec2-933b-4ca3-8c16-0a61f908f4bd",
+    "f5ac4f25-a9f1-490a-a4ca-62d5f0db4a06",
     "c63efee2-97dd-452a-885f-c793001131b7",
 )
 
@@ -139,89 +155,190 @@ def commits():
     """(date, author name, author mail, files) — files as they stand after the commit."""
     sync_v1 = topic(
         "Sync",
-        entry(A_TITLE, A, ["decision"], "active", "confirmed", A_BODY,
-              source="maintainer interview, 2026-03-01",
-              revisit="the snapshot format changes"),
-        entry("Events arrive at most once per second", B, ["constraint"], "active", "inferred",
-              "The upstream feed batches events and sends at most one batch per second; "
-              "nothing in this project can make it faster.\n\n**Reason:** read from the feed's "
-              "rate header, not confirmed by its owner.",
-              source="commit history"),
+        entry(
+            A_TITLE,
+            A,
+            ["decision"],
+            "active",
+            "confirmed",
+            A_BODY,
+            source="maintainer interview, 2026-03-01",
+            revisit="the snapshot format changes",
+        ),
+        entry(
+            "Events arrive at most once per second",
+            B,
+            ["constraint"],
+            "active",
+            "inferred",
+            "The upstream feed batches events and sends at most one batch per second; "
+            "nothing in this project can make it faster.\n\n**Reason:** read from the feed's "
+            "rate header, not confirmed by its owner.",
+            source="commit history",
+        ),
     )
     storage_v1 = topic(
         "Storage",
-        entry(C_TITLE, C, ["workaround"], "open", "unknown",
-              "Writes retry three times when the lock is busy, with no backoff.\n\n"
-              "**Why this needs an answer:** nobody knows where the three came from, or "
-              "whether a backoff was ever tried.",
-              source="code reading"),
-        entry("The 2026-03 lock storm", D, ["incident"], "active", "confirmed",
-              "A burst of retries held the lock for minutes and stalled the sync.\n\n"
-              "**Consequence:** the sync now waits for the snapshot (see the sync topic).",
-              source="post-mortem, 2026-03-18",
-              see=[see("sync.md", A_TITLE, A, "2026-03-20")]),
+        entry(
+            C_TITLE,
+            C,
+            ["workaround"],
+            "open",
+            "unknown",
+            "Writes retry three times when the lock is busy, with no backoff.\n\n"
+            "**Why this needs an answer:** nobody knows where the three came from, or "
+            "whether a backoff was ever tried.",
+            source="code reading",
+        ),
+        entry(
+            "The 2026-03 lock storm",
+            D,
+            ["incident"],
+            "active",
+            "confirmed",
+            "A burst of retries held the lock for minutes and stalled the sync.\n\n"
+            "**Consequence:** the sync now waits for the snapshot (see the sync topic).",
+            source="post-mortem, 2026-03-18",
+            see=[see("sync.md", A_TITLE, A, "2026-03-20")],
+        ),
     )
     api_v1 = topic(
         "API",
-        entry(E_TITLE, E, ["decision"], "pending-confirmation", "inferred",
-              "Every route starts with `/v1/`.\n\n**Considered:** a version header — "
-              "invisible in logs and links.",
-              see=[see("storage.md", C_TITLE, C, "2026-04-15")]),
-        entry("Responses are capped at one megabyte", F, ["constraint"], "needs-review", "confirmed",
-              "A response larger than one megabyte is cut and marked as cut.",
-              source="maintainer interview, 2026-04-14",
-              revisit="the cap is raised by the gateway"),
-        entry(G_TITLE, G, ["decision"], "active", "confirmed",
-              "Cursors are opaque strings; offsets are not offered.\n\n"
-              "**Rejected alternative:** page numbers — they skip and repeat rows "
-              "while the table changes underneath.",
-              source="design review, 2026-04-15",
-              see=[see("api.md", E_TITLE, E, "2026-04-15")]),
+        entry(
+            E_TITLE,
+            E,
+            ["decision"],
+            "pending-confirmation",
+            "inferred",
+            "Every route starts with `/v1/`.\n\n**Considered:** a version header — "
+            "invisible in logs and links.",
+            see=[see("storage.md", C_TITLE, C, "2026-04-15")],
+        ),
+        entry(
+            "Responses are capped at one megabyte",
+            F,
+            ["constraint"],
+            "needs-review",
+            "confirmed",
+            "A response larger than one megabyte is cut and marked as cut.",
+            source="maintainer interview, 2026-04-14",
+            revisit="the cap is raised by the gateway",
+        ),
+        entry(
+            G_TITLE,
+            G,
+            ["decision"],
+            "active",
+            "confirmed",
+            "Cursors are opaque strings; offsets are not offered.\n\n"
+            "**Rejected alternative:** page numbers — they skip and repeat rows "
+            "while the table changes underneath.",
+            source="design review, 2026-04-15",
+            see=[see("api.md", E_TITLE, E, "2026-04-15")],
+        ),
     )
     sync_v2 = topic(
         "Sync",
-        entry(A_TITLE, A, ["decision"], "superseded", "confirmed", A_BODY,
-              source="maintainer interview, 2026-03-01",
-              revisit="the snapshot format changes", superseded_by=H),
-        entry("Events arrive at most once per second", B, ["constraint"], "active", "inferred",
-              "The upstream feed batches events and sends at most one batch per second; "
-              "nothing in this project can make it faster.\n\n**Reason:** read from the feed's "
-              "rate header, not confirmed by its owner.",
-              source="commit history"),
-        entry(H_TITLE, H, ["decision"], "active", "confirmed", H_BODY,
-              source="maintainer conversation, 2026-05-09",
-              see=[see("sync.md", A_TITLE, A, "2026-05-10")]),
-        entry("Clock skew between replicas is tolerated up to a second", K, ["constraint", "decision"],
-              "active", "inferred",
-              "Replicas may disagree by up to a second; the versioned replay absorbs it.",
-              see=[see("sync.md", H_TITLE, H, "2026-05-10")]),
+        entry(
+            A_TITLE,
+            A,
+            ["decision"],
+            "superseded",
+            "confirmed",
+            A_BODY,
+            source="maintainer interview, 2026-03-01",
+            revisit="the snapshot format changes",
+            superseded_by=H,
+        ),
+        entry(
+            "Events arrive at most once per second",
+            B,
+            ["constraint"],
+            "active",
+            "inferred",
+            "The upstream feed batches events and sends at most one batch per second; "
+            "nothing in this project can make it faster.\n\n**Reason:** read from the feed's "
+            "rate header, not confirmed by its owner.",
+            source="commit history",
+        ),
+        entry(
+            H_TITLE,
+            H,
+            ["decision"],
+            "active",
+            "confirmed",
+            H_BODY,
+            source="maintainer conversation, 2026-05-09",
+            see=[see("sync.md", A_TITLE, A, "2026-05-10")],
+        ),
+        entry(
+            "Clock skew between replicas is tolerated up to a second",
+            K,
+            ["constraint", "decision"],
+            "active",
+            "inferred",
+            "Replicas may disagree by up to a second; the versioned replay absorbs it.",
+            see=[see("sync.md", H_TITLE, H, "2026-05-10")],
+        ),
     )
-    storage_v2 = storage_v1 + "\n" + entry(
-        "Temporary files live beside the database", I, ["undefined — no category fits a file location"],
-        "active", "unknown",
-        "Temporary files are written next to the database file, not to the system's temp directory.")
+    storage_v2 = (
+        storage_v1
+        + "\n"
+        + entry(
+            "Temporary files live beside the database",
+            I,
+            ["undefined — no category fits a file location"],
+            "active",
+            "unknown",
+            "Temporary files are written next to the database file, not to the system's temp directory.",
+        )
+    )
     api_v2 = topic(
         "API",
-        entry(E_TITLE, E, ["decision"], "pending-confirmation", "inferred",
-              "Every route starts with `/v1/`.\n\n**Considered:** a version header — "
-              "invisible in logs and links.",
-              see=[see("storage.md", C_TITLE, C, "2026-04-15")]),
-        entry("Responses are capped at one megabyte", F, ["constraint"], "active", "confirmed",
-              "A response larger than one megabyte is cut and marked as cut.",
-              source="maintainer interview, 2026-04-14",
-              verification="contradicted — the gateway's limit is two megabytes since its 2026-05 update",
-              revisit="the cap is raised by the gateway"),
-        entry(G_TITLE, G, ["decision"], "active", "confirmed",
-              "Cursors are opaque strings; offsets are not offered.\n\n"
-              "**Rejected alternative:** page numbers — they skip and repeat rows "
-              "while the table changes underneath.",
-              source="design review, 2026-04-15",
-              see=[see("api.md", E_TITLE, E, "2026-04-15")]),
-        entry("Errors carry a stable code beside the message", J, ["decision"], "active", "confirmed",
-              "Each error has a code that never changes and a message that may.\n\n"
-              "**Reason:** clients matched on messages and broke on every rewording.",
-              source="[issue 12](https://github.com/acme/widget/issues/12)",
-              see=[see("api.md", G_TITLE, G, "2026-06-01")]),
+        entry(
+            E_TITLE,
+            E,
+            ["decision"],
+            "pending-confirmation",
+            "inferred",
+            "Every route starts with `/v1/`.\n\n**Considered:** a version header — "
+            "invisible in logs and links.",
+            see=[see("storage.md", C_TITLE, C, "2026-04-15")],
+        ),
+        entry(
+            "Responses are capped at one megabyte",
+            F,
+            ["constraint"],
+            "active",
+            "confirmed",
+            "A response larger than one megabyte is cut and marked as cut.",
+            source="maintainer interview, 2026-04-14",
+            verification="contradicted — the gateway's limit is two megabytes since its 2026-05 update",
+            revisit="the cap is raised by the gateway",
+        ),
+        entry(
+            G_TITLE,
+            G,
+            ["decision"],
+            "active",
+            "confirmed",
+            "Cursors are opaque strings; offsets are not offered.\n\n"
+            "**Rejected alternative:** page numbers — they skip and repeat rows "
+            "while the table changes underneath.",
+            source="design review, 2026-04-15",
+            see=[see("api.md", E_TITLE, E, "2026-04-15")],
+        ),
+        entry(
+            "Errors carry a stable code beside the message",
+            J,
+            ["decision"],
+            "active",
+            "confirmed",
+            "Each error has a code that never changes and a message that may.\n\n"
+            "**Reason:** clients matched on messages and broke on every rewording.",
+            source="[issue 12](https://github.com/acme/widget/issues/12)",
+            see=[see("api.md", G_TITLE, G, "2026-06-01")],
+        ),
     )
     descs = {
         "sync.md": "how the sync orders snapshot and buffer",
@@ -229,17 +346,43 @@ def commits():
         "api.md": "versioning, limits, pagination and errors",
     }
     base = {".keep-the-why": CONFIG}
-    yield ("2026-03-02T10:00:00+00:00", "Alice Example", "alice@example.org",
-           {**base, "context/index.md": index({"sync.md": descs["sync.md"]}), "context/sync.md": sync_v1})
-    yield ("2026-03-20T14:30:00+00:00", "Bob Example", "bob@example.org",
-           {"context/index.md": index({k: descs[k] for k in ("sync.md", "storage.md")}),
-            "context/storage.md": storage_v1})
-    yield ("2026-04-15T09:15:00+00:00", "Alice Example", "alice@example.org",
-           {"context/index.md": index(descs), "context/api.md": api_v1})
-    yield ("2026-05-10T16:45:00+00:00", "Carol Example", "carol@example.org",
-           {"context/sync.md": sync_v2, "context/storage.md": storage_v2})
-    yield ("2026-06-01T08:00:00+00:00", "Bob Example", "bob@example.org",
-           {"context/api.md": api_v2})
+    yield (
+        "2026-03-02T10:00:00+00:00",
+        "Alice Example",
+        "alice@example.org",
+        {
+            **base,
+            "context/index.md": index({"sync.md": descs["sync.md"]}),
+            "context/sync.md": sync_v1,
+        },
+    )
+    yield (
+        "2026-03-20T14:30:00+00:00",
+        "Bob Example",
+        "bob@example.org",
+        {
+            "context/index.md": index({k: descs[k] for k in ("sync.md", "storage.md")}),
+            "context/storage.md": storage_v1,
+        },
+    )
+    yield (
+        "2026-04-15T09:15:00+00:00",
+        "Alice Example",
+        "alice@example.org",
+        {"context/index.md": index(descs), "context/api.md": api_v1},
+    )
+    yield (
+        "2026-05-10T16:45:00+00:00",
+        "Carol Example",
+        "carol@example.org",
+        {"context/sync.md": sync_v2, "context/storage.md": storage_v2},
+    )
+    yield (
+        "2026-06-01T08:00:00+00:00",
+        "Bob Example",
+        "bob@example.org",
+        {"context/api.md": api_v2},
+    )
 
 
 def build_state():
@@ -250,8 +393,13 @@ def build_state():
         os.makedirs(os.path.join(repo, "context"))
 
         def git(*args, env=None):
-            subprocess.run(["git", *args], cwd=repo, check=True, capture_output=True,
-                           env={**os.environ, **(env or {})})
+            subprocess.run(
+                ["git", *args],
+                cwd=repo,
+                check=True,
+                capture_output=True,
+                env={**os.environ, **(env or {})},
+            )
 
         git("init", "-q", "-b", "main")
         git("remote", "add", "origin", "https://github.com/acme/widget.git")
@@ -260,9 +408,23 @@ def build_state():
                 with open(os.path.join(repo, path), "w", encoding="utf-8") as fh:
                     fh.write(text)
             git("add", "-A")
-            env = {"GIT_AUTHOR_NAME": name, "GIT_AUTHOR_EMAIL": mail, "GIT_AUTHOR_DATE": date,
-                   "GIT_COMMITTER_NAME": name, "GIT_COMMITTER_EMAIL": mail, "GIT_COMMITTER_DATE": date}
-            git("-c", "commit.gpgsign=false", "commit", "-q", "-m", f"context: {date[:10]}", env=env)
+            env = {
+                "GIT_AUTHOR_NAME": name,
+                "GIT_AUTHOR_EMAIL": mail,
+                "GIT_AUTHOR_DATE": date,
+                "GIT_COMMITTER_NAME": name,
+                "GIT_COMMITTER_EMAIL": mail,
+                "GIT_COMMITTER_DATE": date,
+            }
+            git(
+                "-c",
+                "commit.gpgsign=false",
+                "commit",
+                "-q",
+                "-m",
+                f"context: {date[:10]}",
+                env=env,
+            )
         state = StateBuilder(repo).build()
     state["exported"] = True
     state.update(VERSIONS)
@@ -286,7 +448,9 @@ def _scrub(node, old, new):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--page", metavar="OUT", help="render the page from the frozen state to OUT")
+    ap.add_argument(
+        "--page", metavar="OUT", help="render the page from the frozen state to OUT"
+    )
     args = ap.parse_args()
     if args.page:
         from ktw_dashboard.export import render_page
@@ -301,9 +465,11 @@ def main():
     with open(STATE, "w", encoding="utf-8") as fh:
         json.dump(state, fh, ensure_ascii=False, indent=1, sort_keys=True)
         fh.write("\n")
-    print(f"wrote {os.path.relpath(STATE)}: {len(state['entries'])} entries, "
-          f"{len(state['topics'])} topics, {len(state['authors'])} authors, "
-          f"{len(state.get('findings') or [])} findings")
+    print(
+        f"wrote {os.path.relpath(STATE)}: {len(state['entries'])} entries, "
+        f"{len(state['topics'])} topics, {len(state['authors'])} authors, "
+        f"{len(state.get('findings') or [])} findings"
+    )
     return 0
 
 
