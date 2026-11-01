@@ -733,3 +733,30 @@ test("a See into another repository: the live server's project first, the publis
   assert.match(resolveSee(U, {}).error, /no published export/);
   assert.equal(resolveSee(U, { published: {} }).error, "its published export could not be read"); // neither state nor error: still a failure
 });
+
+test("the layout steps without a canvas: it moves what is shown, leaves what is fixed or hidden, and settles", () => {
+  const { layoutTick, settleLayout } = core;
+  const mk = () => ({
+    nodes: [
+      { id: "a", kind: "topic", x: 0, y: 0, vx: 0, vy: 0 },
+      { id: "b", kind: "entry", x: 5, y: 0, vx: 0, vy: 0 },
+      { id: "c", kind: "entry", x: 0, y: 5, vx: 0, vy: 0, fixed: true },
+      { id: "d", kind: "entry", x: 50, y: 50, vx: 0, vy: 0, hidden: true },
+    ],
+    links: [{ s: 0, t: 1, len: 60, kind: "member" }],
+  });
+  const opts = { visible: (n) => !n.hidden };
+  const g = mk();
+  assert.equal(layoutTick(g.nodes, g.links, 1, opts), 0.985);
+  assert.ok(g.nodes[0].x !== 0 || g.nodes[0].y !== 0, "a shown node moves");
+  assert.deepEqual([g.nodes[2].x, g.nodes[2].y], [0, 5], "a fixed node stays");
+  assert.deepEqual([g.nodes[3].x, g.nodes[3].y], [50, 50], "a hidden node stays");
+  // the same start gives the same layout: no randomness inside the step
+  const h = mk(); layoutTick(h.nodes, h.links, 1, opts);
+  assert.deepEqual(h.nodes.map((n) => [n.x, n.y]), g.nodes.map((n) => [n.x, n.y]));
+  // settled: the alpha left is at the threshold, and the spring has pulled a and b toward its length
+  const s = mk(); const left = settleLayout(s.nodes, s.links, opts);
+  assert.ok(left <= 0.003 && left > 0.003 * 0.985, `settles at the threshold, got ${left}`);
+  assert.ok(Math.hypot(s.nodes[1].x - s.nodes[0].x, s.nodes[1].y - s.nodes[0].y) > 20, "the spring has opened the pair up");
+  assert.equal(settleLayout(mk().nodes, [], { maxTicks: 3 }), 1 * 0.985 * 0.985 * 0.985, "maxTicks bounds the run");
+});

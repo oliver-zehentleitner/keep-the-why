@@ -93,3 +93,7 @@ jobs:
         run: |
           python dashboard/tests/web/fixture/make_fixture.py --page /tmp/ktw-fixture.html
           cd dashboard/tests/web && node snapshot.mjs /tmp/ktw-fixture.html
+
+      - name: Canvas traces of the graph and the stage over the frozen fixture (jsdom)
+        # every drawing call of the settled last frame; a difference fails — what the DOM snapshots cannot see
+        run: cd dashboard/tests/web && node canvas-trace.mjs /tmp/ktw-fixture.html
