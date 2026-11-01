@@ -709,3 +709,18 @@ Every request the page makes is in one block of `app.js`. `DASHBOARD` implements
 
 **Rejected alternative:** one provider object with every method always present, returning an error outside live mode. A feature would then have to try the method and read the failure before it knew whether to show itself, and a host could not say "never" apart from "not now". The shell's requests as optional provider methods were also rejected: that would advertise as part of the interface what only this server can do.
 
+## A place is a route; the page's own address lives in one nav block, closed by a test
+
+**Id:** 7ad72848-f138-4f0b-97c2-f6ecb047ceb1
+**Type:** decision
+**Status:** active
+**Evidence:** inferred
+**Source:** the pull request that moved the routing behind `nav` (series PR 5, design proposal revision 3.1, §3); the click handling and the test are the implementer's choices
+**Revisit when:** a host's router needs to see a click on a Markdown link as a move, or a view has to read the address for something that is not a place
+**See:** dashboard.md#the-page-becomes-a-library-a-second-host-builds-on-core-views-and-a-host-maity-the-first-other-host — 24e1ef21-ebf8-4d5b-ab63-c8ccbe82f7ab — as of 2026-11-01
+
+The page's places are route objects (`{ view: "entry", uuid }`), and `KeepTheWhy.core.routes` parses and writes today's hash grammar. The dashboard's `nav` (`href`, `go`, `current`, `onChange`) and the host's own moves — following an address `nav.href` made, the walk to another centre with `pushState`, back and forward between centres, a reload — sit in one block of `app.js`. A test fails when `location.hash`, `history`, `hashchange` or `popstate` appear outside that block, or when a library file touches the page's address at all. A link to a place is built by `navLink`: a real anchor whose `href` comes from `nav.href`, in the same position among the attributes as before, so the DOM snapshots stay identical. A plain left click calls `nav.go`, while a modified click, a middle click or a link with a target is left to the browser. Links inside entry bodies (`ktw-markdown.js`) get their `href` from `nav.href` and no click handler.
+
+**Reason:** "the views reach the address only through nav" has to stay true over the series' later pull requests. Those move code out of `app.js`, and a reviewer would otherwise have to search every move for a stray `location.hash`. A real anchor keeps a new tab, copying the address and screen readers working in every host. A click through `nav.go` gives a host whose router does not follow its own `href`s the move as a call. Markdown links stay plain: `nav.href` already gives the host's own address, and a click handler would mean changing the renderer's interface for a case no host has yet.
+
+**Rejected alternative:** one click handler on the document that turns every hash link into `nav.go` — in another host it would also catch that host's own anchors. Leaving the views on hash strings and letting another host rewrite them — that host would have to know the dashboard's grammar, which the design rules out.

@@ -145,6 +145,28 @@ class LibraryFilesTest(unittest.TestCase):
                         re.search(pattern, line), f"app.js:{lineno}: {what}"
                     )
 
+    def test_routing_goes_through_nav(self):
+        # the page's place lives behind nav: the library files never touch the address, and
+        # app.js reads or writes the hash and the history only in its nav (host) block
+        # the page's own address, not a parameter that happens to be called location
+        address = r"\bwindow\.location\b|\blocation\.(hash|href|search|pathname|origin|reload|assign)\b|\bhistory\.(pushState|replaceState|back|forward|go)\b"
+        routing = re.compile(
+            r"\blocation\.hash\b|\bhistory\.|[\"']hashchange[\"']|[\"']popstate[\"']"
+        )
+        for name in self.files():
+            with self.subTest(name=name):
+                self.assertIsNone(re.search(address, _read(name)))
+        lines = _read("app.js").splitlines()
+        start = next(i for i, l in enumerate(lines) if l.endswith(" nav (host)"))
+        end = next(i for i, l in enumerate(lines) if l.endswith(" end of nav (host)"))
+        for lineno, line in enumerate(lines, 1):
+            if start < lineno <= end:
+                continue
+            with self.subTest(line=lineno):
+                self.assertIsNone(
+                    routing.search(line), f"app.js:{lineno}: routing outside nav"
+                )
+
     def test_classic_scripts_on_one_namespace(self):
         for name in self.files():
             src = _read(name)

@@ -218,6 +218,20 @@ if (!report.updates.dashboardShimmer || report.updates.lintShimmer || !/99\.0\.0
 if (!/→ 99\.0\.0/.test(pd?.textContent || "")) errors.push("outdated entry does not show the newer version");
 report.topbarLinks = { schema: window.document.querySelectorAll('#project-title a[href*="/releases/tag/v"]').length, commit: window.document.querySelectorAll('#project-title a[href*="/commit/"]').length };
 if (S.project.git?.available && /^github\.com\//.test(S.project.git.remote || "") && (report.topbarLinks.schema !== 1 || report.topbarLinks.commit !== 1)) errors.push("top bar links missing: " + JSON.stringify(report.topbarLinks));
+{
+  // a link to a place is a real anchor whose plain click moves through nav; a modified click is left to the browser
+  await go(`#entry/${encodeURIComponent(S.entries[0].id)}`);
+  const crumb = main.querySelector(".crumbs a[href='#overview']");
+  const click = (opts) => { const ev = new window.MouseEvent("click", { bubbles: true, cancelable: true, button: 0, ...opts }); crumb.dispatchEvent(ev); return ev.defaultPrevented; };
+  report.navLink = { href: crumb?.getAttribute("href"), ctrlLeftToBrowser: crumb ? !click({ ctrlKey: true }) : null, plainThroughNav: crumb ? click({}) : null };
+  await tick(120);
+  report.navLink.hashAfter = window.location.hash;
+  if (!crumb || !report.navLink.ctrlLeftToBrowser || !report.navLink.plainThroughNav || report.navLink.hashAfter !== "#overview") errors.push("nav: a link to a place is not followed through nav — " + JSON.stringify(report.navLink));
+  // an old link to the family graph lands on #graph, the address replaced
+  await go("#graph/family");
+  report.familyAlias = window.location.hash;
+  if (report.familyAlias !== "#graph") errors.push("nav: #graph/family was not replaced by #graph — " + report.familyAlias);
+}
 const input = window.document.getElementById("search"); input.value = "retry"; input.dispatchEvent(new window.Event("input"));
 await tick(50);
 report.search = window.document.querySelectorAll("#search-results a").length;
