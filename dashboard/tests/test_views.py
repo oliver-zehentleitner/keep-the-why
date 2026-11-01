@@ -91,7 +91,8 @@ class ManifestTest(unittest.TestCase):
 
 
 # what makes a request; the views get their data from a provider, the dashboard's
-# lives in one block of app.js
+# lives in one block of app.js. A textual net for regressions, not a proof: a call
+# spelled indirectly (a computed name, a dynamic import, an image's src) passes it.
 REQUESTS = r"\bfetch\s*\(|\bEventSource\b|\bXMLHttpRequest\b|\bsendBeacon\b|\bWebSocket\b|\bimportScripts\b"
 PROVIDER_START = "// ---------------------------------------------------------------- provider: every request the page makes"
 PROVIDER_END = (
@@ -110,19 +111,23 @@ class RequestsTest(unittest.TestCase):
                     )
 
     def test_app_requests_only_inside_its_provider_block(self):
-        src = _read("app.js")
-        self.assertEqual(src.count(PROVIDER_START), 1)
-        self.assertEqual(src.count(PROVIDER_END), 1)
-        start, end = src.index(PROVIDER_START), src.index(PROVIDER_END)
-        outside = src[:start] + src[end:]
-        for lineno, line in enumerate(outside.splitlines(), 1):
-            with self.subTest(line=lineno):
+        # the whole file, the block's lines skipped, so a finding names the real line of app.js
+        lines = _read("app.js").splitlines()
+        starts = [n for n, line in enumerate(lines) if line.startswith(PROVIDER_START)]
+        ends = [n for n, line in enumerate(lines) if line.startswith(PROVIDER_END)]
+        self.assertEqual((len(starts), len(ends)), (1, 1))
+        start, end = starts[0], ends[0]
+        for n, line in enumerate(lines):
+            if start <= n <= end:
+                continue
+            with self.subTest(line=n + 1):
                 self.assertIsNone(
                     re.search(REQUESTS, line),
-                    f"app.js (outside the provider): {line.strip()[:80]}",
+                    f"app.js:{n + 1} (outside the provider): {line.strip()[:80]}",
                 )
-        self.assertRegex(
-            src[start:end], r"\bfetch\s*\(", "the provider block makes the requests"
+        self.assertTrue(
+            any(re.search(r"\bfetch\s*\(", line) for line in lines[start:end]),
+            "the provider block makes the requests",
         )
 
 

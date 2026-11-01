@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-const { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, shuffled, compareHits, snippetAt, highlightParts, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf, projectLabel, backlinksUrl, citingOf, hostAnchor , todayISO, addDays, dayDiff, timeGrid, stampLabel, existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan, createdOn, TYPE_KINDS, TYPE_TOKENS, paletteToken, typeKind, SHELF, stageCards, stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight, mergeAuthors, sortAuthors, AUTHOR_SORTS, ownerOf, exportStateUrl, exportVerdict } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
+const { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, shuffled, compareHits, snippetAt, highlightParts, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf, projectLabel, backlinksUrl, citingOf, hostAnchor , todayISO, addDays, dayDiff, timeGrid, stampLabel, existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan, createdOn, TYPE_KINDS, TYPE_TOKENS, paletteToken, typeKind, SHELF, stageCards, stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight, mergeAuthors, sortAuthors, AUTHOR_SORTS, ownerOf, exportStateUrl, exportVerdict, resolveSee } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
 const MD = globalThis.KeepTheWhy.markdown; // ktw-markdown.js
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -189,6 +189,11 @@ function loadedUi() {
 // ktw-core.js; how it travels (timeouts, size caps, CORS wording, the state monitor) stays here. HOST
 // holds what only the dashboard's own shell asks for: the project menu, forget, the update check, the
 // registry for the globe and its search. Nothing else in this file makes a request (test_views.py).
+//
+// Every result says where it came from: `url`, and for a project `canonical`, `root`, `forkOf` as they
+// apply; a failure is `error` beside them, never a throw. `loaded` lists the files read to make it — url,
+// text, kind — and provider() hands those to the state monitor (noteLoaded): the monitor consumes the
+// provenance, the methods do not write to it.
 async function fetchForeign(url) {
   const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), FOREIGN_TIMEOUT_MS);
   try {
@@ -197,8 +202,7 @@ async function fetchForeign(url) {
     if (Number(res.headers?.get?.("content-length") || 0) > FOREIGN_MAX_BYTES) throw new Error(`${url} is larger than ${FOREIGN_MAX_BYTES / 1024 / 1024} MB`);
     const text = await res.text();
     if (text.length > FOREIGN_MAX_BYTES) throw new Error(`${url} is larger than ${FOREIGN_MAX_BYTES / 1024 / 1024} MB`);
-    noteLoaded(url, text);
-    return text;
+    return text; // what was read is recorded by the provider's caller, from the result's `loaded`
   } catch (err) {
     // A request the browser refuses to show the page — no CORS header on the host — and a host that is down
     // reach the page as the same TypeError, by design: it may not learn why another origin said no. Name both,
@@ -211,19 +215,26 @@ async function fetchForeign(url) {
   }
   finally { clearTimeout(timer); }
 }
+const absolute = (url) => new URL(url, location.href).href;
+const failure = (err, fallback) => err?.message || fallback;
 const DASHBOARD = {
-  // this page's own project: the state embedded in an export, or the live server's
+  // this page's own project: { state, url } — the state embedded in an export, or the live server's
   async state() {
-    if (window.__KTW_STATE__) { noteLoaded(location.href.split("#")[0], JSON.stringify(window.__KTW_STATE__), "page", { own: true }); return normalizeState(window.__KTW_STATE__); }
-    const url = api("/api/state.json");
-    const text = await (await fetch(url, { cache: "no-store" })).text();
-    noteLoaded(new URL(url, location.href).href, text, "state", { own: true });
-    return normalizeState(JSON.parse(text));
+    if (window.__KTW_STATE__) {
+      const url = location.href.split("#")[0];
+      return { state: normalizeState(window.__KTW_STATE__), url, loaded: [{ url, text: JSON.stringify(window.__KTW_STATE__), kind: "page", extra: { own: true } }] };
+    }
+    const url = absolute(api("/api/state.json"));
+    try {
+      const text = await (await fetch(url, { cache: "no-store" })).text();
+      return { state: normalizeState(JSON.parse(text)), url, loaded: [{ url, text, kind: "state", extra: { own: true } }] };
+    } catch (err) { return { error: failure(err, "could not load the state"), url }; }
   },
-  // every change of this project, as the server sends it; returns the function that stops listening
+  // every change of this project, as the server sends it: onState({ state, url }); returns the function that stops listening
   subscribe(onState, onStatus) {
-    const es = new EventSource(api("/api/events"));
-    es.addEventListener("state", (ev) => { try { onState(normalizeState(JSON.parse(ev.data))); } catch (err) { console.error(err); } });
+    const url = absolute(api("/api/events"));
+    const es = new EventSource(url);
+    es.addEventListener("state", (ev) => { try { onState({ state: normalizeState(JSON.parse(ev.data)), url }); } catch (err) { console.error(err); } });
     es.onopen = () => onStatus("open");
     es.onerror = () => onStatus("error");
     return () => es.close();
@@ -232,82 +243,107 @@ const DASHBOARD = {
   // names it) — three quarters of the file, read only when an entry is shown. The graph, the globe and the
   // registry never need them; the centre, the merged family's search and the thought reader do, and ask here
   // first. An older export carries its bodies inline and has no `bodies` field; nothing to fetch then.
+  // { state, url } with the bodies filled in, or { state, url, error } with them missing; asked twice, one fetch.
   bodies(state) {
-    if (!state || typeof state.bodies !== "string" || !state.__url) return Promise.resolve(state);
+    if (!state || typeof state.bodies !== "string" || !state.__url) return Promise.resolve({ state, url: state?.__url || null });
     if (state.__bodies) return state.__bodies;
     const url = new URL(state.bodies, state.__url).href;
     state.__bodies = fetchForeign(url).then((text) => {
       const got = JSON.parse(text).bodies || {};
       for (const e of state.entries) { const b = got[e.id]; if (b != null) e.body = b && typeof b === "object" ? b : { text: String(b || ""), reason: "" }; }
       state.bodiesLoaded = true;
-      return state;
-    }).catch((err) => { state.bodiesError = err?.message || "could not fetch the bodies"; return state; });
+      return { state, url, loaded: [{ url, text }] };
+    }).catch((err) => { state.bodiesError = failure(err, "could not fetch the bodies"); return { state, url, error: state.bodiesError }; });
     return state.__bodies;
   },
-  // the family the live server knows: this project's (or `project`'s), the whole tree with `tree`
+  // the family the live server knows — this project's (or `project`'s), the whole tree with `tree`: { members, url }
   async family({ project = PROJECT, tree = false } = {}) {
     const q = [project ? `project=${encodeURIComponent(project)}` : "", tree ? "tree=1" : ""].filter(Boolean).join("&");
-    return (await (await fetch(`/api/family${q ? `?${q}` : ""}`, { cache: "no-store" })).json()).members || [];
+    const url = absolute(`/api/family${q ? `?${q}` : ""}`);
+    try { return { members: (await (await fetch(url, { cache: "no-store" })).json()).members || [], url }; }
+    catch (err) { return { error: failure(err, "could not load the family"), url }; }
   },
-  // a project the live server knows, by its key: { state } or { error }
-  memberState(key) {
-    const url = `/api/state.json?project=${encodeURIComponent(key)}`;
-    return fetch(url, { cache: "no-store" })
-      .then(async (r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); const text = await r.text(); noteLoaded(new URL(url, location.href).href, text, "state"); return JSON.parse(text); })
-      .then((st) => ({ state: normalizeState(st) }), (err) => ({ error: `could not load its state (${err?.message || "server gone"})` }));
+  // a project the live server knows, by its key: { state, url, key }
+  async memberState(key) {
+    const url = absolute(`/api/state.json?project=${encodeURIComponent(key)}`);
+    try {
+      const r = await fetch(url, { cache: "no-store" });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const text = await r.text();
+      return { state: normalizeState(JSON.parse(text)), url, key, loaded: [{ url, text, kind: "state" }] };
+    } catch (err) { return { error: `could not load its state (${failure(err, "server gone")})`, url, key }; }
   },
   // A repository's published export, found through its .keep-the-why at HEAD: { state, url, canonical, root,
-  // raw, forkOf? } or { error, raw, missingLine? }. The verdicts are ktw-core.js's (exportStateUrl, exportVerdict).
+  // raw, forkOf? } or { error, canonical, root, raw, missingLine? }. The verdicts are ktw-core.js's
+  // (exportStateUrl, exportVerdict).
   async exportState(canonical, root = "") {
-    let result, url = "";
+    let url = "";
     const raw = rawFileUrl(canonical, root, ".keep-the-why");
+    const loaded = [];
+    const read = async (u) => { const text = await fetchForeign(u); loaded.push({ url: u, text }); return text; };
     try {
-      const found = exportStateUrl(await fetchForeign(raw), raw);
-      if (found.error) { result = { ...found, raw }; noteFailed(raw, found.error, { canonical }); }
-      else {
-        url = found.url;
-        const state = normalizeState(JSON.parse(await fetchForeign(url)));
-        state.__url = url; // where it came from: its bodies, if kept beside it, resolve against this
-        const verdict = exportVerdict(state, canonical, url);
-        if (verdict.error) { result = { error: verdict.error, raw }; noteFailed(url, verdict.error, { canonical }); }
-        else result = { state, url, canonical, root, raw, ...(verdict.forkOf ? { forkOf: verdict.forkOf } : {}) };
-      }
+      const found = exportStateUrl(await read(raw), raw);
+      if (found.error) { noteFailed(raw, found.error, { canonical }); return { ...found, canonical, root, raw, loaded }; }
+      url = found.url;
+      const state = normalizeState(JSON.parse(await read(url)));
+      state.__url = url; // where it came from: its bodies, if kept beside it, resolve against this
+      const verdict = exportVerdict(state, canonical, url);
+      if (verdict.error) { noteFailed(url, verdict.error, { canonical }); return { error: verdict.error, url, canonical, root, raw, loaded }; }
+      return { state, url, canonical, root, raw, ...(verdict.forkOf ? { forkOf: verdict.forkOf } : {}), loaded };
     } catch (err) {
-      result = { error: `could not fetch the export: ${err?.message || "network error or blocked by CORS"}`, raw };
       for (const u of [raw, url]) { const f = u && FAILED.get(u); if (f) f.canonical = canonical; } // the failed fetch belongs to this repository
       renderLoaded();
+      return { error: `could not fetch the export: ${failure(err, "network error or blocked by CORS")}`, ...(url ? { url } : {}), canonical, root, raw, loaded };
     }
-    return result;
   },
-  // which project the live server knows carries this Id: { project, entry }, or null
+  // which project the live server knows carries this Id: { project, entry, url }; not known there is an error
   async resolveEntry(uuid) {
-    const r = await fetch(`/api/entry?uuid=${encodeURIComponent(uuid)}${PROJECT ? `&project=${encodeURIComponent(PROJECT)}` : ""}`, { cache: "no-store" });
-    return r.ok ? r.json() : null;
+    const url = absolute(`/api/entry?uuid=${encodeURIComponent(uuid)}${PROJECT ? `&project=${encodeURIComponent(PROJECT)}` : ""}`);
+    try {
+      const r = await fetch(url, { cache: "no-store" });
+      if (!r.ok) return { error: `no project known here carries ${uuid}`, url };
+      const hit = await r.json();
+      return { project: hit.project, entry: hit.entry, url };
+    } catch (err) { return { error: failure(err, "server gone"), url }; }
   },
-  // a commit author's profile on the host, looked up when asked for; null when the host's API does not say
+  // a commit author's profile on the host, looked up when asked for: { profile, url }; a host whose API
+  // does not name the account answers { profile: null }
   async authorProfile(canonical, sha) {
     const look = authorLookup(canonical, sha);
-    if (!look?.api) return null;
-    const r = await fetch(look.api, { headers: { Accept: "application/json" } });
-    return r.ok ? look.pick(await r.json()) || null : null;
+    if (!look?.api) return { profile: null, url: null };
+    try {
+      const r = await fetch(look.api, { headers: { Accept: "application/json" } });
+      return { profile: r.ok ? look.pick(await r.json()) || null : null, url: look.api };
+    } catch (err) { return { error: failure(err, "offline or rate-limited"), url: look.api }; }
   },
-  // who in the registry cites this repository; no file is an answer (nobody does), not a failure
+  // who in the registry cites this repository: { file, url }; no file is an answer (nobody does), not a failure
   async backlinks(canonical) {
     const url = backlinksUrl(REGISTRY_URL, canonical);
-    try { return JSON.parse(await fetchForeign(url)); } catch (err) {
-      if (!/HTTP 404/.test(err?.message || "")) throw err;
+    try { const text = await fetchForeign(url); return { file: JSON.parse(text), url, loaded: [{ url, text }] }; } catch (err) {
+      if (!/HTTP 404/.test(err?.message || "")) return { error: failure(err, "network"), url };
       FAILED.delete(url);
-      return { cited_by: [] };
+      return { file: { cited_by: [] }, url };
     }
   },
 };
+// the state monitor reads what a result says it loaded, once per result
+const TRACED = new WeakSet();
+function trace(result) {
+  if (result && typeof result === "object" && !TRACED.has(result)) {
+    TRACED.add(result);
+    for (const l of result.loaded || []) noteLoaded(l.url, l.text, l.kind, l.extra);
+  }
+  return result;
+}
+const traced = (fn) => (...args) => Promise.resolve(fn(...args)).then(trace);
 // the methods the current mode can answer; the rest are absent
 function provider() {
   const live = LIVE();
   return {
-    state: DASHBOARD.state, bodies: DASHBOARD.bodies, exportState: DASHBOARD.exportState, authorProfile: DASHBOARD.authorProfile, backlinks: DASHBOARD.backlinks,
+    state: traced(DASHBOARD.state), bodies: traced(DASHBOARD.bodies), exportState: traced(DASHBOARD.exportState),
+    authorProfile: DASHBOARD.authorProfile, backlinks: traced(DASHBOARD.backlinks),
     subscribe: live ? DASHBOARD.subscribe : undefined, family: live ? DASHBOARD.family : undefined,
-    memberState: live ? DASHBOARD.memberState : undefined, resolveEntry: live ? DASHBOARD.resolveEntry : undefined,
+    memberState: live ? traced(DASHBOARD.memberState) : undefined, resolveEntry: live ? DASHBOARD.resolveEntry : undefined,
   };
 }
 // what only the dashboard's shell asks for — no view does
@@ -315,7 +351,7 @@ const HOST = {
   async projects() { return (await fetch("/api/projects", { cache: "no-store" })).json(); },
   async forget(key) { await fetch("/api/projects/forget", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key }) }); },
   async updates() { return (await fetch("/api/updates", { cache: "no-store" })).json(); },
-  async registryIndex(url) { return JSON.parse(await fetchForeign(url)); },
+  async registryIndex(url) { const text = await fetchForeign(url); noteLoaded(url, text); return JSON.parse(text); },
 };
 // ---------------------------------------------------------------- provider end
 // the page's caches over the provider: one request per project, however many ask at once
@@ -323,7 +359,7 @@ function fetchPublicState(canonical, root = "") {
   const key = `${canonical}|${root}`;
   return (PUBLIC_STATES[key] ||= provider().exportState(canonical, root));
 }
-const ensureBodies = (state) => provider().bodies(state);
+const ensureBodies = (state) => provider().bodies(state).then((r) => r.state);
 const publicHref = (canonical, root = "", hash = "#overview") => `${location.pathname}?public=${encodeURIComponent(canonical)}${root ? `&root=${encodeURIComponent(root)}` : ""}${hash}`;
 
 // ---------------------------------------------------------------- state
@@ -571,7 +607,7 @@ async function viewEntryElsewhere(main, uuid) {
   try {
     const P = provider(); if (!P.resolveEntry) throw new Error();
     const hit = await P.resolveEntry(uuid);
-    if (!hit) throw new Error();
+    if (hit.error) throw new Error(hit.error);
     if (hit.project === (PROJECT || null)) return;
     location.href = `${location.pathname}?project=${encodeURIComponent(hit.project)}#entry/${uuid}`;
   } catch { setKids(main, el("p", { class: "center" }, `No entry with Id ${uuid} in this project, nor in any other project known here. A family member that is not checked out can be cloned or cached — see Family.`)); }
@@ -599,17 +635,10 @@ function resolveRemoteRef(canonical, uuid) {
   const key = `${canonical}|${uuid}`;
   if (!REMOTE_REFS[key]) REMOTE_REFS[key] = (async () => {
     const P = provider();
-    if (P.resolveEntry) {
-      try {
-        const hit = await P.resolveEntry(uuid);
-        if (hit) return { entry: hit.entry || {}, href: `${location.pathname}?project=${encodeURIComponent(hit.project)}#entry/${uuid}` };
-      } catch { /* not known here: the published export */ }
-    }
-    const r = await fetchPublicState(canonical, "");
-    if (!r.state) return { error: r.error };
-    const entry = r.state.entries?.find((e) => e.uuid === uuid);
-    if (!entry) return { error: `its published export (generated ${r.state.generated || "?"}) has no entry with this Id — the reference may be newer than the export, or the entry lives below the repository's top level` };
-    return { entry, href: publicHref(canonical, "", `#entry/${uuid}`) };
+    const known = P.resolveEntry ? await P.resolveEntry(uuid) : null; // the rules are resolveSee's (ktw-core.js)
+    const r = resolveSee(uuid, { known, published: known && !known.error ? null : await fetchPublicState(canonical, "") });
+    if (r.error) return { error: r.error };
+    return { entry: r.entry, href: r.via === "live" ? `${location.pathname}?project=${encodeURIComponent(r.project)}#entry/${uuid}` : publicHref(canonical, "", `#entry/${uuid}`) };
   })();
   return REMOTE_REFS[key];
 }
@@ -1004,7 +1033,7 @@ function refsBox(e) {
 let FAMILY = null; // /api/family result for the current project (live mode only)
 async function fetchFamily() {
   const P = provider(); if (!P.family) return null;
-  try { FAMILY = await P.family(); } catch { FAMILY = null; }
+  const r = await P.family(); FAMILY = r.error ? null : r.members;
   return FAMILY;
 }
 // the family as .keep-the-why declares it — what an export or a public dump knows
@@ -1489,7 +1518,7 @@ function loadFriend(f) {
     if (P.resolveEntry && P.memberState && f.uuids?.length) {
       try {
         const hit = await P.resolveEntry(f.uuids[0]);
-        if (hit) {
+        if (!hit.error) {
           const m = await memberState(hit.project);
           if (m.state) r = { ...liveMember({ key: hit.project, name: m.state.project?.id, role: "self" }, m.state), name: m.state.project?.id || repoLabel(f.canonical) };
         }
@@ -1526,7 +1555,9 @@ async function friendUnit(r) {
   const P = provider();
   if (r.centre?.mode === "live" && P.family && P.memberState) {
     try {
-      const members = (await P.family({ project: r.centre.project, tree: true })).filter((m) => m.role !== "self" && m.key);
+      const fam = await P.family({ project: r.centre.project, tree: true });
+      if (fam.error) throw new Error(fam.error);
+      const members = fam.members.filter((m) => m.role !== "self" && m.key);
       const states = await Promise.all(members.map((m) => memberState(m.key)));
       members.forEach((m, i) => { if (states[i].state) out.push(liveMember(m, states[i].state)); });
       return out;
@@ -1913,7 +1944,9 @@ function citedExclude() {
 async function loadCited() {
   CITED.loading = true; CITED.error = null; render();
   try {
-    const file = await provider().backlinks(canonicalOf(SELF?.project)); // no file is an answer: nobody cites it
+    const bl = await provider().backlinks(canonicalOf(SELF?.project)); // no file is an answer: nobody cites it
+    if (bl.error) throw new Error(bl.error);
+    const file = bl.file;
     const r = citingOf(file, (SELF?.entries || []).map((e) => e.uuid).filter(Boolean), [canonicalOf(SELF?.project)]);
     CITED.list = r.citing; CITED.elsewhere = r.elsewhere; CITED.checked = file.checked || "";
     await Promise.all(CITED.list.map(loadFriend));
@@ -3247,7 +3280,8 @@ let TREE = null; let TREE_AT = 0; // /api/family?tree=1, live mode
 async function fetchTree() {
   const P = provider(); if (!P.family) return null;
   if (TREE && Date.now() - TREE_AT < 30000) return TREE;
-  try { TREE = await P.family({ tree: true }); TREE_AT = Date.now(); } catch { TREE = null; }
+  const r = await P.family({ tree: true });
+  if (r.error) TREE = null; else { TREE = r.members; TREE_AT = Date.now(); }
   return TREE;
 }
 const MEMBER_STATES = {}; // project key -> { at, p: Promise<{state}|{error}> }, live mode
@@ -3604,7 +3638,7 @@ function authorLink(name, commit, project) {
     ev.preventDefault();
     const w = window.open("about:blank", "_blank"); if (w) w.opener = null;
     let url = look.fallback;
-    try { url = (await provider().authorProfile(canonicalOf(project), commit)) || look.fallback; } catch { /* offline or rate-limited: the commit page names the author too */ }
+    url = (await provider().authorProfile(canonicalOf(project), commit)).profile || look.fallback; // offline or rate-limited: the commit page names the author too
     if (url !== look.fallback) AUTHOR_URLS[key] = url;
     ev.target.closest("a").href = url;
     if (w) w.location.href = url; else window.open(url, "_blank", "noopener");
@@ -3683,7 +3717,7 @@ function connectLive() {
   const P = provider();
   if (!P.subscribe) { setLive("export", "public export", "public export — read from the published state.json, no live updates"); return; }
   LIVE_ES = P.subscribe(
-    (state) => { applyState(state); setLive("on", "live", `live — last update ${new Date().toLocaleTimeString()}`); },
+    (r) => { applyState(r.state); setLive("on", "live", `live — last update ${new Date().toLocaleTimeString()}`); },
     (status) => (status === "open" ? setLive("on", "live", "live — the server watches the project and sends every change") : setLive("off", "offline", "connection lost — the server is gone; retrying")));
 }
 // The side pane's width: 1×, 2× (the default), 3×, or half the page beside
@@ -3827,11 +3861,9 @@ async function boot() {
     return;
   }
   setupProjects();
-  if (window.__KTW_STATE__) applyState(await provider().state());
-  else {
-    try { applyState(await provider().state()); }
-    catch (err) { $("#main").append(el("p", { class: "center" }, PROJECT ? `No state for project "${PROJECT}" — unknown id or unknown location.` : "Could not load the state — is the server running?")); }
-  }
+  const own = await provider().state();
+  if (own.state) applyState(own.state);
+  else $("#main").append(el("p", { class: "center" }, PROJECT ? `No state for project "${PROJECT}" — unknown id or unknown location.` : "Could not load the state — is the server running?"));
   connectLive();
   pollUpdates(); setTimeout(pollUpdates, 20000); // the server's first check may still be running at boot
   setInterval(pollUpdates, 60 * 60 * 1000);

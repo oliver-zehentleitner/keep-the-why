@@ -685,3 +685,14 @@ test("an export is shown as the repository asked for, as a fork, or refused", ()
   assert.deepEqual(exportVerdict(st("https://github.com/up/w", "github.com/acme/w"), "https://github.com/acme/w", "U"), { forkOf: "https://github.com/up/w" });
   assert.deepEqual(exportVerdict(st("https://github.com/other/x"), "https://github.com/acme/w", "U"), { error: "the export at U belongs to https://github.com/other/x, not to https://github.com/acme/w" });
 });
+
+test("a See into another repository: the live server's project first, the published export after it", () => {
+  const { resolveSee } = core;
+  const U = "11111111-1111-4111-8111-111111111111";
+  const e = { uuid: U, title: "x" };
+  assert.deepEqual(resolveSee(U, { known: { project: "p", entry: e, url: "u" } }), { entry: e, via: "live", project: "p" });
+  assert.deepEqual(resolveSee(U, { known: { error: "not known", url: "u" }, published: { state: { entries: [e] } } }), { entry: e, via: "export" });
+  assert.deepEqual(resolveSee(U, { published: { error: "could not fetch the export: x" } }), { error: "could not fetch the export: x" });
+  assert.match(resolveSee(U, { published: { state: { generated: "2026-10-01", entries: [] } } }).error, /generated 2026-10-01\) has no entry with this Id/);
+  assert.match(resolveSee(U, {}).error, /no published export/);
+});
