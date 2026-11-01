@@ -693,3 +693,19 @@ The page's pure part, `lib.js`, became `ktw-core.js`: a classic script that puts
 
 **Rejected alternative:** a proper tokenizer that reads emphasis and links as CommonMark does. It would render some existing bodies differently, and the series promises a page that looks the same after every step. A third-party Markdown library plus a sanitiser was also rejected: its output is an HTML string, so it needs the very sink this removes.
 
+
+## Settings go through prefs by a short name; the dashboard keeps them as ktw-<name>, values unchanged
+
+**Id:** 8bb5d9af-d814-4603-b787-92c7e5084dab
+**Type:** decision
+**Status:** active
+**Evidence:** inferred
+**Source:** the pull request that moved the settings behind `prefs` (series PR 6, design proposal revision 3.1, §5); the short names and the guard test are the implementer's choices
+**Revisit when:** a setting needs more than a string, or another host wants the dashboard's stored settings carried over
+**See:** dashboard.md#the-page-becomes-a-library-a-second-host-builds-on-core-views-and-a-host-maity-the-first-other-host — 24e1ef21-ebf8-4d5b-ab63-c8ccbe82f7ab — as of 2026-11-01
+
+Every setting a reader makes — the graph's switches and labels, the pane widths, the thought length, the timeline's arrangement, the scope, the motion, the theme, the globe's introduction — is read and written through `prefs`, an object with `get(key, fallback)` and `set(key, value)`. The views name a setting by a short name (`"friends"`, `"side-graph"`) and store the same strings as before (`on`/`off`, `all`/`linked`, a number, a JSON object for the labels). The dashboard's `prefs` keeps each one in `localStorage` as `ktw-<name>`, the key it always had, so no one's settings are reset. A test fails when `localStorage` appears in `app.js` outside the prefs block, or when a library file uses any browser storage. The topic tree's open folders are not a setting: they stay in `sessionStorage` for the tab.
+
+**Reason:** the prefix is where the host comes in. Each host keeps the settings under its own name (Maity under `maity.ktw.`), so the views must not carry the dashboard's `ktw-` in every key. Keeping the stored strings exactly as they were is what lets the dashboard switch to `prefs` without a migration. A blocked or full storage now reads as the fallback everywhere; before, the theme switch was the one place that read storage unguarded.
+
+**Rejected alternative:** the full keys (`"ktw-friends"`) as the prefs names — another host would store `maity.ktw.ktw-friends` or have to strip the dashboard's prefix. Typed values (booleans, numbers) in the interface — every reader of an existing setting would then need converting code, for no gain the views can see.
