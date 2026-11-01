@@ -258,9 +258,6 @@ function highlightParts(text, terms) {
   return out;
 }
 
-// A family location as the published side reads it: an https URL is another
-// repository (its own root), a relative path is a directory in the same
-// repository, resolved against the root the location was read from.
 // A published export, judged by what it says — the provider fetches, this decides what came back.
 // Two addresses name the same repository whatever their case and trailing slashes.
 const sameCanonical = (a, b) => String(a || "").replace(/\/+$/, "").toLowerCase() === String(b || "").replace(/\/+$/, "").toLowerCase();
@@ -282,6 +279,21 @@ function exportVerdict(state, canonical, url) {
   if (claimed && !sameCanonical(claimed, canonical)) return { error: `the export at ${url} belongs to ${claimed}, not to ${canonical}` };
   return {};
 }
+// A See into another repository, resolved the way the page shows it: the project the live server knows
+// carries the Id first (`known`, a provider resolveEntry result, absent outside live mode), else the
+// repository's published export (`published`, a provider exportState result). Returns { entry, via } —
+// via "live" or "export", the host makes the link — or { error } with the reason to show.
+function resolveSee(uuid, { known = null, published = null } = {}) {
+  if (known && !known.error) return { entry: known.entry || {}, via: "live", project: known.project };
+  if (!published) return { error: "not known here, and no published export was asked for" };
+  if (!published.state) return { error: published.error || "its published export could not be read" }; // a host's result with neither is still a failure
+  const entry = (published.state.entries || []).find((e) => e.uuid === uuid);
+  if (!entry) return { error: `its published export (generated ${published.state.generated || "?"}) has no entry with this Id — the reference may be newer than the export, or the entry lives below the repository's top level` };
+  return { entry, via: "export" };
+}
+// A family location as the published side reads it: an https URL is another
+// repository (its own root), a relative path is a directory in the same
+// repository, resolved against the root the location was read from.
 function resolveLocation(location, canonical, root = "") {
   if (!location) return null;
   if (/^https:\/\//.test(location)) return { canonical: location.replace(/\/+$/, ""), root: "" };
@@ -748,7 +760,7 @@ const routes = Object.freeze({ PAGES, parse: parseRoute, format: formatRoute });
 
 const KTW = (root.KeepTheWhy = root.KeepTheWhy || {});
 KTW.core = Object.freeze({
-  sameCanonical, exportStateUrl, exportVerdict,
+  sameCanonical, exportStateUrl, exportVerdict, resolveSee,
   esc, plural, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug,
   hostAnchor, hostFileLink, hostTreeLink, HOSTS, hostOf, canonicalOf, ownerOf, projectLabel,
   parseSupersededBy, typeName, kindLabel, familyRank, familyOrder, groupByFamily, shuffled, searchTerms,
