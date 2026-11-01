@@ -694,3 +694,30 @@ test("routes: no hash, an unknown one, a malformed escape", () => {
   assert.equal(parse("#search/project/a/b").q, "a/b"); // a slash in the query, typed into the address bar
   assert.equal(format({ view: "nowhere" }), "#overview");
 });
+
+test("every name app.js takes from the core is there", async () => {
+  const { readFileSync } = await import("node:fs");
+  const app = readFileSync(new URL("../../ktw_dashboard/web/app.js", import.meta.url), "utf8");
+  const m = app.match(/^const \{([^}]*)\} = globalThis\.KeepTheWhy\.core;/m);
+  assert.ok(m, "app.js reads the core namespace in one destructuring line");
+  const missing = m[1].split(",").map((s) => s.trim()).filter(Boolean).filter((n) => !(n in core));
+  assert.deepEqual(missing, []);
+});
+
+test("an export's address comes from the published .keep-the-why, https only", () => {
+  const { exportStateUrl } = core;
+  assert.deepEqual(exportStateUrl("- dashboard-state: https://e.org/s.json\n", "RAW"), { url: "https://e.org/s.json" });
+  assert.deepEqual(exportStateUrl("- id: x\n", "RAW"), { error: "no dashboard-state line in the published .keep-the-why (RAW) — this project has no published export yet", missingLine: true });
+  assert.match(exportStateUrl("- dashboard-state: http://e.org/s.json", "RAW").error, /not an https URL/);
+  assert.equal(exportStateUrl(null, "RAW").missingLine, true);
+});
+
+test("an export is shown as the repository asked for, as a fork, or refused", () => {
+  const { exportVerdict, sameCanonical } = core;
+  const st = (canonical, remote) => ({ project: { canonical, git: remote ? { remote } : {} } });
+  assert.ok(sameCanonical("https://github.com/Acme/W/", "https://github.com/acme/w"));
+  assert.deepEqual(exportVerdict(st("https://github.com/acme/w"), "https://github.com/ACME/w/", "U"), {});
+  assert.deepEqual(exportVerdict(st(undefined), "https://github.com/acme/w", "U"), {});
+  assert.deepEqual(exportVerdict(st("https://github.com/up/w", "github.com/acme/w"), "https://github.com/acme/w", "U"), { forkOf: "https://github.com/up/w" });
+  assert.deepEqual(exportVerdict(st("https://github.com/other/x"), "https://github.com/acme/w", "U"), { error: "the export at U belongs to https://github.com/other/x, not to https://github.com/acme/w" });
+});

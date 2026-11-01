@@ -261,6 +261,27 @@ function highlightParts(text, terms) {
 // A family location as the published side reads it: an https URL is another
 // repository (its own root), a relative path is a directory in the same
 // repository, resolved against the root the location was read from.
+// A published export, judged by what it says — the provider fetches, this decides what came back.
+// Two addresses name the same repository whatever their case and trailing slashes.
+const sameCanonical = (a, b) => String(a || "").replace(/\/+$/, "").toLowerCase() === String(b || "").replace(/\/+$/, "").toLowerCase();
+// From a repository's published .keep-the-why: the address of its export, or why there is none.
+function exportStateUrl(configText, raw) {
+  const url = configLine(String(configText ?? ""), "dashboard-state");
+  if (!url) return { error: `no dashboard-state line in the published .keep-the-why (${raw}) — this project has no published export yet`, missingLine: true };
+  if (!/^https:\/\//.test(url)) return { error: `dashboard-state is not an https URL: ${url}` };
+  return { url };
+}
+// An export fetched for `canonical`: shown as that repository, as a fork of the one it names, or refused.
+// A fork's export was made in a checkout whose origin is the cited repository, and declares the
+// repository it was forked from as its canonical; an export that claims another repository otherwise
+// is not shown as this one.
+function exportVerdict(state, canonical, url) {
+  const claimed = state?.project?.canonical;
+  const origin = state?.project?.git?.remote ? `https://${state.project.git.remote}` : "";
+  if (claimed && !sameCanonical(claimed, canonical) && origin && sameCanonical(origin, canonical)) return { forkOf: claimed };
+  if (claimed && !sameCanonical(claimed, canonical)) return { error: `the export at ${url} belongs to ${claimed}, not to ${canonical}` };
+  return {};
+}
 function resolveLocation(location, canonical, root = "") {
   if (!location) return null;
   if (/^https:\/\//.test(location)) return { canonical: location.replace(/\/+$/, ""), root: "" };
@@ -727,6 +748,7 @@ const routes = Object.freeze({ PAGES, parse: parseRoute, format: formatRoute });
 
 const KTW = (root.KeepTheWhy = root.KeepTheWhy || {});
 KTW.core = Object.freeze({
+  sameCanonical, exportStateUrl, exportVerdict,
   esc, plural, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug,
   hostAnchor, hostFileLink, hostTreeLink, HOSTS, hostOf, canonicalOf, ownerOf, projectLabel,
   parseSupersededBy, typeName, kindLabel, familyRank, familyOrder, groupByFamily, shuffled, searchTerms,
