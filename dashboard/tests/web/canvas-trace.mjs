@@ -12,6 +12,7 @@
 process.env.TZ = "UTC";
 
 import { JSDOM, VirtualConsole } from "jsdom";
+import { moduleAsClassic } from "./classic.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -25,7 +26,7 @@ const round = (v) => (typeof v === "number" ? Math.round(v * 1000) / 1000 : v);
 const show = (v) => (typeof v === "number" ? String(round(v)) : typeof v === "string" ? JSON.stringify(v) : Array.isArray(v) ? `[${v.map(show).join(",")}]` : v && typeof v === "object" ? (v.constructor?.name || "object") : String(v));
 
 const errors = [];
-const html = fs.readFileSync(page, "utf8").replace('<script type="module">', "<script>");
+const html = moduleAsClassic(fs.readFileSync(page, "utf8"));
 const tick = (ms) => new Promise((r) => setTimeout(r, ms));
 // The last frame of a canvas. The graph's painter and the stage's both open every frame with clearRect over the
 // whole canvas, so the calls since the last clearRect are the frame drawn last — the one the settled layout shows.
