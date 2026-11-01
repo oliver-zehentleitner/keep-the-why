@@ -677,3 +677,19 @@ The page's pure part, `lib.js`, became `ktw-core.js`: a classic script that puts
 
 **Rejected alternative:** ES modules in the repository, plus a generated classic copy for other hosts. That is a build step, and the two pages would run different bytes. A `views/` subdirectory instead of the prefix was also rejected: the server, the package glob and the export would each have needed a change, where the prefix plus the manifest needs none.
 
+## Bodies render to DOM nodes through the old renderer's own rules, run over markers instead of tags
+
+**Id:** d06eb1b5-744a-4fc9-a87b-d72961e847a6
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** design proposal (revision 3.1) agreed by the maintainer, 2026-11-01 (a DOM-built renderer with exactly the old subset; https-only links); the marker technique is the implementer's, in the pull request that made the change
+**Revisit when:** the subset grows (tables, nested lists, images), or a body renders differently from how its host renders the same Markdown and someone asks for the host's behaviour
+**See:** dashboard.md#the-pages-library-is-classic-scripts-on-one-namespace-the-page-is-otherwise-still-plain-javascript-without-a-build — daab47f5-add1-4ba2-ae24-38162c43af90 — as of 2026-11-01
+
+`ktw-markdown.js` renders an entry's body, title and field values as DOM nodes; no HTML string is built anywhere on the page any more, and `el()` lost its `html` attribute. The inline rules are the ones the page used when it built HTML: the same regular expressions, in the same order — code, bold, the two italics, links, bare topic names — but run over the raw text, writing private-use characters where they wrote tags. The marked text is then read into a small tree, and the tree into elements. Blocks are parsed line by line as before. Two things changed on purpose: a link opens only for an `https://` target (an `http://` one keeps its text and no longer links), and an external link carries `rel="noopener noreferrer"`.
+
+**Reason:** the views are to load unchanged in a host that forbids HTML sinks, and the renderer was the page's largest one. Running the old rules over markers keeps every quirk a body depends on: bold inside code, a bare name not linked inside bold, the link target ending at the first `)`. A parity test checked this against the old renderer, kept frozen in the tests, over 2,194 texts — fifteen real projects' exports and the fixture — with no difference, and in CI it runs over the fixture and this repository's own export.
+
+**Rejected alternative:** a proper tokenizer that reads emphasis and links as CommonMark does. It would render some existing bodies differently, and the series promises a page that looks the same after every step. A third-party Markdown library plus a sanitiser was also rejected: its output is an HTML string, so it needs the very sink this removes.
+
