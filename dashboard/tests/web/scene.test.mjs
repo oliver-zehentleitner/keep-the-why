@@ -59,12 +59,15 @@ test("with no graph drawn, the scene settles the layout itself; with one, it wai
 
 test("the clock's view of an entry: there on the day shown, with the status it had then", () => {
   const scene = create({ state: { project: { git: { available: true } }, entries: [] } });
-  const e = { status: "superseded", git: { created: { date: "2026-03-02" }, status_changes: [{ date: "2026-05-10", status: "superseded", from: "active" }] } };
+  const e = { status: "superseded", git: { created: { date: "2026-03-02" }, status_history: [{ date: "2026-03-02", status: "active" }, { date: "2026-05-10", status: "superseded" }] } };
   const fresh = { status: "active" }; // not committed yet: in a repository, it exists today only
   assert.equal(scene.atClock(e), true, "no clock: today, and the entry exists");
   assert.equal(scene.statusNow(e), "superseded");
   scene.setDay("2026-02-01"); assert.equal(scene.atClock(e), false, "before it was written");
   scene.setDay("2026-04-01"); assert.equal(scene.atClock(e), true);
+  assert.equal(scene.statusNow(e), "active", "on a day before it was superseded, the status it had then");
+  scene.setDay("2026-06-01"); assert.equal(scene.statusNow(e), "superseded");
+  scene.setDay("2026-04-01");
   assert.equal(scene.atClock(fresh), false, "an uncommitted entry of a repository is not there on a past day");
   assert.equal(scene.atClock(fresh, true), false, "a foreign entry came from a repository's export too: without a date, today only");
   const noGit = create({ state: { project: { git: { available: false } }, entries: [] } }); noGit.setDay("2026-04-01");
