@@ -1,15 +1,16 @@
-/* Keep the Why dashboard — the timeline's stage: the project's entries as cards in perspective, time running
-   into the depth, the day shown at the front (the scene's clock). Its scene and camera, the layout that keeps
-   the cards apart, the painter, the pointer and the keys, and the legend under it. The cards stand where the
-   graph beside them stands its nodes (the scene's layout), or in a lane per topic. It reads the scene — the
-   state, the clock, the focus, the held thought, the filter, the layout — keeps its two settings (where a card
-   stands, which foreign entries show) through prefs, and builds its DOM from ktw-ui.js; that is all it is
-   given. The page around it — the bars, the slider, the card, the play loop — is the host's. A classic script
-   on globalThis.KeepTheWhy.views.timeline, listed in ktw-views.json, traced on the canvas (canvas-trace.mjs). */
+/* Keep the Why dashboard — the timeline page: the project's entries as cards in perspective on a stage, time
+   running into the depth, the day shown at the front — with the clock that sets that day, its play loop, the
+   bars of the months, the slider and the card of the entry that came last. The stage's scene and camera, the
+   layout that keeps the cards apart, the painter, the pointer and the keys, and the legend under it. The cards
+   stand where the graph beside them stands its nodes (the scene's layout), or in a lane per topic. It reads the
+   scene — the state, the clock, the focus, the held thought, the filter, the layout — keeps the stage's two
+   settings through prefs, builds its DOM from ktw-ui.js, and takes what only the host has — which graph to stand
+   on, a row for an entry, a body's Markdown, an export's bodies, a redraw — through view()'s `host`. A classic
+   script on globalThis.KeepTheWhy.views.timeline, listed in ktw-views.json, traced on the canvas (canvas-trace.mjs). */
 (function (root) {
 "use strict";
 const { TYPE_KINDS, TYPE_TOKENS, SHELF, addDays, createdOn, dayDiff, daySpan, existsAt, statusAt, linkExistsAt, logDepth, markLinked, percentileBox, pushApart, stageCards, stageHeight, stageLanes, stageLinks, stampLabel, typeKind, filterActive, entryMatches, plural, timeGrid, todayISO, paletteToken } = root.KeepTheWhy.core;
-const { el, setKids, pill, statusPill, evPill, typePills, typeGlyphSvg } = root.KeepTheWhy.ui;
+const { el, setKids, statusPill, evPill, typePills, typeGlyphSvg } = root.KeepTheWhy.ui;
 
 // One stage view per page: create({ scene, nav, prefs }). The page's scene is `shared` here: `scene` is the stage's
 // own (stageScene — its cards, lanes and links), as it always was.

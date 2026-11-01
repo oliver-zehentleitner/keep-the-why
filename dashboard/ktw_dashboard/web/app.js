@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-const { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, shuffled, compareHits, snippetAt, highlightParts, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf, projectLabel, backlinksUrl, citingOf, hostAnchor, todayISO, addDays, dayDiff, timeGrid, stampLabel, existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan, createdOn, TYPE_KINDS, TYPE_TOKENS, paletteToken, typeKind, SHELF, stageCards, stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight, mergeAuthors, sortAuthors, AUTHOR_SORTS, ownerOf, exportStateUrl, exportVerdict, resolveSee, layoutTick , NO_FILTER, filterActive, entryMatches, fkey } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
+const { plural, typeName, isUuid, rawFileUrl, configLine, normalizeState, hostFileLink, hostTreeLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, shuffled, compareHits, snippetAt, highlightParts, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf, projectLabel, backlinksUrl, citingOf, hostAnchor, seeDay, supersededDay, paletteToken, mergeAuthors, sortAuthors, AUTHOR_SORTS, ownerOf, exportStateUrl, exportVerdict, resolveSee, NO_FILTER, filterActive, entryMatches, fkey } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
 const MD = globalThis.KeepTheWhy.markdown; // ktw-markdown.js
 
 // ---------------------------------------------------------------- prefs (host)
@@ -439,9 +439,6 @@ const api = (path) => PROJECT ? `${path}?project=${encodeURIComponent(PROJECT)}`
 // had then, and the See and Superseded by lines that had been written by then (ktw-core.js, existsAt and friends).
 // an entry of this project goes by this project's repository: with one, an entry without a Git date is not committed
 // yet and exists today only; without one there are no days to go by. A foreign entry's export came from a repository.
-const hasRepo = (e) => SCENE.hasRepo(e);
-const atClock = (e, ext = false) => SCENE.atClock(e, ext);
-const statusNow = (e) => SCENE.statusNow(e);
 const byId = () => Object.fromEntries(SCENE.state.entries.map((e) => [e.id, e]));
 const byUuid = () => Object.fromEntries(SCENE.state.entries.filter((e) => e.uuid).map((e) => [e.uuid, e]));
 // an entry's address is its Id, so a copied link survives a renamed heading or a moved entry; file#anchor only without one
