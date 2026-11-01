@@ -218,6 +218,15 @@ if (!report.updates.dashboardShimmer || report.updates.lintShimmer || !/99\.0\.0
 if (!/→ 99\.0\.0/.test(pd?.textContent || "")) errors.push("outdated entry does not show the newer version");
 report.topbarLinks = { schema: window.document.querySelectorAll('#project-title a[href*="/releases/tag/v"]').length, commit: window.document.querySelectorAll('#project-title a[href*="/commit/"]').length };
 if (S.project.git?.available && /^github\.com\//.test(S.project.git.remote || "") && (report.topbarLinks.schema !== 1 || report.topbarLinks.commit !== 1)) errors.push("top bar links missing: " + JSON.stringify(report.topbarLinks));
+{
+  // a switch the reader sets is kept under its name of old — ktw-<name> in localStorage — so nobody's settings reset
+  await go("#graph");
+  const box = [...window.document.querySelectorAll(".graph-ui label")].find((l) => l.textContent.trim() === "motion")?.querySelector("input");
+  const before = window.localStorage.getItem("ktw-motion");
+  if (box) { box.checked = !box.checked; box.dispatchEvent(new window.Event("change")); }
+  report.prefs = { before, after: window.localStorage.getItem("ktw-motion"), checked: box?.checked };
+  if (!box || report.prefs.after !== (box.checked ? "on" : "off")) errors.push("prefs: the motion switch was not kept as ktw-motion — " + JSON.stringify(report.prefs));
+}
 const input = window.document.getElementById("search"); input.value = "retry"; input.dispatchEvent(new window.Event("input"));
 await tick(50);
 report.search = window.document.querySelectorAll("#search-results a").length;
