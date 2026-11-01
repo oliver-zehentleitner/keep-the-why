@@ -26,7 +26,8 @@ const show = (v) => (typeof v === "number" ? String(round(v)) : typeof v === "st
 const errors = [];
 const html = fs.readFileSync(page, "utf8").replace('<script type="module">', "<script>");
 const tick = (ms) => new Promise((r) => setTimeout(r, ms));
-// the last frame of a canvas: everything since its last clearRect
+// The last frame of a canvas. The graph's painter and the stage's both open every frame with clearRect over the
+// whole canvas, so the calls since the last clearRect are the frame drawn last — the one the settled layout shows.
 const lastFrame = (log) => { const i = log.map((l) => l.startsWith("clearRect(")).lastIndexOf(true); return i < 0 ? log : log.slice(i); };
 // One page per route, opened at that route: the graph keeps its positions across a move to another view, so
 // a move made while it settles would leave it wherever the timing had got it to.
@@ -35,6 +36,7 @@ async function trace(hash) {
   vc.on("jsdomError", (e) => errors.push(`${hash} jsdom: ` + (e.detail?.stack || e.message || e).toString().split("\n").slice(0, 2).join(" | ")));
   vc.on("error", (...a) => errors.push(`${hash} console: ` + a.join(" ")));
   const LOGS = new Map(); // canvas -> [call lines]
+  const state = { pending: 0, frames: 0 };
   const dom = new JSDOM(html, {
     runScripts: "dangerously", pretendToBeVisual: true, url: `http://localhost/${hash}`, virtualConsole: vc,
     beforeParse(window) {
@@ -53,16 +55,25 @@ async function trace(hash) {
           set: (t, k, v) => { log.push(`${String(k)} = ${show(v)}`); return true; },
         });
       };
+      // frames run back to back, and the page's pending ones are counted: settled is when none is asked for
       let frames = 0;
-      window.requestAnimationFrame = (fn) => window.setTimeout(() => fn(++frames * 16), 0);
-      window.cancelAnimationFrame = (id) => window.clearTimeout(id);
+      window.requestAnimationFrame = (fn) => { state.pending++; return window.setTimeout(() => { state.pending--; state.frames++; fn(++frames * 16); }, 0); };
+      window.cancelAnimationFrame = (id) => { state.pending = Math.max(0, state.pending - 1); window.clearTimeout(id); };
       window.matchMedia = () => ({ matches: false });
       window.CSS = { escape: (s) => s.replace(/([^\w-])/g, "\\$1") };
       window.Path2D = class { constructor(d) { this.d = d; } };
       window.addEventListener("error", (e) => errors.push(`${hash} window: ` + e.message));
     },
   });
-  await tick(8000); // frames run back to back: the layout settles well within this
+  // wait until the page asks for no more frames — the graph idles once its layout has settled and the stage once its
+  // cards stand still — for a quarter of a second in a row; a page that never comes to rest fails instead of passing
+  // on whatever frame it had reached
+  const LIMIT = Date.now() + 60000; let quiet = 0;
+  while (quiet < 5) {
+    await tick(50);
+    quiet = state.pending === 0 && state.frames > 0 ? quiet + 1 : 0;
+    if (Date.now() > LIMIT) { errors.push(`${hash}: still drawing after 60 s (${state.frames} frames)`); break; }
+  }
   const canvases = [...dom.window.document.querySelectorAll("canvas")].filter((c) => LOGS.has(c));
   const parts = canvases.map((c, i) => [`## canvas ${i + 1} — ${c.parentElement?.className || "?"}`, ...lastFrame(LOGS.get(c)), ""].join("\n"));
   dom.window.close();
