@@ -14,7 +14,8 @@ import os
 import re
 
 from . import gitinfo
-from .server import WEB_DIR
+from .views import WEB_DIR
+from .views import page as views_page
 
 TITLE_PREFIX = "Keep the Why Dashboard"
 
@@ -24,7 +25,7 @@ PREVIEW_IMAGE = "https://keepthewhy.com/assets/logo-crop-safe.png"
 
 def project_label(state: dict) -> str:
     """`owner/repo` from `canonical`, else from the remote; without either,
-    the project's id — `projectLabel` in lib.js. The id is a file-safe form
+    the project's id — `projectLabel` in ktw-core.js. The id is a file-safe form
     (`owner---repo`), not a name to show where a repository is known."""
     p = state.get("project", {})
     remote = gitinfo.normalize_remote(
@@ -57,7 +58,7 @@ def page_description(state: dict) -> str:
 
 def host_file_link(canonical: str, path: str, anchor: str = "") -> str:
     """A file of a repository as its host renders it, at HEAD — the same URL forms as `hostFileLink` in
-    lib.js, the page's one place for host grammar; this copy serves the page without JavaScript.
+    ktw-core.js, the page's one place for host grammar; this copy serves the page without JavaScript.
     """
     base = (canonical or "").rstrip("/")
     if not base.startswith("https://"):
@@ -111,7 +112,7 @@ def noscript_body(state: dict) -> str:
         )
         items = []
         for e in by_file.get(file, []):
-            # the heading's anchor as the host renders it (GitHub's rule, as `hostAnchor` in lib.js), not the
+            # the heading's anchor as the host renders it (GitHub's rule, as `hostAnchor` in ktw-core.js), not the
             # dashboard's own entry id, which differs for a title with an apostrophe or a dot
             anchor = re.sub(r"[^\w\- ]", "", (e.get("title") or "").lower()).replace(
                 " ", "-"
@@ -152,15 +153,9 @@ def render_page(state: dict) -> str:
         css = fh.read()
     with open(os.path.join(WEB_DIR, "app.js"), encoding="utf-8") as fh:
         js = fh.read()
-    with open(os.path.join(WEB_DIR, "lib.js"), encoding="utf-8") as fh:
-        lib = fh.read()
-    # one self-contained page: the library module is inlined ahead of the app,
-    # its `export` keywords dropped and the app's import line removed
-    js = (
-        re.sub(r"^export ", "", lib, flags=re.M)
-        + "\n"
-        + re.sub(r"^import \{[^}]*\} from \"\./lib\.js\";\n", "", js, flags=re.M)
-    )
+    # one self-contained page: the library's classic scripts (ktw-views.json)
+    # inlined where the placeholder stands, ahead of the app's module
+    html = views_page(html, inline=True)
     data = json.dumps(state, ensure_ascii=False).replace("</", "<\\/")
     for name in ("icon.png", "wordmark.png"):
         with open(os.path.join(WEB_DIR, name), "rb") as fh:

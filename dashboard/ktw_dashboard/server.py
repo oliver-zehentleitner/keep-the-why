@@ -20,8 +20,8 @@ from urllib.parse import parse_qs, urlparse
 from .projects import family, forget, record_open, tree
 from .state import StateBuilder
 from .updates import UpdateChecker
-
-WEB_DIR = os.path.join(os.path.dirname(__file__), "web")
+from .views import WEB_DIR
+from .views import page as views_page
 
 
 class LiveState:
@@ -196,8 +196,9 @@ def make_handler(projects: Projects):
             path = url.path
             pid = parse_qs(url.query).get("project", [None])[0]
             if path in ("/", "/index.html"):
-                with open(os.path.join(WEB_DIR, "index.html"), "rb") as fh:
-                    return self._send(200, fh.read(), "text/html; charset=utf-8")
+                with open(os.path.join(WEB_DIR, "index.html"), encoding="utf-8") as fh:
+                    html = views_page(fh.read())
+                return self._send(200, html.encode("utf-8"), "text/html; charset=utf-8")
             if path == "/api/projects":
                 return self._send(
                     200, projects.listing(), "application/json; charset=utf-8"

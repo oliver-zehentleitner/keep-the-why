@@ -1183,9 +1183,16 @@ class HttpEndpointsTest(FamilyTest):
             with self.assertRaises(urllib.error.HTTPError) as ctx:
                 get("/api/entry?uuid=00000000-0000-4000-8000-000000000000")
             self.assertEqual(ctx.exception.code, 404)
-            # the page's module and its library are served
-            with urllib.request.urlopen(base + "/static/lib.js", timeout=10) as r:
-                self.assertIn("export function groupByFamily", r.read().decode())
+            # the page's library is served, and the page loads it before its module
+            with urllib.request.urlopen(base + "/static/ktw-core.js", timeout=10) as r:
+                self.assertIn("function groupByFamily", r.read().decode())
+            with urllib.request.urlopen(base + "/", timeout=10) as r:
+                page = r.read().decode()
+            self.assertNotIn("<!--ktw:views-->", page)
+            self.assertLess(
+                page.index('<script src="/static/ktw-core.js"></script>'),
+                page.index('<script type="module" src="/static/app.js"></script>'),
+            )
             req = urllib.request.Request(
                 base + "/api/projects/forget",
                 data=json.dumps({"key": self.ws_cache}).encode(),

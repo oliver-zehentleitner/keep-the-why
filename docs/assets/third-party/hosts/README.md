@@ -3,7 +3,7 @@
 The marks in this folder belong to their owners. They are shown on the
 landing page of keepthewhy.com under "Git does the rest", in one row and
 one color, to say which Git hosts the project knows: the same six the
-dashboard's `HOSTS` table carries (`dashboard/ktw_dashboard/web/lib.js`).
+dashboard's `HOSTS` table carries (`dashboard/ktw_dashboard/web/ktw-core.js`).
 Nothing here claims endorsement by or affiliation with any of them.
 
 Origin: [Simple Icons](https://simpleicons.org/) 16.34.0, CC0, fetched
