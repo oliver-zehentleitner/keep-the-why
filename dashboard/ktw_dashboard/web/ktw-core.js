@@ -710,6 +710,42 @@ function sortAuthors(rows, key, dir) {
   return [...rows].sort(cmp);
 }
 
+// The page's places, as a route object, and the hash grammar the dashboard
+// writes them in. Views name places by route ({ view: "entry", uuid }); the
+// host's nav turns a route into a URL and back — the dashboard's nav writes
+// this grammar into the page's hash, another host maps routes into its own router.
+// The grammar is the one every link and bookmark already uses:
+// #entry/<uuid>, #topic/<file>, #timeline/<day>, #search/<scope>/<q>,
+// #thought/<a,b,…>, #ref/<canonical>/<uuid>, a page by its name (#graph),
+// and #graph/family, an old link to the family graph (alias: "family").
+const PAGES = ["overview", "graph", "globe", "timeline", "authors", "queues", "findings", "family", "projects", "friends", "thoughts"];
+const decodePart = (s) => { try { return decodeURIComponent(s); } catch { return s; } }; // a malformed escape stays as written
+function parseRoute(hash) {
+  const r = String(hash || "").replace(/^#/, "");
+  if (!r) return { view: "overview" };
+  if (PAGES.includes(r)) return { view: r };
+  if (r === "graph/family") return { view: "graph", alias: "family" };
+  if (r.startsWith("timeline/")) return { view: "timeline", day: r.slice(9) || null };
+  if (r.startsWith("topic/")) return { view: "topic", file: r.slice(6) };
+  if (r.startsWith("entry/")) return { view: "entry", uuid: decodePart(r.slice(6)) };
+  if (r.startsWith("thought/")) return { view: "thought", refs: r.slice(8).split(",").filter(Boolean).map(decodePart) };
+  if (r.startsWith("ref/")) { const cut = r.lastIndexOf("/"); return { view: "ref", canonical: decodePart(r.slice(4, cut)), uuid: r.slice(cut + 1) }; }
+  if (r.startsWith("search/")) { const [, scope, ...q] = r.split("/"); return { view: "search", scope, q: decodePart(q.join("/")) }; }
+  return { view: "overview", unknown: r }; // a hash no place answers to shows the overview, as it always has
+}
+function formatRoute(route) {
+  const v = route?.view || "overview";
+  if (v === "timeline") return route.day ? `#timeline/${route.day}` : "#timeline";
+  if (v === "graph" && route.alias === "family") return "#graph/family";
+  if (v === "topic") return `#topic/${route.file}`;
+  if (v === "entry") return `#entry/${encodeURIComponent(route.uuid)}`;
+  if (v === "thought") return `#thought/${(route.refs || []).map(encodeURIComponent).join(",")}`;
+  if (v === "ref") return `#ref/${encodeURIComponent(route.canonical)}/${route.uuid}`;
+  if (v === "search") return `#search/${route.scope}/${encodeURIComponent(route.q)}`;
+  return PAGES.includes(v) ? `#${v}` : "#overview";
+}
+const routes = Object.freeze({ PAGES, parse: parseRoute, format: formatRoute });
+
 const KTW = (root.KeepTheWhy = root.KeepTheWhy || {});
 KTW.core = Object.freeze({
   sameCanonical, exportStateUrl, exportVerdict,
@@ -722,6 +758,6 @@ KTW.core = Object.freeze({
   existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan, timeGrid, stampLabel,
   TYPE_KINDS, TYPE_TOKENS, PALETTE_SIZE, paletteToken, typeKind, weekStart, SHELF, stageCards,
   stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight, mergeAuthors,
-  AUTHOR_SORTS, sortAuthors,
+  AUTHOR_SORTS, sortAuthors, routes,
 });
 })(globalThis);
