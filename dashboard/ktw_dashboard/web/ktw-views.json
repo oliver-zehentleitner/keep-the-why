@@ -4,6 +4,7 @@
   "state": 2,
   "scripts": [
     "ktw-core.js",
+    "ktw-ui.js",
     "ktw-scene.js",
     "ktw-markdown.js",
     "ktw-graph.js"
