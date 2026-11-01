@@ -66,14 +66,7 @@ function hostPath(url) {
   return HOST_PATHS.get(h.name);
 }
 const miniView = (g) => (g.miniView ||= { scale: 1, ox: 0, oy: 0, userMoved: false, needFit: true, fitScale: 0 }); // the small graph's own view of a graph the page may show too
-// A graph that is the scene's layout source — the stage's, or a copy that shares its nodes (`runner`, `of`) —
-// publishes its positions after every step; it counts as settled once both it and its copy have.
-function publishLayout(g, { force = false } = {}) {
-  const src = scene.layoutSource;
-  if (!src || (g !== src && g.of !== src)) return;
-  if (!force && g.alpha <= 0.003 && scene.layoutSettled) return;
-  scene.publishLayout(src.nodes, { settled: Math.min(src.alpha, src.runner?.alpha ?? 1) <= 0.01 });
-}
+const publishLayout = (g, opts) => scene.publishFrom(g, opts); // the scene's (ktw-scene.js publishFrom)
 function runGraph(canvas, g, opts = {}) {
   const mini = !!opts.mini;
   const V = mini ? miniView(g) : g; // the view — zoom and offset — belongs to the canvas: the side pane's small graph keeps its own, the page's survives a visit elsewhere

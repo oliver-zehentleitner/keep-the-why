@@ -55,6 +55,14 @@ function create({ state = null, self = null, day = null, scope = "project" } = {
       if (settled) scene.layoutSettled = true;
       emit("layout");
     },
+    // a graph that is the layout source — or a copy sharing its nodes (`of`) — publishes after a step; settled
+    // once both it and its copy (`runner`) are; a step that moved nothing after that publishes nothing
+    publishFrom(g, { force = false } = {}) {
+      const src = scene.layoutSource;
+      if (!src || (g !== src && g.of !== src)) return;
+      if (!force && g.alpha <= 0.003 && scene.layoutSettled) return;
+      scene.publishLayout(src.nodes, { settled: Math.min(src.alpha, src.runner?.alpha ?? 1) <= 0.01 });
+    },
     resetLayout(source = null) { layout.clear(); scene.layoutSettled = false; scene.layoutSource = source; },
     // The layout for these nodes and links: the source's, or — with no source — settled here at once, without a
     // canvas (core settleLayout), so a view that needs positions gets them with no graph drawn.
