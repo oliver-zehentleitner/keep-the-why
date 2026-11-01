@@ -1,0 +1,172 @@
+# #entry/682e7ab6-125c-459f-9c67-a3c6b217d8ef
+
+## #main
+<div class="reader open">
+  <div class="crumbs">
+    <a href="#overview">
+      "Overview"
+    "/"
+    <a href="#topic/storage.md">
+      "Storage"
+    "/ line 3"
+    <button class="share-btn" title="copy a link to this entry — the project's published dashboard:\nhttps://acme.example/keep-the-why-dashboard/#entry/682e7ab6-125c-459f-9c67-a3c6b217d8ef" type="button">
+      "⧉ copy link"
+    <a class="ext share-btn source-link" href="https://github.com/acme/widget/blob/main/context/storage.md#writes-retry-three-times-on-a-busy-lock" rel="noopener" target="_blank">
+      "open source"
+      <svg aria-hidden="true" class="ext-icon" viewBox="0 0 24 24">
+        <path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z">
+  <h1>
+    "Writes retry three times on a busy lock"
+  <div class="fields">
+    <span class="pill type">
+      "workaround"
+    <span class="pill status-open">
+      "open"
+    <span class="pill ev-unknown">
+      "unknown"
+    <span class="pill">
+      "Source: code reading"
+  <div class="body">
+    <p>
+      "Writes retry three times when the lock is busy, with no backoff."
+    <div class="label why-open">
+      <b>
+        "Why this needs an answer"
+      <p>
+        "nobody knows where the three came from, or whether a backoff was ever tried."
+  <div class="body refs-box">
+    <h3>
+      "Referenced by (See)"
+    <div class="ref">
+      <a href="#entry/cc7ef11a-f83d-4d95-b45c-d43639003f41">
+        "The API is versioned in the path"
+      <span class="note">
+        "· API"
+  <div class="pager">
+    <span>
+    <a href="#entry/190b1989-a347-471b-8463-4f83b3cfff92">
+      "The 2026-03 lock storm →"
+
+## #details
+<div class="pane-width" title="the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details">
+  <span class="label">
+    "Width"
+  <span class="mini-width">
+    <button class type="button">
+      "1×"
+    <button class="on" type="button">
+      "2×"
+    <button class type="button">
+      "3×"
+    <button class type="button">
+      "½"
+<h3>
+  "Entry"
+<div class="kv">
+  <span class="k">
+    "Id"
+  <span class="v mono" title="the entry's address — what See and Superseded by lines resolve to">
+    "682e7ab6-125c-459f-9c67-a3c6b217d8ef"
+  <span class="k">
+    "at"
+  <span class="v mono">
+    <a class="gh" href="https://github.com/acme/widget/blob/main/context/storage.md#writes-retry-three-times-on-a-busy-lock" rel="noopener" target="_blank" title="open on the host">
+      "storage.md#writes-retry-three-times-on-a-busy-lock"
+  <span class="k">
+    "type"
+  <span class="v">
+    "workaround"
+  <span class="k">
+    "status"
+  <span class="v">
+    <span class="pill status-open">
+      "open"
+  <span class="k">
+    "evidence"
+  <span class="v">
+    <span class="pill ev-unknown">
+      "unknown"
+  <span class="k">
+    "source"
+  <span class="v">
+    "code reading"
+<h3>
+  "Git"
+<div class="kv">
+  <span class="k">
+    "created"
+  <span class="v">
+    <a class="author" href="https://github.com/acme/widget/commit/c385d65" rel="noopener" target="_blank" title="Bob Example — open the profile on the host (looked up from commit c385d65)">
+      "Bob Example"
+    "· 2026-03-20 ·"
+    <code>
+      "c385d65"
+  <span class="k">
+    "last touched"
+  <span class="v">
+    <a class="author" href="https://github.com/acme/widget/commit/c385d65" rel="noopener" target="_blank" title="Bob Example — open the profile on the host (looked up from commit c385d65)">
+      "Bob Example"
+    "· 2026-03-20 ·"
+    <code>
+      "c385d65"
+<h3>
+  "Status history"
+<ul class="hist">
+  <li class="open">
+    "open"
+    <div class="d">
+      <a class="author" href="https://github.com/acme/widget/commit/c385d65" rel="noopener" target="_blank" title="Bob Example — open the profile on the host (looked up from commit c385d65)">
+        "Bob Example"
+      "· 2026-03-20 · c385d65"
+<h3>
+  "Backlinks (2)"
+<a class="backlink" href="#entry/cc7ef11a-f83d-4d95-b45c-d43639003f41">
+  "The API is versioned in the path"
+  <div class="note">
+    "API"
+<a class="backlink" href="#entry/3c80c624-2274-497a-a1f0-d8ff65b0e0c3">
+  "Sync waits for the snapshot before replaying the buffer"
+  <div class="note">
+    "Sync"
+<h3>
+  "Linked after this (3)"
+<p class="note">
+  "This entry is in question (open); these later entries are linked after it — check whether they depend on it."
+<a class="backlink" href="#entry/cc7ef11a-f83d-4d95-b45c-d43639003f41">
+  "The API is versioned in the path"
+  <div class="note">
+    "acme---widget"
+<a class="backlink" href="#entry/f5383416-90c8-4c5c-affc-01c3c67d0518">
+  "Pagination uses opaque cursors"
+  <div class="note">
+    "acme---widget"
+<a class="backlink" href="#entry/f5ac4f25-a9f1-490a-a4ca-62d5f0db4a06">
+  "Errors carry a stable code beside the message"
+  <div class="note">
+    "acme---widget"
+<h3>
+  "In thoughts (1)"
+<a class="backlink" href="#thought/682e7ab6-125c-459f-9c67-a3c6b217d8ef,cc7ef11a-f83d-4d95-b45c-d43639003f41,f5383416-90c8-4c5c-affc-01c3c67d0518,f5ac4f25-a9f1-490a-a4ca-62d5f0db4a06" title="Writes retry three times on a busy lock\n→ The API is versioned in the path\n→ Pagination uses opaque cursors\n→ Errors carry a stable code beside the message">
+  "Writes retry three times on a bu… → Errors carry a stable code besid…"
+  <div class="note">
+    "step 1 of 4 · starts unknown"
+<h3>
+  "Graph"
+<div class="mini tall">
+  <canvas height="0" width="0">
+  <span class="mini-seg">
+    <button class="on" title="this entry's or topic's neighbourhood" type="button">
+      "near"
+    <button class title="the whole project" type="button">
+      "project"
+  <span class="mini-hint">
+    "click to open"
+  <span class="mini-corner">
+    <button class="mini-corner-btn" title="fit the view: everything in the box" type="button">
+      "fit"
+    <button class="mini-corner-btn" title="let go of the held thought — every node alike again (Esc, on a page without a reset of its own)" type="button">
+      "reset"
+  <button class="mini-open" title="open the full graph — the same level, centred on what is shown here" type="button">
+    "⤢ full graph"
+  "null"
+  <div class="mini-filters graph-ui" hidden>

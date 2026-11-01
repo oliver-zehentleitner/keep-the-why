@@ -1,0 +1,812 @@
+{
+ "anonymized": false,
+ "authors": [
+  {
+   "created": 5,
+   "evidence": {
+    "confirmed": 3,
+    "inferred": 2
+   },
+   "first": "2026-03-02",
+   "last": "2026-04-15",
+   "name": "Alice Example",
+   "superseded": 0,
+   "touched": 1
+  },
+  {
+   "created": 3,
+   "evidence": {
+    "confirmed": 2,
+    "unknown": 1
+   },
+   "first": "2026-03-20",
+   "last": "2026-06-01",
+   "name": "Bob Example",
+   "superseded": 0,
+   "touched": 4
+  },
+  {
+   "created": 3,
+   "evidence": {
+    "confirmed": 1,
+    "inferred": 1,
+    "unknown": 1
+   },
+   "first": "2026-05-10",
+   "last": "2026-05-10",
+   "name": "Carol Example",
+   "superseded": 1,
+   "touched": 6
+  }
+ ],
+ "dashboard": "0.0.0-fixture",
+ "entries": [
+  {
+   "body": {
+    "consequence": null,
+    "considered": "a version header — invisible in logs and links.",
+    "reason": null,
+    "rejected": [],
+    "text": "Every route starts with `/v1/`.\n\n**Considered:** a version header — invisible in logs and links.",
+    "why_open": null
+   },
+   "end_line": 14,
+   "evidence": "inferred",
+   "file": "api.md",
+   "findings": [],
+   "git": {
+    "created": {
+     "author": "Alice Example",
+     "commit": "f7c45b1",
+     "date": "2026-04-15",
+     "time": "2026-04-15T09:15:00Z"
+    },
+    "last_touched": {
+     "author": "Alice Example",
+     "commit": "f7c45b1",
+     "date": "2026-04-15",
+     "time": "2026-04-15T09:15:00Z"
+    },
+    "status_history": [
+     {
+      "author": "Alice Example",
+      "commit": "f7c45b1",
+      "date": "2026-04-15",
+      "status": "pending-confirmation",
+      "time": "2026-04-15T09:15:00Z"
+     }
+    ]
+   },
+   "id": "api.md#the-api-is-versioned-in-the-path",
+   "line": 3,
+   "refs": [
+    "storage.md"
+   ],
+   "revisit_when": null,
+   "see": [
+    {
+     "anchor": "writes-retry-three-times-on-a-busy-lock",
+     "date": "2026-04-15",
+     "file": "storage.md",
+     "locator": "storage.md#writes-retry-three-times-on-a-busy-lock",
+     "remote": null,
+     "uuid": "682e7ab6-125c-459f-9c67-a3c6b217d8ef"
+    }
+   ],
+   "source": null,
+   "status": "pending-confirmation",
+   "superseded_by": null,
+   "title": "The API is versioned in the path",
+   "type": [
+    "decision"
+   ],
+   "uuid": "cc7ef11a-f83d-4d95-b45c-d43639003f41",
+   "verification": null
+  },
+  {
+   "body": {
+    "consequence": null,
+    "considered": null,
+    "reason": null,
+    "rejected": [],
+    "text": "A response larger than one megabyte is cut and marked as cut.",
+    "why_open": null
+   },
+   "end_line": 26,
+   "evidence": "confirmed",
+   "file": "api.md",
+   "findings": [],
+   "git": {
+    "created": {
+     "author": "Alice Example",
+     "commit": "f7c45b1",
+     "date": "2026-04-15",
+     "time": "2026-04-15T09:15:00Z"
+    },
+    "last_touched": {
+     "author": "Bob Example",
+     "commit": "50c2216",
+     "date": "2026-06-01",
+     "time": "2026-06-01T08:00:00Z"
+    },
+    "status_history": [
+     {
+      "author": "Alice Example",
+      "commit": "f7c45b1",
+      "date": "2026-04-15",
+      "status": "needs-review",
+      "time": "2026-04-15T09:15:00Z"
+     },
+     {
+      "author": "Bob Example",
+      "commit": "50c2216",
+      "date": "2026-06-01",
+      "status": "active",
+      "time": "2026-06-01T08:00:00Z"
+     }
+    ]
+   },
+   "id": "api.md#responses-are-capped-at-one-megabyte",
+   "line": 15,
+   "refs": [],
+   "revisit_when": "the cap is raised by the gateway",
+   "see": [],
+   "source": "maintainer interview, 2026-04-14",
+   "status": "active",
+   "superseded_by": null,
+   "title": "Responses are capped at one megabyte",
+   "type": [
+    "constraint"
+   ],
+   "uuid": "65568f64-aa13-4915-878d-d5cfe3479e64",
+   "verification": "contradicted — the gateway's limit is two megabytes since its 2026-05 update"
+  },
+  {
+   "body": {
+    "consequence": null,
+    "considered": null,
+    "reason": null,
+    "rejected": [
+     "page numbers — they skip and repeat rows while the table changes underneath."
+    ],
+    "text": "Cursors are opaque strings; offsets are not offered.\n\n**Rejected alternative:** page numbers — they skip and repeat rows while the table changes underneath.",
+    "why_open": null
+   },
+   "end_line": 39,
+   "evidence": "confirmed",
+   "file": "api.md",
+   "findings": [],
+   "git": {
+    "created": {
+     "author": "Alice Example",
+     "commit": "f7c45b1",
+     "date": "2026-04-15",
+     "time": "2026-04-15T09:15:00Z"
+    },
+    "last_touched": {
+     "author": "Bob Example",
+     "commit": "50c2216",
+     "date": "2026-06-01",
+     "time": "2026-06-01T08:00:00Z"
+    },
+    "status_history": [
+     {
+      "author": "Alice Example",
+      "commit": "f7c45b1",
+      "date": "2026-04-15",
+      "status": "active",
+      "time": "2026-04-15T09:15:00Z"
+     }
+    ]
+   },
+   "id": "api.md#pagination-uses-opaque-cursors",
+   "line": 27,
+   "refs": [],
+   "revisit_when": null,
+   "see": [
+    {
+     "anchor": "the-api-is-versioned-in-the-path",
+     "date": "2026-04-15",
+     "file": "api.md",
+     "locator": "api.md#the-api-is-versioned-in-the-path",
+     "remote": null,
+     "uuid": "cc7ef11a-f83d-4d95-b45c-d43639003f41"
+    }
+   ],
+   "source": "design review, 2026-04-15",
+   "status": "active",
+   "superseded_by": null,
+   "title": "Pagination uses opaque cursors",
+   "type": [
+    "decision"
+   ],
+   "uuid": "f5383416-90c8-4c5c-affc-01c3c67d0518",
+   "verification": null
+  },
+  {
+   "body": {
+    "consequence": null,
+    "considered": null,
+    "reason": "clients matched on messages and broke on every rewording.",
+    "rejected": [],
+    "text": "Each error has a code that never changes and a message that may.\n\n**Reason:** clients matched on messages and broke on every rewording.",
+    "why_open": null
+   },
+   "end_line": 51,
+   "evidence": "confirmed",
+   "file": "api.md",
+   "findings": [],
+   "git": {
+    "created": {
+     "author": "Bob Example",
+     "commit": "50c2216",
+     "date": "2026-06-01",
+     "time": "2026-06-01T08:00:00Z"
+    },
+    "last_touched": {
+     "author": "Bob Example",
+     "commit": "50c2216",
+     "date": "2026-06-01",
+     "time": "2026-06-01T08:00:00Z"
+    },
+    "status_history": [
+     {
+      "author": "Bob Example",
+      "commit": "50c2216",
+      "date": "2026-06-01",
+      "status": "active",
+      "time": "2026-06-01T08:00:00Z"
+     }
+    ]
+   },
+   "id": "api.md#errors-carry-a-stable-code-beside-the-message",
+   "line": 40,
+   "refs": [],
+   "revisit_when": null,
+   "see": [
+    {
+     "anchor": "pagination-uses-opaque-cursors",
+     "date": "2026-06-01",
+     "file": "api.md",
+     "locator": "api.md#pagination-uses-opaque-cursors",
+     "remote": null,
+     "uuid": "f5383416-90c8-4c5c-affc-01c3c67d0518"
+    }
+   ],
+   "source": "[issue 12](https://github.com/acme/widget/issues/12)",
+   "status": "active",
+   "superseded_by": null,
+   "title": "Errors carry a stable code beside the message",
+   "type": [
+    "decision"
+   ],
+   "uuid": "f5ac4f25-a9f1-490a-a4ca-62d5f0db4a06",
+   "verification": null
+  },
+  {
+   "body": {
+    "consequence": null,
+    "considered": null,
+    "reason": null,
+    "rejected": [],
+    "text": "Writes retry three times when the lock is busy, with no backoff.\n\n**Why this needs an answer:** nobody knows where the three came from, or whether a backoff was ever tried.",
+    "why_open": "nobody knows where the three came from, or whether a backoff was ever tried."
+   },
+   "end_line": 14,
+   "evidence": "unknown",
+   "file": "storage.md",
+   "findings": [],
+   "git": {
+    "created": {
+     "author": "Bob Example",
+     "commit": "c385d65",
+     "date": "2026-03-20",
+     "time": "2026-03-20T14:30:00Z"
+    },
+    "last_touched": {
+     "author": "Bob Example",
+     "commit": "c385d65",
+     "date": "2026-03-20",
+     "time": "2026-03-20T14:30:00Z"
+    },
+    "status_history": [
+     {
+      "author": "Bob Example",
+      "commit": "c385d65",
+      "date": "2026-03-20",
+      "status": "open",
+      "time": "2026-03-20T14:30:00Z"
+     }
+    ]
+   },
+   "id": "storage.md#writes-retry-three-times-on-a-busy-lock",
+   "line": 3,
+   "refs": [],
+   "revisit_when": null,
+   "see": [],
+   "source": "code reading",
+   "status": "open",
+   "superseded_by": null,
+   "title": "Writes retry three times on a busy lock",
+   "type": [
+    "workaround"
+   ],
+   "uuid": "682e7ab6-125c-459f-9c67-a3c6b217d8ef",
+   "verification": null
+  },
+  {
+   "body": {
+    "consequence": "the sync now waits for the snapshot (see the sync topic).",
+    "considered": null,
+    "reason": null,
+    "rejected": [],
+    "text": "A burst of retries held the lock for minutes and stalled the sync.\n\n**Consequence:** the sync now waits for the snapshot (see the sync topic).",
+    "why_open": null
+   },
+   "end_line": 27,
+   "evidence": "confirmed",
+   "file": "storage.md",
+   "findings": [],
+   "git": {
+    "created": {
+     "author": "Bob Example",
+     "commit": "c385d65",
+     "date": "2026-03-20",
+     "time": "2026-03-20T14:30:00Z"
+    },
+    "last_touched": {
+     "author": "Carol Example",
+     "commit": "5913347",
+     "date": "2026-05-10",
+     "time": "2026-05-10T16:45:00Z"
+    },
+    "status_history": [
+     {
+      "author": "Bob Example",
+      "commit": "c385d65",
+      "date": "2026-03-20",
+      "status": "active",
+      "time": "2026-03-20T14:30:00Z"
+     }
+    ]
+   },
+   "id": "storage.md#the-2026-03-lock-storm",
+   "line": 15,
+   "refs": [
+    "sync.md"
+   ],
+   "revisit_when": null,
+   "see": [
+    {
+     "anchor": "sync-waits-for-the-snapshot-before-replaying-the-buffer",
+     "date": "2026-03-20",
+     "file": "sync.md",
+     "locator": "sync.md#sync-waits-for-the-snapshot-before-replaying-the-buffer",
+     "remote": null,
+     "uuid": "3c80c624-2274-497a-a1f0-d8ff65b0e0c3"
+    }
+   ],
+   "source": "post-mortem, 2026-03-18",
+   "status": "active",
+   "superseded_by": null,
+   "title": "The 2026-03 lock storm",
+   "type": [
+    "incident"
+   ],
+   "uuid": "190b1989-a347-471b-8463-4f83b3cfff92",
+   "verification": null
+  },
+  {
+   "body": {
+    "consequence": null,
+    "considered": null,
+    "reason": null,
+    "rejected": [],
+    "text": "Temporary files are written next to the database file, not to the system's temp directory.",
+    "why_open": null
+   },
+   "end_line": 35,
+   "evidence": "unknown",
+   "file": "storage.md",
+   "findings": [],
+   "git": {
+    "created": {
+     "author": "Carol Example",
+     "commit": "5913347",
+     "date": "2026-05-10",
+     "time": "2026-05-10T16:45:00Z"
+    },
+    "last_touched": {
+     "author": "Carol Example",
+     "commit": "5913347",
+     "date": "2026-05-10",
+     "time": "2026-05-10T16:45:00Z"
+    },
+    "status_history": [
+     {
+      "author": "Carol Example",
+      "commit": "5913347",
+      "date": "2026-05-10",
+      "status": "active",
+      "time": "2026-05-10T16:45:00Z"
+     }
+    ]
+   },
+   "id": "storage.md#temporary-files-live-beside-the-database",
+   "line": 28,
+   "refs": [],
+   "revisit_when": null,
+   "see": [],
+   "source": null,
+   "status": "active",
+   "superseded_by": null,
+   "title": "Temporary files live beside the database",
+   "type": [
+    "undefined — no category fits a file location"
+   ],
+   "uuid": "c1c37ec2-933b-4ca3-8c16-0a61f908f4bd",
+   "verification": null
+  },
+  {
+   "body": {
+    "consequence": null,
+    "considered": null,
+    "reason": "applying buffered events before the snapshot landed caused\nduplicate-then-overwritten state. The ordering is not visible in the code.",
+    "rejected": [
+     "replay in parallel and reconcile — the reconciliation\nwas hard to get right, and the ordering made it unnecessary."
+    ],
+    "text": "The sync step waits for a full snapshot before it applies any buffered event,\neven though this adds latency on a cold start.\n\n**Reason:** applying buffered events before the snapshot landed caused\nduplicate-then-overwritten state. The ordering is not visible in the code.\n\n**Rejected alternative:** replay in parallel and reconcile — the reconciliation\nwas hard to get right, and the ordering made it unnecessary.\n\n- cold start: about two seconds slower\n- warm start: unchanged\n  and no extra memory either\n\n```\nsnapshot = fetch_snapshot()\nreplay(buffer, after=snapshot.version)\n```\n\nSee `storage.md` and [the protocol notes](https://example.org/sync-protocol).",
+    "why_open": null
+   },
+   "end_line": 32,
+   "evidence": "confirmed",
+   "file": "sync.md",
+   "findings": [],
+   "git": {
+    "created": {
+     "author": "Alice Example",
+     "commit": "349ed1b",
+     "date": "2026-03-02",
+     "time": "2026-03-02T10:00:00Z"
+    },
+    "last_touched": {
+     "author": "Carol Example",
+     "commit": "5913347",
+     "date": "2026-05-10",
+     "time": "2026-05-10T16:45:00Z"
+    },
+    "status_history": [
+     {
+      "author": "Alice Example",
+      "commit": "349ed1b",
+      "date": "2026-03-02",
+      "status": "active",
+      "time": "2026-03-02T10:00:00Z"
+     },
+     {
+      "author": "Carol Example",
+      "commit": "5913347",
+      "date": "2026-05-10",
+      "status": "superseded",
+      "time": "2026-05-10T16:45:00Z"
+     }
+    ]
+   },
+   "id": "sync.md#sync-waits-for-the-snapshot-before-replaying-the-buffer",
+   "line": 3,
+   "refs": [
+    "storage.md"
+   ],
+   "revisit_when": "the snapshot format changes",
+   "see": [],
+   "source": "maintainer interview, 2026-03-01",
+   "status": "superseded",
+   "superseded_by": "756f14cb-61c6-4ff2-8dea-29f28c030ca5",
+   "title": "Sync waits for the snapshot before replaying the buffer",
+   "type": [
+    "decision"
+   ],
+   "uuid": "3c80c624-2274-497a-a1f0-d8ff65b0e0c3",
+   "verification": null
+  },
+  {
+   "body": {
+    "consequence": null,
+    "considered": null,
+    "reason": "read from the feed's rate header, not confirmed by its owner.",
+    "rejected": [],
+    "text": "The upstream feed batches events and sends at most one batch per second; nothing in this project can make it faster.\n\n**Reason:** read from the feed's rate header, not confirmed by its owner.",
+    "why_open": null
+   },
+   "end_line": 44,
+   "evidence": "inferred",
+   "file": "sync.md",
+   "findings": [],
+   "git": {
+    "created": {
+     "author": "Alice Example",
+     "commit": "349ed1b",
+     "date": "2026-03-02",
+     "time": "2026-03-02T10:00:00Z"
+    },
+    "last_touched": {
+     "author": "Carol Example",
+     "commit": "5913347",
+     "date": "2026-05-10",
+     "time": "2026-05-10T16:45:00Z"
+    },
+    "status_history": [
+     {
+      "author": "Alice Example",
+      "commit": "349ed1b",
+      "date": "2026-03-02",
+      "status": "active",
+      "time": "2026-03-02T10:00:00Z"
+     }
+    ]
+   },
+   "id": "sync.md#events-arrive-at-most-once-per-second",
+   "line": 33,
+   "refs": [],
+   "revisit_when": null,
+   "see": [],
+   "source": "commit history",
+   "status": "active",
+   "superseded_by": null,
+   "title": "Events arrive at most once per second",
+   "type": [
+    "constraint"
+   ],
+   "uuid": "4bc883fc-f8ef-4d90-b90d-0a669f375a70",
+   "verification": null
+  },
+  {
+   "body": {
+    "consequence": "a snapshot without a version is refused, never guessed.",
+    "considered": null,
+    "reason": "the version makes the ordering explicit, so waiting is no longer\nneeded; cold starts lose the two seconds again.",
+    "rejected": [],
+    "text": "Snapshots carry a version, and the buffer is replayed from that version on,\nwithout waiting for the snapshot to finish loading.\n\n**Reason:** the version makes the ordering explicit, so waiting is no longer\nneeded; cold starts lose the two seconds again.\n\n**Consequence:** a snapshot without a version is refused, never guessed.\n\n1. fetch the snapshot header\n2. replay the buffer from its version\n3. load the rest of the snapshot\n\nFollows [sync.md](sync.md#sync-waits-for-the-snapshot-before-replaying-the-buffer).",
+    "why_open": null
+   },
+   "end_line": 67,
+   "evidence": "confirmed",
+   "file": "sync.md",
+   "findings": [],
+   "git": {
+    "created": {
+     "author": "Carol Example",
+     "commit": "5913347",
+     "date": "2026-05-10",
+     "time": "2026-05-10T16:45:00Z"
+    },
+    "last_touched": {
+     "author": "Carol Example",
+     "commit": "5913347",
+     "date": "2026-05-10",
+     "time": "2026-05-10T16:45:00Z"
+    },
+    "status_history": [
+     {
+      "author": "Carol Example",
+      "commit": "5913347",
+      "date": "2026-05-10",
+      "status": "active",
+      "time": "2026-05-10T16:45:00Z"
+     }
+    ]
+   },
+   "id": "sync.md#sync-replays-the-buffer-against-a-versioned-snapshot",
+   "line": 45,
+   "refs": [],
+   "revisit_when": null,
+   "see": [
+    {
+     "anchor": "sync-waits-for-the-snapshot-before-replaying-the-buffer",
+     "date": "2026-05-10",
+     "file": "sync.md",
+     "locator": "sync.md#sync-waits-for-the-snapshot-before-replaying-the-buffer",
+     "remote": null,
+     "uuid": "3c80c624-2274-497a-a1f0-d8ff65b0e0c3"
+    }
+   ],
+   "source": "maintainer conversation, 2026-05-09",
+   "status": "active",
+   "superseded_by": null,
+   "title": "Sync replays the buffer against a versioned snapshot",
+   "type": [
+    "decision"
+   ],
+   "uuid": "756f14cb-61c6-4ff2-8dea-29f28c030ca5",
+   "verification": null
+  },
+  {
+   "body": {
+    "consequence": null,
+    "considered": null,
+    "reason": null,
+    "rejected": [],
+    "text": "Replicas may disagree by up to a second; the versioned replay absorbs it.",
+    "why_open": null
+   },
+   "end_line": 77,
+   "evidence": "inferred",
+   "file": "sync.md",
+   "findings": [],
+   "git": {
+    "created": {
+     "author": "Carol Example",
+     "commit": "5913347",
+     "date": "2026-05-10",
+     "time": "2026-05-10T16:45:00Z"
+    },
+    "last_touched": {
+     "author": "Carol Example",
+     "commit": "5913347",
+     "date": "2026-05-10",
+     "time": "2026-05-10T16:45:00Z"
+    },
+    "status_history": [
+     {
+      "author": "Carol Example",
+      "commit": "5913347",
+      "date": "2026-05-10",
+      "status": "active",
+      "time": "2026-05-10T16:45:00Z"
+     }
+    ]
+   },
+   "id": "sync.md#clock-skew-between-replicas-is-tolerated-up-to-a-second",
+   "line": 68,
+   "refs": [],
+   "revisit_when": null,
+   "see": [
+    {
+     "anchor": "sync-replays-the-buffer-against-a-versioned-snapshot",
+     "date": "2026-05-10",
+     "file": "sync.md",
+     "locator": "sync.md#sync-replays-the-buffer-against-a-versioned-snapshot",
+     "remote": null,
+     "uuid": "756f14cb-61c6-4ff2-8dea-29f28c030ca5"
+    }
+   ],
+   "source": null,
+   "status": "active",
+   "superseded_by": null,
+   "title": "Clock skew between replicas is tolerated up to a second",
+   "type": [
+    "constraint",
+    "decision"
+   ],
+   "uuid": "c63efee2-97dd-452a-885f-c793001131b7",
+   "verification": null
+  }
+ ],
+ "exported": true,
+ "findings": {
+  "errors": 0,
+  "items": [
+   {
+    "code": "W201",
+    "line": 0,
+    "message": "context/AGENTS.md is missing (created by setup since 0.10.0; an equivalent doing the same job is fine — then silence this deliberately)",
+    "path": "context/AGENTS.md",
+    "severity": "warning"
+   },
+   {
+    "code": "W201",
+    "line": 0,
+    "message": "context/CLAUDE.md is missing (created by setup since 0.10.0; an equivalent doing the same job is fine — then silence this deliberately)",
+    "path": "context/CLAUDE.md",
+    "severity": "warning"
+   },
+   {
+    "code": "W201",
+    "line": 0,
+    "message": "context/README.md is missing (created by setup since 0.10.0; an equivalent doing the same job is fine — then silence this deliberately)",
+    "path": "context/README.md",
+    "severity": "warning"
+   }
+  ],
+  "warnings": 3
+ },
+ "generated": "2026-06-15T12:00:00Z",
+ "linter": "0.0.0.0-fixture",
+ "project": {
+  "canonical": "https://github.com/acme/widget",
+  "children": [],
+  "config": {
+   "canonical": "https://github.com/acme/widget",
+   "capture-confirmation": "confirm-when-unsure",
+   "context": "`context/`",
+   "context-schema": "0.20.3",
+   "dashboard-state": "https://acme.example/keep-the-why-dashboard/state.json",
+   "id": "acme---widget",
+   "init": "complete",
+   "source-reference": "never"
+  },
+  "config_file": ".keep-the-why",
+  "context": "context/",
+  "dashboard_state": "https://acme.example/keep-the-why-dashboard/state.json",
+  "family_badge": null,
+  "git": {
+   "available": true,
+   "branch": "main",
+   "fork": null,
+   "head": "50c2216",
+   "head_full": "50c2216953a44b41c24297dd8aa28bb57e199977",
+   "project_subdir": "",
+   "remote": "github.com/acme/widget",
+   "shallow": false,
+   "upstream": ""
+  },
+  "id": "acme---widget",
+  "name": "widget",
+  "parent": "",
+  "personal_defaults": {},
+  "root": "",
+  "schema": "0.20.3"
+ },
+ "state-json": 2,
+ "topics": [
+  {
+   "entries": 4,
+   "evidence": {
+    "confirmed": 3,
+    "inferred": 1
+   },
+   "file": "api.md",
+   "index_line": "versioning, limits, pagination and errors",
+   "refs_in": [],
+   "refs_out": [
+    "storage.md"
+   ],
+   "status": {
+    "active": 3,
+    "pending-confirmation": 1
+   },
+   "title": "API"
+  },
+  {
+   "entries": 3,
+   "evidence": {
+    "confirmed": 1,
+    "unknown": 2
+   },
+   "file": "storage.md",
+   "index_line": "locks, retries and where files live",
+   "refs_in": [
+    "api.md",
+    "sync.md"
+   ],
+   "refs_out": [
+    "sync.md"
+   ],
+   "status": {
+    "active": 2,
+    "open": 1
+   },
+   "title": "Storage"
+  },
+  {
+   "entries": 4,
+   "evidence": {
+    "confirmed": 2,
+    "inferred": 2
+   },
+   "file": "sync.md",
+   "index_line": "how the sync orders snapshot and buffer",
+   "refs_in": [
+    "storage.md"
+   ],
+   "refs_out": [
+    "storage.md"
+   ],
+   "status": {
+    "active": 3,
+    "superseded": 1
+   },
+   "title": "Sync"
+  }
+ ]
+}

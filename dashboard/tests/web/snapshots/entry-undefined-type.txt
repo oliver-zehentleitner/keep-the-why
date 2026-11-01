@@ -1,0 +1,131 @@
+# #entry/c1c37ec2-933b-4ca3-8c16-0a61f908f4bd
+
+## #main
+<div class="reader active">
+  <div class="crumbs">
+    <a href="#overview">
+      "Overview"
+    "/"
+    <a href="#topic/storage.md">
+      "Storage"
+    "/ line 28"
+    <button class="share-btn" title="copy a link to this entry — the project's published dashboard:\nhttps://acme.example/keep-the-why-dashboard/#entry/c1c37ec2-933b-4ca3-8c16-0a61f908f4bd" type="button">
+      "⧉ copy link"
+    <a class="ext share-btn source-link" href="https://github.com/acme/widget/blob/main/context/storage.md#temporary-files-live-beside-the-database" rel="noopener" target="_blank">
+      "open source"
+      <svg aria-hidden="true" class="ext-icon" viewBox="0 0 24 24">
+        <path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z">
+  <h1>
+    "Temporary files live beside the database"
+  <div class="fields">
+    <span class="pill type" title="undefined — no category fits a file location">
+      "undefined"
+    <span class="pill status-active">
+      "active"
+    <span class="pill ev-unknown">
+      "unknown"
+  <div class="body">
+    <p>
+      "Temporary files are written next to the database file, not to the system's temp directory."
+  <div class="pager">
+    <a href="#entry/190b1989-a347-471b-8463-4f83b3cfff92">
+      "← The 2026-03 lock storm"
+    <span>
+
+## #details
+<div class="pane-width" title="the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details">
+  <span class="label">
+    "Width"
+  <span class="mini-width">
+    <button class type="button">
+      "1×"
+    <button class="on" type="button">
+      "2×"
+    <button class type="button">
+      "3×"
+    <button class type="button">
+      "½"
+<h3>
+  "Entry"
+<div class="kv">
+  <span class="k">
+    "Id"
+  <span class="v mono" title="the entry's address — what See and Superseded by lines resolve to">
+    "c1c37ec2-933b-4ca3-8c16-0a61f908f4bd"
+  <span class="k">
+    "at"
+  <span class="v mono">
+    <a class="gh" href="https://github.com/acme/widget/blob/main/context/storage.md#temporary-files-live-beside-the-database" rel="noopener" target="_blank" title="open on the host">
+      "storage.md#temporary-files-live-beside-the-database"
+  <span class="k">
+    "type"
+  <span class="v">
+    "undefined — no category fits a file location"
+  <span class="k">
+    "status"
+  <span class="v">
+    <span class="pill status-active">
+      "active"
+  <span class="k">
+    "evidence"
+  <span class="v">
+    <span class="pill ev-unknown">
+      "unknown"
+<h3>
+  "Git"
+<div class="kv">
+  <span class="k">
+    "created"
+  <span class="v">
+    <a class="author" href="https://github.com/acme/widget/commit/5913347" rel="noopener" target="_blank" title="Carol Example — open the profile on the host (looked up from commit 5913347)">
+      "Carol Example"
+    "· 2026-05-10 ·"
+    <code>
+      "5913347"
+  <span class="k">
+    "last touched"
+  <span class="v">
+    <a class="author" href="https://github.com/acme/widget/commit/5913347" rel="noopener" target="_blank" title="Carol Example — open the profile on the host (looked up from commit 5913347)">
+      "Carol Example"
+    "· 2026-05-10 ·"
+    <code>
+      "5913347"
+<h3>
+  "Status history"
+<ul class="hist">
+  <li class="active">
+    "active"
+    <div class="d">
+      <a class="author" href="https://github.com/acme/widget/commit/5913347" rel="noopener" target="_blank" title="Carol Example — open the profile on the host (looked up from commit 5913347)">
+        "Carol Example"
+      "· 2026-05-10 · 5913347"
+<h3>
+  "Backlinks (2)"
+<a class="backlink" href="#entry/cc7ef11a-f83d-4d95-b45c-d43639003f41">
+  "The API is versioned in the path"
+  <div class="note">
+    "API"
+<a class="backlink" href="#entry/3c80c624-2274-497a-a1f0-d8ff65b0e0c3">
+  "Sync waits for the snapshot before replaying the buffer"
+  <div class="note">
+    "Sync"
+<h3>
+  "Graph"
+<div class="mini tall">
+  <canvas height="0" width="0">
+  <span class="mini-seg">
+    <button class="on" title="this entry's or topic's neighbourhood" type="button">
+      "near"
+    <button class title="the whole project" type="button">
+      "project"
+  <span class="mini-hint">
+    "click to open"
+  <span class="mini-corner">
+    <button class="mini-corner-btn" title="fit the view: everything in the box" type="button">
+      "fit"
+    <button class="mini-corner-btn" title="let go of the held thought — every node alike again (Esc, on a page without a reset of its own)" type="button">
+      "reset"
+  <button class="mini-open" title="open the full graph — the same level, centred on what is shown here" type="button">
+    "⤢ full graph"
+  "null"
+  <div class="mini-filters graph-ui" hidden>

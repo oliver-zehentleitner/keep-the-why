@@ -82,3 +82,10 @@ jobs:
 
       - name: Public mode over a stubbed published tree (jsdom)
         run: cd dashboard/tests/web && node public.mjs
+
+      - name: DOM snapshots per route over the frozen fixture (jsdom)
+        # the page's current code over tests/web/fixture/state.json; a difference fails —
+        # if intended, rewrite with --update and name each changed snapshot in the PR
+        run: |
+          python dashboard/tests/web/fixture/make_fixture.py --page /tmp/ktw-fixture.html
+          cd dashboard/tests/web && node snapshot.mjs /tmp/ktw-fixture.html

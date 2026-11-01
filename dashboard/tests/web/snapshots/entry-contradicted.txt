@@ -1,0 +1,154 @@
+# #entry/65568f64-aa13-4915-878d-d5cfe3479e64
+
+## #main
+<div class="reader active">
+  <div class="crumbs">
+    <a href="#overview">
+      "Overview"
+    "/"
+    <a href="#topic/api.md">
+      "API"
+    "/ line 15"
+    <button class="share-btn" title="copy a link to this entry — the project's published dashboard:\nhttps://acme.example/keep-the-why-dashboard/#entry/65568f64-aa13-4915-878d-d5cfe3479e64" type="button">
+      "⧉ copy link"
+    <a class="ext share-btn source-link" href="https://github.com/acme/widget/blob/main/context/api.md#responses-are-capped-at-one-megabyte" rel="noopener" target="_blank">
+      "open source"
+      <svg aria-hidden="true" class="ext-icon" viewBox="0 0 24 24">
+        <path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z">
+  <h1>
+    "Responses are capped at one megabyte"
+  <div class="fields">
+    <span class="pill type">
+      "constraint"
+    <span class="pill status-active">
+      "active"
+    <span class="pill ev-confirmed">
+      "confirmed"
+    <span class="pill">
+      "Source: maintainer interview, 2026-04-14"
+    <span class="pill">
+      "Verification: contradicted"
+  <div class="body">
+    <p>
+      "A response larger than one megabyte is cut and marked as cut."
+  <div class="body">
+    <div class="label">
+      <b>
+        "Revisit when"
+      <p>
+        "the cap is raised by the gateway"
+  <div class="pager">
+    <a href="#entry/cc7ef11a-f83d-4d95-b45c-d43639003f41">
+      "← The API is versioned in the path"
+    <a href="#entry/f5383416-90c8-4c5c-affc-01c3c67d0518">
+      "Pagination uses opaque cursors →"
+
+## #details
+<div class="pane-width" title="the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details">
+  <span class="label">
+    "Width"
+  <span class="mini-width">
+    <button class type="button">
+      "1×"
+    <button class="on" type="button">
+      "2×"
+    <button class type="button">
+      "3×"
+    <button class type="button">
+      "½"
+<h3>
+  "Entry"
+<div class="kv">
+  <span class="k">
+    "Id"
+  <span class="v mono" title="the entry's address — what See and Superseded by lines resolve to">
+    "65568f64-aa13-4915-878d-d5cfe3479e64"
+  <span class="k">
+    "at"
+  <span class="v mono">
+    <a class="gh" href="https://github.com/acme/widget/blob/main/context/api.md#responses-are-capped-at-one-megabyte" rel="noopener" target="_blank" title="open on the host">
+      "api.md#responses-are-capped-at-one-megabyte"
+  <span class="k">
+    "type"
+  <span class="v">
+    "constraint"
+  <span class="k">
+    "status"
+  <span class="v">
+    <span class="pill status-active">
+      "active"
+  <span class="k">
+    "evidence"
+  <span class="v">
+    <span class="pill ev-confirmed">
+      "confirmed"
+  <span class="k">
+    "source"
+  <span class="v">
+    "maintainer interview, 2026-04-14"
+  <span class="k">
+    "verification"
+  <span class="v">
+    "contradicted — the gateway's limit is two megabytes since its 2026-05 update"
+  <span class="k">
+    "revisit when"
+  <span class="v">
+    "the cap is raised by the gateway"
+<h3>
+  "Git"
+<div class="kv">
+  <span class="k">
+    "created"
+  <span class="v">
+    <a class="author" href="https://github.com/acme/widget/commit/f7c45b1" rel="noopener" target="_blank" title="Alice Example — open the profile on the host (looked up from commit f7c45b1)">
+      "Alice Example"
+    "· 2026-04-15 ·"
+    <code>
+      "f7c45b1"
+  <span class="k">
+    "last touched"
+  <span class="v">
+    <a class="author" href="https://github.com/acme/widget/commit/50c2216" rel="noopener" target="_blank" title="Bob Example — open the profile on the host (looked up from commit 50c2216)">
+      "Bob Example"
+    "· 2026-06-01 ·"
+    <code>
+      "50c2216"
+<h3>
+  "Status history"
+<ul class="hist">
+  <li class="needs-review">
+    "needs-review"
+    <div class="d">
+      <a class="author" href="https://github.com/acme/widget/commit/f7c45b1" rel="noopener" target="_blank" title="Alice Example — open the profile on the host (looked up from commit f7c45b1)">
+        "Alice Example"
+      "· 2026-04-15 · f7c45b1"
+  <li class="active">
+    "active"
+    <div class="d">
+      <a class="author" href="https://github.com/acme/widget/commit/50c2216" rel="noopener" target="_blank" title="Bob Example — open the profile on the host (looked up from commit 50c2216)">
+        "Bob Example"
+      "· 2026-06-01 · 50c2216"
+<h3>
+  "Backlinks (0)"
+<p class="empty">
+  "nothing references api.md"
+<h3>
+  "Graph"
+<div class="mini tall">
+  <canvas height="0" width="0">
+  <span class="mini-seg">
+    <button class="on" title="this entry's or topic's neighbourhood" type="button">
+      "near"
+    <button class title="the whole project" type="button">
+      "project"
+  <span class="mini-hint">
+    "click to open"
+  <span class="mini-corner">
+    <button class="mini-corner-btn" title="fit the view: everything in the box" type="button">
+      "fit"
+    <button class="mini-corner-btn" title="let go of the held thought — every node alike again (Esc, on a page without a reset of its own)" type="button">
+      "reset"
+  <button class="mini-open" title="open the full graph — the same level, centred on what is shown here" type="button">
+    "⤢ full graph"
+  "null"
+  <div class="mini-filters graph-ui" hidden>
