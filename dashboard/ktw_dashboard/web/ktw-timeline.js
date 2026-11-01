@@ -9,7 +9,7 @@
 (function (root) {
 "use strict";
 const { TYPE_KINDS, TYPE_TOKENS, SHELF, addDays, createdOn, dayDiff, existsAt, statusAt, linkExistsAt, logDepth, markLinked, percentileBox, pushApart, stageCards, stageHeight, stageLanes, stageLinks, stampLabel, typeKind, filterActive, entryMatches } = root.KeepTheWhy.core;
-const { el, setKids, statusPill, evPill, typeGlyphSvg } = root.KeepTheWhy.ui;
+const { el, setKids, statusPill, evPill, typePills, typeGlyphSvg } = root.KeepTheWhy.ui;
 
 // One stage view per page: create({ scene, nav, prefs }). The page's scene is `shared` here: `scene` is the stage's
 // own (stageScene — its cards, lanes and links), as it always was.
@@ -19,7 +19,6 @@ let ROOT_STYLE = null;
 const token = (name) => (ROOT_STYLE ||= getComputedStyle(document.documentElement)).getPropertyValue(name).trim();
 const isShownByFilter = (e) => entryMatches(e, shared.filter);
 const topicOf = (file) => shared.state.topics.find((t) => t.file === file);
-const byId = () => Object.fromEntries(shared.state.entries.map((e) => [e.id, e]));
 // the host's play state, read while the stage draws (runStage's `playing`): on, how far into the next step, how big a step
 let PLAY = { on: false, frac: 0, jump: 1 };
 // where a card stands: where its node stands in the graph beside, or in a lane per topic — kept per browser
