@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import core from "./core.mjs";
 const {
   esc, plural, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf, projectLabel,
-  parseSupersededBy, kindLabel, typeName, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, shuffled, compareHits, snippetAt, highlight,
+  parseSupersededBy, kindLabel, typeName, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, shuffled, compareHits, snippetAt, highlightParts,
   resolveLocation, bodyProse, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, HOSTS, hostOf, backlinksUrl, citingOf, hostAnchor, ownerOf,
   TYPE_TOKENS, PALETTE_SIZE, paletteToken,
 } = core;
@@ -194,11 +194,13 @@ test("snippetAt cuts around the hit and marks the cuts", () => {
   assert.equal(snippetAt("short  text", 0, 5), "short text");
 });
 
-test("highlight escapes first and marks every term, longest first", () => {
-  assert.equal(highlight("a <b> PicoWS and picows", ["picows"]), "a &lt;b&gt; <mark>PicoWS</mark> and <mark>picows</mark>");
-  assert.equal(highlight("proxy_type", ["proxy", "proxy_type"]), "<mark>proxy_type</mark>");
-  assert.equal(highlight("a.b", ["."]), "a<mark>.</mark>b");
-  assert.equal(highlight("<x>", []), "&lt;x&gt;");
+test("highlightParts cuts the text where terms match, longest first, and builds no markup", () => {
+  const m = (text) => ({ text, mark: true }), t = (text) => ({ text, mark: false });
+  assert.deepEqual(highlightParts("a <b> PicoWS and picows", ["picows"]), [t("a <b> "), m("PicoWS"), t(" and "), m("picows")]);
+  assert.deepEqual(highlightParts("proxy_type", ["proxy", "proxy_type"]), [m("proxy_type")]);
+  assert.deepEqual(highlightParts("a.b", ["."]), [t("a"), m("."), t("b")]);
+  assert.deepEqual(highlightParts("<x>", []), [t("<x>")]);
+  assert.deepEqual(highlightParts("", ["x"]), []);
 });
 
 test("resolveLocation: https is another repository, a path stays in this one", () => {

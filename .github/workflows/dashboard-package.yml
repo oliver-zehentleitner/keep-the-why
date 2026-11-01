@@ -72,7 +72,7 @@ jobs:
         run: node --check dashboard/ktw_dashboard/web/app.js && for f in dashboard/ktw_dashboard/web/ktw-*.js; do node --check "$f"; done
 
       - name: Unit-test the page's pure part (node:test, no dependencies)
-        run: node --test dashboard/tests/web/core.test.mjs
+        run: node --test dashboard/tests/web/core.test.mjs dashboard/tests/web/markdown.test.mjs
 
       - name: Export and drive every route in jsdom
         run: |
@@ -82,6 +82,10 @@ jobs:
 
       - name: Public mode over a stubbed published tree (jsdom)
         run: cd dashboard/tests/web && node public.mjs
+
+      - name: Markdown renderer parity with the HTML-string renderer it replaced (jsdom)
+        # every body, title and field value of the fixture and of this repository's own export
+        run: cd dashboard/tests/web && node parity.mjs fixture/state.json /tmp/ktw-dashboard-export/state.json
 
       - name: DOM snapshots per route over the frozen fixture (jsdom)
         # the page's current code over tests/web/fixture/state.json; a difference fails —

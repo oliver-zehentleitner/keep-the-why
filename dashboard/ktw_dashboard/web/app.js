@@ -2,7 +2,8 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-const { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, shuffled, compareHits, snippetAt, highlight, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf, projectLabel, backlinksUrl, citingOf, hostAnchor , todayISO, addDays, dayDiff, timeGrid, stampLabel, existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan, createdOn, TYPE_KINDS, TYPE_TOKENS, paletteToken, typeKind, SHELF, stageCards, stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight, mergeAuthors, sortAuthors, AUTHOR_SORTS, ownerOf } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
+const { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, shuffled, compareHits, snippetAt, highlightParts, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf, projectLabel, backlinksUrl, citingOf, hostAnchor , todayISO, addDays, dayDiff, timeGrid, stampLabel, existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan, createdOn, TYPE_KINDS, TYPE_TOKENS, paletteToken, typeKind, SHELF, stageCards, stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight, mergeAuthors, sortAuthors, AUTHOR_SORTS, ownerOf } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
+const MD = globalThis.KeepTheWhy.markdown; // ktw-markdown.js
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const narrow = () => !!window.matchMedia?.("(max-width: 900px)").matches;
@@ -11,7 +12,6 @@ const el = (tag, attrs = {}, ...kids) => {
   for (const [k, v] of Object.entries(attrs)) {
     if (v == null || v === false) continue;
     if (k === "class") n.className = v;
-    else if (k === "html") n.innerHTML = v;
     else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
     else n.setAttribute(k, v === true ? "" : v);
   }
@@ -300,66 +300,16 @@ const queues = () => ({
 // every entry that needs a person, once — an entry can wait in two queues
 const queueTotal = () => { const q = queues(); return new Set([...q.open, ...q["needs-review"], ...q["pending-confirmation"], ...q.unknown]).size; };
 
-// ---------------------------------------------------------------- markdown (small, safe)
+// ---------------------------------------------------------------- markdown (ktw-markdown.js: DOM nodes, never HTML strings)
 // a merged member's entry names its own project's topic files: resolve them there
 let INLINE_PROJECT = null;
 const inProject = (f) => (INLINE_PROJECT ? `${INLINE_PROJECT}/${f}` : f);
-function inline(md) {
-  let s = esc(md);
-  s = s.replace(/`([^`]+)`/g, (m, c) => `<code>${c}</code>`);
-  s = s.replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
-  s = s.replace(/(^|[\s(])\*([^*\s][^*]*)\*(?=[\s).,;:]|$)/g, "$1<i>$2</i>");
-  s = s.replace(/(^|[\s(])_([^_\s][^_]*)_(?=[\s).,;:]|$)/g, "$1<i>$2</i>");
-  s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (m, t, u) => {
-    if (/^[A-Za-z0-9._-]+\.md(#.*)?$/.test(u) && topicOf(inProject(u.split("#")[0]))) return `<a href="#topic/${inProject(u.split("#")[0])}">${t}</a>`;
-    if (/^https?:\/\//.test(u)) return `<a href="${u}" target="_blank" rel="noopener">${t}</a>`;
-    return `<a>${t}</a>`;
-  });
-  // bare topic references become links
-  s = s.replace(/(^|[^\w/">#-])(<code>)?([A-Za-z0-9][A-Za-z0-9._-]*\.md)(<\/code>)?(?![\w"])/g, (m, pre, c1, f, c2) =>
-    topicOf(inProject(f)) ? `${pre}<a href="#topic/${inProject(f)}">${c1 || ""}${f}${c2 || ""}</a>` : m);
-  return s;
-}
-function renderMarkdown(md) {
-  const out = [];
-  const lines = md.split("\n");
-  let i = 0;
-  const LABEL = /^\*\*(Reason|Rejected alternative|Consequence|Considered|Why this needs an answer):\*\*\s*(.*)$/;
-  const cls = { Reason: "reason", "Rejected alternative": "rejected", Consequence: "consequence", Considered: "considered", "Why this needs an answer": "why-open" };
-  while (i < lines.length) {
-    const ln = lines[i];
-    if (!ln.trim()) { i++; continue; }
-    if (/^\s*(```|~~~)/.test(ln)) {
-      const fence = ln.trim().slice(0, 3); const buf = []; i++;
-      while (i < lines.length && !lines[i].trim().startsWith(fence)) buf.push(lines[i++]);
-      i++; out.push(`<pre><code>${esc(buf.join("\n"))}</code></pre>`); continue;
-    }
-    if (/^#{1,6}\s/.test(ln)) { out.push(`<p><b>${inline(ln.replace(/^#+\s*/, ""))}</b></p>`); i++; continue; }
-    if (/^\s*[-*]\s+/.test(ln)) {
-      const items = [];
-      while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) {
-        let item = lines[i].replace(/^\s*[-*]\s+/, ""); i++;
-        while (i < lines.length && /^\s{2,}\S/.test(lines[i]) && !/^\s*[-*]\s+/.test(lines[i])) item += " " + lines[i++].trim();
-        items.push(`<li>${inline(item)}</li>`);
-      }
-      out.push(`<ul>${items.join("")}</ul>`); continue;
-    }
-    if (/^\s*\d+\.\s+/.test(ln)) {
-      const items = [];
-      while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])) items.push(`<li>${inline(lines[i++].replace(/^\s*\d+\.\s+/, ""))}</li>`);
-      out.push(`<ol>${items.join("")}</ol>`); continue;
-    }
-    // paragraph (until blank line); labelled paragraphs get a callout
-    const buf = [];
-    while (i < lines.length && lines[i].trim() && !/^\s*(```|~~~|[-*]\s|\d+\.\s|#{1,6}\s)/.test(lines[i])) buf.push(lines[i++]);
-    const para = buf.join(" ");
-    const m = para.match(LABEL);
-    if (m) out.push(`<div class="label ${cls[m[1]]}"><b>${m[1]}</b><p>${inline(m[2])}</p></div>`);
-    else out.push(`<p>${inline(para)}</p>`);
-  }
-  return out.join("\n");
-}
-
+const topicHref = (f) => { const file = inProject(f); return topicOf(file) ? `#topic/${file}` : null; };
+// one line of Markdown (a title, a field's value) and a whole body, as a fragment of nodes
+const inline = (md) => MD.renderInline(document, md, { topicHref });
+const renderMarkdown = (md) => MD.render(document, md, { topicHref });
+// a label before a line of Markdown, joined to its first text the way the HTML string joined them
+const labelled = (label, md) => { const f = inline(md); if (f.firstChild?.nodeType === 3) f.firstChild.data = label + f.firstChild.data; else f.prepend(label); return f; };
 // ---------------------------------------------------------------- shared bits
 const pill = (text, cls = "") => el("span", { class: `pill ${cls}` }, text);
 const statusPill = (s) => pill(s || "—", `status-${s}`);
@@ -389,7 +339,7 @@ function entryRow(e) {
   const snippet = e.body.reason || e.body.text.split("\n")[0] || "";
   const g = e.git;
   return el("a", { href: entryHref(e), class: `row ${matches(e) ? "" : "dim"}` },
-    el("div", { class: "rt" }, el("span", { html: inline(e.title) }), ...entryPills(e)),
+    el("div", { class: "rt" }, el("span", {}, inline(e.title)), ...entryPills(e)),
     el("div", { class: "rs" }, snippet.replace(/\*\*|`/g, "")),
     el("div", { class: "rm" }, [projectOf(e), topicOf(e.file)?.title || e.file, g?.created?.author ? `${g.created.author} · ${g.created.date}` : null, g?.last_touched?.date && g.last_touched.date !== g?.created?.date ? `touched ${g.last_touched.date}` : null].filter(Boolean).join("  ·  ")));
 }
@@ -658,10 +608,10 @@ function viewEntry(main, id) {
   INLINE_PROJECT = e.project || null;
   const r = el("div", { class: `reader ${e.status}` },
     el("div", { class: "crumbs" }, el("a", { href: "#overview" }, "Overview"), " / ", el("a", { href: `#topic/${e.file}` }, t?.title || e.file), ` / line ${e.line}`, shareButton(e), sourceLink(entryHostHref(e))),
-    el("h1", { html: inline(e.title) }),
-    el("div", { class: "fields" }, ...entryPills(e), e.source ? el("span", { class: "pill", html: `Source: ${inline(e.source)}` }) : null, e.verification ? el("span", { class: "pill", html: `Verification: ${inline(e.verification.split(/\s[—-]\s/)[0])}` }) : null),
-    el("div", { class: "body", html: renderMarkdown(e.body.text || "_(no body)_") }),
-    e.revisit_when ? el("div", { class: "body" }, el("div", { class: "label", html: `<b>Revisit when</b><p>${inline(e.revisit_when)}</p>` })) : null,
+    el("h1", {}, inline(e.title)),
+    el("div", { class: "fields" }, ...entryPills(e), e.source ? el("span", { class: "pill" }, labelled("Source: ", e.source)) : null, e.verification ? el("span", { class: "pill" }, labelled("Verification: ", e.verification.split(/\s[—-]\s/)[0])) : null),
+    el("div", { class: "body" }, renderMarkdown(e.body.text || "_(no body)_")),
+    e.revisit_when ? el("div", { class: "body" }, el("div", { class: "label" }, el("b", {}, "Revisit when"), el("p", {}, inline(e.revisit_when)))) : null,
     refsBox(e),
     el("div", { class: "pager" },
       idx > 0 ? el("a", { href: entryHref(list[idx - 1]) }, `← ${list[idx - 1].title}`) : el("span"),
@@ -734,10 +684,10 @@ function viewThought(main, refs) {
       el("div", { class: "crumbs" }, `${i + 1} / ${refs.length}`, f.where ? ` · ${f.where}` : "", f.own && topicOf(e.file) ? [" · ", el("a", { href: `#topic/${e.file}` }, topicOf(e.file).title)] : null, e.git?.created?.date ? ` · ${e.git.created.date}` : ""),
       ins.shaky.some((x) => x.i === i) ? el("div", { class: "thought-warn" }, `In question — ${ins.shaky.find((x) => x.i === i).why}. ${plural(steps.length - 1 - i, "later step")} ${steps.length - 1 - i === 1 ? "is" : "are"} linked after it — worth checking whether they depend on it.`) : null,
       ins.affected.includes(i) && !ins.shaky.some((x) => x.i === i) ? el("div", { class: "thought-affected" }, `Linked after step ${ins.shaky[0].i + 1}, which is in question.`) : null,
-      el("h2", {}, el("a", { href: f.href, html: inline(e.title) })),
+      el("h2", {}, el("a", { href: f.href }, inline(e.title))),
       el("div", { class: "fields" }, ...entryPills(e)),
-      el("div", { class: "body", html: renderMarkdown(e.body?.text || "_(no body)_") }),
-      e.revisit_when ? el("div", { class: "body" }, el("div", { class: "label", html: `<b>Revisit when</b><p>${inline(e.revisit_when)}</p>` })) : null));
+      el("div", { class: "body" }, renderMarkdown(e.body?.text || "_(no body)_")),
+      e.revisit_when ? el("div", { class: "body" }, el("div", { class: "label" }, el("b", {}, "Revisit when"), el("p", {}, inline(e.revisit_when)))) : null));
     INLINE_PROJECT = null;
   });
   if (after.length) r.append(goOn(after, "↓ After its newest entry, it"));
@@ -1086,9 +1036,9 @@ function renderDetailsEntry(e) {
     el("span", { class: "k" }, "type"), el("span", { class: "v" }, (e.type || []).join(", ") || "—"),
     el("span", { class: "k" }, "status"), el("span", { class: "v" }, statusPill(e.status)),
     el("span", { class: "k" }, "evidence"), el("span", { class: "v" }, evPill(e.evidence)),
-    e.source ? [el("span", { class: "k" }, "source"), el("span", { class: "v", html: inline(e.source) })] : null,
-    e.verification ? [el("span", { class: "k" }, "verification"), el("span", { class: "v", html: inline(e.verification) })] : null,
-    e.revisit_when ? [el("span", { class: "k" }, "revisit when"), el("span", { class: "v", html: inline(e.revisit_when) })] : null,
+    e.source ? [el("span", { class: "k" }, "source"), el("span", { class: "v" }, inline(e.source))] : null,
+    e.verification ? [el("span", { class: "k" }, "verification"), el("span", { class: "v" }, inline(e.verification))] : null,
+    e.revisit_when ? [el("span", { class: "k" }, "revisit when"), el("span", { class: "v" }, inline(e.revisit_when))] : null,
   ));
   d.append(el("h3", {}, "Git"));
   if (!g) d.append(el("p", { class: "empty" }, S.project.git?.available ? "not in Git yet" : "no repository"));
@@ -2888,7 +2838,7 @@ function fillEntryCard(node, e, { lane, href, state, day, badge, again, onOpen =
   setKids(node, el("div", { class: "stage-card-head" }, el("span", { class: "note mono" }, `${stampLabel(createdOn(e)) || "today"} · `, topicLink), badge),
     el("h3", {}, link(e.title.replace(/`/g, ""), { title: "read the whole entry" })),
     el("div", { class: "pills" }, ...typePills(e.type), statusPill((day ? statusAt(e, day, state !== SELF || hasRepo(e)) : null) || e.status), evPill(e.evidence)),
-    body ? el("div", { class: "body stage-card-body", html: renderMarkdown(body) }) : el("p", { class: "empty stage-card-body" }, typeof (state || S).bodies === "string" ? "loading the text…" : "no text"),
+    body ? el("div", { class: "body stage-card-body" }, renderMarkdown(body)) : el("p", { class: "empty stage-card-body" }, typeof (state || S).bodies === "string" ? "loading the text…" : "no text"),
     el("div", { class: "stage-card-foot" }, e.git?.created?.author ? el("span", { class: "note" }, `recorded by ${e.git.created.author}`) : el("span"), link("open ›")));
   const st = state || SELF;
   if (st && typeof st.bodies === "string" && !st.bodiesLoaded && !st.bodiesError) ensureBodies(st).then(() => { if (node.isConnected) again?.(); });
@@ -2910,18 +2860,26 @@ function entryCard(span) {
 function stageLegend() {
   const sw = (cls, style) => el("i", { class: `sw ${cls}`, style });
   return el("div", { class: "stage-legend" },
-    el("span", { class: "grp" }, ...TYPE_KINDS.map((k) => el("span", { style: `color:${token(TYPE_TOKENS[k])}`, html: `${typeGlyphSvg(k)} <span style="color:var(--fg2)">${k}</span>` })), el("span", {}, sw("", "color:var(--muted)"), el("span", {}, "no type"))),
+    el("span", { class: "grp" }, ...TYPE_KINDS.map((k) => el("span", { style: `color:${token(TYPE_TOKENS[k])}` }, typeGlyphSvg(k), " ", el("span", { style: "color:var(--fg2)" }, k))), el("span", {}, sw("", "color:var(--muted)"), el("span", {}, "no type"))),
     el("span", { class: "grp", title: "Evidence is the fill" }, el("span", {}, sw("solid", "color:var(--fg2)"), "confirmed"), el("span", {}, sw("hatch", "color:var(--fg2)"), "inferred"), el("span", {}, sw("", "color:var(--fg2)"), "unknown")),
     el("span", { class: "grp", title: "Status is the edge" }, el("span", {}, sw("dashed", "color:var(--fg3)"), "superseded"), el("span", {}, sw("ring", "color:var(--fg2)"), "open · needs review · pending")));
 }
 // A card's shape is its Type. decision: a plain card with a diamond. constraint: a thick band across the top, a
 // barred square. workaround: a folded corner and a dashed edge, a folded square. incident: a striped band across
 // the top, a triangle with a bar. The glyph as SVG for the legend, and on the canvas.
+// a Type's glyph as SVG nodes, the stage's shapes in small: [element, attributes] per part
+const GLYPHS = {
+  decision: [["path", { d: "M6 1 11 6 6 11 1 6z" }]],
+  constraint: [["path", { d: "M1.5 1.5h9v9h-9z", fill: "none", stroke: "currentColor", "stroke-width": "1.4" }], ["path", { d: "M1.5 5h9v2h-9z" }]],
+  workaround: [["path", { d: "M1.5 1.5h6l3 3v6h-9z", fill: "none", stroke: "currentColor", "stroke-width": "1.4", "stroke-dasharray": "2 1.5" }], ["path", { d: "M7.5 1.5v3h3", fill: "none", stroke: "currentColor", "stroke-width": "1.4" }]],
+  incident: [["path", { d: "M6 1.2 11.2 10.8H.8z", fill: "none", stroke: "currentColor", "stroke-width": "1.4" }], ["path", { d: "M5.3 4.5h1.4v3.2H5.3zM5.3 8.5h1.4v1.3H5.3z" }]],
+};
 function typeGlyphSvg(kind) {
-  const d = { decision: '<path d="M6 1 11 6 6 11 1 6z"/>', constraint: '<path d="M1.5 1.5h9v9h-9z" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M1.5 5h9v2h-9z"/>',
-    workaround: '<path d="M1.5 1.5h6l3 3v6h-9z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="2 1.5"/><path d="M7.5 1.5v3h3" fill="none" stroke="currentColor" stroke-width="1.4"/>',
-    incident: '<path d="M6 1.2 11.2 10.8H.8z" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M5.3 4.5h1.4v3.2H5.3zM5.3 8.5h1.4v1.3H5.3z"/>' }[kind] || "";
-  return `<svg class="type-glyph" viewBox="0 0 12 12" width="11" height="11" aria-hidden="true" fill="currentColor">${d}</svg>`;
+  const NS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(NS, "svg");
+  for (const [k, v] of Object.entries({ class: "type-glyph", viewBox: "0 0 12 12", width: "11", height: "11", "aria-hidden": "true", fill: "currentColor" })) svg.setAttribute(k, v);
+  for (const [tag, attrs] of GLYPHS[kind] || []) { const n = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); svg.append(n); }
+  return svg;
 }
 function typeGlyph(ctx, kind, x, y, s) { // `s` its size in pixels, at (x, y) top-left, in the current fill and stroke colour
   ctx.save(); ctx.translate(x, y); ctx.scale(s / 12, s / 12); ctx.lineWidth = 1.5 * 12 / s; ctx.setLineDash([]);
@@ -3356,10 +3314,12 @@ function setupScope() { for (const b of $("#scope").querySelectorAll("button")) 
 const searchHref = (scope, q) => `#search/${scope}/${encodeURIComponent(q)}`;
 const memberLabel = (m) => m.role === "self" ? "this project" : m.role === "friend" ? (m.via ? `friend's family, with ${m.via}` : "friend") : m.role === "relative" && m.via ? `relative, via ${m.via}` : m.role;
 const topicTitle = (st, file) => st.topics?.find((t) => t.file === file)?.title || file;
+// text with every search term in a <mark>, as nodes (highlightParts in ktw-core.js)
+const marked = (text, terms) => highlightParts(text, terms).map((p) => (p.mark ? el("mark", {}, p.text) : p.text));
 function hitSnippet(hit) {
-  const w = hit.where; if (!w) return "";
+  const w = hit.where; if (!w) return null;
   const text = snippetAt(w.text.replace(/\*\*|`/g, ""), Math.max(0, w.text.slice(0, w.i).replace(/\*\*|`/g, "").length), w.len);
-  return (w.field === "body" || w.field === "title" ? "" : `<b>${esc(w.field)}:</b> `) + highlight(text, hit.terms);
+  return [w.field === "body" || w.field === "title" ? null : [el("b", {}, `${w.field}:`), " "], marked(text, hit.terms)];
 }
 let RESTORE_SCROLL = 0; // a live update re-renders the results page; its rows arrive after the scroll was restored
 async function viewSearch(main, linkScope, q) {
@@ -3396,8 +3356,8 @@ async function viewSearch(main, linkScope, q) {
           gt?.last_touched?.date && gt.last_touched.date !== gt?.created?.date ? `touched ${gt.last_touched.date}` : null,
           e.uuid ? `Id ${e.uuid.slice(0, 8)}` : null, plural(hit.count, "match").replace("matchs", "matches")].filter(Boolean).join("  ·  ");
         return el("a", { href: g.href(e), class: `row ${matches(e) ? "" : "dim"}` },
-          el("div", { class: "rt" }, el("span", { html: highlight(e.title.replace(/`/g, ""), hit.terms) }), ...entryPills(e)),
-          el("div", { class: "rs", html: hitSnippet(hit) }),
+          el("div", { class: "rt" }, el("span", {}, marked(e.title.replace(/`/g, ""), hit.terms)), ...entryPills(e)),
+          el("div", { class: "rs" }, hitSnippet(hit)),
           el("div", { class: "rm" }, meta));
       }))));
   }
@@ -3432,8 +3392,8 @@ async function viewRegistrySearch(main, q) {
   const box = el("div", { class: "search-page" });
   if (hits.length) box.append(el("section", { class: "sgroup" }, el("div", { class: "sg-head" }, el("b", {}, "Projects in the registry"), el("span", { class: "count" }, plural(hits.length, "hit"))),
     el("div", { class: "entry-list" }, hits.map((p) => { const h = registryHit(p); return el("a", { href: h.href, class: "row" },
-      el("div", { class: "rt" }, el("span", { html: highlight(h.name, terms) }), h.self ? pill("this project", "role") : null),
-      el("div", { class: "rs", html: highlight(p.canonical || "", terms) }),
+      el("div", { class: "rt" }, el("span", {}, marked(h.name, terms)), h.self ? pill("this project", "role") : null),
+      el("div", { class: "rs" }, marked(p.canonical || "", terms)),
       el("div", { class: "rm" }, [...h.meta.slice(1), p.schema ? `schema ${p.schema}` : null, p.dashboard ? `dashboard ${p.dashboard}` : null, p.id ? `id ${p.id}` : null].filter(Boolean).join("  ·  "))); }))));
   else box.append(el("p", { class: "center" }, `No project in the registry matches “${q}” — `, el("a", { href: searchHref("project", q) }, "search the entries of this project"), "."));
   box.append(el("p", { class: "note" }, "The registry lists repositories with a published Keep the Why dashboard export; ", el("a", { href: "https://keepthewhy.com/registry/", target: "_blank", rel: "noopener" }, "keepthewhy.com/registry"), " says how to be listed."));
@@ -3472,9 +3432,9 @@ function setupSearch() {
       ...registryRows(q),
       el("div", { class: "sr-head" }, rows.length ? `Results in this project${all.length > rows.length ? ` (${rows.length} of ${all.length})` : ` (${all.length})`}` : "Results in this project"),
       ...(rows.length ? rows.map(({ e, hit, g }) => el("a", { href: g.href(e), onclick: close },
-      el("div", { html: highlight(e.title.replace(/`/g, ""), hit.terms) }),
+      el("div", {}, marked(e.title.replace(/`/g, ""), hit.terms)),
       el("div", { class: "sr-file" }, topicTitle(g.state, e.file)),
-      el("div", { class: "sr-snip", html: hitSnippet(hit) }))) : [el("div", { style: "padding:10px 12px;color:var(--fg3)" }, "no matches in this project")]),
+      el("div", { class: "sr-snip" }, hitSnippet(hit)))) : [el("div", { style: "padding:10px 12px;color:var(--fg3)" }, "no matches in this project")]),
       REG.on ? el("a", { class: "sr-all", href: searchHref("registry", q), onclick: close }, "↵  projects in the registry, as a page")
         : el("a", { class: "sr-all", href: searchHref("project", q), onclick: close }, all.length > rows.length ? `↵  all ${all.length} results in this project` : "↵  results page")].filter(Boolean)); // replaceChildren writes a null as the text "null"
     box.hidden = false; sel = -1;
