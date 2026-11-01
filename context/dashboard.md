@@ -807,3 +807,21 @@ The stage's positions come from the scene. When the host draws a graph beside th
 
 **Rejected alternative:** each view file carrying its own `el` and pills — the drift above. Folding them into `ktw-core.js` was also rejected: the core has no DOM, and its node tests run without one.
 
+## The stage takes the page's scene, nav and prefs; the thought held is the scene's pin
+
+**Id:** 1d5a2cbf-f61f-4e5a-b5be-722e2258cf7d
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** the split of the timeline's move agreed by the series' lead (2026-11-01: the stage engine as its own step, the held thought through the scene); the pin's form and event named with the coder moving the thoughts list the same day; the rest is the implementer's, in the pull request that moved the stage
+**Revisit when:** the thoughts list moves into the library (the host's redraw on `pin` goes with it), or the play loop does
+**See:** dashboard.md#the-graph-view-takes-the-scene-nav-and-prefs-only-the-page-state-it-reads-moved-into-the-scene — 3b9cacf9-4e62-48b7-943e-a1650e09f3ce — as of 2026-11-01
+
+`web/ktw-timeline.js` holds the stage: its scene, camera, layout, painter, input and the legend under it, with `create({ scene, nav, prefs })` as all it is given. It also keeps the stage's two settings, where a card stands and which foreign entries show, through prefs. The page around the stage stays with the host for now: the bars, the slider, the card and the play loop. The play state is handed in (`playing`), and `runStage` returns the stage's handle instead of writing it into the page.
+
+The held thought is the scene's: `scene.pin` holds its ids joined with `|`, `setThought(t)` holds a thought and `setThought(null)` lets go, and a change is announced once as `pin`. Lighting a thought while it is pointed at is `scene.light(t)` and leaves the pin as it is; that is the event the graphs light it by. The list of thoughts beside the graph redraws on `pin`, in the host until the thoughts view moves too, so the graph's legend, the stage's reset and the side pane only let go and no longer redraw the list themselves.
+
+**Reason:** the stage reset and the graph's legend reached into the thoughts list to clear its pin and redraw it, which is one view writing another's state. Through the scene each lets go, and whoever lists thoughts hears it. Pointing and holding are separate in the page — a held thought gives way while another is pointed at, then comes back — so they are separate in the scene too; one `setThought` for both would have let go of the held thought whenever the pointer left another.
+
+**Rejected alternative:** `setThought` for both pointing and holding, the first reading of the pin's specification — the problem above. The play loop moving with the stage was also rejected: it drives the slider, the bars and the card, which are the page's.
+
