@@ -5,6 +5,13 @@
   --ok: #4fbf7a; --warn: #e0a83a; --bad: #e0574f; --info: #4aa3df; --muted: #8b8b98;
   --confirmed: #4fbf7a; --inferred: #e0a83a; --unknown: #e0574f;
   --active: #835bec; --superseded: #6f6f7a; --open: #4aa3df; --needs-review: #e0a83a; --pending-confirmation: #d66fd6;
+  /* the colour tokens the page's views read (--ktw-*): a Type's colour, and the palette for authors,
+     family members and friends; another host restyles the views by setting these. Literal values, the
+     same in both themes, not var(--accent) and the like: jsdom, which renders the DOM snapshots, does not
+     resolve a var() chain in getComputedStyle, and a browser would return the same colour either way */
+  --ktw-type-decision: #835bec; --ktw-type-constraint: #4aa3df; --ktw-type-workaround: #e0a83a; --ktw-type-incident: #e0574f;
+  --ktw-palette-0: #835bec; --ktw-palette-1: #4aa3df; --ktw-palette-2: #4fbf7a; --ktw-palette-3: #e0a83a; --ktw-palette-4: #e0574f;
+  --ktw-palette-5: #d66fd6; --ktw-palette-6: #3fbfbf; --ktw-palette-7: #b0b04a; --ktw-palette-8: #ff8c5a; --ktw-palette-9: #8b8b98;
   --radius: 8px; --font: -apple-system, "Segoe UI", Inter, Roboto, "Helvetica Neue", sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   color-scheme: dark;

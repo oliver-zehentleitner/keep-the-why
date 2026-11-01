@@ -11,6 +11,7 @@ All notable changes to this project are documented here. Format follows [Keep a 
 
 ### Changed
 
+- `keep-the-why-dashboard` 0.11.16: the page's colours for a Type and its palette — authors, family members, friends, the path — are CSS custom properties (`--ktw-type-decision` … `--ktw-type-incident`, `--ktw-palette-0` … `--ktw-palette-9`) in the stylesheet's `:root`, no longer constants in the script; the page reads them where it draws. Nothing looks different. A host that embeds the page's views sets these to restyle them — the first step of the page becoming a library another tool builds on.
 - `context/release-and-distribution.md`, the `.codexignore` entry: its `Revisit when` named the "Lean Codex plugin" idea in `TODO.md`, which is gone; the trigger now says what the idea was (keeping docs, linter, evals and experiments out of the roughly 13 MB `codex plugin add` copies).
 - `context/release-and-distribution.md`, the shell-fence entry: Snyk on skills.sh has warned (medium, W011) since 0.20.1; the entry still said Socket and Snyk pass.
 - Security page: the skills.sh results for 0.20.3 — Socket *Pass* and Snyk *Warn* (medium, W011) as audited 2026-10-21, Gen Agent Trust Hub *Pass* (safe) from its latest audit, of 0.20.2 (2026-10-12). Its categories are now remote code execution, dynamic execution, persistence, indirect prompt injection and external downloads; the page listed the four of the 0.20.1 audit, with command execution where persistence now is.

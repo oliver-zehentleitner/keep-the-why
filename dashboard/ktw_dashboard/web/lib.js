@@ -529,7 +529,10 @@ export function stampLabel(d) {
 // out — so it can be tested without a canvas. A node is { id, entry, ext?, fam?, proj?, href?, state? } as the
 // graph builds it; `ext` marks a friend's or the path's entry, `fam` a family member's.
 export const TYPE_KINDS = ["decision", "constraint", "workaround", "incident"];
-export const TYPE_COLORS = { decision: "#835bec", constraint: "#4aa3df", workaround: "#e0a83a", incident: "#e0574f" };
+// colours are CSS custom properties the host defines (style.css :root); the pure part names them only
+export const TYPE_TOKENS = { decision: "--ktw-type-decision", constraint: "--ktw-type-constraint", workaround: "--ktw-type-workaround", incident: "--ktw-type-incident" };
+export const PALETTE_SIZE = 10;
+export const paletteToken = (i) => `--ktw-palette-${((Math.trunc(i) % PALETTE_SIZE) + PALETTE_SIZE) % PALETTE_SIZE}`;
 // the first of the four kinds an entry's Type names; null when none
 export const typeKind = (e) => (e.type || []).map((t) => typeName(t)).find((t) => TYPE_KINDS.includes(t)) || null;
 // the Monday that starts the week of a day
