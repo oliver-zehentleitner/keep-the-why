@@ -192,8 +192,9 @@ function loadedUi() {
 //
 // Every result says where it came from: `url`, and for a project `canonical`, `root`, `forkOf` as they
 // apply; a failure is `error` beside them, never a throw. `loaded` lists the files read to make it — url,
-// text, kind — and provider() hands those to the state monitor (noteLoaded): the monitor consumes the
-// provenance, the methods do not write to it.
+// text, kind — and `failed` the files read and refused (a .keep-the-why without a dashboard-state line, an
+// export that claims another repository); provider() hands both to the state monitor, loaded first: a file
+// that was read and then refused ends up among the failures. Transport failures fetchForeign records itself.
 async function fetchForeign(url) {
   const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), FOREIGN_TIMEOUT_MS);
   try {
@@ -283,12 +284,12 @@ const DASHBOARD = {
     const read = async (u) => { const text = await fetchForeign(u); loaded.push({ url: u, text }); return text; };
     try {
       const found = exportStateUrl(await read(raw), raw);
-      if (found.error) { noteFailed(raw, found.error, { canonical }); return { ...found, canonical, root, raw, loaded }; }
+      if (found.error) return { ...found, canonical, root, raw, loaded, failed: [{ url: raw, error: found.error, extra: { canonical } }] };
       url = found.url;
       const state = normalizeState(JSON.parse(await read(url)));
       state.__url = url; // where it came from: its bodies, if kept beside it, resolve against this
       const verdict = exportVerdict(state, canonical, url);
-      if (verdict.error) { noteFailed(url, verdict.error, { canonical }); return { error: verdict.error, url, canonical, root, raw, loaded }; }
+      if (verdict.error) return { error: verdict.error, url, canonical, root, raw, loaded, failed: [{ url, error: verdict.error, extra: { canonical } }] };
       return { state, url, canonical, root, raw, ...(verdict.forkOf ? { forkOf: verdict.forkOf } : {}), loaded };
     } catch (err) {
       for (const u of [raw, url]) { const f = u && FAILED.get(u); if (f) f.canonical = canonical; } // the failed fetch belongs to this repository
@@ -326,12 +327,14 @@ const DASHBOARD = {
     }
   },
 };
-// the state monitor reads what a result says it loaded, once per result
+// the state monitor reads what a result says it loaded and refused, once per result — loaded first, since
+// noting a file as loaded clears it from the failures, and a refused file was loaded before it was refused
 const TRACED = new WeakSet();
 function trace(result) {
   if (result && typeof result === "object" && !TRACED.has(result)) {
     TRACED.add(result);
     for (const l of result.loaded || []) noteLoaded(l.url, l.text, l.kind, l.extra);
+    for (const f of result.failed || []) noteFailed(f.url, f.error, f.extra);
   }
   return result;
 }
