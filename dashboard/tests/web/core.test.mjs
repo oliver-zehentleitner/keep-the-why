@@ -740,3 +740,55 @@ test("hostAnchor: the linter's anchor rule, over the shared vectors read from re
   for (const v of vectors) assert.equal(core.hostAnchor(v.title), v.anchor, v.title);
   assert.equal(core.slug, core.hostAnchor); // an entry's fallback id is its anchor too
 });
+
+test("the layout steps without a canvas: it moves what is shown, leaves what is fixed or hidden, and settles", () => {
+  const { layoutTick, settleLayout } = core;
+  const mk = () => ({
+    nodes: [
+      { id: "a", kind: "topic", x: 0, y: 0, vx: 0, vy: 0 },
+      { id: "b", kind: "entry", x: 5, y: 0, vx: 0, vy: 0 },
+      { id: "c", kind: "entry", x: 0, y: 5, vx: 0, vy: 0, fixed: true },
+      { id: "d", kind: "entry", x: 50, y: 50, vx: 0, vy: 0, hidden: true },
+    ],
+    links: [{ s: 0, t: 1, len: 60, kind: "member" }],
+  });
+  const opts = { visible: (n) => !n.hidden };
+  const g = mk();
+  assert.equal(layoutTick(g.nodes, g.links, 1, opts), 0.985);
+  assert.ok(g.nodes[0].x !== 0 || g.nodes[0].y !== 0, "a shown node moves");
+  assert.deepEqual([g.nodes[2].x, g.nodes[2].y], [0, 5], "a fixed node stays");
+  assert.deepEqual([g.nodes[3].x, g.nodes[3].y], [50, 50], "a hidden node stays");
+  // the same start gives the same layout: no randomness inside the step
+  const h = mk(); layoutTick(h.nodes, h.links, 1, opts);
+  assert.deepEqual(h.nodes.map((n) => [n.x, n.y]), g.nodes.map((n) => [n.x, n.y]));
+  // settled: the alpha left is at the threshold, and the spring has pulled a and b toward its length
+  const s = mk(); const left = settleLayout(s.nodes, s.links, opts);
+  assert.ok(left <= 0.003 && left > 0.003 * 0.985, `settles at the threshold, got ${left}`);
+  assert.ok(Math.hypot(s.nodes[1].x - s.nodes[0].x, s.nodes[1].y - s.nodes[0].y) > 20, "the spring has opened the pair up");
+  assert.equal(settleLayout(mk().nodes, [], { maxTicks: 3 }), 1 * 0.985 * 0.985 * 0.985, "maxTicks bounds the run");
+});
+
+test("layoutTick, pinned on the branches the fixture's graph has none of: a family line, foreign nodes, hubs of two units, an owner", () => {
+  // The values come from the force step as it ran inline in app.js before it moved to the core (dashboard
+  // 0.11.22), on this graph, 25 steps from these positions: a change to any force shows here.
+  const { layoutTick } = core;
+  const n = (id, kind, x, y, extra = {}) => ({ id, kind, x, y, vx: 0, vy: 0, ...extra });
+  const nodes = [
+    n("hubA", "project", 0, 0),
+    n("hubB", "project", 120, 40, { unit: "f1", ext: true, owner: "o" }), // a foreign unit: apart from hubA ...
+    n("hubC", "project", -100, 90, { unit: "f2", ext: true, owner: "o" }), // ... but hubB and hubC share an owner: not apart
+    n("t1", "topic", 30, -20),
+    n("e1", "entry", 50, -40),
+    n("e2", "entry", 150, 60, { unit: "f1", ext: true }), // a foreign entry: the weaker pull to the centre
+  ];
+  const links = [
+    { s: 0, t: 1, len: 260, kind: "family" }, { s: 0, t: 3, len: 120, kind: "hub" }, { s: 3, t: 4, len: 40, kind: "member" },
+    { s: 4, t: 5, len: 150, kind: "see" }, { s: 1, t: 2, len: 200, kind: "owner" }, { s: 1, t: 5, len: 60, kind: "member" },
+  ];
+  let a = 1; for (let i = 0; i < 25; i++) a = layoutTick(nodes, links, a);
+  assert.deepEqual(nodes.map((m) => [m.id, +m.x.toFixed(6), +m.y.toFixed(6)]), [
+    ["hubA", -87.467947, -125.185213], ["hubB", 116.907401, 83.256341], ["hubC", -51.263573, 204.208524],
+    ["t1", 10.851549, -56.570991], ["e1", 58.523222, -38.460981], ["e2", 169.890672, 76.979504],
+  ]);
+  assert.equal(+a.toFixed(12), +(0.985 ** 25).toFixed(12)); // the alpha: 25 decays
+});
