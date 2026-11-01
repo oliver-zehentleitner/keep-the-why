@@ -658,3 +658,39 @@ test("every colour token the pure part names is defined in the stylesheet's :roo
   const names = [...Object.values(TYPE_TOKENS), ...Array.from({ length: PALETTE_SIZE }, (_, i) => paletteToken(i))];
   for (const n of names) assert.match(root, new RegExp(`${n}:\\s*#[0-9a-f]{6};`), `${n} missing or not a literal colour in :root`);
 });
+
+test("routes: today's hash grammar, parsed and written back unchanged", () => {
+  const { parse, format, PAGES } = core.routes;
+  const uuid = "550e8400-e29b-41d4-a716-446655440000";
+  const cases = [
+    ["#overview", { view: "overview" }],
+    ["#graph", { view: "graph" }],
+    ["#timeline", { view: "timeline" }],
+    ["#timeline/2026-10-08", { view: "timeline", day: "2026-10-08" }],
+    ["#timeline/2026-10-08T14", { view: "timeline", day: "2026-10-08T14" }],
+    ["#topic/sync.md", { view: "topic", file: "sync.md" }],
+    [`#entry/${uuid}`, { view: "entry", uuid }],
+    ["#entry/sync.md%23snapshot-before-buffer", { view: "entry", uuid: "sync.md#snapshot-before-buffer" }],
+    [`#thought/${uuid},${uuid}`, { view: "thought", refs: [uuid, uuid] }],
+    [`#ref/https%3A%2F%2Fgithub.com%2Facme%2Fwidget/${uuid}`, { view: "ref", canonical: "https://github.com/acme/widget", uuid }],
+    ["#search/project/snapshot%20buffer", { view: "search", scope: "project", q: "snapshot buffer" }],
+    ["#search/registry/a%2Fb", { view: "search", scope: "registry", q: "a/b" }],
+    ["#graph/family", { view: "graph", alias: "family" }],
+  ];
+  for (const [hash, route] of cases) {
+    assert.deepEqual(parse(hash), route, hash);
+    assert.equal(format(route), hash, hash);
+  }
+  for (const p of PAGES) assert.equal(format(parse(`#${p}`)), `#${p}`);
+});
+
+test("routes: no hash, an unknown one, a malformed escape", () => {
+  const { parse, format } = core.routes;
+  assert.deepEqual(parse(""), { view: "overview" });
+  assert.deepEqual(parse("#"), { view: "overview" });
+  assert.deepEqual(parse("#nowhere"), { view: "overview", unknown: "nowhere" });
+  assert.equal(format(parse("#nowhere")), "#overview");
+  assert.equal(parse("#entry/%E0%A4%A").uuid, "%E0%A4%A"); // kept as written instead of throwing
+  assert.equal(parse("#search/project/a/b").q, "a/b"); // a slash in the query, typed into the address bar
+  assert.equal(format({ view: "nowhere" }), "#overview");
+});
