@@ -1,0 +1,878 @@
+# #timeline
+
+## canvas 1 — stage-wrap
+clearRect(0, 0, 800, 500)
+lineWidth = 1
+strokeStyle = "#3a3a43"
+globalAlpha = 0.9
+beginPath()
+moveTo(-28.842, 497.281)
+lineTo(244.291, 221.958)
+stroke()
+beginPath()
+moveTo(828.842, 497.281)
+lineTo(555.709, 221.958)
+stroke()
+font = "10px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif"
+textBaseline = "middle"
+textAlign = "left"
+globalAlpha = 0.65
+strokeStyle = "#3a3a43"
+beginPath()
+moveTo(22.553, 445.473)
+lineTo(777.447, 445.473)
+stroke()
+fillStyle = "#6f6f7a"
+globalAlpha = 0.9
+fillText("15", 28.553, 445.473)
+globalAlpha = 0.65
+strokeStyle = "#3a3a43"
+beginPath()
+moveTo(40.771, 427.11)
+lineTo(759.229, 427.11)
+stroke()
+fillStyle = "#6f6f7a"
+globalAlpha = 0.9
+fillText("14", 46.771, 427.11)
+globalAlpha = 0.65
+strokeStyle = "#3a3a43"
+beginPath()
+moveTo(55.989, 411.769)
+lineTo(744.011, 411.769)
+stroke()
+globalAlpha = 0.65
+strokeStyle = "#3a3a43"
+beginPath()
+moveTo(68.935, 398.72)
+lineTo(731.065, 398.72)
+stroke()
+fillStyle = "#6f6f7a"
+globalAlpha = 0.9
+fillText("12", 74.935, 398.72)
+globalAlpha = 0.65
+strokeStyle = "#3a3a43"
+beginPath()
+moveTo(80.112, 387.453)
+lineTo(719.888, 387.453)
+stroke()
+globalAlpha = 0.645
+strokeStyle = "#3a3a43"
+beginPath()
+moveTo(89.883, 377.603)
+lineTo(710.117, 377.603)
+stroke()
+fillStyle = "#6f6f7a"
+globalAlpha = 0.895
+fillText("10", 95.883, 377.603)
+globalAlpha = 0.639
+strokeStyle = "#3a3a43"
+beginPath()
+moveTo(98.516, 368.901)
+lineTo(701.484, 368.901)
+stroke()
+globalAlpha = 0.633
+strokeStyle = "#3a3a43"
+beginPath()
+moveTo(106.214, 361.142)
+lineTo(693.786, 361.142)
+stroke()
+fillStyle = "#6f6f7a"
+globalAlpha = 0.883
+fillText("8", 112.214, 361.142)
+globalAlpha = 0.622
+strokeStyle = "#3a3a43"
+beginPath()
+moveTo(119.389, 347.861)
+lineTo(680.611, 347.861)
+stroke()
+globalAlpha = 0.612
+strokeStyle = "#3a3a43"
+beginPath()
+moveTo(130.303, 336.86)
+lineTo(669.697, 336.86)
+stroke()
+fillStyle = "#6f6f7a"
+globalAlpha = 0.862
+fillText("4", 136.303, 336.86)
+globalAlpha = 0.603
+strokeStyle = "#3a3a43"
+beginPath()
+moveTo(139.531, 327.557)
+lineTo(660.469, 327.557)
+stroke()
+globalAlpha = 0.594
+strokeStyle = "#3a3a43"
+beginPath()
+moveTo(147.466, 319.559)
+lineTo(652.534, 319.559)
+stroke()
+fillStyle = "#6f6f7a"
+globalAlpha = 0.844
+fillText("31", 153.466, 319.559)
+globalAlpha = 0.583
+strokeStyle = "#3a3a43"
+beginPath()
+moveTo(157.525, 309.419)
+lineTo(642.475, 309.419)
+stroke()
+globalAlpha = 0.573
+strokeStyle = "#3a3a43"
+beginPath()
+moveTo(165.915, 300.962)
+lineTo(634.085, 300.962)
+stroke()
+fillStyle = "#6f6f7a"
+globalAlpha = 0.823
+fillText("25", 171.915, 300.962)
+globalAlpha = 0.563
+strokeStyle = "#3a3a43"
+beginPath()
+moveTo(173.053, 293.767)
+lineTo(626.947, 293.767)
+stroke()
+globalAlpha = 0.552
+strokeStyle = "#3a3a43"
+beginPath()
+moveTo(181.102, 285.654)
+lineTo(618.898, 285.654)
+stroke()
+globalAlpha = 0.54
+strokeStyle = "#3a3a43"
+beginPath()
+moveTo(189.415, 277.274)
+lineTo(610.585, 277.274)
+stroke()
+fillStyle = "#6f6f7a"
+globalAlpha = 0.79
+fillText("13", 195.415, 277.274)
+globalAlpha = 0.526
+strokeStyle = "#3a3a43"
+beginPath()
+moveTo(197.551, 269.073)
+lineTo(602.449, 269.073)
+stroke()
+globalAlpha = 0.513
+strokeStyle = "#3a3a43"
+beginPath()
+moveTo(205.253, 261.309)
+lineTo(594.747, 261.309)
+stroke()
+globalAlpha = 0.499
+strokeStyle = "#3a3a43"
+beginPath()
+moveTo(212.398, 254.106)
+lineTo(587.602, 254.106)
+stroke()
+fillStyle = "#6f6f7a"
+globalAlpha = 0.749
+fillText("22", 218.398, 254.106)
+globalAlpha = 0.484
+strokeStyle = "#3a3a43"
+beginPath()
+moveTo(219.602, 246.844)
+lineTo(580.398, 246.844)
+stroke()
+globalAlpha = 0.468
+strokeStyle = "#3a3a43"
+beginPath()
+moveTo(227.015, 239.372)
+lineTo(572.985, 239.372)
+stroke()
+globalAlpha = 0.451
+strokeStyle = "#3a3a43"
+beginPath()
+moveTo(234.132, 232.198)
+lineTo(565.868, 232.198)
+stroke()
+fillStyle = "#6f6f7a"
+globalAlpha = 0.701
+fillText("14", 240.132, 232.198)
+globalAlpha = 0.916
+strokeStyle = "#3a3a43"
+beginPath()
+moveTo(143.641, 323.415)
+lineTo(656.359, 323.415)
+stroke()
+fillStyle = "#a2a2ad"
+font = "600 10px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif"
+fillText("2026-06", 149.641, 323.415)
+font = "10px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif"
+globalAlpha = 0.78
+strokeStyle = "#3a3a43"
+beginPath()
+moveTo(204.247, 262.323)
+lineTo(595.753, 262.323)
+stroke()
+fillStyle = "#a2a2ad"
+font = "600 10px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif"
+fillText("2026-05", 210.247, 262.323)
+font = "10px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif"
+globalAlpha = 0.708
+strokeStyle = "#3a3a43"
+beginPath()
+moveTo(225.987, 240.408)
+lineTo(574.013, 240.408)
+stroke()
+fillStyle = "#a2a2ad"
+font = "600 10px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif"
+fillText("2026-04", 231.987, 240.408)
+font = "10px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif"
+globalAlpha = 0.657
+strokeStyle = "#3a3a43"
+beginPath()
+moveTo(238.804, 227.488)
+lineTo(561.196, 227.488)
+stroke()
+fillStyle = "#a2a2ad"
+font = "600 10px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif"
+fillText("2026-03", 244.804, 227.488)
+font = "10px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif"
+globalAlpha = 1
+textBaseline = "top"
+font = "600 11px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+fillStyle = "#a98cf5"
+fillText("2026-06-15T12:00:00Z", 10, 9)
+globalAlpha = 0.252
+strokeStyle = "#a98cf5"
+lineWidth = 1
+setLineDash([])
+beginPath()
+moveTo(460.194, 159.814)
+lineTo(286.146, 153.845)
+stroke()
+globalAlpha = 0.261
+strokeStyle = "#a98cf5"
+lineWidth = 1
+setLineDash([])
+beginPath()
+moveTo(526.982, 100.374)
+lineTo(460.194, 159.814)
+stroke()
+globalAlpha = 0.261
+strokeStyle = "#a98cf5"
+lineWidth = 1
+setLineDash([])
+beginPath()
+moveTo(615.948, 226.486)
+lineTo(526.982, 100.374)
+stroke()
+globalAlpha = 0.246
+strokeStyle = "#a98cf5"
+lineWidth = 1
+setLineDash([])
+beginPath()
+moveTo(323.333, 150.875)
+lineTo(457.479, 174.541)
+stroke()
+globalAlpha = 0.246
+strokeStyle = "#6f6f7a"
+lineWidth = 1
+setLineDash([5,4])
+beginPath()
+moveTo(457.479, 174.541)
+lineTo(322.271, 258.712)
+stroke()
+globalAlpha = 0.246
+strokeStyle = "#a98cf5"
+lineWidth = 1
+setLineDash([])
+beginPath()
+moveTo(322.271, 258.712)
+lineTo(457.479, 174.541)
+stroke()
+globalAlpha = 0.285
+strokeStyle = "#a98cf5"
+lineWidth = 1
+setLineDash([])
+beginPath()
+moveTo(503.052, 225.495)
+lineTo(322.271, 258.712)
+stroke()
+setLineDash([])
+globalAlpha = 0.163
+strokeStyle = "#6f6f7a"
+lineWidth = 1
+beginPath()
+moveTo(464.445, 221.683)
+lineTo(464.445, 226.362)
+stroke()
+globalAlpha = 0.464
+fillStyle = "#26262b"
+globalAlpha = 0.418
+beginPath()
+rect(449.611, 207.99, 29.668, 13.693)
+fill()
+shadowBlur = 0
+fillStyle = "#4aa3df"
+globalAlpha = 0.279
+beginPath()
+rect(449.611, 207.99, 29.668, 13.693)
+fill()
+globalAlpha = 0.464
+fillStyle = "#4aa3df"
+globalAlpha = 0.418
+fillRect(449.611, 207.99, 29.668, 2)
+globalAlpha = 0.464
+lineWidth = 1.2
+strokeStyle = "#4aa3df"
+setLineDash([])
+beginPath()
+rect(449.611, 207.99, 29.668, 13.693)
+stroke()
+setLineDash([])
+globalAlpha = 0.166
+strokeStyle = "#6f6f7a"
+lineWidth = 1
+beginPath()
+moveTo(457.479, 181.455)
+lineTo(457.479, 227.963)
+stroke()
+globalAlpha = 0.475
+fillStyle = "#26262b"
+globalAlpha = 0.428
+beginPath()
+rect(442.498, 167.626, 29.962, 13.829)
+fill()
+shadowBlur = 0
+fillStyle = "#6f6f7a"
+globalAlpha = 0.057
+beginPath()
+rect(442.498, 167.626, 29.962, 13.829)
+fill()
+globalAlpha = 0.475
+lineWidth = 1.2
+strokeStyle = "#6f6f7a"
+setLineDash([4,3])
+beginPath()
+rect(442.498, 167.626, 29.962, 13.829)
+stroke()
+setLineDash([])
+globalAlpha = 0.178
+strokeStyle = "#6f6f7a"
+lineWidth = 1
+beginPath()
+moveTo(323.333, 158.011)
+lineTo(323.333, 233.203)
+stroke()
+globalAlpha = 0.508
+fillStyle = "#26262b"
+globalAlpha = 0.458
+beginPath()
+rect(307.87, 143.738, 30.925, 14.273)
+fill()
+shadowBlur = 0
+fillStyle = "#e0574f"
+globalAlpha = 0.153
+beginPath()
+rect(307.87, 143.738, 30.925, 14.273)
+fill()
+globalAlpha = 0.508
+save()
+beginPath()
+rect(307.87, 143.738, 30.925, 2)
+clip()
+fillStyle = "#e0574f"
+globalAlpha = 0.458
+beginPath()
+moveTo(305.87, 143.738)
+lineTo(309.07, 143.738)
+lineTo(307.07, 145.738)
+lineTo(303.87, 145.738)
+closePath()
+fill()
+beginPath()
+moveTo(312.27, 143.738)
+lineTo(315.47, 143.738)
+lineTo(313.47, 145.738)
+lineTo(310.27, 145.738)
+closePath()
+fill()
+beginPath()
+moveTo(318.67, 143.738)
+lineTo(321.87, 143.738)
+lineTo(319.87, 145.738)
+lineTo(316.67, 145.738)
+closePath()
+fill()
+beginPath()
+moveTo(325.07, 143.738)
+lineTo(328.27, 143.738)
+lineTo(326.27, 145.738)
+lineTo(323.07, 145.738)
+closePath()
+fill()
+beginPath()
+moveTo(331.47, 143.738)
+lineTo(334.67, 143.738)
+lineTo(332.67, 145.738)
+lineTo(329.47, 145.738)
+closePath()
+fill()
+beginPath()
+moveTo(337.87, 143.738)
+lineTo(341.07, 143.738)
+lineTo(339.07, 145.738)
+lineTo(335.87, 145.738)
+closePath()
+fill()
+restore()
+globalAlpha = 0.508
+lineWidth = 1.2
+strokeStyle = "#e0574f"
+setLineDash([])
+beginPath()
+rect(307.87, 143.738, 30.925, 14.273)
+stroke()
+setLineDash([])
+fillStyle = "#e0574f"
+strokeStyle = "#e0574f"
+save()
+translate(327.795, 148.011)
+scale(0.583, 0.583)
+lineWidth = 2.571
+setLineDash([])
+beginPath()
+moveTo(6, 1.2)
+lineTo(11.2, 10.8)
+lineTo(0.8, 10.8)
+closePath()
+stroke()
+fillRect(5.3, 4.5, 1.4, 3.2)
+fillRect(5.3, 8.5, 1.4, 1.3)
+restore()
+globalAlpha = 0.182
+strokeStyle = "#6f6f7a"
+lineWidth = 1
+beginPath()
+moveTo(286.146, 161.056)
+lineTo(286.146, 234.943)
+stroke()
+globalAlpha = 0.519
+fillStyle = "#26262b"
+globalAlpha = 0.467
+beginPath()
+moveTo(270.524, 146.635)
+lineTo(295.279, 146.635)
+lineTo(301.769, 153.124)
+lineTo(301.769, 161.056)
+lineTo(270.524, 161.056)
+closePath()
+fill()
+shadowBlur = 0
+globalAlpha = 0.519
+fillStyle = "#1e1e22"
+beginPath()
+moveTo(295.279, 146.635)
+lineTo(295.279, 153.124)
+lineTo(301.769, 153.124)
+closePath()
+fill()
+strokeStyle = "#e0a83a"
+lineWidth = 1
+stroke()
+lineWidth = 1.2
+strokeStyle = "#e0a83a"
+setLineDash([4,3])
+beginPath()
+moveTo(270.524, 146.635)
+lineTo(295.279, 146.635)
+lineTo(301.769, 153.124)
+lineTo(301.769, 161.056)
+lineTo(270.524, 161.056)
+closePath()
+stroke()
+setLineDash([])
+fillStyle = "#e0a83a"
+strokeStyle = "#e0a83a"
+save()
+translate(286.875, 151.056)
+scale(0.583, 0.583)
+lineWidth = 2.571
+setLineDash([])
+setLineDash([2,1.5])
+beginPath()
+moveTo(1.5, 1.5)
+lineTo(7.5, 1.5)
+lineTo(10.5, 4.5)
+lineTo(10.5, 10.5)
+lineTo(1.5, 10.5)
+closePath()
+stroke()
+setLineDash([])
+beginPath()
+moveTo(7.5, 1.5)
+lineTo(7.5, 4.5)
+lineTo(10.5, 4.5)
+stroke()
+restore()
+fillStyle = "#e0574f"
+font = "700 8px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif"
+textAlign = "left"
+textBaseline = "bottom"
+fillText("?", 275.524, 159.056)
+strokeStyle = "#4aa3df"
+lineWidth = 1.2
+strokeRect(267.524, 143.635, 37.245, 20.421)
+globalAlpha = 0.202
+strokeStyle = "#6f6f7a"
+lineWidth = 1
+beginPath()
+moveTo(526.982, 108.015)
+lineTo(526.982, 245.088)
+stroke()
+globalAlpha = 0.577
+fillStyle = "#26262b"
+globalAlpha = 0.519
+beginPath()
+rect(510.426, 92.734, 33.111, 15.282)
+fill()
+shadowBlur = 0
+fillStyle = "#835bec"
+globalAlpha = 0.173
+beginPath()
+rect(510.426, 92.734, 33.111, 15.282)
+fill()
+globalAlpha = 0.577
+lineWidth = 1.2
+strokeStyle = "#835bec"
+setLineDash([])
+beginPath()
+rect(510.426, 92.734, 33.111, 15.282)
+stroke()
+setLineDash([])
+fillStyle = "#835bec"
+strokeStyle = "#835bec"
+save()
+translate(532.537, 98.015)
+scale(0.583, 0.583)
+lineWidth = 2.571
+setLineDash([])
+beginPath()
+moveTo(6, 1)
+lineTo(11, 6)
+lineTo(6, 11)
+lineTo(1, 6)
+closePath()
+fill()
+restore()
+globalAlpha = 0.206
+strokeStyle = "#6f6f7a"
+lineWidth = 1
+beginPath()
+moveTo(505.877, 177.992)
+lineTo(505.877, 247.085)
+stroke()
+globalAlpha = 0.588
+fillStyle = "#26262b"
+globalAlpha = 0.529
+beginPath()
+rect(489.138, 162.541, 33.478, 15.451)
+fill()
+shadowBlur = 0
+fillStyle = "#4aa3df"
+globalAlpha = 0.176
+beginPath()
+rect(489.138, 162.541, 33.478, 15.451)
+fill()
+globalAlpha = 0.588
+fillStyle = "#4aa3df"
+globalAlpha = 0.529
+fillRect(489.138, 162.541, 33.478, 2)
+globalAlpha = 0.588
+lineWidth = 1.2
+strokeStyle = "#4aa3df"
+setLineDash([])
+beginPath()
+rect(489.138, 162.541, 33.478, 15.451)
+stroke()
+setLineDash([])
+fillStyle = "#4aa3df"
+strokeStyle = "#4aa3df"
+save()
+translate(511.616, 167.992)
+scale(0.583, 0.583)
+lineWidth = 2.571
+setLineDash([])
+strokeRect(1.5, 1.5, 9, 9)
+fillRect(1.5, 5, 9, 2)
+restore()
+globalAlpha = 0.209
+strokeStyle = "#6f6f7a"
+lineWidth = 1
+beginPath()
+moveTo(460.194, 167.626)
+lineTo(460.194, 249.126)
+stroke()
+globalAlpha = 0.598
+fillStyle = "#26262b"
+globalAlpha = 0.538
+beginPath()
+rect(443.268, 152.002, 33.853, 15.624)
+fill()
+shadowBlur = 0
+fillStyle = "#835bec"
+globalAlpha = 0.359
+beginPath()
+rect(443.268, 152.002, 33.853, 15.624)
+fill()
+globalAlpha = 0.598
+lineWidth = 1.2
+strokeStyle = "#835bec"
+setLineDash([])
+beginPath()
+rect(443.268, 152.002, 33.853, 15.624)
+stroke()
+setLineDash([])
+fillStyle = "#835bec"
+strokeStyle = "#835bec"
+save()
+translate(466.12, 157.626)
+scale(0.583, 0.583)
+lineWidth = 2.571
+setLineDash([])
+beginPath()
+moveTo(6, 1)
+lineTo(11, 6)
+lineTo(6, 11)
+lineTo(1, 6)
+closePath()
+fill()
+restore()
+strokeStyle = "#d66fd6"
+lineWidth = 1.2
+strokeRect(440.268, 149.002, 39.853, 21.624)
+font = "9.5px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif"
+textAlign = "left"
+textBaseline = "top"
+fillStyle = "#dcdce3"
+fillText("Th…", 448.268, 156.002)
+globalAlpha = 0.245
+strokeStyle = "#6f6f7a"
+lineWidth = 1
+beginPath()
+moveTo(233.567, 165.477)
+lineTo(233.567, 271.299)
+stroke()
+globalAlpha = 0.7
+fillStyle = "#26262b"
+globalAlpha = 0.63
+beginPath()
+rect(214.603, 147.971, 37.93, 17.506)
+fill()
+shadowBlur = 0
+fillStyle = "#4aa3df"
+globalAlpha = 0.42
+beginPath()
+rect(214.603, 147.971, 37.93, 17.506)
+fill()
+globalAlpha = 0.7
+fillStyle = "#4aa3df"
+globalAlpha = 0.63
+fillRect(214.603, 147.971, 37.93, 2)
+globalAlpha = 0.7
+lineWidth = 1.2
+strokeStyle = "#4aa3df"
+setLineDash([])
+beginPath()
+rect(214.603, 147.971, 37.93, 17.506)
+stroke()
+setLineDash([])
+fillStyle = "#4aa3df"
+strokeStyle = "#4aa3df"
+save()
+translate(241.532, 155.477)
+scale(0.583, 0.583)
+lineWidth = 2.571
+setLineDash([])
+strokeRect(1.5, 1.5, 9, 9)
+fillRect(1.5, 5, 9, 2)
+restore()
+globalAlpha = 0.245
+strokeStyle = "#6f6f7a"
+lineWidth = 1
+beginPath()
+moveTo(503.052, 234.248)
+lineTo(503.052, 271.299)
+stroke()
+globalAlpha = 0.7
+fillStyle = "#26262b"
+globalAlpha = 0.63
+beginPath()
+rect(484.088, 216.742, 37.93, 17.506)
+fill()
+shadowBlur = 0
+fillStyle = "#4aa3df"
+globalAlpha = 0.42
+beginPath()
+rect(484.088, 216.742, 37.93, 17.506)
+fill()
+globalAlpha = 0.7
+fillStyle = "#4aa3df"
+globalAlpha = 0.63
+fillRect(484.088, 216.742, 37.93, 2)
+globalAlpha = 0.7
+lineWidth = 1.2
+strokeStyle = "#4aa3df"
+setLineDash([])
+beginPath()
+rect(484.088, 216.742, 37.93, 17.506)
+stroke()
+setLineDash([])
+fillStyle = "#4aa3df"
+strokeStyle = "#4aa3df"
+save()
+translate(511.017, 224.248)
+scale(0.583, 0.583)
+lineWidth = 2.571
+setLineDash([])
+strokeRect(1.5, 1.5, 9, 9)
+fillRect(1.5, 5, 9, 2)
+restore()
+globalAlpha = 0.249
+strokeStyle = "#6f6f7a"
+lineWidth = 1
+beginPath()
+moveTo(226.316, 133.515)
+lineTo(226.316, 273.923)
+stroke()
+globalAlpha = 0.711
+fillStyle = "#26262b"
+globalAlpha = 0.64
+beginPath()
+rect(207.11, 115.787, 38.412, 17.729)
+fill()
+shadowBlur = 0
+globalAlpha = 0.711
+lineWidth = 1.2
+strokeStyle = "#8b8b98"
+setLineDash([])
+beginPath()
+rect(207.11, 115.787, 38.412, 17.729)
+stroke()
+setLineDash([])
+fillStyle = "#e0574f"
+font = "700 8px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif"
+textAlign = "left"
+textBaseline = "bottom"
+fillText("?", 212.11, 131.515)
+font = "9.5px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif"
+textAlign = "left"
+textBaseline = "top"
+fillStyle = "#dcdce3"
+fillText("Tem…", 212.11, 119.787)
+globalAlpha = 0.249
+strokeStyle = "#6f6f7a"
+lineWidth = 1
+beginPath()
+moveTo(322.271, 267.576)
+lineTo(322.271, 273.923)
+stroke()
+globalAlpha = 0.711
+fillStyle = "#26262b"
+globalAlpha = 0.64
+beginPath()
+rect(303.065, 249.847, 38.412, 17.729)
+fill()
+shadowBlur = 0
+fillStyle = "#835bec"
+globalAlpha = 0.213
+beginPath()
+rect(303.065, 249.847, 38.412, 17.729)
+fill()
+globalAlpha = 0.711
+lineWidth = 1.2
+strokeStyle = "#835bec"
+setLineDash([])
+beginPath()
+rect(303.065, 249.847, 38.412, 17.729)
+stroke()
+setLineDash([])
+fillStyle = "#835bec"
+strokeStyle = "#835bec"
+save()
+translate(330.477, 257.576)
+scale(0.583, 0.583)
+lineWidth = 2.571
+setLineDash([])
+beginPath()
+moveTo(6, 1)
+lineTo(11, 6)
+lineTo(6, 11)
+lineTo(1, 6)
+closePath()
+fill()
+restore()
+font = "9.5px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif"
+textAlign = "left"
+textBaseline = "top"
+fillStyle = "#dcdce3"
+fillText("Syn…", 308.065, 253.847)
+globalAlpha = 0.306
+strokeStyle = "#6f6f7a"
+lineWidth = 1
+beginPath()
+moveTo(615.948, 237.508)
+lineTo(615.948, 324.762)
+stroke()
+globalAlpha = 0.874
+fillStyle = "#26262b"
+globalAlpha = 0.787
+beginPath()
+rect(592.069, 215.465, 47.759, 22.043)
+fill()
+shadowBlur = 0
+fillStyle = "#835bec"
+globalAlpha = 0.262
+beginPath()
+rect(592.069, 215.465, 47.759, 22.043)
+fill()
+globalAlpha = 0.874
+lineWidth = 1.2
+strokeStyle = "#835bec"
+setLineDash([])
+beginPath()
+rect(592.069, 215.465, 47.759, 22.043)
+stroke()
+setLineDash([])
+fillStyle = "#835bec"
+strokeStyle = "#835bec"
+save()
+translate(628.828, 227.508)
+scale(0.583, 0.583)
+lineWidth = 2.571
+setLineDash([])
+beginPath()
+moveTo(6, 1)
+lineTo(11, 6)
+lineTo(6, 11)
+lineTo(1, 6)
+closePath()
+fill()
+restore()
+font = "9.5px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif"
+textAlign = "left"
+textBaseline = "top"
+fillStyle = "#dcdce3"
+fillText("Error…", 597.069, 219.465)
+font = "600 10.5px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif"
+textAlign = "center"
+textBaseline = "middle"
+globalAlpha = 0.82
+fillStyle = "#1e1e22"
+fillRect(418.812, 210.396, 36, 16)
+globalAlpha = 0.9
+fillStyle = "#a2a2ad"
+fillText("Sync", 436.812, 218.396)
+globalAlpha = 0.82
+fillStyle = "#1e1e22"
+fillRect(240.341, 138.524, 54, 16)
+globalAlpha = 0.9
+fillStyle = "#a2a2ad"
+fillText("Storage", 267.341, 146.524)
+globalAlpha = 0.82
+fillStyle = "#1e1e22"
+fillRect(512.25, 156.235, 30, 16)
+globalAlpha = 0.9
+fillStyle = "#a2a2ad"
+fillText("API", 527.25, 164.235)
+globalAlpha = 1

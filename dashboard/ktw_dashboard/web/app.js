@@ -454,7 +454,6 @@ function setClock(day) {
   const n = SCENE.state ? SCENE.state.entries.filter((e) => existsAt(e, day, hasRepo(e))).length : 0; const grew = n !== CLOCK_N; CLOCK_N = n;
   SCENE.setDay(day, { grew }); // every graph follows (runGraph), and the stage
 }
-SCENE.on("day", (day, { grew }) => { if (grew) STAGE?.relax?.(); STAGE?.wake?.(); });
 const byId = () => Object.fromEntries(SCENE.state.entries.map((e) => [e.id, e]));
 const byUuid = () => Object.fromEntries(SCENE.state.entries.filter((e) => e.uuid).map((e) => [e.uuid, e]));
 // an entry's address is its Id, so a copied link survives a renamed heading or a moved entry; file#anchor only without one
@@ -2359,13 +2358,12 @@ let THOUGHT_PIN = null; // the ids of the held thought, joined
 // One step pointed at — in a thought's list of steps, in the reader, on the
 // Thoughts page — is marked in every graph on the page.
 const focusStep = (ref) => SCENE.setFocus(ref); // every graph redraws (runGraph), and the stage
-SCENE.on("focus", () => STAGE?.wake?.());
 const stepHover = (ref) => ({ onmouseenter: () => focusStep(ref), onmouseleave: () => focusStep(null) });
 function lightThought(g, t) {
   g.thought = t ? { nodes: new Set(t.steps), pairs: new Set(t.ids.slice(1).map((id, i) => `${id}|${t.ids[i]}`)) } : null;
   // lighting a thought brings entries into view that may be hidden otherwise, so the layout settles again (and the
   // small graph refits); letting go only redraws — a refit would move the view the person has set
-  if (t) g.alpha = Math.max(g.alpha, 0.02); g.wake?.(); STAGE?.wake?.();
+  if (t) g.alpha = Math.max(g.alpha, 0.02); g.wake?.(); SCENE.wake(); // the stage, too, shows what is lit (it follows the scene)
 }
 // the thought being read (#thought/…) is held in every graph shown beside it, however the reader was reached —
 // read › without a click first, a link, a reload — the same as a thought clicked and then read
@@ -2698,7 +2696,6 @@ function runGraph(canvas, g, opts = {}) {
     const dt = lastT && now ? Math.min(100, now - lastT) : 16; lastT = now || 0;
     const drifting = driftOn() && !hover && !drag && !pan && !pinch;
     if (drifting) { const a = DRIFT_RATE * dt, c = Math.cos(a), sn = Math.sin(a); for (const n of g.nodes) { const x = n.x, y = n.y; n.x = x * c - y * sn; n.y = x * sn + y * c; } }
-    if (STAGE && (g === STAGE.graph || (g.of && g.of === STAGE.graph)) && g.alpha > 0.01 && STAGE.follows?.()) STAGE.wake(); // settling: the stage settles with it, then keeps the positions
     // settled and only turning: every other frame is enough
     if (drifting && g.alpha <= 0.003 && (frame++ & 1)) { g.raf = canvas.isConnected ? requestAnimationFrame(step) : null; return; }
     const ns = g.nodes.filter(visible);
@@ -2938,7 +2935,7 @@ function viewTimeline(main, day) {
     el("p", { class: "note stage-note" }, el("span", { class: "stage-hint" }, (grid.hours ? "On the stage: wheel — an hour forward or back, shift for a day ·" : "On the stage: wheel — a day forward or back, shift for a week ·") + " drag — look around · ctrl+wheel — zoom · double-click — reset the view · click a card to read it, the floor to let go. The thoughts beside: point at one to light its chain here and in the graph."), el("span", { class: "stage-hint-touch" }, "On the stage: drag — look around · pinch — zoom · tap a card to read it, the floor to let go. The slider sets the day.")),
     listBox);
   SCENE.day = null; setClock(day && DAY_RE.test(day) ? clamp(grid.toClock(day)) : span.to); upd();
-  runStage(canvas, { wrap, tip, span, graph: g, setDay, stepBy, big, play, open: card.hold, close: card.release });
+  runStage(canvas, { wrap, tip, span, graph: g, graphBeside: !narrow(), setDay, stepBy, big, play, open: card.hold, close: card.release }); // the side pane draws no graph on a narrow screen (miniGraph)
   ESC.page = () => STAGE?.reset?.();
   // keys while the timeline is open: ← → a day, shift a week, space plays
   const onKey = (ev) => {
@@ -3098,20 +3095,22 @@ function stageCamera(scene, v, o) {
   // awake by a pointed-at thought, and following that would walk the cards along its turn a step per hover). The
   // family graph runs as the side pane's copy (`runner`), which shares its nodes but settles with an alpha of its
   // own: the family graph's own never falls, and read alone it kept the cards following the turn for good
-  const POS = new Map(); let settled = false; // node id -> { x, y }
-  const syncPositions = () => { if (!scene.G) return; for (const [id, q] of SCENE.layout) if (!settled || !POS.has(id)) POS.set(id, q); if (SCENE.layoutSettled) settled = true; o.wrap.dataset.settled = settled ? "1" : ""; }; // the graph's positions, as it published them to the scene (publishLayout)
+  // the positions: the scene's layout (ktw-scene.js) — the graph beside the stage publishes them while it settles,
+  // and the scene keeps them from then on; with no graph drawn beside the stage, the scene settles them itself
+  let sawSettled = false; // the stage follows the layout until it has drawn it settled once
+  const positions = () => { const G = scene.G; if (!G) return SCENE.layout; const L = SCENE.layoutSource ? SCENE.layout : SCENE.layoutFor(G.nodes, G.links); sawSettled = SCENE.layoutSettled; o.wrap.dataset.settled = sawSettled ? "1" : ""; return L; };
   const gbox = { x0: 0, x1: 1, y0: 0, y1: 1 };
-  const measureGraph = (shownCards) => { syncPositions(); const xs = [], ys = []; for (const c of shownCards) { const q = POS.get(c.nid); if (q) { xs.push(q.x); ys.push(q.y); } } const b = percentileBox(xs, ys); if (b) Object.assign(gbox, b); };
+  const measureGraph = (shownCards) => { const P = positions(); const xs = [], ys = []; for (const c of shownCards) { const q = P.get(c.nid); if (q) { xs.push(q.x); ys.push(q.y); } } const b = percentileBox(xs, ys); if (b) Object.assign(gbox, b); };
   const clamp01 = (u) => Math.max(0, Math.min(1, u));
   const gmap = (n) => { const ux = clamp01((n.x - gbox.x0) / (gbox.x1 - gbox.x0 || 1)), uy = clamp01((n.y - gbox.y0) / (gbox.y1 - gbox.y0 || 1)); return { x: (ux - 0.5) * (planeHalf() * 2 - 0.9), y: 1.3 - uy * (1.3 - (SHELF[0] - 0.45)) }; }; // the top row well under the eye
-  const basePos = (c) => { const q = asGraph() ? POS.get(c.nid) : null; return q ? gmap(q) : { x: c.x, y: c.y }; };
+  const basePos = (c) => { const q = asGraph() ? SCENE.layout.get(c.nid) : null; return q ? gmap(q) : { x: c.x, y: c.y }; };
   // the box's height: what the window has left under everything above the stage and over the legend and note under it
   const roomBelow = () => { let below = 24; for (let n = o.wrap.nextElementSibling; n; n = n.nextElementSibling) below += n.offsetHeight + 12; const main = o.wrap.closest("#main"); if (main) below += parseFloat(getComputedStyle(main).paddingBottom) || 0; return below; };
   const roomAbove = () => { const main = o.wrap.closest("#main"); return main ? o.wrap.getBoundingClientRect().top - main.getBoundingClientRect().top + main.scrollTop : 0; };
   const chrome = () => (narrow() ? 60 : 108); // the top bar, the strip, the status bar
   const fitHeight = () => { const h = stageHeight(baseK() * 3.15 + 60, window.innerHeight - chrome() - roomAbove() - roomBelow()); if (Math.abs(h - o.wrap.getBoundingClientRect().height) > 2) o.wrap.style.height = `${h}px`; };
   const zFar = () => Math.max(1, logDepth(tNow() + 20, spanDays, DEPTH_FAR)); // the floor's far edge: a little beyond the first day
-  return { camY, floorY, asGraph, K, KY, planeHalf, now, zOf, zFar, proj, depthAlpha, measureGraph, basePos, fitHeight };
+  return { camY, floorY, asGraph, K, KY, planeHalf, now, zOf, zFar, proj, depthAlpha, measureGraph, basePos, fitHeight, following: () => asGraph() && !sawSettled };
 }
 // The layout: which cards show, where each stands, and the pushes that keep them apart. A push is an offset on the
 // card (ox, oy in plane units); nothing pulls an offset back on its own — a steady pull against the push made the
@@ -3312,8 +3311,8 @@ function runStage(canvas, o) {
   const scene = stageScene(o.graph, o.span);
   // the stage stands its cards where the graph beside it stands its nodes: that graph is the scene's layout source,
   // and its positions so far are the start (a graph already settled publishes nothing more on its own)
-  SCENE.resetLayout(o.graph || null);
-  if (o.graph) publishLayout(o.graph, { force: true });
+  SCENE.resetLayout(o.graph && o.graphBeside ? o.graph : null);
+  if (SCENE.layoutSource) publishLayout(o.graph, { force: true });
   canvas.dataset.lanes = scene.lanes.map((L) => L.title).join(" | "); // what the stage holds, readable from outside (tests)
   const cam = stageCamera(scene, v, o);
   const layout = stageLayout(scene, cam, v);
@@ -3335,7 +3334,16 @@ function runStage(canvas, o) {
     // pick: an entry chosen elsewhere on the page (a thought's step in the pane) is held like a clicked card, and the day moves to its, so it arrives at the front
     pick: (e) => { v.held = (e.uuid && scene.byId[e.uuid]) || scene.byId[e.id] || null; o.play(false); o.open(e, v.held); o.setDay(createdOn(e) || o.span.to); wake(); } };
   resize();
-  const ro = new ResizeObserver(() => { if (!canvas.isConnected) { ro.disconnect(); input.release(); if (STAGE?.wake === wake) STAGE = null; return; } resize(); cam.fitHeight(); wake(); }); ro.observe(canvas);
+  // the scene's changes the stage follows, until its canvas leaves the page: the clock, the focus, a lit thought,
+  // the graph's layout while it settles (the cards stand where its nodes stand), and anything every view redraws for
+  const listening = [
+    SCENE.on("day", (day, { grew }) => { if (grew) layout.relax(); wake(); }),
+    SCENE.on("focus", () => wake()),
+    SCENE.on("thought", () => wake()),
+    SCENE.on("layout", () => { if (cam.following()) wake(); }),
+    SCENE.on("wake", () => wake()),
+  ];
+  const ro = new ResizeObserver(() => { if (!canvas.isConnected) { ro.disconnect(); input.release(); for (const off of listening) off(); if (STAGE?.wake === wake) STAGE = null; return; } resize(); cam.fitHeight(); wake(); }); ro.observe(canvas);
   cam.fitHeight(); wake();
 }
 

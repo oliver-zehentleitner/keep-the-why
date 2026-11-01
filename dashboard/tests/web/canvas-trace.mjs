@@ -5,7 +5,8 @@
 //   node canvas-trace.mjs PAGE            compare against canvas-snapshots/
 //   node canvas-trace.mjs PAGE --update   rewrite canvas-snapshots/
 //
-// The page is the frozen fixture's (fixture/make_fixture.py --page). The clock, the time zone and
+// The page is the frozen fixture's (fixture/make_fixture.py --page). The timeline is traced twice: beside the graph,
+// and on a narrow screen, where no graph is drawn and the scene settles the stage's layout itself. The clock, the time zone and
 // Math.random are held as in snapshot.mjs; the motion is off (the graph's slow turn would never settle); a
 // canvas is 800 × 500; a frame runs as soon as the previous one is done, so the layout settles in the run.
 process.env.TZ = "UTC";
@@ -31,7 +32,7 @@ const tick = (ms) => new Promise((r) => setTimeout(r, ms));
 const lastFrame = (log) => { const i = log.map((l) => l.startsWith("clearRect(")).lastIndexOf(true); return i < 0 ? log : log.slice(i); };
 // One page per route, opened at that route: the graph keeps its positions across a move to another view, so
 // a move made while it settles would leave it wherever the timing had got it to.
-async function trace(hash) {
+async function trace(hash, { narrow = false } = {}) {
   const vc = new VirtualConsole();
   vc.on("jsdomError", (e) => errors.push(`${hash} jsdom: ` + (e.detail?.stack || e.message || e).toString().split("\n").slice(0, 2).join(" | ")));
   vc.on("error", (...a) => errors.push(`${hash} console: ` + a.join(" ")));
@@ -59,9 +60,10 @@ async function trace(hash) {
       let frames = 0;
       window.requestAnimationFrame = (fn) => { state.pending++; return window.setTimeout(() => { state.pending--; state.frames++; fn(++frames * 16); }, 0); };
       window.cancelAnimationFrame = (id) => { state.pending = Math.max(0, state.pending - 1); window.clearTimeout(id); };
-      window.matchMedia = () => ({ matches: false });
+      window.matchMedia = (q) => ({ matches: narrow && /max-width/.test(q) }); // narrow: a phone, where the side pane draws no graph
       window.CSS = { escape: (s) => s.replace(/([^\w-])/g, "\\$1") };
       window.Path2D = class { constructor(d) { this.d = d; } };
+      window.scrollTo = () => {}; // a narrow page scrolls to the view; jsdom has no layout to scroll
       window.addEventListener("error", (e) => errors.push(`${hash} window: ` + e.message));
     },
   });
@@ -76,11 +78,14 @@ async function trace(hash) {
   }
   const canvases = [...dom.window.document.querySelectorAll("canvas")].filter((c) => LOGS.has(c));
   const parts = canvases.map((c, i) => [`## canvas ${i + 1} — ${c.parentElement?.className || "?"}`, ...lastFrame(LOGS.get(c)), ""].join("\n"));
+  // the stage says whether the layout it stands its cards on has settled — with no graph beside it, the scene settles it itself
+  const wrap = dom.window.document.querySelector(".stage-wrap, [data-settled]");
+  if (hash.startsWith("#timeline") && wrap?.dataset.settled !== "1") errors.push(`${hash}${narrow ? " (narrow)" : ""}: the stage's layout never settled`);
   dom.window.close();
   return `# ${hash}\n\n${parts.join("\n")}`;
 }
 const results = new Map();
-for (const [name, hash] of [["graph", "#graph"], ["timeline", "#timeline"]]) results.set(name, await trace(hash));
+for (const [name, hash, opts] of [["graph", "#graph"], ["timeline", "#timeline"], ["timeline-narrow", "#timeline", { narrow: true }]]) results.set(name, await trace(hash, opts));
 
 const files = [...results].map(([name, text]) => [path.join(DIR, `${name}.txt`), text.endsWith("\n") ? text : text + "\n"]);
 let changed = 0;
