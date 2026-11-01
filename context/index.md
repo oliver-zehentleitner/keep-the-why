@@ -33,7 +33,7 @@ Why this project is built the way it is.
 
 ## D
 
-- [dashboard.md](dashboard.md) — design of the read-only dashboard (`dashboard/`): why it exists beside the "no dashboard" line, why in this repo, the plain-JS page, the fingerprint/SSE live mode, Git authors as-is, tree-wide family search, a `See` into another repository followed through its published export, friends and thoughts in the graph, its slow turn, the path of a walk; a GitLab project read through the repository files API (CORS); the timeline's clock and stage, which every graph follows; a family badge only for a family in one repository; owners in the graph; the page as a library a second host (Maity) builds on, its files classic scripts on one namespace, bodies rendered to DOM nodes by the old rules, and the DOM snapshots that guard the refactoring
+- [dashboard.md](dashboard.md) — design of the read-only dashboard (`dashboard/`): why it exists beside the "no dashboard" line, why in this repo, the plain-JS page, the fingerprint/SSE live mode, Git authors as-is, tree-wide family search, a `See` into another repository followed through its published export, friends and thoughts in the graph, its slow turn, the path of a walk; a GitLab project read through the repository files API (CORS); the timeline's clock and stage, which every graph follows; a family badge only for a family in one repository; owners in the graph; the page as a library a second host (Maity) builds on, its files classic scripts on one namespace, bodies rendered to DOM nodes by the old rules, places as routes behind one nav block, and the DOM snapshots that guard the refactoring
 
 ## E
 
