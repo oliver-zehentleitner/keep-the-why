@@ -9,6 +9,11 @@
 // it; :hover, :focus and the like count as on, so their rules are compared too. Token names are compared as
 // the dashboard's variables (var(--ktw-fg2, #a2a2ad) as var(--fg2)); test_views.py holds the values equal.
 //
+// It compares what each element declares, not what it inherits: a container that now declares a value its
+// children used to inherit from further up shows only on the container (EXPECTED names each such case with the
+// exact declaration); whether the inherited value was the same at every width is computed-styles.mjs's to show,
+// in Chromium.
+//
 // A shorthand and its longhands are compared as a family (border, border-color, border-left-color …): the
 // family's winning declarations in cascade order, so a longhand that now loses to a shorthand shows.
 //
@@ -36,9 +41,10 @@ const norm = (v) => v.replace(/var\(--([\w-]+)(?:,[^()]*(?:\([^()]*\)[^()]*)*)?\
 
 // what the split adds on purpose, and why it renders the same
 const EXPECTED = [
-  // #main and #details carry ktw-root now: the lib's font and colour for the views' container, the same values
-  // the body has and they inherited before
-  { path: /^body:\d+\/div:\d+\/(main|aside):\d+$/, family: /^(font|color)$/ },
+  // #main and #details carry ktw-root now: the views' font family and text colour on their container, the values
+  // the body has at every width (its size, which grows on a phone, is left to the host) and they inherited before
+  { path: /^body:\d+\/div:\d+\/(main|aside):\d+$/, family: "font", split: "font-family: var(--font)" },
+  { path: /^body:\d+\/div:\d+\/(main|aside):\d+$/, family: "color", split: "color: var(--fg)" },
 ];
 
 // ---- specificity and matching for the selectors this stylesheet uses
@@ -163,7 +169,9 @@ for (const hash of routes) {
       for (const f of new Set([...a.keys(), ...b.keys()])) {
         compared++;
         if (a.get(f) === b.get(f)) continue;
-        if (EXPECTED.some((x) => x.path.test(path) && x.family.test(f))) { expected++; continue; }
+        // expected: the split's family is the base's plus exactly the one declaration named
+        const plus = (x) => { const parts = (b.get(f) || "").split("; ").filter((d) => d !== x.split); return parts.join("; ") === (a.get(f) || "") && parts.length < (b.get(f) || "").split("; ").length; };
+        if (EXPECTED.some((x) => x.path.test(path) && x.family === f && plus(x))) { expected++; continue; }
         diffs.push(`${hash} @${w}px ${path} [${f}]\n    base:  ${a.get(f) ?? "(none)"}\n    split: ${b.get(f) ?? "(none)"}`);
       }
     }

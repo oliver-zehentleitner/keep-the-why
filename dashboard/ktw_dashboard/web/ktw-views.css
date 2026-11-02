@@ -3,7 +3,7 @@
    the tokens (docs/dashboard-views.md). Bare elements are styled under :where(.ktw-root) — the class a host puts on
    every container it mounts views into, at no added specificity; .ktw-aside marks a side pane. Load it before the host's own stylesheet. */
 :where(.ktw-root, .ktw-root *) { box-sizing: border-box; }
-:where(.ktw-root) { font: 14px/1.5 var(--ktw-font, -apple-system, "Segoe UI", Inter, Roboto, "Helvetica Neue", sans-serif); color: var(--ktw-fg, #dcdce3); }
+:where(.ktw-root) { font-family: var(--ktw-font, -apple-system, "Segoe UI", Inter, Roboto, "Helvetica Neue", sans-serif); color: var(--ktw-fg, #dcdce3); }
 :where(.ktw-root) a { color: var(--ktw-accent2, #a98cf5); text-decoration: none; }
 :where(.ktw-root) a:where(:hover) { text-decoration: underline; }
 :where(.ktw-root) code { font-family: var(--ktw-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace); font-size: 12.5px; }
