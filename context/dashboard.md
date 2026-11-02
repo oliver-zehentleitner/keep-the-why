@@ -841,3 +841,20 @@ The held thought is the scene's: `scene.pin` holds its ids joined with `|`, `set
 
 **Rejected alternative:** waiting for the graph builders to move first — the lead's call. Passing the graph itself instead of a builder was also rejected: the family's graph arrives after the page is first shown, and the page asks again when it does.
 
+
+## The family and the search load through the provider and know public members only; the registry comes in through two host hooks
+
+**Id:** 717445db-3e9f-4800-ac0b-4526c4545496
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** the series' lead, 2026-11-02, on the cut for the search and family step: no token and no host URL in the library, every load through the provider, public members only until the token contract with Maity is settled, the host hooks small and named, the Friends page as its own later step; the hooks' shape is the implementer's, in the pull request that moved the search and the family
+**Revisit when:** the token contract with Maity is settled and private members are to be read, or a second host offers a registry of its own
+**See:** dashboard.md#the-pages-data-comes-through-one-provider-a-method-the-mode-cannot-answer-is-absent-and-the-shells-own-requests-stay-beside-it — 4ec4240f-f651-4559-9067-8d3c966a9690 — as of 2026-11-02
+**See:** dashboard.md#the-globe-loads-the-web-in-waves-each-asked-for-with-its-count-the-registry-is-an-invitation-never-a-requirement — 64f88b63-67b6-4a87-990c-e0258e7b63b0 — as of 2026-11-02
+
+`ktw-family.js` holds what the search, the graph's family and friend layers and the path read about other projects: the tree (from the live server or the members' published exports), each member's state, the friends and their families, and the Family page. `ktw-search.js` holds the scopes, the hits, the results page and the dropdown. The family loads only through the provider it is given and asks the host for two things, the mode and the page's own root. The search asks for nothing else from the family. The registry is the host's: `host.registryPage` draws `#search/registry/<q>` and `host.registryRows` gives the dropdown its registry rows. A host without them has a search without a registry, and the results page's bar then leaves out the registry link.
+
+**Reason:** a token, a private member's path or the registry's URL inside the library would decide for every host what only the dashboard has settled. Maity's per-project access is not settled yet, so the library stays with what any page may read. The registry was already the dashboard's alone, together with the globe it feeds. Two named hooks keep it out of the library without taking it out of the search the dashboard shows.
+
+**Rejected alternative:** moving the registry search into the library behind a provider method. That would have put a URL only this dashboard uses into a file every host loads, and the globe it belongs with stays in the host anyway. The Friends page stayed out of this step: it reads the host's graph builders and shares its helpers with the Thoughts page, which another step is moving at the same time.
