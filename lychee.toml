@@ -38,7 +38,12 @@ exclude_path = ["tools/evals/fixtures", "experiments/rejected-change/results", "
 # that name does not resolve — a move on their side that is not finished.
 # The links stay as published; drop this line once the new host answers, and
 # point the links there if the redirect stays.
+# pepy.tech (the download badges in dashboard/README.md and lint/README.md)
+# answers the runners with 503 since 2026-11-02 and turns every PR red; an
+# outage on their side, the badges are real links. Drop this line once
+# pepy.tech answers again.
 exclude = [
+  "^https://pepy\\.tech/",
   "^https://luongnv\\.com/asm/",
   "^https://www\\.npmjs\\.com/",
   "^https://deepwiki\\.com/",
