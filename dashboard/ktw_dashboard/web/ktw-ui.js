@@ -1,10 +1,11 @@
 /* Keep the Why dashboard — the small pieces every view builds its DOM from: an element with its attributes,
    handlers and children (`el`), children replaced in place (`setKids`), the pills for a Type, a Status and an
-   Evidence, and a Type's glyph as SVG. Nodes only — no state, no HTML strings, nothing read from the page.
+   Evidence, a Type's glyph and a host's mark as SVG, text with the searched words marked, and a link to a place
+   that moves through the host's nav. Nodes only — no state, no HTML strings, nothing read from the page.
    A classic script on globalThis.KeepTheWhy.ui, listed in ktw-views.json after the core. */
 (function (root) {
 "use strict";
-const { typeName } = root.KeepTheWhy.core;
+const { typeName, hostOf, highlightParts } = root.KeepTheWhy.core;
 
 // an element: attributes (class, on<event> handlers, the rest as attributes; null or false leaves one out) and
 // children (nodes, or text; null and false left out, arrays flattened)
@@ -44,6 +45,29 @@ function typeGlyphSvg(kind) {
   return svg;
 }
 
+// the platform's mark before a repository's name, from its URL (ktw-core.js HOSTS); none for a host no row knows
+function hostMark(url) {
+  const h = hostOf(url); if (!h) return null;
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24"); svg.setAttribute("class", "host-mark"); svg.setAttribute("role", "img"); svg.setAttribute("aria-label", h.name);
+  // the name as aria-label, not as an SVG title element: that would join the link's text
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path"); path.setAttribute("d", h.path);
+  svg.append(path); return svg;
+}
+// text with every search term in a <mark>, as nodes (highlightParts in ktw-core.js)
+const marked = (text, terms) => highlightParts(text, terms).map((p) => (p.mark ? el("mark", {}, p.text) : p.text));
+// navLink(nav) — links to places for a host's nav: a real anchor (middle-click, a new tab and a screen reader
+// work) whose plain click moves through nav. `href` in attrs is the route; it keeps its place among the
+// attributes, so the markup is as before.
+const navLinks = (nav) => function navLink(attrs, ...kids) {
+  const route = attrs.href; const own = attrs.onclick;
+  return el("a", { ...attrs, href: nav.href(route), onclick: (ev) => {
+    own?.(ev);
+    if (ev.defaultPrevented || ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey || attrs.target) return;
+    ev.preventDefault(); nav.go(route);
+  } }, ...kids);
+};
+
 const KTW = (root.KeepTheWhy = root.KeepTheWhy || {});
-KTW.ui = Object.freeze({ el, setKids, pill, statusPill, evPill, typePills, entryPills, GLYPHS, typeGlyphSvg });
+KTW.ui = Object.freeze({ el, setKids, pill, statusPill, evPill, typePills, entryPills, GLYPHS, typeGlyphSvg, hostMark, marked, navLinks });
 })(globalThis);

@@ -8,7 +8,9 @@
     "ktw-scene.js",
     "ktw-markdown.js",
     "ktw-graph.js",
-    "ktw-timeline.js"
+    "ktw-timeline.js",
+    "ktw-family.js",
+    "ktw-search.js"
   ],
   "styles": []
 }
