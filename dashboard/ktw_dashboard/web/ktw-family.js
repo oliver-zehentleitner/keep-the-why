@@ -28,6 +28,7 @@ const liveHref = (project, route) => nav.href({ ...route, centre: { mode: "live"
 // hides or shows that reason. A host's promise that rejects is an answer with an error too: nothing here throws.
 const NO_EXPORTS = "published exports are not available on this page";
 const NO_BODIES = "entry texts are not available on this page";
+const NOT_FILLED = "the host answered without the entry texts";
 const canExports = () => typeof provider().exportState === "function";
 const canBodies = () => typeof provider().bodies === "function";
 const failed = (err, what) => (err && err.message) || String(err || what);
@@ -38,14 +39,17 @@ function publicState(canonical, root = "") {
     ? Promise.resolve().then(() => provider().exportState(canonical, root)).catch((err) => ({ error: failed(err, "could not read the published export"), canonical, root }))
     : Promise.resolve({ error: NO_EXPORTS, canonical, root }));
 }
-// a lean state's entry texts, filled in where the provider can; else state.bodiesError says why they are missing
+// a lean state's entry texts, filled in where the provider can; else state.bodiesError says why they are missing.
+// The contract (docs/dashboard-views.md): an answer either fills the state it was handed, in place, and sets its
+// bodiesLoaded, or says why not. Whatever else comes back — an error, a rejection, an answer that does neither —
+// leaves the lean state with a bodiesError, so a reader that waits for the texts (thoughts, timeline:
+// !bodiesLoaded && !bodiesError) asks once and not on every render.
 function bodies(state) {
   const lean = state && typeof state.bodies === "string" && !state.bodiesLoaded;
   if (!canBodies()) { if (lean && !state.bodiesError) state.bodiesError = NO_BODIES; return Promise.resolve(state); }
-  // a failure the provider answers with ({ state, error } or { error }) marks the state as one it rejects does, so a
-  // reader that waits for the texts (thoughts, timeline: !bodiesLoaded && !bodiesError) does not ask again and again
   const mark = (why) => { if (lean && !state.bodiesLoaded && !state.bodiesError) state.bodiesError = why; };
-  return Promise.resolve().then(() => provider().bodies(state)).then((r) => { if (r?.error) mark(String(r.error)); return r?.state || state; }, (err) => { mark(failed(err, "could not fetch the bodies")); return state; });
+  return Promise.resolve().then(() => provider().bodies(state))
+    .then((r) => { mark(r?.error ? String(r.error) : NOT_FILLED); return r?.state || state; }, (err) => { mark(failed(err, "could not fetch the bodies")); return state; });
 }
 
 // What a search runs over: this project, or every member of its tree — the

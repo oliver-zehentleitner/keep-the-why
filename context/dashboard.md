@@ -964,3 +964,19 @@ A host loads three stylesheets: its element defaults (the dashboard's `base.css`
 - Unprefixed classes inside a scoping container (`.ktw-root .pill`): it raises every rule's weight and still collides with a host's `.pill` inside its own pages.
 - Mapping the tokens as `--ktw-fg: var(--fg)`: the shortest form, and the one the design named, but the canvas would read the text `var(--fg)` under jsdom.
 - Loading `ktw-views.css` after the host's stylesheet: a view would then override the host's own adjustments.
+
+## exportState and bodies are optional; a rejection, or a bodies answer that leaves the state lean, is an answer with an error
+
+**Id:** 09dbb355-cd4b-42cc-8fe8-e032ebabdf82
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** the series' lead, 2026-11-02, on the host contract after the pull request that made the views read a host's provider as the guide says; review of that pull request found a `bodies` answer that neither fills the state nor names an error asked again on every render, and the dashboard's own provider answering a lean state without an address that way; the fix and its wording are the implementer's
+**Revisit when:** a host fills a state's texts by handing back a new state rather than the one it was given, or a view needs to tell a host that cannot answer apart from one that failed this time
+**See:** dashboard.md#the-pages-data-comes-through-one-provider-a-method-the-mode-cannot-answer-is-absent-and-the-shells-own-requests-stay-beside-it — 4ec4240f-f651-4559-9067-8d3c966a9690 — as of 2026-11-03
+
+A host's provider may leave out `exportState` and `bodies`, and the views wrap both in `ktw-family.js`. Without `exportState`, what needs a published export says it is not available on this page. Without `bodies`, a lean state is marked with `bodiesError`. A call that rejects counts as an answer with an `error`. A `bodies` answer has two outcomes only: it fills the state it was handed, in place, and sets `bodiesLoaded`, or it leaves the state lean and the state gets a `bodiesError` — the answer's `error`, or a generic one where it names none. The dashboard's own provider names its error too, for a lean state it holds no address for.
+
+**Reason:** the thought reader and the timeline's card ask for the texts while a state is lean and unmarked (`!bodiesLoaded && !bodiesError`), and they ask again on every render. An answer that settles neither field leaves them asking for as long as the page is open. A host the views were not written against must not be able to put them in that loop, so the wrapper settles the state whatever comes back. A view that waits on a promise a host might reject would need a catch at every call site; one wrapper keeps them out.
+
+**Rejected alternative:** a guard in each reader, such as asking once per state and render. It would hide the loop in two views and leave the third that asks to find it again. Treating a resolved answer without an error as a success: the views could not tell a host that filled nothing from one that filled the texts, and a lean state would stay lean with no reason shown.
