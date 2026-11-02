@@ -20,6 +20,8 @@
     { "title": "An image ![logo](logo.png) here", "anchor": "an-image--here", "legacy": "an-image-logologopng-here" },
     { "title": "Use _emphasis_ and __strong__ here", "anchor": "use-emphasis-and-strong-here", "legacy": "use-_emphasis_-and-__strong__-here" },
     { "title": "  Spaces around  ", "anchor": "spaces-around" },
+    { "title": "ä_name_ü stays one word", "anchor": "ä_name_ü-stays-one-word" },
+    { "title": "日本_語_テキスト and _Ünïcödé_ emphasis", "anchor": "日本_語_テキスト-and-ünïcödé-emphasis", "legacy": "日本_語_テキスト-and-_ünïcödé_-emphasis" },
     { "title": "`WSUpgradeRequest` / `WSUpgradeResponse` keep a shape", "anchor": "wsupgraderequest--wsupgraderesponse-keep-a-shape" }
   ]
 }
