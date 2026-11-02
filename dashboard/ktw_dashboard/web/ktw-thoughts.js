@@ -9,7 +9,7 @@
    with each call (`host`). A classic script on globalThis.KeepTheWhy.views.thoughts, listed in ktw-views.json. */
 (function (root) {
 "use strict";
-const { plural, parseSupersededBy, thoughtsOf, thoughtInsights, entryRefs, repoLabel, routes } = root.KeepTheWhy.core;
+const { plural, parseSupersededBy, thoughtsOf, thoughtInsights, entryRefs, repoLabel } = root.KeepTheWhy.core;
 const ui = root.KeepTheWhy.ui;
 const { el, setKids, entryPills } = ui;
 
@@ -109,8 +109,9 @@ scene.on("pin", () => { if (LIST) list(LIST.g, LIST.host); });
 // read › without a click first, a link, a reload — the same as a thought clicked and then read
 function holdReading(g, host) {
   if (!g || nav.current().view !== "thought") return;
-  const here = routes.format(nav.current());
-  const t = graphThoughts(g).all.find((x) => thoughtHref(x) === here);
+  // the route's refs, not an address: a host's href need not be the hash grammar
+  const here = nav.current().refs || [];
+  const t = graphThoughts(g).all.find((x) => { const r = thoughtRoute(x).refs; return r.length === here.length && r.every((id, i) => id === here[i]); });
   if (!t) return;
   scene.setThought(t);
   host.light(g, t);
