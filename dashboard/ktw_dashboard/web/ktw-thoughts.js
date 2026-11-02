@@ -15,7 +15,7 @@ const { el, setKids, entryPills } = ui;
 
 // One thoughts view per page: create({ scene, nav, prefs }).
 function create({ scene, nav, prefs }) {
-const navLink = (attrs, ...kids) => ui.navLink(nav, attrs, ...kids); // a link to a place, moving through nav
+const navLink = ui.navLinks(nav); // a link to a place, moving through nav
 const topicOf = (file) => scene.state.topics.find((t) => t.file === file);
 // #thought/<id>,<id>,…: the Ids are the entries' own, so the address names the thought
 const thoughtRoute = (t) => ({ view: "thought", refs: t.steps.map((n) => n.entry.uuid || n.entry.id) });
