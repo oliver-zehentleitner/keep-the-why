@@ -801,10 +801,14 @@ const entryMatches = (e, f) => {
 };
 // a repository's address as a key: case and trailing slashes do not make another one
 const fkey = (c) => String(c || "").replace(/\/+$/, "").toLowerCase();
+// a repository's short name: owner/name on the platforms the page knows, the URL without its scheme elsewhere
+const repoLabel = (canonical) => canonical.replace(/^https:\/\/(github\.com|gitlab\.com|codeberg\.org|bitbucket\.org)\//, "").replace(/^https:\/\//, "");
+// a topic's title in a state, its file name when the state has no such topic
+const topicTitle = (st, file) => st.topics?.find((t) => t.file === file)?.title || file;
 
 const KTW = (root.KeepTheWhy = root.KeepTheWhy || {});
 KTW.core = Object.freeze({
-  sameCanonical, exportStateUrl, exportVerdict, resolveSee, layoutTick, settleLayout, NO_FILTER, filterActive, entryMatches, fkey,
+  sameCanonical, exportStateUrl, exportVerdict, resolveSee, layoutTick, settleLayout, NO_FILTER, filterActive, entryMatches, fkey, repoLabel, topicTitle,
   esc, plural, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug,
   hostAnchor, hostFileLink, hostTreeLink, HOSTS, hostOf, canonicalOf, ownerOf, projectLabel,
   parseSupersededBy, typeName, kindLabel, familyRank, familyOrder, groupByFamily, shuffled, searchTerms,
