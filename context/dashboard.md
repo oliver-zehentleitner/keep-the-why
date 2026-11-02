@@ -920,3 +920,18 @@ The topic page, the entry page (its references both ways, and an Id this state d
 **Reason:** the family and the search already load what they show through the provider they were made with. Handed to the pages, they keep public state on that one path, where a loader handed in as a host hook would be a second path beside it. A route is what every host can make an address of, while an address built in the library assumes the dashboard's hash. A cache shared across hosts would hand one host's answer to another. Comparing the address the page is at with one written for the entry never matched under a host whose `href` is not the dashboard's hash, so the entry page moved to its own address on every draw.
 
 **Rejected alternative:** `publicTree` and `publicState` as host hooks — a raw loader beside the provider, which the lead ruled out. A new provider method for an export's state — the family already reads exports through `exportState` and keeps one request per project, so a second method would duplicate it. Building the share address from the page's address and the entry's link in the library — under a path-style host the path came out twice.
+
+## The views set an inline style through the element's style object, never as an attribute: their hosts run under a strict Content-Security-Policy
+
+**Id:** ed0c6c03-06e8-4263-a823-9b357b6c94e6
+**Type:** constraint
+**Status:** active
+**Evidence:** confirmed
+**Source:** Maity's `docs/api.md`, §1.1: documents the hub renders answer with `Content-Security-Policy: default-src 'self'`; found while building the host fixture page for the library series, 2026-11-02, and settled with the series' lead the same day
+**Revisit when:** a host the views are vendored into allows `'unsafe-inline'` styles, or the views stop setting inline styles at all
+
+`el()` in `ktw-ui.js` writes its `style` through `n.style.cssText`, the element's style object, where it called `setAttribute("style", …)` before. Every inline style the views set (a dot's colour, a bar's width, a legend swatch, the stage's height) goes through it. `ui.test.mjs` holds `el()` to that, and `test_views.py` forbids `style=` and `setAttribute("style")` anywhere in the library's text.
+
+**Reason:** under `default-src 'self'` without `'unsafe-inline'`, `style-src-attr` falls back to `'self'`, and a browser drops a style attribute set as markup. Writes to the element's style object are not covered by the policy. Maity's hub pages answer with that policy, so through `setAttribute` every colour and width the views set would be missing there. No test showed this because jsdom enforces no policy.
+
+**Rejected alternative:** asking hosts to allow `'unsafe-inline'` for styles. That would weaken a policy the hub chose for its own pages, to suit a library it vendors. Moving every inline style into classes was also rejected: a colour per author, family member or Status, and a width per count, are values, not a fixed set.
