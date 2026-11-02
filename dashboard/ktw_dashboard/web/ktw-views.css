@@ -227,7 +227,7 @@ table.ktw-t.ktw-findings .ktw-mono { white-space: nowrap; }
   .ktw-entry-list .ktw-row .ktw-rs { font-size: 13.5px; }
   .ktw-search-results { left: 0; right: 0; width: auto; }
 }
-.ktw-sub.ktw-warn { color: var(--ktw-warn, #b7791f); }
+.ktw-sub.ktw-warn { color: var(--ktw-warn, #e0a83a); }
 /* family, projects, references (project families) */
 .ktw-search-results .ktw-sr-missing { padding: 8px 12px; color: var(--ktw-fg3, #6f6f7a); font-size: 12px; border-bottom: 1px solid var(--ktw-line, #3a3a43); }
 .ktw-refs-box h3 { margin: 10px 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--ktw-fg3, #6f6f7a); }

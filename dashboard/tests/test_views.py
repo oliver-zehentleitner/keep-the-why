@@ -312,6 +312,11 @@ class StylesTest(unittest.TestCase):
                 self.assertTrue(name.startswith("--ktw-"), f"{name} is not a token")
                 self.assertTrue(fallback, f"{name} has no fallback")
                 self.assertIn(name, defaults)
+                # the same value TOKEN_DEFAULTS gives a canvas and an inline style: a host without the token
+                # sees one colour wherever the views read it
+                self.assertEqual(
+                    " ".join(fallback.split()), " ".join(defaults[name].split())
+                )
 
     def test_views_css_styles_ktw_classes_only(self):
         css = re.sub(r"/\*.*?\*/", "", self.views_css, flags=re.S)
