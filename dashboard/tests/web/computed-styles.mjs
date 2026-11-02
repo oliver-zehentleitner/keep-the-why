@@ -29,7 +29,9 @@ const init = `(() => {
 // in the page: every element's computed style (and its ::before/::after), as a hash per tag path; the full
 // text for the paths asked for
 const collect = (want) => {
-  const SKIP = /^(animation|transition)/;
+  // custom properties are inputs, not results: what they set shows in the properties that use them, and the
+  // tokens' values are held equal by test_views.py
+  const SKIP = /^(animation|transition|--)/;
   const pathOf = (el) => { const p = []; for (let n = el; n && n.localName !== "html"; n = n.parentElement) p.push(`${n.localName}:${n.parentElement ? [...n.parentElement.children].indexOf(n) : 0}`); return p.reverse().join("/"); };
   const text = (cs) => { const v = []; for (let i = 0; i < cs.length; i++) if (!SKIP.test(cs[i])) v.push(`${cs[i]}: ${cs.getPropertyValue(cs[i])}`); return v; };
   const fnv = (s) => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16); };

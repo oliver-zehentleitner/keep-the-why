@@ -9,7 +9,7 @@
    script on globalThis.KeepTheWhy.views.timeline, listed in ktw-views.json, traced on the canvas (canvas-trace.mjs). */
 (function (root) {
 "use strict";
-const { TYPE_KINDS, TYPE_TOKENS, readToken, SHELF, addDays, createdOn, dayDiff, daySpan, existsAt, statusAt, linkExistsAt, logDepth, markLinked, percentileBox, pushApart, stageCards, stageHeight, stageLanes, stageLinks, stampLabel, typeKind, filterActive, entryMatches, plural, timeGrid, todayISO, paletteToken } = root.KeepTheWhy.core;
+const { TYPE_KINDS, TYPE_TOKENS, SHELF, addDays, createdOn, dayDiff, daySpan, existsAt, statusAt, linkExistsAt, logDepth, markLinked, percentileBox, pushApart, stageCards, stageHeight, stageLanes, stageLinks, stampLabel, typeKind, filterActive, entryMatches, plural, timeGrid, todayISO, paletteToken, readToken } = root.KeepTheWhy.core;
 const { el, setKids, statusPill, evPill, typePills, typeGlyphSvg } = root.KeepTheWhy.ui;
 
 // One stage view per page: create({ scene, nav, prefs }). The page's scene is `shared` here: `scene` is the stage's

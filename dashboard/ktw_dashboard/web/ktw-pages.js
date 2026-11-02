@@ -10,7 +10,7 @@
    listed in ktw-views.json. */
 (function (root) {
 "use strict";
-const { plural, typeName, valueColor, isUuid, canonicalOf, hostFileLink, hostTreeLink, hostAnchor, parseSupersededBy, resolveSee, repoLabel, topicTitle, mergeAuthors, sortAuthors, AUTHOR_SORTS, filterActive, entryMatches } = root.KeepTheWhy.core;
+const { plural, typeName, isUuid, canonicalOf, hostFileLink, hostTreeLink, hostAnchor, parseSupersededBy, resolveSee, repoLabel, topicTitle, mergeAuthors, sortAuthors, AUTHOR_SORTS, filterActive, entryMatches, valueColor } = root.KeepTheWhy.core;
 const ui = root.KeepTheWhy.ui;
 const { el, setKids, pill, statusPill, evPill, entryPills, hostMark, extLink, remoteLink, forkPill, headPill } = ui;
 const fmtDate = (d) => d || "—";
