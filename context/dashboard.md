@@ -811,7 +811,7 @@ The stage's positions come from the scene. When the host draws a graph beside th
 
 **Id:** 1d5a2cbf-f61f-4e5a-b5be-722e2258cf7d
 **Type:** decision
-**Status:** active
+**Status:** needs-review
 **Evidence:** confirmed
 **Source:** the split of the timeline's move agreed by the series' lead (2026-11-01: the stage engine as its own step, the held thought through the scene); the pin's form and event named with the coder moving the thoughts list the same day; the rest is the implementer's, in the pull request that moved the stage
 **Revisit when:** the thoughts list moves into the library (the host's redraw on `pin` goes with it), or the play loop does
@@ -825,3 +825,19 @@ The held thought is the scene's: `scene.pin` holds its ids joined with `|`, `set
 
 **Rejected alternative:** `setThought` for both pointing and holding, the first reading of the pin's specification — the problem above. The play loop moving with the stage was also rejected: it drives the slider, the bars and the card, which are the page's.
 
+
+## The thoughts view is handed what only the host has, per call; following a chain stays in the host
+
+**Id:** c20f15f6-076f-45b2-bf58-0efc00d87c33
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** design proposal (revision 3.1) agreed by the maintainer, 2026-11-01 (step 10: the thoughts list, the Thoughts page and the reader in `ktw-thoughts.js`); the start on main without the anchor change agreed with the series' lead, 2026-11-02; the rest is the implementer's, in the pull request that moved the thoughts
+**Revisit when:** the friends, the family graph or the path move into the library, or a second host needs to follow chains itself
+**See:** dashboard.md#the-stage-takes-the-pages-scene-nav-and-prefs-the-thought-held-is-the-scenes-pin — 1d5a2cbf-f61f-4e5a-b5be-722e2258cf7d — as of 2026-11-02
+
+`web/ktw-thoughts.js` holds the thoughts: the chains a graph has, the list beside a graph, the Thoughts page and the reader (`#thought/…`). `create({ scene, nav, prefs })` is all it is made with. The held thought is the scene's pin, and the minimum length is kept through prefs. The list redraws itself on `pin`, from the box its host names and the graph it was last drawn for, so the host no longer redraws it. Each call is handed a host object, the way the timeline page is: the graph of the scope, lighting a thought in one graph, following chains, an entry found in what the page has loaded, an export's bodies, the friends loaded for a step not found, a step picked on the stage, the Markdown with the page's topic links, the list's box, and a redraw. `entryRefs` and `repoLabel` moved into the core and `navLink` into `ktw-ui.js`, because the page and the view both use them.
+
+**Reason:** following a chain does more than fetch. It changes what the page has loaded: the chain's repositories join the friends, and the family graph and the globe's list of what is loaded read that set. That state is the host's, so the view asks for a follow and is told whether one is running. An entry found beyond this state comes from the same place.
+
+**Rejected alternative:** following chains inside the view through the provider. The view would have to keep its own set of loaded repositories beside the host's, and two views would disagree about what the page shows. A copy of `navLink` in the view was rejected too: two copies of how a link moves through nav drift apart.
