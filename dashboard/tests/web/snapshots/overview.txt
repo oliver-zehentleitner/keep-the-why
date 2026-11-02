@@ -26,31 +26,31 @@
         <span class="ktw-k">
           "decision"
         <div class="ktw-bar">
-          <i class="ktw-decision" style="width:46.15384615384615%">
+          <i class="ktw-decision" style="width: 46.15384615384615%;">
         <span class="ktw-v">
           "6"
         <span class="ktw-k">
           "constraint"
         <div class="ktw-bar">
-          <i class="ktw-constraint" style="width:30.76923076923077%">
+          <i class="ktw-constraint" style="width: 30.76923076923077%;">
         <span class="ktw-v">
           "4"
         <span class="ktw-k">
           "workaround"
         <div class="ktw-bar">
-          <i class="ktw-workaround" style="width:7.6923076923076925%">
+          <i class="ktw-workaround" style="width: 7.6923076923076925%;">
         <span class="ktw-v">
           "1"
         <span class="ktw-k">
           "incident"
         <div class="ktw-bar">
-          <i class="ktw-incident" style="width:7.6923076923076925%">
+          <i class="ktw-incident" style="width: 7.6923076923076925%;">
         <span class="ktw-v">
           "1"
         <span class="ktw-k">
           "undefined"
         <div class="ktw-bar">
-          <i class="ktw-undefined" style="width:7.6923076923076925%">
+          <i class="ktw-undefined" style="width: 7.6923076923076925%;">
         <span class="ktw-v">
           "1"
     <div class="ktw-card">
@@ -60,25 +60,25 @@
         <span class="ktw-k">
           "active"
         <div class="ktw-bar">
-          <i class="ktw-active" style="width:75%">
+          <i class="ktw-active" style="width: 75%;">
         <span class="ktw-v">
           "9"
         <span class="ktw-k">
           "open"
         <div class="ktw-bar">
-          <i class="ktw-open" style="width:8.333333333333334%">
+          <i class="ktw-open" style="width: 8.333333333333334%;">
         <span class="ktw-v">
           "1"
         <span class="ktw-k">
           "pending-confirmation"
         <div class="ktw-bar">
-          <i class="ktw-pending-confirmation" style="width:8.333333333333334%">
+          <i class="ktw-pending-confirmation" style="width: 8.333333333333334%;">
         <span class="ktw-v">
           "1"
         <span class="ktw-k">
           "superseded"
         <div class="ktw-bar">
-          <i class="ktw-superseded" style="width:8.333333333333334%">
+          <i class="ktw-superseded" style="width: 8.333333333333334%;">
         <span class="ktw-v">
           "1"
     <div class="ktw-card">
@@ -88,19 +88,19 @@
         <span class="ktw-k">
           "confirmed"
         <div class="ktw-bar">
-          <i class="ktw-confirmed" style="width:50%">
+          <i class="ktw-confirmed" style="width: 50%;">
         <span class="ktw-v">
           "6"
         <span class="ktw-k">
           "inferred"
         <div class="ktw-bar">
-          <i class="ktw-inferred" style="width:33.333333333333336%">
+          <i class="ktw-inferred" style="width: 33.333333333333336%;">
         <span class="ktw-v">
           "4"
         <span class="ktw-k">
           "unknown"
         <div class="ktw-bar">
-          <i class="ktw-unknown" style="width:16.666666666666668%">
+          <i class="ktw-unknown" style="width: 16.666666666666668%;">
         <span class="ktw-v">
           "2"
   <div class="ktw-card">
@@ -160,8 +160,8 @@
     <div class="ktw-td">
       "versioning, limits, pagination and errors"
     <div class="ktw-stack">
-      <i style="width:75%;background:var(--ktw-confirmed, #4fbf7a)" title="confirmed: 3">
-      <i style="width:25%;background:var(--ktw-inferred, #e0a83a)" title="inferred: 1">
+      <i style="width: 75%; background: var(--ktw-confirmed, #4fbf7a);" title="confirmed: 3">
+      <i style="width: 25%; background: var(--ktw-inferred, #e0a83a);" title="inferred: 1">
     <div class="ktw-refs">
       "api.md · → 1 · ← 0"
   <a class="ktw-topic-card" href="#topic/storage.md">
@@ -172,9 +172,9 @@
     <div class="ktw-td">
       "locks, retries and where files live"
     <div class="ktw-stack">
-      <i style="width:25%;background:var(--ktw-confirmed, #4fbf7a)" title="confirmed: 1">
-      <i style="width:25%;background:var(--ktw-inferred, #e0a83a)" title="inferred: 1">
-      <i style="width:50%;background:var(--ktw-unknown, #e0574f)" title="unknown: 2">
+      <i style="width: 25%; background: var(--ktw-confirmed, #4fbf7a);" title="confirmed: 1">
+      <i style="width: 25%; background: var(--ktw-inferred, #e0a83a);" title="inferred: 1">
+      <i style="width: 50%; background: var(--ktw-unknown, #e0574f);" title="unknown: 2">
     <div class="ktw-refs">
       "storage.md · → 1 · ← 2"
   <a class="ktw-topic-card" href="#topic/sync.md">
@@ -185,8 +185,8 @@
     <div class="ktw-td">
       "how the sync orders snapshot and buffer"
     <div class="ktw-stack">
-      <i style="width:50%;background:var(--ktw-confirmed, #4fbf7a)" title="confirmed: 2">
-      <i style="width:50%;background:var(--ktw-inferred, #e0a83a)" title="inferred: 2">
+      <i style="width: 50%; background: var(--ktw-confirmed, #4fbf7a);" title="confirmed: 2">
+      <i style="width: 50%; background: var(--ktw-inferred, #e0a83a);" title="inferred: 2">
     <div class="ktw-refs">
       "sync.md · → 1 · ← 1"
 <h2>

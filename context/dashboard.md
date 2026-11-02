@@ -781,11 +781,13 @@ The stage's positions come from the scene. When the host draws a graph beside th
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
-**Source:** design proposal (revision 3.1) agreed by the maintainer, 2026-11-01 (only host interfaces cross into a view); what moved into the scene, `nav.open`, the pane's composition staying with the host and the tests' scoped app are the implementer's, in the pull request that moved the graph
+**Source:** design proposal (revision 3.1) agreed by the maintainer, 2026-11-01 (only host interfaces cross into a view); what moved into the scene, `nav.open`, the pane's composition staying with the host and the tests' scoped app are the implementer's, in the pull request that moved the graph; the graph's data moved on the series' lead's request, 2026-11-02, as a prerequisite of mounting the views without the dashboard
 **Revisit when:** the graph's model builders (which projects, friends, family and path are in a graph) move into the library, or another view needs page state the scene does not carry
 **See:** dashboard.md#the-views-share-one-scene-state-clock-focus-scope-and-layout-and-the-events-that-carry-their-changes — 350c514d-f042-40a7-88fb-255307561f50 — as of 2026-11-01
 
-`web/ktw-graph.js` holds the graph view: `runGraph` with its drawing, pointing and dragging, the name placement, a thought lit, a project spotted, the small graph's own view, the motion and the names per group. `create({ scene, nav, prefs })` is all it is given. Two pieces of page state the graph read from the page's globals are now the scene's: the entry shown in the details (`selected`) and the sidebar's filter, whose matching moved into the core (`entryMatches`). A node's address is followed through `nav.open`, which joins `nav`'s interface. `miniGraph()`, which decides which graph the side pane shows and builds its switches, stays with the host, because it composes the host's graph builders; the canvas it puts there is the view's. The tests run `app.js` as a strict function rather than a global script (`tests/web/classic.mjs`), as a browser runs a module, so a library file that reached for one of its names fails in the test as it would in the browser.
+`web/ktw-graph.js` holds the graph view: `runGraph` with its drawing, pointing and dragging, the name placement, a thought lit, a project spotted, the small graph's own view, the motion and the names per group. `create({ scene, nav, prefs })` is all it is given. Two pieces of page state the graph read from the page's globals are now the scene's: the entry shown in the details (`selected`) and the sidebar's filter, whose matching moved into the core (`entryMatches`). A node's address is followed through `nav.open`, which joins `nav`'s interface. `miniGraph()`, which decides which graph the side pane shows and builds its switches, stays with the host, because it chooses among the host's graphs — the whole one with its friends, family and owners — and the neighbourhood the view builds; the canvas it puts there is the view's. The tests run `app.js` as a strict function rather than a global script (`tests/web/classic.mjs`), as a browser runs a module, so a library file that reached for one of its names fails in the test as it would in the browser.
+
+The graph's data followed later, ahead of the step that mounts every view without the dashboard: `assemble` (the nodes and links of topics and entries, linked through `nav`) and the neighbourhood of an entry or a topic for the side pane (`buildSubgraph`, `buildTopicSubgraph`) are the view's, so a host without `app.js` can build the graph and the thoughts it shows. Where the old nodes stood, so a node keeps its place, is passed to them (`prev`) instead of read from the dashboard's graph. `buildGraph` stays with the host: it composes the friends, the family and the owners' groups around `assemble`, and those are the host's.
 
 **Reason:** a view that read the page's globals would run only on this page. With the filter and the selection in the scene, a host that has neither leaves them empty and the graph dims and marks nothing. The pane's composition is page logic — this dashboard's choice of graphs and switches — and it moves only when the builders it calls do. The test change closes a gap the series would otherwise hide: the tests inlined `app.js` as a classic script, and every one of its names was global to the library, which in a browser it is not.
 
@@ -923,6 +925,20 @@ The topic page, the entry page (its references both ways, and an Id this state d
 
 **Rejected alternative:** `publicTree` and `publicState` as host hooks — a raw loader beside the provider, which the lead ruled out. A new provider method for an export's state — the family already reads exports through `exportState` and keeps one request per project, so a second method would duplicate it. Building the share address from the page's address and the entry's link in the library — under a path-style host the path came out twice.
 
+## The views set an inline style through the element's style object, never as an attribute: their hosts run under a strict Content-Security-Policy
+
+**Id:** ed0c6c03-06e8-4263-a823-9b357b6c94e6
+**Type:** constraint
+**Status:** active
+**Evidence:** confirmed
+**Source:** Maity's `docs/api.md`, §1.1: documents the hub renders answer with `Content-Security-Policy: default-src 'self'`; found while building the host fixture page for the library series, 2026-11-02, and settled with the series' lead the same day
+**Revisit when:** a host the views are vendored into allows `'unsafe-inline'` styles, or the views stop setting inline styles at all
+
+`ui.setAttrs` in `ktw-ui.js` writes a `style` through `n.style.cssText`, the element's style object, where `el()` called `setAttribute("style", …)` before. Every element the views build gets its attributes there: `el()` for HTML, `svgEl()` for SVG (the timeline's bars, the Type glyphs). So every inline style the views set (a dot's colour, a bar's width, a legend swatch, the stage's height) goes through it. `ui.test.mjs` holds `el()` and `svgEl()` to that. `test_views.py` forbids `style=` and `setAttribute("style")` anywhere in the library's text, and allows one generic `setAttribute(k, …)` loop, the one in `setAttrs`.
+
+**Reason:** with no `style-src-attr` in the policy, a browser falls back along `style-src-attr` → `style-src` → `default-src`. Under `default-src 'self'` and nothing else, that is `'self'` without `'unsafe-inline'`, and a browser drops a style attribute set as markup. Writes to the element's style object are not covered by the policy. Maity's hub pages answer with that policy, so through `setAttribute` every colour and width the views set would be missing there. No test showed this because jsdom enforces no policy.
+
+**Rejected alternative:** asking hosts to allow `'unsafe-inline'` for styles. That would weaken a policy the hub chose for its own pages, to suit a library it vendors. Moving every inline style into classes was also rejected: a colour per author, family member or Status, and a width per count, are values, not a fixed set.
 ## The views' stylesheet styles .ktw-* classes and reads --ktw-* tokens; a host loads its element defaults, then the views, then its own rules
 
 **Id:** 6e03c31b-7f53-4759-86e6-fa3d491ea92a

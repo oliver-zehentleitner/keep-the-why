@@ -10,7 +10,7 @@
 (function (root) {
 "use strict";
 const { TYPE_KINDS, TYPE_TOKENS, SHELF, addDays, createdOn, dayDiff, daySpan, existsAt, statusAt, linkExistsAt, logDepth, markLinked, percentileBox, pushApart, stageCards, stageHeight, stageLanes, stageLinks, stampLabel, typeKind, filterActive, entryMatches, plural, timeGrid, todayISO, paletteToken, readToken } = root.KeepTheWhy.core;
-const { el, setKids, statusPill, evPill, typePills, typeGlyphSvg } = root.KeepTheWhy.ui;
+const { el, svgEl, setKids, statusPill, evPill, typePills, typeGlyphSvg } = root.KeepTheWhy.ui;
 
 // One stage view per page: create({ scene, nav, prefs }). The page's scene is `shared` here: `scene` is the stage's
 // own (stageScene — its cards, lanes and links), as it always was.
@@ -134,7 +134,7 @@ function stageLayout(scene, cam, v) {
 // The painter: the floor with its days and months, the lanes' names or the topics' names, the lines between cards,
 // the cards themselves — far ones first — and the names of the topics at the centre of their cards.
 function stagePainter(ctx, scene, cam, layout, v, o) {
-  const css = getComputedStyle(document.documentElement); const color = (name) => readToken(css, name);
+  const css = getComputedStyle(o.wrap || document.documentElement); const color = (name) => readToken(css, name); // as the stage's box inherits them
   const HATCH = new Map(); // colour -> pattern: diagonal lines, the fill of an inferred entry
   const hatch = (col) => { if (!HATCH.has(col)) { const pc = document.createElement("canvas"); pc.width = pc.height = 6; const x = pc.getContext("2d"); if (x) { x.strokeStyle = col; x.lineWidth = 1.2; x.beginPath(); x.moveTo(-1, 7); x.lineTo(7, -1); x.moveTo(-1, 1); x.lineTo(1, -1); x.moveTo(5, 7); x.lineTo(7, 5); x.stroke(); } HATCH.set(col, ctx.createPattern(pc, "repeat")); } return HATCH.get(col); };
   const litIds = () => { const t = scene.G?.thought; const set = new Set(); if (t) for (const n of t.nodes) if (n.entry) set.add(n.entry.uuid || n.id); return set; };
@@ -225,7 +225,7 @@ function stagePainter(ctx, scene, cam, layout, v, o) {
     if (held) { ctx.strokeStyle = color("--ktw-accent2"); ctx.lineWidth = 2; ctx.globalAlpha = 0.9; ctx.strokeRect(b.x0 - 6, b.y0 - 6, b.w + 12, b.h + 12); ctx.globalAlpha = a; }
     if (kind && b.w > 30) { ctx.fillStyle = evc; ctx.strokeStyle = evc; const gs = Math.max(7, Math.min(11, b.h * 0.3)); typeGlyph(ctx, kind, b.x1 - gs - 4 - (fold ? fold * 0.6 : 0), b.y1 - gs - 3, gs); }
     if (e.evidence === "unknown" && b.w > 30) { ctx.fillStyle = color("--ktw-unknown"); ctx.font = font(Math.max(8, Math.min(12, b.h * 0.32)), "700"); ctx.textAlign = "left"; ctx.textBaseline = "bottom"; ctx.fillText("?", b.x0 + 5, b.y1 - 2); }
-    if (st === "open" || st === "needs-review" || st === "pending-confirmation") { ctx.strokeStyle = color(`--${st}`); ctx.lineWidth = 1.2; ctx.strokeRect(b.x0 - 3, b.y0 - 3, b.w + 6, b.h + 6); }
+    if (st === "open" || st === "needs-review" || st === "pending-confirmation") { ctx.strokeStyle = color(`--ktw-status-${st}`); ctx.lineWidth = 1.2; ctx.strokeRect(b.x0 - 3, b.y0 - 3, b.w + 6, b.h + 6); }
     if (isStep) { ctx.strokeStyle = color("--ktw-accent2"); ctx.lineWidth = 2.5; ctx.strokeRect(b.x0 - 5, b.y0 - 5, b.w + 10, b.h + 10); }
     // the title on every card with room for a word, the type never below reading size: a card far back shows its first words
     const fs = Math.max(9.5, Math.min(12, 11 * b.s * v.zoom)); const top = kind === "constraint" || kind === "incident" ? band + 1 : 0;
@@ -393,6 +393,7 @@ const stageSeg = (cls, title, options, current, pick, label = null) => el("span"
 
 function view(main, day, host) {
   HOST = host;
+  ROOT_STYLE = getComputedStyle(main); // the tokens as the view's container inherits them
   main.append(el("h1", {}, "Timeline"));
   if (!shared.state.project.git?.available) return main.append(el("p", { class: "ktw-center" }, "No Git repository — no dates to draw."));
   if (shared.state.project.git.shallow) main.append(el("p", { class: "ktw-sub ktw-warn" }, "Shallow clone: the history stops at the clone's edge, so every entry older than that appears to start there. Fetch the full history (git fetch --unshallow) for real dates."));
@@ -499,7 +500,7 @@ function timelineBars(main, span, setDay) {
   // padT leaves room above the bars for the day's label, clear of them; a bar spans its month, a hair between two
   const mainW = main.clientWidth || 900; const Wd = Math.max(360, Math.round(narrow() ? mainW - 28 : mainW - 64 - 18 - Math.min(420, Math.max(280, (mainW - 82) * 0.42))));
   const Hd = 130, padL = 34, padB = 32, padT = 18; const colW = (Wd - padL) / all.length; const bw = colW - 2;
-  const ns = (tag, attrs, text) => { const n = document.createElementNS("http://www.w3.org/2000/svg", tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); if (text != null) n.textContent = text; return n; };
+  const ns = (tag, attrs, text) => svgEl(tag, attrs, text); // ui.svgEl: a style among the attributes goes through the CSSOM
   const svg = ns("svg", { viewBox: `0 0 ${Wd} ${Hd}` }); const axis = ns("g", { class: "ktw-axis" }); svg.append(axis);
   const scaleY = (v) => padT + (Hd - padB - padT) * (1 - v / max);
   for (const tick of [0, Math.ceil(max / 2), max]) { axis.append(ns("line", { x1: padL, x2: Wd, y1: scaleY(tick), y2: scaleY(tick) })); axis.append(ns("text", { x: padL - 6, y: scaleY(tick) + 3, "text-anchor": "end" }, tick)); }

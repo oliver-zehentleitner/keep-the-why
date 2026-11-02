@@ -7,19 +7,29 @@
 "use strict";
 const { typeName, hostOf, highlightParts } = root.KeepTheWhy.core;
 
-// an element: attributes (class, on<event> handlers, the rest as attributes; null or false leaves one out) and
-// children (nodes, or text; null and false left out, arrays flattened)
-const el = (tag, attrs = {}, ...kids) => {
-  const n = document.createElement(tag);
+// Attributes on an element, HTML or SVG: class; style through the CSSOM — a page under a Content-Security-Policy
+// without 'unsafe-inline' (Maity's hub pages, default-src 'self') drops a style attribute set as markup, not the
+// element's style object; on<event> handlers; the rest as attributes. null or false leaves one out. Every element
+// the views build gets its attributes here (el, svgEl), so no style reaches setAttribute.
+function setAttrs(n, attrs) {
   for (const [k, v] of Object.entries(attrs)) {
     if (v == null || v === false) continue;
-    if (k === "class") n.className = v;
+    if (k === "class") n.setAttribute("class", v);
+    else if (k === "style") n.style.cssText = v;
     else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
     else n.setAttribute(k, v === true ? "" : v);
   }
+  return n;
+}
+// an element with its attributes (setAttrs) and children (nodes, or text; null and false left out, arrays flattened)
+const el = (tag, attrs = {}, ...kids) => {
+  const n = setAttrs(document.createElement(tag), attrs);
   for (const k of kids.flat(Infinity)) if (k != null && k !== false) n.append(k.nodeType ? k : document.createTextNode(String(k)));
   return n;
 };
+// an SVG element with its attributes (setAttrs) and, given, its text
+const SVG_NS = "http://www.w3.org/2000/svg";
+const svgEl = (tag, attrs = {}, text = null) => { const n = setAttrs(document.createElementNS(SVG_NS, tag), attrs); if (text != null) n.textContent = text; return n; };
 // the children of a node replaced by these (null and false left out, arrays flattened)
 const setKids = (node, ...kids) => node.replaceChildren(...kids.flat(Infinity).filter((k) => k != null && k !== false));
 
@@ -38,10 +48,8 @@ const GLYPHS = {
   incident: [["path", { d: "M6 1.2 11.2 10.8H.8z", fill: "none", stroke: "currentColor", "stroke-width": "1.4" }], ["path", { d: "M5.3 4.5h1.4v3.2H5.3zM5.3 8.5h1.4v1.3H5.3z" }]],
 };
 function typeGlyphSvg(kind) {
-  const NS = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(NS, "svg");
-  for (const [k, v] of Object.entries({ class: "ktw-type-glyph", viewBox: "0 0 12 12", width: "11", height: "11", "aria-hidden": "true", fill: "currentColor" })) svg.setAttribute(k, v);
-  for (const [tag, attrs] of GLYPHS[kind] || []) { const n = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); svg.append(n); }
+  const svg = svgEl("svg", { class: "ktw-type-glyph", viewBox: "0 0 12 12", width: "11", height: "11", "aria-hidden": "true", fill: "currentColor" });
+  for (const [tag, attrs] of GLYPHS[kind] || []) svg.append(svgEl(tag, attrs));
   return svg;
 }
 
@@ -95,5 +103,5 @@ const headPill = (g) => {
 };
 
 const KTW = (root.KeepTheWhy = root.KeepTheWhy || {});
-KTW.ui = Object.freeze({ el, setKids, pill, statusPill, evPill, typePills, entryPills, GLYPHS, typeGlyphSvg, hostMark, marked, navLinks, extLink, remoteLink, forkPill, headPill });
+KTW.ui = Object.freeze({ el, svgEl, setAttrs, setKids, pill, statusPill, evPill, typePills, entryPills, GLYPHS, typeGlyphSvg, hostMark, marked, navLinks, extLink, remoteLink, forkPill, headPill });
 })(globalThis);

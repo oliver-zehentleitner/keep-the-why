@@ -8,7 +8,7 @@
    globalThis.KeepTheWhy.views.graph, listed in ktw-views.json, tested through the page (canvas-trace.mjs). */
 (function (root) {
 "use strict";
-const { layoutTick, linkExistsAt, hostOf, filterActive, entryMatches, fkey, readToken } = root.KeepTheWhy.core;
+const { layoutTick, linkExistsAt, hostOf, filterActive, entryMatches, fkey, linkFamily, seeDay, supersededDay, parseSupersededBy, readToken } = root.KeepTheWhy.core;
 
 // One graph view per page: create({ scene, nav, prefs }) — the host's scene, navigation and settings.
 function create({ scene, nav, prefs }) {
@@ -71,7 +71,7 @@ function runGraph(canvas, g, opts = {}) {
   const mini = !!opts.mini;
   const V = mini ? miniView(g) : g; // the view — zoom and offset — belongs to the canvas: the side pane's small graph keeps its own, the page's survives a visit elsewhere
   const ctx = canvas.getContext("2d");
-  const css = getComputedStyle(document.documentElement);
+  const css = getComputedStyle(canvas); // the tokens as the canvas inherits them: a host sets them on any ancestor
   const color = (v) => readToken(css, v);
   let W = 0, H = 0, dpr = window.devicePixelRatio || 1;
   let hover = null, drag = null, pan = null, moved = false;
@@ -202,7 +202,7 @@ function runGraph(canvas, g, opts = {}) {
       if (n.kind === "project") { ctx.fillStyle = color("--ktw-bg"); ctx.fill(); ctx.lineWidth = 3.5 / V.scale; ctx.strokeStyle = n.color; if (n.chain) ctx.setLineDash([8 / V.scale, 3 / V.scale, 2 / V.scale, 3 / V.scale]); else if (n.friend) ctx.setLineDash([5 / V.scale, 3 / V.scale]); else if (n.trail) ctx.setLineDash([1.5 / V.scale, 3 / V.scale]); ctx.stroke(); ctx.setLineDash([]); ctx.beginPath(); ctx.arc(n.x, n.y, n.r * 0.38, 0, Math.PI * 2); ctx.fillStyle = n.color; ctx.fill(); }
       else if (n.kind === "topic") { ctx.fillStyle = n.color || color("--ktw-accent"); ctx.fill(); }
       else if (n.kind === "owner") { ctx.fillStyle = color("--ktw-bg"); ctx.fill(); ctx.lineWidth = 1.5 / V.scale; ctx.strokeStyle = color("--ktw-fg3"); ctx.stroke(); ctx.beginPath(); ctx.arc(n.x, n.y, n.r * 0.72, 0, Math.PI * 2); ctx.stroke(); } // the inner ring in the graph's units: a radius from the zoom went negative far out, and the canvas throws on that
-      else { const st = statusNow(n.entry); const sup = st === "superseded"; ctx.fillStyle = sup ? color("--ktw-bg") : evColor[ev(n)] || color("--ktw-muted"); ctx.fill(); if (sup) { ctx.lineWidth = 1.2 / V.scale; ctx.strokeStyle = evColor[ev(n)] || color("--ktw-fg3"); ctx.stroke(); } if (st === "open" || st === "needs-review" || st === "pending-confirmation") { ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 2.5 / V.scale, 0, Math.PI * 2); ctx.lineWidth = 1.2 / V.scale; ctx.strokeStyle = color(`--${st}`); ctx.stroke(); } }
+      else { const st = statusNow(n.entry); const sup = st === "superseded"; ctx.fillStyle = sup ? color("--ktw-bg") : evColor[ev(n)] || color("--ktw-muted"); ctx.fill(); if (sup) { ctx.lineWidth = 1.2 / V.scale; ctx.strokeStyle = evColor[ev(n)] || color("--ktw-fg3"); ctx.stroke(); } if (st === "open" || st === "needs-review" || st === "pending-confirmation") { ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 2.5 / V.scale, 0, Math.PI * 2); ctx.lineWidth = 1.2 / V.scale; ctx.strokeStyle = color(`--ktw-status-${st}`); ctx.stroke(); } }
       if (n === focus) { ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 4 / V.scale, 0, Math.PI * 2); ctx.lineWidth = 1.5 / V.scale; ctx.strokeStyle = color("--ktw-fg"); ctx.stroke(); }
       if (n === stepNode) { ctx.globalAlpha = 1; ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 7 / V.scale, 0, Math.PI * 2); ctx.lineWidth = 3 / V.scale; ctx.strokeStyle = color("--ktw-accent2"); ctx.stroke(); ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 12 / V.scale, 0, Math.PI * 2); ctx.lineWidth = 1 / V.scale; ctx.stroke(); }
     }
@@ -273,7 +273,62 @@ function runGraph(canvas, g, opts = {}) {
   g.raf = requestAnimationFrame(step);
 }
 
+// ---- the graph's data: nodes and links from topics and entries, and the neighbourhood of a topic or an entry. Links
+// go through nav; `prev` holds the nodes of a graph drawn before, so a node keeps its place.
+function seedNode(n, prev) {
+  const p = prev[n.id];
+  if (p) Object.assign(n, { x: p.x, y: p.y, vx: 0, vy: 0, fixed: p.fixed });
+  else { n.x = (Math.random() - 0.5) * 600; n.y = (Math.random() - 0.5) * 400; n.vx = n.vy = 0; }
+  return n;
+}
+function assemble(topics, entries, prev = {}) {
+  const nodes = []; const links = []; const index = {};
+  const add = (n) => { index[n.id] = nodes.length; nodes.push(seedNode(n, prev)); };
+  for (const t of topics) add({ id: `t:${t.file}`, kind: "topic", label: t.title, file: t.file, r: 10 + Math.sqrt(t.entries) * 3.2, href: nav.href({ view: "topic", file: t.file }) });
+  for (const e of entries) add({ id: `e:${e.id}`, kind: "entry", label: e.title, file: e.file, entry: e, r: 4.2, href: nav.href({ view: "entry", uuid: e.uuid || e.id }) });
+  for (const e of entries) {
+    if (index[`t:${e.file}`] != null) links.push({ s: index[`e:${e.id}`], t: index[`t:${e.file}`], kind: "member", len: 46 });
+    for (const f of e.refs) if (index[`t:${f}`] != null) links.push({ s: index[`e:${e.id}`], t: index[`t:${f}`], kind: "ref", len: 120 });
+  }
+  const seen = new Set();
+  for (const t of topics) for (const f of t.refs_out) { if (index[`t:${f}`] == null) continue; const k = [t.file, f].sort().join("|"); if (seen.has(k)) continue; seen.add(k); links.push({ s: index[`t:${t.file}`], t: index[`t:${f}`], kind: "topic", len: 170 }); }
+  // See and Superseded by between entries, by Id; between their topics while entries are hidden
+  const tpairs = new Set();
+  for (const x of linkFamily([{ key: "self", role: "self", state: { entries } }]).xrefs) {
+    const a = entries.find((e) => e.id === x.from.id), b = entries.find((e) => e.id === x.to.id);
+    const s = index[`e:${x.from.id}`], t = index[`e:${x.to.id}`];
+    if (s == null || t == null) continue;
+    // the day the link came to be, for the clock: a See from its as-of day, a Superseded by from the status change
+    const day = x.kind === "see" ? seeDay(a, (a.see || []).find((r) => r?.uuid === b.uuid)) : supersededDay(a);
+    links.push({ s, t, kind: x.kind, len: 150, day });
+    const ts = index[`t:${a.file}`], tt = index[`t:${b.file}`]; const k = `${ts}|${tt}`;
+    if (a.file !== b.file && ts != null && tt != null && !tpairs.has(k)) { tpairs.add(k); links.push({ s: ts, t: tt, kind: "xtopic", len: 200, day }); }
+  }
+  return { nodes, links, index };
+}
+// the Ids an entry points at, and the entries of `list` that point at it
+const pointsAt = (e) => [...(e.see || []).map((r) => r?.uuid), e.superseded_by ? parseSupersededBy(e.superseded_by)?.uuid : null].filter(Boolean);
+const linkedTo = (e, list) => list.filter((x) => x !== e && ((e.uuid && pointsAt(x).includes(e.uuid)) || (x.uuid && pointsAt(e).includes(x.uuid))));
+function buildTopicSubgraph(t, prev = {}) {
+  // the topic with its entries, plus the topics it references and the ones referencing it (with the entries that do)
+  const files = new Set([t.file, ...t.refs_out, ...t.refs_in]);
+  const topics = scene.state.topics.filter((x) => files.has(x.file));
+  const entries = scene.state.entries.filter((x) => x.file === t.file || x.refs.includes(t.file));
+  return Object.assign({ scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true, alpha: 1 }, assemble(topics, entries, prev));
+}
+function buildSubgraph(e, prev = {}) {
+  // the entry, its topic and siblings, the topics it references, and the entries elsewhere that reference its topic
+  const files = new Set([e.file, ...e.refs]);
+  const back = scene.state.entries.filter((x) => x.refs.includes(e.file));
+  const linked = linkedTo(e, scene.state.entries); // See / Superseded by, either direction
+  for (const b of [...back, ...linked]) files.add(b.file);
+  const topics = scene.state.topics.filter((t) => files.has(t.file));
+  const entries = scene.state.entries.filter((x) => x.file === e.file || x.id === e.id || back.includes(x) || linked.includes(x));
+  return Object.assign({ scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true, alpha: 1 }, assemble(topics, entries, prev));
+}
+
 return Object.freeze({
+  assemble, buildSubgraph, buildTopicSubgraph,
   run: runGraph, lightThought, spotIn, projectNodes, miniView, publishLayout, hostPath,
   driftOn, setDrift, labels: () => LABELS, setLabels, labelsOn,
 });

@@ -50,10 +50,10 @@
         <td>
           "0"
         <td>
-          <div style="min-width:160px">
+          <div style="min-width: 160px;">
             <div class="ktw-stack">
-              <i style="width:60%;background:var(--ktw-confirmed, #4fbf7a)" title="confirmed: 3">
-              <i style="width:40%;background:var(--ktw-inferred, #e0a83a)" title="inferred: 2">
+              <i style="width: 60%; background: var(--ktw-confirmed, #4fbf7a);" title="confirmed: 3">
+              <i style="width: 40%; background: var(--ktw-inferred, #e0a83a);" title="inferred: 2">
         <td class="ktw-mono">
           "2026-03-02"
         <td class="ktw-mono">
@@ -69,10 +69,10 @@
         <td>
           "0"
         <td>
-          <div style="min-width:160px">
+          <div style="min-width: 160px;">
             <div class="ktw-stack">
-              <i style="width:66.66666666666667%;background:var(--ktw-confirmed, #4fbf7a)" title="confirmed: 2">
-              <i style="width:33.333333333333336%;background:var(--ktw-unknown, #e0574f)" title="unknown: 1">
+              <i style="width: 66.66666666666667%; background: var(--ktw-confirmed, #4fbf7a);" title="confirmed: 2">
+              <i style="width: 33.333333333333336%; background: var(--ktw-unknown, #e0574f);" title="unknown: 1">
         <td class="ktw-mono">
           "2026-03-20"
         <td class="ktw-mono">
@@ -88,16 +88,16 @@
         <td>
           "1"
         <td>
-          <div style="min-width:160px">
+          <div style="min-width: 160px;">
             <div class="ktw-stack">
-              <i style="width:25%;background:var(--ktw-confirmed, #4fbf7a)" title="confirmed: 1">
-              <i style="width:50%;background:var(--ktw-inferred, #e0a83a)" title="inferred: 2">
-              <i style="width:25%;background:var(--ktw-unknown, #e0574f)" title="unknown: 1">
+              <i style="width: 25%; background: var(--ktw-confirmed, #4fbf7a);" title="confirmed: 1">
+              <i style="width: 50%; background: var(--ktw-inferred, #e0a83a);" title="inferred: 2">
+              <i style="width: 25%; background: var(--ktw-unknown, #e0574f);" title="unknown: 1">
         <td class="ktw-mono">
           "2026-05-10"
         <td class="ktw-mono">
           "2026-05-10"
-<p class="ktw-note" style="margin-top:10px">
+<p class="ktw-note" style="margin-top: 10px;">
   "Click a name to open the author's profile on the host; click elsewhere in the row to filter every view to that author, again to clear. Click a column's name to sort by it, again to turn the order round."
 
 ## #details

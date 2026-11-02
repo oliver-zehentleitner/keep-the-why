@@ -24,13 +24,13 @@
       <span class="ktw-k">
         "active"
       <div class="ktw-bar">
-        <i class="ktw-active" style="width:75%">
+        <i class="ktw-active" style="width: 75%;">
       <span class="ktw-v">
         "3"
       <span class="ktw-k">
         "pending-confirmation"
       <div class="ktw-bar">
-        <i class="ktw-pending-confirmation" style="width:25%">
+        <i class="ktw-pending-confirmation" style="width: 25%;">
       <span class="ktw-v">
         "1"
   <div class="ktw-card">
@@ -40,13 +40,13 @@
       <span class="ktw-k">
         "confirmed"
       <div class="ktw-bar">
-        <i class="ktw-confirmed" style="width:75%">
+        <i class="ktw-confirmed" style="width: 75%;">
       <span class="ktw-v">
         "3"
       <span class="ktw-k">
         "inferred"
       <div class="ktw-bar">
-        <i class="ktw-inferred" style="width:25%">
+        <i class="ktw-inferred" style="width: 25%;">
       <span class="ktw-v">
         "1"
 <h2>
