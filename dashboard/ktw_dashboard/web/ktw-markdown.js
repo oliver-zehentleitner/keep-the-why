@@ -175,7 +175,7 @@ function buildBlocks(doc, blocks, into) {
     else if (b.k === "h") { const p = element(doc, "p"); p.appendChild(buildInline(doc, b.c, element(doc, "b"))); into.appendChild(p); }
     else if (b.k === "ul" || b.k === "ol") { const list = element(doc, b.k); for (const it of b.items) list.appendChild(buildInline(doc, it, element(doc, "li"))); into.appendChild(list); }
     else if (b.k === "label") {
-      const div = element(doc, "div", `label ${b.kind}`);
+      const div = element(doc, "div", `ktw-label ktw-${b.kind}`);
       const head = element(doc, "b"); head.appendChild(doc.createTextNode(b.label));
       div.appendChild(head); div.appendChild(buildInline(doc, b.c, element(doc, "p"))); into.appendChild(div);
     } else into.appendChild(buildInline(doc, b.c, element(doc, "p")));

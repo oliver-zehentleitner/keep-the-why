@@ -1,40 +1,40 @@
 # #entry/756f14cb-61c6-4ff2-8dea-29f28c030ca5
 
 ## #main
-<div class="reader active">
-  <div class="crumbs">
+<div class="ktw-reader ktw-active">
+  <div class="ktw-crumbs">
     <a href="#overview">
       "Overview"
     "/"
     <a href="#topic/sync.md">
       "Sync"
     "/ line 45"
-    <button class="share-btn" title="copy a link to this entry — the project's published dashboard:\nhttps://acme.example/keep-the-why-dashboard/#entry/756f14cb-61c6-4ff2-8dea-29f28c030ca5" type="button">
+    <button class="ktw-share-btn" title="copy a link to this entry — the project's published dashboard:\nhttps://acme.example/keep-the-why-dashboard/#entry/756f14cb-61c6-4ff2-8dea-29f28c030ca5" type="button">
       "⧉ copy link"
-    <a class="ext share-btn source-link" href="https://github.com/acme/widget/blob/main/context/sync.md#sync-replays-the-buffer-against-a-versioned-snapshot" rel="noopener" target="_blank">
+    <a class="ktw-ext ktw-share-btn ktw-source-link" href="https://github.com/acme/widget/blob/main/context/sync.md#sync-replays-the-buffer-against-a-versioned-snapshot" rel="noopener" target="_blank">
       "open source"
-      <svg aria-hidden="true" class="ext-icon" viewBox="0 0 24 24">
+      <svg aria-hidden="true" class="ktw-ext-icon" viewBox="0 0 24 24">
         <path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z">
   <h1>
     "Sync replays the buffer against a versioned snapshot"
-  <div class="fields">
-    <span class="pill type">
+  <div class="ktw-fields">
+    <span class="ktw-pill ktw-type">
       "decision"
-    <span class="pill status-active">
+    <span class="ktw-pill ktw-status-active">
       "active"
-    <span class="pill ev-confirmed">
+    <span class="ktw-pill ktw-ev-confirmed">
       "confirmed"
-    <span class="pill">
+    <span class="ktw-pill">
       "Source: maintainer conversation, 2026-05-09"
-  <div class="body">
+  <div class="ktw-body">
     <p>
       "Snapshots carry a version, and the buffer is replayed from that version on, without waiting for the snapshot to finish loading."
-    <div class="label reason">
+    <div class="ktw-label ktw-reason">
       <b>
         "Reason"
       <p>
         "the version makes the ordering explicit, so waiting is no longer needed; cold starts lose the two seconds again."
-    <div class="label consequence">
+    <div class="ktw-label ktw-consequence">
       <b>
         "Consequence"
       <p>
@@ -51,44 +51,44 @@
       <a href="#topic/sync.md">
         "sync.md"
       "."
-  <div class="body refs-box">
+  <div class="ktw-body ktw-refs-box">
     <h3>
       "See"
-    <div class="ref">
+    <div class="ktw-ref">
       <a href="#entry/3c80c624-2274-497a-a1f0-d8ff65b0e0c3">
         "Sync waits for the snapshot before replaying the buffer"
-      <span class="note">
+      <span class="ktw-note">
         "· Sync"
-      <span class="note">
+      <span class="ktw-note">
         "· as of 2026-05-10"
     <h3>
       "Supersedes"
-    <div class="ref">
+    <div class="ktw-ref">
       <a href="#entry/3c80c624-2274-497a-a1f0-d8ff65b0e0c3">
         "Sync waits for the snapshot before replaying the buffer"
-      <span class="note">
+      <span class="ktw-note">
         "· Sync"
     <h3>
       "Referenced by (See)"
-    <div class="ref">
+    <div class="ktw-ref">
       <a href="#entry/c63efee2-97dd-452a-885f-c793001131b7">
         "Clock skew between replicas is tolerated up to a second"
-      <span class="note">
+      <span class="ktw-note">
         "· Sync"
-  <div class="pager">
+  <div class="ktw-pager">
     <a href="#entry/4bc883fc-f8ef-4d90-b90d-0a669f375a70">
       "← Events arrive at most once per second"
     <a href="#entry/c63efee2-97dd-452a-885f-c793001131b7">
       "Clock skew between replicas is tolerated up to a second →"
 
 ## #details
-<div class="pane-width" title="the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details">
-  <span class="label">
+<div class="ktw-pane-width" title="the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details">
+  <span class="ktw-label">
     "Width"
-  <span class="mini-width">
+  <span class="ktw-mini-width">
     <button class type="button">
       "1×"
-    <button class="on" type="button">
+    <button class="ktw-on" type="button">
       "2×"
     <button class type="button">
       "3×"
@@ -96,85 +96,85 @@
       "½"
 <h3>
   "Entry"
-<div class="kv">
-  <span class="k">
+<div class="ktw-kv">
+  <span class="ktw-k">
     "Id"
-  <span class="v mono" title="the entry's address — what See and Superseded by lines resolve to">
+  <span class="ktw-v ktw-mono" title="the entry's address — what See and Superseded by lines resolve to">
     "756f14cb-61c6-4ff2-8dea-29f28c030ca5"
-  <span class="k">
+  <span class="ktw-k">
     "at"
-  <span class="v mono">
-    <a class="gh" href="https://github.com/acme/widget/blob/main/context/sync.md#sync-replays-the-buffer-against-a-versioned-snapshot" rel="noopener" target="_blank" title="open on the host">
+  <span class="ktw-v ktw-mono">
+    <a class="ktw-gh" href="https://github.com/acme/widget/blob/main/context/sync.md#sync-replays-the-buffer-against-a-versioned-snapshot" rel="noopener" target="_blank" title="open on the host">
       "sync.md#sync-replays-the-buffer-against-a-versioned-snapshot"
-  <span class="k">
+  <span class="ktw-k">
     "type"
-  <span class="v">
+  <span class="ktw-v">
     "decision"
-  <span class="k">
+  <span class="ktw-k">
     "status"
-  <span class="v">
-    <span class="pill status-active">
+  <span class="ktw-v">
+    <span class="ktw-pill ktw-status-active">
       "active"
-  <span class="k">
+  <span class="ktw-k">
     "evidence"
-  <span class="v">
-    <span class="pill ev-confirmed">
+  <span class="ktw-v">
+    <span class="ktw-pill ktw-ev-confirmed">
       "confirmed"
-  <span class="k">
+  <span class="ktw-k">
     "source"
-  <span class="v">
+  <span class="ktw-v">
     "maintainer conversation, 2026-05-09"
 <h3>
   "Git"
-<div class="kv">
-  <span class="k">
+<div class="ktw-kv">
+  <span class="ktw-k">
     "created"
-  <span class="v">
-    <a class="author" href="https://github.com/acme/widget/commit/51344a6" rel="noopener" target="_blank" title="Carol Example — open the profile on the host (looked up from commit 51344a6)">
+  <span class="ktw-v">
+    <a class="ktw-author" href="https://github.com/acme/widget/commit/51344a6" rel="noopener" target="_blank" title="Carol Example — open the profile on the host (looked up from commit 51344a6)">
       "Carol Example"
     "· 2026-05-10 ·"
     <code>
       "51344a6"
-  <span class="k">
+  <span class="ktw-k">
     "last touched"
-  <span class="v">
-    <a class="author" href="https://github.com/acme/widget/commit/51344a6" rel="noopener" target="_blank" title="Carol Example — open the profile on the host (looked up from commit 51344a6)">
+  <span class="ktw-v">
+    <a class="ktw-author" href="https://github.com/acme/widget/commit/51344a6" rel="noopener" target="_blank" title="Carol Example — open the profile on the host (looked up from commit 51344a6)">
       "Carol Example"
     "· 2026-05-10 ·"
     <code>
       "51344a6"
 <h3>
   "Status history"
-<ul class="hist">
-  <li class="active">
+<ul class="ktw-hist">
+  <li class="ktw-active">
     "active"
-    <div class="d">
-      <a class="author" href="https://github.com/acme/widget/commit/51344a6" rel="noopener" target="_blank" title="Carol Example — open the profile on the host (looked up from commit 51344a6)">
+    <div class="ktw-d">
+      <a class="ktw-author" href="https://github.com/acme/widget/commit/51344a6" rel="noopener" target="_blank" title="Carol Example — open the profile on the host (looked up from commit 51344a6)">
         "Carol Example"
       "· 2026-05-10 · 51344a6"
 <h3>
   "Backlinks (1)"
-<a class="backlink" href="#entry/190b1989-a347-471b-8463-4f83b3cfff92">
+<a class="ktw-backlink" href="#entry/190b1989-a347-471b-8463-4f83b3cfff92">
   "The 2026-03 lock storm"
-  <div class="note">
+  <div class="ktw-note">
     "Storage"
 <h3>
   "Graph"
-<div class="mini tall">
+<div class="ktw-mini ktw-tall">
   <canvas height="0" width="0">
-  <span class="mini-seg">
-    <button class="on" title="this entry's or topic's neighbourhood" type="button">
+  <span class="ktw-mini-seg">
+    <button class="ktw-on" title="this entry's or topic's neighbourhood" type="button">
       "near"
     <button class title="the whole project" type="button">
       "project"
-  <span class="mini-hint">
+  <span class="ktw-mini-hint">
     "click to open"
-  <span class="mini-corner">
-    <button class="mini-corner-btn" title="fit the view: everything in the box" type="button">
+  <span class="ktw-mini-corner">
+    <button class="ktw-mini-corner-btn" title="fit the view: everything in the box" type="button">
       "fit"
-    <button class="mini-corner-btn" title="let go of the held thought — every node alike again (Esc, on a page without a reset of its own)" type="button">
+    <button class="ktw-mini-corner-btn" title="let go of the held thought — every node alike again (Esc, on a page without a reset of its own)" type="button">
       "reset"
-  <button class="mini-open" title="open the full graph — the same level, centred on what is shown here" type="button">
+  <button class="ktw-mini-open" title="open the full graph — the same level, centred on what is shown here" type="button">
     "⤢ full graph"
   "null"
-  <div class="mini-filters graph-ui" hidden>
+  <div class="ktw-mini-filters ktw-graph-ui" hidden>

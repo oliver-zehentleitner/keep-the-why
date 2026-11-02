@@ -1,84 +1,84 @@
 # #graph
 
 ## #main
-<div class="graph-wrap">
+<div class="ktw-graph-wrap">
   <canvas height="0" width="0">
-  <div class="graph-ui">
-    <span class="ui-group">
+  <div class="ktw-graph-ui">
+    <span class="ktw-ui-group">
       <label>
         <input checked type="checkbox">
         "entries"
       <label title="the names of this project's topics and entries — topics, and entries when zoomed in">
         <input checked type="checkbox">
         "labels"
-    <span class="ui-group cited-ctl">
+    <span class="ktw-ui-group ktw-cited-ctl">
       <label title="who in the Keep the Why registry cites this project — the registry's backlink file, https://keepthewhy.com/registry/backlinks/github.com/acme/widget.json, loaded on the click and not remembered. Citations from repositories outside the registry are not in it.">
         <input type="checkbox">
         "cited by"
-    <span class="ui-group">
+    <span class="ktw-ui-group">
       <label title="the projects of one owner around a node for the owner — only an owner with more than one project in the graph; the node opens the owner's page">
         <input type="checkbox">
         "owners"
-    <span class="ui-group">
+    <span class="ktw-ui-group">
       <label title="the path's projects in the graph — the projects you came through; unchecked they are hidden, not forgotten (the path bar discards)">
         <input checked type="checkbox">
         "path"
-    <span class="ui-group">
+    <span class="ktw-ui-group">
       <label title="the graph turns very slowly; it stops while you point at it">
         <input checked type="checkbox">
         "motion"
-    <span class="ui-group">
-      <button class="link-btn" title="every switch in this bar on">
+    <span class="ktw-ui-group">
+      <button class="ktw-link-btn" title="every switch in this bar on">
         "select all"
-      <button class="link-btn" title="every switch in this bar off — the project's topics alone">
+      <button class="ktw-link-btn" title="every switch in this bar off — the project's topics alone">
         "unselect all"
-    <span class="ui-group">
-      <button class="link-btn graph-reset" title="fit the graph and let go of every node you placed">
+    <span class="ktw-ui-group">
+      <button class="ktw-link-btn ktw-graph-reset" title="fit the graph and let go of every node you placed">
         "reset"
-  <div class="graph-legend">
+  <div class="ktw-graph-legend">
     <span>
-      <i class="dot" style="background:var(--accent);width:12px;height:12px">
+      <i class="ktw-dot" style="background:var(--accent);width:12px;height:12px">
       "topic (size = entries)"
     <span>
-      <i class="dot confirmed">
+      <i class="ktw-dot ktw-confirmed">
       "confirmed"
     <span>
-      <i class="dot inferred">
+      <i class="ktw-dot ktw-inferred">
       "inferred"
     <span>
-      <i class="dot unknown">
+      <i class="ktw-dot ktw-unknown">
       "unknown"
     <span>
-      <i class="dot" style="background:transparent;border:1.5px solid var(--fg3)">
+      <i class="ktw-dot" style="background:transparent;border:1.5px solid var(--fg3)">
       "superseded"
     <span>
       "— reference · ··· membership"
-    <span class="family">
-      <i class="dot" style="background:var(--accent);width:10px;height:10px">
+    <span class="ktw-family">
+      <i class="ktw-dot" style="background:var(--accent);width:10px;height:10px">
       <b>
         "acme---widget"
-  <button aria-expanded="false" class="graph-toggle ui-toggle" type="button">
+  <button aria-expanded="false" class="ktw-graph-toggle ktw-ui-toggle" type="button">
     "Layers"
-  <button aria-expanded="false" class="graph-toggle legend-toggle" type="button">
+  <button aria-expanded="false" class="ktw-graph-toggle ktw-legend-toggle" type="button">
     "Legend"
-  <button class="graph-corner graph-corner-fit" title="fit the view: everything in the box, centred on the point the graph turns around" type="button">
+  <button class="ktw-graph-corner ktw-graph-corner-fit" title="fit the view: everything in the box, centred on the point the graph turns around" type="button">
     "fit"
-  <button class="graph-corner graph-corner-reset" title="let go of the held thought — every node alike again (Esc does this and the bar's reset)" type="button">
+  <button class="ktw-graph-corner ktw-graph-corner-reset" title="let go of the held thought — every node alike again (Esc does this and the bar's reset)" type="button">
     "reset"
-  <div class="graph-hint">
+  <div class="ktw-graph-hint">
     "drag nodes · wheel zoom · drag background to pan · click to open"
-  <div class="graph-hint-touch">
+  <div class="ktw-graph-hint-touch">
     "pinch to zoom · drag to pan · tap to open"
-  <div class="stage-card graph-preview" hidden>
+  <div class="ktw-stage-card ktw-graph-preview" hidden>
 
 ## #details
-<div class="pane-width" title="the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details">
-  <span class="label">
+<div class="ktw-pane-width" title="the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details">
+  <span class="ktw-label">
     "Width"
-  <span class="mini-width">
+  <span class="ktw-mini-width">
     <button class type="button">
       "1×"
-    <button class="on" type="button">
+    <button class="ktw-on" type="button">
       "2×"
     <button class type="button">
       "3×"
@@ -87,59 +87,59 @@
 <div id="thoughts">
   <h3>
     "Thoughts (1)"
-    <span class="thought-min" title="entries a thought has at least — from one link up to the longest chain here">
+    <span class="ktw-thought-min" title="entries a thought has at least — from one link up to the longest chain here">
       "from"
       <button class type="button">
         "2"
       <button class type="button">
         "3"
-      <button class="on" type="button">
+      <button class="ktw-on" type="button">
         "4"
-  <p class="note">
+  <p class="ktw-note">
     "Chains of linked entries — See and Superseded by — first entry first. Point at one to light its path, click to hold it."
-  <div class="thought  ">
-    <button class="thought-head" title="Writes retry three times on a busy lock\n→ The API is versioned in the path\n→ Pagination uses opaque cursors\n→ Errors carry a stable code beside the message" type="button">
-      <span class="count">
+  <div class="ktw-thought  ">
+    <button class="ktw-thought-head" title="Writes retry three times on a busy lock\n→ The API is versioned in the path\n→ Pagination uses opaque cursors\n→ Errors carry a stable code beside the message" type="button">
+      <span class="ktw-count">
         "4"
       "Writes retry three times on a bu… → Errors carry a stable code besid…"
-      <span class="pill warn-pill" title="its first entry's Evidence is unknown: where later entries depend on it, they depend on a reason nobody confirmed">
+      <span class="ktw-pill ktw-warn-pill" title="its first entry's Evidence is unknown: where later entries depend on it, they depend on a reason nobody confirmed">
         "starts unknown"
-      <span class="pill warn-pill" title="step 1: open\nstep 2: pending-confirmation\n3 later steps are linked after it">
+      <span class="ktw-pill ktw-warn-pill" title="step 1: open\nstep 2: pending-confirmation\n3 later steps are linked after it">
         "step in question"
-    <a class="thought-read" href="#thought/682e7ab6-125c-459f-9c67-a3c6b217d8ef,cc7ef11a-f83d-4d95-b45c-d43639003f41,f5383416-90c8-4c5c-affc-01c3c67d0518,f5ac4f25-a9f1-490a-a4ca-62d5f0db4a06" title="read the whole thought — every entry in order, in full">
+    <a class="ktw-thought-read" href="#thought/682e7ab6-125c-459f-9c67-a3c6b217d8ef,cc7ef11a-f83d-4d95-b45c-d43639003f41,f5383416-90c8-4c5c-affc-01c3c67d0518,f5ac4f25-a9f1-490a-a4ca-62d5f0db4a06" title="read the whole thought — every entry in order, in full">
       "read ›"
 <h3>
   "Legend"
-<div class="legend-list">
+<div class="ktw-legend-list">
   <span>
-    <i class="dot" style="background:var(--accent);width:12px;height:12px">
+    <i class="ktw-dot" style="background:var(--accent);width:12px;height:12px">
     "topic — size follows its entry count"
   <span>
-    <i class="dot confirmed">
+    <i class="ktw-dot ktw-confirmed">
     "entry, Evidence confirmed"
   <span>
-    <i class="dot inferred">
+    <i class="ktw-dot ktw-inferred">
     "entry, Evidence inferred"
   <span>
-    <i class="dot unknown">
+    <i class="ktw-dot ktw-unknown">
     "entry, Evidence unknown"
   <span>
-    <i class="dot" style="background:transparent;border:1.5px solid var(--fg3)">
+    <i class="ktw-dot" style="background:transparent;border:1.5px solid var(--fg3)">
     "superseded — hollow"
   <span>
-    <i class="dot" style="background:var(--bg);border:1.5px solid var(--open)">
+    <i class="ktw-dot" style="background:var(--bg);border:1.5px solid var(--open)">
     "ring — open, needs review, pending"
   <span>
     "solid line — a reference between topics; dotted — membership"
   <span>
-    <i class="dot" style="background:transparent;border:2px dashed var(--fg3);width:10px;height:10px">
+    <i class="ktw-dot" style="background:transparent;border:2px dashed var(--fg3);width:10px;height:10px">
     "friend — a repository cited outside the family, loaded with the graph; a click on its hub or name goes there"
   <span>
-    <i class="dot" style="background:transparent;border:2px dotted var(--fg3);width:10px;height:10px">
+    <i class="ktw-dot" style="background:transparent;border:2px dotted var(--fg3);width:10px;height:10px">
     "path — a project you walked through to get here, numbered in order; a click goes back there"
 <h3>
   "Keys"
-<p class="note">
+<p class="ktw-note">
   <kbd>
     "/"
   "search ·"

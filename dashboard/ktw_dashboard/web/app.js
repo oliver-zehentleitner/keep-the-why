@@ -67,7 +67,7 @@ const isLocalPage = () => /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const narrow = () => !!window.matchMedia?.("(max-width: 900px)").matches;
-const schemaPill = (p) => el("span", { class: "pill" }, el("a", { class: "gh", href: `https://github.com/oliver-zehentleitner/keep-the-why/releases/tag/v${p.schema}`, target: "_blank", rel: "noopener", title: `context-schema ${p.schema} — the Keep the Why release this context/ was last checked against` }, `schema ${p.schema}`));
+const schemaPill = (p) => el("span", { class: "ktw-pill" }, el("a", { class: "ktw-gh", href: `https://github.com/oliver-zehentleitner/keep-the-why/releases/tag/v${p.schema}`, target: "_blank", rel: "noopener", title: `context-schema ${p.schema} — the Keep the Why release this context/ was last checked against` }, `schema ${p.schema}`));
 // The centre: the project the page shows. Read from the URL when the page
 // loads; a walk to a friend or back along the path changes it in place
 // (setCentre), without a reload — see "path" below.
@@ -114,7 +114,7 @@ const loadedTotals = () => { let bytes = 0, states = 0; for (const r of LOADED.v
 function renderLoaded() {
   const box = $("#loaded"); if (!box) return;
   const { bytes, states } = loadedTotals();
-  const a = box.querySelector("a"); if (a) { setKids(a, `${plural(states, "state")} · ${fmtBytes(bytes)}`, FAILED.size ? el("span", { class: "warn" }, ` · ⚠ ${FAILED.size} failed`) : null); }
+  const a = box.querySelector("a"); if (a) { setKids(a, `${plural(states, "state")} · ${fmtBytes(bytes)}`, FAILED.size ? el("span", { class: "ktw-warn" }, ` · ⚠ ${FAILED.size} failed`) : null); }
   const pop = box.querySelector(".loaded-pop"); if (pop) fillLoadedPop(pop);
 }
 // The state monitor, one line per project: which files of it the page holds — the state, its bodies, its
@@ -147,9 +147,9 @@ function fillLoadedPop(pop) {
     const v = st ? [st.schema ? `ktw ${st.schema}` : null, st.dashboard ? `dashboard ${st.dashboard}` : null, st.linter ? `lint ${st.linter}` : null].filter(Boolean).join(" · ") : c?.schema ? `ktw ${c.schema}` : "";
     const parts = [];
     if (st) parts.push(el("span", {}, `state ${fmtBytes(st.bytes)}`,
-      el("span", { class: "note" }, st.kind === "page" ? " — embedded in this page, in full" : st.own && !st.lean && LIVE() ? " — from the local server, in full" : st.lean ? " — lean, bodies beside it" : " — in full")));
+      el("span", { class: "ktw-note" }, st.kind === "page" ? " — embedded in this page, in full" : st.own && !st.lean && LIVE() ? " — from the local server, in full" : st.lean ? " — lean, bodies beside it" : " — in full")));
     if (b) parts.push(el("span", {}, `bodies ${fmtBytes(b.bytes)}`));
-    else if (st?.lean) parts.push(el("span", { class: "note" }, "bodies not loaded — fetched when an entry is opened"));
+    else if (st?.lean) parts.push(el("span", { class: "ktw-note" }, "bodies not loaded — fetched when an entry is opened"));
     if (c) parts.push(el("span", {}, `.keep-the-why ${fmtBytes(c.bytes)}`));
     if (G.files.other) parts.push(el("span", {}, `file ${fmtBytes(G.files.other.bytes)}`));
     // the links on a line of their own, under the name: the dashboard, then each file that came
@@ -162,19 +162,19 @@ function fillLoadedPop(pop) {
     ].filter(Boolean);
     return el("div", { class: `loaded-row${G.own ? " own" : ""}` }, el("span", { class: "size" }, fmtBytes(G.bytes)),
       el("span", { class: "what" },
-        el("b", {}, G.project || "—"), G.own ? el("span", { class: "pill" }, "this page") : null,
-        links.length ? [el("br"), ...links.flatMap((a, i) => (i ? [el("span", { class: "sep" }, " · "), a] : [a]))] : null,
-        v ? [el("br"), el("span", { class: "note" }, v)] : null,
-        el("br"), ...parts.flatMap((p, i) => (i ? [el("span", { class: "sep" }, " · "), p] : [p]))));
+        el("b", {}, G.project || "—"), G.own ? el("span", { class: "ktw-pill" }, "this page") : null,
+        links.length ? [el("br"), ...links.flatMap((a, i) => (i ? [el("span", { class: "ktw-sep" }, " · "), a] : [a]))] : null,
+        v ? [el("br"), el("span", { class: "ktw-note" }, v)] : null,
+        el("br"), ...parts.flatMap((p, i) => (i ? [el("span", { class: "ktw-sep" }, " · "), p] : [p]))));
   };
   // what did not come back: a block of its own at the bottom, reached from the header's warning
   const failed = [...FAILED.entries()].sort((x, y) => y[1].at - x[1].at);
-  const failedBlock = failed.length ? el("div", { class: "loaded-failed", id: "loaded-failed" }, el("div", { class: "loaded-head warn" }, `Not loaded (${failed.length})`),
-    ...failed.map(([url, f]) => el("div", { class: "loaded-row failed" }, el("span", { class: "size warn" }, "⚠"),
-      el("span", { class: "what" }, el("b", {}, hostMark(f.canonical), f.canonical ? repoLabel(f.canonical) : f.kind), el("span", { class: "note" }, ` — ${f.kind}`),
-        el("br"), el("span", { class: "err" }, (f.error.startsWith(`${url}: `) ? f.error.slice(url.length + 2) : f.error.endsWith(` for ${url}`) ? f.error.slice(0, -(url.length + 5)) : f.error)), // the address is linked below; say it once
+  const failedBlock = failed.length ? el("div", { class: "loaded-failed", id: "loaded-failed" }, el("div", { class: "loaded-head ktw-warn" }, `Not loaded (${failed.length})`),
+    ...failed.map(([url, f]) => el("div", { class: "loaded-row failed" }, el("span", { class: "size ktw-warn" }, "⚠"),
+      el("span", { class: "what" }, el("b", {}, hostMark(f.canonical), f.canonical ? repoLabel(f.canonical) : f.kind), el("span", { class: "ktw-note" }, ` — ${f.kind}`),
+        el("br"), el("span", { class: "ktw-err" }, (f.error.startsWith(`${url}: `) ? f.error.slice(url.length + 2) : f.error.endsWith(` for ${url}`) ? f.error.slice(0, -(url.length + 5)) : f.error)), // the address is linked below; say it once
         el("br"), el("a", { href: url, target: "_blank", rel: "noopener", title: "open it in the browser — does it answer at all?" }, `${url} ↗`))))) : null;
-  const toFailed = failed.length ? el("a", { href: "#", class: "warn", onclick: (ev) => { ev.preventDefault(); pop.querySelector("#loaded-failed")?.scrollIntoView?.({ block: "start", behavior: "smooth" }); } }, ` · ⚠ ${failed.length} not loaded ↓`) : null;
+  const toFailed = failed.length ? el("a", { href: "#", class: "ktw-warn", onclick: (ev) => { ev.preventDefault(); pop.querySelector("#loaded-failed")?.scrollIntoView?.({ block: "start", behavior: "smooth" }); } }, ` · ⚠ ${failed.length} not loaded ↓`) : null;
   setKids(pop, el("div", { class: "loaded-head" }, `${plural(list.length, "project")} — ${plural(LOADED.size, "file")} — ${fmtBytes(bytes)}`, toFailed), ...list.map(row), failedBlock);
 }
 // whether this page follows the project: a dot and a word in the status bar, beside the state monitor. One node,
@@ -184,7 +184,7 @@ function liveUi() {
   if (!LIVE_NODE) LIVE_NODE = el("span", { id: "live", class: "live", title: "connecting to the dashboard server" }, el("i", { class: "live-dot" }, "●"), el("span", { class: "live-label" }, "connecting"));
   return LIVE_NODE;
 }
-function setLive(kind, label, title) { const n = liveUi(); n.className = `live ${kind}`; n.title = title; n.querySelector(".live-label").textContent = label; }
+function setLive(kind, label, title) { const n = liveUi(); n.className = `live ktw-${kind}`; n.title = title; n.querySelector(".live-label").textContent = label; }
 function loadedUi() {
   const box = el("span", { id: "loaded" });
   const pop = el("div", { class: "loaded-pop", hidden: true });
@@ -425,15 +425,15 @@ const renderMarkdown = (md) => MD.render(document, md, { topicHref });
 // ---------------------------------------------------------------- global strip (numbers on every view)
 function renderStrip() {
   const q = queues(); const s = $("#strip"); s.replaceChildren();
-  const stat = (label, n, href, cls = "", title = "") => el("a", { class: `stat ${cls} ${n ? "" : "zero"}`, href, title }, el("b", {}, n), label);
+  const stat = (label, n, href, cls = "", title = "") => el("a", { class: `ktw-stat ${cls} ${n ? "" : "zero"}`, href, title }, el("b", {}, n), label);
   const f = SCENE.state.findings;
   s.append(
     stat("entries", SCENE.state.entries.length, "#overview"), stat("topics", SCENE.state.topics.length, "#overview"), stat("authors", SCENE.state.authors.length, "#authors"),
-    el("span", { class: "sep" }), el("span", { class: "lbl" }, "needs a person"),
+    el("span", { class: "ktw-sep" }), el("span", { class: "lbl" }, "needs a person"),
     stat("open", q.open.length, "#queues", "q-open"), stat("needs review", q["needs-review"].length, "#queues", "q-needs-review"),
     stat("pending", q["pending-confirmation"].length, "#queues", "q-pending-confirmation"), stat("unknown evidence", q.unknown.length, "#queues", "q-unknown"),
     stat("revisit-when", q.revisit.length, "#queues", "", "Revisit-when triggers on record"),
-    el("span", { class: "sep" }), el("span", { class: "lbl" }, "lint"),
+    el("span", { class: "ktw-sep" }), el("span", { class: "lbl" }, "lint"),
     stat("errors", f.errors, "#findings", f.errors ? "lint-bad hot" : "lint-ok", `keep-the-why-lint ${SCENE.state.linter}`),
     stat("warnings", f.warnings, "#findings", f.warnings ? "lint-warn" : "lint-ok", `keep-the-why-lint ${SCENE.state.linter}`),
   );
@@ -451,9 +451,9 @@ function renderSidebar() {
     const d = el("details", { open: openState[t.file] ?? (SCENE.state.topics.length <= 6) });
     d.addEventListener("toggle", () => { openState[t.file] = d.open; sessionStorage.setItem("ktw-tree", JSON.stringify(openState)); });
     d.append(el("summary", { "data-file": t.file, onclick: (ev) => { if (ev.target.closest(".tw")) return; ev.preventDefault(); nav.go({ view: "topic", file: t.file }); d.open = true; } },
-      el("span", { class: "tw" }, "▶"), el("span", { class: "tt" }, t.title), el("span", { class: "count" }, list.length)));
-    for (const e of list) d.append(navLink({ href: entryRoute(e), class: `leaf ${matches(e) ? "" : "dim"}`, "data-id": e.id, title: e.title },
-      el("i", { class: `dot ${e.evidence} ${e.status}` }), el("span", {}, e.title.replace(/`/g, ""))));
+      el("span", { class: "tw" }, "▶"), el("span", { class: "ktw-tt" }, t.title), el("span", { class: "ktw-count" }, list.length)));
+    for (const e of list) d.append(navLink({ href: entryRoute(e), class: `leaf ${matches(e) ? "" : "ktw-dim"}`, "data-id": e.id, title: e.title },
+      el("i", { class: `ktw-dot ktw-${e.evidence} ktw-${e.status}` }), el("span", {}, e.title.replace(/`/g, ""))));
     tree.append(d);
   }
   $("#tree-count").textContent = `${SCENE.state.topics.length} · ${plural(SCENE.state.entries.length, "entry")}`;
@@ -462,7 +462,7 @@ function renderSidebar() {
   const fill = (id, key, values, label) => {
     const sel = $(id); const cur = SCENE.filter[key];
     sel.replaceChildren(el("option", { value: "" }, `${label}: all`), ...values.map((v) => el("option", { value: v, selected: v === cur }, v)));
-    sel.classList.toggle("set", !!cur);
+    sel.classList.toggle("ktw-set", !!cur);
     sel.onchange = () => { SCENE.filter[key] = sel.value; rerender(); };
   };
   fill("#f-status", "status", STATUS_ORDER.filter((s) => SCENE.state.entries.some((e) => e.status === s)), "status");
@@ -474,13 +474,13 @@ function renderSidebar() {
 }
 function markActive() {
   const route = nav.current();
-  for (const a of document.querySelectorAll(".nav a")) a.classList.toggle("active", !route.unknown && route.view === a.dataset.route);
+  for (const a of document.querySelectorAll(".nav a")) a.classList.toggle("ktw-active", !route.unknown && route.view === a.dataset.route);
   const entry = route.view === "entry" ? entryOf(route.uuid) : null;
   const file = route.view === "topic" ? route.file : entry?.file || null;
-  for (const s of document.querySelectorAll(".tree summary")) s.classList.toggle("active", s.dataset.file === file && route.view === "topic");
-  for (const a of document.querySelectorAll(".tree .leaf")) a.classList.toggle("active", !!entry && a.dataset.id === entry.id);
+  for (const s of document.querySelectorAll(".tree summary")) s.classList.toggle("ktw-active", s.dataset.file === file && route.view === "topic");
+  for (const a of document.querySelectorAll(".tree .leaf")) a.classList.toggle("ktw-active", !!entry && a.dataset.id === entry.id);
   if (file) { const d = document.querySelector(`.tree summary[data-file="${CSS.escape(file)}"]`)?.parentElement; if (d) d.open = true; }
-  document.querySelector(".tree .leaf.active")?.scrollIntoView?.({ block: "nearest" });
+  document.querySelector(".tree .leaf.ktw-active")?.scrollIntoView?.({ block: "nearest" });
 }
 
 // ---------------------------------------------------------------- views
@@ -560,26 +560,26 @@ function familyDeclared() {
 let PROJECTS = null; // /api/projects result
 let SELECTED_DEFAULT = null; // the server's own project, for the menu when the URL names none
 async function viewProjects(main) {
-  main.append(el("h1", {}, "Projects"), el("p", { class: "sub" }, "Every project this machine knows — from ~/.keep-the-why/projects.json, the folder next to this one, and the personal files. Families grouped, parent first. Forgetting a row removes it from the mapping; a cache directory goes with it, a working tree is never touched."));
-  if (!LIVE()) return main.append(el("p", { class: "center" }, "Static export — the project list is a live-server view."));
-  let data; try { data = await HOST.projects(); } catch { return main.append(el("p", { class: "center" }, "Could not load the project list.")); }
+  main.append(el("h1", {}, "Projects"), el("p", { class: "ktw-sub" }, "Every project this machine knows — from ~/.keep-the-why/projects.json, the folder next to this one, and the personal files. Families grouped, parent first. Forgetting a row removes it from the mapping; a cache directory goes with it, a working tree is never touched."));
+  if (!LIVE()) return main.append(el("p", { class: "ktw-center" }, "Static export — the project list is a live-server view."));
+  let data; try { data = await HOST.projects(); } catch { return main.append(el("p", { class: "ktw-center" }, "Could not load the project list.")); }
   PROJECTS = data.projects || [];
   const current = PROJECT || data.selected;
   const list = PROJECTS;
   const row = (p, depth) => {
     const here = p.key === current;
     const label = p.path ? el("a", { href: nav.href({ view: "overview", centre: { mode: "live", project: p.key } }) }, p.name) : el("span", {}, p.id);
-    const forget = p.source === "unresolved" ? null : el("button", { class: "link-btn danger", title: p.kind === "cache" ? "forget this cache and delete its directory (a cache is never the only copy of anything)" : "forget this path — the working tree itself is not touched", onclick: async () => {
+    const forget = p.source === "unresolved" ? null : el("button", { class: "ktw-link-btn ktw-danger", title: p.kind === "cache" ? "forget this cache and delete its directory (a cache is never the only copy of anything)" : "forget this path — the working tree itself is not touched", onclick: async () => {
       if (!confirm(p.kind === "cache" ? `Forget the cache of ${p.id} and delete ${p.path}?` : `Forget ${p.path}? The directory stays; only the mapping row goes.`)) return;
       try { await HOST.forget(p.key); } catch {}
       if (here) go(pagePath()); else render();
     } }, "forget");
-    return el("div", { class: `prow depth-${Math.min(depth, 3)} ${here ? "here" : ""}` },
-      el("div", { class: "pr" }, depth ? el("span", { class: "tree-mark" }, "└") : null, label, el("span", { class: `pill kind-${p.path ? p.kind : "none"}` }, p.path ? kindLabel(p.kind) : "location unknown"), here ? el("span", { class: "pill" }, "here") : null, p.root ? el("span", { class: "pill mono", title: "root: below the git toplevel" }, p.root) : null),
-      el("div", { class: "pm mono" }, p.id, p.canonical ? ` · ${p.canonical}` : "", p.path ? ` · ${p.path}` : "", p.last_opened ? ` · seen ${p.last_opened}` : ""),
+    return el("div", { class: `ktw-prow ktw-depth-${Math.min(depth, 3)} ${here ? "ktw-here" : ""}` },
+      el("div", { class: "ktw-pr" }, depth ? el("span", { class: "ktw-tree-mark" }, "└") : null, label, el("span", { class: `ktw-pill ktw-kind-${p.path ? p.kind : "ktw-none"}` }, p.path ? kindLabel(p.kind) : "location unknown"), here ? el("span", { class: "ktw-pill" }, "here") : null, p.root ? el("span", { class: "ktw-pill ktw-mono", title: "root: below the git toplevel" }, p.root) : null),
+      el("div", { class: "ktw-pm ktw-mono" }, p.id, p.canonical ? ` · ${p.canonical}` : "", p.path ? ` · ${p.path}` : "", p.last_opened ? ` · seen ${p.last_opened}` : ""),
       forget);
   };
-  main.append(el("div", { class: "projects" }, groupByFamily(list).map(([p, depth]) => row(p, depth))));
+  main.append(el("div", { class: "ktw-projects" }, groupByFamily(list).map(([p, depth]) => row(p, depth))));
 }
 
 // ---------------------------------------------------------------- details pane
@@ -589,21 +589,21 @@ function renderDetailsDefault() {
   if (route.view === "graph" || route.view === "globe") {
     d.append(el("div", { id: "thoughts" }));
     renderThoughts(familyGraphShown() ? (fgraph && Date.now() - fgraph.at < 30000 ? fgraph : null) : graph);
-    d.append(el("h3", {}, "Legend"), el("div", { class: "legend-list" },
+    d.append(el("h3", {}, "Legend"), el("div", { class: "ktw-legend-list" },
       familyGraphShown() ? [
-        el("span", {}, el("i", { class: "dot", style: "background:var(--bg);border:3px solid var(--accent);width:12px;height:12px" }), "project — a ring in its colour; its topics take the same colour"),
+        el("span", {}, el("i", { class: "ktw-dot", style: "background:var(--bg);border:3px solid var(--accent);width:12px;height:12px" }), "project — a ring in its colour; its topics take the same colour"),
         el("span", {}, "thick dashed line — parent and child project"),
         el("span", {}, "coloured line — a See between two entries, within a project or across"),
         el("span", {}, "grey dashed line — Superseded by"),
         el("span", {}, "with entries hidden, references between projects are drawn between their topics")] : null,
-      el("span", {}, el("i", { class: "dot", style: "background:var(--accent);width:12px;height:12px" }), "topic — size follows its entry count"),
-      el("span", {}, el("i", { class: "dot confirmed" }), "entry, Evidence confirmed"), el("span", {}, el("i", { class: "dot inferred" }), "entry, Evidence inferred"), el("span", {}, el("i", { class: "dot unknown" }), "entry, Evidence unknown"),
-      el("span", {}, el("i", { class: "dot", style: "background:transparent;border:1.5px solid var(--fg3)" }), "superseded — hollow"),
-      el("span", {}, el("i", { class: "dot", style: "background:var(--bg);border:1.5px solid var(--open)" }), "ring — open, needs review, pending"),
+      el("span", {}, el("i", { class: "ktw-dot", style: "background:var(--accent);width:12px;height:12px" }), "topic — size follows its entry count"),
+      el("span", {}, el("i", { class: "ktw-dot ktw-confirmed" }), "entry, Evidence confirmed"), el("span", {}, el("i", { class: "ktw-dot ktw-inferred" }), "entry, Evidence inferred"), el("span", {}, el("i", { class: "ktw-dot ktw-unknown" }), "entry, Evidence unknown"),
+      el("span", {}, el("i", { class: "ktw-dot", style: "background:transparent;border:1.5px solid var(--fg3)" }), "superseded — hollow"),
+      el("span", {}, el("i", { class: "ktw-dot", style: "background:var(--bg);border:1.5px solid var(--open)" }), "ring — open, needs review, pending"),
       el("span", {}, "solid line — a reference between topics; dotted — membership"),
-      el("span", {}, el("i", { class: "dot", style: "background:transparent;border:2px dashed var(--fg3);width:10px;height:10px" }), "friend — a repository cited outside the family, loaded with the graph; a click on its hub or name goes there"),
-      el("span", {}, el("i", { class: "dot", style: "background:transparent;border:2px dotted var(--fg3);width:10px;height:10px" }), "path — a project you walked through to get here, numbered in order; a click goes back there")),
-      el("h3", {}, "Keys"), el("p", { class: "note" }, el("kbd", {}, "/"), " search · ", el("kbd", {}, "g"), " graph · ", el("kbd", {}, "o"), " overview · ", el("kbd", {}, "q"), " queues · ", el("kbd", {}, "t"), " timeline · ", el("kbd", {}, "a"), " authors · ", el("kbd", {}, "l"), " findings"));
+      el("span", {}, el("i", { class: "ktw-dot", style: "background:transparent;border:2px dashed var(--fg3);width:10px;height:10px" }), "friend — a repository cited outside the family, loaded with the graph; a click on its hub or name goes there"),
+      el("span", {}, el("i", { class: "ktw-dot", style: "background:transparent;border:2px dotted var(--fg3);width:10px;height:10px" }), "path — a project you walked through to get here, numbered in order; a click goes back there")),
+      el("h3", {}, "Keys"), el("p", { class: "ktw-note" }, el("kbd", {}, "/"), " search · ", el("kbd", {}, "g"), " graph · ", el("kbd", {}, "o"), " overview · ", el("kbd", {}, "q"), " queues · ", el("kbd", {}, "t"), " timeline · ", el("kbd", {}, "a"), " authors · ", el("kbd", {}, "l"), " findings"));
     return;
   }
   if (route.view === "timeline") {
@@ -611,7 +611,7 @@ function renderDetailsDefault() {
     d.dataset.pane = "graph";
     d.append(el("div", { id: "thoughts" }));
     renderThoughts(TIMELINE.stage()?.graph || graph);
-    d.append(el("h3", {}, "Graph"), el("p", { class: "note" }, "What existed on the day shown, with the status it had then."));
+    d.append(el("h3", {}, "Graph"), el("p", { class: "ktw-note" }, "What existed on the day shown, with the status it had then."));
     miniGraph(d, { tall: true });
     return;
   }
@@ -627,14 +627,14 @@ function renderDetailsDefault() {
 let MINI = null;
 function miniGraph(d, ctx) {
   const focusId = ctx.entry ? `e:${ctx.entry.id}` : ctx.topic ? `t:${ctx.topic.file}` : null;
-  if (narrow()) { d.append(el("h3", {}, "Graph"), navLink({ class: "backlink", href: { view: "graph" } }, "Open the project graph →")); return; }
+  if (narrow()) { d.append(el("h3", {}, "Graph"), navLink({ class: "ktw-backlink", href: { view: "graph" } }, "Open the project graph →")); return; }
   const modes = [...(focusId ? ["near"] : []), "project", ...(canFamily() ? ["family"] : [])];
   const mode = MINI && modes.includes(MINI) ? MINI : focusId ? "near" : familyGraphShown() && modes.includes("family") ? "family" : "project";
-  const box = el("div", { class: `mini ${focusId || ctx.tall ? "tall" : "fill"}` });
-  const seg = el("span", { class: "mini-seg" }, modes.length > 1 ? modes.map((m) => el("button", { type: "button", class: m === mode ? "on" : "", title: { near: "this entry's or topic's neighbourhood", project: "the whole project", family: "the whole family tree" }[m], onclick: () => { MINI = m; const keep = d.querySelector(".mini"); const h = keep?.previousElementSibling?.tagName === "H3" ? keep.previousElementSibling : null; h?.remove(); keep?.remove(); miniGraph(d, ctx); } }, m)) : el("span", { class: "mini-title" }, "graph"));
+  const box = el("div", { class: `ktw-mini ${focusId || ctx.tall ? "ktw-tall" : "ktw-fill"}` });
+  const seg = el("span", { class: "ktw-mini-seg" }, modes.length > 1 ? modes.map((m) => el("button", { type: "button", class: m === mode ? "ktw-on" : "", title: { near: "this entry's or topic's neighbourhood", project: "the whole project", family: "the whole family tree" }[m], onclick: () => { MINI = m; const keep = d.querySelector(".ktw-mini"); const h = keep?.previousElementSibling?.tagName === "H3" ? keep.previousElementSibling : null; h?.remove(); keep?.remove(); miniGraph(d, ctx); } }, m)) : el("span", { class: "ktw-mini-title" }, "graph"));
   const canvas = el("canvas");
   // one click to the full graph: the same level, centred on the entry or topic shown
-  const full = el("button", { type: "button", class: "mini-open", title: "open the full graph — the same level, centred on what is shown here",
+  const full = el("button", { type: "button", class: "ktw-mini-open", title: "open the full graph — the same level, centred on what is shown here",
     onclick: () => {
       if (mode === "family") setScope("family", { rerender: false });
       GRAPH_CENTER = ctx.entry ? { entry: ctx.entry } : ctx.topic ? { topic: ctx.topic } : null;
@@ -642,15 +642,15 @@ function miniGraph(d, ctx) {
       nav.go({ view: "graph" });
     } }, "⤢ full graph");
   // the full graph's switches, folded into the small one: a ⚙ opens the same groups
-  const filters = el("div", { class: "mini-filters graph-ui", hidden: !MINI_FILTERS });
-  const gear = el("button", { type: "button", class: "mini-gear", title: "the graph's switches — the same as in the full graph", onclick: () => { MINI_FILTERS = !MINI_FILTERS; filters.hidden = !MINI_FILTERS; } }, "⚙");
+  const filters = el("div", { class: "ktw-mini-filters ktw-graph-ui", hidden: !MINI_FILTERS });
+  const gear = el("button", { type: "button", class: "ktw-mini-gear", title: "the graph's switches — the same as in the full graph", onclick: () => { MINI_FILTERS = !MINI_FILTERS; filters.hidden = !MINI_FILTERS; } }, "⚙");
   const fillFilters = (g) => { if (mode !== "near") setKids(filters, ...graphControlGroups(g, mode === "family", miniView(g))); };
   // fit and reset beside it, for the graph this box runs: fit the view, let go of the held thought
-  const corner = el("span", { class: "mini-corner" });
+  const corner = el("span", { class: "ktw-mini-corner" });
   const cornerFor = (g) => { const letGo = () => { SCENE.setThought(null); focusStep(null); lightThought(g, null); g.wake?.(); }; ESC.pane = letGo; setKids(corner,
-    el("button", { type: "button", class: "mini-corner-btn", title: "fit the view: everything in the box", onclick: () => { const v = miniView(g); v.userMoved = false; v.needFit = true; g.wake?.(); } }, "fit"),
-    el("button", { type: "button", class: "mini-corner-btn", title: "let go of the held thought — every node alike again (Esc, on a page without a reset of its own)", onclick: letGo }, "reset")); };
-  box.append(canvas, seg, el("span", { class: "mini-hint" }, mode === "near" ? "click to open" : "hover · click"), corner, full, mode !== "near" ? gear : null, filters);
+    el("button", { type: "button", class: "ktw-mini-corner-btn", title: "fit the view: everything in the box", onclick: () => { const v = miniView(g); v.userMoved = false; v.needFit = true; g.wake?.(); } }, "fit"),
+    el("button", { type: "button", class: "ktw-mini-corner-btn", title: "let go of the held thought — every node alike again (Esc, on a page without a reset of its own)", onclick: letGo }, "reset")); };
+  box.append(canvas, seg, el("span", { class: "ktw-mini-hint" }, mode === "near" ? "click to open" : "hover · click"), corner, full, mode !== "near" ? gear : null, filters);
   if (focusId) d.append(el("h3", {}, "Graph"));
   d.append(box);
   const opts = { mini: true, focusId };
@@ -658,14 +658,14 @@ function miniGraph(d, ctx) {
     // friends live at the project level: the control switches there (the family level with the family scope) and loads them
     const n = friendCandidates(SCENE.state.entries.filter((e) => (e.project || null) === (ctx.entry?.project || ctx.topic?.project || null))).length;
     const up = modes.includes("family") && familyGraphShown() ? "family" : "project";
-    if (n || hasFamily()) box.append(el("span", { class: "mini-seg mini-friends" }, el("button", { type: "button", title: `show the friends — switches to the ${up} level`,
+    if (n || hasFamily()) box.append(el("span", { class: "ktw-mini-seg ktw-mini-friends" }, el("button", { type: "button", title: `show the friends — switches to the ${up} level`,
       onclick: () => { MINI = up; FRIENDS.load = true; setFriendsAuto(true); render(); } }, n ? `friends (${n})` : "friends")));
     const near = ctx.entry ? buildSubgraph(ctx.entry) : buildTopicSubgraph(ctx.topic); cornerFor(near);
     return requestAnimationFrame(() => runGraph(canvas, near, opts));
   }
   if (mode === "project") { const g = buildGraph(ctx.entry?.project || ctx.topic?.project || null); holdReading(g); fillFilters(g); cornerFor(g); /* friends are in the gear's groups */ return requestAnimationFrame(() => runGraph(canvas, g, opts)); }
   // family: the family graph's nodes, with switches of their own (entries shown); the zoom is the small graph's own either way
-  const note = el("span", { class: "mini-hint", style: "top:28px;bottom:auto" }, "loading the family…"); box.append(note);
+  const note = el("span", { class: "ktw-mini-hint", style: "top:28px;bottom:auto" }, "loading the family…"); box.append(note);
   const show = (fg) => { note.remove(); if (!canvas.isConnected) return; const mg = { ...fg, showEntries: SHOW_ENTRIES, showLabels: true, raf: null, wake: null, alpha: Math.max(fg.alpha, 0.3), of: fg }; fg.runner = mg; holdReading(mg); fillFilters(mg); cornerFor(mg); runGraph(canvas, mg, opts); };
   if (fgraph && Date.now() - fgraph.at < 30000) requestAnimationFrame(() => show(fgraph));
   else buildFamilyGraph().then(show);
@@ -858,7 +858,7 @@ let SHOW_ENTRIES = prefs.get("entries") !== "off";
 function setShowEntries(on) { SHOW_ENTRIES = on; prefs.set("entries", on ? "on" : "off"); }
 const labelsUi = (g, group, what) => el("label", { title: `the names of ${what} — topics, and entries when zoomed in` }, el("input", { type: "checkbox", checked: GRAPH.labels()[group] !== false, onchange: (ev) => { setLabels(group, ev.target.checked); g.wake?.(); } }), group === "project" ? "labels" : group === "friendsFamilies" ? "friends families labels" : `${group} labels`);
 // the "<group> entries" checkbox, the same for the three groups
-const allEntriesUi = (group, checked, set, what) => el("label", { class: "friend-entries", title: `every entry of ${what}, not only the ones that link to this graph` }, el("input", { type: "checkbox", checked, onchange: (ev) => { set(ev.target.checked); if (fgraph) fgraph.at = 0; render(); } }), group === "friendsFamilies" ? "friends families entries" : `${group} entries`);
+const allEntriesUi = (group, checked, set, what) => el("label", { class: "ktw-friend-entries", title: `every entry of ${what}, not only the ones that link to this graph` }, el("input", { type: "checkbox", checked, onchange: (ev) => { set(ev.target.checked); if (fgraph) fgraph.at = 0; render(); } }), group === "friendsFamilies" ? "friends families entries" : `${group} entries`);
 // every switch in the bar at once — motion is not a filter and stays
 function selectAll(g, on) {
   g.showEntries = on; setShowEntries(on);
@@ -1245,32 +1245,32 @@ function onLinkClick(ev) {
 function pathBar() {
   if (!KEEP_PATH || !TRAIL.length) return null;
   const here = SCENE.self?.project?.id || SCENE.self?.project?.name || "";
-  const steps = TRAIL.map((t, i) => [el("a", { href: t.url + "#graph", title: `back to ${t.name} — the path shortens to here`, onclick: (ev) => { ev.preventDefault(); moveTo(t, "#graph"); }, onmouseenter: () => spotProject(t.canonical, t.root), onmouseleave: () => spotProject(null) }, `${i + 1} · ${t.name}`), el("span", { class: "sep" }, " › ")]).flat();
-  return el("div", { class: "path-bar" }, el("span", { class: "label" }, "Path "), ...steps, el("b", {}, here),
+  const steps = TRAIL.map((t, i) => [el("a", { href: t.url + "#graph", title: `back to ${t.name} — the path shortens to here`, onclick: (ev) => { ev.preventDefault(); moveTo(t, "#graph"); }, onmouseenter: () => spotProject(t.canonical, t.root), onmouseleave: () => spotProject(null) }, `${i + 1} · ${t.name}`), el("span", { class: "ktw-sep" }, " › ")]).flat();
+  return el("div", { class: "ktw-path-bar" }, el("span", { class: "ktw-label" }, "Path "), ...steps, el("b", {}, here),
     el("span", { class: "grow" }),
     el("label", { title: "show the path's projects in the graph" }, el("input", { type: "checkbox", checked: TRAIL_SHOW, onchange: (ev) => { setTrailShow(ev.target.checked); if (fgraph) fgraph.at = 0; render(); } }), "in graph"),
-    el("button", { type: "button", class: "link-btn", title: "forget the path; this project becomes the start", onclick: () => { TRAIL = []; if (fgraph) fgraph.at = 0; render(); } }, "discard"));
+    el("button", { type: "button", class: "ktw-link-btn", title: "forget the path; this project becomes the start", onclick: () => { TRAIL = []; if (fgraph) fgraph.at = 0; render(); } }, "discard"));
 }
 function friendsUi(g) {
   const list = g.friends || [];
   if (!list.length) return null;
   const waiting = list.filter((f) => !FRIENDS.loaded[fkey(f.canonical)]);
-  if (FRIENDS.loading) return el("span", { class: "friends-load note" }, "loading friends…");
+  if (FRIENDS.loading) return el("span", { class: "ktw-friends-load ktw-note" }, "loading friends…");
   if (!FRIENDS.on || waiting.length) {
-    const b = el("button", { class: "link-btn friends-load", title: "load the repositories these entries cite outside the family, now and from here on", onclick: () => { b.disabled = true; b.textContent = "loading friends…"; setFriendsAuto(true); loadFriends(FRIENDS.on ? waiting : list); } }, `friends (${FRIENDS.on ? waiting.length : list.length})`);
+    const b = el("button", { class: "ktw-link-btn ktw-friends-load", title: "load the repositories these entries cite outside the family, now and from here on", onclick: () => { b.disabled = true; b.textContent = "loading friends…"; setFriendsAuto(true); loadFriends(FRIENDS.on ? waiting : list); } }, `friends (${FRIENDS.on ? waiting.length : list.length})`);
     return b;
   }
   // a friend whose export could not be fetched is loaded with an error and draws nothing — say so
   // here, where the reader looks for it, and point at the Friends view, which names the reason
   const failed = list.filter((f) => FRIENDS.loaded[fkey(f.canonical)]?.error);
   const shown = list.length - failed.length;
-  return el("span", { class: "friends-ctl" },
-    el("label", { class: "friends-toggle", title: "the repositories these entries cite outside the family — unchecked, they are no longer loaded on their own" }, el("input", { type: "checkbox", checked: true, onchange: () => { FRIENDS.on = false; setFriendsAuto(false); if (fgraph) fgraph.at = 0; render(); } }), "friends"),
-    failed.length ? navLink({ class: "friends-failed warn", href: { view: "friends" }, title: failed.map((f) => `${repoLabel(f.canonical)} — ${FRIENDS.loaded[fkey(f.canonical)].error}`).join("\n") }, `${shown ? `${failed.length} of ${list.length}` : failed.length === 1 ? "the one friend" : `all ${failed.length}`} not loaded ↗`) : null,
+  return el("span", { class: "ktw-friends-ctl" },
+    el("label", { class: "ktw-friends-toggle", title: "the repositories these entries cite outside the family — unchecked, they are no longer loaded on their own" }, el("input", { type: "checkbox", checked: true, onchange: () => { FRIENDS.on = false; setFriendsAuto(false); if (fgraph) fgraph.at = 0; render(); } }), "friends"),
+    failed.length ? navLink({ class: "ktw-friends-failed ktw-warn", href: { view: "friends" }, title: failed.map((f) => `${repoLabel(f.canonical)} — ${FRIENDS.loaded[fkey(f.canonical)].error}`).join("\n") }, `${shown ? `${failed.length} of ${list.length}` : failed.length === 1 ? "the one friend" : `all ${failed.length}`} not loaded ↗`) : null,
     shown ? allEntriesUi("friends", FRIEND_ENTRIES, setFriendEntries, "every friend") : null,
     shown ? labelsUi(g, "friends", "the friends") : null,
     ...(shown && list.some((f) => (FRIENDS.loaded[fkey(f.canonical)]?.members || []).length > 1) ? [
-      el("label", { class: "friend-families", title: FRIEND_FAMILIES ? "a friend's family beside it — unchecked, the cited repository alone" : "show a friend's family beside it" }, el("input", { type: "checkbox", checked: FRIEND_FAMILIES, onchange: (ev) => { setFriendFamilies(ev.target.checked); if (fgraph) fgraph.at = 0; render(); } }), "friends families"),
+      el("label", { class: "ktw-friend-families", title: FRIEND_FAMILIES ? "a friend's family beside it — unchecked, the cited repository alone" : "show a friend's family beside it" }, el("input", { type: "checkbox", checked: FRIEND_FAMILIES, onchange: (ev) => { setFriendFamilies(ev.target.checked); if (fgraph) fgraph.at = 0; render(); } }), "friends families"),
       ...(FRIEND_FAMILIES ? [allEntriesUi("friendsFamilies", FRIEND_FAM_ENTRIES, setFriendFamEntries, "every member of a friend's family"), labelsUi(g, "friendsFamilies", "the friends' families")] : []),
     ] : []));
 }
@@ -1302,22 +1302,22 @@ function citedUi(g) {
   if (!url) return null; // no repository URL the registry could hold
   CITED.url = url;
   const title = `who in the Keep the Why registry cites this project — the registry's backlink file, ${url}, loaded on the click and not remembered${CITED.checked ? `; built ${CITED.checked}` : ""}. Citations from repositories outside the registry are not in it.`;
-  if (CITED.loading) return el("span", { class: "ui-group" }, el("span", { class: "note" }, "loading cited by…"));
+  if (CITED.loading) return el("span", { class: "ktw-ui-group" }, el("span", { class: "ktw-note" }, "loading cited by…"));
   const failed = CITED.on ? CITED.list.filter((f) => FRIENDS.loaded[fkey(f.canonical)]?.error) : [];
-  return el("span", { class: "ui-group cited-ctl" },
+  return el("span", { class: "ktw-ui-group ktw-cited-ctl" },
     el("label", { title }, el("input", { type: "checkbox", checked: CITED.on, onchange: (ev) => { if (ev.target.checked) loadCited(); else { CITED.on = false; if (fgraph) fgraph.at = 0; render(); } } }),
       CITED.on ? `cited by (${CITED.list.length})` : "cited by"),
-    CITED.on && !CITED.list.length ? el("span", { class: "note" }, "nothing in the registry cites this project") : null,
-    CITED.on && CITED.elsewhere ? el("span", { class: "note", title: "the registry lists citations of Ids this export does not hold — an entry since removed, or another project in the same repository" }, `${CITED.elsewhere} of Ids not here`) : null,
-    failed.length ? navLink({ class: "warn", href: { view: "friends" }, title: failed.map((f) => `${repoLabel(f.canonical)} — ${FRIENDS.loaded[fkey(f.canonical)].error}`).join("\n") }, `${failed.length} not loaded ↗`) : null,
-    CITED.error ? el("span", { class: "warn", title: CITED.error }, "registry not reached") : null);
+    CITED.on && !CITED.list.length ? el("span", { class: "ktw-note" }, "nothing in the registry cites this project") : null,
+    CITED.on && CITED.elsewhere ? el("span", { class: "ktw-note", title: "the registry lists citations of Ids this export does not hold — an entry since removed, or another project in the same repository" }, `${CITED.elsewhere} of Ids not here`) : null,
+    failed.length ? navLink({ class: "ktw-warn", href: { view: "friends" }, title: failed.map((f) => `${repoLabel(f.canonical)} — ${FRIENDS.loaded[fkey(f.canonical)].error}`).join("\n") }, `${failed.length} not loaded ↗`) : null,
+    CITED.error ? el("span", { class: "ktw-warn", title: CITED.error }, "registry not reached") : null);
 }
 // the family beside the project graph: on by default, off per browser (and then not loaded either)
 function familyUi(g) {
   if (!canFamily()) return null;
   const merged = g !== graph; // the family graph: every member whole
-  return el("span", { class: "family-ctl" },
-    el("label", { class: "family-toggle", title: FAMILY_NB_ON ? "the family's projects in the graph — unchecked, the project alone, with its friends and path" : "show the family's projects in the graph, with the entries linked here" },
+  return el("span", { class: "ktw-family-ctl" },
+    el("label", { class: "ktw-family-toggle", title: FAMILY_NB_ON ? "the family's projects in the graph — unchecked, the project alone, with its friends and path" : "show the family's projects in the graph, with the entries linked here" },
       el("input", { type: "checkbox", checked: FAMILY_NB_ON, onchange: (ev) => { setFamilyNeighbours(ev.target.checked); if (ev.target.checked) autoFamily(); render(); } }), FAMILY_NB.loading ? "family (loading…)" : familyCount() == null ? "family" : `family (${familyCount()})`),
     FAMILY_NB_ON && (merged || familyMembers().length) ? allEntriesUi("family", FAMILY_ENTRIES, setFamilyEntries, "every member of the family — the family graph, every member whole") : null);
 }
@@ -1327,14 +1327,14 @@ function miniFriends(g) {
   const list = g.friends || [];
   if (!list.length) return null;
   const waiting = list.filter((f) => !FRIENDS.loaded[fkey(f.canonical)]);
-  if (want) { if (!FRIENDS.on || waiting.length) { loadFriends(FRIENDS.on ? waiting : list); return el("span", { class: "mini-seg mini-friends" }, el("button", { type: "button", disabled: true }, "loading…")); } }
+  if (want) { if (!FRIENDS.on || waiting.length) { loadFriends(FRIENDS.on ? waiting : list); return el("span", { class: "ktw-mini-seg ktw-mini-friends" }, el("button", { type: "button", disabled: true }, "loading…")); } }
   const on = FRIENDS.on && !waiting.length;
-  if (FRIENDS.loading && !want) return el("span", { class: "mini-seg mini-friends" }, el("button", { type: "button", disabled: true }, "loading…"));
+  if (FRIENDS.loading && !want) return el("span", { class: "ktw-mini-seg ktw-mini-friends" }, el("button", { type: "button", disabled: true }, "loading…"));
   const failed = on ? list.filter((f) => FRIENDS.loaded[fkey(f.canonical)]?.error) : [];
-  const b = el("button", { type: "button", class: on ? "on" : "", title: on ? (failed.length ? `${failed.length} of ${list.length} could not be loaded — the Friends view names the reason` : "hide the friends — they are no longer loaded on their own") : "load the repositories these entries cite outside the family, now and from here on",
+  const b = el("button", { type: "button", class: on ? "ktw-on" : "", title: on ? (failed.length ? `${failed.length} of ${list.length} could not be loaded — the Friends view names the reason` : "hide the friends — they are no longer loaded on their own") : "load the repositories these entries cite outside the family, now and from here on",
     onclick: () => { if (on) { FRIENDS.on = false; setFriendsAuto(false); if (fgraph) fgraph.at = 0; render(); } else { b.disabled = true; b.textContent = "loading…"; setFriendsAuto(true); loadFriends(FRIENDS.on ? waiting : list); } } },
     on ? (failed.length ? `friends (${failed.length} not loaded)` : "friends") : `friends (${FRIENDS.on ? waiting.length : list.length})`);
-  return el("span", { class: "mini-seg mini-friends" }, b);
+  return el("span", { class: "ktw-mini-seg ktw-mini-friends" }, b);
 }
 // ---------------------------------------------------------------- thoughts (host)
 // The thoughts themselves — the chains, the list, the page, the reader — are ktw-thoughts.js. Here: the graph an
@@ -1438,14 +1438,14 @@ let GLOBE_PORTION = GLOBE_PORTIONS[0];
 function globeDialog({ title, lines, note }) {
   return new Promise((resolve) => {
     const close = (v) => { box.remove(); resolve(v); };
-    const list = el("div", { class: "globe-list" }); const noteEl = el("p", { class: "note" }); const actions = el("div", { class: "globe-actions" });
+    const list = el("div", { class: "globe-list" }); const noteEl = el("p", { class: "ktw-note" }); const actions = el("div", { class: "globe-actions" });
     const fill = () => {
       const n = Math.min(GLOBE_PORTION, lines.length); const rest = lines.length - n;
       noteEl.textContent = note(n);
-      setKids(list, ...lines.slice(0, n).map((l) => el("div", {}, l)), rest ? el("div", { class: "note" }, `… and ${rest} more — offered after these`) : null);
-      const size = lines.length > GLOBE_PORTIONS[0] ? el("label", { class: "note portion", title: "how many repositories one click loads" }, "per portion ",
+      setKids(list, ...lines.slice(0, n).map((l) => el("div", {}, l)), rest ? el("div", { class: "ktw-note" }, `… and ${rest} more — offered after these`) : null);
+      const size = lines.length > GLOBE_PORTIONS[0] ? el("label", { class: "ktw-note portion", title: "how many repositories one click loads" }, "per portion ",
         el("select", { onchange: (ev) => { GLOBE_PORTION = Number(ev.target.value); fill(); } }, ...GLOBE_PORTIONS.map((p) => el("option", { value: String(p), selected: p === GLOBE_PORTION }, String(p))))) : null;
-      setKids(actions, size, el("button", { type: "button", class: "link-btn", onclick: () => close(false) }, "no, stop here"), el("button", { type: "button", class: "primary", onclick: () => close(n) }, rest ? `load next ${n}` : "load them"));
+      setKids(actions, size, el("button", { type: "button", class: "ktw-link-btn", onclick: () => close(false) }, "no, stop here"), el("button", { type: "button", class: "primary", onclick: () => close(n) }, rest ? `load next ${n}` : "load them"));
     };
     const box = el("div", { class: "globe-dialog" }, el("div", { class: "globe-card" }, el("h3", {}, title), noteEl, list, actions));
     fill();
@@ -1523,7 +1523,7 @@ function globeIntro() {
       el("p", {}, el("b", {}, "Hops"), " — choose 1 to 10, then ", el("i", {}, "go"), ". Hop 1 is every repository the drawn entries cite beyond what the graph shows, hop 2 what those cite, and so on. Before each wave a dialog lists the repositories and files it would fetch; you load them or stop there. ", el("i", {}, "0 hops"), " — the default — shows what the graph shows: the project with its family and friends, as their switches have them; going back to it drops the waves."),
       el("p", {}, el("b", {}, "registry"), " — every project listed in the Keep the Why registry (keepthewhy.com/registry), loaded as a wave of its own, asked for the same way: projects that cite nothing of yours, and the ones that cite you. The ⓘ beside it says how a project gets listed."),
       el("p", {}, el("b", {}, "clear"), " drops what the globe loaded; friends, family and path stay.")),
-    el("div", { class: "globe-actions" }, el("label", { class: "note", style: "margin-right:auto" }, never, " don't show this again"), el("button", { type: "button", class: "primary", onclick: close }, "got it"))));
+    el("div", { class: "globe-actions" }, el("label", { class: "ktw-note", style: "margin-right:auto" }, never, " don't show this again"), el("button", { type: "button", class: "primary", onclick: close }, "got it"))));
   document.body.append(box);
 }
 // what a wave brought in may lie outside the view: frame the whole graph again, whatever the reader had moved
@@ -1532,9 +1532,9 @@ function globeClear() { globeRefit(); GLOBE.extra.clear(); GLOBE.failed.clear();
 function globeUi(g) {
   if (!GLOBE.view) return null;
   const sel = el("select", { title: "how many hops out from what is loaded — each wave is asked for with its count", onchange: (ev) => { GLOBE.hops = Number(ev.target.value); if (GLOBE.hops === 0) globeClear(); else render(); } }, ...Array.from({ length: 11 }, (_, i) => el("option", { value: String(i), selected: i === GLOBE.hops }, `${i} hop${i === 1 ? "" : "s"}`)));
-  const go = el("button", { type: "button", class: "link-btn", disabled: GLOBE.busy || GLOBE.hops <= GLOBE.done, title: "load the next waves, one asked after the other", onclick: () => globeRun(GLOBE.hops) }, GLOBE.busy ? "loading…" : GLOBE.done ? `go on (${GLOBE.done} done)` : "go");
+  const go = el("button", { type: "button", class: "ktw-link-btn", disabled: GLOBE.busy || GLOBE.hops <= GLOBE.done, title: "load the next waves, one asked after the other", onclick: () => globeRun(GLOBE.hops) }, GLOBE.busy ? "loading…" : GLOBE.done ? `go on (${GLOBE.done} done)` : "go");
   const reg = el("label", { title: `every project listed in the registry — ${GLOBE.registryUrl}` }, el("input", { type: "checkbox", checked: GLOBE.registry, disabled: GLOBE.busy, onchange: (ev) => { if (ev.target.checked) globeRegistry(); else { for (const [k, f] of GLOBE.extra) if (f.registry) GLOBE.extra.delete(k); registryOff(); render(); } } }), "registry");
-  const regNext = GLOBE.registry && GLOBE.registryLeft ? el("button", { type: "button", class: "link-btn", disabled: GLOBE.busy, title: "the registry was stopped part-way: offer the projects this pass has not tried", onclick: globeRegistry }, "next") : null;
+  const regNext = GLOBE.registry && GLOBE.registryLeft ? el("button", { type: "button", class: "ktw-link-btn", disabled: GLOBE.busy, title: "the registry was stopped part-way: offer the projects this pass has not tried", onclick: globeRegistry }, "next") : null;
   // an ⓘ beside the switch: what the registry is, and that one line in a pull request puts a project on it
   const info = el("span", { class: "globe-info", tabindex: "0" }, "ⓘ",
     el("span", { class: "globe-info-box" },
@@ -1542,8 +1542,8 @@ function globeUi(g) {
       el("p", {}, "A list of repositories with a published Keep the Why dashboard export, kept in the keep-the-why repository and built into an index the globe can load as a wave of its own. Nothing needs it: the globe finds repositories by their citations. The registry is for being found from a project that cites nothing of yours — and for seeing who cites you."),
       el("p", {}, "To be listed, open a pull request that adds one line to ", el("code", {}, "registry/projects.txt"), ": your repository's canonical URL. A workflow follows its ", el("code", {}, ".keep-the-why"), " to the ", el("code", {}, "dashboard-state"), " export and checks that the export names your repository — move the export later and the listing follows. A family is listed by its root project: its members come with it through their parent/children lines (with friends families on)."),
       el("p", {}, el("a", { href: "https://keepthewhy.com/registry/", target: "_blank", rel: "noopener" }, "keepthewhy.com/registry"), " · ", el("a", { href: "https://github.com/oliver-zehentleitner/keep-the-why/blob/main/registry/projects.txt", target: "_blank", rel: "noopener" }, "registry/projects.txt on GitHub"))));
-  const clear = GLOBE.extra.size ? el("button", { type: "button", class: "link-btn", title: "drop everything the globe loaded; friends, family and path stay", onclick: globeClear }, "clear") : null;
-  return el("span", { class: "ui-group globe-ctl" }, el("a", { class: "globe-mark", href: "https://keepthewhy.com/registry/", target: "_blank", rel: "noopener", title: "the registry — what the globe can load, and how to be listed" }, "🌐"), sel, go, reg, regNext, info, clear);
+  const clear = GLOBE.extra.size ? el("button", { type: "button", class: "ktw-link-btn", title: "drop everything the globe loaded; friends, family and path stay", onclick: globeClear }, "clear") : null;
+  return el("span", { class: "ktw-ui-group globe-ctl" }, el("a", { class: "globe-mark", href: "https://keepthewhy.com/registry/", target: "_blank", rel: "noopener", title: "the registry — what the globe can load, and how to be listed" }, "🌐"), sel, go, reg, regNext, info, clear);
 }
 const followAll = () => followChains((g) => { const t = THOUGHTS.of(g); return [...t.thoughts, ...t.open].flatMap((c) => c.ends); });
 // one chain, found again after each hop by its newest entry's Id
@@ -1587,14 +1587,14 @@ const holdReading = (g) => THOUGHTS.holdReading(g, THOUGHTS_HOST);
 const renderThoughts = (g) => THOUGHTS.list(g, THOUGHTS_HOST);
 function friendsLegend(g) {
   if (!FRIENDS.on && !CHAIN.extra.size && !GLOBE.extra.size && !GLOBE.failed.size) return [];
-  const out = friendUnits(g).map((u, i) => el("span", { class: "friend", title: `friend: ${u.r.canonical}${u.members.length > 1 ? ` — a family of ${u.members.length}, shown whole` : ""} — its hub shows the entries cited there; a click on its hub or its name goes there` },
-    el("i", { class: "dot", style: `background:transparent;border:2px dashed ${friendColor(i)};width:10px;height:10px` }),
+  const out = friendUnits(g).map((u, i) => el("span", { class: "ktw-friend", title: `friend: ${u.r.canonical}${u.members.length > 1 ? ` — a family of ${u.members.length}, shown whole` : ""} — its hub shows the entries cited there; a click on its hub or its name goes there` },
+    el("i", { class: "ktw-dot", style: `background:transparent;border:2px dashed ${friendColor(i)};width:10px;height:10px` }),
     el("a", { href: u.r.open, onclick: (ev) => { if (!u.r.centre) return; ev.preventDefault(); moveTo({ centre: u.r.centre, state: u.r.state }, "#graph"); } }, u.r.name),
-    u.members.length > 1 ? el("span", { class: "note" }, ` · family of ${u.members.length}`) : (u.r.members || []).length > 1 ? el("span", { class: "note" }, ` · family of ${u.r.members.length}, not shown`) : null,
-    u.via === "chain" ? el("span", { class: "note" }, " · via a thought") : null));
-  for (const f of g.friends || []) { const r = FRIENDS.loaded[fkey(f.canonical)]; if (r && !r.state) out.push(el("span", { class: "warn", title: r.error }, `${repoLabel(r.canonical)} not loaded`)); }
+    u.members.length > 1 ? el("span", { class: "ktw-note" }, ` · family of ${u.members.length}`) : (u.r.members || []).length > 1 ? el("span", { class: "ktw-note" }, ` · family of ${u.r.members.length}, not shown`) : null,
+    u.via === "chain" ? el("span", { class: "ktw-note" }, " · via a thought") : null));
+  for (const f of g.friends || []) { const r = FRIENDS.loaded[fkey(f.canonical)]; if (r && !r.state) out.push(el("span", { class: "ktw-warn", title: r.error }, `${repoLabel(r.canonical)} not loaded`)); }
   // the globe's waves and the registry: what could not be loaded is named, not dropped — often it is back tomorrow
-  if (GLOBE.view) for (const f of GLOBE.failed.values()) out.push(el("span", { class: "warn", title: f.error }, `${repoLabel(f.canonical)} not loaded · ${f.hop === "registry" ? "registry" : `hop ${f.hop}`}`));
+  if (GLOBE.view) for (const f of GLOBE.failed.values()) out.push(el("span", { class: "ktw-warn", title: f.error }, `${repoLabel(f.canonical)} not loaded · ${f.hop === "registry" ? "registry" : `hop ${f.hop}`}`));
   return out;
 }
 // Every project the graph holds, one line each, from its hub nodes: this project first, then the path's
@@ -1610,7 +1610,7 @@ function projectsLegend(g) {
   const p = SCENE.state?.project || {};
   const hubs = g.nodes.filter((n) => n.kind === "project");
   const out = [];
-  if (!hubs.some((n) => n.self)) out.push(el("span", { class: "family" }, el("i", { class: "dot", style: "background:var(--accent);width:10px;height:10px" }), el("b", {}, p.id || p.name || "this project")));
+  if (!hubs.some((n) => n.self)) out.push(el("span", { class: "ktw-family" }, el("i", { class: "ktw-dot", style: "background:var(--accent);width:10px;height:10px" }), el("b", {}, p.id || p.name || "this project")));
   const kind = (n) => (n.self ? "this project" : n.trail ? "a step of the path" : n.chain ? "reached by a thought" : n.citedOnly ? "cites this project — from the registry" : n.friend ? (n.kin ? "a friend's family member" : n.citing ? "a friend that also cites this project" : "a friend") : "family");
   const ring = (n) => (n.self ? `background:${n.color};` : `background:transparent;border:2px ${n.chain ? "dashed" : n.friend ? "dashed" : n.trail ? "dotted" : "solid"} ${n.color};`);
   const units = new Map(friendUnits(g).map((u) => [u.k, u]));
@@ -1626,25 +1626,25 @@ function projectsLegend(g) {
     const u = n.friend && !n.kin ? units.get(n.unit) : null;
     const notShown = u && u.members.length === 1 && (u.r.members || []).length > 1 ? u.r.members.length : 0;
     const forkOf = u?.r.forkOf || null;
-    out.push(el("span", { class: n.friend ? "friend" : "family", style: depth ? `padding-left:${depth * 14}px` : "", title: kind(n), onmouseenter: () => { g.spot = projectNodes(g, n); g.alpha = Math.max(g.alpha, 0.02); g.wake?.(); }, onmouseleave: () => { g.spot = null; g.alpha = Math.max(g.alpha, 0.02); g.wake?.(); } }, el("i", { class: "dot", style: `${ring(n)}width:10px;height:10px` }), hostMark(n.canonical), name,
-      notShown ? el("span", { class: "note" }, ` · family of ${notShown}, not shown`) : null,
-      forkOf ? el("span", { class: "note", title: `the export names ${forkOf} as its canonical and was made in a checkout of ${u.r.canonical}` }, " · fork of ", el("a", { href: forkOf, target: "_blank", rel: "noopener" }, hostMark(forkOf), repoLabel(forkOf))) : null,
-      n.hop != null ? el("span", { class: "note" }, n.hop === "registry" ? " · from the registry" : ` · hop ${n.hop}`) : n.chain ? el("span", { class: "note" }, " · via a thought") : null,
-      n.citing ? el("span", { class: "note" }, n.citedOnly ? " · cites this project" : " · cites this project too") : null));
+    out.push(el("span", { class: n.friend ? "ktw-friend" : "ktw-family", style: depth ? `padding-left:${depth * 14}px` : "", title: kind(n), onmouseenter: () => { g.spot = projectNodes(g, n); g.alpha = Math.max(g.alpha, 0.02); g.wake?.(); }, onmouseleave: () => { g.spot = null; g.alpha = Math.max(g.alpha, 0.02); g.wake?.(); } }, el("i", { class: "ktw-dot", style: `${ring(n)}width:10px;height:10px` }), hostMark(n.canonical), name,
+      notShown ? el("span", { class: "ktw-note" }, ` · family of ${notShown}, not shown`) : null,
+      forkOf ? el("span", { class: "ktw-note", title: `the export names ${forkOf} as its canonical and was made in a checkout of ${u.r.canonical}` }, " · fork of ", el("a", { href: forkOf, target: "_blank", rel: "noopener" }, hostMark(forkOf), repoLabel(forkOf))) : null,
+      n.hop != null ? el("span", { class: "ktw-note" }, n.hop === "registry" ? " · from the registry" : ` · hop ${n.hop}`) : n.chain ? el("span", { class: "ktw-note" }, " · via a thought") : null,
+      n.citing ? el("span", { class: "ktw-note" }, n.citedOnly ? " · cites this project" : " · cites this project too") : null));
   }
   return out;
 }
 // the path's line, explained where it is drawn: it is the way walked, not a relation between the projects
-const pathLegend = (g) => (pathShown() && TRAIL.some((t) => !sameCentreAsGraph(g, t)) ? [el("span", { class: "path-legend", title: "the projects you came through, in the order walked; the line says nothing about how they relate" }, "···› the path — the way you walked here, not a citation")] : []);
+const pathLegend = (g) => (pathShown() && TRAIL.some((t) => !sameCentreAsGraph(g, t)) ? [el("span", { class: "ktw-path-legend", title: "the projects you came through, in the order walked; the line says nothing about how they relate" }, "···› the path — the way you walked here, not a citation")] : []);
 function familyLegend(g) {
   if (g !== graph) return [];
   const fam = familyMembers();
   // each member with its ring colour, as the family graph's legend has it; the name goes there
-  const out = fam.map((m) => el("span", { class: "family", title: `family: ${m.role || "member"} — its hub shows the entries linked to this project; a click on the name goes there` },
-    el("i", { class: "dot", style: `background:transparent;border:2px solid ${m.color || familyColor()};width:10px;height:10px` }),
+  const out = fam.map((m) => el("span", { class: "ktw-family", title: `family: ${m.role || "member"} — its hub shows the entries linked to this project; a click on the name goes there` },
+    el("i", { class: "ktw-dot", style: `background:transparent;border:2px solid ${m.color || familyColor()};width:10px;height:10px` }),
     el("a", { href: m.open || "#graph", onclick: (ev) => { if (!m.centre) return; ev.preventDefault(); moveTo({ centre: m.centre, state: m.state }, "#graph"); } }, m.name)));
-  if (FAMILY_NB.loading) out.push(el("span", { class: "note" }, "loading the family…"));
-  if (FAMILY_NB.missing?.length && canFamily()) out.push(el("span", { class: "warn", title: FAMILY_NB.missing.map(({ member: m, reason }) => `${m.name}: ${reason}`).join("\n") }, `${plural(FAMILY_NB.missing.length, "member")} not available here`));
+  if (FAMILY_NB.loading) out.push(el("span", { class: "ktw-note" }, "loading the family…"));
+  if (FAMILY_NB.missing?.length && canFamily()) out.push(el("span", { class: "ktw-warn", title: FAMILY_NB.missing.map(({ member: m, reason }) => `${m.name}: ${reason}`).join("\n") }, `${plural(FAMILY_NB.missing.length, "member")} not available here`));
   return out;
 }
 // the graph's control bar, in groups: this project (entries · labels) · family · friends · path · motion · select / unselect all · reset.
@@ -1656,18 +1656,18 @@ function graphControlGroups(g, family, view = g) {
   const globe = globeUi(g);
   return [
     globe,
-    el("span", { class: "ui-group" }, el("label", {}, el("input", { type: "checkbox", checked: g.showEntries, onchange: (ev) => { g.showEntries = ev.target.checked; setShowEntries(ev.target.checked); g.alpha = 0.5; g.wake?.(); } }), "entries"), labelsUi(g, "project", "this project's topics and entries")),
-    famUi ? el("span", { class: "ui-group" }, famUi, FAMILY_NB_ON ? labelsUi(g, "family", "the family's projects") : null) : null,
-    fui ? el("span", { class: "ui-group" }, fui) : null,
+    el("span", { class: "ktw-ui-group" }, el("label", {}, el("input", { type: "checkbox", checked: g.showEntries, onchange: (ev) => { g.showEntries = ev.target.checked; setShowEntries(ev.target.checked); g.alpha = 0.5; g.wake?.(); } }), "entries"), labelsUi(g, "project", "this project's topics and entries")),
+    famUi ? el("span", { class: "ktw-ui-group" }, famUi, FAMILY_NB_ON ? labelsUi(g, "family", "the family's projects") : null) : null,
+    fui ? el("span", { class: "ktw-ui-group" }, fui) : null,
     citedUi(g),
-    el("span", { class: "ui-group" }, el("label", { title: "the projects of one owner around a node for the owner — only an owner with more than one project in the graph; the node opens the owner's page" }, el("input", { type: "checkbox", checked: OWNER_GROUPS, onchange: (ev) => { setOwnerGroups(ev.target.checked); if (fgraph) fgraph.at = 0; render(); } }), "owners")),
-    el("span", { class: "ui-group" }, el("label", { title: "the path's projects in the graph — the projects you came through; unchecked they are hidden, not forgotten (the path bar discards)" }, el("input", { type: "checkbox", checked: keepPath() && TRAIL_SHOW, onchange: (ev) => { if (ev.target.checked && !keepPath()) setKeepPath(true); setTrailShow(ev.target.checked); if (fgraph) fgraph.at = 0; render(); } }), "path"),
+    el("span", { class: "ktw-ui-group" }, el("label", { title: "the projects of one owner around a node for the owner — only an owner with more than one project in the graph; the node opens the owner's page" }, el("input", { type: "checkbox", checked: OWNER_GROUPS, onchange: (ev) => { setOwnerGroups(ev.target.checked); if (fgraph) fgraph.at = 0; render(); } }), "owners")),
+    el("span", { class: "ktw-ui-group" }, el("label", { title: "the path's projects in the graph — the projects you came through; unchecked they are hidden, not forgotten (the path bar discards)" }, el("input", { type: "checkbox", checked: keepPath() && TRAIL_SHOW, onchange: (ev) => { if (ev.target.checked && !keepPath()) setKeepPath(true); setTrailShow(ev.target.checked); if (fgraph) fgraph.at = 0; render(); } }), "path"),
       ...(pathShown() && TRAIL.some((t) => !sameCentreAsGraph(g, t)) ? [allEntriesUi("path", PATH_ENTRIES, setPathEntries, "every step of the path"), labelsUi(g, "path", "the path's projects")] : [])),
-    el("span", { class: "ui-group" }, el("label", { title: "the graph turns very slowly; it stops while you point at it" }, el("input", { type: "checkbox", checked: driftOn(), onchange: (ev) => { setDrift(ev.target.checked); g.wake?.(); } }), "motion")),
-    el("span", { class: "ui-group" },
-      el("button", { class: "link-btn", title: "every switch in this bar on", onclick: () => selectAll(g, true) }, "select all"),
-      el("button", { class: "link-btn", title: "every switch in this bar off — the project's topics alone", onclick: () => selectAll(g, false) }, "unselect all")),
-    el("span", { class: "ui-group" }, el("button", { class: "link-btn graph-reset", title: "fit the graph and let go of every node you placed", onclick: () => resetGraphView(g, family, view) }, "reset")),
+    el("span", { class: "ktw-ui-group" }, el("label", { title: "the graph turns very slowly; it stops while you point at it" }, el("input", { type: "checkbox", checked: driftOn(), onchange: (ev) => { setDrift(ev.target.checked); g.wake?.(); } }), "motion")),
+    el("span", { class: "ktw-ui-group" },
+      el("button", { class: "ktw-link-btn", title: "every switch in this bar on", onclick: () => selectAll(g, true) }, "select all"),
+      el("button", { class: "ktw-link-btn", title: "every switch in this bar off — the project's topics alone", onclick: () => selectAll(g, false) }, "unselect all")),
+    el("span", { class: "ktw-ui-group" }, el("button", { class: "ktw-link-btn ktw-graph-reset", title: "fit the graph and let go of every node you placed", onclick: () => resetGraphView(g, family, view) }, "reset")),
   ].filter(Boolean);
 }
 let TREE_ASKED = false;
@@ -1675,33 +1675,33 @@ function viewGraph(main) {
   // live: the whole family tree is known before anything counts as a friend — the server's own API, no other host
   if (LIVE() && !FAM.treeNow() && !TREE_ASKED) { TREE_ASKED = true; FAM.tree().then((t) => { if (t && onView("graph", "globe")) render(); }); }
   const family = familyGraphShown();
-  const wrap = el("div", { class: "graph-wrap" });
+  const wrap = el("div", { class: "ktw-graph-wrap" });
   main.append(wrap);
   const fill = (g) => {
     const canvas = el("canvas");
-    const ui = el("div", { class: "graph-ui" }, ...graphControlGroups(g, family));
+    const ui = el("div", { class: "ktw-graph-ui" }, ...graphControlGroups(g, family));
     const legend = family
-      ? el("div", { class: "graph-legend" },
+      ? el("div", { class: "ktw-graph-legend" },
         ...projectsLegend(g),
         el("span", {}, `${plural(g.across, "reference")} across projects`), ...pathLegend(g),
-        g.missing.length ? el("span", { class: "warn", title: g.missing.map(({ member: m, reason }) => `${m.name}: ${reason}`).join("\n") }, `${plural(g.missing.length, "member")} not available here`) : null, ...friendsLegend(g).filter((x) => x.classList.contains("warn")))
-      : el("div", { class: "graph-legend" },
-        el("span", {}, el("i", { class: "dot", style: "background:var(--accent);width:12px;height:12px" }), "topic (size = entries)"),
-        el("span", {}, el("i", { class: "dot confirmed" }), "confirmed"), el("span", {}, el("i", { class: "dot inferred" }), "inferred"), el("span", {}, el("i", { class: "dot unknown" }), "unknown"),
-        el("span", {}, el("i", { class: "dot", style: "background:transparent;border:1.5px solid var(--fg3)" }), "superseded"),
-        el("span", {}, "— reference · ··· membership"), ...pathLegend(g), ...projectsLegend(g), ...familyLegend(g).filter((x) => x.classList.contains("warn") || x.classList.contains("note")), ...friendsLegend(g).filter((x) => x.classList.contains("warn")));
+        g.missing.length ? el("span", { class: "ktw-warn", title: g.missing.map(({ member: m, reason }) => `${m.name}: ${reason}`).join("\n") }, `${plural(g.missing.length, "member")} not available here`) : null, ...friendsLegend(g).filter((x) => x.classList.contains("ktw-warn")))
+      : el("div", { class: "ktw-graph-legend" },
+        el("span", {}, el("i", { class: "ktw-dot", style: "background:var(--accent);width:12px;height:12px" }), "topic (size = entries)"),
+        el("span", {}, el("i", { class: "ktw-dot ktw-confirmed" }), "confirmed"), el("span", {}, el("i", { class: "ktw-dot ktw-inferred" }), "inferred"), el("span", {}, el("i", { class: "ktw-dot ktw-unknown" }), "unknown"),
+        el("span", {}, el("i", { class: "ktw-dot", style: "background:transparent;border:1.5px solid var(--fg3)" }), "superseded"),
+        el("span", {}, "— reference · ··· membership"), ...pathLegend(g), ...projectsLegend(g), ...familyLegend(g).filter((x) => x.classList.contains("ktw-warn") || x.classList.contains("ktw-note")), ...friendsLegend(g).filter((x) => x.classList.contains("ktw-warn")));
     // on a phone the switches and the legend sit behind two buttons, so the graph gets the screen (CSS shows them there only)
-    const toggle = (cls, label, other) => el("button", { type: "button", class: `graph-toggle ${cls}-toggle`, "aria-expanded": "false",
-      onclick: (ev) => { const open = wrap.classList.toggle(`${cls}-open`); wrap.classList.remove(`${other}-open`); ev.currentTarget.setAttribute("aria-expanded", String(open)); } }, label);
+    const toggle = (cls, label, other) => el("button", { type: "button", class: `ktw-graph-toggle ktw-${cls}-toggle`, "aria-expanded": "false",
+      onclick: (ev) => { const open = wrap.classList.toggle(`ktw-${cls}-open`); wrap.classList.remove(`ktw-${other}-open`); ev.currentTarget.setAttribute("aria-expanded", String(open)); } }, label);
     // the corner's reset lets go of the held thought and the pointed-at step: every node alike again; the bar's reset
     // (fit, let go of placed nodes) stays what it is
     const letGo = () => { SCENE.setThought(null); focusStep(null); g.wake?.(); };
-    const cornerReset = el("button", { type: "button", class: "graph-corner graph-corner-reset", title: "let go of the held thought — every node alike again (Esc does this and the bar's reset)", onclick: letGo }, "reset");
+    const cornerReset = el("button", { type: "button", class: "ktw-graph-corner ktw-graph-corner-reset", title: "let go of the held thought — every node alike again (Esc does this and the bar's reset)", onclick: letGo }, "reset");
     // fit: nothing changes but the view — zoomed and centred so that everything is in the box, and stays in it while the graph turns
-    const cornerFit = el("button", { type: "button", class: "graph-corner graph-corner-fit", title: "fit the view: everything in the box, centred on the point the graph turns around", onclick: () => { g.userMoved = false; g.needFit = true; g.wake?.(); } }, "fit");
+    const cornerFit = el("button", { type: "button", class: "ktw-graph-corner ktw-graph-corner-fit", title: "fit the view: everything in the box, centred on the point the graph turns around", onclick: () => { g.userMoved = false; g.needFit = true; g.wake?.(); } }, "fit");
     wrap.replaceChildren(canvas, ui, legend, ...[pathBar()].filter(Boolean), toggle("ui", "Layers", "legend"), toggle("legend", "Legend", "ui"), cornerFit, cornerReset,
-      el("div", { class: "graph-hint" }, family ? "family — a project's name goes there, in place · drag nodes · wheel zoom · drag background to pan" : "drag nodes · wheel zoom · drag background to pan · click to open"),
-      el("div", { class: "graph-hint-touch" }, "pinch to zoom · drag to pan · tap to open"));
+      el("div", { class: "ktw-graph-hint" }, family ? "family — a project's name goes there, in place · drag nodes · wheel zoom · drag background to pan" : "drag nodes · wheel zoom · drag background to pan · click to open"),
+      el("div", { class: "ktw-graph-hint-touch" }, "pinch to zoom · drag to pan · tap to open"));
     // on a phone the graph opens fitted to the screen, also one that settled earlier and was moved then
     if (narrow()) { g.userMoved = false; g.needFit = true; }
     // arriving from the side pane's graph: centred on the entry or topic it showed
@@ -1713,19 +1713,19 @@ function viewGraph(main) {
     // the family graph and the globe keep everything in view; on a phone every graph does, until it is touched
     // a click on an entry opens a preview beside it — the timeline's card — instead of leaving the graph; open › or the
     // title goes to the entry's page; × on the badge, a click on the background or Esc closes it
-    const preview = el("div", { class: "stage-card graph-preview", hidden: true }); wrap.append(preview);
+    const preview = el("div", { class: "ktw-stage-card ktw-graph-preview", hidden: true }); wrap.append(preview);
     // the preview can be in the way: its head is a handle, the card goes where it is dragged and stays inside the box
     let grip = null; // { dx, dy }: where in the card the pointer took hold
-    preview.onpointerdown = (ev) => { if (!ev.target.closest(".stage-card-head") || ev.target.closest("button, a")) return; grip = { dx: ev.clientX - preview.offsetLeft, dy: ev.clientY - preview.offsetTop }; preview.classList.add("dragging"); preview.setPointerCapture(ev.pointerId); ev.preventDefault(); };
+    preview.onpointerdown = (ev) => { if (!ev.target.closest(".ktw-stage-card-head") || ev.target.closest("button, a")) return; grip = { dx: ev.clientX - preview.offsetLeft, dy: ev.clientY - preview.offsetTop }; preview.classList.add("ktw-dragging"); preview.setPointerCapture(ev.pointerId); ev.preventDefault(); };
     preview.onpointermove = (ev) => { if (!grip) return; const W = wrap.clientWidth, H = wrap.clientHeight; preview.style.left = `${Math.max(0, Math.min(W - preview.offsetWidth, ev.clientX - grip.dx))}px`; preview.style.top = `${Math.max(0, Math.min(H - preview.offsetHeight, ev.clientY - grip.dy))}px`; };
-    preview.onpointerup = preview.onpointercancel = () => { grip = null; preview.classList.remove("dragging"); };
+    preview.onpointerup = preview.onpointercancel = () => { grip = null; preview.classList.remove("ktw-dragging"); };
     const closePreview = () => { if (preview.hidden) return; preview.hidden = true; SCENE.selected = null; focusStep(null); g.wake?.(); }; // a row of the topic's list may still be pointed at when the list goes
     let place = null; // set below, before any click can happen
     const showPreview = (n, sx, sy) => {
       const e = n.entry; SCENE.selected = e.id;
       const tnode = g.nodes.find((m) => m.kind === "topic" && m.file === e.file && (m.unit || "") === (n.unit || "")); // the topic's node carries its title, a friend's too
       TIMELINE.fillEntryCard(preview, e, { lane: (n.proj ? `${n.proj} · ` : "") + (tnode?.label || topicOf(e.file)?.title || e.file).replace(/`/g, ""), href: n.href, state: n.state || SCENE.self, day: null,
-        badge: el("button", { type: "button", class: "pill stage-card-held", title: "close the preview", onclick: closePreview }, "preview ", el("b", {}, "×")), again: () => { if (SCENE.selected === e.id) showPreview(n, sx, sy); }, onOpen: n.action || null,
+        badge: el("button", { type: "button", class: "ktw-pill ktw-stage-card-held", title: "close the preview", onclick: closePreview }, "preview ", el("b", {}, "×")), again: () => { if (SCENE.selected === e.id) showPreview(n, sx, sy); }, onOpen: n.action || null,
         topic: tnode ? { title: "back to the topic's preview", onClick: () => showTopicPreview(tnode, null, null) } : null , renderBody: (md) => renderMarkdown(md), bodies: (st) => ensureBodies(st) }); // from inside the preview: the card stays where it is
       preview.hidden = false; place(sx, sy); g.wake?.();
     };
@@ -1739,19 +1739,19 @@ function viewGraph(main) {
       const openTopic = n.action || null; const title = (n.label || n.file).replace(/`/g, "");
       const link = (text, extra = {}) => el("a", { href: n.href, ...extra, onclick: openTopic ? (ev) => { ev.preventDefault(); openTopic(); } : null }, text);
       SCENE.selected = null;
-      setKids(preview, el("div", { class: "stage-card-head" }, el("span", { class: "note mono" }, `${n.proj ? `${n.proj} · ` : ""}topic · ${plural(members.length, "entry")}`), el("button", { type: "button", class: "pill stage-card-held", title: "close the preview", onclick: closePreview }, "preview ", el("b", {}, "×"))),
+      setKids(preview, el("div", { class: "ktw-stage-card-head" }, el("span", { class: "ktw-note ktw-mono" }, `${n.proj ? `${n.proj} · ` : ""}topic · ${plural(members.length, "entry")}`), el("button", { type: "button", class: "ktw-pill ktw-stage-card-held", title: "close the preview", onclick: closePreview }, "preview ", el("b", {}, "×"))),
         el("h3", {}, link(title, { title: "open the topic's page" })),
-        el("div", { class: "stage-card-body topic-entries" }, members.length ? members.map((m) => el("button", { type: "button", class: "topic-entry", title: "preview this entry", onclick: () => showPreview(m, null, null), ...stepHover(m.id) }, el("span", { class: "te-title" }, m.entry.title.replace(/`/g, "")), statusPill(m.entry.status), evPill(m.entry.evidence))) : el("p", { class: "empty" }, "no entries shown — entries may be switched off in the graph")),
-        el("div", { class: "stage-card-foot" }, el("span"), link("open ›")));
+        el("div", { class: "ktw-stage-card-body ktw-topic-entries" }, members.length ? members.map((m) => el("button", { type: "button", class: "ktw-topic-entry", title: "preview this entry", onclick: () => showPreview(m, null, null), ...stepHover(m.id) }, el("span", { class: "ktw-te-title" }, m.entry.title.replace(/`/g, "")), statusPill(m.entry.status), evPill(m.entry.evidence))) : el("p", { class: "ktw-empty" }, "no entries shown — entries may be switched off in the graph")),
+        el("div", { class: "ktw-stage-card-foot" }, el("span"), link("open ›")));
       preview.hidden = false; place(sx, sy); g.wake?.();
     };
     ESC.page = () => { if (!preview.hidden) return closePreview(); letGo(); resetGraphView(g, family); }; // an open preview goes first; the next Esc resets
-    runGraph(canvas, g, { fit: family || GLOBE.view || narrow(), onTouch: () => wrap.classList.remove("ui-open", "legend-open"), onEntry: showPreview, onTopic: showTopicPreview, onBlank: closePreview });
+    runGraph(canvas, g, { fit: family || GLOBE.view || narrow(), onTouch: () => wrap.classList.remove("ktw-ui-open", "ktw-legend-open"), onEntry: showPreview, onTopic: showTopicPreview, onBlank: closePreview });
     renderThoughts(g);
   };
   if (!family) return fill(buildGraph());
   if (fgraph && Date.now() - fgraph.at < 30000) return fill(fgraph); // a live update re-renders: no refetch
-  wrap.append(el("p", { class: "center" }, "Loading the family…"));
+  wrap.append(el("p", { class: "ktw-center" }, "Loading the family…"));
   buildFamilyGraph().then((g) => { if (wrap.isConnected && onView("graph", "globe") && familyGraphShown()) fill(g); });
 }
 
@@ -1777,7 +1777,7 @@ const scope = () => (canFamily() && SCENE.scope === "family" ? "family" : "proje
 function markScope() {
   const box = $("#scope"); if (!box) return;
   box.hidden = !canFamily();
-  for (const b of box.querySelectorAll("button")) b.classList.toggle("on", b.dataset.scope === scope());
+  for (const b of box.querySelectorAll("button")) b.classList.toggle("ktw-on", b.dataset.scope === scope());
 }
 function setScope(v, { rerender: again = true } = {}) {
   if (v !== "project" && v !== "family") return;
@@ -1795,23 +1795,23 @@ function setupScope() { for (const b of $("#scope").querySelectorAll("button")) 
 async function viewRegistrySearch(main, q, { scopeBar }) {
   const input = $("#search"); if (document.activeElement !== input) input.value = q;
   const terms = searchTerms(q);
-  const sub = el("p", { class: "sub" }, `Reading ${REGISTRY_URL}…`);
-  main.append(el("div", { class: "search-head" }, el("h1", {}, "Search ", el("span", { class: "q" }, `“${q}”`)), scopeBar("registry", q)), sub);
+  const sub = el("p", { class: "ktw-sub" }, `Reading ${REGISTRY_URL}…`);
+  main.append(el("div", { class: "ktw-search-head" }, el("h1", {}, "Search ", el("span", { class: "ktw-q" }, `“${q}”`)), scopeBar("registry", q)), sub);
   if (terms.length === 0 || q.trim().length < 2) { sub.textContent = "Type at least two characters in the search field and press Enter."; return; }
   await loadRegistryIndex();
   if (!SEARCH.onSearch("registry", q)) return; // navigated away meanwhile
-  if (!REGISTRY.idx) { sub.textContent = `registry not reached — ${REGISTRY.error}`; sub.classList.add("warn"); return; }
+  if (!REGISTRY.idx) { sub.textContent = `registry not reached — ${REGISTRY.error}`; sub.classList.add("ktw-warn"); return; }
   const all = REGISTRY.idx.projects || []; const hits = registryMatches(all, q);
   sub.textContent = `${plural(hits.length, "project")} of ${all.length} in the registry` + (terms.length > 1 ? ` · all of: ${terms.join(", ")}` : "") +
     ` · matched: name, repository URL, id — the projects' entries are not searched` + (REGISTRY.idx.checked ? ` · registry checked ${REGISTRY.idx.checked}` : "");
-  const box = el("div", { class: "search-page" });
-  if (hits.length) box.append(el("section", { class: "sgroup" }, el("div", { class: "sg-head" }, el("b", {}, "Projects in the registry"), el("span", { class: "count" }, plural(hits.length, "hit"))),
-    el("div", { class: "entry-list" }, hits.map((p) => { const h = registryHit(p); return el("a", { href: h.href, class: "row" },
-      el("div", { class: "rt" }, el("span", {}, marked(h.name, terms)), h.self ? pill("this project", "role") : null),
-      el("div", { class: "rs" }, marked(p.canonical || "", terms)),
-      el("div", { class: "rm" }, [...h.meta.slice(1), p.schema ? `schema ${p.schema}` : null, p.dashboard ? `dashboard ${p.dashboard}` : null, p.id ? `id ${p.id}` : null].filter(Boolean).join("  ·  "))); }))));
-  else box.append(el("p", { class: "center" }, `No project in the registry matches “${q}” — `, navLink({ href: { view: "search", scope: "project", q: q } }, "search the entries of this project"), "."));
-  box.append(el("p", { class: "note" }, "The registry lists repositories with a published Keep the Why dashboard export; ", el("a", { href: "https://keepthewhy.com/registry/", target: "_blank", rel: "noopener" }, "keepthewhy.com/registry"), " says how to be listed."));
+  const box = el("div", { class: "ktw-search-page" });
+  if (hits.length) box.append(el("section", { class: "ktw-sgroup" }, el("div", { class: "ktw-sg-head" }, el("b", {}, "Projects in the registry"), el("span", { class: "ktw-count" }, plural(hits.length, "hit"))),
+    el("div", { class: "ktw-entry-list" }, hits.map((p) => { const h = registryHit(p); return el("a", { href: h.href, class: "ktw-row" },
+      el("div", { class: "ktw-rt" }, el("span", {}, marked(h.name, terms)), h.self ? pill("this project", "ktw-role") : null),
+      el("div", { class: "ktw-rs" }, marked(p.canonical || "", terms)),
+      el("div", { class: "ktw-rm" }, [...h.meta.slice(1), p.schema ? `schema ${p.schema}` : null, p.dashboard ? `dashboard ${p.dashboard}` : null, p.id ? `id ${p.id}` : null].filter(Boolean).join("  ·  "))); }))));
+  else box.append(el("p", { class: "ktw-center" }, `No project in the registry matches “${q}” — `, navLink({ href: { view: "search", scope: "project", q: q } }, "search the entries of this project"), "."));
+  box.append(el("p", { class: "ktw-note" }, "The registry lists repositories with a published Keep the Why dashboard export; ", el("a", { href: "https://keepthewhy.com/registry/", target: "_blank", rel: "noopener" }, "keepthewhy.com/registry"), " says how to be listed."));
   main.append(box);
 }
 // The dropdown's registry rows (ktw-search.js host.registryRows): "Find a project in the registry", a project rather
@@ -1820,15 +1820,15 @@ async function viewRegistrySearch(main, q, { scopeBar }) {
 // mode, from its published export. The entries of the listed projects are not searched (that is the globe's load,
 // not a search). The row is forgotten with the dropdown.
 function registryRows(q, { open, expand, run, close }) {
-  if (!open) return [el("a", { class: "sr-all sr-registry", href: "#", title: `the Keep the Why registry's index, ${REGISTRY_URL}, read on the click — projects whose name, repository URL or id carry the words typed`, onclick: (ev) => { ev.preventDefault(); expand(); loadRegistryIndex().then(run); } }, "Find a project in the registry")];
-  const head = (t) => el("div", { class: "sr-head" }, t);
-  if (!REGISTRY.idx) return [head("Projects in the registry"), el("div", { class: `sr-note${REGISTRY.loading ? "" : " warn"}` }, REGISTRY.loading ? `reading ${REGISTRY_URL}…` : `registry not reached — ${REGISTRY.error}`)];
+  if (!open) return [el("a", { class: "ktw-sr-all ktw-sr-registry", href: "#", title: `the Keep the Why registry's index, ${REGISTRY_URL}, read on the click — projects whose name, repository URL or id carry the words typed`, onclick: (ev) => { ev.preventDefault(); expand(); loadRegistryIndex().then(run); } }, "Find a project in the registry")];
+  const head = (t) => el("div", { class: "ktw-sr-head" }, t);
+  if (!REGISTRY.idx) return [head("Projects in the registry"), el("div", { class: `ktw-sr-note${REGISTRY.loading ? "" : " ktw-warn"}` }, REGISTRY.loading ? `reading ${REGISTRY_URL}…` : `registry not reached — ${REGISTRY.error}`)];
   const all = REGISTRY.idx.projects || []; const hits = registryMatches(all, q);
   return [head(`Projects in the registry (${hits.length} of ${all.length})`),
     ...(hits.length ? hits.map((p) => { const h = registryHit(p); return el("a", { href: h.href, onclick: close },
-      el("div", {}, h.name, h.self ? el("span", { class: "sr-file" }, " · this project") : null),
-      el("div", { class: "sr-file" }, h.meta.join(" · "))); })
-      : [el("div", { class: "sr-note" }, "no project in the registry matches")])];
+      el("div", {}, h.name, h.self ? el("span", { class: "ktw-sr-file" }, " · this project") : null),
+      el("div", { class: "ktw-sr-file" }, h.meta.join(" · "))); })
+      : [el("div", { class: "ktw-sr-note" }, "no project in the registry matches")])];
 }
 function setupSearch() {
   SEARCH.attach({ input: $("#search"), box: $("#search-results"), within: ".topbar-right" });
@@ -1902,7 +1902,7 @@ function authorLink(name, commit, project) {
   const look = !SCENE.state.anonymized && project ? authorLookup(canonicalOf(project), commit) : null;
   if (!name || !look) return el("span", {}, name || "—");
   const key = `${canonicalOf(project)}|${name}`;
-  return el("a", { class: "author", href: AUTHOR_URLS[key] || look.fallback, target: "_blank", rel: "noopener", title: `${name} — open the profile on the host (looked up from commit ${commit})`, onclick: async (ev) => {
+  return el("a", { class: "ktw-author", href: AUTHOR_URLS[key] || look.fallback, target: "_blank", rel: "noopener", title: `${name} — open the profile on the host (looked up from commit ${commit})`, onclick: async (ev) => {
     ev.stopPropagation();
     if (AUTHOR_URLS[key] || !look.api) return; // known, or a host whose API names no account: the link goes straight there
     ev.preventDefault();
@@ -1926,23 +1926,23 @@ function renderBadges() {
   const fam = (SCENE.self || SCENE.state).project?.family_badge;
   if (base && fam && !fam.missing?.length) list.push({ name: "family", img: `${base}badge-family.svg`, href: base, alt: "Keep the Why · family" }, { name: "family, flat", img: `${base}badge-family-flat.svg`, href: base, alt: "keep the why · family" });
   const famNote = fam?.missing?.length
-    ? el("p", { class: "note" }, `No family badge: ${fam.missing.map((m) => `${m.name} (${m.reason})`).join(", ")} — a member outside this repository has no numbers when this project is exported, and a total without it would be wrong.`)
+    ? el("p", { class: "ktw-note" }, `No family badge: ${fam.missing.map((m) => `${m.name} (${m.reason})`).join(", ")} — a member outside this repository has no numbers when this project is exported, and a total without it would be wrong.`)
     : null;
   const field = (label, text) => {
-    const b = el("button", { type: "button", class: "link-btn", onclick: async () => { const ok = await copyText(text); b.textContent = ok ? "✓" : "✗"; setTimeout(() => { b.textContent = "copy"; }, 1500); } }, "copy");
-    return el("div", { class: "badge-field" }, el("span", { class: "note" }, label), el("input", { type: "text", readonly: true, value: text, onfocus: (ev) => ev.target.select() }), b);
+    const b = el("button", { type: "button", class: "ktw-link-btn", onclick: async () => { const ok = await copyText(text); b.textContent = ok ? "✓" : "✗"; setTimeout(() => { b.textContent = "copy"; }, 1500); } }, "copy");
+    return el("div", { class: "badge-field" }, el("span", { class: "ktw-note" }, label), el("input", { type: "text", readonly: true, value: text, onfocus: (ev) => ev.target.select() }), b);
   };
   setKids(pop, el("b", {}, "Badges"),
     ...list.map((x) => el("div", { class: "badge-item" },
       el("a", { href: x.href, target: "_blank", rel: "noopener" }, el("img", { src: x.img, alt: x.alt })),
       field("MD", `[![${x.alt}](${x.img})](${x.href})`),
       field("HTML", `<a href="${x.href}"><img alt="${x.alt}" src="${x.img}"></a>`))),
-    base ? null : el("p", { class: "note" }, "The live badges come with a published export — a dashboard-state line in .keep-the-why."), famNote);
+    base ? null : el("p", { class: "ktw-note" }, "The live badges come with a published export — a dashboard-state line in .keep-the-why."), famNote);
 }
 function applyState(state) {
   SCENE.self = state; SCENE.state = state;
   const p = SCENE.state.project;
-  setKids($("#project-title"), $("#project-select").hidden ? el("b", {}, p.id || p.name) : null, schemaPill(p), headPill(p.git), p.git?.remote ? el("span", { class: "pill" }, remoteLink(p.git.remote)) : null, forkPill(p.git));
+  setKids($("#project-title"), $("#project-select").hidden ? el("b", {}, p.id || p.name) : null, schemaPill(p), headPill(p.git), p.git?.remote ? el("span", { class: "ktw-pill" }, remoteLink(p.git.remote)) : null, forkPill(p.git));
   document.title = `Keep the Why Dashboard · ${projectLabel(p)}`;
   setKids($("#statusbar"),
     el("span", { id: "pkg-dashboard" }, el("a", { href: "https://pypi.org/project/keep-the-why-dashboard/", target: "_blank", rel: "noopener", title: "keep-the-why-dashboard on PyPI" }, `keep-the-why-dashboard ${SCENE.state.dashboard}`)),
@@ -2005,16 +2005,16 @@ function applySide() {
   const v = SIDE[paneKind()];
   $("#app").dataset.side = v;
   const d = $("#details");
-  if (d && !d.querySelector(":scope > .pane-width")) d.prepend(paneWidthBar());
-  for (const b of document.querySelectorAll(".mini-width button")) b.classList.toggle("on", b.textContent === sideLabel(v));
+  if (d && !d.querySelector(":scope > .ktw-pane-width")) d.prepend(paneWidthBar());
+  for (const b of document.querySelectorAll(".ktw-mini-width button")) b.classList.toggle("ktw-on", b.textContent === sideLabel(v));
   SCENE.wake();
 }
 function setSide(v) { const k = paneKind(); SIDE[k] = v; prefs.set(`side-${k}`, v); applySide(); }
 // the choice sits at the top of the pane, above whatever it holds, on every page
 function paneWidthBar() {
-  return el("div", { class: "pane-width", title: "the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details" },
-    el("span", { class: "label" }, "Width"),
-    el("span", { class: "mini-width" }, ...SIDE_WIDTHS.map((v) => el("button", { type: "button", class: v === SIDE[paneKind()] ? "on" : "", onclick: () => setSide(v) }, sideLabel(v)))));
+  return el("div", { class: "ktw-pane-width", title: "the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details" },
+    el("span", { class: "ktw-label" }, "Width"),
+    el("span", { class: "ktw-mini-width" }, ...SIDE_WIDTHS.map((v) => el("button", { type: "button", class: v === SIDE[paneKind()] ? "ktw-on" : "", onclick: () => setSide(v) }, sideLabel(v)))));
 }
 function setupSideToggle() {
   const btn = $("#side-toggle"); const app = $("#app");
@@ -2094,7 +2094,7 @@ function setupMode() {
   box.hidden = false;
   for (const b of box.querySelectorAll("button")) {
     const on = b.dataset.mode === (MODE === "public" ? "public" : "local");
-    b.classList.toggle("on", on);
+    b.classList.toggle("ktw-on", on);
     b.disabled = b.dataset.mode === "public" && !canonical;
     b.title = b.dataset.mode === "public" ? (canonical ? "read this project's family from its published exports" : "no canonical — cannot be looked up publicly") : "read clones and caches on this machine";
     b.onclick = () => {
@@ -2113,13 +2113,13 @@ async function boot() {
     const r = await fetchPublicState(PUBLIC, PUBLIC_ROOT);
     setLive("export", "public export", "public export — read from the published state.json, no live updates");
     if (!r.state) {
-      const msg = el("div", { class: "center" }, el("p", {}, `Cannot browse ${PUBLIC} publicly: ${r.error}.`));
+      const msg = el("div", { class: "ktw-center" }, el("p", {}, `Cannot browse ${PUBLIC} publicly: ${r.error}.`));
       $("#main").append(msg);
       if (r.missingLine) {
         // the live server may know a local checkout that already carries the line, on a branch the default branch has not merged
         try {
           const local = ((await HOST.projects()).projects || []).find((p) => p.canonical === PUBLIC && p.dashboard_state);
-          if (local) msg.append(el("p", { class: "note" }, `Your checkout at ${local.path} names ${local.dashboard_state} — on a branch that is not on the default branch yet. Public mode reads what is published: the line counts once it is merged, and the family once the published export carries it.`));
+          if (local) msg.append(el("p", { class: "ktw-note" }, `Your checkout at ${local.path} names ${local.dashboard_state} — on a branch that is not on the default branch yet. Public mode reads what is published: the line counts once it is merged, and the family once the published export carries it.`));
         } catch { /* not served by a live dashboard */ }
       }
       msg.append(el("p", {}, el("a", { href: pagePath() }, "back to local")));
@@ -2132,7 +2132,7 @@ async function boot() {
   setupProjects();
   const own = await provider().state();
   if (own.state) applyState(own.state);
-  else $("#main").append(el("p", { class: "center" }, PROJECT ? `No state for project "${PROJECT}" — unknown id or unknown location.` : "Could not load the state — is the server running?"));
+  else $("#main").append(el("p", { class: "ktw-center" }, PROJECT ? `No state for project "${PROJECT}" — unknown id or unknown location.` : "Could not load the state — is the server running?"));
   connectLive();
   pollUpdates(); setTimeout(pollUpdates, 20000); // the server's first check may still be running at boot
   setInterval(pollUpdates, 60 * 60 * 1000);

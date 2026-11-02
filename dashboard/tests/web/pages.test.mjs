@@ -44,8 +44,8 @@ test("what a page leaves behind answers to the host that drew it, whichever host
   const mainA = doc.createElement("main"), mainB = doc.createElement("main");
   P.authors(mainA, A);
   P.authors(mainB, B); // B draws last
-  mainA.querySelector("button.link-btn").click();
-  mainB.querySelector("button.link-btn").click();
+  mainA.querySelector("button.ktw-link-btn").click();
+  mainB.querySelector("button.ktw-link-btn").click();
   assert.deepEqual(JSON.parse(JSON.stringify(calls)), [["A", "loadFriends", "https://example.org/A-friend"], ["B", "loadFriends", "https://example.org/B-friend"]]);
 });
 
@@ -102,9 +102,9 @@ test("a reference resolved later lands with the host that drew it, whichever hos
   P.entry(mainB, UUID, B); // B draws before A's lookup has answered
   await Promise.all([A.answered, B.answered]); await new Promise((r) => setTimeout(r, 0));
   assert.deepEqual(JSON.parse(JSON.stringify(calls.filter((c) => c[1] === "resolveEntry"))), [["A", "resolveEntry", REMOTE], ["B", "resolveEntry", REMOTE]]);
-  assert.match(mainA.querySelector(".ref.remote").textContent, /A's entry/);
-  assert.match(mainB.querySelector(".ref.remote").textContent, /B's entry/);
-  assert.equal(mainA.querySelector(".ref.remote a").getAttribute("href"), "/maity/p/why" + core.routes.format({ view: "entry", uuid: REMOTE }), "the host's own address for the entry");
+  assert.match(mainA.querySelector(".ktw-ref.ktw-remote").textContent, /A's entry/);
+  assert.match(mainB.querySelector(".ktw-ref.ktw-remote").textContent, /B's entry/);
+  assert.equal(mainA.querySelector(".ktw-ref.ktw-remote a").getAttribute("href"), "/maity/p/why" + core.routes.format({ view: "entry", uuid: REMOTE }), "the host's own address for the entry");
 });
 
 test("the address an entry's copy-link button copies is the host's, the path not doubled", () => {
@@ -112,7 +112,7 @@ test("the address an entry's copy-link button copies is the host's, the path not
   const calls = [];
   const main = doc.createElement("main");
   P.entry(main, UUID, entryHost("A", calls));
-  const title = main.querySelector(".share-btn").getAttribute("title");
+  const title = main.querySelector(".ktw-share-btn").getAttribute("title");
   assert.ok(title.endsWith(`https://example.org/maity/p/why#entry/${UUID}`), title);
   assert.equal(title.split("/maity/p/why").length, 2, "the path once");
   assert.deepEqual(JSON.parse(JSON.stringify(calls.filter((c) => c[1] === "shareUrl"))), [["A", "shareUrl", "entry"]]);

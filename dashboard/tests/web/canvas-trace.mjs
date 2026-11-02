@@ -80,16 +80,16 @@ async function trace(hash, { narrow = false } = {}) {
   const canvases = [...dom.window.document.querySelectorAll("canvas")].filter((c) => LOGS.has(c));
   const parts = canvases.map((c, i) => [`## canvas ${i + 1} — ${c.parentElement?.className || "?"}`, ...lastFrame(LOGS.get(c)), ""].join("\n"));
   // the stage says whether the layout it stands its cards on has settled — with no graph beside it, the scene settles it itself
-  const wrap = dom.window.document.querySelector(".stage-wrap, [data-settled]");
+  const wrap = dom.window.document.querySelector(".ktw-stage-wrap, [data-settled]");
   if (hash.startsWith("#timeline") && wrap?.dataset.settled !== "1") errors.push(`${hash}${narrow ? " (narrow)" : ""}: the stage's layout never settled`);
   // After the trace: the pointer across the stage, so what a card does when it is pointed at runs too (its tip) —
   // a name missing there would otherwise only show when someone hovers. Nothing of this goes into the trace.
-  const stage = dom.window.document.querySelector("canvas.stage");
+  const stage = dom.window.document.querySelector("canvas.ktw-stage");
   if (stage) {
     let tips = 0;
     for (let y = 20; y < 500; y += 24) for (let x = 20; x < 800; x += 24) {
       stage.dispatchEvent(new dom.window.MouseEvent("mousemove", { clientX: x, clientY: y, bubbles: true }));
-      if (!dom.window.document.querySelector(".stage-tip")?.hidden) tips++;
+      if (!dom.window.document.querySelector(".ktw-stage-tip")?.hidden) tips++;
     }
     await tick(50);
     if (!tips) errors.push(`${hash}${narrow ? " (narrow)" : ""}: no card showed its tip under the pointer`);

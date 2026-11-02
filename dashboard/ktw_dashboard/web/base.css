@@ -1,0 +1,16 @@
+/* The dashboard's element defaults — the page's base, loaded ahead of the views' ktw-views.css, as they stood
+   at the top of style.css: a views' class rule wins a tie with them, and the dashboard's own rules in
+   style.css (loaded after the views) win over both. */
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { font: 14px/1.5 var(--font); background: var(--bg); color: var(--fg); }
+a { color: var(--accent2); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code { font-family: var(--mono); font-size: 12.5px; }
+code { background: var(--bg3); padding: 1px 5px; border-radius: 4px; }
+button { font: inherit; color: inherit; }
+[hidden] { display: none !important; }
+h1 { font-size: 22px; margin: 0 0 4px; font-weight: 650; }
+h2 { font-size: 17px; margin: 24px 0 10px; font-weight: 600; }
+h3 { font-size: 13px; margin: 18px 0 8px; text-transform: uppercase; letter-spacing: .08em; color: var(--fg3); font-weight: 600; }
+kbd { font-family: var(--mono); font-size: 11px; background: var(--bg3); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; }

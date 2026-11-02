@@ -3,178 +3,178 @@
 ## #main
 <h1>
   "Queues"
-<p class="sub">
+<p class="ktw-sub">
   "What needs a person. The dashboard lists; it does not decide."
-<section class="queue">
+<section class="ktw-queue">
   <h2>
     "Open questions"
-    <span class="count">
+    <span class="ktw-count">
       "1"
-  <p class="why">
+  <p class="ktw-why">
     "Status: open — the entry's central question has no answer yet."
-  <div class="entry-list">
-    <a class="row " href="#entry/682e7ab6-125c-459f-9c67-a3c6b217d8ef">
-      <div class="rt">
+  <div class="ktw-entry-list">
+    <a class="ktw-row " href="#entry/682e7ab6-125c-459f-9c67-a3c6b217d8ef">
+      <div class="ktw-rt">
         <span>
           "Writes retry three times on a busy lock"
-        <span class="pill type">
+        <span class="ktw-pill ktw-type">
           "workaround"
-        <span class="pill status-open">
+        <span class="ktw-pill ktw-status-open">
           "open"
-        <span class="pill ev-unknown">
+        <span class="ktw-pill ktw-ev-unknown">
           "unknown"
-      <div class="rs">
+      <div class="ktw-rs">
         "Writes retry three times when the lock is busy, with no backoff."
-      <div class="rm">
+      <div class="ktw-rm">
         "Storage · Bob Example · 2026-03-20"
-<section class="queue">
+<section class="ktw-queue">
   <h2>
     "Needs review"
-    <span class="count">
+    <span class="ktw-count">
       "0"
-  <p class="why">
+  <p class="ktw-why">
     "Status: needs-review — a Revisit-when trigger fired and nobody re-checked yet."
-  <p class="note">
+  <p class="ktw-note">
     "nothing here"
-<section class="queue">
+<section class="ktw-queue">
   <h2>
     "Pending confirmation"
-    <span class="count">
+    <span class="ktw-count">
       "1"
-  <p class="why">
+  <p class="ktw-why">
     "Written in an unattended session where a question would have been asked; never confirmed by anyone."
-  <div class="entry-list">
-    <a class="row " href="#entry/cc7ef11a-f83d-4d95-b45c-d43639003f41">
-      <div class="rt">
+  <div class="ktw-entry-list">
+    <a class="ktw-row " href="#entry/cc7ef11a-f83d-4d95-b45c-d43639003f41">
+      <div class="ktw-rt">
         <span>
           "The API is versioned in the path"
-        <span class="pill type">
+        <span class="ktw-pill ktw-type">
           "decision"
-        <span class="pill status-pending-confirmation">
+        <span class="ktw-pill ktw-status-pending-confirmation">
           "pending-confirmation"
-        <span class="pill ev-inferred">
+        <span class="ktw-pill ktw-ev-inferred">
           "inferred"
-      <div class="rs">
+      <div class="ktw-rs">
         "Every route starts with /v1/."
-      <div class="rm">
+      <div class="ktw-rm">
         "API · Alice Example · 2026-04-15"
-<section class="queue">
+<section class="ktw-queue">
   <h2>
     "Unknown evidence"
-    <span class="count">
+    <span class="ktw-count">
       "2"
-  <p class="why">
+  <p class="ktw-why">
     "Where the claim came from could not be traced — on any entry still in force, an open question included: Evidence and Status are separate axes. A maintainer can often settle these in a minute."
-  <div class="entry-list">
-    <a class="row " href="#entry/682e7ab6-125c-459f-9c67-a3c6b217d8ef">
-      <div class="rt">
+  <div class="ktw-entry-list">
+    <a class="ktw-row " href="#entry/682e7ab6-125c-459f-9c67-a3c6b217d8ef">
+      <div class="ktw-rt">
         <span>
           "Writes retry three times on a busy lock"
-        <span class="pill type">
+        <span class="ktw-pill ktw-type">
           "workaround"
-        <span class="pill status-open">
+        <span class="ktw-pill ktw-status-open">
           "open"
-        <span class="pill ev-unknown">
+        <span class="ktw-pill ktw-ev-unknown">
           "unknown"
-      <div class="rs">
+      <div class="ktw-rs">
         "Writes retry three times when the lock is busy, with no backoff."
-      <div class="rm">
+      <div class="ktw-rm">
         "Storage · Bob Example · 2026-03-20"
-    <a class="row " href="#entry/c1c37ec2-933b-4ca3-8c16-0a61f908f4bd">
-      <div class="rt">
+    <a class="ktw-row " href="#entry/c1c37ec2-933b-4ca3-8c16-0a61f908f4bd">
+      <div class="ktw-rt">
         <span>
           "Temporary files live beside the database"
-        <span class="pill type" title="undefined — no category fits a file location">
+        <span class="ktw-pill ktw-type" title="undefined — no category fits a file location">
           "undefined"
-        <span class="pill status-active">
+        <span class="ktw-pill ktw-status-active">
           "active"
-        <span class="pill ev-unknown">
+        <span class="ktw-pill ktw-ev-unknown">
           "unknown"
-      <div class="rs">
+      <div class="ktw-rs">
         "Temporary files are written next to the database file, not to the system's temp directory."
-      <div class="rm">
+      <div class="ktw-rm">
         "Storage · Carol Example · 2026-05-10"
-<section class="queue">
+<section class="ktw-queue">
   <h2>
     "Revisit-when triggers"
-    <span class="count">
+    <span class="ktw-count">
       "1"
-  <p class="why">
+  <p class="ktw-why">
     "The conditions on record. Whether one has fired is a human judgement; the dashboard cannot tell."
-  <div class="entry-list">
-    <a class="row " href="#entry/65568f64-aa13-4915-878d-d5cfe3479e64">
-      <div class="rt">
+  <div class="ktw-entry-list">
+    <a class="ktw-row " href="#entry/65568f64-aa13-4915-878d-d5cfe3479e64">
+      <div class="ktw-rt">
         <span>
           "Responses are capped at one megabyte"
-        <span class="pill type">
+        <span class="ktw-pill ktw-type">
           "constraint"
-        <span class="pill status-active">
+        <span class="ktw-pill ktw-status-active">
           "active"
-        <span class="pill ev-confirmed">
+        <span class="ktw-pill ktw-ev-confirmed">
           "confirmed"
-      <div class="rs">
+      <div class="ktw-rs">
         "A response larger than one megabyte is cut and marked as cut."
-      <div class="rm">
+      <div class="ktw-rm">
         "API · Alice Example · 2026-04-15 · touched 2026-06-01"
 
 ## #details
-<div class="pane-width" title="the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details">
-  <span class="label">
+<div class="ktw-pane-width" title="the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details">
+  <span class="ktw-label">
     "Width"
-  <span class="mini-width">
+  <span class="ktw-mini-width">
     <button class type="button">
       "1×"
-    <button class="on" type="button">
+    <button class="ktw-on" type="button">
       "2×"
     <button class type="button">
       "3×"
     <button class type="button">
       "½"
-<div class="mini fill">
+<div class="ktw-mini ktw-fill">
   <canvas height="0" width="0">
-  <span class="mini-seg">
-    <span class="mini-title">
+  <span class="ktw-mini-seg">
+    <span class="ktw-mini-title">
       "graph"
-  <span class="mini-hint">
+  <span class="ktw-mini-hint">
     "hover · click"
-  <span class="mini-corner">
-    <button class="mini-corner-btn" title="fit the view: everything in the box" type="button">
+  <span class="ktw-mini-corner">
+    <button class="ktw-mini-corner-btn" title="fit the view: everything in the box" type="button">
       "fit"
-    <button class="mini-corner-btn" title="let go of the held thought — every node alike again (Esc, on a page without a reset of its own)" type="button">
+    <button class="ktw-mini-corner-btn" title="let go of the held thought — every node alike again (Esc, on a page without a reset of its own)" type="button">
       "reset"
-  <button class="mini-open" title="open the full graph — the same level, centred on what is shown here" type="button">
+  <button class="ktw-mini-open" title="open the full graph — the same level, centred on what is shown here" type="button">
     "⤢ full graph"
-  <button class="mini-gear" title="the graph's switches — the same as in the full graph" type="button">
+  <button class="ktw-mini-gear" title="the graph's switches — the same as in the full graph" type="button">
     "⚙"
-  <div class="mini-filters graph-ui" hidden>
-    <span class="ui-group">
+  <div class="ktw-mini-filters ktw-graph-ui" hidden>
+    <span class="ktw-ui-group">
       <label>
         <input checked type="checkbox">
         "entries"
       <label title="the names of this project's topics and entries — topics, and entries when zoomed in">
         <input checked type="checkbox">
         "labels"
-    <span class="ui-group cited-ctl">
+    <span class="ktw-ui-group ktw-cited-ctl">
       <label title="who in the Keep the Why registry cites this project — the registry's backlink file, https://keepthewhy.com/registry/backlinks/github.com/acme/widget.json, loaded on the click and not remembered. Citations from repositories outside the registry are not in it.">
         <input type="checkbox">
         "cited by"
-    <span class="ui-group">
+    <span class="ktw-ui-group">
       <label title="the projects of one owner around a node for the owner — only an owner with more than one project in the graph; the node opens the owner's page">
         <input type="checkbox">
         "owners"
-    <span class="ui-group">
+    <span class="ktw-ui-group">
       <label title="the path's projects in the graph — the projects you came through; unchecked they are hidden, not forgotten (the path bar discards)">
         <input checked type="checkbox">
         "path"
-    <span class="ui-group">
+    <span class="ktw-ui-group">
       <label title="the graph turns very slowly; it stops while you point at it">
         <input checked type="checkbox">
         "motion"
-    <span class="ui-group">
-      <button class="link-btn" title="every switch in this bar on">
+    <span class="ktw-ui-group">
+      <button class="ktw-link-btn" title="every switch in this bar on">
         "select all"
-      <button class="link-btn" title="every switch in this bar off — the project's topics alone">
+      <button class="ktw-link-btn" title="every switch in this bar off — the project's topics alone">
         "unselect all"
-    <span class="ui-group">
-      <button class="link-btn graph-reset" title="fit the graph and let go of every node you placed">
+    <span class="ktw-ui-group">
+      <button class="ktw-link-btn ktw-graph-reset" title="fit the graph and let go of every node you placed">
         "reset"

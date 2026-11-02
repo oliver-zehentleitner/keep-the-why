@@ -9,7 +9,7 @@
    script on globalThis.KeepTheWhy.views.timeline, listed in ktw-views.json, traced on the canvas (canvas-trace.mjs). */
 (function (root) {
 "use strict";
-const { TYPE_KINDS, TYPE_TOKENS, SHELF, addDays, createdOn, dayDiff, daySpan, existsAt, statusAt, linkExistsAt, logDepth, markLinked, percentileBox, pushApart, stageCards, stageHeight, stageLanes, stageLinks, stampLabel, typeKind, filterActive, entryMatches, plural, timeGrid, todayISO, paletteToken } = root.KeepTheWhy.core;
+const { TYPE_KINDS, TYPE_TOKENS, readToken, SHELF, addDays, createdOn, dayDiff, daySpan, existsAt, statusAt, linkExistsAt, logDepth, markLinked, percentileBox, pushApart, stageCards, stageHeight, stageLanes, stageLinks, stampLabel, typeKind, filterActive, entryMatches, plural, timeGrid, todayISO, paletteToken } = root.KeepTheWhy.core;
 const { el, setKids, statusPill, evPill, typePills, typeGlyphSvg } = root.KeepTheWhy.ui;
 
 // One stage view per page: create({ scene, nav, prefs }). The page's scene is `shared` here: `scene` is the stage's
@@ -17,7 +17,7 @@ const { el, setKids, statusPill, evPill, typePills, typeGlyphSvg } = root.KeepTh
 function create({ scene: shared, nav, prefs }) {
 const narrow = () => !!root.matchMedia?.("(max-width: 900px)").matches;
 let ROOT_STYLE = null;
-const token = (name) => (ROOT_STYLE ||= getComputedStyle(document.documentElement)).getPropertyValue(name).trim();
+const token = (name) => readToken((ROOT_STYLE ||= getComputedStyle(document.documentElement)), name);
 const isShownByFilter = (e) => entryMatches(e, shared.filter);
 const topicOf = (file) => shared.state.topics.find((t) => t.file === file);
 // where a card stands: where its node stands in the graph beside, or in a lane per topic — kept per browser
@@ -30,11 +30,11 @@ const foreignShown = (c) => !c.ext || FOREIGN === "all" || (FOREIGN === "linked"
 
 // the legend under the stage: the kinds, the fills, the edges
 function stageLegend() {
-  const sw = (cls, style) => el("i", { class: `sw ${cls}`, style });
-  return el("div", { class: "stage-legend" },
-    el("span", { class: "grp" }, ...TYPE_KINDS.map((k) => el("span", { style: `color:${token(TYPE_TOKENS[k])}` }, typeGlyphSvg(k), " ", el("span", { style: "color:var(--fg2)" }, k))), el("span", {}, sw("", "color:var(--muted)"), el("span", {}, "no type"))),
-    el("span", { class: "grp", title: "Evidence is the fill" }, el("span", {}, sw("solid", "color:var(--fg2)"), "confirmed"), el("span", {}, sw("hatch", "color:var(--fg2)"), "inferred"), el("span", {}, sw("", "color:var(--fg2)"), "unknown")),
-    el("span", { class: "grp", title: "Status is the edge" }, el("span", {}, sw("dashed", "color:var(--fg3)"), "superseded"), el("span", {}, sw("ring", "color:var(--fg2)"), "open · needs review · pending")));
+  const sw = (cls, style) => el("i", { class: `ktw-sw ${cls}`, style });
+  return el("div", { class: "ktw-stage-legend" },
+    el("span", { class: "ktw-grp" }, ...TYPE_KINDS.map((k) => el("span", { style: `color:${token(TYPE_TOKENS[k])}` }, typeGlyphSvg(k), " ", el("span", { style: "color:var(--ktw-fg2, #a2a2ad)" }, k))), el("span", {}, sw("", "color:var(--ktw-muted, #8b8b98)"), el("span", {}, "no type"))),
+    el("span", { class: "ktw-grp", title: "Evidence is the fill" }, el("span", {}, sw("ktw-solid", "color:var(--ktw-fg2, #a2a2ad)"), "confirmed"), el("span", {}, sw("ktw-hatch", "color:var(--ktw-fg2, #a2a2ad)"), "inferred"), el("span", {}, sw("", "color:var(--ktw-fg2, #a2a2ad)"), "unknown")),
+    el("span", { class: "ktw-grp", title: "Status is the edge" }, el("span", {}, sw("ktw-dashed", "color:var(--ktw-fg3, #6f6f7a)"), "superseded"), el("span", {}, sw("ktw-ring", "color:var(--ktw-fg2, #a2a2ad)"), "open · needs review · pending")));
 }
 
 // A card's shape is its Type. decision: a plain card with a diamond. constraint: a thick band across the top, a
@@ -134,17 +134,17 @@ function stageLayout(scene, cam, v) {
 // The painter: the floor with its days and months, the lanes' names or the topics' names, the lines between cards,
 // the cards themselves — far ones first — and the names of the topics at the centre of their cards.
 function stagePainter(ctx, scene, cam, layout, v, o) {
-  const css = getComputedStyle(document.documentElement); const color = (name) => css.getPropertyValue(name).trim();
+  const css = getComputedStyle(document.documentElement); const color = (name) => readToken(css, name);
   const HATCH = new Map(); // colour -> pattern: diagonal lines, the fill of an inferred entry
   const hatch = (col) => { if (!HATCH.has(col)) { const pc = document.createElement("canvas"); pc.width = pc.height = 6; const x = pc.getContext("2d"); if (x) { x.strokeStyle = col; x.lineWidth = 1.2; x.beginPath(); x.moveTo(-1, 7); x.lineTo(7, -1); x.moveTo(-1, 1); x.lineTo(1, -1); x.moveTo(5, 7); x.lineTo(7, 5); x.stroke(); } HATCH.set(col, ctx.createPattern(pc, "repeat")); } return HATCH.get(col); };
   const litIds = () => { const t = scene.G?.thought; const set = new Set(); if (t) for (const n of t.nodes) if (n.entry) set.add(n.entry.uuid || n.id); return set; };
-  const font = (size, weight = "") => `${weight ? weight + " " : ""}${size}px ${color("--font") || "sans-serif"}`;
+  const font = (size, weight = "") => `${weight ? weight + " " : ""}${size}px ${color("--ktw-font") || "sans-serif"}`;
   const rects = []; // the cards drawn this frame, near ones last, each with its foot (the line down to the floor)
   const labels = []; // the topics' name pills drawn this frame (as the graph): pointed at, the topic's cards stand out
 
   function floor(day, xl, xr, zFar) {
     const { proj, floorY, depthAlpha, zOf } = cam;
-    ctx.lineWidth = 1; ctx.strokeStyle = color("--line"); ctx.globalAlpha = 0.9;
+    ctx.lineWidth = 1; ctx.strokeStyle = color("--ktw-line"); ctx.globalAlpha = 0.9;
     const edges = cam.asGraph() ? [xl, xr] : Array.from({ length: scene.cols + 1 }, (_, i) => i - scene.cols / 2); // the plane's edges, or the lane lines
     for (const x of edges) { const [ax, ay] = proj(x, floorY, -0.4); const [bx, by] = proj(x, floorY, zFar); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); }
     ctx.font = font(10); ctx.textBaseline = "middle"; ctx.textAlign = "left"; // the labels inside the floor's left edge: it runs out of the box at the front
@@ -154,20 +154,20 @@ function stagePainter(ctx, scene, cam, layout, v, o) {
     for (let back = 0; back < 4000; back++) {
       const d = addDays(day.slice(0, 10), -back); if (d < o.span.from.slice(0, 10)) break; if (d.endsWith("-01")) continue; const z = zOf(d); if (z > zFar) break;
       const [ax, ay] = proj(xl, floorY, z), [bx, by] = proj(xr, floorY, z); if (Math.abs(ay - lastY) < 7) continue; lastY = ay;
-      ctx.globalAlpha = 0.25 + 0.4 * depthAlpha(z); ctx.strokeStyle = color("--line"); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
-      if (Math.abs(ay - lastLabelY) >= 16 && ay > 8 && ay < v.H - 4) { lastLabelY = ay; ctx.fillStyle = color("--fg3"); ctx.globalAlpha = 0.5 + 0.4 * depthAlpha(z); ctx.fillText(String(Number(d.slice(8, 10))), ax + 6, ay); }
+      ctx.globalAlpha = 0.25 + 0.4 * depthAlpha(z); ctx.strokeStyle = color("--ktw-line"); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+      if (Math.abs(ay - lastLabelY) >= 16 && ay > 8 && ay < v.H - 4) { lastLabelY = ay; ctx.fillStyle = color("--ktw-fg3"); ctx.globalAlpha = 0.5 + 0.4 * depthAlpha(z); ctx.fillText(String(Number(d.slice(8, 10))), ax + 6, ay); }
     }
     // the months: a line on the first, its label in bold, the year on January's
     let [yy, mm] = day.slice(0, 7).split("-").map(Number);
     for (let guard = 0; guard < 600; guard++) {
       const first = `${yy}-${String(mm).padStart(2, "0")}-01`; const z = zOf(first); if (z > zFar) break;
       const [ax, ay] = proj(xl, floorY, z), [bx, by] = proj(xr, floorY, z);
-      ctx.globalAlpha = 0.35 + 0.65 * depthAlpha(z); ctx.strokeStyle = mm === 1 ? color("--fg3") : color("--line"); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
-      ctx.fillStyle = color("--fg2"); ctx.font = font(10, "600"); if (ay > 8 && ay < v.H - 4) ctx.fillText(mm === 1 ? `${yy}-01` : first.slice(0, 7), ax + 6, ay); ctx.font = font(10);
+      ctx.globalAlpha = 0.35 + 0.65 * depthAlpha(z); ctx.strokeStyle = mm === 1 ? color("--ktw-fg3") : color("--ktw-line"); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+      ctx.fillStyle = color("--ktw-fg2"); ctx.font = font(10, "600"); if (ay > 8 && ay < v.H - 4) ctx.fillText(mm === 1 ? `${yy}-01` : first.slice(0, 7), ax + 6, ay); ctx.font = font(10);
       mm--; if (mm < 1) { mm = 12; yy--; }
     }
     // the day shown, in the corner
-    ctx.globalAlpha = 1; ctx.textBaseline = "top"; ctx.font = `600 11px ${color("--mono") || "monospace"}`; ctx.fillStyle = color("--accent2"); ctx.fillText(`${day}${PLAY.on ? " ▶" : ""}`, 10, 9);
+    ctx.globalAlpha = 1; ctx.textBaseline = "top"; ctx.font = `600 11px ${color("--ktw-mono") || "monospace"}`; ctx.fillStyle = color("--ktw-accent2"); ctx.fillText(`${day}${PLAY.on ? " ▶" : ""}`, 10, 9);
   }
   function laneNames(day) { // by topic: along the near edge, the upper shelf's lane above the lower's
     const { proj, floorY, K } = cam;
@@ -175,14 +175,14 @@ function stagePainter(ctx, scene, cam, layout, v, o) {
     for (const L of scene.lanes) {
       if (!L.items.some((c) => layout.thereAt(c, day))) continue;
       const [x, y, s] = proj(L.x, floorY, 0); const w = K() * s * 0.9 - 10; let txt = L.title; while (txt.length > 3 && ctx.measureText(txt).width > w) txt = txt.slice(0, -2); if (txt !== L.title) txt = txt.slice(0, -1) + "…";
-      ctx.fillStyle = color("--fg2"); ctx.globalAlpha = L.shelf ? 0.9 : 0.65; ctx.fillText(`${L.shelf ? "▴" : "▾"} ${txt}`, x, y + (L.shelf ? 5 : 19));
+      ctx.fillStyle = color("--ktw-fg2"); ctx.globalAlpha = L.shelf ? 0.9 : 0.65; ctx.fillText(`${L.shelf ? "▴" : "▾"} ${txt}`, x, y + (L.shelf ? 5 : 19));
     }
   }
   function topicNames(vis, boxes) { // as the graph: each at the centre of its cards on screen, on a pill — the cards recede, a name on the near plane would stand nowhere near them
     const groups = new Map();
     for (const { c } of vis) { if (c.ext) continue; const b = boxes.get(c); const g = groups.get(c.e.file) || groups.set(c.e.file, { x: 0, y: 0, n: 0 }).get(c.e.file); g.x += b.cx; g.y += b.cy; g.n++; }
     ctx.font = font(10.5, "600"); ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    for (const [file, g] of groups) { const t = (topicOf(file)?.title || file).replace(/`/g, "").slice(0, 34); const x = g.x / g.n, y = g.y / g.n; const w = ctx.measureText(t).width + 12; const on = v.hoverTopic === file; ctx.globalAlpha = on ? 0.95 : 0.82; ctx.fillStyle = on ? color("--bg3") : color("--bg"); ctx.fillRect(x - w / 2, y - 8, w, 16); ctx.globalAlpha = on ? 1 : 0.9; ctx.fillStyle = on ? color("--accent2") : color("--fg2"); ctx.fillText(t, x, y); labels.push({ file, x0: x - w / 2, y0: y - 8, x1: x + w / 2, y1: y + 8 }); }
+    for (const [file, g] of groups) { const t = (topicOf(file)?.title || file).replace(/`/g, "").slice(0, 34); const x = g.x / g.n, y = g.y / g.n; const w = ctx.measureText(t).width + 12; const on = v.hoverTopic === file; ctx.globalAlpha = on ? 0.95 : 0.82; ctx.fillStyle = on ? color("--ktw-surface2") : color("--ktw-bg"); ctx.fillRect(x - w / 2, y - 8, w, 16); ctx.globalAlpha = on ? 1 : 0.9; ctx.fillStyle = on ? color("--ktw-accent2") : color("--ktw-fg2"); ctx.fillText(t, x, y); labels.push({ file, x0: x - w / 2, y0: y - 8, x1: x + w / 2, y1: y + 8 }); }
   }
   function lines(day, boxes, lit) { // every See and Superseded by written by then; a lit thought's and the held or pointed-at card's stand out, the rest fade
     const pairs = scene.G?.thought?.pairs || null;
@@ -192,7 +192,7 @@ function stagePainter(ctx, scene, cam, layout, v, o) {
       const near = [v.hover, v.held].some((c) => c && (l.a === c || l.b === c));
       const A = boxes.get(l.a), B = boxes.get(l.b);
       ctx.globalAlpha = onLit || near ? 0.95 : lit.size ? 0.08 : 0.35 * Math.min(A.s, B.s) + 0.1;
-      ctx.strokeStyle = onLit || near ? color("--fg") : l.kind === "see" ? color("--accent2") : color("--fg3"); ctx.lineWidth = onLit || near ? 1.6 : 1; ctx.setLineDash(l.kind === "superseded" ? [5, 4] : []);
+      ctx.strokeStyle = onLit || near ? color("--ktw-fg") : l.kind === "see" ? color("--ktw-accent2") : color("--ktw-fg3"); ctx.lineWidth = onLit || near ? 1.6 : 1; ctx.setLineDash(l.kind === "superseded" ? [5, 4] : []);
       ctx.beginPath(); ctx.moveTo(A.cx, A.cy); ctx.lineTo(B.cx, B.cy); ctx.stroke();
     }
     ctx.setLineDash([]);
@@ -205,32 +205,32 @@ function stagePainter(ctx, scene, cam, layout, v, o) {
     const fresh = dayDiff(c.day, day) <= 3 && !PLAY.frac; // arrived within three days of the day shown: it glows
     const a = held ? 1 : (faded ? 0.16 : 1) * cam.depthAlpha(z); // the held card at full strength, whatever its depth
     const [fx, fy] = cam.proj(layout.posOf(c).x, cam.floorY, z); // the foot
-    ctx.globalAlpha = a * (held || hovered ? 0.9 : 0.35); ctx.strokeStyle = held || hovered ? color("--fg") : color("--fg3"); ctx.lineWidth = held || hovered ? 1.5 : 1; ctx.beginPath(); ctx.moveTo(b.cx, b.y1); ctx.lineTo(fx, fy); ctx.stroke();
+    ctx.globalAlpha = a * (held || hovered ? 0.9 : 0.35); ctx.strokeStyle = held || hovered ? color("--ktw-fg") : color("--ktw-fg3"); ctx.lineWidth = held || hovered ? 1.5 : 1; ctx.beginPath(); ctx.moveTo(b.cx, b.y1); ctx.lineTo(fx, fy); ctx.stroke();
     b.foot = [b.cx, b.y1, fx, fy];
     const kind = typeKind(e); const fold = kind === "workaround" ? Math.min(b.h * 0.45, b.w * 0.3) : 0;
-    const evc = sup ? color("--fg3") : (TYPE_TOKENS[kind] ? color(TYPE_TOKENS[kind]) : "") || color("--muted"); // the type's colour; a superseded card goes grey
+    const evc = sup ? color("--ktw-fg3") : (TYPE_TOKENS[kind] ? color(TYPE_TOKENS[kind]) : "") || color("--ktw-muted"); // the type's colour; a superseded card goes grey
     const outline = () => { ctx.beginPath(); if (fold) { ctx.moveTo(b.x0, b.y0); ctx.lineTo(b.x1 - fold, b.y0); ctx.lineTo(b.x1, b.y0 + fold); ctx.lineTo(b.x1, b.y1); ctx.lineTo(b.x0, b.y1); ctx.closePath(); } else ctx.rect(b.x0, b.y0, b.w, b.h); };
     ctx.globalAlpha = a;
-    if (fresh || isLit || hovered || held || isStep) { ctx.shadowColor = held || isStep ? color("--accent2") : isLit ? color("--fg") : evc; ctx.shadowBlur = held ? 36 : isStep ? 22 : 14; }
+    if (fresh || isLit || hovered || held || isStep) { ctx.shadowColor = held || isStep ? color("--ktw-accent2") : isLit ? color("--ktw-fg") : evc; ctx.shadowBlur = held ? 36 : isStep ? 22 : 14; }
     // the body: the background, then a solid tint for confirmed, hatching for inferred, nothing for unknown
-    ctx.fillStyle = color("--bg2"); ctx.globalAlpha = a * 0.9; outline(); ctx.fill(); ctx.shadowBlur = 0;
+    ctx.fillStyle = color("--ktw-surface"); ctx.globalAlpha = a * 0.9; outline(); ctx.fill(); ctx.shadowBlur = 0;
     if (e.evidence === "confirmed") { ctx.fillStyle = evc; ctx.globalAlpha = a * (sup ? 0.12 : 0.3); outline(); ctx.fill(); }
     else if (e.evidence === "inferred") { ctx.fillStyle = hatch(evc) || evc; ctx.globalAlpha = a * (sup ? 0.3 : 0.6); outline(); ctx.fill(); }
     ctx.globalAlpha = a;
     const band = Math.max(2, Math.min(5, b.h * 0.11));
     if (kind === "constraint") { ctx.fillStyle = evc; ctx.globalAlpha = a * 0.9; ctx.fillRect(b.x0, b.y0, b.w, band); ctx.globalAlpha = a; }
     if (kind === "incident") { ctx.save(); ctx.beginPath(); ctx.rect(b.x0, b.y0, b.w, band); ctx.clip(); ctx.fillStyle = evc; ctx.globalAlpha = a * 0.9; const sw = Math.max(3, band * 1.6); for (let x = b.x0 - band; x < b.x1 + band; x += sw * 2) { ctx.beginPath(); ctx.moveTo(x, b.y0); ctx.lineTo(x + sw, b.y0); ctx.lineTo(x + sw - band, b.y0 + band); ctx.lineTo(x - band, b.y0 + band); ctx.closePath(); ctx.fill(); } ctx.restore(); ctx.globalAlpha = a; }
-    if (fold) { ctx.fillStyle = color("--bg"); ctx.beginPath(); ctx.moveTo(b.x1 - fold, b.y0); ctx.lineTo(b.x1 - fold, b.y0 + fold); ctx.lineTo(b.x1, b.y0 + fold); ctx.closePath(); ctx.fill(); ctx.strokeStyle = evc; ctx.lineWidth = 1; ctx.stroke(); }
-    ctx.lineWidth = held ? 2.6 : hovered ? 2 : 1.2; ctx.strokeStyle = held ? color("--fg") : evc; ctx.setLineDash(sup || kind === "workaround" ? [4, 3] : []); outline(); ctx.stroke(); ctx.setLineDash([]);
-    if (held) { ctx.strokeStyle = color("--accent2"); ctx.lineWidth = 2; ctx.globalAlpha = 0.9; ctx.strokeRect(b.x0 - 6, b.y0 - 6, b.w + 12, b.h + 12); ctx.globalAlpha = a; }
+    if (fold) { ctx.fillStyle = color("--ktw-bg"); ctx.beginPath(); ctx.moveTo(b.x1 - fold, b.y0); ctx.lineTo(b.x1 - fold, b.y0 + fold); ctx.lineTo(b.x1, b.y0 + fold); ctx.closePath(); ctx.fill(); ctx.strokeStyle = evc; ctx.lineWidth = 1; ctx.stroke(); }
+    ctx.lineWidth = held ? 2.6 : hovered ? 2 : 1.2; ctx.strokeStyle = held ? color("--ktw-fg") : evc; ctx.setLineDash(sup || kind === "workaround" ? [4, 3] : []); outline(); ctx.stroke(); ctx.setLineDash([]);
+    if (held) { ctx.strokeStyle = color("--ktw-accent2"); ctx.lineWidth = 2; ctx.globalAlpha = 0.9; ctx.strokeRect(b.x0 - 6, b.y0 - 6, b.w + 12, b.h + 12); ctx.globalAlpha = a; }
     if (kind && b.w > 30) { ctx.fillStyle = evc; ctx.strokeStyle = evc; const gs = Math.max(7, Math.min(11, b.h * 0.3)); typeGlyph(ctx, kind, b.x1 - gs - 4 - (fold ? fold * 0.6 : 0), b.y1 - gs - 3, gs); }
-    if (e.evidence === "unknown" && b.w > 30) { ctx.fillStyle = color("--unknown"); ctx.font = font(Math.max(8, Math.min(12, b.h * 0.32)), "700"); ctx.textAlign = "left"; ctx.textBaseline = "bottom"; ctx.fillText("?", b.x0 + 5, b.y1 - 2); }
+    if (e.evidence === "unknown" && b.w > 30) { ctx.fillStyle = color("--ktw-unknown"); ctx.font = font(Math.max(8, Math.min(12, b.h * 0.32)), "700"); ctx.textAlign = "left"; ctx.textBaseline = "bottom"; ctx.fillText("?", b.x0 + 5, b.y1 - 2); }
     if (st === "open" || st === "needs-review" || st === "pending-confirmation") { ctx.strokeStyle = color(`--${st}`); ctx.lineWidth = 1.2; ctx.strokeRect(b.x0 - 3, b.y0 - 3, b.w + 6, b.h + 6); }
-    if (isStep) { ctx.strokeStyle = color("--accent2"); ctx.lineWidth = 2.5; ctx.strokeRect(b.x0 - 5, b.y0 - 5, b.w + 10, b.h + 10); }
+    if (isStep) { ctx.strokeStyle = color("--ktw-accent2"); ctx.lineWidth = 2.5; ctx.strokeRect(b.x0 - 5, b.y0 - 5, b.w + 10, b.h + 10); }
     // the title on every card with room for a word, the type never below reading size: a card far back shows its first words
     const fs = Math.max(9.5, Math.min(12, 11 * b.s * v.zoom)); const top = kind === "constraint" || kind === "incident" ? band + 1 : 0;
     if (b.w > 26 && b.h - 6 - top >= fs) {
-      ctx.font = font(fs); ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.fillStyle = sup ? color("--fg3") : color("--fg");
+      ctx.font = font(fs); ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.fillStyle = sup ? color("--ktw-fg3") : color("--ktw-fg");
       const words = e.title.replace(/`/g, "").split(" "); const rows = []; let cur = "";
       for (const w of words) { const t = cur ? `${cur} ${w}` : w; if (ctx.measureText(t).width > b.w - 10 && cur) { rows.push(cur); cur = w; } else cur = t; if (rows.length >= 3) break; }
       if (rows.length < 3 && cur) rows.push(cur);
@@ -284,8 +284,8 @@ function stageInput(canvas, st, v, o) {
     if (c) showTip(c, px, py); else hideTip();
   };
   canvas.onmouseleave = () => { if (v.hover) { v.hover = null; shared.setFocus(null); wake(); } if (v.hoverTopic) { v.hoverTopic = null; wake(); } hideTip(); };
-  canvas.onmousedown = (ev) => { if (ev.button !== 0) return; const [px, py] = pos(ev); drag = { px, py, panX: v.panX, panY: v.panY }; moved = false; canvas.classList.add("grabbing"); };
-  const onUp = (ev) => { if (!drag) return; const [px, py] = pos(ev); drag = null; canvas.classList.remove("grabbing"); if (moved || pickLabel(px, py)) return; const c = pick(px, py); if (c) openCard(c); else if (ev.target === canvas && v.held) closeCard(); };
+  canvas.onmousedown = (ev) => { if (ev.button !== 0) return; const [px, py] = pos(ev); drag = { px, py, panX: v.panX, panY: v.panY }; moved = false; canvas.classList.add("ktw-grabbing"); };
+  const onUp = (ev) => { if (!drag) return; const [px, py] = pos(ev); drag = null; canvas.classList.remove("ktw-grabbing"); if (moved || pickLabel(px, py)) return; const c = pick(px, py); if (c) openCard(c); else if (ev.target === canvas && v.held) closeCard(); };
   window.addEventListener("mouseup", onUp);
   canvas.onwheel = (ev) => {
     ev.preventDefault();
@@ -322,7 +322,7 @@ function runStage(canvas, o) {
   const wake = () => { if (!v.raf && canvas.isConnected) v.raf = requestAnimationFrame(frame); };
   // the tip beside the pointer, inside the box
   const place = (box, px, py) => { const r = canvas.getBoundingClientRect(); const w = box.offsetWidth || 280, h = box.offsetHeight || 80; box.style.left = `${px + 14 + w > r.width - 8 ? Math.max(8, px - 14 - w) : px + 14}px`; box.style.top = `${py + 14 + h > r.height - 8 ? Math.max(8, py - 14 - h) : py + 14}px`; };
-  const showTip = (c, px, py) => { const e = c.e; setKids(o.tip, el("b", {}, e.title.replace(/`/g, "")), el("div", { class: "note" }, `${c.lane?.title || e.file} · ${stampLabel(c.day)}${e.git?.created?.author ? " · " + e.git.created.author : ""}`), el("div", { class: "pills" }, ...typePills(e.type), statusPill(statusAt(e, cam.now(), c.ext || shared.hasRepo(e)) || e.status), evPill(e.evidence))); o.tip.hidden = false; place(o.tip, px, py); };
+  const showTip = (c, px, py) => { const e = c.e; setKids(o.tip, el("b", {}, e.title.replace(/`/g, "")), el("div", { class: "ktw-note" }, `${c.lane?.title || e.file} · ${stampLabel(c.day)}${e.git?.created?.author ? " · " + e.git.created.author : ""}`), el("div", { class: "ktw-pills" }, ...typePills(e.type), statusPill(statusAt(e, cam.now(), c.ext || shared.hasRepo(e)) || e.status), evPill(e.evidence))); o.tip.hidden = false; place(o.tip, px, py); };
   const hideTip = () => { o.tip.hidden = true; };
   const openCard = (c) => { v.held = c; o.open(c.e, c); wake(); };
   const closeCard = () => { if (!v.held) return; v.held = null; o.close(); wake(); };
@@ -388,31 +388,31 @@ function setStageForeign(v) { setForeign(v); HOST.render(); } // the lanes are t
 function stopPlay() { PLAY.on = false; if (PLAY.raf) cancelAnimationFrame(PLAY.raf); PLAY.raf = null; PLAY.last = 0; PLAY.acc = 0; PLAY.frac = 0; PLAY.jump = 1; }
 const DAY_RE = /^\d{4}-\d{2}-\d{2}(T\d{2})?$/; // a day, or an hour of it
 // a segment of buttons on the stage, one of them on
-const stageSeg = (cls, title, options, current, pick, label = null) => el("span", { class: `stage-seg ${cls}`, title }, label ? el("span", { class: "seg-label" }, label) : null,
-  ...options.map(([v, l]) => el("button", { type: "button", class: v === current ? "on" : "", onclick: (ev) => { pick(v); for (const b of ev.currentTarget.parentNode.querySelectorAll("button")) b.classList.toggle("on", b === ev.currentTarget); } }, l)));
+const stageSeg = (cls, title, options, current, pick, label = null) => el("span", { class: `ktw-stage-seg ${cls}`, title }, label ? el("span", { class: "ktw-seg-label" }, label) : null,
+  ...options.map(([v, l]) => el("button", { type: "button", class: v === current ? "ktw-on" : "", onclick: (ev) => { pick(v); for (const b of ev.currentTarget.parentNode.querySelectorAll("button")) b.classList.toggle("ktw-on", b === ev.currentTarget); } }, l)));
 
 function view(main, day, host) {
   HOST = host;
   main.append(el("h1", {}, "Timeline"));
-  if (!shared.state.project.git?.available) return main.append(el("p", { class: "center" }, "No Git repository — no dates to draw."));
-  if (shared.state.project.git.shallow) main.append(el("p", { class: "sub warn" }, "Shallow clone: the history stops at the clone's edge, so every entry older than that appears to start there. Fetch the full history (git fetch --unshallow) for real dates."));
-  const sub = el("p", { class: "sub" }, "The project day by day. The stage shows what existed on the day shown, the graph beside it the same; the playhead sets the day. The card shows the entry that appeared last by then, or the one clicked on the stage. The bars count the entries by the month their heading first appeared in Git, stacked by author, grey ticks for entries superseded that month.");
+  if (!shared.state.project.git?.available) return main.append(el("p", { class: "ktw-center" }, "No Git repository — no dates to draw."));
+  if (shared.state.project.git.shallow) main.append(el("p", { class: "ktw-sub ktw-warn" }, "Shallow clone: the history stops at the clone's edge, so every entry older than that appears to start there. Fetch the full history (git fetch --unshallow) for real dates."));
+  const sub = el("p", { class: "ktw-sub" }, "The project day by day. The stage shows what existed on the day shown, the graph beside it the same; the playhead sets the day. The card shows the entry that appeared last by then, or the one clicked on the stage. The bars count the entries by the month their heading first appeared in Git, stacked by author, grey ticks for entries superseded that month.");
   // the graph the stage is a view of and the thoughts beside it are drawn from: the family graph with the family
   // scope (built once it is asked for, the view rendered again when it arrives), else this project's
   const g = host.graph(); // the host's graph builders: which graph the stage stands on (the family's, when it is shown and built)
   // the clock runs from the first day of any entry on the page — ours, or one a friend, the family or the path brought — to today
   const span = daySpan([...shared.state.entries, ...g.nodes.filter((n) => n.kind === "entry" && n.entry).map((n) => n.entry)]);
-  if (!span) return main.append(sub, el("p", { class: "center" }, "Nothing dated yet."));
+  if (!span) return main.append(sub, el("p", { class: "ktw-center" }, "Nothing dated yet."));
   const clamp = (d) => (d < span.from ? span.from : d > span.to ? span.to : d);
   const bars = timelineBars(main, span, (d) => setDay(d));
-  const listBox = el("div", { class: "entry-list", style: "margin-top:16px" });
+  const listBox = el("div", { class: "ktw-entry-list", style: "margin-top:16px" });
   bars.onMonth = (k, entries) => { listBox.replaceChildren(el("h2", {}, k), ...entries.map(HOST.entryRow)); };
   // the playhead: a slider over the days, play with a speed, the counts of the day
   const grid = timeGrid(span); const big = grid.hours ? 24 : 7; // a step: an hour or a day; shift: a day or a week
-  const range = el("input", { type: "range", min: 0, max: grid.steps, step: 1, class: "playhead-range", title: grid.hours ? "the hour the page shows — drag, or ← → (an hour), shift ← → (a day), space plays" : "the day the page shows — drag, or ← → (a day), shift ← → (a week), space plays" });
-  const dayLabel = el("b", { class: "playhead-day" }); const counts = el("span", { class: "playhead-counts" });
-  const playBtn = el("button", { type: "button", class: "play-btn", title: "play the days — space" });
-  const speedSel = el("select", { class: "play-speed", title: "how fast the days pass" }, SPEEDS.map(([v, l]) => el("option", { value: v }, l)));
+  const range = el("input", { type: "range", min: 0, max: grid.steps, step: 1, class: "ktw-playhead-range", title: grid.hours ? "the hour the page shows — drag, or ← → (an hour), shift ← → (a day), space plays" : "the day the page shows — drag, or ← → (a day), shift ← → (a week), space plays" });
+  const dayLabel = el("b", { class: "ktw-playhead-day" }); const counts = el("span", { class: "ktw-playhead-counts" });
+  const playBtn = el("button", { type: "button", class: "ktw-play-btn", title: "play the days — space" });
+  const speedSel = el("select", { class: "ktw-play-speed", title: "how fast the days pass" }, SPEEDS.map(([v, l]) => el("option", { value: v }, l)));
   speedSel.onchange = () => { PLAY.speed = speedSel.value === "entry" ? "entry" : Number(speedSel.value) || 7; PLAY.acc = 0; PLAY.frac = 0; PLAY.jump = 1; };
   for (const opt of speedSel.options) if (opt.value === String(PLAY.speed) || (opt.value !== "entry" && Math.abs(Number(opt.value) - PLAY.speed) < 1e-9)) opt.selected = true;
   // the days entries appeared on, for the "1 entry /s" speed: ours and the graph's foreign ones, as the span counts them
@@ -423,7 +423,7 @@ function view(main, day, host) {
     range.value = grid.stepOf(d); dayLabel.textContent = grid.label(d); bars.mark(d, grid.label(d));
     const here = shared.state.entries.filter((e) => shared.atClock(e)); const st = count(here.map((e) => ({ s: shared.statusNow(e) })), "s"); const open = (st.open || 0) + (st["needs-review"] || 0) + (st["pending-confirmation"] || 0);
     setKids(counts, `${plural(here.length, "entry")} by then`, st.active ? ` · ${st.active} active` : "", st.superseded ? ` · ${st.superseded} superseded` : "", open ? ` · ${open} in question` : "");
-    playBtn.textContent = PLAY.on ? "⏸" : "▶"; playBtn.classList.toggle("on", PLAY.on);
+    playBtn.textContent = PLAY.on ? "⏸" : "▶"; playBtn.classList.toggle("ktw-on", PLAY.on);
     card.refresh();
     try { nav.go({ view: "timeline", day: d === span.to ? null : grid.url(d) }, { replace: true }); } catch {}
   };
@@ -455,20 +455,20 @@ function view(main, day, host) {
   }
   playBtn.onclick = () => play(!PLAY.on);
   range.oninput = () => { play(false); setDay(grid.at(Number(range.value))); };
-  const jump = (to, title, label) => el("button", { type: "button", class: "play-jump", title, onclick: () => { play(false); setDay(to()); } }, label);
+  const jump = (to, title, label) => el("button", { type: "button", class: "ktw-play-jump", title, onclick: () => { play(false); setDay(to()); } }, label);
   const card = entryCard(span);
   // the stage and its switches
-  const wrap = el("div", { class: "stage-wrap" }); const canvas = el("canvas", { class: "stage" }); const tip = el("div", { class: "stage-tip", hidden: true });
+  const wrap = el("div", { class: "ktw-stage-wrap" }); const canvas = el("canvas", { class: "ktw-stage" }); const tip = el("div", { class: "ktw-stage-tip", hidden: true });
   wrap.append(canvas, tip,
-    stageSeg("stage-arrange", "where a card stands: where its node stands in the graph beside (the stage is the graph, time pulled out as depth), or in a lane per topic", [["graph", "as the graph"], ["topics", "by topic"]], ARRANGE, setStageArrange),
-    stageSeg("stage-foreign", "other repositories' entries — friends, family, path: only the ones a chain of See or Superseded by joins to this project's, every one the graph holds, or none", [["linked", "linked"], ["all", "all"], ["none", "none"]], FOREIGN, setStageForeign, "others"),
-    el("button", { type: "button", class: "stage-reset", title: "let go of the held thought and card — every card alike again — and reset the view (Esc)", onclick: () => STAGE?.reset?.() }, "reset"));
-  main.append(el("div", { class: "timeline-head" },
-      el("div", { class: "timeline-head-text" }, sub, bars.node, bars.legend,
-        el("div", { class: "playhead" }, jump(() => span.from, "the first day", "⏮"), playBtn, jump(() => span.to, "today", "⏭"), range, dayLabel, speedSel, counts)),
-      el("div", { class: "stage-card-slot" }, card.node)),
+    stageSeg("ktw-stage-arrange", "where a card stands: where its node stands in the graph beside (the stage is the graph, time pulled out as depth), or in a lane per topic", [["graph", "as the graph"], ["topics", "by topic"]], ARRANGE, setStageArrange),
+    stageSeg("ktw-stage-foreign", "other repositories' entries — friends, family, path: only the ones a chain of See or Superseded by joins to this project's, every one the graph holds, or none", [["linked", "linked"], ["all", "all"], ["none", "none"]], FOREIGN, setStageForeign, "others"),
+    el("button", { type: "button", class: "ktw-stage-reset", title: "let go of the held thought and card — every card alike again — and reset the view (Esc)", onclick: () => STAGE?.reset?.() }, "reset"));
+  main.append(el("div", { class: "ktw-timeline-head" },
+      el("div", { class: "ktw-timeline-head-text" }, sub, bars.node, bars.legend,
+        el("div", { class: "ktw-playhead" }, jump(() => span.from, "the first day", "⏮"), playBtn, jump(() => span.to, "today", "⏭"), range, dayLabel, speedSel, counts)),
+      el("div", { class: "ktw-stage-card-slot" }, card.node)),
     wrap, stageLegend(),
-    el("p", { class: "note stage-note" }, el("span", { class: "stage-hint" }, (grid.hours ? "On the stage: wheel — an hour forward or back, shift for a day ·" : "On the stage: wheel — a day forward or back, shift for a week ·") + " drag — look around · ctrl+wheel — zoom · double-click — reset the view · click a card to read it, the floor to let go. The thoughts beside: point at one to light its chain here and in the graph."), el("span", { class: "stage-hint-touch" }, "On the stage: drag — look around · pinch — zoom · tap a card to read it, the floor to let go. The slider sets the day.")),
+    el("p", { class: "ktw-note ktw-stage-note" }, el("span", { class: "ktw-stage-hint" }, (grid.hours ? "On the stage: wheel — an hour forward or back, shift for a day ·" : "On the stage: wheel — a day forward or back, shift for a week ·") + " drag — look around · ctrl+wheel — zoom · double-click — reset the view · click a card to read it, the floor to let go. The thoughts beside: point at one to light its chain here and in the graph."), el("span", { class: "ktw-stage-hint-touch" }, "On the stage: drag — look around · pinch — zoom · tap a card to read it, the floor to let go. The slider sets the day.")),
     listBox);
   shared.day = null; setClock(day && DAY_RE.test(day) ? clamp(grid.toClock(day)) : span.to); upd();
   STAGE = runStage(canvas, { wrap, tip, span, graph: g, graphBeside: !narrow(), setDay, stepBy, big, play, playing: PLAY, open: card.hold, close: card.release, onClose: (h) => { if (STAGE === h) STAGE = null; } }); // the side pane draws no graph on a narrow screen (miniGraph)
@@ -500,23 +500,23 @@ function timelineBars(main, span, setDay) {
   const mainW = main.clientWidth || 900; const Wd = Math.max(360, Math.round(narrow() ? mainW - 28 : mainW - 64 - 18 - Math.min(420, Math.max(280, (mainW - 82) * 0.42))));
   const Hd = 130, padL = 34, padB = 32, padT = 18; const colW = (Wd - padL) / all.length; const bw = colW - 2;
   const ns = (tag, attrs, text) => { const n = document.createElementNS("http://www.w3.org/2000/svg", tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); if (text != null) n.textContent = text; return n; };
-  const svg = ns("svg", { viewBox: `0 0 ${Wd} ${Hd}` }); const axis = ns("g", { class: "axis" }); svg.append(axis);
+  const svg = ns("svg", { viewBox: `0 0 ${Wd} ${Hd}` }); const axis = ns("g", { class: "ktw-axis" }); svg.append(axis);
   const scaleY = (v) => padT + (Hd - padB - padT) * (1 - v / max);
   for (const tick of [0, Math.ceil(max / 2), max]) { axis.append(ns("line", { x1: padL, x2: Wd, y1: scaleY(tick), y2: scaleY(tick) })); axis.append(ns("text", { x: padL - 6, y: scaleY(tick) + 3, "text-anchor": "end" }, tick)); }
   const monthX = (d) => { const i = all.indexOf(d.slice(0, 7)); if (i < 0) return d < all[0] ? padL : Wd; const dim = new Date(Date.UTC(+d.slice(0, 4), +d.slice(5, 7), 0)).getUTCDate(); return padL + (i + (Math.min(+d.slice(8, 10), dim) - 1) / dim) * colW + 1; };
-  const marker = ns("line", { class: "now", x1: padL, x2: padL, y1: padT - 4, y2: Hd - padB + 14 }); const markerLabel = ns("text", { class: "now-label", x: padL, y: 9, "text-anchor": "start" }, "");
-  const out = { node: el("div", { class: "timeline" }, svg), onMonth: null,
-    legend: el("div", { class: "legend" }, shared.state.authors.map((a) => el("span", {}, el("i", { class: "sw", style: `background:${authorColor(a.name)}` }), a.name)), el("span", {}, el("i", { class: "sw", style: "background:var(--superseded)" }), "superseded that month")),
+  const marker = ns("line", { class: "ktw-now", x1: padL, x2: padL, y1: padT - 4, y2: Hd - padB + 14 }); const markerLabel = ns("text", { class: "ktw-now-label", x: padL, y: 9, "text-anchor": "start" }, "");
+  const out = { node: el("div", { class: "ktw-timeline" }, svg), onMonth: null,
+    legend: el("div", { class: "ktw-legend" }, shared.state.authors.map((a) => el("span", {}, el("i", { class: "ktw-sw", style: `background:${authorColor(a.name)}` }), a.name)), el("span", {}, el("i", { class: "ktw-sw", style: "background:var(--ktw-status-superseded, #6f6f7a)" }), "superseded that month")),
     mark: (d, label = d) => { const x = monthX(d); marker.setAttribute("x1", x); marker.setAttribute("x2", x); markerLabel.setAttribute("x", Math.min(Wd - 64, x + 4)); markerLabel.textContent = label; } };
   all.forEach((k, i) => {
     const x = padL + i * colW + 1; let yTop = scaleY(0);
     for (const a of shared.state.authors.map((a) => a.name)) {
       const v = months[k]?.[a]; if (!v) continue; const h = scaleY(0) - scaleY(v); yTop -= h;
-      const rect = ns("rect", { class: "b", x, y: yTop, width: bw, height: h, fill: authorColor(a), rx: 2 }); rect.append(ns("title", {}, `${k} · ${a}: ${v} — click: that month's entries, and the day moves to its end`));
+      const rect = ns("rect", { class: "ktw-b", x, y: yTop, width: bw, height: h, fill: authorColor(a), rx: 2 }); rect.append(ns("title", {}, `${k} · ${a}: ${v} — click: that month's entries, and the day moves to its end`));
       rect.addEventListener("click", () => { out.onMonth?.(k, created.filter((e) => e.git.created.date.startsWith(k))); const last = new Date(Date.UTC(+k.slice(0, 4), +k.slice(5, 7), 0)).toISOString().slice(0, 10); setDay(last < span.from ? span.from : last > span.to ? span.to : last); });
       svg.append(rect);
     }
-    if (sup[k]) for (let s = 0; s < sup[k]; s++) svg.append(ns("rect", { class: "sup", x: x + s * 5, y: Hd - padB + 6, width: 3, height: 6 }));
+    if (sup[k]) for (let s = 0; s < sup[k]; s++) svg.append(ns("rect", { class: "ktw-sup", x: x + s * 5, y: Hd - padB + 6, width: 3, height: 6 }));
     if (all.length <= 18 || i % Math.ceil(all.length / 18) === 0) axis.append(ns("text", { x: x + bw / 2, y: Hd - padB + 22, "text-anchor": "middle" }, k));
   });
   svg.append(marker, markerLabel);
@@ -534,25 +534,25 @@ function fillEntryCard(node, e, { lane, href, state, day, badge, again, onOpen =
   // a friend's entry opens by walking to that project in place (the node's action), not by a plain link
   const link = (text, extra = {}) => el("a", { href, ...extra, onclick: onOpen ? (ev) => { ev.preventDefault(); onOpen(); } : null }, text);
   // the topic in the head is a link where there is somewhere to go: the topic's preview in the graph, its page on the timeline
-  const topicLink = topic ? el("a", { class: "card-topic", href: topic.href || "#", title: topic.title || "the topic", onclick: topic.onClick ? (ev) => { ev.preventDefault(); topic.onClick(); } : null }, lane) : lane;
-  setKids(node, el("div", { class: "stage-card-head" }, el("span", { class: "note mono" }, `${stampLabel(createdOn(e)) || "today"} · `, topicLink), badge),
+  const topicLink = topic ? el("a", { class: "ktw-card-topic", href: topic.href || "#", title: topic.title || "the topic", onclick: topic.onClick ? (ev) => { ev.preventDefault(); topic.onClick(); } : null }, lane) : lane;
+  setKids(node, el("div", { class: "ktw-stage-card-head" }, el("span", { class: "ktw-note ktw-mono" }, `${stampLabel(createdOn(e)) || "today"} · `, topicLink), badge),
     el("h3", {}, link(e.title.replace(/`/g, ""), { title: "read the whole entry" })),
-    el("div", { class: "pills" }, ...typePills(e.type), statusPill((day ? statusAt(e, day, state !== shared.self || shared.hasRepo(e)) : null) || e.status), evPill(e.evidence)),
-    body ? el("div", { class: "body stage-card-body" }, renderBody(body)) : el("p", { class: "empty stage-card-body" }, typeof (state || shared.state).bodies === "string" ? "loading the text…" : "no text"),
-    el("div", { class: "stage-card-foot" }, e.git?.created?.author ? el("span", { class: "note" }, `recorded by ${e.git.created.author}`) : el("span"), link("open ›")));
+    el("div", { class: "ktw-pills" }, ...typePills(e.type), statusPill((day ? statusAt(e, day, state !== shared.self || shared.hasRepo(e)) : null) || e.status), evPill(e.evidence)),
+    body ? el("div", { class: "ktw-body ktw-stage-card-body" }, renderBody(body)) : el("p", { class: "ktw-empty ktw-stage-card-body" }, typeof (state || shared.state).bodies === "string" ? "loading the text…" : "no text"),
+    el("div", { class: "ktw-stage-card-foot" }, e.git?.created?.author ? el("span", { class: "ktw-note" }, `recorded by ${e.git.created.author}`) : el("span"), link("open ›")));
   const st = state || shared.self;
   if (st && typeof st.bodies === "string" && !st.bodiesLoaded && !st.bodiesError) bodies(st).then(() => { if (node.isConnected) again?.(); });
 }
 const laneTitle = (e) => (e.project ? `${e.project} · ` : "") + (topicOf(e.file)?.title || e.file).replace(/`/g, "");
 function entryCard(span) {
-  const node = el("div", { class: "stage-card" }); let held = null; // the held entry's Id
+  const node = el("div", { class: "ktw-stage-card" }); let held = null; // the held entry's Id
   const latest = (d) => { let best = null; for (const e of shared.state.entries) { if (!existsAt(e, d, shared.hasRepo(e))) continue; const c = createdOn(e) || span.to; if (!best || c >= best.c) best = { e, c }; } return best?.e || null; };
   const fill = (e, isHeld, c = null) => fillEntryCard(node, e, { lane: c?.lane?.title || laneTitle(e), href: c?.href || entryHref(e), state: c?.state || shared.self, day: shared.day || span.to,
     topic: !(c?.ext) && !e.project ? { title: "open the topic's page", href: nav.href({ view: "topic", file: e.file }) } : null,
-    badge: isHeld ? el("button", { type: "button", class: "pill stage-card-held", title: "let go — back to the latest entry by the day shown", onclick: () => STAGE?.close?.() }, "picked ", el("b", {}, "×")) : el("span", { class: "pill" }, "latest by then"),
+    badge: isHeld ? el("button", { type: "button", class: "ktw-pill ktw-stage-card-held", title: "let go — back to the latest entry by the day shown", onclick: () => STAGE?.close?.() }, "picked ", el("b", {}, "×")) : el("span", { class: "ktw-pill" }, "latest by then"),
     again: () => { if (held ? held === (e.uuid || e.id) : latest(shared.day || span.to) === e) fill(e, isHeld, c); } });
   return { node,
-    refresh: () => { if (held) return; const e = latest(shared.day || span.to); if (e) fill(e, false); else setKids(node, el("p", { class: "empty" }, "No entry by this day.")); },
+    refresh: () => { if (held) return; const e = latest(shared.day || span.to); if (e) fill(e, false); else setKids(node, el("p", { class: "ktw-empty" }, "No entry by this day.")); },
     hold: (e, c) => { held = e.uuid || e.id; shared.selected = e.id; fill(e, true, c); },
     release: () => { held = null; shared.selected = null; const e = latest(shared.day || span.to); if (e) fill(e, false); } };
 }

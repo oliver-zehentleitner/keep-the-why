@@ -14,5 +14,5 @@
     "ktw-thoughts.js",
     "ktw-pages.js"
   ],
-  "styles": []
+  "styles": ["ktw-views.css"]
 }

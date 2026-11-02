@@ -9,6 +9,7 @@ before it reaches anyone's vendor pull request.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import unittest
@@ -207,6 +208,144 @@ class LibraryFilesTest(unittest.TestCase):
                             re.search(pattern, line),
                             f"{name}:{lineno}: {what} — build nodes, set textContent",
                         )
+
+
+# the dashboard's variable each of the views' tokens stands for (docs/dashboard-views.md)
+TOKEN_OF = {
+    "bg": "bg",
+    "bg2": "surface",
+    "bg3": "surface2",
+    "line": "line",
+    "fg": "fg",
+    "fg2": "fg2",
+    "fg3": "fg3",
+    "accent": "accent",
+    "accent2": "accent2",
+    "ok": "ok",
+    "warn": "warn",
+    "bad": "bad",
+    "info": "info",
+    "muted": "muted",
+    "confirmed": "confirmed",
+    "inferred": "inferred",
+    "unknown": "unknown",
+    "active": "status-active",
+    "superseded": "status-superseded",
+    "open": "status-open",
+    "needs-review": "status-needs-review",
+    "pending-confirmation": "status-pending-confirmation",
+    "radius": "radius",
+    "font": "font",
+    "mono": "mono",
+}
+
+
+def _block(css: str, selector: str) -> dict:
+    m = re.search(r"(?m)^" + re.escape(selector) + r"\s*\{(.*?)\}", css, re.S)
+    body = re.sub(r"/\*.*?\*/", "", m.group(1), flags=re.S)
+    return {k: v.strip() for k, v in re.findall(r"--([\w-]+)\s*:\s*([^;]+);", body)}
+
+
+def _token_defaults() -> dict:
+    src = _read("ktw-core.js")
+    body = re.search(
+        r"const TOKEN_DEFAULTS = Object\.freeze\(\{(.*?)\}\);", src, re.S
+    ).group(1)
+    return {
+        k: json.loads(v)
+        for k, v in re.findall(r'"(--ktw-[\w-]+)":\s*("(?:[^"\\]|\\.)*")', body)
+    }
+
+
+class StylesTest(unittest.TestCase):
+    """ktw-views.css and the tokens: the views style .ktw-* only and read --ktw-*
+    only, with fallbacks; the dashboard sets every token to its own colour."""
+
+    def setUp(self):
+        self.style = _read("style.css")
+        self.views_css = _read("ktw-views.css")
+        self.dark = _block(self.style, ":root")
+        self.light = _block(self.style, ':root[data-theme="light"]')
+
+    def test_tokens_equal_the_dashboards_variables_in_both_themes(self):
+        for theme, vals in (("dark", self.dark), ("light", self.light)):
+            for var, token in TOKEN_OF.items():
+                if var not in vals:
+                    continue
+                with self.subTest(theme=theme, token=token):
+                    self.assertEqual(vals.get(f"ktw-{token}"), vals[var])
+        for token in TOKEN_OF.values():
+            self.assertIn(f"ktw-{token}", self.dark)
+
+    def test_palette_starts_at_the_accent(self):
+        self.assertEqual(self.dark["ktw-palette-0"], self.dark["accent"])
+
+    def test_core_defaults_are_the_dashboards_dark_values(self):
+        defaults = _token_defaults()
+        dark = {f"--{k}": v for k, v in self.dark.items() if k.startswith("ktw-")}
+        self.assertEqual(defaults, dark)
+
+    def test_views_css_reads_tokens_only_each_with_its_default(self):
+        defaults = _token_defaults()
+        uses = re.findall(
+            r"var\(\s*(--[\w-]+)\s*(,\s*([^()]*(?:\([^()]*\)[^()]*)*))?\)",
+            self.views_css,
+        )
+        self.assertTrue(uses)
+        for name, _, fallback in uses:
+            with self.subTest(token=name):
+                self.assertTrue(name.startswith("--ktw-"), f"{name} is not a token")
+                self.assertTrue(fallback, f"{name} has no fallback")
+                self.assertIn(name, defaults)
+
+    def test_views_css_styles_ktw_classes_only(self):
+        css = re.sub(r"/\*.*?\*/", "", self.views_css, flags=re.S)
+        for head in re.findall(r"([^{}]+)\{", css):
+            head = head.strip()
+            if head.startswith("@") or head.startswith("from") or head.startswith("to"):
+                continue
+            for sel in re.split(r",(?![^()]*\))", head):
+                sel = sel.strip()
+                with self.subTest(selector=sel):
+                    self.assertNotRegex(sel, r"#[\w-]", "an id is the host's")
+                    for c in re.findall(r"\.(-?[_a-zA-Z][\w-]*)", sel):
+                        self.assertTrue(c.startswith("ktw-"), f".{c} is not the views'")
+                    self.assertTrue(
+                        ".ktw-" in sel.split(":where(.ktw-root")[0]
+                        or sel.startswith(":where(.ktw-root"),
+                        "a bare element is styled under :where(.ktw-root) only",
+                    )
+
+    def test_library_reads_known_tokens_only(self):
+        defaults = _token_defaults()
+        for name in (
+            n for n in os.listdir(views.WEB_DIR) if re.match(r"^ktw-.+\.js$", n)
+        ):
+            src = _read(name)
+            for used in re.findall(r'(?:var\(|\(")(--[\w-]+)', src):
+                with self.subTest(file=name, token=used):
+                    self.assertTrue(
+                        used.startswith("--ktw-"),
+                        f"{name} reads {used}, the host's variable",
+                    )
+                    self.assertIn(used, defaults)
+
+    def test_stylesheets_load_base_then_views_then_the_dashboards(self):
+        with open(os.path.join(views.WEB_DIR, "index.html"), encoding="utf-8") as fh:
+            page = views.page(fh.read())
+        order = [
+            page.index(f'href="/static/{n}"')
+            for n in ("base.css", "ktw-views.css", "style.css")
+        ]
+        self.assertEqual(order, sorted(order))
+        html = render_page({"project": {}, "entries": [], "topics": [], "authors": []})
+        marks = [
+            _read("base.css").splitlines()[0],
+            self.views_css.splitlines()[0],
+            self.style.splitlines()[0],
+        ]
+        at = [html.index(m) for m in marks]
+        self.assertEqual(at, sorted(at))
 
 
 if __name__ == "__main__":

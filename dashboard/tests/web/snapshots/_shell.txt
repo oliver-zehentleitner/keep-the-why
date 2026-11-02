@@ -1,10 +1,10 @@
 ## #sidebar
 <div class="nav">
-  <a class="active" data-route="overview" href="#overview">
+  <a class="ktw-active" data-route="overview" href="#overview">
     "Overview"
   <a data-route="queues" href="#queues">
     "Queues"
-    <span class="count" id="queue-count">
+    <span class="ktw-count" id="queue-count">
       "3"
   <a data-route="graph" href="#graph">
     "Graph"
@@ -52,130 +52,130 @@
       "Carol Example"
     <option value="Bob Example">
       "Bob Example"
-  <button class="link-btn" hidden id="f-clear">
+  <button class="ktw-link-btn" hidden id="f-clear">
     "clear"
 <div class="tree-head">
   "Topics"
-  <span class="count" id="tree-count">
+  <span class="ktw-count" id="tree-count">
     "3 · 12 entries"
 <div class="tree" id="tree">
   <details open>
     <summary data-file="api.md">
       <span class="tw">
         "▶"
-      <span class="tt">
+      <span class="ktw-tt">
         "API"
-      <span class="count">
+      <span class="ktw-count">
         "4"
     <a class="leaf " data-id="api.md#the-api-is-versioned-in-the-path" href="#entry/cc7ef11a-f83d-4d95-b45c-d43639003f41" title="The API is versioned in the path">
-      <i class="dot inferred pending-confirmation">
+      <i class="ktw-dot ktw-inferred ktw-pending-confirmation">
       <span>
         "The API is versioned in the path"
     <a class="leaf " data-id="api.md#responses-are-capped-at-one-megabyte" href="#entry/65568f64-aa13-4915-878d-d5cfe3479e64" title="Responses are capped at one megabyte">
-      <i class="dot confirmed active">
+      <i class="ktw-dot ktw-confirmed ktw-active">
       <span>
         "Responses are capped at one megabyte"
     <a class="leaf " data-id="api.md#pagination-uses-opaque-cursors" href="#entry/f5383416-90c8-4c5c-affc-01c3c67d0518" title="Pagination uses opaque cursors">
-      <i class="dot confirmed active">
+      <i class="ktw-dot ktw-confirmed ktw-active">
       <span>
         "Pagination uses opaque cursors"
     <a class="leaf " data-id="api.md#errors-carry-a-stable-code-beside-the-message" href="#entry/f5ac4f25-a9f1-490a-a4ca-62d5f0db4a06" title="Errors carry a stable code beside the message">
-      <i class="dot confirmed active">
+      <i class="ktw-dot ktw-confirmed ktw-active">
       <span>
         "Errors carry a stable code beside the message"
   <details open>
     <summary data-file="storage.md">
       <span class="tw">
         "▶"
-      <span class="tt">
+      <span class="ktw-tt">
         "Storage"
-      <span class="count">
+      <span class="ktw-count">
         "4"
     <a class="leaf " data-id="storage.md#writes-retry-three-times-on-a-busy-lock" href="#entry/682e7ab6-125c-459f-9c67-a3c6b217d8ef" title="Writes retry three times on a busy lock">
-      <i class="dot unknown open">
+      <i class="ktw-dot ktw-unknown ktw-open">
       <span>
         "Writes retry three times on a busy lock"
     <a class="leaf " data-id="storage.md#the-2026-03-lock-storm" href="#entry/190b1989-a347-471b-8463-4f83b3cfff92" title="The 2026-03 lock storm">
-      <i class="dot confirmed active">
+      <i class="ktw-dot ktw-confirmed ktw-active">
       <span>
         "The 2026-03 lock storm"
     <a class="leaf " data-id="storage.md#temporary-files-live-beside-the-database" href="#entry/c1c37ec2-933b-4ca3-8c16-0a61f908f4bd" title="Temporary files live beside the database">
-      <i class="dot unknown active">
+      <i class="ktw-dot ktw-unknown ktw-active">
       <span>
         "Temporary files live beside the database"
     <a class="leaf " data-id="storage.md#pasted-markup-stays-text" href="#entry/050ea108-42f3-4f0f-9ea9-dd2156f206d7" title="Pasted <b>markup</b> stays text">
-      <i class="dot inferred active">
+      <i class="ktw-dot ktw-inferred ktw-active">
       <span>
         "Pasted <b>markup</b> stays text"
   <details open>
     <summary data-file="sync.md">
       <span class="tw">
         "▶"
-      <span class="tt">
+      <span class="ktw-tt">
         "Sync"
-      <span class="count">
+      <span class="ktw-count">
         "4"
     <a class="leaf " data-id="sync.md#sync-waits-for-the-snapshot-before-replaying-the-buffer" href="#entry/3c80c624-2274-497a-a1f0-d8ff65b0e0c3" title="Sync waits for the snapshot before replaying the buffer">
-      <i class="dot confirmed superseded">
+      <i class="ktw-dot ktw-confirmed ktw-superseded">
       <span>
         "Sync waits for the snapshot before replaying the buffer"
     <a class="leaf " data-id="sync.md#events-arrive-at-most-once-per-second" href="#entry/4bc883fc-f8ef-4d90-b90d-0a669f375a70" title="Events arrive at most once per second">
-      <i class="dot inferred active">
+      <i class="ktw-dot ktw-inferred ktw-active">
       <span>
         "Events arrive at most once per second"
     <a class="leaf " data-id="sync.md#sync-replays-the-buffer-against-a-versioned-snapshot" href="#entry/756f14cb-61c6-4ff2-8dea-29f28c030ca5" title="Sync replays the buffer against a versioned snapshot">
-      <i class="dot confirmed active">
+      <i class="ktw-dot ktw-confirmed ktw-active">
       <span>
         "Sync replays the buffer against a versioned snapshot"
     <a class="leaf " data-id="sync.md#clock-skew-between-replicas-is-tolerated-up-to-a-second" href="#entry/c63efee2-97dd-452a-885f-c793001131b7" title="Clock skew between replicas is tolerated up to a second">
-      <i class="dot inferred active">
+      <i class="ktw-dot ktw-inferred ktw-active">
       <span>
         "Clock skew between replicas is tolerated up to a second"
 
 ## #strip
-<a class="stat  " href="#overview" title>
+<a class="ktw-stat  " href="#overview" title>
   <b>
     "12"
   "entries"
-<a class="stat  " href="#overview" title>
+<a class="ktw-stat  " href="#overview" title>
   <b>
     "3"
   "topics"
-<a class="stat  " href="#authors" title>
+<a class="ktw-stat  " href="#authors" title>
   <b>
     "3"
   "authors"
-<span class="sep">
+<span class="ktw-sep">
 <span class="lbl">
   "needs a person"
-<a class="stat q-open " href="#queues" title>
+<a class="ktw-stat q-open " href="#queues" title>
   <b>
     "1"
   "open"
-<a class="stat q-needs-review zero" href="#queues" title>
+<a class="ktw-stat q-needs-review zero" href="#queues" title>
   <b>
     "0"
   "needs review"
-<a class="stat q-pending-confirmation " href="#queues" title>
+<a class="ktw-stat q-pending-confirmation " href="#queues" title>
   <b>
     "1"
   "pending"
-<a class="stat q-unknown " href="#queues" title>
+<a class="ktw-stat q-unknown " href="#queues" title>
   <b>
     "2"
   "unknown evidence"
-<a class="stat  " href="#queues" title="Revisit-when triggers on record">
+<a class="ktw-stat  " href="#queues" title="Revisit-when triggers on record">
   <b>
     "1"
   "revisit-when"
-<span class="sep">
+<span class="ktw-sep">
 <span class="lbl">
   "lint"
-<a class="stat lint-ok zero" href="#findings" title="keep-the-why-lint 0.0.0.0-fixture">
+<a class="ktw-stat lint-ok zero" href="#findings" title="keep-the-why-lint 0.0.0.0-fixture">
   <b>
     "0"
   "errors"
-<a class="stat lint-warn " href="#findings" title="keep-the-why-lint 0.0.0.0-fixture">
+<a class="ktw-stat lint-warn " href="#findings" title="keep-the-why-lint 0.0.0.0-fixture">
   <b>
     "3"
   "warnings"
@@ -183,17 +183,17 @@
 ## #project-title
 <b>
   "acme---widget"
-<span class="pill">
-  <a class="gh" href="https://github.com/oliver-zehentleitner/keep-the-why/releases/tag/v0.20.3" rel="noopener" target="_blank" title="context-schema 0.20.3 — the Keep the Why release this context/ was last checked against">
+<span class="ktw-pill">
+  <a class="ktw-gh" href="https://github.com/oliver-zehentleitner/keep-the-why/releases/tag/v0.20.3" rel="noopener" target="_blank" title="context-schema 0.20.3 — the Keep the Why release this context/ was last checked against">
     "schema 0.20.3"
-<span class="pill" title="branch and commit on GitHub">
-  <a class="gh" href="https://github.com/acme/widget/tree/main" rel="noopener" target="_blank">
+<span class="ktw-pill" title="branch and commit on GitHub">
+  <a class="ktw-gh" href="https://github.com/acme/widget/tree/main" rel="noopener" target="_blank">
     "main"
   "@"
-  <a class="gh" href="https://github.com/acme/widget/commit/9b269efd6cb77c2921fd4c7077058160739b02d5" rel="noopener" target="_blank" title="9b269efd6cb77c2921fd4c7077058160739b02d5">
+  <a class="ktw-gh" href="https://github.com/acme/widget/commit/9b269efd6cb77c2921fd4c7077058160739b02d5" rel="noopener" target="_blank" title="9b269efd6cb77c2921fd4c7077058160739b02d5">
     "9b269ef"
-<span class="pill">
-  <a class="gh" href="https://github.com/acme/widget" rel="noopener" target="_blank">
-    <svg aria-label="GitHub" class="host-mark" role="img" viewBox="0 0 24 24">
+<span class="ktw-pill">
+  <a class="ktw-gh" href="https://github.com/acme/widget" rel="noopener" target="_blank">
+    <svg aria-label="GitHub" class="ktw-host-mark" role="img" viewBox="0 0 24 24">
       <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12">
     "github.com/acme/widget"

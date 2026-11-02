@@ -148,8 +148,12 @@ def _head_meta(state: dict) -> str:
 def render_page(state: dict) -> str:
     with open(os.path.join(WEB_DIR, "index.html"), encoding="utf-8") as fh:
         html = fh.read()
-    with open(os.path.join(WEB_DIR, "style.css"), encoding="utf-8") as fh:
-        css = fh.read()
+    # the dashboard's two stylesheets, around the views' own (index.html): base.css
+    # ahead of them, style.css after
+    css = {}
+    for name in ("base.css", "style.css"):
+        with open(os.path.join(WEB_DIR, name), encoding="utf-8") as fh:
+            css[name] = fh.read()
     with open(os.path.join(WEB_DIR, "app.js"), encoding="utf-8") as fh:
         js = fh.read()
     # one self-contained page: the library's classic scripts (ktw-views.json)
@@ -166,9 +170,11 @@ def render_page(state: dict) -> str:
     # a crawler or a link preview reads the static head
     html = re.sub(r"<title>[^<]*</title>", lambda _: _head_meta(state), html, count=1)
     html = html.replace("<!--ktw:noscript-->", noscript_body(state), 1)
-    html = html.replace(
-        '<link rel="stylesheet" href="/static/style.css">', f"<style>\n{css}\n</style>"
-    )
+    for name, text in css.items():
+        html = html.replace(
+            f'<link rel="stylesheet" href="/static/{name}">',
+            f"<style>\n{text}\n</style>",
+        )
     html = html.replace(
         '<script type="module" src="/static/app.js"></script>',
         f'<script>window.__KTW_STATE__ = {data};</script>\n<script type="module">\n{js}\n</script>',

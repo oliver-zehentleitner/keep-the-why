@@ -1,6 +1,6 @@
 # #timeline
 
-## canvas 1 — stage-wrap
+## canvas 1 — ktw-stage-wrap
 clearRect(0, 0, 800, 500)
 lineWidth = 1
 strokeStyle = "#3a3a43"
