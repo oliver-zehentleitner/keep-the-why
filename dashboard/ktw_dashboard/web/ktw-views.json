@@ -11,7 +11,8 @@
     "ktw-timeline.js",
     "ktw-family.js",
     "ktw-search.js",
-    "ktw-thoughts.js"
+    "ktw-thoughts.js",
+    "ktw-pages.js"
   ],
   "styles": []
 }
