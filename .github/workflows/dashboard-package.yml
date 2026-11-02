@@ -86,6 +86,9 @@ jobs:
       - name: The pages under two hosts, neither of them the dashboard's (jsdom)
         run: cd dashboard/tests/web && node --test pages.test.mjs
 
+      - name: Styles through the CSSOM, as a page under a strict Content-Security-Policy needs them (jsdom)
+        run: cd dashboard/tests/web && node --test ui.test.mjs
+
       - name: Markdown renderer parity with the HTML-string renderer it replaced (jsdom)
         # every body, title and field value of the fixture and of this repository's own export
         run: cd dashboard/tests/web && node parity.mjs fixture/state.json /tmp/ktw-dashboard-export/state.json

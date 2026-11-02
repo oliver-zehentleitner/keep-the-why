@@ -10,7 +10,7 @@
 (function (root) {
 "use strict";
 const { TYPE_KINDS, TYPE_TOKENS, SHELF, addDays, createdOn, dayDiff, daySpan, existsAt, statusAt, linkExistsAt, logDepth, markLinked, percentileBox, pushApart, stageCards, stageHeight, stageLanes, stageLinks, stampLabel, typeKind, filterActive, entryMatches, plural, timeGrid, todayISO, paletteToken } = root.KeepTheWhy.core;
-const { el, setKids, statusPill, evPill, typePills, typeGlyphSvg } = root.KeepTheWhy.ui;
+const { el, svgEl, setKids, statusPill, evPill, typePills, typeGlyphSvg } = root.KeepTheWhy.ui;
 
 // One stage view per page: create({ scene, nav, prefs }). The page's scene is `shared` here: `scene` is the stage's
 // own (stageScene — its cards, lanes and links), as it always was.
@@ -499,7 +499,7 @@ function timelineBars(main, span, setDay) {
   // padT leaves room above the bars for the day's label, clear of them; a bar spans its month, a hair between two
   const mainW = main.clientWidth || 900; const Wd = Math.max(360, Math.round(narrow() ? mainW - 28 : mainW - 64 - 18 - Math.min(420, Math.max(280, (mainW - 82) * 0.42))));
   const Hd = 130, padL = 34, padB = 32, padT = 18; const colW = (Wd - padL) / all.length; const bw = colW - 2;
-  const ns = (tag, attrs, text) => { const n = document.createElementNS("http://www.w3.org/2000/svg", tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); if (text != null) n.textContent = text; return n; };
+  const ns = (tag, attrs, text) => svgEl(tag, attrs, text); // ui.svgEl: a style among the attributes goes through the CSSOM
   const svg = ns("svg", { viewBox: `0 0 ${Wd} ${Hd}` }); const axis = ns("g", { class: "axis" }); svg.append(axis);
   const scaleY = (v) => padT + (Hd - padB - padT) * (1 - v / max);
   for (const tick of [0, Math.ceil(max / 2), max]) { axis.append(ns("line", { x1: padL, x2: Wd, y1: scaleY(tick), y2: scaleY(tick) })); axis.append(ns("text", { x: padL - 6, y: scaleY(tick) + 3, "text-anchor": "end" }, tick)); }

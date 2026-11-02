@@ -14,13 +14,13 @@
     <div class="note">
       "2026-03-20 → 2026-06-01 · grew over 73 days"
     <div class="timeline-bar">
-      <span class="tick" style="left:0%" title="1: 2026-03-20 — Writes retry three times on a busy lock">
+      <span class="tick" style="left: 0%;" title="1: 2026-03-20 — Writes retry three times on a busy lock">
         "1"
-      <span class="tick" style="left:35.61643835616438%" title="2: 2026-04-15 — The API is versioned in the path">
+      <span class="tick" style="left: 35.61643835616438%;" title="2: 2026-04-15 — The API is versioned in the path">
         "2"
-      <span class="tick" style="left:35.61643835616438%" title="3: 2026-04-15 — Pagination uses opaque cursors">
+      <span class="tick" style="left: 35.61643835616438%;" title="3: 2026-04-15 — Pagination uses opaque cursors">
         "3"
-      <span class="tick" style="left:100%" title="4: 2026-06-01 — Errors carry a stable code beside the message">
+      <span class="tick" style="left: 100%;" title="4: 2026-06-01 — Errors carry a stable code beside the message">
         "4"
   <div class="thought-warn">
     "Its first entry's Evidence is unknown. Where a later step depends on it, it depends on a reason nobody confirmed."

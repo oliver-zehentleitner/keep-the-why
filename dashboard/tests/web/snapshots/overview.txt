@@ -26,31 +26,31 @@
         <span class="k">
           "decision"
         <div class="bar">
-          <i class="decision" style="width:46.15384615384615%">
+          <i class="decision" style="width: 46.15384615384615%;">
         <span class="v">
           "6"
         <span class="k">
           "constraint"
         <div class="bar">
-          <i class="constraint" style="width:30.76923076923077%">
+          <i class="constraint" style="width: 30.76923076923077%;">
         <span class="v">
           "4"
         <span class="k">
           "workaround"
         <div class="bar">
-          <i class="workaround" style="width:7.6923076923076925%">
+          <i class="workaround" style="width: 7.6923076923076925%;">
         <span class="v">
           "1"
         <span class="k">
           "incident"
         <div class="bar">
-          <i class="incident" style="width:7.6923076923076925%">
+          <i class="incident" style="width: 7.6923076923076925%;">
         <span class="v">
           "1"
         <span class="k">
           "undefined"
         <div class="bar">
-          <i class="undefined" style="width:7.6923076923076925%">
+          <i class="undefined" style="width: 7.6923076923076925%;">
         <span class="v">
           "1"
     <div class="card">
@@ -60,25 +60,25 @@
         <span class="k">
           "active"
         <div class="bar">
-          <i class="active" style="width:75%">
+          <i class="active" style="width: 75%;">
         <span class="v">
           "9"
         <span class="k">
           "open"
         <div class="bar">
-          <i class="open" style="width:8.333333333333334%">
+          <i class="open" style="width: 8.333333333333334%;">
         <span class="v">
           "1"
         <span class="k">
           "pending-confirmation"
         <div class="bar">
-          <i class="pending-confirmation" style="width:8.333333333333334%">
+          <i class="pending-confirmation" style="width: 8.333333333333334%;">
         <span class="v">
           "1"
         <span class="k">
           "superseded"
         <div class="bar">
-          <i class="superseded" style="width:8.333333333333334%">
+          <i class="superseded" style="width: 8.333333333333334%;">
         <span class="v">
           "1"
     <div class="card">
@@ -88,19 +88,19 @@
         <span class="k">
           "confirmed"
         <div class="bar">
-          <i class="confirmed" style="width:50%">
+          <i class="confirmed" style="width: 50%;">
         <span class="v">
           "6"
         <span class="k">
           "inferred"
         <div class="bar">
-          <i class="inferred" style="width:33.333333333333336%">
+          <i class="inferred" style="width: 33.333333333333336%;">
         <span class="v">
           "4"
         <span class="k">
           "unknown"
         <div class="bar">
-          <i class="unknown" style="width:16.666666666666668%">
+          <i class="unknown" style="width: 16.666666666666668%;">
         <span class="v">
           "2"
   <div class="card">
@@ -160,8 +160,8 @@
     <div class="td">
       "versioning, limits, pagination and errors"
     <div class="stack">
-      <i style="width:75%;background:var(--confirmed)" title="confirmed: 3">
-      <i style="width:25%;background:var(--inferred)" title="inferred: 1">
+      <i style="width: 75%; background: var(--confirmed);" title="confirmed: 3">
+      <i style="width: 25%; background: var(--inferred);" title="inferred: 1">
     <div class="refs">
       "api.md · → 1 · ← 0"
   <a class="topic-card" href="#topic/storage.md">
@@ -172,9 +172,9 @@
     <div class="td">
       "locks, retries and where files live"
     <div class="stack">
-      <i style="width:25%;background:var(--confirmed)" title="confirmed: 1">
-      <i style="width:25%;background:var(--inferred)" title="inferred: 1">
-      <i style="width:50%;background:var(--unknown)" title="unknown: 2">
+      <i style="width: 25%; background: var(--confirmed);" title="confirmed: 1">
+      <i style="width: 25%; background: var(--inferred);" title="inferred: 1">
+      <i style="width: 50%; background: var(--unknown);" title="unknown: 2">
     <div class="refs">
       "storage.md · → 1 · ← 2"
   <a class="topic-card" href="#topic/sync.md">
@@ -185,8 +185,8 @@
     <div class="td">
       "how the sync orders snapshot and buffer"
     <div class="stack">
-      <i style="width:50%;background:var(--confirmed)" title="confirmed: 2">
-      <i style="width:50%;background:var(--inferred)" title="inferred: 2">
+      <i style="width: 50%; background: var(--confirmed);" title="confirmed: 2">
+      <i style="width: 50%; background: var(--inferred);" title="inferred: 2">
     <div class="refs">
       "sync.md · → 1 · ← 1"
 <h2>
