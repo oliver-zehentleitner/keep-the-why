@@ -21,7 +21,7 @@ test("the scene holds what the views share and tells its subscribers when it cha
   scene.on("spot", (c, r) => heard.push(["spot", c, r]));
   scene.on("scope", (v) => heard.push(["scope", v]));
   scene.on("wake", () => heard.push(["wake"]));
-  scene.setDay("2026-04-15", { grew: true }); scene.setFocus("u1"); scene.setFocus(""); scene.setThought({ ids: [] });
+  scene.setDay("2026-04-15", { grew: true }); scene.setFocus("u1"); scene.setFocus(""); scene.light({ ids: [] });
   scene.spot("https://e.org/x", ""); scene.setScope("project"); scene.wake();
   off(); scene.setDay(null);
   assert.deepEqual(heard, [["day", "2026-04-15", true], ["focus", "u1"], ["focus", null], ["thought", { ids: [] }], ["spot", "https://e.org/x", ""], ["scope", "project"], ["wake"]]);
@@ -73,4 +73,16 @@ test("the clock's view of an entry: there on the day shown, with the status it h
   const noGit = create({ state: { project: { git: { available: false } }, entries: [] } }); noGit.setDay("2026-04-01");
   assert.equal(noGit.atClock(fresh), true, "a project without a repository has no days to go by: the entry is there");
   assert.equal(scene.hasRepo({ origin: {} }), true, "a foreign entry came from a repository");
+});
+
+test("a thought held is the scene's pin: set and let go through setThought, told once per change; lighting in passing leaves it", () => {
+  const scene = create();
+  const pins = []; scene.on("pin", (k) => pins.push(k));
+  const t = { ids: ["a", "b", "c"] }, u = { ids: ["x", "y"] };
+  scene.setThought(t); assert.equal(scene.pin, "a|b|c");
+  scene.setThought(t); // the same thought again: no change, no event
+  scene.light(u); scene.light(null); assert.equal(scene.pin, "a|b|c", "pointing at another thought does not move the pin");
+  scene.setThought(u); scene.setThought(null); scene.setThought(null);
+  assert.deepEqual(pins, ["a|b|c", "x|y", null]);
+  assert.equal(scene.pin, null);
 });
