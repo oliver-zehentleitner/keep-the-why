@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-const { plural, entryRefs, rawFileUrl, configLine, normalizeState, canonicalOf, NO_FILTER, familyOrder, parseSupersededBy, kindLabel, groupByFamily, searchTerms, registryMatches, shuffled, resolveLocation, linkFamily, authorLookup, mergeStates, projectLabel, backlinksUrl, citingOf, seeDay, supersededDay, paletteToken, ownerOf, exportStateUrl, exportVerdict, fkey, repoLabel } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
+const { plural, entryRefs, isUuid, rawFileUrl, configLine, normalizeState, hostFileLink, canonicalOf, NO_FILTER, familyOrder, parseSupersededBy, kindLabel, groupByFamily, searchTerms, registryMatches, shuffled, resolveLocation, linkFamily, authorLookup, mergeStates, projectLabel, backlinksUrl, citingOf, hostAnchor, seeDay, supersededDay, paletteToken, ownerOf, exportStateUrl, exportVerdict, resolveSee, fkey, repoLabel, topicTitle } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
 const MD = globalThis.KeepTheWhy.markdown; // ktw-markdown.js
 
 // ---------------------------------------------------------------- prefs (host)
@@ -379,7 +379,7 @@ const publicHref = (canonical, root = "", hash = "#overview") => centreUrl({ mod
 // or with the family scope the whole family merged, ktw-core.js mergeStates); SCENE.self, this project's own
 // state, always; SCENE.day, the clock; SCENE.focus, SCENE.scope, the layout — and the events views follow.
 // DOM helpers, pills and glyphs every view uses (ktw-ui.js): no state, only nodes
-const { el, setKids, pill, statusPill, evPill, typePills, typeGlyphSvg, hostMark, marked, remoteLink, forkPill, headPill } = globalThis.KeepTheWhy.ui;
+const { el, setKids, pill, statusPill, evPill, typePills, entryPills, typeGlyphSvg, hostMark, marked, extLink, remoteLink, forkPill, headPill } = globalThis.KeepTheWhy.ui;
 const SCENE = globalThis.KeepTheWhy.scene.create({ scope: prefs.get("scope") || prefs.get("search-scope") || "project" }); // search-scope: the name before the scope switched the graph too
 // The graph view (ktw-graph.js): it draws what the host builds, given the scene, navigation and settings only.
 const GRAPH = globalThis.KeepTheWhy.views.graph.create({ scene: SCENE, nav, prefs });
@@ -406,11 +406,11 @@ const api = (path) => PROJECT ? `${path}?project=${encodeURIComponent(PROJECT)}`
 // had then, and the See and Superseded by lines that had been written by then (ktw-core.js, existsAt and friends).
 // an entry of this project goes by this project's repository: with one, an entry without a Git date is not committed
 // yet and exists today only; without one there are no days to go by. A foreign entry's export came from a repository.
-// The pages (ktw-pages.js): the overview, a topic, an entry, the queues, the findings, the authors and the details
-// pane beside a topic or an entry, and what the page reads off the scene's state through them (an entry by its Id,
-// a topic, the queues); what only this host has is PAGES_HOST, further down.
+// The pages (ktw-pages.js): the overview, the queues, the findings and the authors, the pieces the pages share, and
+// what the page reads off the scene's state through them (an entry by its Id, a topic, the queues); what only this
+// host has is PAGES_HOST, further down.
 const PAGES = globalThis.KeepTheWhy.views.pages.create({ scene: SCENE, nav, prefs });
-const { byUuid, entryRoute, entryHref, entryOf, topicOf, entriesOf, matches, pageFiltered, queues, queueTotal, STATUS_ORDER, EV_ORDER, copyText } = PAGES;
+const { byUuid, entryRoute, entryHref, entryOf, topicOf, entriesOf, matches, pageFiltered, queues, queueTotal, STATUS_ORDER, EV_ORDER, bars, copyText, copyLinkButton } = PAGES;
 
 // ---------------------------------------------------------------- markdown (ktw-markdown.js: DOM nodes, never HTML strings)
 // a merged member's entry names its own project's topic files: resolve them there
@@ -420,6 +420,8 @@ const topicHref = (f) => { const file = inProject(f); return topicOf(file) ? nav
 // one line of Markdown (a title, a field's value) and a whole body, as a fragment of nodes
 const inline = (md) => MD.renderInline(document, md, { topicHref });
 const renderMarkdown = (md) => MD.render(document, md, { topicHref });
+// a label before a line of Markdown, joined to its first text the way the HTML string joined them
+const labelled = (label, md) => { const f = inline(md); if (f.firstChild?.nodeType === 3) f.firstChild.data = label + f.firstChild.data; else f.prepend(label); return f; };
 // ---------------------------------------------------------------- shared bits
 
 // ---------------------------------------------------------------- global strip (numbers on every view)
@@ -484,6 +486,134 @@ function markActive() {
 }
 
 // ---------------------------------------------------------------- views
+function viewTopic(main, file) {
+  const t = topicOf(file);
+  if (!t) return main.append(el("p", { class: "center" }, `No topic ${file}`));
+  const list = entriesOf(file);
+  main.append(
+    el("div", { class: "crumbs" }, navLink({ href: { view: "overview" } }, "Overview"), " / ", t.file, copyLinkButton(shareUrlFor(nav.href({ view: "topic", file: t.file }), t.project), "topic"), sourceLink(topicHostHref(t))),
+    el("h1", {}, t.title),
+    el("p", { class: "sub" }, t.index_line || "—"),
+    el("div", { class: "grid2" },
+      el("div", { class: "card" }, el("h3", {}, "Status"), bars(t.status, STATUS_ORDER)),
+      el("div", { class: "card" }, el("h3", {}, "Evidence"), bars(t.evidence, EV_ORDER)),
+    ),
+    el("h2", {}, "Entries"),
+    el("div", { class: "entry-list" }, list.map(entryRow)),
+  );
+  renderDetailsTopic(t);
+}
+async function viewEntryElsewhere(main, uuid) {
+  if (PUBLISHED()) {
+    // an Id this export does not carry: look through the family's published exports
+    main.append(el("p", { class: "center" }, `Looking for ${uuid} in the family's published exports…`));
+    const t = await publicTree();
+    for (const g of t.groups) {
+      if (g.member.role === "self") continue;
+      if (g.state.entries?.some((e) => e.uuid === uuid)) { nav.go({ view: "entry", uuid, centre: { mode: "public", canonical: g.member.canonical, root: g.member.root || "" } }); return; }
+    }
+    return setKids(main, el("p", { class: "center" }, `No entry with Id ${uuid} in this export, nor in the family's published exports.`));
+  }
+  // an Id this project does not carry: ask the server which known project does
+  main.append(el("p", { class: "center" }, `Looking for ${uuid} in the other projects known here…`));
+  try {
+    const P = provider(); if (!P.resolveEntry) throw new Error();
+    const hit = await P.resolveEntry(uuid);
+    if (hit.error) throw new Error(hit.error);
+    if (hit.project === (PROJECT || null)) return;
+    nav.go({ view: "entry", uuid, centre: { mode: "live", project: hit.project } });
+  } catch { setKids(main, el("p", { class: "center" }, `No entry with Id ${uuid} in this project, nor in any other project known here. A family member that is not checked out can be cloned or cached — see Family.`)); }
+}
+// #ref/<canonical>/<uuid>: an entry in another repository, family or not — a
+// reference row's link before it resolved, or a link someone shared. Resolved
+// as the row resolves it (resolveRemoteRef), then the page goes there; the
+// canonical and the Id stay on the page when nothing loads.
+async function viewRemoteEntry(main, canonical, uuid) {
+  const here = byUuid()[uuid];
+  if (here) { nav.go(entryRoute(here), { replace: true }); return render(); }
+  main.append(el("p", { class: "center" }, `Looking for ${uuid} in ${repoLabel(canonical)}…`));
+  const r = await resolveRemoteRef(canonical, uuid);
+  if (r.entry) { go(r.href); return; }
+  setKids(main, el("div", { class: "center" }, el("p", {}, `Cannot open ${uuid} in ${repoLabel(canonical)}: ${r.error}.`),
+    el("p", { class: "note" }, el("a", { href: canonical, target: "_blank", rel: "noopener" }, canonical.replace(/^https:\/\//, "")))));
+}
+// A reference into another repository, resolved when it is shown: the entry
+// from a project known to the live server, else from the repository's
+// published export (its .keep-the-why at HEAD names the dashboard-state).
+// One lookup per canonical and Id per page; what comes back is shown as text
+// in the reference's row, never merged into this project's counts or queues.
+const REMOTE_REFS = {}; // `${canonical}|${uuid}` -> Promise<{entry, href} | {error}>
+function resolveRemoteRef(canonical, uuid) {
+  const key = `${canonical}|${uuid}`;
+  if (!REMOTE_REFS[key]) REMOTE_REFS[key] = (async () => {
+    const P = provider();
+    const known = P.resolveEntry ? await P.resolveEntry(uuid) : null; // the rules are resolveSee's (ktw-core.js)
+    const r = resolveSee(uuid, { known, published: known && !known.error ? null : await fetchPublicState(canonical, "") });
+    if (r.error) return { error: r.error };
+    return { entry: r.entry, href: nav.href({ view: "entry", uuid, centre: r.via === "live" ? { mode: "live", project: r.project } : { mode: "public", canonical, root: "" } }) };
+  })();
+  return REMOTE_REFS[key];
+}
+function remoteRefLine(ref, label) {
+  const lead = () => (label ? el("b", {}, label) : null);
+  const date = ref.date ? el("span", { class: "note" }, ` · as of ${ref.date}`) : null;
+  const repo = () => el("a", { class: "note", href: ref.remote, target: "_blank", rel: "noopener", title: "the repository on its host" }, " · repository");
+  const row = el("div", { class: "ref remote" }, lead(), navLink({ href: { view: "ref", canonical: ref.remote, uuid: ref.uuid } }, hostMark(ref.remote), repoLabel(ref.remote)),
+    el("span", { class: "note mono" }, ` · ${ref.uuid}`), el("span", { class: "note" }, " · resolving…"), date, repo());
+  resolveRemoteRef(ref.remote, ref.uuid).then((r) => {
+    if (r.entry) {
+      const e = r.entry; const state = [e.status, e.evidence].filter(Boolean).join(" · ");
+      setKids(row, lead(), el("a", { href: r.href }, e.title || ref.uuid), el("span", { class: "note" }, " · ", hostMark(ref.remote), `${repoLabel(ref.remote)}${state ? " · " + state : ""}`), date, repo());
+    } else {
+      setKids(row, lead(), el("a", { href: ref.remote, target: "_blank", rel: "noopener" }, hostMark(ref.remote), repoLabel(ref.remote)), el("span", { class: "note mono" }, ` · ${ref.uuid}`), el("span", { class: "note warn" }, ` · not resolved: ${r.error}`), date);
+    }
+  });
+  return row;
+}
+function refLine(ref, label) {
+  // one See / Superseded by reference as a row: local -> the entry here; remote -> the canonical, and the Id to find it there
+  const target = ref.uuid ? byUuid()[ref.uuid] : null;
+  const date = ref.date ? el("span", { class: "note" }, ` · as of ${ref.date}`) : null;
+  if (target) return el("div", { class: "ref" }, label ? el("b", {}, label) : null, navLink({ href: entryRoute(target) }, target.title), el("span", { class: "note" }, ` · ${topicOf(target.file)?.title || target.file}`), date);
+  if (ref.remote && ref.uuid) return remoteRefLine(ref, label);
+  if (ref.remote) return el("div", { class: "ref" }, label ? el("b", {}, label) : null, el("a", { href: ref.remote, target: "_blank", rel: "noopener" }, ref.remote.replace(/^https:\/\//, "")), date);
+  if (ref.file) return el("div", { class: "ref" }, label ? el("b", {}, label) : null, topicOf(ref.file) ? navLink({ href: { view: "topic", file: ref.file } }, ref.locator) : ref.locator, el("span", { class: "note mono" }, ` · ${ref.uuid || ""}`), el("span", { class: "note warn" }, " · Id not found here — the locator may be stale"), date);
+  return el("div", { class: "ref" }, label ? el("b", {}, label) : null, ref.text || "");
+}
+const shareUrlOf = (e) => shareUrlFor(entryHref(e), e.project);
+// the entry's or topic's file on the host, in the repository it lives in (a merged member's in its own)
+const hostProjectOf = (x) => x.origin?.state?.project || SCENE.state.project;
+// the context directory as a path in the repository: under the root in a mono repository (core/context/)
+const hostContextDir = (P) => `${P.root ? P.root.replace(/\/$/, "") + "/" : ""}${P.context || "context/"}`;
+const entryHostHref = (e) => { const P = hostProjectOf(e); return hostFileLink(canonicalOf(P), P.git?.branch, hostContextDir(P), e.localFile || e.file, hostAnchor(e.title)); }; // GitHub's anchor, not the entry id
+const topicHostHref = (t) => { const P = hostProjectOf(t); return hostFileLink(canonicalOf(P), P.git?.branch, hostContextDir(P), t.localFile || t.file, null); };
+// "open source": the Markdown file on the host, beside the copy-link button; nothing without a canonical
+const sourceLink = (href) => href ? extLink(href, "open source", "share-btn source-link") : null;
+function shareButton(e) { return copyLinkButton(shareUrlOf(e), "entry"); }
+function viewEntry(main, id) {
+  const e = entryOf(id);
+  if (!e && isUuid(id) && (LIVE() || (PUBLISHED() && canonicalOf(SCENE.state.project)))) return viewEntryElsewhere(main, id);
+  if (!e) return main.append(el("p", { class: "center" }, "No such entry"));
+  if (ROUTES.format(nav.current()) !== entryHref(e)) nav.go(entryRoute(e), { replace: true }); // an old file#anchor link shows the Id address from here on
+  const list = entriesOf(e.file); const idx = list.indexOf(e);
+  const t = topicOf(e.file);
+  INLINE_PROJECT = e.project || null;
+  const r = el("div", { class: `reader ${e.status}` },
+    el("div", { class: "crumbs" }, navLink({ href: { view: "overview" } }, "Overview"), " / ", navLink({ href: { view: "topic", file: e.file } }, t?.title || e.file), ` / line ${e.line}`, shareButton(e), sourceLink(entryHostHref(e))),
+    el("h1", {}, inline(e.title)),
+    el("div", { class: "fields" }, ...entryPills(e), e.source ? el("span", { class: "pill" }, labelled("Source: ", e.source)) : null, e.verification ? el("span", { class: "pill" }, labelled("Verification: ", e.verification.split(/\s[—-]\s/)[0])) : null),
+    el("div", { class: "body" }, renderMarkdown(e.body.text || "_(no body)_")),
+    e.revisit_when ? el("div", { class: "body" }, el("div", { class: "label" }, el("b", {}, "Revisit when"), el("p", {}, inline(e.revisit_when)))) : null,
+    refsBox(e),
+    el("div", { class: "pager" },
+      idx > 0 ? navLink({ href: entryRoute(list[idx - 1]) }, `← ${list[idx - 1].title}`) : el("span"),
+      idx < list.length - 1 ? navLink({ href: entryRoute(list[idx + 1]) }, `${list[idx + 1].title} →`) : el("span")),
+  );
+  INLINE_PROJECT = null;
+  main.append(r);
+  SCENE.selected = e.id;
+  renderDetailsEntry(e);
+}
 // #thought/<id>,<id>,…: a whole thought in one view — every entry of the chain
 // in reading order, origin first, each in full, joined by how the next one
 // follows from it. The Ids are the entries' own, so the address names the
@@ -558,6 +688,36 @@ function authorProjects() {
   return out;
 }
 
+const supersedersOf = (e) => e.uuid ? SCENE.state.entries.filter((x) => x.superseded_by && parseSupersededBy(x.superseded_by)?.uuid === e.uuid) : [];
+const seenFrom = (e, list) => e.uuid ? list.filter((x) => (x.see || []).some((r) => r?.uuid === e.uuid)) : [];
+// See and Superseded by of an entry, and the other way round: what supersedes
+// or points at it — here, and with the family scope anywhere in the tree
+function refsBox(e) {
+  const back = (label, rows) => rows.length ? [el("h3", {}, label), ...rows] : null;
+  const localRow = (x) => el("div", { class: "ref" }, navLink({ href: entryRoute(x) }, x.title), el("span", { class: "note" }, ` · ${x.project ? x.project + " · " : ""}${topicOf(x.file)?.title || x.file}`));
+  const sup = supersedersOf(e), seen = seenFrom(e, SCENE.state.entries);
+  const box = el("div", { class: "body refs-box" },
+    e.see?.length ? [el("h3", {}, "See"), ...e.see.map((r) => refLine(r))] : null,
+    e.superseded_by ? [el("h3", {}, "Superseded by"), (() => { const sb = parseSupersededBy(e.superseded_by); return sb.none != null ? el("div", { class: "ref" }, el("i", {}, "none"), el("span", { class: "note" }, ` — ${sb.none}`)) : refLine(sb); })()] : null,
+    back("Supersedes", sup.map(localRow)), back("Referenced by (See)", seen.map(localRow)));
+  if (SCENE.state.merged) return box.childNodes.length ? box : null; // the merged family holds every reference
+  const family = e.uuid && canFamily();
+  if (family && scope() === "family" && !SCENE.state.merged) {
+    const more = el("div", {}, el("p", { class: "note" }, "Looking for references from the rest of the family…")); box.append(more);
+    searchPool("family").then((pool) => {
+      const sups = [], sees = [];
+      for (const g of pool.groups) {
+        if (g.member.role === "self") continue;
+        const row = (x) => el("div", { class: "ref" }, el("a", { href: g.href(x) }, x.title), el("span", { class: "note" }, ` · ${g.member.name} · ${topicTitle(g.state, x.file)}`));
+        for (const x of g.state.entries || []) { if (x.superseded_by && parseSupersededBy(x.superseded_by)?.uuid === e.uuid) sups.push(row(x)); if ((x.see || []).some((r) => r?.uuid === e.uuid)) sees.push(row(x)); }
+      }
+      setKids(more, back("Supersedes, elsewhere in the family", sups), back("Referenced by (See), elsewhere in the family", sees),
+        pool.missing.length ? el("p", { class: "note" }, `${plural(pool.missing.length, "family member")} not available here — not looked through.`) : null);
+      if (!sups.length && !sees.length && !pool.missing.length) more.replaceChildren(el("p", { class: "note" }, "No references to this entry from the rest of the family."));
+    });
+  } else if (family) box.append(el("p", { class: "note" }, "References from the rest of the family show with the family scope — the switch next to the project menu."));
+  return box.childNodes.length ? box : null;
+}
 
 // ---------------------------------------------------------------- family and projects
 let FAMILY = null; // /api/family result for the current project (live mode only)
@@ -599,6 +759,51 @@ async function viewProjects(main) {
 }
 
 // ---------------------------------------------------------------- details pane
+function renderDetailsTopic(t) {
+  const d = $("#details"); d.replaceChildren();
+  d.append(el("h3", {}, "Topic"), el("div", { class: "kv" }, el("span", { class: "k" }, "file"), el("span", { class: "v mono" }, t.file), el("span", { class: "k" }, "entries"), el("span", { class: "v" }, t.entries)));
+  d.append(el("h3", {}, `References out (${t.refs_out.length})`), ...(t.refs_out.length ? t.refs_out.map((f) => navLink({ class: "backlink", href: { view: "topic", file: f } }, topicOf(f)?.title || f)) : [el("p", { class: "empty" }, "none")]));
+  d.append(el("h3", {}, `Referenced by (${t.refs_in.length})`), ...(t.refs_in.length ? t.refs_in.map((f) => navLink({ class: "backlink", href: { view: "topic", file: f } }, topicOf(f)?.title || f)) : [el("p", { class: "empty" }, "none")]));
+  miniGraph(d, { topic: t });
+}
+function renderDetailsEntry(e) {
+  const d = $("#details"); d.replaceChildren();
+  const g = e.git;
+  const P = hostProjectOf(e); // a merged member's entry lives in its own repository
+  const hostHref = entryHostHref(e);
+  d.append(el("h3", {}, "Entry"), el("div", { class: "kv" },
+    e.uuid ? [el("span", { class: "k" }, "Id"), el("span", { class: "v mono", title: "the entry's address — what See and Superseded by lines resolve to" }, e.uuid)] : null,
+    e.project ? [el("span", { class: "k" }, "project"), el("span", { class: "v" }, e.origin?.href ? el("a", { href: memberLink(e.origin.member, "#overview") }, e.project) : e.project)] : null,
+    el("span", { class: "k" }, "at"), el("span", { class: "v mono" }, hostHref ? el("a", { class: "gh", href: hostHref, target: "_blank", rel: "noopener", title: "open on the host" }, e.id) : e.id),
+    el("span", { class: "k" }, "type"), el("span", { class: "v" }, (e.type || []).join(", ") || "—"),
+    el("span", { class: "k" }, "status"), el("span", { class: "v" }, statusPill(e.status)),
+    el("span", { class: "k" }, "evidence"), el("span", { class: "v" }, evPill(e.evidence)),
+    e.source ? [el("span", { class: "k" }, "source"), el("span", { class: "v" }, inline(e.source))] : null,
+    e.verification ? [el("span", { class: "k" }, "verification"), el("span", { class: "v" }, inline(e.verification))] : null,
+    e.revisit_when ? [el("span", { class: "k" }, "revisit when"), el("span", { class: "v" }, inline(e.revisit_when))] : null,
+  ));
+  d.append(el("h3", {}, "Git"));
+  if (!g) d.append(el("p", { class: "empty" }, SCENE.state.project.git?.available ? "not in Git yet" : "no repository"));
+  else {
+    const who = (c) => c ? [authorLink(c.author, c.commit, P), `${c.date ? " · " + c.date : ""}${c.commit ? " · " : ""}`, c.commit ? el("code", {}, c.commit) : null] : ["—"];
+    d.append(el("div", { class: "kv" },
+      el("span", { class: "k" }, "created"), el("span", { class: "v" }, ...who(g.created)),
+      el("span", { class: "k" }, "last touched"), el("span", { class: "v" }, ...who(g.last_touched))));
+    if (g.status_history?.length) d.append(el("h3", {}, "Status history"), el("ul", { class: "hist" }, g.status_history.map((h) => el("li", { class: h.status }, `${h.status}`, el("div", { class: "d" }, authorLink(h.author, h.commit, P), ` · ${h.date} · ${h.commit}`)))));
+  }
+  const back = SCENE.state.entries.filter((x) => x.id !== e.id && x.refs.includes(e.file));
+  d.append(el("h3", {}, `Backlinks (${back.length})`), ...(back.length ? back.map((x) => navLink({ class: "backlink", href: entryRoute(x) }, x.title, el("div", { class: "note" }, topicOf(x.file)?.title || x.file))) : [el("p", { class: "empty" }, `nothing references ${e.file}`)]));
+  // the thoughts this entry is a step of — in the graph of the scope, friends and path included
+  const mine = entryThoughts(e);
+  const resting = new Set(); for (const { t, i } of mine) if (t.ins.shaky.some((x) => x.i === i)) for (const j of t.steps.slice(i + 1)) resting.add(j);
+  if (resting.size) d.append(el("h3", {}, `Linked after this (${resting.size})`), el("p", { class: "note" }, `This entry is in question (${e.status}); these later entries are linked after it — check whether they depend on it.`), ...[...resting].map((n) => el("a", { class: "backlink", href: n.href }, n.label, el("div", { class: "note" }, projOf(n)))));
+  if (mine.length) d.append(el("h3", {}, `In thoughts (${mine.length})`), ...mine.map(({ t, i }) => navLink({ class: "backlink", href: thoughtRoute(t), title: t.steps.map((n) => n.label).join("\n→ ") },
+    `${shortLabel(t.steps[0])} → ${shortLabel(t.steps[t.steps.length - 1])}`,
+    el("div", { class: "note" }, `step ${i + 1} of ${t.steps.length}${t.evolution ? " · evolution" : ""}${t.ends.length ? " · continues ↗" : ""}${t.ins.weakOrigin ? ` · starts ${t.ins.weakOrigin}` : ""}${t.ins.affected.includes(i) ? " · after a step in question" : ""}`))));
+  if (e.refs.length) d.append(el("h3", {}, "References"), ...e.refs.map((f) => navLink({ class: "backlink", href: { view: "topic", file: f } }, topicOf(f)?.title || f)));
+  if (e.findings.length) d.append(el("h3", {}, "Linter"), ...e.findings.map((f) => el("div", { class: "finding" }, pill(f.code, `sev-${f.severity}`), ` line ${f.line}: ${f.message}`)));
+  renderDetailsNeighbourhood(e);
+}
 function renderDetailsDefault() {
   const d = $("#details"); d.replaceChildren();
   const route = nav.current();
@@ -634,6 +839,7 @@ function renderDetailsDefault() {
   d.dataset.pane = "graph";
   miniGraph(d, {});
 }
+function renderDetailsNeighbourhood(e) { miniGraph($("#details"), { entry: e }); }
 // The side-pane graph: the neighbourhood of an entry or topic, the whole
 // project, or the whole family — a switch in its corner, remembered per
 // browser. Family is offered where the family scope is (live, public).
@@ -1587,21 +1793,16 @@ const THOUGHTS_HOST = {
 };
 // what the pages (ktw-pages.js) ask of this host, with every call
 const PAGES_HOST = {
-  live: () => LIVE(), published: () => PUBLISHED(), project: () => PROJECT || null,
-  provider: () => provider(), publicTree: () => publicTree(), publicState: (canonical, root) => fetchPublicState(canonical, root),
-  pageUrl: () => pageUrl(), isLocalPage: () => isLocalPage(), go: (href) => go(href),
-  inline: THOUGHTS_HOST.inline, renderBody: THOUGHTS_HOST.renderBody,
-  details: () => $("#details"), miniGraph: (box, opts) => miniGraph(box, opts),
-  canFamily: () => canFamily(), scope: () => scope(), searchPool: (s) => searchPool(s),
-  entryThoughts: (e) => entryThoughts(e), thoughts: THOUGHTS,
-  authorLink: (name, commit, project) => authorLink(name, commit, project), memberLink: (m, hash) => memberLink(m, hash),
-  authorProjects: () => authorProjects(),
+  published: () => PUBLISHED(), pageUrl: () => pageUrl(), isLocalPage: () => isLocalPage(),
+  inline: THOUGHTS_HOST.inline,
+  authorLink: (name, commit, project) => authorLink(name, commit, project), authorProjects: () => authorProjects(),
   friendsWaiting: () => ((graph || buildGraph()).friends || []).filter((f) => !FRIENDS.loaded[fkey(f.canonical)]),
   friendsLoading: () => FRIENDS.loading,
   loadFriends: (waiting) => { setFriendsAuto(true); loadFriends(waiting).then(() => { if (onView("authors")) render(); }); },
   render: () => render(), rerender: () => rerender(),
 };
 const entryRow = (e) => PAGES.entryRow(e, PAGES_HOST);
+const shareUrlFor = (hash, project) => PAGES.shareUrlFor(hash, project, PAGES_HOST);
 const holdReading = (g) => THOUGHTS.holdReading(g, THOUGHTS_HOST);
 const renderThoughts = (g) => THOUGHTS.list(g, THOUGHTS_HOST);
 function friendsLegend(g) {
@@ -1881,10 +2082,10 @@ function render() {
   else if (v === "projects") { viewProjects(main); renderDetailsDefault(); }
   else if (v === "friends") { viewFriends(main); renderDetailsDefault(); }
   else if (v === "thoughts") { THOUGHTS.page(main, THOUGHTS_HOST); renderDetailsDefault(); }
-  else if (v === "topic") PAGES.topic(main, route.file, PAGES_HOST);
-  else if (v === "entry") PAGES.entry(main, route.uuid, PAGES_HOST);
+  else if (v === "topic") viewTopic(main, route.file);
+  else if (v === "entry") viewEntry(main, route.uuid);
   else if (v === "thought") { THOUGHTS.reader(main, route.refs, THOUGHTS_HOST); renderDetailsDefault(); }
-  else if (v === "ref") { PAGES.remoteEntry(main, route.canonical, route.uuid, PAGES_HOST); renderDetailsDefault(); }
+  else if (v === "ref") { viewRemoteEntry(main, route.canonical, route.uuid); renderDetailsDefault(); }
   else if (v === "search") { SEARCH.view(main, route.scope, route.q); renderDetailsDefault(); }
   else { PAGES.overview(main, PAGES_HOST); renderDetailsDefault(); }
   markActive(); applySide();
