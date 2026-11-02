@@ -127,7 +127,7 @@ Every request the views make goes through it. `provider()` returns an object who
 | `authorProfile(canonical, sha)` | `{ profile, url }`; `profile: null` where the host's API does not name the account | no | not called by the views: the dashboard's page uses it to link an author to the account |
 | `backlinks(canonical)` | `{ file, url }`: who in the registry cites this repository; no file is an answer | no | not called by the views: the dashboard's page reads it for the Friends page's `cited()` hook |
 
-A method left out hides the feature that needs it, or the feature says why it has nothing; it never makes the views throw or leave a promise rejected. A method that rejects counts as an answer with an `error`. The dashboard's export, for example, has no `family`, `memberState` or `resolveEntry`, because those need the live server. The fixture host page (`dashboard/tests/web/host/`) runs one host with `state`, `bodies` and `exportState`, and one with `state()` alone.
+A method left out hides the feature that needs it, or the feature says why it has nothing; it never makes the views throw or leave a promise rejected. `exportState` and `bodies` are wrapped: either one that rejects counts as an answer with an `error`, and a `bodies` answer with an `error` marks the state's `bodiesError`, so the views do not ask for the texts again. The other methods are awaited as they are, so a host's `family` and `memberState` answer a failure with `{ error }` and do not reject. The dashboard's export, for example, has no `family`, `memberState` or `resolveEntry`, because those need the live server. The fixture host page (`dashboard/tests/web/host/`) runs one host with `state`, `bodies` and `exportState`, and one with `state()` alone.
 
 ### nav
 

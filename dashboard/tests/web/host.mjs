@@ -83,6 +83,25 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     const got = await H.b.family.bodies(lean).catch(reject("bodies"));
     if (got !== lean || !/not available/.test(lean.bodiesError || "")) errors.push(`host b: bodies without a provider method: ${JSON.stringify(lean)}`);
     if (H.b.family.canExports() || H.b.family.canBodies() || !H.a.family.canExports() || !H.a.family.canBodies()) errors.push("canExports / canBodies do not follow the providers");
+    // a bodies method that fails: answered with { state, error } or { error }, or rejected — each marks the lean
+    // state, so a reader waiting for the texts (!bodiesLoaded && !bodiesError) asks once, not again and again
+    const K = w.KeepTheWhy;
+    const failing = {
+      "resolves { state, error }": (st) => Promise.resolve({ state: st, error: "offline" }),
+      "resolves { error }": () => Promise.resolve({ error: "offline" }),
+      "rejects": () => Promise.reject(new Error("offline")),
+    };
+    for (const [how, fn] of Object.entries(failing)) {
+      let calls = 0;
+      const fam = K.views.family.create({ scene: K.scene.create({ state: H.a.state, self: H.a.state }), nav: H.a.nav,
+        provider: () => ({ state: async () => ({ state: H.a.state }), bodies: (st) => { calls++; return fn(st); } }), host: { mode: () => "export", root: () => "" } });
+      const st = { bodies: "bodies.json", entries: [] };
+      const back = await fam.bodies(st).catch(reject(`bodies that ${how}`));
+      if (back !== st || !/offline/.test(st.bodiesError || "")) errors.push(`bodies that ${how}: the state is not marked (${JSON.stringify(st)})`);
+      // what thoughts.reader and the timeline do before they ask
+      if (!st.bodiesLoaded && !st.bodiesError) await fam.bodies(st);
+      if (calls !== 1) errors.push(`bodies that ${how}: asked ${calls} times`);
+    }
     errors.push(...(w.KTW_HOST_ERRORS || []));
     console.log(`${rendered}/${places.length * 2} places rendered under two hosts`);
   }

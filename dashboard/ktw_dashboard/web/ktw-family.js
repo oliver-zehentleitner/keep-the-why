@@ -42,7 +42,10 @@ function publicState(canonical, root = "") {
 function bodies(state) {
   const lean = state && typeof state.bodies === "string" && !state.bodiesLoaded;
   if (!canBodies()) { if (lean && !state.bodiesError) state.bodiesError = NO_BODIES; return Promise.resolve(state); }
-  return Promise.resolve().then(() => provider().bodies(state)).then((r) => r?.state || state, (err) => { if (lean && !state.bodiesError) state.bodiesError = failed(err, "could not fetch the bodies"); return state; });
+  // a failure the provider answers with ({ state, error } or { error }) marks the state as one it rejects does, so a
+  // reader that waits for the texts (thoughts, timeline: !bodiesLoaded && !bodiesError) does not ask again and again
+  const mark = (why) => { if (lean && !state.bodiesLoaded && !state.bodiesError) state.bodiesError = why; };
+  return Promise.resolve().then(() => provider().bodies(state)).then((r) => { if (r?.error) mark(String(r.error)); return r?.state || state; }, (err) => { mark(failed(err, "could not fetch the bodies")); return state; });
 }
 
 // What a search runs over: this project, or every member of its tree — the
