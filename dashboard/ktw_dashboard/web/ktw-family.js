@@ -24,12 +24,26 @@ const publicHref = (canonical, root = "", route = { view: "overview" }) => nav.h
 const liveHref = (project, route) => nav.href({ ...route, centre: { mode: "live", project } });
 
 // the page's caches over the provider: one request per project, however many ask at once
+// exportState and bodies are optional (docs/dashboard-views.md): without one, the answer says so, and what needs it
+// hides or shows that reason. A host's promise that rejects is an answer with an error too: nothing here throws.
+const NO_EXPORTS = "published exports are not available on this page";
+const NO_BODIES = "entry texts are not available on this page";
+const canExports = () => typeof provider().exportState === "function";
+const canBodies = () => typeof provider().bodies === "function";
+const failed = (err, what) => (err && err.message) || String(err || what);
 const PUBLIC_STATES = {}; // `${canonical}|${root}` -> Promise<{state, url} | {error}>
 function publicState(canonical, root = "") {
   const key = `${canonical}|${root}`;
-  return (PUBLIC_STATES[key] ||= provider().exportState(canonical, root));
+  return (PUBLIC_STATES[key] ||= canExports()
+    ? Promise.resolve().then(() => provider().exportState(canonical, root)).catch((err) => ({ error: failed(err, "could not read the published export"), canonical, root }))
+    : Promise.resolve({ error: NO_EXPORTS, canonical, root }));
 }
-const bodies = (state) => provider().bodies(state).then((r) => r.state);
+// a lean state's entry texts, filled in where the provider can; else state.bodiesError says why they are missing
+function bodies(state) {
+  const lean = state && typeof state.bodies === "string" && !state.bodiesLoaded;
+  if (!canBodies()) { if (lean && !state.bodiesError) state.bodiesError = NO_BODIES; return Promise.resolve(state); }
+  return Promise.resolve().then(() => provider().bodies(state)).then((r) => r?.state || state, (err) => { if (lean && !state.bodiesError) state.bodiesError = failed(err, "could not fetch the bodies"); return state; });
+}
 
 // What a search runs over: this project, or every member of its tree — the
 // whole family from the root down, not only the parent chain.
@@ -317,7 +331,7 @@ async function friendsView(main, host) {
 
 return Object.freeze({
   mode: () => host.mode(), live: LIVE, published: PUBLISHED,
-  publicState, bodies, tree, memberState, publicTree, publicTreeFrom, pool, friendPool,
+  publicState, bodies, canExports, canBodies, tree, memberState, publicTree, publicTreeFrom, pool, friendPool,
   treeNow: () => TREE, publicTreeNow: () => PUBLIC_TREE, resetCentre,
   friends: FRIENDS, friendCandidates, loadFriend, forgetFriend, liveMember, publicMember,
   view, friendsView,

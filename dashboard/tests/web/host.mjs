@@ -1,7 +1,8 @@
 // The views under two foreign hosts (tests/web/host/), in jsdom: served from dashboard/ over HTTP the way a host
-// serves them, the library loaded from the manifest by the page itself. Every place each host offers renders,
-// every link a view draws is the host's path (never the dashboard's #hash), and moving one host leaves the other
-// where it was. jsdom does not enforce the page's CSP; computed-styles.mjs --host checks the page in Chromium.
+// serves them, the library loaded from the manifest by the page itself. Every place each host offers shows what
+// that place must show (host.js's KTW_HOST_PLACES), every link a view draws is the host's path (never the
+// dashboard's #hash), moving one host leaves the other where it was, a route no place answers to is an error, and
+// host B's provider — state() only — gets answers that say what is missing, never a rejection. jsdom does not enforce the page's CSP; computed-styles.mjs --host checks the page in Chromium.
 //
 //   node host.mjs
 import { JSDOM, VirtualConsole } from "jsdom";
@@ -43,19 +44,14 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   if (doc.documentElement.dataset.ready !== "1") errors.push(`the page did not start: ${(w.KTW_HOST_ERRORS || []).join(" | ")}`);
   else {
     const H = w.KTW_HOSTS;
-    const S = H.a.state;
-    const entry = S.entries.find((e) => e.uuid);
-    const places = [
-      { view: "overview" }, { view: "graph" }, { view: "timeline" }, { view: "thoughts" }, { view: "queues" }, { view: "findings" }, { view: "authors" },
-      { view: "family" }, { view: "friends" },
-      { view: "topic", file: S.topics[0].file }, { view: "entry", uuid: entry.uuid }, { view: "search", scope: "self", q: "snapshot" },
-    ];
+    const places = w.KTW_HOST_PLACES;
     let rendered = 0;
-    for (const route of places) {
+    for (const place of places) {
+      const route = place.route;
       for (const name of ["a", "b"]) {
-        H[name].go(route); await tick(200);
+        const miss = await w.KTW_HOST_SETTLE(name, place);
         const main = H[name].main;
-        if (!main.querySelector("h1")) { errors.push(`host ${name} ${route.view}: no heading rendered`); continue; }
+        if (miss) { errors.push(`host ${name} ${route.view}: missing ${miss}`); continue; }
         rendered++;
         for (const a of main.querySelectorAll("a[href]")) {
           const href = a.getAttribute("href");
@@ -74,6 +70,19 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     const link = [...H.a.main.querySelectorAll("a[href^='/a/why/topic/']")][0];
     if (!link) errors.push("host a: the overview links no topic");
     else { link.click(); await tick(200); if (H.a.nav.current().view !== "topic") errors.push("host a: a topic link did not move host a"); if (w.location.href !== before) errors.push("host a: a link changed the page's address"); }
+    // a route no place answers to is reported, not shown as the overview
+    const had = w.KTW_HOST_ERRORS.length;
+    H.a.go({ view: "nowhere" }); await tick(50);
+    if (w.KTW_HOST_ERRORS.length !== had + 1 || !/no place answers/.test(w.KTW_HOST_ERRORS[had] || "")) errors.push("host a: an unknown route was not reported");
+    else w.KTW_HOST_ERRORS.pop();
+    // host B's provider has state() only: the family's reads through it answer with the reason, never reject
+    const reject = (what) => (e) => { errors.push(`host b: ${what} rejected: ${e?.message || e}`); return {}; };
+    const pub = await H.b.family.publicState("https://github.com/acme/other", "").catch(reject("publicState"));
+    if (pub.state || !/not available/.test(pub.error || "")) errors.push(`host b: publicState without exportState: ${JSON.stringify(pub)}`);
+    const lean = { bodies: "bodies.json", entries: [] };
+    const got = await H.b.family.bodies(lean).catch(reject("bodies"));
+    if (got !== lean || !/not available/.test(lean.bodiesError || "")) errors.push(`host b: bodies without a provider method: ${JSON.stringify(lean)}`);
+    if (H.b.family.canExports() || H.b.family.canBodies() || !H.a.family.canExports() || !H.a.family.canBodies()) errors.push("canExports / canBodies do not follow the providers");
     errors.push(...(w.KTW_HOST_ERRORS || []));
     console.log(`${rendered}/${places.length * 2} places rendered under two hosts`);
   }

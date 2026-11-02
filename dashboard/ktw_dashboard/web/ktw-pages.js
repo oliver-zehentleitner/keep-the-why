@@ -293,7 +293,7 @@ function forHost(H) {
       const r = resolveSee(uuid, { known, published: known && !known.error ? null : await family.publicState(canonical, "") });
       if (r.error) return { error: r.error };
       return { entry: r.entry, route: { view: "entry", uuid, centre: r.via === "live" ? { mode: "live", project: r.project } : { mode: "public", canonical, root: "" } } };
-    })();
+    })().catch((err) => ({ error: err?.message || String(err) })); // a host's lookup that throws is a reference not resolved
     return REMOTE_REFS[key];
   }
   function remoteRefLine(ref, label) {

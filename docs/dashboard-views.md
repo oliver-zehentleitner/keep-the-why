@@ -36,9 +36,14 @@ All files live in `dashboard/ktw_dashboard/web/` and ship in the `keep-the-why-d
 | `ktw-thoughts.js` | `views.thoughts` | The chains of linked entries: the list beside a graph, the Thoughts page, the reader. |
 | `ktw-pages.js` | `views.pages` | The overview, queues, findings, authors, topic and entry pages, an entry's row, the details pane. |
 
-### Frozen, shallowly
+### Frozen, shallowly, except the scene
 
-Every object a file puts on `KeepTheWhy`, and every instance a `create()` returns, is passed through `Object.freeze` once. The freeze is shallow. A host cannot replace `KeepTheWhy.core.routes` or add a method to a view instance. The objects those properties hold, such as the scene's `state` or a view's caches, are live and change as the page runs. Treat them as read-only; the scene's methods are the way to change what it holds.
+Every object a file puts on `KeepTheWhy`, and every instance a view's `create()` returns, is passed through `Object.freeze` once. The freeze is shallow. A host cannot replace `KeepTheWhy.core.routes` or add a method to a view instance. The objects those properties hold, such as a view's caches, are live and change as the page runs. Treat them as read-only.
+
+The scene is the exception: `KeepTheWhy.scene.create()` returns a plain object, not frozen, because the host writes to it.
+
+- **Assigned by the host:** `state` and `self` when a new state arrives (`state` is what the views show, the family merged in or not; `self` is the project's own), `selected` (the entry the details pane shows, by id) and `filter` (the sidebar's `{ status, evidence, author }`). No view listens for these; the host renders after it sets them.
+- **Changed through a method only:** `day` (`setDay`), `focus` (`setFocus`), `thought` (`light`), `pin` (`setThought`), `scope` (`setScope`) and the layout (`resetLayout`, `layoutFor`). Views subscribe to these with `scene.on(event, fn)`. Assigning one directly changes the value without telling them.
 
 ### Rendering safety
 
@@ -77,7 +82,7 @@ A view renders into the element the host hands it: `pages.overview(main, H)`, `f
 
 Without `ktw-root`, the views' headings, links and code spans take the host's element styles. Without `ktw-aside`, the side pane's graph, thoughts list and width switch lose their layout.
 
-`dashboard/tests/web/host/` is a complete small host: two of them on one page, with their own containers, path-style navigation, settings and provider, loading the files from the manifest under a strict policy. `host.mjs` drives it in jsdom.
+`dashboard/tests/web/host/` is a complete small host: two of them on one page, with their own containers, path-style navigation, settings and provider, loading the files from the manifest under a strict policy. Host A's provider has `state`, `bodies` and `exportState`, host B's `state()` alone. `host.js` lists every place with what it must show under each host. `host.mjs` drives it in jsdom, and `host-chromium.mjs` in Chromium under the policy.
 
 ## Styles
 
@@ -110,19 +115,19 @@ Only these cross the boundary between the views and the page around them.
 
 Every request the views make goes through it. `provider()` returns an object whose methods return a promise of a result. Each result says where it came from: `url`, and for a project `canonical`, `root` and `forkOf` as they apply. A failure is an `error` field beside those, never a throw. `loaded` lists the files read to make the result and `failed` the files read and refused, for a host that shows what the page fetched.
 
-| Method | Result | Required |
-|---|---|---|
-| `state()` | `{ state, url }`: the project shown | yes |
-| `subscribe(onState, onStatus)` | calls `onState({ state, url })` on every change; returns the function that stops listening | no |
-| `bodies(state)` | `{ state, url }` with entry bodies filled in; an export with bodies inline needs no fetch | no |
-| `family({ project, tree })` | `{ members, url }`: the family a server knows | no |
-| `memberState(key)` | `{ state, url, key }`: another project a server knows | no |
-| `exportState(canonical, root)` | `{ state, url, canonical, root, raw, forkOf? }` or `{ error, … }`: a repository's published export | no |
-| `resolveEntry(uuid)` | `{ project, entry, url }`: which known project carries an Id | no |
-| `authorProfile(canonical, sha)` | `{ profile, url }`; `profile: null` where the host's API does not name the account | no |
-| `backlinks(canonical)` | `{ file, url }`: who in the registry cites this repository; no file is an answer | no |
+| Method | Result | Required | Without it |
+|---|---|---|---|
+| `state()` | `{ state, url }`: the project shown | yes | — |
+| `subscribe(onState, onStatus)` | calls `onState({ state, url })` on every change; returns the function that stops listening | no | not called by the views: the dashboard's page uses it for live updates |
+| `bodies(state)` | `{ state, url }` with entry bodies filled in; an export with bodies inline needs no fetch | no | a lean state (`bodies` names a file) stays without its entry texts: `state.bodiesError` says so, the timeline's cards and the thought reader show no text, and a family or friends search says above its results which projects it searched without texts |
+| `family({ project, tree })` | `{ members, url }`: the family a server knows | no | in live mode, the Family page lists no members and the family search scope covers the project alone |
+| `memberState(key)` | `{ state, url, key }`: another project a server knows | no | a member's state is not read; it is listed under "Not searched" with the reason |
+| `exportState(canonical, root)` | `{ state, url, canonical, root, raw, forkOf? }` or `{ error, … }`: a repository's published export | no | outside live mode the family and friends search scopes are not offered. The Family page lists the declared members with "published exports are not available on this page". A See or Superseded by into another repository shows "not resolved" with that reason, and so does its `ref` place. Friends that need an export are listed under "Not loaded" |
+| `resolveEntry(uuid)` | `{ project, entry, url }`: which known project carries an Id | no | a reference into another repository is resolved from its published export only |
+| `authorProfile(canonical, sha)` | `{ profile, url }`; `profile: null` where the host's API does not name the account | no | not called by the views: the dashboard's page uses it to link an author to the account |
+| `backlinks(canonical)` | `{ file, url }`: who in the registry cites this repository; no file is an answer | no | not called by the views: the dashboard's page reads it for the Friends page's `cited()` hook |
 
-A method left out hides the feature that needs it. The dashboard's export, for example, has no `family`, `memberState` or `resolveEntry`, because those need the live server.
+A method left out hides the feature that needs it, or the feature says why it has nothing; it never makes the views throw or leave a promise rejected. A method that rejects counts as an answer with an `error`. The dashboard's export, for example, has no `family`, `memberState` or `resolveEntry`, because those need the live server. The fixture host page (`dashboard/tests/web/host/`) runs one host with `state`, `bodies` and `exportState`, and one with `state()` alone.
 
 ### nav
 

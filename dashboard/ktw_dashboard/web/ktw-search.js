@@ -39,7 +39,8 @@ function rows(given, q) {
   return out.sort((a, b) => compareHits(a.hit, b.hit));
 }
 // the family can be read live, from a published export, or from an export that knows its repository
-const searchScopes = () => (family.live() || family.mode() === "public" || (family.mode() === "export" && !!canonicalOf(scene.state?.project)) ? ["project", "family"] : ["project"]);
+// (outside live mode only through the provider's exportState: without it, family and friends are not offered)
+const searchScopes = () => (family.live() || (family.canExports() && (family.mode() === "public" || (family.mode() === "export" && !!canonicalOf(scene.state?.project)))) ? ["project", "family"] : ["project"]);
 const hasFamily = () => !!(scene.state?.project?.parent || (scene.state?.project?.children || []).length);
 const canFamily = () => searchScopes().includes("family") && hasFamily();
 // friends can be searched where the family can be read, and there are any: entries citing outside the family
@@ -75,6 +76,9 @@ async function view(main, linkScope, q) {
     (pageFiltered() ? ` · ${shown} match the sidebar filters, the rest dimmed` : "") +
     " · searched: title, body, Revisit when, Source, Verification, Superseded by, Id, file, type, status, evidence";
   const box = el("div", { class: "ktw-search-page" });
+  // a project whose entry texts could not be had was searched without them: said once, above the results
+  const textless = found.groups.filter((g) => g.state.bodiesError);
+  if (textless.length) box.append(el("p", { class: "ktw-note ktw-warn" }, `Searched without the entry texts in ${textless.map((g) => g.member.name).join(", ")}: ${[...new Set(textless.map((g) => g.state.bodiesError))].join("; ")}.`));
   for (const g of found.groups) {
     const mine = hits.filter((r) => r.g === g);
     if (!mine.length) continue;
