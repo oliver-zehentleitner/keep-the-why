@@ -127,6 +127,12 @@ function projectLabel(p) {
   return (i > 0 && r.slice(i + 1)) || p?.id || p?.name || "";
 }
 
+// an entry's references to other entries — its See lines and its Superseded by — each with the Id it names, the
+// repository when it is another one (remote), and its kind
+const entryRefs = (e) => [...(e.see || []).map((x) => x && { uuid: x.uuid, remote: x.remote, kind: "see" }), e.superseded_by ? { ...parseSupersededBy(e.superseded_by), kind: "superseded" } : null].filter((x) => x?.uuid);
+// a repository by its canonical, short: owner/name on the big hosts, the host and path elsewhere
+const repoLabel = (canonical) => canonical.replace(/^https:\/\/(github\.com|gitlab\.com|codeberg\.org|bitbucket\.org)\//, "").replace(/^https:\/\//, "");
+
 function parseSupersededBy(value) {
   if (!value) return null;
   const v = value.trim();
@@ -807,7 +813,7 @@ KTW.core = Object.freeze({
   sameCanonical, exportStateUrl, exportVerdict, resolveSee, layoutTick, settleLayout, NO_FILTER, filterActive, entryMatches, fkey,
   esc, plural, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug,
   hostAnchor, hostFileLink, hostTreeLink, HOSTS, hostOf, canonicalOf, ownerOf, projectLabel,
-  parseSupersededBy, typeName, kindLabel, familyRank, familyOrder, groupByFamily, shuffled, searchTerms,
+  parseSupersededBy, entryRefs, repoLabel, typeName, kindLabel, familyRank, familyOrder, groupByFamily, shuffled, searchTerms,
   registryMatches, bodyProse, searchHit, compareHits, snippetAt, highlightParts, resolveLocation, backlinksUrl,
   citingOf, friendsOf, thoughtsOf, SHAKY, thoughtInsights, linkFamily, authorLookup, mergeStates,
   todayISO, nowISO, isMoment, msOf, isoAt, addDays, dayDiff, createdOn,

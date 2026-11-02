@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-const { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, shuffled, compareHits, snippetAt, highlightParts, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf, projectLabel, backlinksUrl, citingOf, hostAnchor, todayISO, addDays, dayDiff, timeGrid, stampLabel, existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan, createdOn, TYPE_KINDS, TYPE_TOKENS, paletteToken, typeKind, SHELF, stageCards, stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight, mergeAuthors, sortAuthors, AUTHOR_SORTS, ownerOf, exportStateUrl, exportVerdict, resolveSee, layoutTick , NO_FILTER, filterActive, entryMatches, fkey } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
+const { esc, plural, typeName, entryRefs, repoLabel, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, shuffled, compareHits, snippetAt, highlightParts, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf, projectLabel, backlinksUrl, citingOf, hostAnchor, todayISO, addDays, dayDiff, timeGrid, stampLabel, existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan, createdOn, TYPE_KINDS, TYPE_TOKENS, paletteToken, typeKind, SHELF, stageCards, stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight, mergeAuthors, sortAuthors, AUTHOR_SORTS, ownerOf, exportStateUrl, exportVerdict, resolveSee, layoutTick , NO_FILTER, filterActive, entryMatches, fkey } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
 const MD = globalThis.KeepTheWhy.markdown; // ktw-markdown.js
 
 // ---------------------------------------------------------------- prefs (host)
@@ -53,14 +53,7 @@ const nav = {
 const onView = (...views) => { const r = nav.current(); return !r.alias && !r.unknown && views.includes(r.view); };
 // a link to a place: a real anchor — middle-click, a new tab and a screen reader work — whose plain click moves
 // through nav. `href` in attrs is the route; it keeps its place among the attributes, so the markup is as before.
-function navLink(attrs, ...kids) {
-  const route = attrs.href; const own = attrs.onclick;
-  return el("a", { ...attrs, href: nav.href(route), onclick: (ev) => {
-    own?.(ev);
-    if (ev.defaultPrevented || ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey || attrs.target) return;
-    ev.preventDefault(); nav.go(route);
-  } }, ...kids);
-}
+const navLink = (attrs, ...kids) => globalThis.KeepTheWhy.ui.navLink(nav, attrs, ...kids);
 // The host's own moves, for what is not a place: an address nav.href made
 // (a graph node's), a walk to another centre in place, a reload, and whether
 // the page is on this machine.
@@ -432,6 +425,11 @@ const GRAPH = globalThis.KeepTheWhy.views.graph.create({ scene: SCENE, nav, pref
 const { run: runGraph, lightThought, spotIn, projectNodes, miniView, driftOn, setDrift, setLabels } = GRAPH;
 // The timeline's stage (ktw-timeline.js): the same three, and the page around it stays here.
 const TIMELINE = globalThis.KeepTheWhy.views.timeline.create({ scene: SCENE, nav, prefs });
+// The thoughts (ktw-thoughts.js): the list beside a graph, the Thoughts page and the reader; what only this host
+// has — the graph of the scope, following a chain into other repositories, an entry found in what the page has
+// loaded, the Markdown with this page's topic links, a redraw — is THOUGHTS_HOST, further down.
+const THOUGHTS = globalThis.KeepTheWhy.views.thoughts.create({ scene: SCENE, nav, prefs });
+const { thoughtRoute, thoughtHref, shortLabel, projOf, focusStep, stepHover } = THOUGHTS;
 let PROJECT = QUERY.get("project"); // null: the server's SCENE.selected one
 const api = (path) => PROJECT ? `${path}?project=${encodeURIComponent(PROJECT)}` : path;
 // The clock: the day the page shows — the timeline's playhead. Set while the timeline is open, null
@@ -699,7 +697,6 @@ function resolveRemoteRef(canonical, uuid) {
   })();
   return REMOTE_REFS[key];
 }
-const repoLabel = (canonical) => canonical.replace(/^https:\/\/(github\.com|gitlab\.com|codeberg\.org|bitbucket\.org)\//, "").replace(/^https:\/\//, "");
 function remoteRefLine(ref, label) {
   const lead = () => (label ? el("b", {}, label) : null);
   const date = ref.date ? el("span", { class: "note" }, ` · as of ${ref.date}`) : null;
@@ -788,8 +785,6 @@ function viewEntry(main, id) {
 // follows from it. The Ids are the entries' own, so the address names the
 // thought; entries of friends or of the path's projects are found in what the
 // page has loaded, and a missing one says so.
-const thoughtRoute = (t) => ({ view: "thought", refs: t.steps.map((n) => n.entry.uuid || n.entry.id) });
-const thoughtHref = (t) => nav.href(thoughtRoute(t));
 function findEntry(ref) {
   const here = entryOf(ref);
   if (here) return { e: here, href: entryHref(here), where: here.project || null, own: true };
@@ -800,69 +795,10 @@ function findEntry(ref) {
   for (const p of pools) { const e = (p.state.entries || []).find((x) => x.uuid === ref || x.id === ref); if (e) return { e, href: p.href ? p.href(e) : "#graph", where: p.name, own: false, origin: p }; }
   return null;
 }
-function thoughtLink(a, b) {
-  if (!a || !b) return "then";
-  if (a.e.uuid && (b.e.see || []).some((x) => x?.uuid === a.e.uuid)) return "cited by";
-  const sb = a.e.superseded_by ? parseSupersededBy(a.e.superseded_by) : null;
-  if (sb?.uuid && sb.uuid === b.e.uuid) return "superseded by";
-  return "then";
-}
-// the days a thought's steps were created, as ticks on one line
-function thoughtTimeline(steps, ins) {
-  if (!ins.from || ins.from === ins.to) return ins.from ? el("p", { class: "note" }, `All its steps were written on ${ins.from}.`) : null;
-  const t0 = Date.parse(ins.from), t1 = Date.parse(ins.to), days = Math.round((t1 - t0) / 86400000);
-  const bar = el("div", { class: "timeline-bar" });
-  steps.forEach((f, i) => { const d = f?.e?.git?.created?.date; if (!d) return; const x = ((Date.parse(d) - t0) / (t1 - t0)) * 100; bar.append(el("span", { class: "tick", style: `left:${x}%`, title: `${i + 1}: ${d} — ${f.e.title}`, ...stepHover(f.e.uuid || `e:${f.e.id}`) }, String(i + 1))); });
-  return el("div", { class: "thought-timeline" }, el("div", { class: "note" }, `${ins.from} → ${ins.to} · grew over ${plural(days, "day")}`), bar);
-}
-function viewThought(main, refs) {
-  const steps = refs.map(findEntry);
-  // a step from another project may come from a lean export: its body is fetched, and the view renders again
-  const lean = steps.filter((f) => f?.origin?.state && typeof f.origin.state.bodies === "string" && !f.origin.state.bodiesLoaded && !f.origin.state.bodiesError);
-  if (lean.length) Promise.all(lean.map((f) => ensureBodies(f.origin.state))).then(() => { if (nav.current().view === "thought") render(); });
-  // an entry of a friend is found once the friends are in: they load with a graph, and the view renders again
-  if (steps.some((f) => !f) && FRIENDS_AUTO && !FRIENDS.on && !FRIENDS.loading) buildGraph();
-  const links = steps.map((f, i) => (i ? thoughtLink(steps[i - 1], f) : null));
-  const ins = thoughtInsights(steps.map((f) => f?.e || {}), links.slice(1).map((l) => (l === "superseded by" ? "superseded" : "see")));
-  // where the chain goes on beyond what the page has loaded: before its origin, after its newest entry
-  const beyond = (f, kind) => (f ? entryRefs(f.e).filter((x) => x.kind === kind && x.remote && !findEntry(x.uuid)) : []);
-  const before = beyond(steps[0], "see"), after = beyond(steps[steps.length - 1], "superseded");
-  const goOn = (ends, where) => el("div", { class: "thought-beyond" }, `${where} goes on in ${[...new Set(ends.map((x) => repoLabel(x.remote)))].join(", ")} — not loaded on this page. `,
-    el("button", { type: "button", class: "link-btn", disabled: CHAIN.busy, onclick: () => followThought({ anchor: steps.filter(Boolean).pop()?.e.uuid }, (c) => { if (c) nav.go(thoughtRoute(c)); else render(); }) }, CHAIN.busy ? "loading…" : "load the whole chain"));
-  const evolution = steps.length > 1 && links.slice(1).every((l) => l === "superseded by");
-  const r = el("div", { class: "reader thought-reader" },
-    el("div", { class: "crumbs" }, navLink({ href: { view: "graph" } }, "Graph"), " / thought"),
-    el("h1", {}, evolution ? `An evolution in ${refs.length} entries` : `A thought in ${refs.length} entries`),
-    el("p", { class: "sub" }, evolution ? "One decision, replaced step by step — from the first version to the one in force." : "A chain of linked entries, each citing the one before — read from the first to the last. A link says two entries are related: often that one follows from the other, not always."),
-    before.length ? goOn(before.map((x) => ({ ...x })), "↑ Before its origin, it") : null,
-    thoughtTimeline(steps, ins),
-    ins.weakOrigin ? el("div", { class: "thought-warn" }, `Its first entry's Evidence is ${ins.weakOrigin}. Where a later step depends on it, it depends on a reason nobody confirmed.`) : null);
-  steps.forEach((f, i) => {
-    if (i) r.append(el("div", { class: "thought-link" }, `↓ ${links[i]}`));
-    if (!f) { r.append(el("section", { class: "thought-step missing" }, el("div", { class: "crumbs" }, `${i + 1} / ${refs.length}`), el("p", { class: "note" }, `Entry ${refs[i]} is not loaded on this page — it lives in a project outside it (a friend, or a step of a path); load the friends in the graph, or walk there.`))); return; }
-    const e = f.e;
-    INLINE_PROJECT = f.own ? e.project || null : "\u0000"; // a foreign entry's file names are not this page's topics
-    r.append(el("section", { class: `thought-step ${e.status}`, ...stepHover(e.uuid || `e:${e.id}`) },
-      el("div", { class: "crumbs" }, `${i + 1} / ${refs.length}`, f.where ? ` · ${f.where}` : "", f.own && topicOf(e.file) ? [" · ", navLink({ href: { view: "topic", file: e.file } }, topicOf(e.file).title)] : null, e.git?.created?.date ? ` · ${e.git.created.date}` : ""),
-      ins.shaky.some((x) => x.i === i) ? el("div", { class: "thought-warn" }, `In question — ${ins.shaky.find((x) => x.i === i).why}. ${plural(steps.length - 1 - i, "later step")} ${steps.length - 1 - i === 1 ? "is" : "are"} linked after it — worth checking whether they depend on it.`) : null,
-      ins.affected.includes(i) && !ins.shaky.some((x) => x.i === i) ? el("div", { class: "thought-affected" }, `Linked after step ${ins.shaky[0].i + 1}, which is in question.`) : null,
-      el("h2", {}, el("a", { href: f.href }, inline(e.title))),
-      el("div", { class: "fields" }, ...entryPills(e)),
-      el("div", { class: "body" }, renderMarkdown(e.body?.text || "_(no body)_")),
-      e.revisit_when ? el("div", { class: "body" }, el("div", { class: "label" }, el("b", {}, "Revisit when"), el("p", {}, inline(e.revisit_when)))) : null));
-    INLINE_PROJECT = null;
-  });
-  if (after.length) r.append(goOn(after, "↓ After its newest entry, it"));
-  main.append(r);
-  renderDetailsDefault();
-}
-// ---------------------------------------------------------------- friends and thoughts pages
-// Both read the graph of the scope (this project, or the family), with the
-// friends, the path and the followed chains it has — the same data the Graph
-// view shows, laid out as lists.
+// ---------------------------------------------------------------- friends page
+// It reads the graph of the scope (this project, or the family), with the friends, the path and the followed
+// chains it has — the same data the Graph view shows, laid out as lists; so does the Thoughts page (ktw-thoughts.js).
 const graphForScope = async () => (familyGraphShown() ? buildFamilyGraph() : buildGraph());
-const projOf = (n) => n.proj || n.entry?.project || SCENE.self?.project?.id || SCENE.self?.project?.name || "";
-const lightAll = (t) => SCENE.light(t); // every graph lights it (runGraph)
 async function viewFriends(main) {
   main.append(el("h1", {}, "Friends"), el("p", { class: "sub" }, "Repositories the entries here cite outside the family — linked into the graph, never merged into search, queues or counts. A friend in a family comes as the whole family. One hop: a friend's own friends are not loaded; walk there to see them."));
   const box = el("div", { class: "friends-page" }, el("p", { class: "center" }, "Loading…")); main.append(box);
@@ -901,77 +837,6 @@ async function viewFriends(main) {
   if (citing.length) kids.push(el("h2", { class: "section" }, "Citing this project — from the registry"), el("p", { class: "note" }, `Repositories in the Keep the Why registry whose entries cite this project, from its backlink file${CITED.checked ? `, built ${CITED.checked}` : ""}. Citations from outside the registry are not in it.`), ...citing.map((u) => card(u, units.indexOf(u))));
   if (chained.length) kids.push(el("h2", { class: "section" }, "Reached by following a thought"), ...chained.map((u) => card(u, units.indexOf(u))));
   if (failed.length) kids.push(el("h2", { class: "section" }, "Not loaded"), ...failed.map((r) => el("div", { class: "ref" }, el("a", { href: r.canonical, target: "_blank", rel: "noopener" }, hostMark(r.canonical), repoLabel(r.canonical)), el("span", { class: "note warn" }, ` · ${r.error}`))));
-  setKids(box, ...kids);
-}
-async function viewThoughtsPage(main) {
-  const minSeg = el("span", { class: "thought-min" });
-  main.append(el("h1", {}, "Thoughts ", minSeg), el("p", { class: "sub" }, "Chains of linked entries: each cites the one before (See) or replaced it (Superseded by) — in this graph, with its family, friends and path. A link says two entries are related; often one follows from the other, not always. Point at a chain to light it in the graph beside."));
-  const box = el("div", { class: "thoughts-page" }, el("p", { class: "center" }, "Loading…")); main.append(box);
-  const g = await graphForScope();
-  if (!box.isConnected) return;
-  const all = graphChains(g);
-  minSeg.replaceWith(thoughtMinSeg(all));
-  const min = thoughtMin(all);
-  const thoughts = all.filter((t) => t.steps.length >= min);
-  const open = all.filter((t) => t.ends.length);
-  if (!thoughts.length && !open.length) return setKids(box, el("p", { class: "empty" }, "No chain of linked entries here yet — a thought is a chain of See or Superseded by, each entry citing the one before."));
-  const across = (t) => new Set(t.steps.map(projOf)).size > 1;
-  const tags = (t) => [t.evolution ? el("span", { class: "pill" }, "evolution") : null, across(t) ? el("span", { class: "pill" }, "across projects") : null, t.ends.length ? el("span", { class: "pill" }, "continues ↗") : null, ...insightPills(t), span(t) ? el("span", { class: "note" }, span(t)) : null];
-  const row = (t) => el("div", { class: "thought-row", onmouseenter: () => lightAll(t), onmouseleave: () => lightAll(null) },
-    el("span", { class: "count" }, String(t.steps.length)),
-    navLink({ href: thoughtRoute(t), title: t.steps.map((n) => n.label).join("\n→ ") }, `${shortLabel(t.steps[0])} → ${shortLabel(t.steps[t.steps.length - 1])}`), ...tags(t));
-  const entryLink = (n, extra) => el("a", { class: "backlink", href: n.href, ...stepHover(n.entry?.uuid || n.id) }, n.label.replace(/`/g, ""), el("div", { class: "note" }, [projOf(n), extra].filter(Boolean).join(" · ")));
-  // counts
-  const count = (pick) => { const m = new Map(); for (const t of thoughts) for (const n of pick(t)) m.set(n, (m.get(n) || 0) + 1); return [...m.entries()].sort((a, b) => b[1] - a[1]); };
-  const starts = count((t) => [t.steps[0]]), ends = count((t) => [t.steps[t.steps.length - 1]]);
-  const bridges = count((t) => t.steps.slice(1, -1)).filter(([, c]) => c > 1);
-  const fansTo = ends.filter(([, c]) => c > 1), fansFrom = starts.filter(([, c]) => c > 1);
-  const projects = new Map(); const bump = (p, k) => { if (!projects.has(p)) projects.set(p, { starts: 0, ends: 0, through: 0 }); projects.get(p)[k]++; };
-  for (const t of thoughts) { bump(projOf(t.steps[0]), "starts"); bump(projOf(t.steps[t.steps.length - 1]), "ends"); for (const p of new Set(t.steps.slice(1, -1).map(projOf))) bump(p, "through"); }
-  const stat = (n, label) => el("div", { class: "stat" }, el("b", {}, String(n)), el("span", {}, label));
-  const kids = [
-    el("div", { class: "stats" }, stat(thoughts.length, "thoughts"), stat(thoughts.filter((t) => t.evolution).length, "evolutions"), stat(thoughts.filter(across).length, "across projects"), stat(open.length, "going on beyond"), stat(thoughts[0]?.steps.length || 0, "longest"),
-      stat(thoughts.filter((t) => t.ins.weakOrigin).length, "start unconfirmed"), stat(thoughts.filter((t) => t.ins.shaky.length).length, "pass a step in question")),
-  ];
-  // chains whose first entry nobody confirmed, grouped by that entry
-  const weak = thoughts.filter((t) => t.ins.weakOrigin);
-  if (weak.length) {
-    const byOrigin = new Map(); for (const t of weak) { if (!byOrigin.has(t.steps[0])) byOrigin.set(t.steps[0], []); byOrigin.get(t.steps[0]).push(t); }
-    kids.push(el("h2", {}, "Starting from an unconfirmed entry"), el("p", { class: "note" }, "Chains whose first entry has Evidence inferred or unknown. Where later entries depend on it, they depend on a reason nobody confirmed — the first entry is the place to ask."),
-      ...[...byOrigin.entries()].map(([n, ts]) => el("div", { class: "fan" }, entryLink(n, `Evidence ${n.entry.evidence} · ${plural(ts.length, "thought")} start here`), el("div", { class: "fan-rows" }, ...ts.map(row)))));
-  }
-  // entries in question and the later entries linked after them — what to check if they change
-  const impact = new Map();
-  for (const t of thoughts.concat(open.filter((t) => t.steps.length < min))) for (const x of t.ins.shaky) {
-    const n = t.steps[x.i];
-    if (!impact.has(n)) impact.set(n, { why: x.why, later: new Set(), thoughts: new Set(), projects: new Set() });
-    const m = impact.get(n); m.thoughts.add(t);
-    for (const j of t.steps.slice(x.i + 1)) { m.later.add(j); m.projects.add(projOf(j)); }
-  }
-  if (impact.size) kids.push(el("h2", {}, "Chains through a step in question"), el("p", { class: "note" }, "Entries in question — open, needing review, waiting for confirmation, or replaced yet still cited — and the later entries linked after them. If one of these changes, these are the entries to check: whether they depend on it is for a person to say."),
-    ...[...impact.entries()].sort((a, b) => b[1].later.size - a[1].later.size).map(([n, m]) => el("div", { class: "fan" },
-      entryLink(n, `${m.why} · ${m.later.size} later ${m.later.size === 1 ? "entry" : "entries"} linked after it${m.projects.size > 1 ? `, in ${m.projects.size} projects` : ""}`),
-      el("div", { class: "fan-rows" }, ...[...m.later].map((j) => entryLink(j, j.entry.status))))));
-  if (fansTo.length) kids.push(el("h2", {}, "Where many lines lead"), el("p", { class: "note" }, "Entries at the end of several chains — where chains from different starts arrive."),
-    ...fansTo.map(([n, c]) => el("div", { class: "fan" }, entryLink(n, `${c} starts`), el("div", { class: "fan-rows" }, ...thoughts.filter((t) => t.steps[t.steps.length - 1] === n).map(row)))));
-  if (fansFrom.length) kids.push(el("h2", {}, "Where many lines start"), el("p", { class: "note" }, "Entries several chains start from — often a decision much else refers to."),
-    ...fansFrom.map(([n, c]) => el("div", { class: "fan" }, entryLink(n, `${c} thoughts`), el("div", { class: "fan-rows" }, ...thoughts.filter((t) => t.steps[0] === n).map(row)))));
-  if (bridges.length) kids.push(el("h2", {}, "Bridges"), el("p", { class: "note" }, "Entries in the middle of several chains — where many links pass through."), ...bridges.slice(0, 12).map(([n, c]) => entryLink(n, `in ${c} thoughts`)));
-  if (projects.size > 1) kids.push(el("h2", {}, "By project"), el("div", { class: "table-wrap" }, el("table", { class: "t" }, el("thead", {}, el("tr", {}, ["Project", "Starts", "Passes through", "Ends"].map((h) => el("th", {}, h)))),
-    el("tbody", {}, [...projects.entries()].sort((a, b) => (b[1].starts + b[1].ends + b[1].through) - (a[1].starts + a[1].ends + a[1].through)).map(([p, c]) => el("tr", {}, el("td", {}, p), el("td", {}, String(c.starts)), el("td", {}, String(c.through)), el("td", {}, String(c.ends))))))));
-  // time: when lines grew last, from the day each step was created
-  const dated = thoughts.filter((t) => t.ins.to);
-  if (dated.length > 1) {
-    const recent = [...dated].sort((a, b) => b.ins.to.localeCompare(a.ins.to)).slice(0, 5);
-    const resting = [...dated].sort((a, b) => a.ins.to.localeCompare(b.ins.to)).slice(0, 5);
-    kids.push(el("h2", {}, "Recently grown"), el("p", { class: "note" }, "Lines whose newest step is the newest — where reasoning is moving now."), ...recent.map(row),
-      el("h2", {}, "Resting longest"), el("p", { class: "note" }, "Lines that have not grown for the longest time — settled, or forgotten."), ...resting.map(row));
-  }
-  kids.push(el("h2", {}, `All thoughts (${thoughts.length})`), ...thoughts.map(row));
-  const evo = thoughts.filter((t) => t.evolution);
-  if (evo.length) kids.push(el("h2", {}, `Evolutions (${evo.length})`), el("p", { class: "note" }, "One decision, replaced step by step."), ...evo.map(row));
-  if (open.length) kids.push(el("h2", {}, `Going on beyond this page (${open.length})`), el("p", { class: "note" }, "Chains that continue in a repository this page has not loaded."),
-    el("button", { type: "button", class: "link-btn", disabled: CHAIN.busy, onclick: followAll }, CHAIN.busy ? "loading the chains…" : "load the whole chains"), ...open.map(row));
   setKids(box, ...kids);
 }
 function viewQueues(main) {
@@ -1642,8 +1507,6 @@ function toggleFriend(k) {
 // a unit is the repositories it holds — by canonical and root, not by how they were loaded: the same family
 // read once from this machine (live keys) and once from published exports (public keys) is one unit
 const unitKey = (members) => members.map((m) => `${fkey(m.canonical)}|${m.root || ""}`).sort().join(" ");
-// an entry's See and Superseded by, each { uuid, remote, kind }
-const entryRefs = (e) => [...(e.see || []).map((x) => x && { uuid: x.uuid, remote: x.remote, kind: "see" }), e.superseded_by ? { ...parseSupersededBy(e.superseded_by), kind: "superseded" } : null].filter((x) => x?.uuid);
 function friendUnits(g) {
   // friends of one family are one unit: the Ids cited in any of its repositories together
   const units = new Map();
@@ -2043,87 +1906,13 @@ function miniFriends(g) {
     on ? (failed.length ? `friends (${failed.length} not loaded)` : "friends") : `friends (${FRIENDS.on ? waiting.length : list.length})`);
   return el("span", { class: "mini-seg mini-friends" }, b);
 }
-// ---------------------------------------------------------------- thoughts
-// Thoughts: chains of linked entries through the graph — the longest chains of See
-// and Superseded by between entries (each one cites the one before), at least
-// four entries long, across projects where the graph spans them (family,
-// friends). Listed beside the graph; pointing at one lights its path, a click
-// holds it and lists its steps in reading order, origin first. A chain made
-// only of Superseded by is how one decision changed over time: an evolution.
-let THOUGHT_MIN = Number(prefs.get("thought-min")) || 4; // entries a thought has at least, kept per browser
-// the choices go from 2 (one link) up to the longest chain in the graph on the page, and grow with
-// it when a friend or a path brings a longer one; a kept choice above the longest here is drawn
-// down to it, so a sparse project shows its chains instead of an empty list
-const longestChain = (all) => Math.max(2, ...all.map((t) => t.steps.length));
-const thoughtMin = (all) => Math.min(THOUGHT_MIN, longestChain(all));
-function thoughtMinSeg(all, onpick = render) {
-  const top = longestChain(all), cur = thoughtMin(all);
-  return el("span", { class: "thought-min", title: "entries a thought has at least — from one link up to the longest chain here" }, "from ",
-    ...Array.from({ length: top - 1 }, (_, i) => i + 2).map((m) => el("button", { type: "button", class: m === cur ? "on" : "", onclick: () => { THOUGHT_MIN = m; prefs.set("thought-min", String(m)); onpick(); } }, String(m))));
-}
-// Every chain in the graph, at least two entries long: the entry-to-entry
-// edges in reading order (later → earlier), plus an edge to a placeholder for
-// every reference into an entry the page has not loaded — a chain that ends
-// in a placeholder goes on beyond this page, before its origin (a See into
-// an unloaded repository) or after its newest entry (a Superseded by naming a
-// successor there). What cites a chain's newest entry from a repository that
-// is not loaded cannot be known; there is no index of the web, by design.
-function graphChains(g) {
-  const kind = {};
-  const edges = [];
-  for (const l of g.links) {
-    if (l.kind !== "see" && l.kind !== "superseded") continue;
-    const a = g.nodes[l.s], b = g.nodes[l.t];
-    if (a?.kind !== "entry" || b?.kind !== "entry") continue;
-    // later first: a See runs from the entry that cites to the one cited, a Superseded by from the old entry to its successor
-    const [later, earlier] = l.kind === "see" ? [a, b] : [b, a];
-    edges.push([later.id, earlier.id]); kind[`${later.id}|${earlier.id}`] = l.kind;
-  }
-  const present = new Set(g.nodes.filter((n) => n.kind === "entry" && n.entry.uuid).map((n) => n.entry.uuid));
-  for (const n of g.nodes) {
-    if (n.kind !== "entry") continue;
-    for (const x of entryRefs(n.entry)) {
-      if (!x.remote || present.has(x.uuid)) continue;
-      const v = `?${x.remote}|${x.uuid}`;
-      edges.push(x.kind === "see" ? [n.id, v] : [v, n.id]);
-    }
-  }
-  const byId = Object.fromEntries(g.nodes.map((n) => [n.id, n]));
-  const merged = new Map(); // one chain per run of real entries, its open ends together
-  for (const ids of thoughtsOf(edges, 2)) {
-    const real = ids.filter((id) => !id.startsWith("?"));
-    if (real.length < 2) continue;
-    const ends = ids.filter((id) => id.startsWith("?")).map((v) => { const cut = v.lastIndexOf("|"); return { canonical: v.slice(1, cut), uuid: v.slice(cut + 1) }; });
-    const key = real.join("|");
-    if (!merged.has(key)) {
-      const steps = real.map((id) => byId[id]);
-      const kinds = real.slice(1).map((id, i) => kind[`${id}|${real[i]}`]);
-      merged.set(key, { ids: real, steps, kinds, evolution: kinds.every((k) => k === "superseded"), ends: [], ins: thoughtInsights(steps.map((n) => n.entry), kinds) });
-    }
-    const t = merged.get(key);
-    for (const e of ends) if (!t.ends.some((x) => x.uuid === e.uuid && x.canonical === e.canonical)) t.ends.push(e);
-  }
-  return [...merged.values()].sort((a, b) => b.steps.length - a.steps.length || a.ids.join().localeCompare(b.ids.join()));
-}
-// a chain's first entry and steps in question, as marks for a list row
-const insightPills = (t) => [
-  t.ins?.weakOrigin ? el("span", { class: "pill warn-pill", title: `its first entry's Evidence is ${t.ins.weakOrigin}: where later entries depend on it, they depend on a reason nobody confirmed` }, `starts ${t.ins.weakOrigin}`) : null,
-  t.ins?.shaky.length ? el("span", { class: "pill warn-pill", title: t.ins.shaky.map((x) => `step ${x.i + 1}: ${x.why}`).join("\n") + `\n${t.ins.affected.length} later ${t.ins.affected.length === 1 ? "step is" : "steps are"} linked after it` }, "step in question") : null,
-];
-const span = (t) => (t.ins?.from ? (t.ins.from === t.ins.to ? t.ins.from : `${t.ins.from} → ${t.ins.to}`) : "");
-const shortLabel = (n) => { const t = (n?.label || "").replace(/`/g, ""); return t.length > 34 ? t.slice(0, 32) + "…" : t; };
-// the thoughts an entry is a step of, with its place in each
+// ---------------------------------------------------------------- thoughts (host)
+// The thoughts themselves — the chains, the list, the page, the reader — are ktw-thoughts.js. Here: the graph an
+// entry's thoughts are read from (the family's while it is shown and fresh, the project's, or the graph of the
+// entry's own member), following chains into other repositories, and what the view is handed (THOUGHTS_HOST).
 function entryThoughts(e) {
   const g = familyGraphShown() && fgraph && Date.now() - fgraph.at < 30000 ? fgraph : graph && !e.project ? graph : buildGraph(e.project || null);
-  const same = (n) => n.entry === e || (e.uuid && n.entry?.uuid === e.uuid);
-  const all = graphChains(g), min = thoughtMin(all);
-  return all.filter((t) => t.steps.length >= min || t.ends.length).map((t) => ({ t, i: t.steps.findIndex(same) })).filter((x) => x.i >= 0);
-}
-// the thoughts (at least the chosen number of entries, drawn down to the longest chain here), and
-// the shorter chains that go on beyond this page
-function graphThoughts(g) {
-  const all = graphChains(g), min = thoughtMin(all);
-  return { all, thoughts: all.filter((t) => t.steps.length >= min), open: all.filter((t) => t.ends.length && t.steps.length < min) };
+  return THOUGHTS.forEntry(e, g);
 }
 // Following a chain: a click loads exactly the repositories a chain goes on
 // into, each as a unit, and again from there, until the chain ends, reaches a
@@ -2326,63 +2115,32 @@ function globeUi(g) {
   const clear = GLOBE.extra.size ? el("button", { type: "button", class: "link-btn", title: "drop everything the globe loaded; friends, family and path stay", onclick: globeClear }, "clear") : null;
   return el("span", { class: "ui-group globe-ctl" }, el("a", { class: "globe-mark", href: "https://keepthewhy.com/registry/", target: "_blank", rel: "noopener", title: "the registry — what the globe can load, and how to be listed" }, "🌐"), sel, go, reg, regNext, info, clear);
 }
-const followAll = () => followChains((g) => { const t = graphThoughts(g); return [...t.thoughts, ...t.open].flatMap((c) => c.ends); });
+const followAll = () => followChains((g) => { const t = THOUGHTS.of(g); return [...t.thoughts, ...t.open].flatMap((c) => c.ends); });
 // one chain, found again after each hop by its newest entry's Id
 function followThought(t, then) {
   const anchor = t.anchor || t.steps[t.steps.length - 1].entry.uuid;
   let last = null;
-  return followChains((g) => { last = graphChains(g).filter((c) => c.steps.some((n) => n.entry.uuid === anchor)).sort((a, b) => b.steps.length - a.steps.length)[0] || null; return last ? last.ends : []; })
+  return followChains((g) => { last = THOUGHTS.chains(g).filter((c) => c.steps.some((n) => n.entry.uuid === anchor)).sort((a, b) => b.steps.length - a.steps.length)[0] || null; return last ? last.ends : []; })
     .then(() => then?.(last));
 }
-// the thought held is the scene's (SCENE.pin, set by SCENE.setThought); the list beside the graph follows it.
-// Until the thoughts view moves into the library, the host redraws its list when the pin changes.
-let THOUGHTS_FOR = null; // the graph whose thoughts the list shows
-SCENE.on("pin", () => renderThoughts(THOUGHTS_FOR));
-// One step pointed at — in a thought's list of steps, in the reader, on the
-// Thoughts page — is marked in every graph on the page.
-const focusStep = (ref) => SCENE.setFocus(ref); // every graph redraws (runGraph), and the stage
-const stepHover = (ref) => ({ onmouseenter: () => focusStep(ref), onmouseleave: () => focusStep(null) });
-// the thought being read (#thought/…) is held in every graph shown beside it, however the reader was reached —
-// read › without a click first, a link, a reload — the same as a thought clicked and then read
-function holdReading(g) {
-  if (!g || nav.current().view !== "thought") return;
-  const here = ROUTES.format(nav.current());
-  const t = graphThoughts(g).all.find((x) => thoughtHref(x) === here);
-  if (!t) return;
-  SCENE.setThought(t);
-  lightThought(g, t);
-}
-function renderThoughts(g) {
-  const box = $("#thoughts");
-  THOUGHTS_FOR = g;
-  if (!box || !g) return;
-  const { all, thoughts: list, open } = graphThoughts(g);
-  const short = (n) => { const t = (n?.label || "").replace(/`/g, ""); return t.length > 34 ? t.slice(0, 32) + "…" : t; };
-  const held = [...list, ...open].find((t) => t.ids.join("|") === SCENE.pin) || null;
-  lightThought(g, held);
-  const minSeg = thoughtMinSeg(all, () => { SCENE.setThought(null); renderThoughts(g); }); // a new minimum: the list is another, held or not
-  const repos = (ends) => [...new Set(ends.map((e) => repoLabel(e.canonical)))];
-  const row = (t) => {
-    const key = t.ids.join("|"); const on = key === SCENE.pin;
-    return el("div", { class: `thought ${on ? "on" : ""} ${t.ends.length ? "open" : ""}` },
-      el("button", { type: "button", class: "thought-head", title: t.steps.map((n) => n.label).join("\n→ ") + (t.ends.length ? `\n… goes on in ${repos(t.ends).join(", ")}` : ""),
-        onmouseenter: () => lightThought(g, t), onmouseleave: () => lightThought(g, held), // a held thought gives way while another is pointed at, and comes back
-        onclick: () => SCENE.setThought(on ? null : t) },
-        el("span", { class: "count" }, String(t.steps.length)), `${short(t.steps[0])} → ${short(t.steps[t.steps.length - 1])}`, t.evolution ? el("span", { class: "pill" }, "evolution") : null, ...insightPills(t)),
-      navLink({ class: "thought-read", href: thoughtRoute(t), title: "read the whole thought — every entry in order, in full" }, "read ›"),
-      t.ends.length ? el("button", { type: "button", class: "thought-follow link-btn", disabled: CHAIN.busy, title: `load the repositories this chain goes on into — ${repos(t.ends).join(", ")} — hop by hop, until it ends`, onclick: () => followThought(t) }, `continues ↗ ${repos(t.ends).join(", ")}`) : null,
-      on ? el("ol", { class: "thought-steps" }, t.steps.map((n) => el("li", stepHover(n.entry?.uuid || n.id), el("a", { href: n.href, onclick: (ev) => { if (n.entry && STAGE?.pick && nav.current().view === "timeline") { ev.preventDefault(); STAGE.pick(n.entry); } } }, n.label.replace(/`/g, ""))))) : null);
-  };
-  const openEnds = [...list, ...open].flatMap((t) => t.ends);
-  const followBtn = openEnds.length ? el("button", { type: "button", class: "link-btn thought-follow-all", disabled: CHAIN.busy, title: "load every repository the chains here go on into, hop by hop — nothing else", onclick: followAll }, CHAIN.busy ? "loading the chains…" : `load the whole chains (${repos(openEnds).length} ${repos(openEnds).length === 1 ? "repository" : "repositories"})`) : null;
-  const head = list.length
-    ? [el("h3", {}, `Thoughts (${list.length}) `, minSeg), el("p", { class: "note" }, "Chains of linked entries — See and Superseded by — first entry first. Point at one to light its path, click to hold it.")]
-    : [el("h3", {}, "Thoughts ", minSeg), el("p", { class: "note" }, "No chain of linked entries in this graph yet — a thought is a chain of See or Superseded by, each entry citing the one before.")];
-  setKids(box, ...head, followBtn, ...list.map(row),
-    open.length ? el("h3", { class: "thought-open-head" }, `Going on beyond this page (${open.length})`) : null,
-    open.length ? el("p", { class: "note" }, "Shorter chains that continue in a repository this page has not loaded — loading it may make them thoughts.") : null,
-    ...open.map(row));
-}
+// what the thoughts view is handed: the graph of the scope (its page), a thought lit in one graph, following
+// chains, an entry found beyond this state, an export's bodies, the friends loaded for a step not found, a step
+// picked on the stage, the Markdown with this page's topic links, the box of the list beside the graph, a redraw
+const THOUGHTS_HOST = {
+  graph: () => graphForScope(),
+  light: (g, t) => lightThought(g, t),
+  follow: { busy: () => CHAIN.busy, chain: (t, then) => followThought(t, then), all: () => followAll() },
+  findEntry: (ref) => findEntry(ref),
+  bodies: (st) => ensureBodies(st),
+  needFriends: () => { if (FRIENDS_AUTO && !FRIENDS.on && !FRIENDS.loading) buildGraph(); },
+  pick: (e) => { if (!STAGE?.pick || nav.current().view !== "timeline") return false; STAGE.pick(e); return true; },
+  inline: (md, project) => { INLINE_PROJECT = project; try { return inline(md); } finally { INLINE_PROJECT = null; } },
+  renderBody: (md, project) => { INLINE_PROJECT = project; try { return renderMarkdown(md); } finally { INLINE_PROJECT = null; } },
+  listBox: () => $("#thoughts"),
+  render: () => render(),
+};
+const holdReading = (g) => THOUGHTS.holdReading(g, THOUGHTS_HOST);
+const renderThoughts = (g) => THOUGHTS.list(g, THOUGHTS_HOST);
 function friendsLegend(g) {
   if (!FRIENDS.on && !CHAIN.extra.size && !GLOBE.extra.size && !GLOBE.failed.size) return [];
   const out = friendUnits(g).map((u, i) => el("span", { class: "friend", title: `friend: ${u.r.canonical}${u.members.length > 1 ? ` — a family of ${u.members.length}, shown whole` : ""} — its hub shows the entries cited there; a click on its hub or its name goes there` },
@@ -3067,10 +2825,10 @@ function render() {
   else if (v === "family") { viewFamily(main); renderDetailsDefault(); }
   else if (v === "projects") { viewProjects(main); renderDetailsDefault(); }
   else if (v === "friends") { viewFriends(main); renderDetailsDefault(); }
-  else if (v === "thoughts") { viewThoughtsPage(main); renderDetailsDefault(); }
+  else if (v === "thoughts") { THOUGHTS.page(main, THOUGHTS_HOST); renderDetailsDefault(); }
   else if (v === "topic") viewTopic(main, route.file);
   else if (v === "entry") viewEntry(main, route.uuid);
-  else if (v === "thought") viewThought(main, route.refs);
+  else if (v === "thought") { THOUGHTS.reader(main, route.refs, THOUGHTS_HOST); renderDetailsDefault(); }
   else if (v === "ref") { viewRemoteEntry(main, route.canonical, route.uuid); renderDetailsDefault(); }
   else if (v === "search") { viewSearch(main, route.scope, route.q); renderDetailsDefault(); }
   else { viewOverview(main); renderDetailsDefault(); }

@@ -1,6 +1,6 @@
 /* Keep the Why dashboard — the small pieces every view builds its DOM from: an element with its attributes,
    handlers and children (`el`), children replaced in place (`setKids`), the pills for a Type, a Status and an
-   Evidence, and a Type's glyph as SVG. Nodes only — no state, no HTML strings, nothing read from the page.
+   Evidence, a link that moves through the host's nav (`navLink`), and a Type's glyph as SVG. Nodes only — no state, no HTML strings, nothing read from the page.
    A classic script on globalThis.KeepTheWhy.ui, listed in ktw-views.json after the core. */
 (function (root) {
 "use strict";
@@ -29,6 +29,17 @@ const evPill = (e) => pill(e || "—", `ev-${e}`);
 const typePills = (types) => (types?.length ? types : ["—"]).map((t) => { const p = pill(typeName(t), "type"); if (t !== typeName(t)) p.title = t; return p; });
 const entryPills = (e) => [...typePills(e.type), statusPill(e.status), evPill(e.evidence)];
 
+// a link to a place: a real anchor — middle-click, a new tab and a screen reader work — whose plain click moves
+// through the host's nav. `href` in attrs is the route; it keeps its place among the attributes.
+function navLink(nav, attrs, ...kids) {
+  const route = attrs.href; const own = attrs.onclick;
+  return el("a", { ...attrs, href: nav.href(route), onclick: (ev) => {
+    own?.(ev);
+    if (ev.defaultPrevented || ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey || attrs.target) return;
+    ev.preventDefault(); nav.go(route);
+  } }, ...kids);
+}
+
 // a Type's glyph as SVG nodes, the stage's shapes in small: [element, attributes] per part
 const GLYPHS = {
   decision: [["path", { d: "M6 1 11 6 6 11 1 6z" }]],
@@ -45,5 +56,5 @@ function typeGlyphSvg(kind) {
 }
 
 const KTW = (root.KeepTheWhy = root.KeepTheWhy || {});
-KTW.ui = Object.freeze({ el, setKids, pill, statusPill, evPill, typePills, entryPills, GLYPHS, typeGlyphSvg });
+KTW.ui = Object.freeze({ el, setKids, pill, statusPill, evPill, typePills, entryPills, navLink, GLYPHS, typeGlyphSvg });
 })(globalThis);
