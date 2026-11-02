@@ -38,7 +38,9 @@
     const listeners = new Set();
     const nav = {
       href: (route) => base + ROUTES.format(route).replace(/^#/, ""),
-      go(route) { current = route; for (const fn of listeners) fn(current); render(); },
+      // a move renders the place; a replace only rewrites where the host is (the timeline keeps its day in the
+      // route that way), as the dashboard's history.replaceState fires no hashchange
+      go(route, { replace = false } = {}) { current = route; if (replace) return; for (const fn of listeners) fn(current); render(); },
       current: () => current,
       onChange: (fn) => listeners.add(fn),
       open(href) { if (href.startsWith(base)) nav.go(ROUTES.parse("#" + href.slice(base.length))); },
@@ -97,7 +99,7 @@
           const canvas = document.createElement("canvas"); wrap.append(canvas); main.append(h, wrap);
           graphView.run(canvas, graphOf(), { fit: true, onEntry: (n) => nav.go({ view: "entry", uuid: n.entry.uuid || n.entry.id }), onTopic: (n) => nav.go({ view: "topic", file: n.file }) });
         }
-        else if (r.view === "timeline") timeline.view(main, r.day || null, { bodies: async (st) => ({ state: st }), entryRow: (e) => pages.entryRow(e, H), renderBody: H.renderBody, render: () => render() });
+        else if (r.view === "timeline") timeline.view(main, r.day || null, { graph: () => graphOf(), bodies: async (st) => ({ state: st }), entryRow: (e) => pages.entryRow(e, H), renderBody: H.renderBody, render: () => render() });
         else if (r.view === "thoughts") thoughts.page(main, T);
         else if (r.view === "queues") pages.queuesPage(main, H);
         else if (r.view === "findings") pages.findings(main);

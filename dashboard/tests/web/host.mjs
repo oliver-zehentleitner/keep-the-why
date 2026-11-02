@@ -33,6 +33,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const dom = await JSDOM.fromURL(url, { runScripts: "dangerously", resources: "usable", pretendToBeVisual: true, virtualConsole: vc,
     beforeParse(w) {
       w.ResizeObserver = class { observe() {} disconnect() {} }; w.matchMedia = () => ({ matches: false });
+      // jsdom draws nothing: a context that takes every call, as snapshot.mjs gives the page
+      w.HTMLCanvasElement.prototype.getContext = () => new Proxy({}, { get: (t, k) => (k === "measureText" ? () => ({ width: 10 }) : () => {}), set: () => true });
       w.fetch = (u, o) => fetch(new URL(String(u), url), o); // jsdom has none; same-origin requests only, as the page makes
     } });
   const w = dom.window, doc = w.document;
@@ -44,7 +46,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     const S = H.a.state;
     const entry = S.entries.find((e) => e.uuid);
     const places = [
-      { view: "overview" }, { view: "queues" }, { view: "findings" }, { view: "authors" }, { view: "family" }, { view: "friends" },
+      { view: "overview" }, { view: "graph" }, { view: "timeline" }, { view: "thoughts" }, { view: "queues" }, { view: "findings" }, { view: "authors" },
+      { view: "family" }, { view: "friends" },
       { view: "topic", file: S.topics[0].file }, { view: "entry", uuid: entry.uuid }, { view: "search", scope: "self", q: "snapshot" },
     ];
     let rendered = 0;

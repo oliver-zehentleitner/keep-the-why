@@ -322,6 +322,10 @@ class StylesTest(unittest.TestCase):
             n for n in os.listdir(views.WEB_DIR) if re.match(r"^ktw-.+\.js$", n)
         ):
             src = _read(name)
+            # a name built in a template counts too: `--${status}` would read the host's variable
+            for built in re.findall(r"`(--[\w-]*)\$\{", src):
+                with self.subTest(file=name, token=built):
+                    self.assertTrue(built.startswith("--ktw-"), f"{name} builds {built}…, the host's variable")
             for used in re.findall(r'(?:var\(|\(")(--[\w-]+)', src):
                 with self.subTest(file=name, token=used):
                     self.assertTrue(

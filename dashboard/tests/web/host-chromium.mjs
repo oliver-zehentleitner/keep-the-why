@@ -20,7 +20,8 @@ if ((await page.evaluate(() => document.documentElement.dataset.ready)) !== "1")
 
 const places = await page.evaluate(() => {
   const S = window.KTW_HOSTS.a.state; const entry = S.entries.find((e) => e.uuid);
-  return [{ view: "overview" }, { view: "queues" }, { view: "findings" }, { view: "authors" }, { view: "family" }, { view: "friends" },
+  return [{ view: "overview" }, { view: "graph" }, { view: "timeline" }, { view: "thoughts" }, { view: "queues" }, { view: "findings" }, { view: "authors" },
+      { view: "family" }, { view: "friends" },
     { view: "topic", file: S.topics[0].file }, { view: "entry", uuid: entry.uuid }, { view: "search", scope: "self", q: "snapshot" }];
 });
 let rendered = 0;

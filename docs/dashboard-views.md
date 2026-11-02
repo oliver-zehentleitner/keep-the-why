@@ -131,7 +131,7 @@ The views name places as routes (`KeepTheWhy.core.routes`: `parse`, `format`, `P
 | Member | Does |
 |---|---|
 | `href(route)` | the address for a route, used as a real anchor's `href` |
-| `go(route, { replace })` | moves there |
+| `go(route, { replace })` | moves there; with `replace`, only records the route as where the page is, without showing it anew (the timeline keeps its day in the route this way) |
 | `current()` | the route the page is on |
 | `onChange(fn)` | calls `fn(route)` when that changes |
 | `open(href)` | follows an address `href` made (a graph node carries its own) |
@@ -200,7 +200,7 @@ What only the page around a view can answer, it hands in. The pages, the thought
   - `findEntry(ref)`, `bodies(state)`, `needFriends()`, `pick(e)`;
   - `inline` and `renderBody`;
   - `listBox()` and `render()`.
-- **`timeline.view(main, day, host)`:** `bodies(state)`, `entryRow(e)`, `renderBody(md)`, `render()`.
+- **`timeline.view(main, day, host)`:** `graph()` (the graph the stage stands on, built with `graph.assemble`), `bodies(state)`, `entryRow(e)`, `renderBody(md)`, `render()`.
 
 Known behaviour a host should plan for:
 
