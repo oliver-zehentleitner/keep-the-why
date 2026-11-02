@@ -398,7 +398,7 @@ const searchPool = (scope) => SEARCH.pool(scope);
 // has — the graph of the scope, following a chain into other repositories, an entry found in what the page has
 // loaded, the Markdown with this page's topic links, a redraw — is THOUGHTS_HOST, further down.
 const THOUGHTS = globalThis.KeepTheWhy.views.thoughts.create({ scene: SCENE, nav, prefs });
-const { thoughtRoute, shortLabel, projOf, focusStep, stepHover } = THOUGHTS;
+const { focusStep, stepHover } = THOUGHTS;
 let PROJECT = QUERY.get("project"); // null: the server's SCENE.selected one
 const api = (path) => PROJECT ? `${path}?project=${encodeURIComponent(PROJECT)}` : path;
 // The clock: the day the page shows — the timeline's playhead. Set while the timeline is open, null
@@ -410,7 +410,7 @@ const api = (path) => PROJECT ? `${path}?project=${encodeURIComponent(PROJECT)}`
 // what the page reads off the scene's state through them (an entry by its Id, a topic, the queues); what only this
 // host has is PAGES_HOST, further down.
 const PAGES = globalThis.KeepTheWhy.views.pages.create({ scene: SCENE, nav, prefs, family: FAM, search: SEARCH });
-const { byUuid, entryRoute, entryHref, entryOf, topicOf, entriesOf, matches, pageFiltered, queues, queueTotal, STATUS_ORDER, EV_ORDER, copyText } = PAGES;
+const { entryRoute, entryHref, entryOf, topicOf, entriesOf, matches, pageFiltered, queues, queueTotal, STATUS_ORDER, EV_ORDER, copyText } = PAGES;
 
 // ---------------------------------------------------------------- markdown (ktw-markdown.js: DOM nodes, never HTML strings)
 // a merged member's entry names its own project's topic files: resolve them there

@@ -19,6 +19,7 @@ const fmtDate = (d) => d || "—";
 // published exports an Id or a reference is looked for in, through its provider; the search (ktw-search.js) knows
 // whether there is a family and gathers it.
 function create({ scene, nav, prefs, family, search }) {
+// prefs: no page keeps a setting yet; taken all the same, so every view is made the same way
 const navLink = ui.navLinks(nav); // a link to a place, moving through nav
 
 const byId = () => Object.fromEntries(scene.state.entries.map((e) => [e.id, e]));
