@@ -108,7 +108,9 @@ jobs:
     # looks on purpose says so in its body, the way a changed DOM snapshot is named.
     name: computed styles match the base branch (Chromium)
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    # pinned: Playwright installs Chromium's system libraries only for the Ubuntu releases it supports, and
+    # ubuntu-latest moves ahead of it
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
