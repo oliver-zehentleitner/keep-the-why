@@ -30,17 +30,6 @@ const evPill = (e) => pill(e || "—", `ev-${e}`);
 const typePills = (types) => (types?.length ? types : ["—"]).map((t) => { const p = pill(typeName(t), "type"); if (t !== typeName(t)) p.title = t; return p; });
 const entryPills = (e) => [...typePills(e.type), statusPill(e.status), evPill(e.evidence)];
 
-// a link to a place: a real anchor — middle-click, a new tab and a screen reader work — whose plain click moves
-// through the host's nav. `href` in attrs is the route; it keeps its place among the attributes.
-function navLink(nav, attrs, ...kids) {
-  const route = attrs.href; const own = attrs.onclick;
-  return el("a", { ...attrs, href: nav.href(route), onclick: (ev) => {
-    own?.(ev);
-    if (ev.defaultPrevented || ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey || attrs.target) return;
-    ev.preventDefault(); nav.go(route);
-  } }, ...kids);
-}
-
 // a Type's glyph as SVG nodes, the stage's shapes in small: [element, attributes] per part
 const GLYPHS = {
   decision: [["path", { d: "M6 1 11 6 6 11 1 6z" }]],

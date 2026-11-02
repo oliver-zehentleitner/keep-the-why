@@ -120,7 +120,6 @@ function list(g, host) {
   LIST = { g, host };
   if (!box || !g) return;
   const { all, thoughts: shown, open } = graphThoughts(g);
-  const short = (n) => { const t = (n?.label || "").replace(/`/g, ""); return t.length > 34 ? t.slice(0, 32) + "…" : t; };
   const held = [...shown, ...open].find((t) => t.ids.join("|") === scene.pin) || null;
   host.light(g, held);
   const minSeg = thoughtMinSeg(all, () => { scene.setThought(null); list(g, host); }); // a new minimum: the list is another, held or not
@@ -132,7 +131,7 @@ function list(g, host) {
       el("button", { type: "button", class: "thought-head", title: t.steps.map((n) => n.label).join("\n→ ") + (t.ends.length ? `\n… goes on in ${repos(t.ends).join(", ")}` : ""),
         onmouseenter: () => host.light(g, t), onmouseleave: () => host.light(g, held), // a held thought gives way while another is pointed at, and comes back
         onclick: () => scene.setThought(on ? null : t) },
-        el("span", { class: "count" }, String(t.steps.length)), `${short(t.steps[0])} → ${short(t.steps[t.steps.length - 1])}`, t.evolution ? el("span", { class: "pill" }, "evolution") : null, ...insightPills(t)),
+        el("span", { class: "count" }, String(t.steps.length)), `${shortLabel(t.steps[0])} → ${shortLabel(t.steps[t.steps.length - 1])}`, t.evolution ? el("span", { class: "pill" }, "evolution") : null, ...insightPills(t)),
       navLink({ class: "thought-read", href: thoughtRoute(t), title: "read the whole thought — every entry in order, in full" }, "read ›"),
       t.ends.length ? el("button", { type: "button", class: "thought-follow link-btn", disabled: busy, title: `load the repositories this chain goes on into — ${repos(t.ends).join(", ")} — hop by hop, until it ends`, onclick: () => host.follow.chain(t) }, `continues ↗ ${repos(t.ends).join(", ")}`) : null,
       on ? el("ol", { class: "thought-steps" }, t.steps.map((n) => el("li", stepHover(n.entry?.uuid || n.id), el("a", { href: n.href, onclick: (ev) => { if (n.entry && host.pick?.(n.entry)) ev.preventDefault(); } }, n.label.replace(/`/g, ""))))) : null);
@@ -283,10 +282,10 @@ function reader(main, refs, host) {
   main.append(r);
 }
 
-return {
+return Object.freeze({
   chains: graphChains, of: graphThoughts, forEntry: entryThoughts, list, page, reader, holdReading,
   thoughtRoute, thoughtHref, shortLabel, projOf, focusStep, stepHover,
-};
+});
 }
 
 const KTW = (root.KeepTheWhy = root.KeepTheWhy || {});

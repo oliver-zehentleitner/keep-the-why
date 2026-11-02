@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-const { plural, typeName, entryRefs, isUuid, rawFileUrl, configLine, normalizeState, hostFileLink, hostTreeLink, canonicalOf, NO_FILTER, familyOrder, parseSupersededBy, kindLabel, groupByFamily, searchTerms, registryMatches, shuffled, resolveLocation, linkFamily, authorLookup, mergeStates, thoughtsOf, thoughtInsights, projectLabel, backlinksUrl, citingOf, hostAnchor, seeDay, supersededDay, paletteToken, mergeAuthors, sortAuthors, AUTHOR_SORTS, ownerOf, exportStateUrl, exportVerdict, resolveSee, filterActive, entryMatches, fkey, repoLabel, topicTitle } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
+const { plural, typeName, entryRefs, isUuid, rawFileUrl, configLine, normalizeState, hostFileLink, hostTreeLink, canonicalOf, NO_FILTER, familyOrder, parseSupersededBy, kindLabel, groupByFamily, searchTerms, registryMatches, shuffled, resolveLocation, linkFamily, authorLookup, mergeStates, projectLabel, backlinksUrl, citingOf, hostAnchor, seeDay, supersededDay, paletteToken, mergeAuthors, sortAuthors, AUTHOR_SORTS, ownerOf, exportStateUrl, exportVerdict, resolveSee, filterActive, entryMatches, fkey, repoLabel, topicTitle } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
 const MD = globalThis.KeepTheWhy.markdown; // ktw-markdown.js
 
 // ---------------------------------------------------------------- prefs (host)
@@ -423,7 +423,7 @@ const searchPool = (scope) => SEARCH.pool(scope);
 // has — the graph of the scope, following a chain into other repositories, an entry found in what the page has
 // loaded, the Markdown with this page's topic links, a redraw — is THOUGHTS_HOST, further down.
 const THOUGHTS = globalThis.KeepTheWhy.views.thoughts.create({ scene: SCENE, nav, prefs });
-const { thoughtRoute, thoughtHref, shortLabel, projOf, focusStep, stepHover } = THOUGHTS;
+const { thoughtRoute, shortLabel, projOf, focusStep, stepHover } = THOUGHTS;
 let PROJECT = QUERY.get("project"); // null: the server's SCENE.selected one
 const api = (path) => PROJECT ? `${path}?project=${encodeURIComponent(PROJECT)}` : path;
 // The clock: the day the page shows — the timeline's playhead. Set while the timeline is open, null
