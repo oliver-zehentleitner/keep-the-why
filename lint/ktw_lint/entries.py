@@ -31,12 +31,58 @@ _FIELD_RE = re.compile(
     r"\s*(.*?)\s*$"
 )
 _ANCHOR_DROP_RE = re.compile(r"[^\w\- ]", re.UNICODE)
+_CODE_SPAN_RE = re.compile(r"(`+)(.+?)\1")
+_IMAGE_RE = re.compile(r"!\[[^\]]*\]\([^)]*\)")
+_LINK_RE = re.compile(r"\[([^\]]*)\]\([^)]*\)")
+_UNDERSCORE_EM_RE = re.compile(r"(?<!\w)(__?)(?=\S)(.+?)(?<=\S)\1(?!\w)")
+_TAG_RE = re.compile(r"</?([A-Za-z][A-Za-z0-9]*)(?:\s[^<>]*)?/?>")
+# The inline tags a host renders as HTML inside a heading — GitHub's sanitizer
+# allows them, and so does GitLab's. Their markup is not in the heading's text,
+# so not in its anchor; any other tag is shown as text on GitHub (GitLab drops
+# it), and its name stays in the anchor.
+INLINE_TAGS = frozenset(
+    "a abbr b bdi bdo big br cite code del dfn em font i img ins kbd mark q rp rt "
+    "ruby s samp small span strike strong sub sup time tt u var wbr".split()
+)
+
+
+def heading_text(title: str) -> str:
+    """The text a host shows for a Markdown heading: a code span as written,
+    a link as its text, an image as nothing, emphasis with underscores
+    without them, and the markup of an inline HTML tag left out."""
+
+    def plain(part: str) -> str:
+        part = _IMAGE_RE.sub("", part)
+        part = _LINK_RE.sub(r"\1", part)
+        part = _UNDERSCORE_EM_RE.sub(r"\2", part)
+        return _TAG_RE.sub(
+            lambda m: "" if m.group(1).lower() in INLINE_TAGS else m.group(0), part
+        )
+
+    out, pos = [], 0
+    for m in _CODE_SPAN_RE.finditer(title):
+        out.append(plain(title[pos : m.start()]))
+        out.append(m.group(2))
+        pos = m.end()
+    out.append(plain(title[pos:]))
+    return "".join(out)
 
 
 def anchor(title: str) -> str:
-    """The heading anchor a Markdown host derives from an entry title: lowercase,
-    punctuation dropped, spaces to hyphens (GitHub's rule; a local `See` locator
-    uses it as `<file>#<anchor>`)."""
+    """The heading anchor a Markdown host derives from an entry title (GitHub's
+    rule, which GitLab shares): the heading's text as the host shows it, then
+    lowercase, everything but letters, digits, `_`, `-` and spaces dropped,
+    each space a hyphen. A local `See` locator uses it as `<file>#<anchor>`,
+    the dashboard as an entry's id. A repeated heading's `-1` is not reproduced."""
+    return _ANCHOR_DROP_RE.sub("", heading_text(title).strip().lower()).replace(
+        " ", "-"
+    )
+
+
+def legacy_anchor(title: str) -> str:
+    """The anchor as the linter derived it before 0.20.3.1, from the raw title —
+    it differs only for a title with inline HTML, a link or underscore emphasis.
+    E119 still accepts it, so a locator written then keeps resolving."""
     return _ANCHOR_DROP_RE.sub("", title.strip().lower()).replace(" ", "-")
 
 

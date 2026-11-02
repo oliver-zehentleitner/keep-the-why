@@ -13,6 +13,8 @@ import json
 import os
 import re
 
+from ktw_lint.entries import anchor as heading_anchor
+
 from . import gitinfo
 from .views import WEB_DIR
 from .views import page as views_page
@@ -112,11 +114,8 @@ def noscript_body(state: dict) -> str:
         )
         items = []
         for e in by_file.get(file, []):
-            # the heading's anchor as the host renders it (GitHub's rule, as `hostAnchor` in ktw-core.js), not the
-            # dashboard's own entry id, which differs for a title with an apostrophe or a dot
-            anchor = re.sub(r"[^\w\- ]", "", (e.get("title") or "").lower()).replace(
-                " ", "-"
-            )
+            # the heading's anchor as the host renders it (ktw_lint.entries.anchor, as `hostAnchor` in ktw-core.js)
+            anchor = heading_anchor(e.get("title") or "")
             href = host_file_link(canonical, prefix + file, anchor) if canonical else ""
             title = esc((e.get("title") or "").replace("`", ""))
             label = f'<a href="{esc(href)}">{title}</a>' if href else title

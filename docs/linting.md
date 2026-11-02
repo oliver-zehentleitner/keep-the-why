@@ -143,7 +143,7 @@ None of this is specific to Keep the Why; it is the same set of settings any tea
 | E116 | error | the same `Id` on two entries of the project |
 | E117 | error | `See` or `Superseded by` value not in its documented shape — for another project, the locator must be exactly that project's `canonical` (the repository URL — no file path, anchor, query or `.git` suffix) |
 | E118 | error | `See` / `Superseded by` names an `Id` no entry in this project carries |
-| E119 | error | a local `See` locator (`<file>.md#<anchor>`) no longer matches the entry its `Id` names — repair the locator, keep the `Id` |
+| E119 | error | a local `See` locator (`<file>.md#<anchor>`) no longer matches the entry its `Id` names — repair the locator, keep the `Id`. The anchor is the heading as the host renders it: inline HTML, a link's address and underscore emphasis are not part of it (since 0.20.3.1; the anchor derived from the raw title before that is still accepted) |
 | E120 | error | `Status: superseded` without a `Superseded by` line |
 | E121 | error | `Superseded by` on an entry whose Status is not `superseded` |
 | E201–E204 | error | `index.md` missing / broken link / unlisted topic file / not sorted |
