@@ -103,7 +103,7 @@
       <i class="dot unknown active">
       <span>
         "Temporary files live beside the database"
-    <a class="leaf " data-id="storage.md#pasted-b-markup-b-stays-text" href="#entry/050ea108-42f3-4f0f-9ea9-dd2156f206d7" title="Pasted <b>markup</b> stays text">
+    <a class="leaf " data-id="storage.md#pasted-markup-stays-text" href="#entry/050ea108-42f3-4f0f-9ea9-dd2156f206d7" title="Pasted <b>markup</b> stays text">
       <i class="dot inferred active">
       <span>
         "Pasted <b>markup</b> stays text"

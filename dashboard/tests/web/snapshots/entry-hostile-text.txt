@@ -11,7 +11,7 @@
     "/ line 37"
     <button class="share-btn" title="copy a link to this entry — the project's published dashboard:\nhttps://acme.example/keep-the-why-dashboard/#entry/050ea108-42f3-4f0f-9ea9-dd2156f206d7" type="button">
       "⧉ copy link"
-    <a class="ext share-btn source-link" href="https://github.com/acme/widget/blob/main/context/storage.md#pasted-bmarkupb-stays-text" rel="noopener" target="_blank">
+    <a class="ext share-btn source-link" href="https://github.com/acme/widget/blob/main/context/storage.md#pasted-markup-stays-text" rel="noopener" target="_blank">
       "open source"
       <svg aria-hidden="true" class="ext-icon" viewBox="0 0 24 24">
         <path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z">
@@ -77,8 +77,8 @@
   <span class="k">
     "at"
   <span class="v mono">
-    <a class="gh" href="https://github.com/acme/widget/blob/main/context/storage.md#pasted-bmarkupb-stays-text" rel="noopener" target="_blank" title="open on the host">
-      "storage.md#pasted-b-markup-b-stays-text"
+    <a class="gh" href="https://github.com/acme/widget/blob/main/context/storage.md#pasted-markup-stays-text" rel="noopener" target="_blank" title="open on the host">
+      "storage.md#pasted-markup-stays-text"
   <span class="k">
     "type"
   <span class="v">

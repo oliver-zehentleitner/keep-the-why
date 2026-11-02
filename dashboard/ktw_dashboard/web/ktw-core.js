@@ -48,12 +48,25 @@ function normalizeState(s) {
   return s;
 }
 
-const slug = (t) => t.toLowerCase().replace(/[^\w\- ]/g, "").replace(/ /g, "-");
-// A heading's anchor as the host renders it (GitHub's rule: lowercase, everything but letters, digits,
-// `_`, `-` and spaces dropped, spaces to hyphens; letters beyond ASCII kept) — for links into the host,
-// not the dashboard's own entry id, which turns an apostrophe or a slash into a hyphen. export.py's
-// list without JavaScript uses the same rule. A repeated heading's `-1` suffix is not reproduced.
-const hostAnchor = (title) => String(title || "").toLowerCase().replace(/[^\p{L}\p{N}_\- ]/gu, "").replace(/ /g, "-");
+// A heading's anchor as the host renders it — GitHub's rule, which GitLab shares, the same as the linter's
+// ktw_lint.entries.anchor (the vectors in lint/tests/anchors.json hold both to it): the heading's text as the
+// host shows it — a code span as written, a link as its text, an image as nothing, underscore emphasis without
+// its underscores, an inline HTML tag's markup left out (another tag stays as text, as GitHub shows it) — then
+// lowercase, everything but letters, digits, `_`, `-` and spaces dropped, each space a hyphen. It is an entry's
+// id after its file (state.py) and a link into the host. A repeated heading's `-1` suffix is not reproduced.
+const INLINE_TAGS = new Set("a abbr b bdi bdo big br cite code del dfn em font i img ins kbd mark q rp rt ruby s samp small span strike strong sub sup time tt u var wbr".split(" "));
+function headingText(title) {
+  const plain = (part) => part
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/(?<![\p{L}\p{N}_])(__?)(?=\S)(.+?)(?<=\S)\1(?![\p{L}\p{N}_])/gu, "$2") // a word character as Python's \w: any letter or digit, not ASCII only
+    .replace(/<\/?([A-Za-z][A-Za-z0-9]*)(?:\s[^<>]*)?\/?>/g, (m, tag) => (INLINE_TAGS.has(tag.toLowerCase()) ? "" : m));
+  let out = "", pos = 0;
+  for (const m of String(title || "").matchAll(/(`+)(.+?)\1/g)) { out += plain(title.slice(pos, m.index)) + m[2]; pos = m.index + m[0].length; }
+  return out + plain(String(title || "").slice(pos));
+}
+const hostAnchor = (title) => headingText(title).trim().toLowerCase().replace(/[^\p{L}\p{N}_\- ]/gu, "").replace(/ /g, "-");
+const slug = hostAnchor; // the fallback id of an entry a state carries without one
 
 // The one place host URL grammar lives: a file (and heading anchor) of a
 // repository as its host renders it. Everything else in Keep the Why keeps

@@ -841,7 +841,6 @@ The held thought is the scene's: `scene.pin` holds its ids joined with `|`, `set
 
 **Rejected alternative:** waiting for the graph builders to move first — the lead's call. Passing the graph itself instead of a builder was also rejected: the family's graph arrives after the page is first shown, and the page asks again when it does.
 
-
 ## The family and the search load through the provider and know public members only; the registry comes in through two host hooks
 
 **Id:** 717445db-3e9f-4800-ac0b-4526c4545496
@@ -858,6 +857,21 @@ The held thought is the scene's: `scene.pin` holds its ids joined with `|`, `set
 **Reason:** a token, a private member's path or the registry's URL inside the library would decide for every host what only the dashboard has settled. Maity's per-project access is not settled yet, so the library stays with what any page may read. The registry was already the dashboard's alone, together with the globe it feeds. Two named hooks keep it out of the library without taking it out of the search the dashboard shows.
 
 **Rejected alternative:** moving the registry search into the library behind a provider method. That would have put a URL only this dashboard uses into a file every host loads, and the globe it belongs with stays in the host anyway. The Friends page stayed out of this step: it reads the host's graph builders and shares its helpers with the Thoughts page, which another step is moving at the same time.
+
+## One heading-anchor rule, the host's: the linter holds it, the page mirrors it, and an entry's id is its anchor
+
+**Id:** e8766afe-6da7-45ca-87ab-af4fd01ec891
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** anchors read from rendered files on GitHub and GitLab, 2026-11-01 (probe branches, since deleted; the vectors in `lint/tests/anchors.json`); maintainer decision the same day that the entry ids follow the rule too ("nobody has bookmarks"); the legacy acceptance in `E119` and GitHub's side on disallowed tags are the implementer's choices
+**Revisit when:** GitHub or GitLab changes how it derives a heading's anchor, or a project's titles start using HTML the two hosts render differently
+
+A heading's anchor is derived the way the hosts derive it, from the heading's text as rendered: a code span as written, a link as its text, an image as nothing, underscore emphasis without its underscores, and the markup of an inline HTML tag left out. Then: lowercase, everything but letters, digits, `_`, `-` and spaces dropped, each space a hyphen. `ktw_lint.entries.anchor` is the rule. `E119` uses it for `See` locators, the dashboard uses it for an entry's id (`<file>#<anchor>`) and for the page without JavaScript, and `hostAnchor` in `ktw-core.js` mirrors it for host links. Both implementations are tested against one vector file. `E119` also accepts the anchor the linter derived from the raw title before, which differs only for titles with inline HTML, a link or underscore emphasis.
+
+**Reason:** five copies of the rule had drifted apart. The four that followed GitHub never looked at HTML, so a title with `<b>` pointed links at the top of the file. The dashboard's id had a rule of its own (anything outside a-z0-9 a hyphen), so the address the page showed for an entry differed from the one a `See` line writes in about one title in five. With one rule, the locator the skill writes, the id the page uses and the host's anchor are the same string. The legacy acceptance keeps every locator written before the change from becoming an error in a project's CI.
+
+**Rejected alternative:** keeping the dashboard's ids on their own rule and fixing only the host links — two addresses for one entry stay. Following GitLab for a disallowed tag such as `<script>` (it drops the tag; GitHub shows it as text) — GitHub is the host the locator convention was written against, and no real title carries such a tag. Rendering titles with a Markdown library to read the anchor — a dependency for both the linter and the page, for a rule this short.
 
 ## The thoughts view is handed what only the host has, per call; following a chain stays in the host
 
