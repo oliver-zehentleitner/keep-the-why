@@ -792,3 +792,16 @@ test("layoutTick, pinned on the branches the fixture's graph has none of: a fami
   ]);
   assert.equal(+a.toFixed(12), +(0.985 ** 25).toFixed(12)); // the alpha: 25 decays
 });
+
+test("the sidebar's filter: each field empty for any, an entry's author its creator or its last toucher", () => {
+  const { NO_FILTER, filterActive, entryMatches, fkey } = core;
+  const e = { status: "active", evidence: "inferred", git: { created: { author: "Alice" }, last_touched: { author: "Bob" } } };
+  assert.equal(filterActive(NO_FILTER), false); assert.equal(filterActive(null), false);
+  assert.equal(filterActive({ ...NO_FILTER, author: "Bob" }), true);
+  assert.equal(entryMatches(e, NO_FILTER), true); assert.equal(entryMatches(e, null), true);
+  assert.equal(entryMatches(e, { ...NO_FILTER, status: "open" }), false);
+  assert.equal(entryMatches(e, { ...NO_FILTER, evidence: "inferred", author: "Alice" }), true);
+  assert.equal(entryMatches(e, { ...NO_FILTER, author: "Bob" }), true, "the last toucher matches too");
+  assert.equal(entryMatches({ status: "active", git: { last_touched: { author: "Bob" } } }, { ...NO_FILTER, author: "Bob" }), true);
+  assert.equal(fkey("https://GitHub.com/Acme/W//"), "https://github.com/acme/w");
+});

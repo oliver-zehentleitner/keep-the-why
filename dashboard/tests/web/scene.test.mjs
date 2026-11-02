@@ -21,7 +21,7 @@ test("the scene holds what the views share and tells its subscribers when it cha
   scene.on("spot", (c, r) => heard.push(["spot", c, r]));
   scene.on("scope", (v) => heard.push(["scope", v]));
   scene.on("wake", () => heard.push(["wake"]));
-  scene.setDay("2026-04-15", { grew: true }); scene.setFocus("u1"); scene.setFocus(""); scene.setThought({ ids: [] });
+  scene.setDay("2026-04-15", { grew: true }); scene.setFocus("u1"); scene.setFocus(""); scene.light({ ids: [] });
   scene.spot("https://e.org/x", ""); scene.setScope("project"); scene.wake();
   off(); scene.setDay(null);
   assert.deepEqual(heard, [["day", "2026-04-15", true], ["focus", "u1"], ["focus", null], ["thought", { ids: [] }], ["spot", "https://e.org/x", ""], ["scope", "project"], ["wake"]]);
@@ -55,4 +55,34 @@ test("with no graph drawn, the scene settles the layout itself; with one, it wai
   const drawn = create(); const h = mk(); drawn.resetLayout(h);
   assert.equal(drawn.layoutFor(h.nodes, h.links).size, 0, "a source is set: nothing is settled here");
   assert.deepEqual([h.nodes[1].x, h.nodes[1].y], [5, 0], "and the source's nodes are left alone");
+});
+
+test("the clock's view of an entry: there on the day shown, with the status it had then", () => {
+  const scene = create({ state: { project: { git: { available: true } }, entries: [] } });
+  const e = { status: "superseded", git: { created: { date: "2026-03-02" }, status_history: [{ date: "2026-03-02", status: "active" }, { date: "2026-05-10", status: "superseded" }] } };
+  const fresh = { status: "active" }; // not committed yet: in a repository, it exists today only
+  assert.equal(scene.atClock(e), true, "no clock: today, and the entry exists");
+  assert.equal(scene.statusNow(e), "superseded");
+  scene.setDay("2026-02-01"); assert.equal(scene.atClock(e), false, "before it was written");
+  scene.setDay("2026-04-01"); assert.equal(scene.atClock(e), true);
+  assert.equal(scene.statusNow(e), "active", "on a day before it was superseded, the status it had then");
+  scene.setDay("2026-06-01"); assert.equal(scene.statusNow(e), "superseded");
+  scene.setDay("2026-04-01");
+  assert.equal(scene.atClock(fresh), false, "an uncommitted entry of a repository is not there on a past day");
+  assert.equal(scene.atClock(fresh, true), false, "a foreign entry came from a repository's export too: without a date, today only");
+  const noGit = create({ state: { project: { git: { available: false } }, entries: [] } }); noGit.setDay("2026-04-01");
+  assert.equal(noGit.atClock(fresh), true, "a project without a repository has no days to go by: the entry is there");
+  assert.equal(scene.hasRepo({ origin: {} }), true, "a foreign entry came from a repository");
+});
+
+test("a thought held is the scene's pin: set and let go through setThought, told once per change; lighting in passing leaves it", () => {
+  const scene = create();
+  const pins = []; scene.on("pin", (k) => pins.push(k));
+  const t = { ids: ["a", "b", "c"] }, u = { ids: ["x", "y"] };
+  scene.setThought(t); assert.equal(scene.pin, "a|b|c");
+  scene.setThought(t); // the same thought again: no change, no event
+  scene.light(u); scene.light(null); assert.equal(scene.pin, "a|b|c", "pointing at another thought does not move the pin");
+  scene.setThought(u); scene.setThought(null); scene.setThought(null);
+  assert.deepEqual(pins, ["a|b|c", "x|y", null]);
+  assert.equal(scene.pin, null);
 });

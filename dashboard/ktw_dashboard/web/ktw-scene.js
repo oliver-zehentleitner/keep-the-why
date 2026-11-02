@@ -10,7 +10,8 @@
 // Events a view can subscribe to, and what comes with them:
 //   day      (day, { grew })  the clock moved; `grew`: the set of entries shown changed, so a layout may settle again
 //   focus    (ref)            an entry pointed at (an Id or a node id), or null
-//   thought  (t)              a thought chain lit, or null
+//   thought  (t)              a thought chain lit while pointed at, or null (light)
+//   pin      (key)            the thought held — its ids joined by "|" — changed, or let go (null) (setThought)
 //   spot     (canonical, root) a project pointed at outside the graph, or null
 //   scope    (scope)          "project" or "family"
 //   layout   ()               the layout source published positions
@@ -22,6 +23,9 @@ function create({ state = null, self = null, day = null, scope = "project" } = {
   const scene = {
     state, self, day, scope,
     focus: null, thought: null,
+    pin: null, // the thought held, by its ids joined with "|" (setThought); lighting one in passing does not change it
+    selected: null, // the entry the page shows in its details, by id
+    filter: { status: "", evidence: "", author: "" }, // the sidebar's: what is not matched is dimmed (core entryMatches)
     layout, layoutSettled: false,
     // the graph whose positions the layout follows; null: none is drawn, and the layout is settled here (layoutFor)
     layoutSource: null,
@@ -30,9 +34,17 @@ function create({ state = null, self = null, day = null, scope = "project" } = {
       subs.get(event).add(fn);
       return () => subs.get(event)?.delete(fn);
     },
+    // The clock's view of an entry. An entry of the project shown goes by its repository: with one, an entry
+    // without a Git date is not committed yet and exists today only; a foreign entry's export came from a
+    // repository. atClock: is it there on the day shown (today with no clock); statusNow: its status then.
+    hasRepo(e) { return e?.origin || e?.project ? true : !!scene.state?.project?.git?.available; },
+    atClock(e, ext = false) { return root.KeepTheWhy.core.existsAt(e, scene.day, ext || scene.hasRepo(e)); },
+    statusNow(e) { return scene.day ? root.KeepTheWhy.core.statusAt(e, scene.day, scene.hasRepo(e)) || e.status : e.status; },
     setDay(d, { grew = false } = {}) { scene.day = d; emit("day", d, { grew }); },
     setFocus(ref) { scene.focus = ref || null; emit("focus", scene.focus); },
-    setThought(t) { scene.thought = t || null; emit("thought", scene.thought); },
+    light(t) { scene.thought = t || null; emit("thought", scene.thought); }, // pointed at: lit in every graph, held by none
+    // hold a thought, or let go of the one held (null); the views that list or light the held one hear `pin`
+    setThought(t) { const key = t ? t.ids.join("|") : null; if (key === scene.pin) return; scene.pin = key; emit("pin", key); },
     spot(canonical, rt) { emit("spot", canonical, rt); },
     setScope(v) { scene.scope = v; emit("scope", v); },
     wake() { emit("wake"); },
@@ -42,6 +54,14 @@ function create({ state = null, self = null, day = null, scope = "project" } = {
       for (const n of nodes) if ((n.kind === "entry" || n.kind === "topic") && (!scene.layoutSettled || !layout.has(n.id))) layout.set(n.id, { x: n.x, y: n.y });
       if (settled) scene.layoutSettled = true;
       emit("layout");
+    },
+    // a graph that is the layout source — or a copy sharing its nodes (`of`) — publishes after a step; settled
+    // once both it and its copy (`runner`) are; a step that moved nothing after that publishes nothing
+    publishFrom(g, { force = false } = {}) {
+      const src = scene.layoutSource;
+      if (!src || (g !== src && g.of !== src)) return;
+      if (!force && g.alpha <= 0.003 && scene.layoutSettled) return;
+      scene.publishLayout(src.nodes, { settled: Math.min(src.alpha, src.runner?.alpha ?? 1) <= 0.01 });
     },
     resetLayout(source = null) { layout.clear(); scene.layoutSettled = false; scene.layoutSource = source; },
     // The layout for these nodes and links: the source's, or — with no source — settled here at once, without a

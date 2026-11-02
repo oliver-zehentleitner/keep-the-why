@@ -775,6 +775,72 @@ The stage's positions come from the scene. When the host draws a graph beside th
 
 **Rejected alternative:** a registry of views that the scene calls by name (wake, relax). It would turn the scene back into the loop over the page's graphs, with a list to keep. Events in which a view decides what to do keep the scene free of drawing. Keeping the clock's entry count in the scene was also rejected: it is the page's measure of when a layout should settle again, so the host computes it and passes it on with the day.
 
+## The graph view takes the scene, nav and prefs only; the page state it reads moved into the scene
+
+**Id:** 3b9cacf9-4e62-48b7-943e-a1650e09f3ce
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** design proposal (revision 3.1) agreed by the maintainer, 2026-11-01 (only host interfaces cross into a view); what moved into the scene, `nav.open`, the pane's composition staying with the host and the tests' scoped app are the implementer's, in the pull request that moved the graph
+**Revisit when:** the graph's model builders (which projects, friends, family and path are in a graph) move into the library, or another view needs page state the scene does not carry
+**See:** dashboard.md#the-views-share-one-scene-state-clock-focus-scope-and-layout-and-the-events-that-carry-their-changes — 350c514d-f042-40a7-88fb-255307561f50 — as of 2026-11-01
+
+`web/ktw-graph.js` holds the graph view: `runGraph` with its drawing, pointing and dragging, the name placement, a thought lit, a project spotted, the small graph's own view, the motion and the names per group. `create({ scene, nav, prefs })` is all it is given. Two pieces of page state the graph read from the page's globals are now the scene's: the entry shown in the details (`selected`) and the sidebar's filter, whose matching moved into the core (`entryMatches`). A node's address is followed through `nav.open`, which joins `nav`'s interface. `miniGraph()`, which decides which graph the side pane shows and builds its switches, stays with the host, because it composes the host's graph builders; the canvas it puts there is the view's. The tests run `app.js` as a strict function rather than a global script (`tests/web/classic.mjs`), as a browser runs a module, so a library file that reached for one of its names fails in the test as it would in the browser.
+
+**Reason:** a view that read the page's globals would run only on this page. With the filter and the selection in the scene, a host that has neither leaves them empty and the graph dims and marks nothing. The pane's composition is page logic — this dashboard's choice of graphs and switches — and it moves only when the builders it calls do. The test change closes a gap the series would otherwise hide: the tests inlined `app.js` as a classic script, and every one of its names was global to the library, which in a browser it is not.
+
+**Rejected alternative:** passing the filter and the selection to the graph as callbacks. Those would be two more interfaces beside the four the proposal allows, for state that other views (lists, the stage) read as well. Moving `miniGraph()` with the view was also rejected: it would pull the graph builders, the friends and the family layers along, which is a later step.
+
+## Every view builds its DOM from one stateless helper file; the clock's view of an entry is the scene's
+
+**Id:** cba9a299-113c-41b6-96c1-8385a68d9135
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** proposed by the implementer while moving the timeline (PR 9) and agreed by the series' lead the same day (2026-11-01): `ktw-ui.js` to hold only DOM helpers and no state, the clock lookups on the scene
+**Revisit when:** a helper in `ktw-ui.js` needs state or the page, or a host wants its own pills
+**See:** dashboard.md#the-graph-view-takes-the-scene-nav-and-prefs-only-the-page-state-it-reads-moved-into-the-scene — 3b9cacf9-4e62-48b7-943e-a1650e09f3ce — as of 2026-11-01
+
+`web/ktw-ui.js` holds what every view builds from: `el` (an element, its attributes, handlers and children), `setKids`, the pills for a Type, a Status and an Evidence, and a Type's glyph as SVG. It holds nodes only — no state, nothing read from the page — and stands in the manifest after the core, under the same safety rules. The clock's view of an entry — whether it is there on the day shown (`atClock`), with which status (`statusNow`), and whether it goes by a repository (`hasRepo`) — is three methods on the scene. The graph view and the page use them, instead of each keeping a copy.
+
+**Reason:** the timeline, the thoughts list and the pages each need `el` and the pills. Moved one view at a time, each library file would have grown its own copy, and two coders moving views in parallel would have made two. The clock lookups read only the scene's day and state, so the scene is where they belong. A copy in each view was the first form the graph view took, and the copies would have drifted.
+
+**Rejected alternative:** each view file carrying its own `el` and pills — the drift above. Folding them into `ktw-core.js` was also rejected: the core has no DOM, and its node tests run without one.
+
+## The stage takes the page's scene, nav and prefs; the thought held is the scene's pin
+
+**Id:** 1d5a2cbf-f61f-4e5a-b5be-722e2258cf7d
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** the split of the timeline's move agreed by the series' lead (2026-11-01: the stage engine as its own step, the held thought through the scene); the pin's form and event named with the coder moving the thoughts list the same day; the rest is the implementer's, in the pull request that moved the stage
+**Revisit when:** the thoughts list moves into the library (the host's redraw on `pin` goes with it), or the play loop does
+**See:** dashboard.md#the-graph-view-takes-the-scene-nav-and-prefs-only-the-page-state-it-reads-moved-into-the-scene — 3b9cacf9-4e62-48b7-943e-a1650e09f3ce — as of 2026-11-01
+
+`web/ktw-timeline.js` holds the stage: its scene, camera, layout, painter, input and the legend under it, with `create({ scene, nav, prefs })` as all it is given. It also keeps the stage's two settings, where a card stands and which foreign entries show, through prefs. The page around the stage stays with the host for now: the bars, the slider, the card and the play loop. (The next step moved them too, the same day — see `caf46ca9-ecd0-46cb-b6a5-058c668c2ef7`.) The play state is handed in (`playing`), and `runStage` returns the stage's handle instead of writing it into the page.
+
+The held thought is the scene's: `scene.pin` holds its ids joined with `|`, `setThought(t)` holds a thought and `setThought(null)` lets go, and a change is announced once as `pin`. Lighting a thought while it is pointed at is `scene.light(t)` and leaves the pin as it is; that is the event the graphs light it by. The list of thoughts beside the graph redraws on `pin`, in the host until the thoughts view moves too, so the graph's legend, the stage's reset and the side pane only let go and no longer redraw the list themselves.
+
+**Reason:** the stage reset and the graph's legend reached into the thoughts list to clear its pin and redraw it, which is one view writing another's state. Through the scene each lets go, and whoever lists thoughts hears it. Pointing and holding are separate in the page — a held thought gives way while another is pointed at, then comes back — so they are separate in the scene too; one `setThought` for both would have let go of the held thought whenever the pointer left another.
+
+**Rejected alternative:** `setThought` for both pointing and holding, the first reading of the pin's specification — the problem above. The play loop moving with the stage was also rejected: it drives the slider, the bars and the card, which are the page's.
+
+## The timeline page takes the host's graph builders as callbacks; its clock and play loop moved with it
+
+**Id:** caf46ca9-ecd0-46cb-b6a5-058c668c2ef7
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** the series' lead, 2026-11-01: the timeline view to take the graph builders as host callbacks rather than wait for them to move ("whether they move later is decided separately"); the shape of the callbacks is the implementer's, in the pull request that moved the page
+**Revisit when:** the graph builders move into the library, or a second host shows the timeline and needs a callback this one does not give
+**See:** dashboard.md#the-stage-takes-the-pages-scene-nav-and-prefs-the-thought-held-is-the-scenes-pin — 1d5a2cbf-f61f-4e5a-b5be-722e2258cf7d — as of 2026-11-01
+
+`ktw-timeline.js` holds the whole timeline page now: the clock (`setClock`, with the count of entries that decides when a layout settles again), the play loop and its speeds, the bars, the slider, the card under it and the stage. `view(main, day, host)` shows it, and `host` carries what only the host has: `graph()`, its graph builders (the family's graph when it is shown and built, else the project's, rebuilt while the family's is fetched), `entryRow`, `renderBody` (its Markdown with its topic links), `bodies` (the provider's) and `render`. `leave()` stops the clock when the page goes elsewhere, and `stage()` hands out the stage's handle. The card the graph's preview fills takes `renderBody` and `bodies` as options. Esc stays with the host, which points it at the stage's reset after showing the page.
+
+**Reason:** the graph builders compose the friends, the family and the path layers, which is this dashboard's page logic. Moving them would have pulled half the page along, and the lead decided the timeline should not wait for that. Five callbacks keep the line plain: what is the page's comes in through `host`, and everything else is the scene, nav and prefs. The clock and the play loop drive only the timeline's own parts, so they moved with it.
+
+**Rejected alternative:** waiting for the graph builders to move first — the lead's call. Passing the graph itself instead of a builder was also rejected: the family's graph arrives after the page is first shown, and the page asks again when it does.
+
 ## One heading-anchor rule, the host's: the linter holds it, the page mirrors it, and an entry's id is its anchor
 
 **Id:** e8766afe-6da7-45ca-87ab-af4fd01ec891

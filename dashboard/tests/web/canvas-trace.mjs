@@ -12,6 +12,7 @@
 process.env.TZ = "UTC";
 
 import { JSDOM, VirtualConsole } from "jsdom";
+import { moduleAsClassic } from "./classic.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -25,7 +26,7 @@ const round = (v) => (typeof v === "number" ? Math.round(v * 1000) / 1000 : v);
 const show = (v) => (typeof v === "number" ? String(round(v)) : typeof v === "string" ? JSON.stringify(v) : Array.isArray(v) ? `[${v.map(show).join(",")}]` : v && typeof v === "object" ? (v.constructor?.name || "object") : String(v));
 
 const errors = [];
-const html = fs.readFileSync(page, "utf8").replace('<script type="module">', "<script>");
+const html = moduleAsClassic(fs.readFileSync(page, "utf8"));
 const tick = (ms) => new Promise((r) => setTimeout(r, ms));
 // The last frame of a canvas. The graph's painter and the stage's both open every frame with clearRect over the
 // whole canvas, so the calls since the last clearRect are the frame drawn last — the one the settled layout shows.
@@ -81,6 +82,18 @@ async function trace(hash, { narrow = false } = {}) {
   // the stage says whether the layout it stands its cards on has settled — with no graph beside it, the scene settles it itself
   const wrap = dom.window.document.querySelector(".stage-wrap, [data-settled]");
   if (hash.startsWith("#timeline") && wrap?.dataset.settled !== "1") errors.push(`${hash}${narrow ? " (narrow)" : ""}: the stage's layout never settled`);
+  // After the trace: the pointer across the stage, so what a card does when it is pointed at runs too (its tip) —
+  // a name missing there would otherwise only show when someone hovers. Nothing of this goes into the trace.
+  const stage = dom.window.document.querySelector("canvas.stage");
+  if (stage) {
+    let tips = 0;
+    for (let y = 20; y < 500; y += 24) for (let x = 20; x < 800; x += 24) {
+      stage.dispatchEvent(new dom.window.MouseEvent("mousemove", { clientX: x, clientY: y, bubbles: true }));
+      if (!dom.window.document.querySelector(".stage-tip")?.hidden) tips++;
+    }
+    await tick(50);
+    if (!tips) errors.push(`${hash}${narrow ? " (narrow)" : ""}: no card showed its tip under the pointer`);
+  }
   dom.window.close();
   return `# ${hash}\n\n${parts.join("\n")}`;
 }

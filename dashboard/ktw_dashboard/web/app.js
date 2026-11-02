@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-const { esc, plural, typeName, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug, hostFileLink, hostTreeLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, shuffled, compareHits, snippetAt, highlightParts, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf, projectLabel, backlinksUrl, citingOf, hostAnchor, todayISO, addDays, dayDiff, timeGrid, stampLabel, existsAt, statusAt, seeDay, supersededDay, linkExistsAt, daySpan, createdOn, TYPE_KINDS, TYPE_TOKENS, paletteToken, typeKind, SHELF, stageCards, stageLinks, markLinked, stageLanes, logDepth, percentileBox, pushApart, stageHeight, mergeAuthors, sortAuthors, AUTHOR_SORTS, ownerOf, exportStateUrl, exportVerdict, resolveSee, layoutTick } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
+const { plural, typeName, isUuid, rawFileUrl, configLine, normalizeState, hostFileLink, hostTreeLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, shuffled, compareHits, snippetAt, highlightParts, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf, projectLabel, backlinksUrl, citingOf, hostAnchor, seeDay, supersededDay, paletteToken, mergeAuthors, sortAuthors, AUTHOR_SORTS, ownerOf, exportStateUrl, exportVerdict, resolveSee, NO_FILTER, filterActive, entryMatches, fkey } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
 const MD = globalThis.KeepTheWhy.markdown; // ktw-markdown.js
 
 // ---------------------------------------------------------------- prefs (host)
@@ -47,6 +47,8 @@ const nav = {
   },
   current: () => ROUTES.parse(location.hash),
   onChange: (fn) => window.addEventListener("hashchange", () => fn(nav.current())),
+  // follow an address nav.href made (a graph node carries its own): a place on this page, or another page
+  open(href) { if (href.startsWith("#")) nav.go(ROUTES.parse(href)); else location.href = href; },
 };
 const onView = (...views) => { const r = nav.current(); return !r.alias && !r.unknown && views.includes(r.view); };
 // a link to a place: a real anchor — middle-click, a new tab and a screen reader work — whose plain click moves
@@ -62,7 +64,7 @@ function navLink(attrs, ...kids) {
 // The host's own moves, for what is not a place: an address nav.href made
 // (a graph node's), a walk to another centre in place, a reload, and whether
 // the page is on this machine.
-const go = (href) => { if (href.startsWith("#")) nav.go(ROUTES.parse(href)); else location.href = href; };
+const go = (href) => nav.open(href);
 const pushUrl = (url, state) => history.pushState(state, "", url);
 const onWalk = (fn) => window.addEventListener("popstate", fn); // back and forward between centres (onPopState)
 const reloadPage = () => location.reload();
@@ -72,18 +74,6 @@ const isLocalPage = () => /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const narrow = () => !!window.matchMedia?.("(max-width: 900px)").matches;
-const el = (tag, attrs = {}, ...kids) => {
-  const n = document.createElement(tag);
-  for (const [k, v] of Object.entries(attrs)) {
-    if (v == null || v === false) continue;
-    if (k === "class") n.className = v;
-    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
-    else n.setAttribute(k, v === true ? "" : v);
-  }
-  for (const k of kids.flat(Infinity)) if (k != null && k !== false) n.append(k.nodeType ? k : document.createTextNode(String(k)));
-  return n;
-};
-const setKids = (node, ...kids) => node.replaceChildren(...kids.flat(Infinity).filter((k) => k != null && k !== false));
 const fmtDate = (d) => d || "—";
 // the platform's mark before a repository's name, from its URL (ktw-core.js HOSTS);
 // none for a host no row knows
@@ -434,26 +424,21 @@ const publicHref = (canonical, root = "", hash = "#overview") => centreUrl({ mod
 // The scene (ktw-scene.js): what every view on the page shares — SCENE.state, what the page shows (this project,
 // or with the family scope the whole family merged, ktw-core.js mergeStates); SCENE.self, this project's own
 // state, always; SCENE.day, the clock; SCENE.focus, SCENE.scope, the layout — and the events views follow.
+// DOM helpers, pills and glyphs every view uses (ktw-ui.js): no state, only nodes
+const { el, setKids, pill, statusPill, evPill, typePills, entryPills, typeGlyphSvg } = globalThis.KeepTheWhy.ui;
 const SCENE = globalThis.KeepTheWhy.scene.create({ scope: prefs.get("scope") || prefs.get("search-scope") || "project" }); // search-scope: the name before the scope switched the graph too
-let PROJECT = QUERY.get("project"); // null: the server's selected one
+// The graph view (ktw-graph.js): it draws what the host builds, given the scene, navigation and settings only.
+const GRAPH = globalThis.KeepTheWhy.views.graph.create({ scene: SCENE, nav, prefs });
+const { run: runGraph, lightThought, spotIn, projectNodes, miniView, driftOn, setDrift, setLabels } = GRAPH;
+// The timeline's stage (ktw-timeline.js): the same three, and the page around it stays here.
+const TIMELINE = globalThis.KeepTheWhy.views.timeline.create({ scene: SCENE, nav, prefs });
+let PROJECT = QUERY.get("project"); // null: the server's SCENE.selected one
 const api = (path) => PROJECT ? `${path}?project=${encodeURIComponent(PROJECT)}` : path;
-let filter = { status: "", evidence: "", author: "" };
-let selected = null; // entry id shown in the details pane
 // The clock: the day the page shows — the timeline's playhead. Set while the timeline is open, null
 // everywhere else. Every graph on the page follows it: only what existed on that day, with the status it
 // had then, and the See and Superseded by lines that had been written by then (ktw-core.js, existsAt and friends).
-let CLOCK_N = -1; // how many entries the clock's day shows: a layout settles again only when that changes
 // an entry of this project goes by this project's repository: with one, an entry without a Git date is not committed
 // yet and exists today only; without one there are no days to go by. A foreign entry's export came from a repository.
-const hasRepo = (e) => (e?.origin || e?.project ? true : !!SCENE.state?.project?.git?.available);
-const atClock = (e, ext = false) => existsAt(e, SCENE.day, ext || hasRepo(e));
-const statusNow = (e) => (SCENE.day ? statusAt(e, SCENE.day, hasRepo(e)) || e.status : e.status);
-function setClock(day) {
-  if (day === SCENE.day) return;
-  // the layout settles again only when the set of nodes changed, not on every day the playhead passes
-  const n = SCENE.state ? SCENE.state.entries.filter((e) => existsAt(e, day, hasRepo(e))).length : 0; const grew = n !== CLOCK_N; CLOCK_N = n;
-  SCENE.setDay(day, { grew }); // every graph follows (runGraph), and the stage
-}
 const byId = () => Object.fromEntries(SCENE.state.entries.map((e) => [e.id, e]));
 const byUuid = () => Object.fromEntries(SCENE.state.entries.filter((e) => e.uuid).map((e) => [e.uuid, e]));
 // an entry's address is its Id, so a copied link survives a renamed heading or a moved entry; file#anchor only without one
@@ -463,11 +448,9 @@ const entryOf = (ref) => byId()[ref] || (isUuid(ref) ? byUuid()[ref] : null);
 const topicOf = (file) => SCENE.state.topics.find((t) => t.file === file);
 const entriesOf = (file) => SCENE.state.entries.filter((e) => e.file === file);
 const authorOf = (e) => e.git?.created?.author || e.git?.last_touched?.author || "";
-const matches = (e) =>
-  (!filter.status || e.status === filter.status) &&
-  (!filter.evidence || e.evidence === filter.evidence) &&
-  (!filter.author || authorOf(e) === filter.author || e.git?.last_touched?.author === filter.author);
-const filterActive = () => !!(filter.status || filter.evidence || filter.author);
+// the sidebar's filter and the entry in the details are the scene's (SCENE.filter, SCENE.selected): the graph reads them too
+const matches = (e) => entryMatches(e, SCENE.filter);
+const pageFiltered = () => filterActive(SCENE.filter);
 const queues = () => ({
   open: SCENE.state.entries.filter((e) => e.status === "open"),
   "needs-review": SCENE.state.entries.filter((e) => e.status === "needs-review"),
@@ -490,11 +473,6 @@ const renderMarkdown = (md) => MD.render(document, md, { topicHref });
 // a label before a line of Markdown, joined to its first text the way the HTML string joined them
 const labelled = (label, md) => { const f = inline(md); if (f.firstChild?.nodeType === 3) f.firstChild.data = label + f.firstChild.data; else f.prepend(label); return f; };
 // ---------------------------------------------------------------- shared bits
-const pill = (text, cls = "") => el("span", { class: `pill ${cls}` }, text);
-const statusPill = (s) => pill(s || "—", `status-${s}`);
-const evPill = (e) => pill(e || "—", `ev-${e}`);
-const typePills = (types) => (types?.length ? types : ["—"]).map((t) => { const p = pill(typeName(t), "type"); if (t !== typeName(t)) p.title = t; return p; });
-const entryPills = (e) => [...typePills(e.type), statusPill(e.status), evPill(e.evidence)];
 function bars(counts, order, clsPrefix = "") {
   const total = Object.values(counts).reduce((a, b) => a + b, 0) || 1;
   const keys = [...order.filter((k) => k in counts), ...Object.keys(counts).filter((k) => !order.includes(k))];
@@ -573,16 +551,16 @@ function renderSidebar() {
   $("#queue-count").textContent = queueTotal() || "";
   // filters
   const fill = (id, key, values, label) => {
-    const sel = $(id); const cur = filter[key];
+    const sel = $(id); const cur = SCENE.filter[key];
     sel.replaceChildren(el("option", { value: "" }, `${label}: all`), ...values.map((v) => el("option", { value: v, selected: v === cur }, v)));
     sel.classList.toggle("set", !!cur);
-    sel.onchange = () => { filter[key] = sel.value; rerender(); };
+    sel.onchange = () => { SCENE.filter[key] = sel.value; rerender(); };
   };
   fill("#f-status", "status", STATUS_ORDER.filter((s) => SCENE.state.entries.some((e) => e.status === s)), "status");
   fill("#f-evidence", "evidence", EV_ORDER.filter((s) => SCENE.state.entries.some((e) => e.evidence === s)), "evidence");
   fill("#f-author", "author", SCENE.state.authors.map((a) => a.name), "author");
-  $("#f-clear").hidden = !filterActive();
-  $("#f-clear").onclick = () => { filter = { status: "", evidence: "", author: "" }; rerender(); };
+  $("#f-clear").hidden = !pageFiltered();
+  $("#f-clear").onclick = () => { SCENE.filter = { ...NO_FILTER }; rerender(); };
   markActive();
 }
 function markActive() {
@@ -792,7 +770,7 @@ function viewEntry(main, id) {
   );
   INLINE_PROJECT = null;
   main.append(r);
-  selected = e.id;
+  SCENE.selected = e.id;
   renderDetailsEntry(e);
 }
 // #thought/<id>,<id>,…: a whole thought in one view — every entry of the chain
@@ -874,7 +852,7 @@ function viewThought(main, refs) {
 // view shows, laid out as lists.
 const graphForScope = async () => (familyGraphShown() ? buildFamilyGraph() : buildGraph());
 const projOf = (n) => n.proj || n.entry?.project || SCENE.self?.project?.id || SCENE.self?.project?.name || "";
-const lightAll = (t) => SCENE.setThought(t); // every graph lights it (runGraph)
+const lightAll = (t) => SCENE.light(t); // every graph lights it (runGraph)
 async function viewFriends(main) {
   main.append(el("h1", {}, "Friends"), el("p", { class: "sub" }, "Repositories the entries here cite outside the family — linked into the graph, never merged into search, queues or counts. A friend in a family comes as the whole family. One hop: a friend's own friends are not loaded; walk there to see them."));
   const box = el("div", { class: "friends-page" }, el("p", { class: "center" }, "Loading…")); main.append(box);
@@ -1044,7 +1022,7 @@ function viewAuthors(main) {
   };
   const head = (cols) => el("thead", {}, el("tr", {}, cols.map(th)));
   const numCells = (a) => [el("td", {}, a.created), el("td", {}, a.touched), el("td", {}, a.superseded), el("td", {}, el("div", { style: "min-width:160px" }, stack(a.evidence, EV_ORDER))), el("td", { class: "mono" }, fmtDate(a.first)), el("td", { class: "mono" }, fmtDate(a.last))];
-  const rowOf = (a, nameCell) => el("tr", { class: `clickable ${filter.author === a.name ? "sel" : ""}`, onclick: () => { filter.author = filter.author === a.name ? "" : a.name; rerender(); } }, nameCell, ...numCells(a));
+  const rowOf = (a, nameCell) => el("tr", { class: `clickable ${SCENE.filter.author === a.name ? "sel" : ""}`, onclick: () => { SCENE.filter.author = SCENE.filter.author === a.name ? "" : a.name; rerender(); } }, nameCell, ...numCells(a));
   // what was counted, and the friends not loaded yet
   const g = graph || buildGraph(); const waiting = (g.friends || []).filter((f) => !FRIENDS.loaded[fkey(f.canonical)]);
   const byRole = (role) => projects.filter((P) => P.role === role).map((P) => P.name);
@@ -1065,7 +1043,7 @@ function viewAuthors(main) {
       main.append(d);
     }
   }
-  if (filter.author) main.append(el("h2", {}, `Entries created by ${filter.author}`), el("div", { class: "entry-list" }, SCENE.state.entries.filter((e) => authorOf(e) === filter.author).map(entryRow)));
+  if (SCENE.filter.author) main.append(el("h2", {}, `Entries created by ${SCENE.filter.author}`), el("div", { class: "entry-list" }, SCENE.state.entries.filter((e) => authorOf(e) === SCENE.filter.author).map(entryRow)));
 }
 
 const supersedersOf = (e) => e.uuid ? SCENE.state.entries.filter((x) => x.superseded_by && parseSupersededBy(x.superseded_by)?.uuid === e.uuid) : [];
@@ -1263,7 +1241,7 @@ function renderDetailsDefault() {
     // the timeline: the thoughts list first, as beside the graph, and a small project graph under it that follows the clock
     d.dataset.pane = "graph";
     d.append(el("div", { id: "thoughts" }));
-    renderThoughts(STAGE?.graph || graph);
+    renderThoughts(TIMELINE.stage()?.graph || graph);
     d.append(el("h3", {}, "Graph"), el("p", { class: "note" }, "What existed on the day shown, with the status it had then."));
     miniGraph(d, { tall: true });
     return;
@@ -1301,7 +1279,7 @@ function miniGraph(d, ctx) {
   const fillFilters = (g) => { if (mode !== "near") setKids(filters, ...graphControlGroups(g, mode === "family", miniView(g))); };
   // fit and reset beside it, for the graph this box runs: fit the view, let go of the held thought
   const corner = el("span", { class: "mini-corner" });
-  const cornerFor = (g) => { const letGo = () => { THOUGHT_PIN = null; focusStep(null); lightThought(g, null); renderThoughts(g); g.wake?.(); }; ESC.pane = letGo; setKids(corner,
+  const cornerFor = (g) => { const letGo = () => { SCENE.setThought(null); focusStep(null); lightThought(g, null); g.wake?.(); }; ESC.pane = letGo; setKids(corner,
     el("button", { type: "button", class: "mini-corner-btn", title: "fit the view: everything in the box", onclick: () => { const v = miniView(g); v.userMoved = false; v.needFit = true; g.wake?.(); } }, "fit"),
     el("button", { type: "button", class: "mini-corner-btn", title: "let go of the held thought — every node alike again (Esc, on a page without a reset of its own)", onclick: letGo }, "reset")); };
   box.append(canvas, seg, el("span", { class: "mini-hint" }, mode === "near" ? "click to open" : "hover · click"), corner, full, mode !== "near" ? gear : null, filters);
@@ -1417,7 +1395,7 @@ async function buildFamilyGraph() {
     else { n.x = (near?.x || 0) + (Math.random() - 0.5) * 140; n.y = (near?.y || 0) + (Math.random() - 0.5) * 140; n.vx = n.vy = 0; }
     index[n.id] = nodes.length; nodes.push(n); return n;
   };
-  // this project keeps the local graph's ids, so the selected entry and the positions carry over
+  // this project keeps the local graph's ids, so the SCENE.selected entry and the positions carry over
   const tid = (G, file) => (G.key === "self" ? `t:${file}` : `t:${G.key}:${file}`);
   const eid = (G, id) => (G.key === "self" ? `e:${id}` : `e:${G.key}:${id}`);
   // this project in the middle, the rest of the family around it — after a move to a member, that one is the middle
@@ -1510,21 +1488,14 @@ function setOwnerGroups(on) { OWNER_GROUPS = on; prefs.set("owner-groups", on ? 
 // "entries" of the main graph, kept per browser like every other switch in the bar — a move to another centre builds a new graph and must not reset it
 let SHOW_ENTRIES = prefs.get("entries") !== "off";
 function setShowEntries(on) { SHOW_ENTRIES = on; prefs.set("entries", on ? "on" : "off"); }
-// labels per group too — the project's own nodes, the family, the friends, the path — kept per browser, all on by default;
-// on a phone only this project's names: the other groups' topic names pile up on a small screen (hub names always show)
-const LABEL_DEFAULTS = (() => { const all = !narrow(); return { project: true, family: all, friends: all, friendsFamilies: all, path: all }; })();
-let LABELS = (() => { try { return { ...LABEL_DEFAULTS, ...JSON.parse(prefs.get("labels", "{}")) }; } catch { return { ...LABEL_DEFAULTS }; } })(); // a value that is no JSON: the defaults
-function setLabels(group, on) { LABELS = { ...LABELS, [group]: on }; prefs.set("labels", JSON.stringify(LABELS)); }
-const labelGroupOf = (n) => (n.ext ? (n.unit === "family" ? "family" : String(n.unit || "").startsWith("trail:") ? "path" : n.kin ? "friendsFamilies" : "friends") : n.fam ? "family" : "project");
-const labelsOn = (n) => LABELS[labelGroupOf(n)] !== false;
-const labelsUi = (g, group, what) => el("label", { title: `the names of ${what} — topics, and entries when zoomed in` }, el("input", { type: "checkbox", checked: LABELS[group] !== false, onchange: (ev) => { setLabels(group, ev.target.checked); g.wake?.(); } }), group === "project" ? "labels" : group === "friendsFamilies" ? "friends families labels" : `${group} labels`);
+const labelsUi = (g, group, what) => el("label", { title: `the names of ${what} — topics, and entries when zoomed in` }, el("input", { type: "checkbox", checked: GRAPH.labels()[group] !== false, onchange: (ev) => { setLabels(group, ev.target.checked); g.wake?.(); } }), group === "project" ? "labels" : group === "friendsFamilies" ? "friends families labels" : `${group} labels`);
 // the "<group> entries" checkbox, the same for the three groups
 const allEntriesUi = (group, checked, set, what) => el("label", { class: "friend-entries", title: `every entry of ${what}, not only the ones that link to this graph` }, el("input", { type: "checkbox", checked, onchange: (ev) => { set(ev.target.checked); if (fgraph) fgraph.at = 0; render(); } }), group === "friendsFamilies" ? "friends families entries" : `${group} entries`);
 // every switch in the bar at once — motion is not a filter and stays
 function selectAll(g, on) {
   g.showEntries = on; setShowEntries(on);
   for (const x of [graph, fgraph]) if (x) x.showEntries = on; // the bar may switch to the other graph on the way (family entries)
-  for (const k of Object.keys(LABELS)) setLabels(k, on);
+  for (const k of Object.keys(GRAPH.labels())) setLabels(k, on);
   setFamilyNeighbours(on); setFamilyEntries(on);
   setFriendEntries(on); setFriendFamilies(on); setFriendFamEntries(on); setPathEntries(on);
   setTrailShow(on); // the path is hidden or shown, never discarded here
@@ -1542,7 +1513,6 @@ function autoFriends(g) {
   FRIENDS.loading = true;
   setTimeout(() => loadFriends(FRIENDS.on ? waiting : list).finally(() => { FRIENDS.loading = false; }), 0); // after the graph that asked is drawn
 } // loaded: key -> {state, name, href(e), topicHref(file), open} | {error}
-const fkey = (c) => String(c || "").replace(/\/+$/, "").toLowerCase();
 const friendColor = (i) => palette(i + 5);
 const familyColor = () => palette(8);
 // The project's own family as neighbours of the project graph — the parent, the
@@ -1900,7 +1870,7 @@ function remember(c, state) {
 function setCentre(c, state) {
   MODE = c.mode; PUBLIC = c.mode === "public" ? c.canonical : null; PUBLIC_ROOT = c.mode === "public" ? c.root || "" : ""; PROJECT = c.mode === "live" ? c.project || null : null;
   graph = null; fgraph = null; TREE = null; TREE_AT = 0; TREE_ASKED = false; PUBLIC_TREE = null; LAST_POOL = null;
-  FRIENDS.on = false; FRIENDS.expanded.clear(); THOUGHT_PIN = null; MINI = null; CHAIN.extra.clear(); CHAIN.tried.clear();
+  FRIENDS.on = false; FRIENDS.expanded.clear(); SCENE.setThought(null); MINI = null; CHAIN.extra.clear(); CHAIN.tried.clear();
   FAMILY_NB = { groups: null, missing: [], loading: false }; // the family beside the graph is the new centre's
   GLOBE.extra.clear(); GLOBE.failed.clear(); GLOBE.done = 0; registryOff(); // the globe's waves were counted from the old centre; what was fetched stays in memory
   CITED.on = false; CITED.loading = false; CITED.error = null; CITED.list = []; CITED.elsewhere = 0; CITED.checked = ""; CITED.url = null; // who cites the old centre
@@ -2354,17 +2324,14 @@ function followThought(t, then) {
   return followChains((g) => { last = graphChains(g).filter((c) => c.steps.some((n) => n.entry.uuid === anchor)).sort((a, b) => b.steps.length - a.steps.length)[0] || null; return last ? last.ends : []; })
     .then(() => then?.(last));
 }
-let THOUGHT_PIN = null; // the ids of the held thought, joined
+// the thought held is the scene's (SCENE.pin, set by SCENE.setThought); the list beside the graph follows it.
+// Until the thoughts view moves into the library, the host redraws its list when the pin changes.
+let THOUGHTS_FOR = null; // the graph whose thoughts the list shows
+SCENE.on("pin", () => renderThoughts(THOUGHTS_FOR));
 // One step pointed at — in a thought's list of steps, in the reader, on the
 // Thoughts page — is marked in every graph on the page.
 const focusStep = (ref) => SCENE.setFocus(ref); // every graph redraws (runGraph), and the stage
 const stepHover = (ref) => ({ onmouseenter: () => focusStep(ref), onmouseleave: () => focusStep(null) });
-function lightThought(g, t) {
-  g.thought = t ? { nodes: new Set(t.steps), pairs: new Set(t.ids.slice(1).map((id, i) => `${id}|${t.ids[i]}`)) } : null;
-  // lighting a thought brings entries into view that may be hidden otherwise, so the layout settles again (and the
-  // small graph refits); letting go only redraws — a refit would move the view the person has set
-  if (t) g.alpha = Math.max(g.alpha, 0.02); g.wake?.(); SCENE.wake(); // the stage, too, shows what is lit (it follows the scene)
-}
 // the thought being read (#thought/…) is held in every graph shown beside it, however the reader was reached —
 // read › without a click first, a link, a reload — the same as a thought clicked and then read
 function holdReading(g) {
@@ -2372,28 +2339,29 @@ function holdReading(g) {
   const here = ROUTES.format(nav.current());
   const t = graphThoughts(g).all.find((x) => thoughtHref(x) === here);
   if (!t) return;
-  THOUGHT_PIN = t.ids.join("|");
+  SCENE.setThought(t);
   lightThought(g, t);
 }
 function renderThoughts(g) {
   const box = $("#thoughts");
+  THOUGHTS_FOR = g;
   if (!box || !g) return;
   const { all, thoughts: list, open } = graphThoughts(g);
   const short = (n) => { const t = (n?.label || "").replace(/`/g, ""); return t.length > 34 ? t.slice(0, 32) + "…" : t; };
-  const held = [...list, ...open].find((t) => t.ids.join("|") === THOUGHT_PIN) || null;
+  const held = [...list, ...open].find((t) => t.ids.join("|") === SCENE.pin) || null;
   lightThought(g, held);
-  const minSeg = thoughtMinSeg(all, () => { THOUGHT_PIN = null; renderThoughts(g); });
+  const minSeg = thoughtMinSeg(all, () => { SCENE.setThought(null); renderThoughts(g); }); // a new minimum: the list is another, held or not
   const repos = (ends) => [...new Set(ends.map((e) => repoLabel(e.canonical)))];
   const row = (t) => {
-    const key = t.ids.join("|"); const on = key === THOUGHT_PIN;
+    const key = t.ids.join("|"); const on = key === SCENE.pin;
     return el("div", { class: `thought ${on ? "on" : ""} ${t.ends.length ? "open" : ""}` },
       el("button", { type: "button", class: "thought-head", title: t.steps.map((n) => n.label).join("\n→ ") + (t.ends.length ? `\n… goes on in ${repos(t.ends).join(", ")}` : ""),
         onmouseenter: () => lightThought(g, t), onmouseleave: () => lightThought(g, held), // a held thought gives way while another is pointed at, and comes back
-        onclick: () => { THOUGHT_PIN = on ? null : key; renderThoughts(g); } },
+        onclick: () => SCENE.setThought(on ? null : t) },
         el("span", { class: "count" }, String(t.steps.length)), `${short(t.steps[0])} → ${short(t.steps[t.steps.length - 1])}`, t.evolution ? el("span", { class: "pill" }, "evolution") : null, ...insightPills(t)),
       navLink({ class: "thought-read", href: thoughtRoute(t), title: "read the whole thought — every entry in order, in full" }, "read ›"),
       t.ends.length ? el("button", { type: "button", class: "thought-follow link-btn", disabled: CHAIN.busy, title: `load the repositories this chain goes on into — ${repos(t.ends).join(", ")} — hop by hop, until it ends`, onclick: () => followThought(t) }, `continues ↗ ${repos(t.ends).join(", ")}`) : null,
-      on ? el("ol", { class: "thought-steps" }, t.steps.map((n) => el("li", stepHover(n.entry?.uuid || n.id), el("a", { href: n.href, onclick: (ev) => { if (n.entry && STAGE?.pick && nav.current().view === "timeline") { ev.preventDefault(); STAGE.pick(n.entry); } } }, n.label.replace(/`/g, ""))))) : null);
+      on ? el("ol", { class: "thought-steps" }, t.steps.map((n) => el("li", stepHover(n.entry?.uuid || n.id), el("a", { href: n.href, onclick: (ev) => { if (n.entry && TIMELINE.stage()?.pick && nav.current().view === "timeline") { ev.preventDefault(); TIMELINE.stage().pick(n.entry); } } }, n.label.replace(/`/g, ""))))) : null);
   };
   const openEnds = [...list, ...open].flatMap((t) => t.ends);
   const followBtn = openEnds.length ? el("button", { type: "button", class: "link-btn thought-follow-all", disabled: CHAIN.busy, title: "load every repository the chains here go on into, hop by hop — nothing else", onclick: followAll }, CHAIN.busy ? "loading the chains…" : `load the whole chains (${repos(openEnds).length} ${repos(openEnds).length === 1 ? "repository" : "repositories"})`) : null;
@@ -2421,27 +2389,11 @@ function friendsLegend(g) {
 // steps, the family, the friends with their families — each with the ring the canvas draws for it, the
 // name a link that goes there in place. The hubs carry what the legend needs, so what is listed is
 // exactly what is drawn.
-// the nodes a project hub stands for: its topics and entries, by the ids the layers give them
-function projectNodes(g, hub) {
-  const out = new Set([hub]);
-  const m = hub.id.match(/^f:(.+):([^:]+)$/); // a layer's hub: f:<unit>:<member key>
-  const pre = m ? [`ft:${m[1]}:${m[2]}:`, `fe:${m[1]}:${m[2]}:`] : hub.id.startsWith("p:") && hub.id !== "p:self" ? [`t:${hub.id.slice(2)}:`, `e:${hub.id.slice(2)}:`] : null;
-  for (const n of g.nodes) {
-    if (n.kind === "project") continue;
-    if (pre ? pre.some((x) => n.id.startsWith(x)) : !n.ext && !n.fam) out.add(n);
-  }
-  return out;
-}
 // light a project in every graph on the page — the path bar and the Family view point at projects the way the legend does
 // A project pointed at outside the graph (a Family row, a step of the path): its nodes stay, the rest fades.
 // The projects of one repository share the canonical and differ by root, so both are compared; a caller
 // that knows no root (undefined) matches by the canonical alone.
 const spotProject = (canonical, root) => SCENE.spot(canonical, root); // every graph spots it (spotIn, from runGraph)
-function spotIn(G, canonical, root) {
-  const same = (n) => n.kind === "project" && n.canonical && fkey(n.canonical) === fkey(canonical) && (root === undefined || (n.root || "") === (root || ""));
-  const hub = canonical ? G.nodes.find(same) : null;
-  G.spot = hub ? projectNodes(G, hub) : null; G.alpha = Math.max(G.alpha, 0.02); G.wake?.();
-}
 function projectsLegend(g) {
   const p = SCENE.state?.project || {};
   const hubs = g.nodes.filter((n) => n.kind === "project");
@@ -2531,7 +2483,7 @@ function viewGraph(main) {
       onclick: (ev) => { const open = wrap.classList.toggle(`${cls}-open`); wrap.classList.remove(`${other}-open`); ev.currentTarget.setAttribute("aria-expanded", String(open)); } }, label);
     // the corner's reset lets go of the held thought and the pointed-at step: every node alike again; the bar's reset
     // (fit, let go of placed nodes) stays what it is
-    const letGo = () => { THOUGHT_PIN = null; focusStep(null); renderThoughts(g); g.wake?.(); };
+    const letGo = () => { SCENE.setThought(null); focusStep(null); g.wake?.(); };
     const cornerReset = el("button", { type: "button", class: "graph-corner graph-corner-reset", title: "let go of the held thought — every node alike again (Esc does this and the bar's reset)", onclick: letGo }, "reset");
     // fit: nothing changes but the view — zoomed and centred so that everything is in the box, and stays in it while the graph turns
     const cornerFit = el("button", { type: "button", class: "graph-corner graph-corner-fit", title: "fit the view: everything in the box, centred on the point the graph turns around", onclick: () => { g.userMoved = false; g.needFit = true; g.wake?.(); } }, "fit");
@@ -2555,14 +2507,14 @@ function viewGraph(main) {
     preview.onpointerdown = (ev) => { if (!ev.target.closest(".stage-card-head") || ev.target.closest("button, a")) return; grip = { dx: ev.clientX - preview.offsetLeft, dy: ev.clientY - preview.offsetTop }; preview.classList.add("dragging"); preview.setPointerCapture(ev.pointerId); ev.preventDefault(); };
     preview.onpointermove = (ev) => { if (!grip) return; const W = wrap.clientWidth, H = wrap.clientHeight; preview.style.left = `${Math.max(0, Math.min(W - preview.offsetWidth, ev.clientX - grip.dx))}px`; preview.style.top = `${Math.max(0, Math.min(H - preview.offsetHeight, ev.clientY - grip.dy))}px`; };
     preview.onpointerup = preview.onpointercancel = () => { grip = null; preview.classList.remove("dragging"); };
-    const closePreview = () => { if (preview.hidden) return; preview.hidden = true; selected = null; focusStep(null); g.wake?.(); }; // a row of the topic's list may still be pointed at when the list goes
+    const closePreview = () => { if (preview.hidden) return; preview.hidden = true; SCENE.selected = null; focusStep(null); g.wake?.(); }; // a row of the topic's list may still be pointed at when the list goes
     let place = null; // set below, before any click can happen
     const showPreview = (n, sx, sy) => {
-      const e = n.entry; selected = e.id;
+      const e = n.entry; SCENE.selected = e.id;
       const tnode = g.nodes.find((m) => m.kind === "topic" && m.file === e.file && (m.unit || "") === (n.unit || "")); // the topic's node carries its title, a friend's too
-      fillEntryCard(preview, e, { lane: (n.proj ? `${n.proj} · ` : "") + (tnode?.label || topicOf(e.file)?.title || e.file).replace(/`/g, ""), href: n.href, state: n.state || SCENE.self, day: null,
-        badge: el("button", { type: "button", class: "pill stage-card-held", title: "close the preview", onclick: closePreview }, "preview ", el("b", {}, "×")), again: () => { if (selected === e.id) showPreview(n, sx, sy); }, onOpen: n.action || null,
-        topic: tnode ? { title: "back to the topic's preview", onClick: () => showTopicPreview(tnode, null, null) } : null }); // from inside the preview: the card stays where it is
+      TIMELINE.fillEntryCard(preview, e, { lane: (n.proj ? `${n.proj} · ` : "") + (tnode?.label || topicOf(e.file)?.title || e.file).replace(/`/g, ""), href: n.href, state: n.state || SCENE.self, day: null,
+        badge: el("button", { type: "button", class: "pill stage-card-held", title: "close the preview", onclick: closePreview }, "preview ", el("b", {}, "×")), again: () => { if (SCENE.selected === e.id) showPreview(n, sx, sy); }, onOpen: n.action || null,
+        topic: tnode ? { title: "back to the topic's preview", onClick: () => showTopicPreview(tnode, null, null) } : null , renderBody: (md) => renderMarkdown(md), bodies: (st) => ensureBodies(st) }); // from inside the preview: the card stays where it is
       preview.hidden = false; place(sx, sy); g.wake?.();
     };
     // a click on a topic opens its preview: the topic's name linking its page, and its entries — a click on one
@@ -2574,7 +2526,7 @@ function viewGraph(main) {
       const members = g.nodes.filter((m) => m.kind === "entry" && m.entry && m.file === n.file && (m.unit || "") === (n.unit || ""));
       const openTopic = n.action || null; const title = (n.label || n.file).replace(/`/g, "");
       const link = (text, extra = {}) => el("a", { href: n.href, ...extra, onclick: openTopic ? (ev) => { ev.preventDefault(); openTopic(); } : null }, text);
-      selected = null;
+      SCENE.selected = null;
       setKids(preview, el("div", { class: "stage-card-head" }, el("span", { class: "note mono" }, `${n.proj ? `${n.proj} · ` : ""}topic · ${plural(members.length, "entry")}`), el("button", { type: "button", class: "pill stage-card-held", title: "close the preview", onclick: closePreview }, "preview ", el("b", {}, "×"))),
         el("h3", {}, link(title, { title: "open the topic's page" })),
         el("div", { class: "stage-card-body topic-entries" }, members.length ? members.map((m) => el("button", { type: "button", class: "topic-entry", title: "preview this entry", onclick: () => showPreview(m, null, null), ...stepHover(m.id) }, el("span", { class: "te-title" }, m.entry.title.replace(/`/g, "")), statusPill(m.entry.status), evPill(m.entry.evidence))) : el("p", { class: "empty" }, "no entries shown — entries may be switched off in the graph")),
@@ -2590,763 +2542,19 @@ function viewGraph(main) {
   wrap.append(el("p", { class: "center" }, "Loading the family…"));
   buildFamilyGraph().then((g) => { if (wrap.isConnected && onView("graph", "globe") && familyGraphShown()) fill(g); });
 }
-// The graph turns very slowly in its plane — one turn in about six minutes —
-// and stops while it is pointed at, dragged or panned. Off with the system's
-// reduced-motion setting, or with *motion* in the graph (kept per browser).
-const DRIFT_RATE = (2 * Math.PI) / 360000; // radians per millisecond
-// motion: on by default, off on a phone (a turning graph is hard to tap, and it keeps the battery busy); a stored choice wins
-let DRIFT = (() => { const v = prefs.get("motion"); return v ? v !== "off" : !narrow(); })();
-const reducedMotion = () => { try { return !!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches; } catch { return false; } };
-const driftOn = () => DRIFT && !reducedMotion();
-function setDrift(on) { DRIFT = on; prefs.set("motion", on ? "on" : "off"); }
-// the platform's mark for a hub's name on the canvas, one Path2D per platform
-const HOST_PATHS = new Map();
-function hostPath(url) {
-  const h = hostOf(url); if (!h || typeof Path2D === "undefined") return null;
-  if (!HOST_PATHS.has(h.name)) HOST_PATHS.set(h.name, new Path2D(h.path));
-  return HOST_PATHS.get(h.name);
-}
-const miniView = (g) => (g.miniView ||= { scale: 1, ox: 0, oy: 0, userMoved: false, needFit: true, fitScale: 0 }); // the small graph's own view of a graph the page may show too
-// A graph that is the scene's layout source — the stage's, or a copy that shares its nodes (`runner`, `of`) —
-// publishes its positions after every step; it counts as settled once both it and its copy have.
-function publishLayout(g, { force = false } = {}) {
-  const src = SCENE.layoutSource;
-  if (!src || (g !== src && g.of !== src)) return;
-  if (!force && g.alpha <= 0.003 && SCENE.layoutSettled) return;
-  SCENE.publishLayout(src.nodes, { settled: Math.min(src.alpha, src.runner?.alpha ?? 1) <= 0.01 });
-}
-function runGraph(canvas, g, opts = {}) {
-  const mini = !!opts.mini;
-  const V = mini ? miniView(g) : g; // the view — zoom and offset — belongs to the canvas: the side pane's small graph keeps its own, the page's survives a visit elsewhere
-  const ctx = canvas.getContext("2d");
-  const css = getComputedStyle(document.documentElement);
-  const color = (v) => css.getPropertyValue(v).trim();
-  let W = 0, H = 0, dpr = window.devicePixelRatio || 1;
-  let hover = null, drag = null, pan = null, moved = false;
-  const resize = () => { const r = canvas.getBoundingClientRect(); W = r.width; H = r.height; canvas.width = W * dpr; canvas.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); };
-  resize();
-  const ro = new ResizeObserver(resize); ro.observe(canvas);
-  const toWorld = (px, py) => [(px - W / 2 - V.ox) / V.scale, (py - H / 2 - V.oy) / V.scale];
-  // zoom limits: never below half of what the fitted view needed — a fixed floor above it made a large family
-  // or the globe jump in on the first pinch and refuse to zoom out again
-  const minScale = () => Math.min(0.15, (V.fitScale || 0.15) / 2);
-  const zoomTo = (ns, px, py) => { ns = Math.min(6, Math.max(minScale(), ns)); const k = ns / V.scale; V.ox = px - (px - V.ox) * k; V.oy = py - (py - V.oy) * k; V.scale = ns; };
-  // under the clock an entry is there from the day it was created, a topic from its first entry's day
-  const topicAlive = (n) => !SCENE.day || g.nodes.some((m) => m.kind === "entry" && m.file === n.file && (m.unit || "") === (n.unit || "") && atClock(m.entry, !!m.ext));
-  // under the clock every entry follows it, a friend's or a family member's as much as our own (their exports carry
-  // the same Git days); one without Git is simply there
-  const visible = (n) => n.kind === "topic" ? topicAlive(n) : n.kind !== "entry" ? true : atClock(n.entry, !!n.ext) && (g.showEntries || !!g.thought?.nodes.has(n));
-  // a topic-level reference stands in for entry references only while entries are hidden
-  const linkOn = (l) => visible(g.nodes[l.s]) && visible(g.nodes[l.t]) && (l.kind !== "xtopic" || !g.showEntries) && linkExistsAt(SCENE.day, l.day);
-  const dim = (n) => n.kind === "entry" && filterActive() && !matches(n.entry);
-  const pick = (px, py) => { const [x, y] = toWorld(px, py); let best = null, bd = 1e9; for (const n of g.nodes) { if (!visible(n)) continue; const d = Math.hypot(n.x - x, n.y - y); if (d < Math.max(n.r + 4, 8) / Math.min(V.scale, 1) && d < bd) { best = n; bd = d; } } return best; };
-  // a project's name under its hub is a link: pointed at, underlined; clicked, it goes there
-  let hoverName = null, nameDown = null;
-  const pickName = (px, py) => { const [x, y] = toWorld(px, py); for (const b of g.nameBoxes || []) if (x >= b.x0 && x <= b.x1 && y >= b.y0 && y <= b.y1) return b.n; return null; };
-  canvas.onmousemove = (ev) => {
-    const r = canvas.getBoundingClientRect(); const px = ev.clientX - r.left, py = ev.clientY - r.top;
-    if (!drag && !pan) { hoverName = pickName(px, py); if (hoverName) { hover = hoverName; canvas.style.cursor = "pointer"; return; } }
-    if (drag) { const [x, y] = toWorld(px, py); drag.x = x; drag.y = y; drag.vx = drag.vy = 0; drag.fixed = true; g.alpha = Math.max(g.alpha, 0.3); moved = true; return; }
-    if (pan) { V.ox = pan.ox + (px - pan.px); V.oy = pan.oy + (py - pan.py); moved = true; return; }
-    hover = pick(px, py); canvas.style.cursor = hover ? "pointer" : "grab";
-  };
-  canvas.onmousedown = (ev) => { const r = canvas.getBoundingClientRect(); const px = ev.clientX - r.left, py = ev.clientY - r.top; moved = false; V.userMoved = true; nameDown = pickName(px, py); if (nameDown) return; const n = pick(px, py); if (n) drag = n; else pan = { px, py, ox: V.ox, oy: V.oy }; canvas.classList.add("grabbing"); };
-  // a project's hub and its name do the same: go there, in place — the circle used to expand a friend (now the
-  // switches' job) or open an overview, and a click on a foreign hub seemed to do nothing. This project's own
-  // hub is where the reader already is: a click on it does nothing.
-  const walkTo = (n) => (n.self ? null : n.walk ? n.walk() : go(n.href));
-  const screenOf = (n) => [W / 2 + g.ox + n.x * g.scale, H / 2 + g.oy + n.y * g.scale];
-  const open = (n) => (n.kind === "project" || n.kind === "owner" ? walkTo(n) : n.kind === "entry" && opts.onEntry ? opts.onEntry(n, ...screenOf(n)) : n.kind === "topic" && opts.onTopic ? opts.onTopic(n, ...screenOf(n)) : n.action ? n.action() : go(n.href));
-  window.addEventListener("mouseup", () => { if (nameDown) { const n = nameDown; nameDown = null; walkTo(n); return; } if (drag && !moved) open(drag); else if (pan && !moved) opts.onBlank?.(); drag = null; pan = null; canvas.classList.remove("grabbing"); });
-  canvas.onmouseleave = () => { hover = null; hoverName = null; };
-  canvas.onwheel = (ev) => { ev.preventDefault(); V.userMoved = true; const r = canvas.getBoundingClientRect(); zoomTo(V.scale * Math.exp(-ev.deltaY * 0.0012), ev.clientX - r.left - W / 2, ev.clientY - r.top - H / 2); };
-  canvas.ondblclick = (ev) => { const r = canvas.getBoundingClientRect(); const n = pick(ev.clientX - r.left, ev.clientY - r.top); if (n) { n.fixed = false; g.alpha = 0.4; } };
-  // touch: one finger drags a node or pans (full view only), two fingers pinch-zoom around the point between them
-  // and pan with it, a tap opens
-  let pinch = null;
-  const tpos = (t) => { const r = canvas.getBoundingClientRect(); return [t.clientX - r.left, t.clientY - r.top]; };
-  const tdist = (ts) => Math.hypot(ts[0].clientX - ts[1].clientX, ts[0].clientY - ts[1].clientY);
-  const tmid = (ts) => { const [ax, ay] = tpos(ts[0]), [bx, by] = tpos(ts[1]); return [(ax + bx) / 2 - W / 2, (ay + by) / 2 - H / 2]; };
-  canvas.addEventListener("touchstart", (ev) => {
-    V.userMoved = true; opts.onTouch?.();
-    if (ev.touches.length === 2) { const [mx, my] = tmid(ev.touches); pinch = { d: tdist(ev.touches) || 1, scale: V.scale, wx: (mx - V.ox) / V.scale, wy: (my - V.oy) / V.scale }; drag = null; pan = null; return; }
-    const [px, py] = tpos(ev.touches[0]); moved = false; nameDown = pickName(px, py); if (nameDown) return; const n = pick(px, py);
-    if (n) drag = n; else if (!mini) pan = { px, py, ox: V.ox, oy: V.oy };
-  }, { passive: true });
-  canvas.addEventListener("touchmove", (ev) => {
-    if (pinch && ev.touches.length === 2) {
-      const [mx, my] = tmid(ev.touches); const ns = Math.min(6, Math.max(minScale(), pinch.scale * (tdist(ev.touches) / pinch.d)));
-      V.scale = ns; V.ox = mx - pinch.wx * ns; V.oy = my - pinch.wy * ns; ev.preventDefault(); return; // the point under the fingers stays under them
-    }
-    if (!ev.touches.length) return;
-    const [px, py] = tpos(ev.touches[0]);
-    if (drag) { const [x, y] = toWorld(px, py); drag.x = x; drag.y = y; drag.vx = drag.vy = 0; drag.fixed = true; g.alpha = Math.max(g.alpha, 0.3); moved = true; ev.preventDefault(); }
-    else if (pan) { V.ox = pan.ox + (px - pan.px); V.oy = pan.oy + (py - pan.py); moved = true; ev.preventDefault(); }
-  }, { passive: false });
-  canvas.addEventListener("touchend", (ev) => {
-    if (pinch) { if (!ev.touches.length) pinch = null; return; }
-    if (nameDown) { const n = nameDown; nameDown = null; if (!moved) walkTo(n); return; }
-    if (drag && !moved) open(drag); else if (pan && !moved) opts.onBlank?.();
-    drag = null; pan = null;
-  });
-  const ev = (n) => n.entry.evidence;
-  const evColor = { confirmed: color("--confirmed"), inferred: color("--inferred"), unknown: color("--unknown") };
-  let lastT = 0, frame = 0;
-  function step(now) {
-    const dt = lastT && now ? Math.min(100, now - lastT) : 16; lastT = now || 0;
-    const drifting = driftOn() && !hover && !drag && !pan && !pinch;
-    if (drifting) { const a = DRIFT_RATE * dt, c = Math.cos(a), sn = Math.sin(a); for (const n of g.nodes) { const x = n.x, y = n.y; n.x = x * c - y * sn; n.y = x * sn + y * c; } }
-    // settled and only turning: every other frame is enough
-    if (drifting && g.alpha <= 0.003 && (frame++ & 1)) { g.raf = canvas.isConnected ? requestAnimationFrame(step) : null; return; }
-    const ns = g.nodes.filter(visible);
-    if (g.alpha > 0.003) g.alpha = layoutTick(g.nodes, g.links, g.alpha, { visible, linkOn }); // the forces are ktw-core.js's
-    publishLayout(g);
-    // keep the canvas framed on the nodes while they settle: the small one always, the family graph until the person moves it
-    if ((mini || ((opts.fit || V.needFit) && !V.userMoved)) && (g.alpha > 0.01 || V.needFit) && W && H) {
-      let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
-      for (const n of ns) { minX = Math.min(minX, n.x - n.r); maxX = Math.max(maxX, n.x + n.r); minY = Math.min(minY, n.y - n.r); maxY = Math.max(maxY, n.y + n.r + 18); }
-      const pad = mini || narrow() ? 60 : 140;
-      // while the graph turns, the fit is centred on the point it turns around (the origin) and sized to the
-      // farthest node from it, so nothing leaves the box as it comes round; still, the fit is the nodes' box
-      if (ns.length && driftOn()) { let R = 0; for (const n of ns) R = Math.max(R, Math.hypot(n.x, n.y) + n.r + 18); const sw = Math.max(80, 2 * R + pad); V.scale = Math.min(mini ? 2.2 : 1.2, Math.min(W / sw, H / sw)); V.fitScale = V.scale; V.ox = 0; V.oy = 0; }
-      else if (ns.length) { const sw = Math.max(80, maxX - minX + pad), sh = Math.max(80, maxY - minY + pad); V.scale = Math.min(mini ? 2.2 : 1.2, Math.min(W / sw, H / sh)); V.fitScale = V.scale; V.ox = -((minX + maxX) / 2) * V.scale; V.oy = -((minY + maxY) / 2) * V.scale; }
-      V.needFit = false;
-    }
-    // draw
-    ctx.clearRect(0, 0, W, H);
-    ctx.save(); ctx.translate(W / 2 + V.ox, H / 2 + V.oy); ctx.scale(V.scale, V.scale);
-    const th = g.thought;
-    const sp = th ? null : g.spot; // a project pointed at in the legend: its nodes stay, the rest fades
-    const focus = th || sp ? null : hover || (opts.focusId && g.index[opts.focusId] != null ? g.nodes[g.index[opts.focusId]] : null) || (!mini && selected ? g.nodes[g.index[`e:${selected}`]] : null);
-    const neigh = new Set(); if (focus) { neigh.add(focus); for (const l of g.links) { if (!linkOn(l)) continue; if (g.nodes[l.s] === focus) neigh.add(g.nodes[l.t]); if (g.nodes[l.t] === focus) neigh.add(g.nodes[l.s]); } }
-    if (th) for (const n of th.nodes) neigh.add(n);
-    if (sp) for (const n of sp) neigh.add(n);
-    const stepNode = SCENE.focus ? ns.find((n) => n.kind === "entry" && (n.entry?.uuid === SCENE.focus || n.id === SCENE.focus)) : null;
-    if (stepNode) neigh.add(stepNode);
-    const onThought = (l) => !!th && (l.kind === "see" || l.kind === "superseded") && (th.pairs.has(`${g.nodes[l.s].id}|${g.nodes[l.t].id}`) || th.pairs.has(`${g.nodes[l.t].id}|${g.nodes[l.s].id}`));
-    const LW = { topic: 1.6, ref: 1, family: 2.6, see: 1.5, xtopic: 1.5, superseded: 1.3, trail: 1.4, owner: 1.6 };
-    const DASH = { member: [2, 3], hub: [2, 3], family: [9, 6], superseded: [5, 4], trail: [2, 6], owner: [1, 4] };
-    for (const l of g.links) {
-      if (!linkOn(l)) continue;
-      const a = g.nodes[l.s], b = g.nodes[l.t]; const hi = (focus && (a === focus || b === focus)) || onThought(l) || (sp && sp.has(a) && sp.has(b));
-      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
-      ctx.lineWidth = (LW[l.kind] || 0.6) / V.scale; ctx.setLineDash((DASH[l.kind] || []).map((v) => v / V.scale));
-      const base = l.kind === "see" || l.kind === "xtopic" ? (l.color || color("--accent2")) : l.kind === "superseded" || l.kind === "family" || l.kind === "trail" || l.kind === "owner" ? color("--fg3") : color("--line");
-      ctx.strokeStyle = hi ? (l.kind === "see" || l.kind === "xtopic" ? color("--fg") : color("--accent2")) : base; ctx.globalAlpha = (focus || th || sp) && !hi ? (th ? 0.12 : 0.25) : l.kind === "see" || l.kind === "xtopic" ? 0.85 : 1; if (onThought(l)) ctx.lineWidth = 3 / V.scale; ctx.stroke();
-      // the path is the way walked, not a citation: an arrow at its middle points the way it went, toward where the reader is now
-      if (l.kind === "trail") {
-        const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, ang = Math.atan2(b.y - a.y, b.x - a.x), s = 9 / V.scale;
-        ctx.setLineDash([]); ctx.beginPath(); ctx.moveTo(mx + Math.cos(ang) * s, my + Math.sin(ang) * s);
-        ctx.lineTo(mx + Math.cos(ang + 2.5) * s, my + Math.sin(ang + 2.5) * s); ctx.lineTo(mx + Math.cos(ang - 2.5) * s, my + Math.sin(ang - 2.5) * s); ctx.closePath();
-        ctx.fillStyle = ctx.strokeStyle; ctx.fill();
-      }
-    }
-    ctx.setLineDash([]);
-    const drawOrder = sp ? [...ns.filter((n) => !sp.has(n)), ...ns.filter((n) => sp.has(n))] : ns; // the spotted project on top
-    for (const n of drawOrder) {
-      const faded = ((focus || th || sp) && !neigh.has(n)) || dim(n);
-      ctx.globalAlpha = faded ? 0.18 : 1;
-      ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-      if (n.kind === "project") { ctx.fillStyle = color("--bg"); ctx.fill(); ctx.lineWidth = 3.5 / V.scale; ctx.strokeStyle = n.color; if (n.chain) ctx.setLineDash([8 / V.scale, 3 / V.scale, 2 / V.scale, 3 / V.scale]); else if (n.friend) ctx.setLineDash([5 / V.scale, 3 / V.scale]); else if (n.trail) ctx.setLineDash([1.5 / V.scale, 3 / V.scale]); ctx.stroke(); ctx.setLineDash([]); ctx.beginPath(); ctx.arc(n.x, n.y, n.r * 0.38, 0, Math.PI * 2); ctx.fillStyle = n.color; ctx.fill(); }
-      else if (n.kind === "topic") { ctx.fillStyle = n.color || color("--accent"); ctx.fill(); }
-      else if (n.kind === "owner") { ctx.fillStyle = color("--bg"); ctx.fill(); ctx.lineWidth = 1.5 / V.scale; ctx.strokeStyle = color("--fg3"); ctx.stroke(); ctx.beginPath(); ctx.arc(n.x, n.y, n.r * 0.72, 0, Math.PI * 2); ctx.stroke(); } // the inner ring in the graph's units: a radius from the zoom went negative far out, and the canvas throws on that
-      else { const st = statusNow(n.entry); const sup = st === "superseded"; ctx.fillStyle = sup ? color("--bg") : evColor[ev(n)] || color("--muted"); ctx.fill(); if (sup) { ctx.lineWidth = 1.2 / V.scale; ctx.strokeStyle = evColor[ev(n)] || color("--fg3"); ctx.stroke(); } if (st === "open" || st === "needs-review" || st === "pending-confirmation") { ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 2.5 / V.scale, 0, Math.PI * 2); ctx.lineWidth = 1.2 / V.scale; ctx.strokeStyle = color(`--${st}`); ctx.stroke(); } }
-      if (n === focus) { ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 4 / V.scale, 0, Math.PI * 2); ctx.lineWidth = 1.5 / V.scale; ctx.strokeStyle = color("--fg"); ctx.stroke(); }
-      if (n === stepNode) { ctx.globalAlpha = 1; ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 7 / V.scale, 0, Math.PI * 2); ctx.lineWidth = 3 / V.scale; ctx.strokeStyle = color("--accent2"); ctx.stroke(); ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 12 / V.scale, 0, Math.PI * 2); ctx.lineWidth = 1 / V.scale; ctx.stroke(); }
-    }
-    ctx.globalAlpha = 1;
-    const anyLabels = (g.showLabels && Object.values(LABELS).some(Boolean)) || focus || th || stepNode;
-    g.nameBoxes = [];
-    {
-      // which names to draw: first the ones that must show (the focus, the step, a thought, the name pointed at), then the
-      // focus's neighbours, project names (this project first), topics, entries — bigger nodes first within each. A name
-      // that would cover one already drawn is left out, so a dense graph shows fewer names instead of a pile of text;
-      // zooming in makes room and brings them back.
-      const cand = [];
-      for (const n of ns) {
-        const hubName = n.kind === "project" || n.kind === "owner";
-        if (sp) { if (!sp.has(n)) continue; if (!hubName && n.kind !== "topic" && !(V.scale > 1.6)) continue; } // a spotted project: its names alone
-        if (!hubName && !anyLabels && !sp) continue;
-        const lab = sp ? true : g.showLabels && labelsOn(n);
-        const show = sp || n === stepNode || (th && th.nodes.has(n)) ? true : hubName ? true : n.kind === "topic" ? (mini ? neigh.has(n) || n === focus || g.nodes.filter((x) => x.kind === "topic").length <= 12 : lab || neigh.has(n)) : (focus && (neigh.has(n) || n === focus)) || (!mini && lab && V.scale > 1.6);
-        if (!show) continue;
-        const faded = (focus || th) && !neigh.has(n) && n !== focus; if (faded && !hubName) continue;
-        const must = n === focus || n === stepNode || n === hoverName || (th && th.nodes.has(n));
-        const rank = must ? 0 : faded ? 5 : focus && neigh.has(n) ? 1 : hubName ? (n.self ? 2 : 3) : n.kind === "topic" ? 4 : 6;
-        cand.push({ n, hubName, faded, must, rank });
-      }
-      cand.sort((a, b) => a.rank - b.rank || b.n.r - a.n.r);
-      const placed = [], maxLen = narrow() ? 32 : 48, pad = 2 / V.scale;
-      const free = (b) => !placed.some((p) => b.x0 < p.x1 + pad && b.x1 > p.x0 - pad && b.y0 < p.y1 + pad && b.y1 > p.y0 - pad);
-      ctx.textAlign = "center"; ctx.textBaseline = "top";
-      for (const { n, hubName, faded, must } of cand) {
-        ctx.font = hubName ? `600 ${(mini ? 12 : 13) / V.scale}px ${color("--font") || "sans-serif"}` : `${(mini ? 11 : 12) / V.scale}px ${color("--font") || "sans-serif"}`;
-        const lbl = n.label.replace(/`/g, ""); const txt = lbl.length > maxLen ? lbl.slice(0, maxLen - 2) + "…" : lbl;
-        const mark = hubName ? hostPath(n.canonical) : null; const iw = mark ? (mini ? 12 : 13) / V.scale : 0; const gap = mark ? 4 / V.scale : 0;
-        const tw = ctx.measureText(txt).width; const y = n.y + n.r + 3 / V.scale;
-        const left = n.x - (tw + iw + gap) / 2; const tx = left + iw + gap + tw / 2; // the mark before the name, the pair centred
-        const box = { x0: left - 3 / V.scale, y0: y - 1 / V.scale, x1: tx + tw / 2 + 3 / V.scale, y1: y + 15 / V.scale };
-        if (!must && !free(box)) continue;
-        placed.push(box);
-        ctx.fillStyle = color("--bg"); ctx.globalAlpha = faded ? 0.4 : 0.75; ctx.fillRect(box.x0, box.y0, box.x1 - box.x0, 15 / V.scale); ctx.globalAlpha = faded ? 0.5 : 1;
-        ctx.fillStyle = n.kind === "entry" ? color("--fg2") : hubName && n === hoverName ? color("--accent2") : color("--fg"); ctx.fillText(txt, tx, y);
-        if (mark) { ctx.save(); ctx.translate(left, y + 0.5 / V.scale); ctx.scale(iw / 24, iw / 24); ctx.fill(mark); ctx.restore(); }
-        if (hubName) {
-          g.nameBoxes.push({ n, ...box });
-          if (n === hoverName) { ctx.fillRect(tx - tw / 2, y + 14 / V.scale, tw, 1 / V.scale); }
-        }
-        ctx.globalAlpha = 1;
-      }
-    }
-    ctx.restore();
-    if (!canvas.isConnected) { ro.disconnect(); g.raf = null; for (const off of listening) off(); return; }
-    const busy = g.alpha > 0.003 || drag || pan || pinch || hover || driftOn();
-    g.raf = busy ? requestAnimationFrame(step) : null; // idle: no frames until something happens
-  }
-  const wake = () => { if (!g.raf && canvas.isConnected) g.raf = requestAnimationFrame(step); };
-  // the scene's changes this graph follows, until its canvas leaves the page
-  const listening = [
-    SCENE.on("day", (day, { grew }) => { if (grew && g.alpha < 0.2) g.alpha = 0.2; g.wake?.(); }),
-    SCENE.on("focus", () => g.wake?.()),
-    SCENE.on("thought", (t) => lightThought(g, t)),
-    SCENE.on("spot", (canonical, root) => spotIn(g, canonical, root)),
-    SCENE.on("wake", () => g.wake?.()),
-  ];
-  for (const evn of ["mousemove", "mousedown", "wheel", "dblclick", "touchstart", "touchmove", "mouseleave"]) canvas.addEventListener(evn, wake, { passive: true });
-  window.addEventListener("mouseup", wake);
-  g.wake = wake;
-  ro.observe(canvas); // re-observe after the resize handler above; a resize wakes the loop
-  const ro2 = new ResizeObserver(() => { resize(); if (g.alpha < 0.05) g.alpha = 0.05; wake(); }); ro2.observe(canvas);
-  if (g.raf) cancelAnimationFrame(g.raf);
-  g.raf = requestAnimationFrame(step);
-}
 
-// ---------------------------------------------------------------- timeline (SVG)
-const authorColor = (name) => palette(Math.max(0, SCENE.state.authors.findIndex((a) => a.name === name)));
-// ---------------------------------------------------------------- timeline: the clock, the playhead, the stage
-// The Timeline owns the clock. The slider, the play button, the keys and a wheel over the stage set the day, and
-// every graph on the page follows it (setClock). The stage is a perspective view of the graph's entries: time runs
-// into the depth — the day shown is the near plane, what came before recedes, what a day brings arrives at the
-// front — a card per entry in the colours of its Type, filled by Evidence, edged by Status, the See and Superseded
-// by lines between cards from the day they were written. Plain canvas, projected by hand: three numbers per point,
-// no library. The scene and the layout are pure functions in ktw-core.js (stageCards … pushApart); this file holds the
-// page, the camera, the painter and the input. #timeline/<day> opens the page on that day.
-// speed: days per second, or "entry" — a step per second to the next day an entry appeared on, the days between
-// slid through in that second (several entries of one day are one step); frac: the part of a step between two
-// whole ones, for the stage's motion; jump: the days the current step spans (1 for a speed in days)
-const PLAY = { on: false, speed: 7, raf: null, last: 0, acc: 0, frac: 0, jump: 1 };
-const SPEEDS = [["entry", "1 entry /s"], [1 / 24, "1 hour /s"], [3 / 24, "3 hours /s"], [1, "1 day /s"], [7, "1 week /s"], [30, "1 month /s"], [120, "4 months /s"]];
-let STAGE = null; // the stage on the page: { wake, relax, reset, pick, close, graph, follows }
-const ESC = { page: null, pane: null }; // what Esc does: the page's reset button, else the side pane's graph's; the view sets it, render() clears it
-let TIMELINE_FAMILY_ASKED = false; // the family graph is being built for the timeline
-// "graph": a card stands where its node stands in the graph beside, the stage is the graph with time pulled out as depth;
-// "topics": a lane per topic across the width. Kept per browser.
-let STAGE_ARRANGE = prefs.get("stage-arrange") || "graph";
-// other repositories' entries on the stage: "linked" — only the ones a chain of See or Superseded by joins to this
-// project's entries; "all" — every one the graph holds; "none". Kept per browser.
-let STAGE_FOREIGN = prefs.get("stage-foreign") || "linked";
-function setStageArrange(v) { STAGE_ARRANGE = v; prefs.set("stage-arrange", v); STAGE?.relax?.(); STAGE?.wake?.(); }
-function setStageForeign(v) { STAGE_FOREIGN = v; prefs.set("stage-foreign", v); render(); } // the lanes are the shown cards': the view is rebuilt
-const foreignShown = (c) => !c.ext || STAGE_FOREIGN === "all" || (STAGE_FOREIGN === "linked" && c.linked);
-function stopPlay() { PLAY.on = false; if (PLAY.raf) cancelAnimationFrame(PLAY.raf); PLAY.raf = null; PLAY.last = 0; PLAY.acc = 0; PLAY.frac = 0; PLAY.jump = 1; }
-const DAY_RE = /^\d{4}-\d{2}-\d{2}(T\d{2})?$/; // a day, or an hour of it
-// a segment of buttons on the stage, one of them on
-const stageSeg = (cls, title, options, current, pick, label = null) => el("span", { class: `stage-seg ${cls}`, title }, label ? el("span", { class: "seg-label" }, label) : null,
-  ...options.map(([v, l]) => el("button", { type: "button", class: v === current ? "on" : "", onclick: (ev) => { pick(v); for (const b of ev.currentTarget.parentNode.querySelectorAll("button")) b.classList.toggle("on", b === ev.currentTarget); } }, l)));
-
-function viewTimeline(main, day) {
-  main.append(el("h1", {}, "Timeline"));
-  if (!SCENE.state.project.git?.available) return main.append(el("p", { class: "center" }, "No Git repository — no dates to draw."));
-  if (SCENE.state.project.git.shallow) main.append(el("p", { class: "sub warn" }, "Shallow clone: the history stops at the clone's edge, so every entry older than that appears to start there. Fetch the full history (git fetch --unshallow) for real dates."));
-  const sub = el("p", { class: "sub" }, "The project day by day. The stage shows what existed on the day shown, the graph beside it the same; the playhead sets the day. The card shows the entry that appeared last by then, or the one clicked on the stage. The bars count the entries by the month their heading first appeared in Git, stacked by author, grey ticks for entries superseded that month.");
-  // the graph the stage is a view of and the thoughts beside it are drawn from: the family graph with the family
-  // scope (built once it is asked for, the view rendered again when it arrives), else this project's
+// The timeline page (ktw-timeline.js) is given, besides the scene, nav and prefs, what only this host has: which
+// graph its stage stands on — the family's when the family graph is shown and built, else the project's (asked
+// for once while it builds, and the page redrawn when it is there) — a row for an entry, the Markdown with this
+// page's topic links, an export's bodies, and a redraw.
+function timelineGraph() {
   const family = familyGraphShown(); const familyFresh = fgraph && Date.now() - fgraph.at < 30000;
   if (family && !familyFresh && !TIMELINE_FAMILY_ASKED) { TIMELINE_FAMILY_ASKED = true; buildFamilyGraph().then(() => { TIMELINE_FAMILY_ASKED = false; if (nav.current().view === "timeline") render(); }); }
-  const g = family && familyFresh ? fgraph : buildGraph();
-  // the clock runs from the first day of any entry on the page — ours, or one a friend, the family or the path brought — to today
-  const span = daySpan([...SCENE.state.entries, ...g.nodes.filter((n) => n.kind === "entry" && n.entry).map((n) => n.entry)]);
-  if (!span) return main.append(sub, el("p", { class: "center" }, "Nothing dated yet."));
-  const clamp = (d) => (d < span.from ? span.from : d > span.to ? span.to : d);
-  const bars = timelineBars(main, span, (d) => setDay(d));
-  const listBox = el("div", { class: "entry-list", style: "margin-top:16px" });
-  bars.onMonth = (k, entries) => { listBox.replaceChildren(el("h2", {}, k), ...entries.map(entryRow)); };
-  // the playhead: a slider over the days, play with a speed, the counts of the day
-  const grid = timeGrid(span); const big = grid.hours ? 24 : 7; // a step: an hour or a day; shift: a day or a week
-  const range = el("input", { type: "range", min: 0, max: grid.steps, step: 1, class: "playhead-range", title: grid.hours ? "the hour the page shows — drag, or ← → (an hour), shift ← → (a day), space plays" : "the day the page shows — drag, or ← → (a day), shift ← → (a week), space plays" });
-  const dayLabel = el("b", { class: "playhead-day" }); const counts = el("span", { class: "playhead-counts" });
-  const playBtn = el("button", { type: "button", class: "play-btn", title: "play the days — space" });
-  const speedSel = el("select", { class: "play-speed", title: "how fast the days pass" }, SPEEDS.map(([v, l]) => el("option", { value: v }, l)));
-  speedSel.onchange = () => { PLAY.speed = speedSel.value === "entry" ? "entry" : Number(speedSel.value) || 7; PLAY.acc = 0; PLAY.frac = 0; PLAY.jump = 1; };
-  for (const opt of speedSel.options) if (opt.value === String(PLAY.speed) || (opt.value !== "entry" && Math.abs(Number(opt.value) - PLAY.speed) < 1e-9)) opt.selected = true;
-  // the days entries appeared on, for the "1 entry /s" speed: ours and the graph's foreign ones, as the span counts them
-  const entryDays = [...new Set([...SCENE.state.entries, ...g.nodes.filter((n) => n.kind === "entry" && n.entry).map((n) => n.entry)].map(createdOn).filter(Boolean).map(grid.toClock))].sort();
-  const nextEntryDay = (d) => entryDays.find((x) => x > d) || span.to;
-  const upd = () => {
-    const d = SCENE.day || span.to;
-    range.value = grid.stepOf(d); dayLabel.textContent = grid.label(d); bars.mark(d, grid.label(d));
-    const here = SCENE.state.entries.filter((e) => atClock(e)); const st = count(here.map((e) => ({ s: statusNow(e) })), "s"); const open = (st.open || 0) + (st["needs-review"] || 0) + (st["pending-confirmation"] || 0);
-    setKids(counts, `${plural(here.length, "entry")} by then`, st.active ? ` · ${st.active} active` : "", st.superseded ? ` · ${st.superseded} superseded` : "", open ? ` · ${open} in question` : "");
-    playBtn.textContent = PLAY.on ? "⏸" : "▶"; playBtn.classList.toggle("on", PLAY.on);
-    card.refresh();
-    try { nav.go({ view: "timeline", day: d === span.to ? null : grid.url(d) }, { replace: true }); } catch {}
-  };
-  const setDay = (d) => { setClock(clamp(grid.toClock(d))); upd(); };
-  const stepBy = (d, n) => (span.timed ? grid.at(grid.stepOf(d) + n) : addDays(d, n));
-  function play(on) {
-    if (on === PLAY.on) return;
-    if (!on) { stopPlay(); upd(); return; }
-    if ((SCENE.day || span.to) >= span.to) setClock(span.from); // at the end: once more from the start
-    PLAY.on = true; PLAY.last = 0; PLAY.acc = 0;
-    const step = (now) => {
-      if (!PLAY.on || !range.isConnected) { stopPlay(); return; }
-      const dt = PLAY.last ? Math.min(0.1, (now - PLAY.last) / 1000) : 0; PLAY.last = now;
-      if (PLAY.speed === "entry") {
-        // one step per second to the next day with an entry; the stage slides through the days between
-        const target = nextEntryDay(SCENE.day); PLAY.jump = span.timed ? dayDiff(SCENE.day, target) : Math.max(1, dayDiff(SCENE.day, target)); PLAY.acc += dt; PLAY.frac = Math.min(1, PLAY.acc);
-        if (PLAY.acc >= 1) { PLAY.acc = 0; PLAY.frac = 0; if (target >= span.to) { setClock(span.to); stopPlay(); upd(); return; } setDay(target); }
-        else STAGE?.wake?.();
-      } else {
-        // the speed in days a second, the clock in steps of the grid's unit — an hour or a day
-        const U = grid.unit; PLAY.jump = U; PLAY.acc += dt * PLAY.speed;
-        const whole = Math.floor(PLAY.acc / U); PLAY.frac = (PLAY.acc - whole * U) / U;
-        if (whole >= 1) { PLAY.acc -= whole * U; const d = stepBy(SCENE.day, whole); if (d >= span.to) { setClock(span.to); stopPlay(); upd(); return; } setDay(d); }
-        else STAGE?.wake?.();
-      }
-      PLAY.raf = requestAnimationFrame(step);
-    };
-    upd(); PLAY.raf = requestAnimationFrame(step);
-  }
-  playBtn.onclick = () => play(!PLAY.on);
-  range.oninput = () => { play(false); setDay(grid.at(Number(range.value))); };
-  const jump = (to, title, label) => el("button", { type: "button", class: "play-jump", title, onclick: () => { play(false); setDay(to()); } }, label);
-  const card = entryCard(span);
-  // the stage and its switches
-  const wrap = el("div", { class: "stage-wrap" }); const canvas = el("canvas", { class: "stage" }); const tip = el("div", { class: "stage-tip", hidden: true });
-  wrap.append(canvas, tip,
-    stageSeg("stage-arrange", "where a card stands: where its node stands in the graph beside (the stage is the graph, time pulled out as depth), or in a lane per topic", [["graph", "as the graph"], ["topics", "by topic"]], STAGE_ARRANGE, setStageArrange),
-    stageSeg("stage-foreign", "other repositories' entries — friends, family, path: only the ones a chain of See or Superseded by joins to this project's, every one the graph holds, or none", [["linked", "linked"], ["all", "all"], ["none", "none"]], STAGE_FOREIGN, setStageForeign, "others"),
-    el("button", { type: "button", class: "stage-reset", title: "let go of the held thought and card — every card alike again — and reset the view (Esc)", onclick: () => STAGE?.reset?.() }, "reset"));
-  main.append(el("div", { class: "timeline-head" },
-      el("div", { class: "timeline-head-text" }, sub, bars.node, bars.legend,
-        el("div", { class: "playhead" }, jump(() => span.from, "the first day", "⏮"), playBtn, jump(() => span.to, "today", "⏭"), range, dayLabel, speedSel, counts)),
-      el("div", { class: "stage-card-slot" }, card.node)),
-    wrap, stageLegend(),
-    el("p", { class: "note stage-note" }, el("span", { class: "stage-hint" }, (grid.hours ? "On the stage: wheel — an hour forward or back, shift for a day ·" : "On the stage: wheel — a day forward or back, shift for a week ·") + " drag — look around · ctrl+wheel — zoom · double-click — reset the view · click a card to read it, the floor to let go. The thoughts beside: point at one to light its chain here and in the graph."), el("span", { class: "stage-hint-touch" }, "On the stage: drag — look around · pinch — zoom · tap a card to read it, the floor to let go. The slider sets the day.")),
-    listBox);
-  SCENE.day = null; setClock(day && DAY_RE.test(day) ? clamp(grid.toClock(day)) : span.to); upd();
-  runStage(canvas, { wrap, tip, span, graph: g, graphBeside: !narrow(), setDay, stepBy, big, play, open: card.hold, close: card.release }); // the side pane draws no graph on a narrow screen (miniGraph)
-  ESC.page = () => STAGE?.reset?.();
-  // keys while the timeline is open: ← → a day, shift a week, space plays
-  const onKey = (ev) => {
-    if (!wrap.isConnected) return document.removeEventListener("keydown", onKey);
-    if (/^(INPUT|SELECT|TEXTAREA)$/.test(ev.target?.tagName) && ev.target !== range) return;
-    const d = SCENE.day || span.to;
-    if (ev.key === "ArrowLeft") { play(false); setDay(stepBy(d, ev.shiftKey ? -big : -1)); ev.preventDefault(); }
-    else if (ev.key === "ArrowRight") { play(false); setDay(stepBy(d, ev.shiftKey ? big : 1)); ev.preventDefault(); }
-    else if (ev.key === " " && ev.target !== range) { play(!PLAY.on); ev.preventDefault(); }
-  };
-  document.addEventListener("keydown", onKey);
+  return family && familyFresh ? fgraph : buildGraph();
 }
-// The bars: entries by the month their heading first appeared in Git, stacked by author, grey ticks for entries
-// superseded that month, a marker for the day shown. Returns the SVG, the authors' legend, `mark(day)` and a click
-// on a month (`onMonth(month, entries)` to set, and the day moves to the month's end through `setDay`).
-function timelineBars(main, span, setDay) {
-  const created = SCENE.state.entries.filter((e) => e.git?.created?.date && matches(e));
-  const months = {}; const sup = {};
-  for (const e of created) { const m = e.git.created.date.slice(0, 7); (months[m] ||= {})[e.git.created.author] = ((months[m] || {})[e.git.created.author] || 0) + 1; }
-  for (const e of SCENE.state.entries) for (const h of e.git?.status_history || []) if (h.status === "superseded" && h.date) sup[h.date.slice(0, 7)] = (sup[h.date.slice(0, 7)] || 0) + 1;
-  // every month from the first dated one to this month
-  const all = []; let [y, m] = (Object.keys({ ...months, ...sup }).sort()[0] || span.from.slice(0, 7)).split("-").map(Number); const [ey, em] = todayISO().slice(0, 7).split("-").map(Number);
-  while (y < ey || (y === ey && m <= em)) { all.push(`${y}-${String(m).padStart(2, "0")}`); m++; if (m > 12) { m = 1; y++; } }
-  const max = Math.max(1, ...all.map((k) => Object.values(months[k] || {}).reduce((a, b) => a + b, 0)));
-  // the drawing is as wide as the column beside the card, so its text keeps its size (an SVG scales as a whole);
-  // padT leaves room above the bars for the day's label, clear of them; a bar spans its month, a hair between two
-  const mainW = main.clientWidth || 900; const Wd = Math.max(360, Math.round(narrow() ? mainW - 28 : mainW - 64 - 18 - Math.min(420, Math.max(280, (mainW - 82) * 0.42))));
-  const Hd = 130, padL = 34, padB = 32, padT = 18; const colW = (Wd - padL) / all.length; const bw = colW - 2;
-  const ns = (tag, attrs, text) => { const n = document.createElementNS("http://www.w3.org/2000/svg", tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); if (text != null) n.textContent = text; return n; };
-  const svg = ns("svg", { viewBox: `0 0 ${Wd} ${Hd}` }); const axis = ns("g", { class: "axis" }); svg.append(axis);
-  const scaleY = (v) => padT + (Hd - padB - padT) * (1 - v / max);
-  for (const tick of [0, Math.ceil(max / 2), max]) { axis.append(ns("line", { x1: padL, x2: Wd, y1: scaleY(tick), y2: scaleY(tick) })); axis.append(ns("text", { x: padL - 6, y: scaleY(tick) + 3, "text-anchor": "end" }, tick)); }
-  const monthX = (d) => { const i = all.indexOf(d.slice(0, 7)); if (i < 0) return d < all[0] ? padL : Wd; const dim = new Date(Date.UTC(+d.slice(0, 4), +d.slice(5, 7), 0)).getUTCDate(); return padL + (i + (Math.min(+d.slice(8, 10), dim) - 1) / dim) * colW + 1; };
-  const marker = ns("line", { class: "now", x1: padL, x2: padL, y1: padT - 4, y2: Hd - padB + 14 }); const markerLabel = ns("text", { class: "now-label", x: padL, y: 9, "text-anchor": "start" }, "");
-  const out = { node: el("div", { class: "timeline" }, svg), onMonth: null,
-    legend: el("div", { class: "legend" }, SCENE.state.authors.map((a) => el("span", {}, el("i", { class: "sw", style: `background:${authorColor(a.name)}` }), a.name)), el("span", {}, el("i", { class: "sw", style: "background:var(--superseded)" }), "superseded that month")),
-    mark: (d, label = d) => { const x = monthX(d); marker.setAttribute("x1", x); marker.setAttribute("x2", x); markerLabel.setAttribute("x", Math.min(Wd - 64, x + 4)); markerLabel.textContent = label; } };
-  all.forEach((k, i) => {
-    const x = padL + i * colW + 1; let yTop = scaleY(0);
-    for (const a of SCENE.state.authors.map((a) => a.name)) {
-      const v = months[k]?.[a]; if (!v) continue; const h = scaleY(0) - scaleY(v); yTop -= h;
-      const rect = ns("rect", { class: "b", x, y: yTop, width: bw, height: h, fill: authorColor(a), rx: 2 }); rect.append(ns("title", {}, `${k} · ${a}: ${v} — click: that month's entries, and the day moves to its end`));
-      rect.addEventListener("click", () => { out.onMonth?.(k, created.filter((e) => e.git.created.date.startsWith(k))); const last = new Date(Date.UTC(+k.slice(0, 4), +k.slice(5, 7), 0)).toISOString().slice(0, 10); setDay(last < span.from ? span.from : last > span.to ? span.to : last); });
-      svg.append(rect);
-    }
-    if (sup[k]) for (let s = 0; s < sup[k]; s++) svg.append(ns("rect", { class: "sup", x: x + s * 5, y: Hd - padB + 6, width: 3, height: 6 }));
-    if (all.length <= 18 || i % Math.ceil(all.length / 18) === 0) axis.append(ns("text", { x: x + bw / 2, y: Hd - padB + 22, "text-anchor": "middle" }, k));
-  });
-  svg.append(marker, markerLabel);
-  return out;
-}
-// The card beside the bars: the entry that appeared last by the day shown, or the one held — clicked on the stage
-// or in the thoughts list — until let go. The whole body, rendered as the reader renders it; the bodies sit beside
-// an export by default, this project's and a friend's alike, and are fetched once, on demand.
-// An entry as a card: the day and topic, a badge, the title linking the entry, its pills, the whole body as the
-// reader renders it, who recorded it and open ›. The timeline's card beside the bars and the graph's preview are
-// the same card. `badge` is the head's right-hand element; `state` the export the entry came from, for the bodies
-// that sit beside an export and are fetched once, on demand (`again` is called when they arrived).
-function fillEntryCard(node, e, { lane, href, state, day, badge, again, onOpen = null, topic = null }) {
-  const body = e.body?.text || "";
-  // a friend's entry opens by walking to that project in place (the node's action), not by a plain link
-  const link = (text, extra = {}) => el("a", { href, ...extra, onclick: onOpen ? (ev) => { ev.preventDefault(); onOpen(); } : null }, text);
-  // the topic in the head is a link where there is somewhere to go: the topic's preview in the graph, its page on the timeline
-  const topicLink = topic ? el("a", { class: "card-topic", href: topic.href || "#", title: topic.title || "the topic", onclick: topic.onClick ? (ev) => { ev.preventDefault(); topic.onClick(); } : null }, lane) : lane;
-  setKids(node, el("div", { class: "stage-card-head" }, el("span", { class: "note mono" }, `${stampLabel(createdOn(e)) || "today"} · `, topicLink), badge),
-    el("h3", {}, link(e.title.replace(/`/g, ""), { title: "read the whole entry" })),
-    el("div", { class: "pills" }, ...typePills(e.type), statusPill((day ? statusAt(e, day, state !== SCENE.self || hasRepo(e)) : null) || e.status), evPill(e.evidence)),
-    body ? el("div", { class: "body stage-card-body" }, renderMarkdown(body)) : el("p", { class: "empty stage-card-body" }, typeof (state || SCENE.state).bodies === "string" ? "loading the text…" : "no text"),
-    el("div", { class: "stage-card-foot" }, e.git?.created?.author ? el("span", { class: "note" }, `recorded by ${e.git.created.author}`) : el("span"), link("open ›")));
-  const st = state || SCENE.self;
-  if (st && typeof st.bodies === "string" && !st.bodiesLoaded && !st.bodiesError) ensureBodies(st).then(() => { if (node.isConnected) again?.(); });
-}
-const laneTitle = (e) => (e.project ? `${e.project} · ` : "") + (topicOf(e.file)?.title || e.file).replace(/`/g, "");
-function entryCard(span) {
-  const node = el("div", { class: "stage-card" }); let held = null; // the held entry's Id
-  const latest = (d) => { let best = null; for (const e of SCENE.state.entries) { if (!existsAt(e, d, hasRepo(e))) continue; const c = createdOn(e) || span.to; if (!best || c >= best.c) best = { e, c }; } return best?.e || null; };
-  const fill = (e, isHeld, c = null) => fillEntryCard(node, e, { lane: c?.lane?.title || laneTitle(e), href: c?.href || entryHref(e), state: c?.state || SCENE.self, day: SCENE.day || span.to,
-    topic: !(c?.ext) && !e.project ? { title: "open the topic's page", href: nav.href({ view: "topic", file: e.file }) } : null,
-    badge: isHeld ? el("button", { type: "button", class: "pill stage-card-held", title: "let go — back to the latest entry by the day shown", onclick: () => STAGE?.close?.() }, "picked ", el("b", {}, "×")) : el("span", { class: "pill" }, "latest by then"),
-    again: () => { if (held ? held === (e.uuid || e.id) : latest(SCENE.day || span.to) === e) fill(e, isHeld, c); } });
-  return { node,
-    refresh: () => { if (held) return; const e = latest(SCENE.day || span.to); if (e) fill(e, false); else setKids(node, el("p", { class: "empty" }, "No entry by this day.")); },
-    hold: (e, c) => { held = e.uuid || e.id; selected = e.id; fill(e, true, c); },
-    release: () => { held = null; selected = null; const e = latest(SCENE.day || span.to); if (e) fill(e, false); } };
-}
-// the legend under the stage: the kinds, the fills, the edges
-function stageLegend() {
-  const sw = (cls, style) => el("i", { class: `sw ${cls}`, style });
-  return el("div", { class: "stage-legend" },
-    el("span", { class: "grp" }, ...TYPE_KINDS.map((k) => el("span", { style: `color:${token(TYPE_TOKENS[k])}` }, typeGlyphSvg(k), " ", el("span", { style: "color:var(--fg2)" }, k))), el("span", {}, sw("", "color:var(--muted)"), el("span", {}, "no type"))),
-    el("span", { class: "grp", title: "Evidence is the fill" }, el("span", {}, sw("solid", "color:var(--fg2)"), "confirmed"), el("span", {}, sw("hatch", "color:var(--fg2)"), "inferred"), el("span", {}, sw("", "color:var(--fg2)"), "unknown")),
-    el("span", { class: "grp", title: "Status is the edge" }, el("span", {}, sw("dashed", "color:var(--fg3)"), "superseded"), el("span", {}, sw("ring", "color:var(--fg2)"), "open · needs review · pending")));
-}
-// A card's shape is its Type. decision: a plain card with a diamond. constraint: a thick band across the top, a
-// barred square. workaround: a folded corner and a dashed edge, a folded square. incident: a striped band across
-// the top, a triangle with a bar. The glyph as SVG for the legend, and on the canvas.
-// a Type's glyph as SVG nodes, the stage's shapes in small: [element, attributes] per part
-const GLYPHS = {
-  decision: [["path", { d: "M6 1 11 6 6 11 1 6z" }]],
-  constraint: [["path", { d: "M1.5 1.5h9v9h-9z", fill: "none", stroke: "currentColor", "stroke-width": "1.4" }], ["path", { d: "M1.5 5h9v2h-9z" }]],
-  workaround: [["path", { d: "M1.5 1.5h6l3 3v6h-9z", fill: "none", stroke: "currentColor", "stroke-width": "1.4", "stroke-dasharray": "2 1.5" }], ["path", { d: "M7.5 1.5v3h3", fill: "none", stroke: "currentColor", "stroke-width": "1.4" }]],
-  incident: [["path", { d: "M6 1.2 11.2 10.8H.8z", fill: "none", stroke: "currentColor", "stroke-width": "1.4" }], ["path", { d: "M5.3 4.5h1.4v3.2H5.3zM5.3 8.5h1.4v1.3H5.3z" }]],
-};
-function typeGlyphSvg(kind) {
-  const NS = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(NS, "svg");
-  for (const [k, v] of Object.entries({ class: "type-glyph", viewBox: "0 0 12 12", width: "11", height: "11", "aria-hidden": "true", fill: "currentColor" })) svg.setAttribute(k, v);
-  for (const [tag, attrs] of GLYPHS[kind] || []) { const n = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); svg.append(n); }
-  return svg;
-}
-function typeGlyph(ctx, kind, x, y, s) { // `s` its size in pixels, at (x, y) top-left, in the current fill and stroke colour
-  ctx.save(); ctx.translate(x, y); ctx.scale(s / 12, s / 12); ctx.lineWidth = 1.5 * 12 / s; ctx.setLineDash([]);
-  if (kind === "decision") { ctx.beginPath(); ctx.moveTo(6, 1); ctx.lineTo(11, 6); ctx.lineTo(6, 11); ctx.lineTo(1, 6); ctx.closePath(); ctx.fill(); }
-  else if (kind === "constraint") { ctx.strokeRect(1.5, 1.5, 9, 9); ctx.fillRect(1.5, 5, 9, 2); }
-  else if (kind === "workaround") { ctx.setLineDash([2, 1.5]); ctx.beginPath(); ctx.moveTo(1.5, 1.5); ctx.lineTo(7.5, 1.5); ctx.lineTo(10.5, 4.5); ctx.lineTo(10.5, 10.5); ctx.lineTo(1.5, 10.5); ctx.closePath(); ctx.stroke(); ctx.setLineDash([]); ctx.beginPath(); ctx.moveTo(7.5, 1.5); ctx.lineTo(7.5, 4.5); ctx.lineTo(10.5, 4.5); ctx.stroke(); }
-  else if (kind === "incident") { ctx.beginPath(); ctx.moveTo(6, 1.2); ctx.lineTo(11.2, 10.8); ctx.lineTo(0.8, 10.8); ctx.closePath(); ctx.stroke(); ctx.fillRect(5.3, 4.5, 1.4, 3.2); ctx.fillRect(5.3, 8.5, 1.4, 1.3); }
-  ctx.restore();
-}
-
-// ---- the stage: scene, camera, layout, painter, input
-// The scene: the graph's entry nodes as cards — ours and the ones a friend, the family or the path brought, so a
-// thought that crosses repositories lights every step — the links between them, and the lanes by topic among the
-// cards that show. A card keeps its node's id and reads the node afresh (the graph rebuilds its nodes on every
-// render, the ids stay). Built once per view; a live update renders the view again.
-function stageScene(G, span) {
-  const entryNodes = (G?.nodes || []).filter((n) => n.kind === "entry" && n.entry);
-  const { cards, byId } = stageCards(entryNodes, { today: span.to, selfState: SCENE.self });
-  const links = stageLinks(cards, byId); markLinked(cards, links);
-  const { lanes, cols } = stageLanes(cards, { show: foreignShown, topicTitle: (file, c) => ((c.state?.topics || SCENE.state.topics).find((t) => t.file === file)?.title) }); // a foreign entry's topic title from its own export
-  return { G, cards, byId, links, lanes, cols, nodeOf: (c) => (G?.index?.[c.nid] != null ? G.nodes[G.index[c.nid]] : null) };
-}
-// The camera: the scale, the depth and the projection. World units: x across the near plane, y up, z the depth —
-// days back from the day shown, logarithmic and scaled to the span so the last days spread out where the eye is and
-// the past fills the stage. The scale follows the width (a plane of 5.6 units across); where the window has height
-// to spare the box grows, up to twice, and the scale grows with it. As the graph, a card stands where its node
-// stands in the graph beside: the graph's plane (its 4th to 96th percentile, outliers held at the edge) mapped onto
-// the near plane, the positions copied while the graph settles and then kept — following its slow turn walked the
-// cards around the stage without end.
-function stageCamera(scene, v, o) {
-  const F = 4.2; // focal length in plane units
-  const spanDays = Math.max(14, dayDiff(o.span.from, o.span.to));
-  const DEPTH_FAR = F * 1.4; // the depth at the span's end: size 1 / 2.4
-  const camY = 1.85, floorY = -0.95; // the eye just above the top row; the floor's height
-  const asGraph = () => STAGE_ARRANGE === "graph" && !!scene.G;
-  const baseK = () => Math.max(56, Math.min(190, (v.W - 40) / 5.6));
-  const KY = () => Math.max(baseK(), Math.min(2 * baseK(), (v.H - 60) / 3.15)) * v.zoom; // up: the same in both arrangements
-  const K = () => (asGraph() ? KY() : Math.max(56, Math.min(190, (v.W - 40) / (scene.cols + 1.2))) * v.zoom); // across: by topic the lanes' width
-  const planeHalf = () => (asGraph() ? Math.max(1.5, (v.W / 2 - 12) / K()) : scene.cols / 2); // as the graph the plane spans the box, its edges at the bottom corners
-  const horizon = () => v.H * 0.13 + v.panY; const cx = () => v.W / 2 + v.panX;
-  const now = () => (SCENE.day || o.span.to);
-  const tNow = () => dayDiff(o.span.from, now()) + (PLAY.on ? PLAY.frac * PLAY.jump : 0); // days since the first day, fractional while playing (a whole jump at the entry speed)
-  const zOf = (day) => logDepth(tNow() - dayDiff(o.span.from, day), spanDays, DEPTH_FAR);
-  const proj = (x, y, z) => { const s = F / (F + Math.max(z, -F * 0.9)); return [cx() + x * K() * s, horizon() + (camY - y) * KY() * s, s]; };
-  const depthAlpha = (z) => Math.max(0.2, Math.min(1, 1.1 - z / (DEPTH_FAR * 1.6)));
-  // the graph's positions, copied while it settles and then kept
-  // (copied until the graph has settled once; from then on only a node not yet known is added — the graph is nudged
-  // awake by a pointed-at thought, and following that would walk the cards along its turn a step per hover). The
-  // family graph runs as the side pane's copy (`runner`), which shares its nodes but settles with an alpha of its
-  // own: the family graph's own never falls, and read alone it kept the cards following the turn for good
-  // the positions: the scene's layout (ktw-scene.js) — the graph beside the stage publishes them while it settles,
-  // and the scene keeps them from then on; with no graph drawn beside the stage, the scene settles them itself
-  let sawSettled = false; // the stage follows the layout until it has drawn it settled once
-  const positions = () => { const G = scene.G; if (!G) return SCENE.layout; const L = SCENE.layoutSource ? SCENE.layout : SCENE.layoutFor(G.nodes, G.links); sawSettled = SCENE.layoutSettled; o.wrap.dataset.settled = sawSettled ? "1" : ""; return L; };
-  const gbox = { x0: 0, x1: 1, y0: 0, y1: 1 };
-  const measureGraph = (shownCards) => { const P = positions(); const xs = [], ys = []; for (const c of shownCards) { const q = P.get(c.nid); if (q) { xs.push(q.x); ys.push(q.y); } } const b = percentileBox(xs, ys); if (b) Object.assign(gbox, b); };
-  const clamp01 = (u) => Math.max(0, Math.min(1, u));
-  const gmap = (n) => { const ux = clamp01((n.x - gbox.x0) / (gbox.x1 - gbox.x0 || 1)), uy = clamp01((n.y - gbox.y0) / (gbox.y1 - gbox.y0 || 1)); return { x: (ux - 0.5) * (planeHalf() * 2 - 0.9), y: 1.3 - uy * (1.3 - (SHELF[0] - 0.45)) }; }; // the top row well under the eye
-  const basePos = (c) => { const q = asGraph() ? SCENE.layout.get(c.nid) : null; return q ? gmap(q) : { x: c.x, y: c.y }; };
-  // the box's height: what the window has left under everything above the stage and over the legend and note under it
-  const roomBelow = () => { let below = 24; for (let n = o.wrap.nextElementSibling; n; n = n.nextElementSibling) below += n.offsetHeight + 12; const main = o.wrap.closest("#main"); if (main) below += parseFloat(getComputedStyle(main).paddingBottom) || 0; return below; };
-  const roomAbove = () => { const main = o.wrap.closest("#main"); return main ? o.wrap.getBoundingClientRect().top - main.getBoundingClientRect().top + main.scrollTop : 0; };
-  const chrome = () => (narrow() ? 60 : 108); // the top bar, the strip, the status bar
-  const fitHeight = () => { const h = stageHeight(baseK() * 3.15 + 60, window.innerHeight - chrome() - roomAbove() - roomBelow()); if (Math.abs(h - o.wrap.getBoundingClientRect().height) > 2) o.wrap.style.height = `${h}px`; };
-  const zFar = () => Math.max(1, logDepth(tNow() + 20, spanDays, DEPTH_FAR)); // the floor's far edge: a little beyond the first day
-  return { camY, floorY, asGraph, K, KY, planeHalf, now, zOf, zFar, proj, depthAlpha, measureGraph, basePos, fitHeight, following: () => asGraph() && !sawSettled };
-}
-// The layout: which cards show, where each stands, and the pushes that keep them apart. A push is an offset on the
-// card (ox, oy in plane units); nothing pulls an offset back on its own — a steady pull against the push made the
-// cards shiver — the offsets give up half their room, eased over a dozen frames, when the day or the arrangement
-// changes (relax). Settling ends after SETTLE_FRAMES frames of pushes until the next relax: two cards wedged
-// between their bounds would otherwise trade places forever.
-function stageLayout(scene, cam, v) {
-  const SETTLE_FRAMES = 120; let settleFrames = 0, easing = 0;
-  const thereAt = (c, day) => existsAt(c.e, day, c.ext || hasRepo(c.e));
-  const shown = (c) => foreignShown(c) && thereAt(c, cam.now()) && (!PLAY.on || cam.zOf(c.day) >= -0.02);
-  const posOf = (c) => { const q = cam.basePos(c); return { x: q.x + c.ox, y: q.y + c.oy }; };
-  const room = (c) => { const b = cam.basePos(c); return { xlo: -1.3, xhi: 1.3, ylo: Math.max(-0.9, cam.floorY + 0.3 - b.y), yhi: Math.min(0.9, cam.camY - 0.35 - b.y) }; };
-  const relax = () => { easing = 12; settleFrames = 0; };
-  // one frame of settling; true while more frames are wanted
-  const settle = (items) => {
-    let busy = false;
-    if (easing) { easing--; for (const c of scene.cards) { c.ox *= 0.944; c.oy *= 0.944; } busy = true; }
-    const sOf = new Map(items.map((i) => [i.c, i.box.s])); // each card's size on screen, for the push in plane units
-    if (settleFrames < SETTLE_FRAMES && pushApart(items, { px: (c) => cam.K() * (sOf.get(c) || 1), py: (c) => cam.KY() * (sOf.get(c) || 1), room })) { settleFrames++; busy = true; }
-    return busy;
-  };
-  return { thereAt, shown, posOf, relax, settle };
-}
-// The painter: the floor with its days and months, the lanes' names or the topics' names, the lines between cards,
-// the cards themselves — far ones first — and the names of the topics at the centre of their cards.
-function stagePainter(ctx, scene, cam, layout, v, o) {
-  const css = getComputedStyle(document.documentElement); const color = (name) => css.getPropertyValue(name).trim();
-  const HATCH = new Map(); // colour -> pattern: diagonal lines, the fill of an inferred entry
-  const hatch = (col) => { if (!HATCH.has(col)) { const pc = document.createElement("canvas"); pc.width = pc.height = 6; const x = pc.getContext("2d"); if (x) { x.strokeStyle = col; x.lineWidth = 1.2; x.beginPath(); x.moveTo(-1, 7); x.lineTo(7, -1); x.moveTo(-1, 1); x.lineTo(1, -1); x.moveTo(5, 7); x.lineTo(7, 5); x.stroke(); } HATCH.set(col, ctx.createPattern(pc, "repeat")); } return HATCH.get(col); };
-  const litIds = () => { const t = scene.G?.thought; const set = new Set(); if (t) for (const n of t.nodes) if (n.entry) set.add(n.entry.uuid || n.id); return set; };
-  const font = (size, weight = "") => `${weight ? weight + " " : ""}${size}px ${color("--font") || "sans-serif"}`;
-  const rects = []; // the cards drawn this frame, near ones last, each with its foot (the line down to the floor)
-  const labels = []; // the topics' name pills drawn this frame (as the graph): pointed at, the topic's cards stand out
-
-  function floor(day, xl, xr, zFar) {
-    const { proj, floorY, depthAlpha, zOf } = cam;
-    ctx.lineWidth = 1; ctx.strokeStyle = color("--line"); ctx.globalAlpha = 0.9;
-    const edges = cam.asGraph() ? [xl, xr] : Array.from({ length: scene.cols + 1 }, (_, i) => i - scene.cols / 2); // the plane's edges, or the lane lines
-    for (const x of edges) { const [ax, ay] = proj(x, floorY, -0.4); const [bx, by] = proj(x, floorY, zFar); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); }
-    ctx.font = font(10); ctx.textBaseline = "middle"; ctx.textAlign = "left"; // the labels inside the floor's left edge: it runs out of the box at the front
-    // the days: a faint line across for every day back from the one shown, as long as the lines stay apart on screen
-    // (the last days are wide apart, the old ones run together), the day of the month where there is room for a number
-    let lastY = -1e9, lastLabelY = -1e9;
-    for (let back = 0; back < 4000; back++) {
-      const d = addDays(day.slice(0, 10), -back); if (d < o.span.from.slice(0, 10)) break; if (d.endsWith("-01")) continue; const z = zOf(d); if (z > zFar) break;
-      const [ax, ay] = proj(xl, floorY, z), [bx, by] = proj(xr, floorY, z); if (Math.abs(ay - lastY) < 7) continue; lastY = ay;
-      ctx.globalAlpha = 0.25 + 0.4 * depthAlpha(z); ctx.strokeStyle = color("--line"); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
-      if (Math.abs(ay - lastLabelY) >= 16 && ay > 8 && ay < v.H - 4) { lastLabelY = ay; ctx.fillStyle = color("--fg3"); ctx.globalAlpha = 0.5 + 0.4 * depthAlpha(z); ctx.fillText(String(Number(d.slice(8, 10))), ax + 6, ay); }
-    }
-    // the months: a line on the first, its label in bold, the year on January's
-    let [yy, mm] = day.slice(0, 7).split("-").map(Number);
-    for (let guard = 0; guard < 600; guard++) {
-      const first = `${yy}-${String(mm).padStart(2, "0")}-01`; const z = zOf(first); if (z > zFar) break;
-      const [ax, ay] = proj(xl, floorY, z), [bx, by] = proj(xr, floorY, z);
-      ctx.globalAlpha = 0.35 + 0.65 * depthAlpha(z); ctx.strokeStyle = mm === 1 ? color("--fg3") : color("--line"); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
-      ctx.fillStyle = color("--fg2"); ctx.font = font(10, "600"); if (ay > 8 && ay < v.H - 4) ctx.fillText(mm === 1 ? `${yy}-01` : first.slice(0, 7), ax + 6, ay); ctx.font = font(10);
-      mm--; if (mm < 1) { mm = 12; yy--; }
-    }
-    // the day shown, in the corner
-    ctx.globalAlpha = 1; ctx.textBaseline = "top"; ctx.font = `600 11px ${color("--mono") || "monospace"}`; ctx.fillStyle = color("--accent2"); ctx.fillText(`${day}${PLAY.on ? " ▶" : ""}`, 10, 9);
-  }
-  function laneNames(day) { // by topic: along the near edge, the upper shelf's lane above the lower's
-    const { proj, floorY, K } = cam;
-    ctx.font = font(10.5); ctx.textAlign = "center"; ctx.textBaseline = "top";
-    for (const L of scene.lanes) {
-      if (!L.items.some((c) => layout.thereAt(c, day))) continue;
-      const [x, y, s] = proj(L.x, floorY, 0); const w = K() * s * 0.9 - 10; let txt = L.title; while (txt.length > 3 && ctx.measureText(txt).width > w) txt = txt.slice(0, -2); if (txt !== L.title) txt = txt.slice(0, -1) + "…";
-      ctx.fillStyle = color("--fg2"); ctx.globalAlpha = L.shelf ? 0.9 : 0.65; ctx.fillText(`${L.shelf ? "▴" : "▾"} ${txt}`, x, y + (L.shelf ? 5 : 19));
-    }
-  }
-  function topicNames(vis, boxes) { // as the graph: each at the centre of its cards on screen, on a pill — the cards recede, a name on the near plane would stand nowhere near them
-    const groups = new Map();
-    for (const { c } of vis) { if (c.ext) continue; const b = boxes.get(c); const g = groups.get(c.e.file) || groups.set(c.e.file, { x: 0, y: 0, n: 0 }).get(c.e.file); g.x += b.cx; g.y += b.cy; g.n++; }
-    ctx.font = font(10.5, "600"); ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    for (const [file, g] of groups) { const t = (topicOf(file)?.title || file).replace(/`/g, "").slice(0, 34); const x = g.x / g.n, y = g.y / g.n; const w = ctx.measureText(t).width + 12; const on = v.hoverTopic === file; ctx.globalAlpha = on ? 0.95 : 0.82; ctx.fillStyle = on ? color("--bg3") : color("--bg"); ctx.fillRect(x - w / 2, y - 8, w, 16); ctx.globalAlpha = on ? 1 : 0.9; ctx.fillStyle = on ? color("--accent2") : color("--fg2"); ctx.fillText(t, x, y); labels.push({ file, x0: x - w / 2, y0: y - 8, x1: x + w / 2, y1: y + 8 }); }
-  }
-  function lines(day, boxes, lit) { // every See and Superseded by written by then; a lit thought's and the held or pointed-at card's stand out, the rest fade
-    const pairs = scene.G?.thought?.pairs || null;
-    for (const l of scene.links) {
-      if (!boxes.has(l.a) || !boxes.has(l.b) || !linkExistsAt(day, l.day)) continue;
-      const onLit = pairs && (pairs.has(`${l.a.nid}|${l.b.nid}`) || pairs.has(`${l.b.nid}|${l.a.nid}`));
-      const near = [v.hover, v.held].some((c) => c && (l.a === c || l.b === c));
-      const A = boxes.get(l.a), B = boxes.get(l.b);
-      ctx.globalAlpha = onLit || near ? 0.95 : lit.size ? 0.08 : 0.35 * Math.min(A.s, B.s) + 0.1;
-      ctx.strokeStyle = onLit || near ? color("--fg") : l.kind === "see" ? color("--accent2") : color("--fg3"); ctx.lineWidth = onLit || near ? 1.6 : 1; ctx.setLineDash(l.kind === "superseded" ? [5, 4] : []);
-      ctx.beginPath(); ctx.moveTo(A.cx, A.cy); ctx.lineTo(B.cx, B.cy); ctx.stroke();
-    }
-    ctx.setLineDash([]);
-  }
-  function card(c, z, b, day, lit) { // a card in its Type's colour and shape, filled by Evidence, edged by Status, with its foot and its title
-    const e = c.e; const st = statusAt(e, day, c.ext || hasRepo(e)) || e.status; const sup = st === "superseded";
-    const held = c === v.held, hovered = c === v.hover;
-    const isLit = lit.has(e.uuid || c.nid); const isStep = SCENE.focus && (e.uuid === SCENE.focus || c.nid === SCENE.focus);
-    const faded = (lit.size && !isLit && !hovered && !held) || (filterActive() && !matches(e)) || (v.hoverTopic && (c.ext || e.file !== v.hoverTopic)); // a topic's name pointed at: its cards alone stand out
-    const fresh = dayDiff(c.day, day) <= 3 && !PLAY.frac; // arrived within three days of the day shown: it glows
-    const a = held ? 1 : (faded ? 0.16 : 1) * cam.depthAlpha(z); // the held card at full strength, whatever its depth
-    const [fx, fy] = cam.proj(layout.posOf(c).x, cam.floorY, z); // the foot
-    ctx.globalAlpha = a * (held || hovered ? 0.9 : 0.35); ctx.strokeStyle = held || hovered ? color("--fg") : color("--fg3"); ctx.lineWidth = held || hovered ? 1.5 : 1; ctx.beginPath(); ctx.moveTo(b.cx, b.y1); ctx.lineTo(fx, fy); ctx.stroke();
-    b.foot = [b.cx, b.y1, fx, fy];
-    const kind = typeKind(e); const fold = kind === "workaround" ? Math.min(b.h * 0.45, b.w * 0.3) : 0;
-    const evc = sup ? color("--fg3") : (TYPE_TOKENS[kind] ? color(TYPE_TOKENS[kind]) : "") || color("--muted"); // the type's colour; a superseded card goes grey
-    const outline = () => { ctx.beginPath(); if (fold) { ctx.moveTo(b.x0, b.y0); ctx.lineTo(b.x1 - fold, b.y0); ctx.lineTo(b.x1, b.y0 + fold); ctx.lineTo(b.x1, b.y1); ctx.lineTo(b.x0, b.y1); ctx.closePath(); } else ctx.rect(b.x0, b.y0, b.w, b.h); };
-    ctx.globalAlpha = a;
-    if (fresh || isLit || hovered || held || isStep) { ctx.shadowColor = held || isStep ? color("--accent2") : isLit ? color("--fg") : evc; ctx.shadowBlur = held ? 36 : isStep ? 22 : 14; }
-    // the body: the background, then a solid tint for confirmed, hatching for inferred, nothing for unknown
-    ctx.fillStyle = color("--bg2"); ctx.globalAlpha = a * 0.9; outline(); ctx.fill(); ctx.shadowBlur = 0;
-    if (e.evidence === "confirmed") { ctx.fillStyle = evc; ctx.globalAlpha = a * (sup ? 0.12 : 0.3); outline(); ctx.fill(); }
-    else if (e.evidence === "inferred") { ctx.fillStyle = hatch(evc) || evc; ctx.globalAlpha = a * (sup ? 0.3 : 0.6); outline(); ctx.fill(); }
-    ctx.globalAlpha = a;
-    const band = Math.max(2, Math.min(5, b.h * 0.11));
-    if (kind === "constraint") { ctx.fillStyle = evc; ctx.globalAlpha = a * 0.9; ctx.fillRect(b.x0, b.y0, b.w, band); ctx.globalAlpha = a; }
-    if (kind === "incident") { ctx.save(); ctx.beginPath(); ctx.rect(b.x0, b.y0, b.w, band); ctx.clip(); ctx.fillStyle = evc; ctx.globalAlpha = a * 0.9; const sw = Math.max(3, band * 1.6); for (let x = b.x0 - band; x < b.x1 + band; x += sw * 2) { ctx.beginPath(); ctx.moveTo(x, b.y0); ctx.lineTo(x + sw, b.y0); ctx.lineTo(x + sw - band, b.y0 + band); ctx.lineTo(x - band, b.y0 + band); ctx.closePath(); ctx.fill(); } ctx.restore(); ctx.globalAlpha = a; }
-    if (fold) { ctx.fillStyle = color("--bg"); ctx.beginPath(); ctx.moveTo(b.x1 - fold, b.y0); ctx.lineTo(b.x1 - fold, b.y0 + fold); ctx.lineTo(b.x1, b.y0 + fold); ctx.closePath(); ctx.fill(); ctx.strokeStyle = evc; ctx.lineWidth = 1; ctx.stroke(); }
-    ctx.lineWidth = held ? 2.6 : hovered ? 2 : 1.2; ctx.strokeStyle = held ? color("--fg") : evc; ctx.setLineDash(sup || kind === "workaround" ? [4, 3] : []); outline(); ctx.stroke(); ctx.setLineDash([]);
-    if (held) { ctx.strokeStyle = color("--accent2"); ctx.lineWidth = 2; ctx.globalAlpha = 0.9; ctx.strokeRect(b.x0 - 6, b.y0 - 6, b.w + 12, b.h + 12); ctx.globalAlpha = a; }
-    if (kind && b.w > 30) { ctx.fillStyle = evc; ctx.strokeStyle = evc; const gs = Math.max(7, Math.min(11, b.h * 0.3)); typeGlyph(ctx, kind, b.x1 - gs - 4 - (fold ? fold * 0.6 : 0), b.y1 - gs - 3, gs); }
-    if (e.evidence === "unknown" && b.w > 30) { ctx.fillStyle = color("--unknown"); ctx.font = font(Math.max(8, Math.min(12, b.h * 0.32)), "700"); ctx.textAlign = "left"; ctx.textBaseline = "bottom"; ctx.fillText("?", b.x0 + 5, b.y1 - 2); }
-    if (st === "open" || st === "needs-review" || st === "pending-confirmation") { ctx.strokeStyle = color(`--${st}`); ctx.lineWidth = 1.2; ctx.strokeRect(b.x0 - 3, b.y0 - 3, b.w + 6, b.h + 6); }
-    if (isStep) { ctx.strokeStyle = color("--accent2"); ctx.lineWidth = 2.5; ctx.strokeRect(b.x0 - 5, b.y0 - 5, b.w + 10, b.h + 10); }
-    // the title on every card with room for a word, the type never below reading size: a card far back shows its first words
-    const fs = Math.max(9.5, Math.min(12, 11 * b.s * v.zoom)); const top = kind === "constraint" || kind === "incident" ? band + 1 : 0;
-    if (b.w > 26 && b.h - 6 - top >= fs) {
-      ctx.font = font(fs); ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.fillStyle = sup ? color("--fg3") : color("--fg");
-      const words = e.title.replace(/`/g, "").split(" "); const rows = []; let cur = "";
-      for (const w of words) { const t = cur ? `${cur} ${w}` : w; if (ctx.measureText(t).width > b.w - 10 && cur) { rows.push(cur); cur = w; } else cur = t; if (rows.length >= 3) break; }
-      if (rows.length < 3 && cur) rows.push(cur);
-      const lh = fs * 1.2; const maxRows = Math.max(1, Math.floor((b.h - 6 - top) / lh));
-      rows.slice(0, maxRows).forEach((t, i) => { let txt = t; if (i === maxRows - 1 && (rows.length > maxRows || words.length > rows.join(" ").split(" ").length)) txt += "…"; const room = b.w - 10 - (i === 0 && fold ? fold : 0); while (txt.length > 2 && ctx.measureText(txt).width > room) txt = txt.slice(0, -2) + "…"; ctx.fillText(txt, b.x0 + 5, b.y0 + 4 + top + i * lh); });
-    }
-  }
-  // one frame; true while the layout wants another
-  function draw() {
-    rects.length = 0; labels.length = 0; ctx.clearRect(0, 0, v.W, v.H);
-    const day = cam.now(); const lit = litIds(); const byGraph = cam.asGraph();
-    const vis = scene.cards.filter(layout.shown).map((c) => ({ c, z: cam.zOf(c.day) + c.dz })).sort((a, b) => b.z - a.z); // far ones first
-    if (byGraph) cam.measureGraph(vis.map((i) => i.c));
-    const half = cam.planeHalf(); const xl = -half - (byGraph ? 0 : 0.1), xr = half + (byGraph ? 0 : 0.1);
-    floor(day, xl, xr, cam.zFar());
-    if (!byGraph) laneNames(day);
-    const cardScale = byGraph ? 0.66 : 1; // as the graph the cards stand closer: smaller, the tip tells the rest
-    const boxes = new Map();
-    for (const { c, z } of vis) { const q = layout.posOf(c); const [x, y, s] = cam.proj(q.x, q.y, z); const grow = c === v.held ? 1.12 : 1; const w = cam.K() * s * 0.78 * cardScale * grow, h = Math.min(cam.KY(), cam.K() * 1.5) * s * 0.36 * cardScale * grow; boxes.set(c, { x0: x - w / 2, y0: y - h / 2, x1: x + w / 2, y1: y + h / 2, cx: x, cy: y, s, w, h }); }
-    const busy = layout.settle(vis.map((i) => ({ ...i, box: boxes.get(i.c) })));
-    lines(day, boxes, lit);
-    for (const { c, z } of vis) { const b = boxes.get(c); card(c, z, b, day, lit); rects.push({ ...b, c }); }
-    if (byGraph) topicNames(vis, boxes);
-    ctx.globalAlpha = 1;
-    return busy;
-  }
-  // the card under a point: its box, or its foot
-  const nearFoot = (r, px, py) => { const [ax, ay, bx, by] = r.foot; const dx = bx - ax, dy = by - ay; const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy || 1))); return Math.hypot(px - (ax + t * dx), py - (ay + t * dy)) <= 4; };
-  const pick = (px, py) => { for (let i = rects.length - 1; i >= 0; i--) { const r = rects[i]; if (px >= r.x0 && px <= r.x1 && py >= r.y0 && py <= r.y1) return r.c; } for (let i = rects.length - 1; i >= 0; i--) if (nearFoot(rects[i], px, py)) return rects[i].c; return null; };
-  const pickLabel = (px, py) => labels.find((l) => px >= l.x0 && px <= l.x1 && py >= l.y0 && py <= l.y1)?.file || null; // the pills lie over the cards
-  return { draw, pick, pickLabel };
-}
-// The input: the pointer and the fingers. A card under the pointer is pointed at (its node lit in the graph, a tip
-// beside it); a click holds it (the card beside the bars shows it) and a click on the floor lets go; a drag looks
-// around; the wheel scrubs the days, with ctrl it zooms; a double-click resets the view. On touch: one finger looks
-// around, two pinch, a tap holds.
-function stageInput(canvas, st, v, o) {
-  const { pick, pickLabel, wake, openCard, closeCard, showTip, hideTip } = st;
-  let drag = null, moved = false, pinch = null;
-  const pos = (ev) => { const r = canvas.getBoundingClientRect(); return [ev.clientX - r.left, ev.clientY - r.top]; };
-  canvas.onmousemove = (ev) => {
-    const [px, py] = pos(ev);
-    if (drag) { v.panX = drag.panX + (px - drag.px); v.panY = drag.panY + (py - drag.py); if (Math.hypot(px - drag.px, py - drag.py) > 4) moved = true; hideTip(); wake(); return; }
-    const t = pickLabel(px, py); // a topic's name: its cards stand out, nothing to open
-    if (t !== v.hoverTopic) { v.hoverTopic = t; wake(); }
-    if (t) { if (v.hover) { v.hover = null; focusStep(null); } canvas.style.cursor = "default"; hideTip(); return; }
-    const c = pick(px, py);
-    if (c !== v.hover) { v.hover = c; focusStep(c?.e.uuid || c?.e.id || null); wake(); }
-    canvas.style.cursor = c ? "pointer" : "grab";
-    if (c) showTip(c, px, py); else hideTip();
-  };
-  canvas.onmouseleave = () => { if (v.hover) { v.hover = null; focusStep(null); wake(); } if (v.hoverTopic) { v.hoverTopic = null; wake(); } hideTip(); };
-  canvas.onmousedown = (ev) => { if (ev.button !== 0) return; const [px, py] = pos(ev); drag = { px, py, panX: v.panX, panY: v.panY }; moved = false; canvas.classList.add("grabbing"); };
-  const onUp = (ev) => { if (!drag) return; const [px, py] = pos(ev); drag = null; canvas.classList.remove("grabbing"); if (moved || pickLabel(px, py)) return; const c = pick(px, py); if (c) openCard(c); else if (ev.target === canvas && v.held) closeCard(); };
-  window.addEventListener("mouseup", onUp);
-  canvas.onwheel = (ev) => {
-    ev.preventDefault();
-    if (ev.ctrlKey || ev.metaKey) { v.zoom = Math.min(4, Math.max(0.5, v.zoom * Math.exp(-ev.deltaY * 0.0015))); wake(); return; }
-    const d = Math.sign(ev.deltaY || ev.deltaX) * (ev.shiftKey ? o.big : 1); if (!d) return;
-    o.play(false); o.setDay(o.stepBy(SCENE.day || o.span.to, d)); hideTip();
-  };
-  canvas.ondblclick = () => { v.zoom = 1; v.panX = 0; v.panY = 0; wake(); };
-  const tpos = (t) => { const r = canvas.getBoundingClientRect(); return [t.clientX - r.left, t.clientY - r.top]; };
-  const tdist = (ts) => Math.hypot(ts[0].clientX - ts[1].clientX, ts[0].clientY - ts[1].clientY);
-  canvas.addEventListener("touchstart", (ev) => { if (ev.touches.length === 2) { pinch = { d: tdist(ev.touches) || 1, zoom: v.zoom }; drag = null; return; } const [px, py] = tpos(ev.touches[0]); drag = { px, py, panX: v.panX, panY: v.panY }; moved = false; }, { passive: true });
-  canvas.addEventListener("touchmove", (ev) => { if (pinch && ev.touches.length === 2) { v.zoom = Math.min(4, Math.max(0.5, pinch.zoom * (tdist(ev.touches) / pinch.d))); wake(); ev.preventDefault(); return; } if (!drag || !ev.touches.length) return; const [px, py] = tpos(ev.touches[0]); v.panX = drag.panX + (px - drag.px); v.panY = drag.panY + (py - drag.py); if (Math.hypot(px - drag.px, py - drag.py) > 6) moved = true; wake(); ev.preventDefault(); }, { passive: false });
-  canvas.addEventListener("touchend", (ev) => { if (pinch) { if (!ev.touches.length) pinch = null; return; } if (!drag) return; const d = drag; drag = null; if (moved) return; const c = pick(d.px, d.py); if (c) openCard(c); else if (v.held) closeCard(); });
-  return { release: () => window.removeEventListener("mouseup", onUp) };
-}
-// The stage on the page: the scene from the graph, the camera, the layout, the painter and the input wired to one
-// view state, redrawn on demand (wake) — never idle-looping — and the API the rest of the page uses (STAGE).
-function runStage(canvas, o) {
-  const ctx = canvas.getContext("2d"); if (!ctx) return;
-  const v = { W: 0, H: 0, zoom: 1, panX: 0, panY: 0, hover: null, hoverTopic: null, held: null, raf: null }; // the view: the box, the camera's zoom and pan, what is pointed at and held
-  const scene = stageScene(o.graph, o.span);
-  // the stage stands its cards where the graph beside it stands its nodes: that graph is the scene's layout source,
-  // and its positions so far are the start (a graph already settled publishes nothing more on its own)
-  SCENE.resetLayout(o.graph && o.graphBeside ? o.graph : null);
-  if (SCENE.layoutSource) publishLayout(o.graph, { force: true });
-  canvas.dataset.lanes = scene.lanes.map((L) => L.title).join(" | "); // what the stage holds, readable from outside (tests)
-  const cam = stageCamera(scene, v, o);
-  const layout = stageLayout(scene, cam, v);
-  const painter = stagePainter(ctx, scene, cam, layout, v, o);
-  const dpr = window.devicePixelRatio || 1;
-  const resize = () => { const r = canvas.getBoundingClientRect(); v.W = r.width; v.H = r.height; canvas.width = v.W * dpr; canvas.height = v.H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); };
-  const frame = () => { v.raf = null; if (painter.draw()) wake(); };
-  const wake = () => { if (!v.raf && canvas.isConnected) v.raf = requestAnimationFrame(frame); };
-  // the tip beside the pointer, inside the box
-  const place = (box, px, py) => { const r = canvas.getBoundingClientRect(); const w = box.offsetWidth || 280, h = box.offsetHeight || 80; box.style.left = `${px + 14 + w > r.width - 8 ? Math.max(8, px - 14 - w) : px + 14}px`; box.style.top = `${py + 14 + h > r.height - 8 ? Math.max(8, py - 14 - h) : py + 14}px`; };
-  const showTip = (c, px, py) => { const e = c.e; setKids(o.tip, el("b", {}, e.title.replace(/`/g, "")), el("div", { class: "note" }, `${c.lane?.title || e.file} · ${stampLabel(c.day)}${e.git?.created?.author ? " · " + e.git.created.author : ""}`), el("div", { class: "pills" }, ...typePills(e.type), statusPill(statusAt(e, cam.now(), c.ext || hasRepo(e)) || e.status), evPill(e.evidence))); o.tip.hidden = false; place(o.tip, px, py); };
-  const hideTip = () => { o.tip.hidden = true; };
-  const openCard = (c) => { v.held = c; o.open(c.e, c); wake(); };
-  const closeCard = () => { if (!v.held) return; v.held = null; o.close(); wake(); };
-  const input = stageInput(canvas, { pick: painter.pick, pickLabel: painter.pickLabel, wake, openCard, closeCard, showTip, hideTip }, v, o);
-  STAGE = { wake, graph: scene.G, relax: layout.relax, follows: cam.asGraph, close: closeCard,
-    // reset: let go of the held card and the held thought, every card alike again, the view as it opened
-    reset: () => { THOUGHT_PIN = null; renderThoughts(scene.G); focusStep(null); closeCard(); v.zoom = 1; v.panX = 0; v.panY = 0; v.hover = null; hideTip(); cam.fitHeight(); wake(); },
-    // pick: an entry chosen elsewhere on the page (a thought's step in the pane) is held like a clicked card, and the day moves to its, so it arrives at the front
-    pick: (e) => { v.held = (e.uuid && scene.byId[e.uuid]) || scene.byId[e.id] || null; o.play(false); o.open(e, v.held); o.setDay(createdOn(e) || o.span.to); wake(); } };
-  resize();
-  // the scene's changes the stage follows, until its canvas leaves the page: the clock, the focus, a lit thought,
-  // the graph's layout while it settles (the cards stand where its nodes stand), and anything every view redraws for
-  const listening = [
-    SCENE.on("day", (day, { grew }) => { if (grew) layout.relax(); wake(); }),
-    SCENE.on("focus", () => wake()),
-    SCENE.on("thought", () => wake()),
-    SCENE.on("layout", () => { if (cam.following()) wake(); }),
-    SCENE.on("wake", () => wake()),
-  ];
-  const ro = new ResizeObserver(() => { if (!canvas.isConnected) { ro.disconnect(); input.release(); for (const off of listening) off(); if (STAGE?.wake === wake) STAGE = null; return; } resize(); cam.fitHeight(); wake(); }); ro.observe(canvas);
-  cam.fitHeight(); wake();
-}
-
+const TIMELINE_HOST = { graph: timelineGraph, entryRow: (e) => entryRow(e), renderBody: (md) => renderMarkdown(md), bodies: (st) => ensureBodies(st), render: () => render() };
+const ESC = { page: null, pane: null }; // what Esc does: the page's reset button, else the side pane's graph's; the view sets it, render() clears it
+let TIMELINE_FAMILY_ASKED = false; // the family graph is being built for the timeline
 // ---------------------------------------------------------------- search
 // What a search runs over: this project, or every member of its tree — the
 // whole family from the root down, not only the parent chain. Shared by the
@@ -3518,7 +2726,7 @@ async function viewSearch(main, linkScope, q) {
   sub.textContent = `${plural(rows.length, "entry")} in ${plural(projectsHit, "project")}` +
     (scope !== "project" ? ` · ${plural(pool.groups.length, "project")} searched` : "") +
     (terms.length > 1 ? ` · all of: ${terms.join(", ")}` : "") +
-    (filterActive() ? ` · ${shown} match the sidebar filters, the rest dimmed` : "") +
+    (pageFiltered() ? ` · ${shown} match the sidebar filters, the rest dimmed` : "") +
     " · searched: title, body, Revisit when, Source, Verification, Superseded by, Id, file, type, status, evidence";
   const box = el("div", { class: "search-page" });
   for (const g of pool.groups) {
@@ -3649,15 +2857,15 @@ function render() {
   if (!SCENE.state) return;
   const main = $("#main"); main.replaceChildren();
   const route = nav.current(); const v = route.view;
-  selected = null; ESC.page = null; ESC.pane = null;
-  if (v !== "timeline") { SCENE.day = null; CLOCK_N = -1; stopPlay(); STAGE = null; } // the clock lives in the timeline; everywhere else the page shows today
+  SCENE.selected = null; ESC.page = null; ESC.pane = null;
+  if (v !== "timeline") TIMELINE.leave(); // the clock lives in the timeline; everywhere else the page shows today
   GLOBE.view = v === "globe"; $("#app").classList.toggle("globe", GLOBE.view); // the globe: the graph alone, full width
   if (GLOBE.view) setTimeout(globeIntro, 0); else GLOBE_INTRO_SHOWN = false; // explained on the way in, once per visit
   $("#details").dataset.pane = "other";
   if (v !== "graph" && v !== "globe") { const bar = pathBar(); if (bar) main.append(bar); } // the graph and the globe carry it as an overlay
   if (v === "graph" && route.alias === "family") { setScope("family", { rerender: false }); setFamilyNeighbours(true); setFamilyEntries(true); nav.go({ view: "graph" }, { replace: true }); viewGraph(main); renderDetailsDefault(); } // an old link to the family graph: the family whole, in the graph and in the scope
   else if (v === "graph" || v === "globe") { viewGraph(main); renderDetailsDefault(); }
-  else if (v === "timeline") { viewTimeline(main, route.day || null); renderDetailsDefault(); }
+  else if (v === "timeline") { TIMELINE.view(main, route.day || null, TIMELINE_HOST); ESC.page = () => TIMELINE.stage()?.reset?.(); renderDetailsDefault(); }
   else if (v === "authors") { viewAuthors(main); renderDetailsDefault(); }
   else if (v === "queues") { viewQueues(main); renderDetailsDefault(); }
   else if (v === "findings") { viewFindings(main); renderDetailsDefault(); }

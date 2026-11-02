@@ -803,9 +803,21 @@ function settleLayout(nodes, links, { alpha = 1, until = 0.003, maxTicks = 2000,
   return a;
 }
 
+// The sidebar's filter — status, evidence, author, each empty for any — and whether an entry passes it.
+// An entry's author is who created it, or who touched it last when no creation is known; either matches.
+const NO_FILTER = Object.freeze({ status: "", evidence: "", author: "" });
+const filterActive = (f) => !!(f && (f.status || f.evidence || f.author));
+const entryMatches = (e, f) => {
+  if (!f) return true;
+  const author = e.git?.created?.author || e.git?.last_touched?.author || "";
+  return (!f.status || e.status === f.status) && (!f.evidence || e.evidence === f.evidence) && (!f.author || author === f.author || e.git?.last_touched?.author === f.author);
+};
+// a repository's address as a key: case and trailing slashes do not make another one
+const fkey = (c) => String(c || "").replace(/\/+$/, "").toLowerCase();
+
 const KTW = (root.KeepTheWhy = root.KeepTheWhy || {});
 KTW.core = Object.freeze({
-  sameCanonical, exportStateUrl, exportVerdict, resolveSee, layoutTick, settleLayout,
+  sameCanonical, exportStateUrl, exportVerdict, resolveSee, layoutTick, settleLayout, NO_FILTER, filterActive, entryMatches, fkey,
   esc, plural, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug,
   hostAnchor, hostFileLink, hostTreeLink, HOSTS, hostOf, canonicalOf, ownerOf, projectLabel,
   parseSupersededBy, typeName, kindLabel, familyRank, familyOrder, groupByFamily, shuffled, searchTerms,

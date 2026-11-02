@@ -13,6 +13,7 @@
 process.env.TZ = "UTC"; // before the first Date: the timeline labels hours in the reader's zone
 
 import { JSDOM, VirtualConsole } from "jsdom";
+import { moduleAsClassic } from "./classic.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -24,7 +25,7 @@ if (!page) { console.error("usage: node snapshot.mjs PAGE [--update]"); process.
 const update = flag === "--update";
 
 // ---- the page, with everything that differs between two runs held still
-const html = fs.readFileSync(page, "utf8").replace('<script type="module">', "<script>");
+const html = moduleAsClassic(fs.readFileSync(page, "utf8"));
 const errors = [];
 const vc = new VirtualConsole();
 vc.on("jsdomError", (e) => errors.push("jsdom: " + (e.detail?.stack || e.message || e).toString().split("\n").slice(0, 2).join(" | ")));
