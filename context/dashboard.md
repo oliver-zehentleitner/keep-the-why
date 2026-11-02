@@ -858,6 +858,8 @@ The held thought is the scene's: `scene.pin` holds its ids joined with `|`, `set
 
 **Rejected alternative:** moving the registry search into the library behind a provider method. That would have put a URL only this dashboard uses into a file every host loads, and the globe it belongs with stays in the host anyway. The Friends page stayed out of this step: it reads the host's graph builders and shares its helpers with the Thoughts page, which another step is moving at the same time.
 
+The Friends page followed in its own step (dashboard 0.11.33) and joined the friends in `ktw-family.js` as `family.friendsView(main, host)`. What only the dashboard has goes in with each call: `graph()`, `units(g)` (the friends grouped as the graph draws them, which depends on the graph's layers, the path, followed chains and the globe), `color(i)` and `load(list)`. The registry's citations of this project come through `cited()`, which returns `{ checked, ask }` once the graph is there. A host leaves `cited` out when it has no registry, and the page then shows no registry button. The registry stays the host's for the reason above: the backlink file is the dashboard's index of the public registry, not part of a project's own state. A hub host like Maity would turn it into requests to third-party hosts on behalf of its users. Making `cited` optional rather than required lets such a host show the Friends page without pretending to have a registry.
+
 ## One heading-anchor rule, the host's: the linter holds it, the page mirrors it, and an entry's id is its anchor
 
 **Id:** e8766afe-6da7-45ca-87ab-af4fd01ec891
@@ -920,3 +922,28 @@ The topic page, the entry page (its references both ways, and an Id this state d
 **Reason:** the family and the search already load what they show through the provider they were made with. Handed to the pages, they keep public state on that one path, where a loader handed in as a host hook would be a second path beside it. A route is what every host can make an address of, while an address built in the library assumes the dashboard's hash. A cache shared across hosts would hand one host's answer to another. Comparing the address the page is at with one written for the entry never matched under a host whose `href` is not the dashboard's hash, so the entry page moved to its own address on every draw.
 
 **Rejected alternative:** `publicTree` and `publicState` as host hooks — a raw loader beside the provider, which the lead ruled out. A new provider method for an export's state — the family already reads exports through `exportState` and keeps one request per project, so a second method would duplicate it. Building the share address from the page's address and the entry's link in the library — under a path-style host the path came out twice.
+
+## The views' stylesheet styles .ktw-* classes and reads --ktw-* tokens; a host loads its element defaults, then the views, then its own rules
+
+**Id:** 6e03c31b-7f53-4759-86e6-fa3d491ea92a
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** design rev 3.1 §6 (classes and tokens prefixed, a fallback for every token, the host maps its variables), approved by the maintainer; the series' lead, 2026-11-02, on the snapshot rule for the rename, literal tokens, `.ktw-root` as the host's duty, the base.css order and the Chromium check in CI; the two cascade cases below were found by the checks in the pull request
+**Revisit when:** a host needs the views at a specificity its own rules cannot meet, or the views' canvas colours have to follow a theme switch inside one page without a redraw
+
+The views' classes carry the `ktw-` prefix, and their rules are `web/ktw-views.css`, listed under `styles` in `ktw-views.json`. The file styles `.ktw-*` classes only and reads `--ktw-*` custom properties only. Every read has a fallback, the dashboard's dark theme, which `ktw-core.js` also holds as `TOKEN_DEFAULTS` for the canvas. Bare elements (headings, links, code, buttons) are styled inside `:where(.ktw-root)`, a class the host puts on every container it mounts views into. `.ktw-aside` marks a side pane. The views' root sets the font family and the text colour, never the size.
+
+A host loads three stylesheets: its element defaults (the dashboard's `base.css`), then `ktw-views.css`, then its own rules (`style.css`). The dashboard sets every token as a literal equal to its own variable, in both themes. The canvas views read the tokens at the element they draw in, not at the page's root.
+
+**Reason:**
+- Without a prefix, a host's own `.pill` or `.card` (Maity has both) would meet the views' rules.
+- `:where()` keeps the scoped element rules at the weight of the bare `h1` or `button` they copy. As `.ktw-root button` they would have outweighed the views' class rules: a check in this step found the mini graph's corner buttons losing their colour that way.
+- The load order keeps every rule's place in the cascade. A host's element default loses a tie to a view's class rule, and a host's own rule wins a tie with a view's, so a host adjusts a view without `!important`. With the dashboard's bare `a:hover` loaded after the views, it would have won over `a.ktw-author`; it loads before them in `base.css`, where it stood before.
+- Literal tokens, because jsdom, which renders the snapshots and the canvas traces, does not resolve a `var()` chain in `getComputedStyle`.
+- Reading at the element, because a host may set the tokens on its container rather than on the root.
+
+**Rejected alternative:**
+- Unprefixed classes inside a scoping container (`.ktw-root .pill`): it raises every rule's weight and still collides with a host's `.pill` inside its own pages.
+- Mapping the tokens as `--ktw-fg: var(--fg)`: the shortest form, and the one the design named, but the canvas would read the text `var(--fg)` under jsdom.
+- Loading `ktw-views.css` after the host's stylesheet: a view would then override the host's own adjustments.
