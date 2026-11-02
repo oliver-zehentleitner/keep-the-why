@@ -198,6 +198,20 @@ class LibraryFilesTest(unittest.TestCase):
                 self.assertIn("root.KeepTheWhy = root.KeepTheWhy || {}", src)
                 self.assertTrue(src.rstrip().endswith("})(globalThis);"))
 
+    def test_one_generic_attribute_setter(self):
+        # every element the views build gets its attributes through ui.setAttrs, which sends a style through the
+        # CSSOM (a strict Content-Security-Policy drops a style attribute); a loop of its own that calls
+        # setAttribute(k, …) for whatever keys it is given would let a style through
+        found = [
+            (name, lineno)
+            for name in self.files()
+            for lineno, line in enumerate(_read(name).splitlines(), 1)
+            if re.search(r"\.setAttribute\(\s*k\b", line)
+        ]
+        self.assertEqual(
+            [n for n, _ in found], ["ktw-ui.js"], f"generic attribute setters: {found}"
+        )
+
     def test_rendering_safety_subset(self):
         for name in self.files():
             for lineno, line in enumerate(_read(name).splitlines(), 1):
