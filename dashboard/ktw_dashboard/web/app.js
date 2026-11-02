@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-const { plural, entryRefs, rawFileUrl, configLine, normalizeState, canonicalOf, NO_FILTER, familyOrder, parseSupersededBy, kindLabel, groupByFamily, searchTerms, registryMatches, shuffled, resolveLocation, linkFamily, authorLookup, mergeStates, projectLabel, backlinksUrl, citingOf, seeDay, supersededDay, paletteToken, ownerOf, exportStateUrl, exportVerdict, fkey, repoLabel } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
+const { plural, entryRefs, rawFileUrl, configLine, normalizeState, canonicalOf, NO_FILTER, familyOrder, kindLabel, groupByFamily, searchTerms, registryMatches, shuffled, resolveLocation, linkFamily, authorLookup, mergeStates, projectLabel, backlinksUrl, citingOf, paletteToken, ownerOf, exportStateUrl, exportVerdict, fkey, repoLabel } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
 const MD = globalThis.KeepTheWhy.markdown; // ktw-markdown.js
 
 // ---------------------------------------------------------------- prefs (host)
@@ -383,7 +383,7 @@ const { el, setKids, pill, statusPill, evPill, typePills, typeGlyphSvg, hostMark
 const SCENE = globalThis.KeepTheWhy.scene.create({ scope: prefs.get("scope") || prefs.get("search-scope") || "project" }); // search-scope: the name before the scope switched the graph too
 // The graph view (ktw-graph.js): it draws what the host builds, given the scene, navigation and settings only.
 const GRAPH = globalThis.KeepTheWhy.views.graph.create({ scene: SCENE, nav, prefs });
-const { run: runGraph, lightThought, spotIn, projectNodes, miniView, driftOn, setDrift, setLabels } = GRAPH;
+const { run: runGraph, assemble, lightThought, spotIn, projectNodes, miniView, driftOn, setDrift, setLabels } = GRAPH;
 // The timeline's stage (ktw-timeline.js): the same three, and the page around it stays here.
 const TIMELINE = globalThis.KeepTheWhy.views.timeline.create({ scene: SCENE, nav, prefs });
 // The family (ktw-family.js): the tree, the members' states, the friends, the Family page — loaded through the provider,
@@ -674,40 +674,6 @@ function miniGraph(d, ctx) {
 let MINI_FILTERS = false; // the side pane graph's switches, folded unless opened
 let graph = null; // the full graph persists across re-renders so positions survive live updates
 let GRAPH_CENTER = null; // { entry } or { topic }: centre the full graph there once, coming from the side pane
-function seedNode(n, prev) {
-  const p = prev[n.id];
-  if (p) Object.assign(n, { x: p.x, y: p.y, vx: 0, vy: 0, fixed: p.fixed });
-  else { n.x = (Math.random() - 0.5) * 600; n.y = (Math.random() - 0.5) * 400; n.vx = n.vy = 0; }
-  return n;
-}
-function assemble(topics, entries, prev = {}) {
-  const nodes = []; const links = []; const index = {};
-  const add = (n) => { index[n.id] = nodes.length; nodes.push(seedNode(n, prev)); };
-  for (const t of topics) add({ id: `t:${t.file}`, kind: "topic", label: t.title, file: t.file, r: 10 + Math.sqrt(t.entries) * 3.2, href: nav.href({ view: "topic", file: t.file }) });
-  for (const e of entries) add({ id: `e:${e.id}`, kind: "entry", label: e.title, file: e.file, entry: e, r: 4.2, href: entryHref(e) });
-  for (const e of entries) {
-    if (index[`t:${e.file}`] != null) links.push({ s: index[`e:${e.id}`], t: index[`t:${e.file}`], kind: "member", len: 46 });
-    for (const f of e.refs) if (index[`t:${f}`] != null) links.push({ s: index[`e:${e.id}`], t: index[`t:${f}`], kind: "ref", len: 120 });
-  }
-  const seen = new Set();
-  for (const t of topics) for (const f of t.refs_out) { if (index[`t:${f}`] == null) continue; const k = [t.file, f].sort().join("|"); if (seen.has(k)) continue; seen.add(k); links.push({ s: index[`t:${t.file}`], t: index[`t:${f}`], kind: "topic", len: 170 }); }
-  // See and Superseded by between entries, by Id; between their topics while entries are hidden
-  const tpairs = new Set();
-  for (const x of linkFamily([{ key: "self", role: "self", state: { entries } }]).xrefs) {
-    const a = entries.find((e) => e.id === x.from.id), b = entries.find((e) => e.id === x.to.id);
-    const s = index[`e:${x.from.id}`], t = index[`e:${x.to.id}`];
-    if (s == null || t == null) continue;
-    // the day the link came to be, for the clock: a See from its as-of day, a Superseded by from the status change
-    const day = x.kind === "see" ? seeDay(a, (a.see || []).find((r) => r?.uuid === b.uuid)) : supersededDay(a);
-    links.push({ s, t, kind: x.kind, len: 150, day });
-    const ts = index[`t:${a.file}`], tt = index[`t:${b.file}`]; const k = `${ts}|${tt}`;
-    if (a.file !== b.file && ts != null && tt != null && !tpairs.has(k)) { tpairs.add(k); links.push({ s: ts, t: tt, kind: "xtopic", len: 200, day }); }
-  }
-  return { nodes, links, index };
-}
-// the Ids an entry points at, and the entries of `list` that point at it
-const pointsAt = (e) => [...(e.see || []).map((r) => r?.uuid), e.superseded_by ? parseSupersededBy(e.superseded_by)?.uuid : null].filter(Boolean);
-const linkedTo = (e, list) => list.filter((x) => x !== e && ((e.uuid && pointsAt(x).includes(e.uuid)) || (x.uuid && pointsAt(e).includes(x.uuid))));
 function buildGraph(project = null) {
   const prev = graph ? Object.fromEntries(graph.nodes.map((n) => [n.id, n])) : {};
   const entries = SCENE.state.entries.filter((e) => (e.project || null) === project);
@@ -720,25 +686,10 @@ function buildGraph(project = null) {
   graph.alpha = Math.max(graph.alpha, 0.6);
   return graph;
 }
-function buildTopicSubgraph(t) {
-  // the topic with its entries, plus the topics it references and the ones referencing it (with the entries that do)
-  const files = new Set([t.file, ...t.refs_out, ...t.refs_in]);
-  const topics = SCENE.state.topics.filter((x) => files.has(x.file));
-  const entries = SCENE.state.entries.filter((x) => x.file === t.file || x.refs.includes(t.file));
-  const prev = graph ? Object.fromEntries(graph.nodes.map((n) => [n.id, n])) : {};
-  return Object.assign({ scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true, alpha: 1 }, assemble(topics, entries, prev));
-}
-function buildSubgraph(e) {
-  // the entry, its topic and siblings, the topics it references, and the entries elsewhere that reference its topic
-  const files = new Set([e.file, ...e.refs]);
-  const back = SCENE.state.entries.filter((x) => x.refs.includes(e.file));
-  const linked = linkedTo(e, SCENE.state.entries); // See / Superseded by, either direction
-  for (const b of [...back, ...linked]) files.add(b.file);
-  const topics = SCENE.state.topics.filter((t) => files.has(t.file));
-  const entries = SCENE.state.entries.filter((x) => x.file === e.file || x.id === e.id || back.includes(x) || linked.includes(x));
-  const prev = graph ? Object.fromEntries(graph.nodes.map((n) => [n.id, n])) : {};
-  return Object.assign({ scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true, alpha: 1 }, assemble(topics, entries, prev));
-}
+// the neighbourhood of a topic or an entry, for the side pane (ktw-graph.js), seeded from where the full graph's nodes are
+const prevNodes = () => (graph ? Object.fromEntries(graph.nodes.map((n) => [n.id, n])) : {});
+const buildTopicSubgraph = (t) => GRAPH.buildTopicSubgraph(t, prevNodes());
+const buildSubgraph = (e) => GRAPH.buildSubgraph(e, prevNodes());
 // The family graph: every project of the tree as a hub in its own colour,
 // its topics and entries around it, parent and child projects joined, and
 // the See and Superseded by lines between entries drawn across projects.

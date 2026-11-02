@@ -8,7 +8,7 @@
    globalThis.KeepTheWhy.views.graph, listed in ktw-views.json, tested through the page (canvas-trace.mjs). */
 (function (root) {
 "use strict";
-const { layoutTick, linkExistsAt, hostOf, filterActive, entryMatches, fkey } = root.KeepTheWhy.core;
+const { layoutTick, linkExistsAt, hostOf, filterActive, entryMatches, fkey, linkFamily, seeDay, supersededDay, parseSupersededBy } = root.KeepTheWhy.core;
 
 // One graph view per page: create({ scene, nav, prefs }) — the host's scene, navigation and settings.
 function create({ scene, nav, prefs }) {
@@ -273,7 +273,62 @@ function runGraph(canvas, g, opts = {}) {
   g.raf = requestAnimationFrame(step);
 }
 
+// ---- the graph's data: nodes and links from topics and entries, and the neighbourhood of a topic or an entry. Links
+// go through nav; `prev` holds the nodes of a graph drawn before, so a node keeps its place.
+function seedNode(n, prev) {
+  const p = prev[n.id];
+  if (p) Object.assign(n, { x: p.x, y: p.y, vx: 0, vy: 0, fixed: p.fixed });
+  else { n.x = (Math.random() - 0.5) * 600; n.y = (Math.random() - 0.5) * 400; n.vx = n.vy = 0; }
+  return n;
+}
+function assemble(topics, entries, prev = {}) {
+  const nodes = []; const links = []; const index = {};
+  const add = (n) => { index[n.id] = nodes.length; nodes.push(seedNode(n, prev)); };
+  for (const t of topics) add({ id: `t:${t.file}`, kind: "topic", label: t.title, file: t.file, r: 10 + Math.sqrt(t.entries) * 3.2, href: nav.href({ view: "topic", file: t.file }) });
+  for (const e of entries) add({ id: `e:${e.id}`, kind: "entry", label: e.title, file: e.file, entry: e, r: 4.2, href: nav.href({ view: "entry", uuid: e.uuid || e.id }) });
+  for (const e of entries) {
+    if (index[`t:${e.file}`] != null) links.push({ s: index[`e:${e.id}`], t: index[`t:${e.file}`], kind: "member", len: 46 });
+    for (const f of e.refs) if (index[`t:${f}`] != null) links.push({ s: index[`e:${e.id}`], t: index[`t:${f}`], kind: "ref", len: 120 });
+  }
+  const seen = new Set();
+  for (const t of topics) for (const f of t.refs_out) { if (index[`t:${f}`] == null) continue; const k = [t.file, f].sort().join("|"); if (seen.has(k)) continue; seen.add(k); links.push({ s: index[`t:${t.file}`], t: index[`t:${f}`], kind: "topic", len: 170 }); }
+  // See and Superseded by between entries, by Id; between their topics while entries are hidden
+  const tpairs = new Set();
+  for (const x of linkFamily([{ key: "self", role: "self", state: { entries } }]).xrefs) {
+    const a = entries.find((e) => e.id === x.from.id), b = entries.find((e) => e.id === x.to.id);
+    const s = index[`e:${x.from.id}`], t = index[`e:${x.to.id}`];
+    if (s == null || t == null) continue;
+    // the day the link came to be, for the clock: a See from its as-of day, a Superseded by from the status change
+    const day = x.kind === "see" ? seeDay(a, (a.see || []).find((r) => r?.uuid === b.uuid)) : supersededDay(a);
+    links.push({ s, t, kind: x.kind, len: 150, day });
+    const ts = index[`t:${a.file}`], tt = index[`t:${b.file}`]; const k = `${ts}|${tt}`;
+    if (a.file !== b.file && ts != null && tt != null && !tpairs.has(k)) { tpairs.add(k); links.push({ s: ts, t: tt, kind: "xtopic", len: 200, day }); }
+  }
+  return { nodes, links, index };
+}
+// the Ids an entry points at, and the entries of `list` that point at it
+const pointsAt = (e) => [...(e.see || []).map((r) => r?.uuid), e.superseded_by ? parseSupersededBy(e.superseded_by)?.uuid : null].filter(Boolean);
+const linkedTo = (e, list) => list.filter((x) => x !== e && ((e.uuid && pointsAt(x).includes(e.uuid)) || (x.uuid && pointsAt(e).includes(x.uuid))));
+function buildTopicSubgraph(t, prev = {}) {
+  // the topic with its entries, plus the topics it references and the ones referencing it (with the entries that do)
+  const files = new Set([t.file, ...t.refs_out, ...t.refs_in]);
+  const topics = scene.state.topics.filter((x) => files.has(x.file));
+  const entries = scene.state.entries.filter((x) => x.file === t.file || x.refs.includes(t.file));
+  return Object.assign({ scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true, alpha: 1 }, assemble(topics, entries, prev));
+}
+function buildSubgraph(e, prev = {}) {
+  // the entry, its topic and siblings, the topics it references, and the entries elsewhere that reference its topic
+  const files = new Set([e.file, ...e.refs]);
+  const back = scene.state.entries.filter((x) => x.refs.includes(e.file));
+  const linked = linkedTo(e, scene.state.entries); // See / Superseded by, either direction
+  for (const b of [...back, ...linked]) files.add(b.file);
+  const topics = scene.state.topics.filter((t) => files.has(t.file));
+  const entries = scene.state.entries.filter((x) => x.file === e.file || x.id === e.id || back.includes(x) || linked.includes(x));
+  return Object.assign({ scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true, alpha: 1 }, assemble(topics, entries, prev));
+}
+
 return Object.freeze({
+  assemble, buildSubgraph, buildTopicSubgraph,
   run: runGraph, lightThought, spotIn, projectNodes, miniView, publishLayout, hostPath,
   driftOn, setDrift, labels: () => LABELS, setLabels, labelsOn,
 });
