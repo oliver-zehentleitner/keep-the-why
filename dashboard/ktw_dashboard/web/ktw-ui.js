@@ -1,7 +1,7 @@
 /* Keep the Why dashboard — the small pieces every view builds its DOM from: an element with its attributes,
    handlers and children (`el`), children replaced in place (`setKids`), the pills for a Type, a Status and an
-   Evidence, a Type's glyph and a host's mark as SVG, text with the searched words marked, and a link to a place
-   that moves through the host's nav. Nodes only — no state, no HTML strings, nothing read from the page.
+   Evidence, a Type's glyph and a host's mark as SVG, text with the searched words marked, a link to a place
+   that moves through the host's nav, a link out of the page, and a checkout's branch, commit and fork as pills. Nodes only — no state, no HTML strings, nothing read from the page.
    A classic script on globalThis.KeepTheWhy.ui, listed in ktw-views.json after the core. */
 (function (root) {
 "use strict";
@@ -68,6 +68,32 @@ const navLinks = (nav) => function navLink(attrs, ...kids) {
   } }, ...kids);
 };
 
+// the "opens elsewhere" mark after a link that leaves the page: a box with an arrow out of it
+function extIcon() {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24"); svg.setAttribute("class", "ext-icon"); svg.setAttribute("aria-hidden", "true");
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", "M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z");
+  svg.append(path); return svg;
+}
+// a link out of the page, with the mark after it
+const extLink = (href, text, cls = "") => el("a", { class: `ext ${cls}`.trim(), href, target: "_blank", rel: "noopener" }, text, extIcon());
+const remoteLink = (remote) => el("a", { class: "gh", href: `https://${remote}`, target: "_blank", rel: "noopener" }, hostMark(remote), remote);
+const onGitHub = (g) => !!g?.remote && /^github\.com\//.test(g.remote);
+// a fork checkout: `origin` is the fork, the published repository is elsewhere — read from
+// the `upstream` remote, or from `canonical` in .keep-the-why differing from `origin`
+const forkTitle = (f) => f.by === "upstream" ? "this checkout has an `upstream` remote: origin is a fork of it" : "origin differs from the project's `canonical` (.keep-the-why): this checkout is a fork or mirror of it";
+const forkPill = (g) => g?.fork ? el("span", { class: "pill fork", title: forkTitle(g.fork) }, "fork of ", remoteLink(g.fork.of)) : null;
+const headPill = (g) => {
+  if (!g?.available) return null;
+  const branch = g.branch && g.branch !== "HEAD" ? g.branch : null;
+  if (!onGitHub(g)) return el("span", { class: "pill", title: g.remote || "" }, `${branch || "detached"}@${g.head}`);
+  const base = `https://${g.remote}`;
+  return el("span", { class: "pill", title: "branch and commit on GitHub" },
+    branch ? el("a", { class: "gh", href: `${base}/tree/${encodeURIComponent(branch)}`, target: "_blank", rel: "noopener" }, branch) : "detached", "@",
+    el("a", { class: "gh", href: `${base}/commit/${g.head_full || g.head}`, target: "_blank", rel: "noopener", title: g.head_full || g.head }, g.head));
+};
+
 const KTW = (root.KeepTheWhy = root.KeepTheWhy || {});
-KTW.ui = Object.freeze({ el, setKids, pill, statusPill, evPill, typePills, entryPills, GLYPHS, typeGlyphSvg, hostMark, marked, navLinks });
+KTW.ui = Object.freeze({ el, setKids, pill, statusPill, evPill, typePills, entryPills, GLYPHS, typeGlyphSvg, hostMark, marked, navLinks, extLink, remoteLink, forkPill, headPill });
 })(globalThis);

@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-const { plural, typeName, entryRefs, isUuid, rawFileUrl, configLine, normalizeState, hostFileLink, hostTreeLink, canonicalOf, NO_FILTER, familyOrder, parseSupersededBy, kindLabel, groupByFamily, searchTerms, registryMatches, shuffled, resolveLocation, linkFamily, authorLookup, mergeStates, projectLabel, backlinksUrl, citingOf, hostAnchor, seeDay, supersededDay, paletteToken, mergeAuthors, sortAuthors, AUTHOR_SORTS, ownerOf, exportStateUrl, exportVerdict, resolveSee, filterActive, entryMatches, fkey, repoLabel, topicTitle } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
+const { plural, entryRefs, isUuid, rawFileUrl, configLine, normalizeState, hostFileLink, canonicalOf, NO_FILTER, familyOrder, parseSupersededBy, kindLabel, groupByFamily, searchTerms, registryMatches, shuffled, resolveLocation, linkFamily, authorLookup, mergeStates, projectLabel, backlinksUrl, citingOf, hostAnchor, seeDay, supersededDay, paletteToken, ownerOf, exportStateUrl, exportVerdict, resolveSee, fkey, repoLabel, topicTitle } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
 const MD = globalThis.KeepTheWhy.markdown; // ktw-markdown.js
 
 // ---------------------------------------------------------------- prefs (host)
@@ -67,32 +67,7 @@ const isLocalPage = () => /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const narrow = () => !!window.matchMedia?.("(max-width: 900px)").matches;
-const fmtDate = (d) => d || "—";
-// the "opens elsewhere" mark after a link that leaves the page: a box with an arrow out of it
-function extIcon() {
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("viewBox", "0 0 24 24"); svg.setAttribute("class", "ext-icon"); svg.setAttribute("aria-hidden", "true");
-  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  path.setAttribute("d", "M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z");
-  svg.append(path); return svg;
-}
-const extLink = (href, text, cls = "") => el("a", { class: `ext ${cls}`.trim(), href, target: "_blank", rel: "noopener" }, text, extIcon());
-const remoteLink = (remote) => el("a", { class: "gh", href: `https://${remote}`, target: "_blank", rel: "noopener" }, hostMark(remote), remote);
-const onGitHub = (g) => !!g?.remote && /^github\.com\//.test(g.remote);
-// a fork checkout: `origin` is the fork, the published repository is elsewhere — read from
-// the `upstream` remote, or from `canonical` in .keep-the-why differing from `origin`
-const forkTitle = (f) => f.by === "upstream" ? "this checkout has an `upstream` remote: origin is a fork of it" : "origin differs from the project's `canonical` (.keep-the-why): this checkout is a fork or mirror of it";
-const forkPill = (g) => g?.fork ? el("span", { class: "pill fork", title: forkTitle(g.fork) }, "fork of ", remoteLink(g.fork.of)) : null;
 const schemaPill = (p) => el("span", { class: "pill" }, el("a", { class: "gh", href: `https://github.com/oliver-zehentleitner/keep-the-why/releases/tag/v${p.schema}`, target: "_blank", rel: "noopener", title: `context-schema ${p.schema} — the Keep the Why release this context/ was last checked against` }, `schema ${p.schema}`));
-const headPill = (g) => {
-  if (!g?.available) return null;
-  const branch = g.branch && g.branch !== "HEAD" ? g.branch : null;
-  if (!onGitHub(g)) return el("span", { class: "pill", title: g.remote || "" }, `${branch || "detached"}@${g.head}`);
-  const base = `https://${g.remote}`;
-  return el("span", { class: "pill", title: "branch and commit on GitHub" },
-    branch ? el("a", { class: "gh", href: `${base}/tree/${encodeURIComponent(branch)}`, target: "_blank", rel: "noopener" }, branch) : "detached", "@",
-    el("a", { class: "gh", href: `${base}/commit/${g.head_full || g.head}`, target: "_blank", rel: "noopener", title: g.head_full || g.head }, g.head));
-};
 // The centre: the project the page shows. Read from the URL when the page
 // loads; a walk to a friend or back along the path changes it in place
 // (setCentre), without a reload — see "path" below.
@@ -404,7 +379,7 @@ const publicHref = (canonical, root = "", hash = "#overview") => centreUrl({ mod
 // or with the family scope the whole family merged, ktw-core.js mergeStates); SCENE.self, this project's own
 // state, always; SCENE.day, the clock; SCENE.focus, SCENE.scope, the layout — and the events views follow.
 // DOM helpers, pills and glyphs every view uses (ktw-ui.js): no state, only nodes
-const { el, setKids, pill, statusPill, evPill, typePills, entryPills, typeGlyphSvg, hostMark, marked } = globalThis.KeepTheWhy.ui;
+const { el, setKids, pill, statusPill, evPill, typePills, entryPills, typeGlyphSvg, hostMark, marked, extLink, remoteLink, forkPill, headPill } = globalThis.KeepTheWhy.ui;
 const SCENE = globalThis.KeepTheWhy.scene.create({ scope: prefs.get("scope") || prefs.get("search-scope") || "project" }); // search-scope: the name before the scope switched the graph too
 // The graph view (ktw-graph.js): it draws what the host builds, given the scene, navigation and settings only.
 const GRAPH = globalThis.KeepTheWhy.views.graph.create({ scene: SCENE, nav, prefs });
@@ -431,28 +406,11 @@ const api = (path) => PROJECT ? `${path}?project=${encodeURIComponent(PROJECT)}`
 // had then, and the See and Superseded by lines that had been written by then (ktw-core.js, existsAt and friends).
 // an entry of this project goes by this project's repository: with one, an entry without a Git date is not committed
 // yet and exists today only; without one there are no days to go by. A foreign entry's export came from a repository.
-const byId = () => Object.fromEntries(SCENE.state.entries.map((e) => [e.id, e]));
-const byUuid = () => Object.fromEntries(SCENE.state.entries.filter((e) => e.uuid).map((e) => [e.uuid, e]));
-// an entry's address is its Id, so a copied link survives a renamed heading or a moved entry; file#anchor only without one
-const entryRoute = (e) => ({ view: "entry", uuid: e.uuid || e.id });
-const entryHref = (e) => nav.href(entryRoute(e));
-const entryOf = (ref) => byId()[ref] || (isUuid(ref) ? byUuid()[ref] : null);
-const topicOf = (file) => SCENE.state.topics.find((t) => t.file === file);
-const entriesOf = (file) => SCENE.state.entries.filter((e) => e.file === file);
-const authorOf = (e) => e.git?.created?.author || e.git?.last_touched?.author || "";
-// the sidebar's filter and the entry in the details are the scene's (SCENE.filter, SCENE.selected): the graph reads them too
-const matches = (e) => entryMatches(e, SCENE.filter);
-const pageFiltered = () => filterActive(SCENE.filter);
-const queues = () => ({
-  open: SCENE.state.entries.filter((e) => e.status === "open"),
-  "needs-review": SCENE.state.entries.filter((e) => e.status === "needs-review"),
-  "pending-confirmation": SCENE.state.entries.filter((e) => e.status === "pending-confirmation"),
-  // Evidence is its own axis (Core rule 5): an open question with an untraced origin counts here and under open
-  unknown: SCENE.state.entries.filter((e) => e.evidence === "unknown" && e.status !== "superseded"),
-  revisit: SCENE.state.entries.filter((e) => e.revisit_when && e.status !== "superseded"),
-});
-// every entry that needs a person, once — an entry can wait in two queues
-const queueTotal = () => { const q = queues(); return new Set([...q.open, ...q["needs-review"], ...q["pending-confirmation"], ...q.unknown]).size; };
+// The pages (ktw-pages.js): the overview, the queues, the findings and the authors, the pieces the pages share, and
+// what the page reads off the scene's state through them (an entry by its Id, a topic, the queues); what only this
+// host has is PAGES_HOST, further down.
+const PAGES = globalThis.KeepTheWhy.views.pages.create({ scene: SCENE, nav, prefs });
+const { byUuid, entryRoute, entryHref, entryOf, topicOf, entriesOf, matches, pageFiltered, queues, queueTotal, STATUS_ORDER, EV_ORDER, bars, copyText, copyLinkButton } = PAGES;
 
 // ---------------------------------------------------------------- markdown (ktw-markdown.js: DOM nodes, never HTML strings)
 // a merged member's entry names its own project's topic files: resolve them there
@@ -465,34 +423,6 @@ const renderMarkdown = (md) => MD.render(document, md, { topicHref });
 // a label before a line of Markdown, joined to its first text the way the HTML string joined them
 const labelled = (label, md) => { const f = inline(md); if (f.firstChild?.nodeType === 3) f.firstChild.data = label + f.firstChild.data; else f.prepend(label); return f; };
 // ---------------------------------------------------------------- shared bits
-function bars(counts, order, clsPrefix = "") {
-  const total = Object.values(counts).reduce((a, b) => a + b, 0) || 1;
-  const keys = [...order.filter((k) => k in counts), ...Object.keys(counts).filter((k) => !order.includes(k))];
-  return el("div", { class: "bars" }, keys.map((k) => [
-    el("span", { class: "k" }, k || "(none)"),
-    el("div", { class: "bar" }, el("i", { class: `${clsPrefix}${k}`, style: `width:${(100 * counts[k]) / total}%` })),
-    el("span", { class: "v" }, counts[k]),
-  ]));
-}
-function stack(counts, order) {
-  const total = Object.values(counts).reduce((a, b) => a + b, 0) || 1;
-  return el("div", { class: "stack" }, order.filter((k) => counts[k]).map((k) => el("i", { style: `width:${(100 * counts[k]) / total}%;background:var(--${k})`, title: `${k}: ${counts[k]}` })));
-}
-const count = (list, key) => list.reduce((m, e) => ((m[e[key] || ""] = (m[e[key] || ""] || 0) + 1), m), {});
-const typeCounts = (list) => list.reduce((m, e) => { for (const t of e.type?.length ? e.type.map(typeName) : ["(none)"]) m[t] = (m[t] || 0) + 1; return m; }, {});
-const STATUS_ORDER = ["active", "open", "needs-review", "pending-confirmation", "superseded"];
-const EV_ORDER = ["confirmed", "inferred", "unknown"];
-const entryLink = (e, extra = "") => navLink({ href: entryRoute(e), class: extra }, e.title);
-const projectOf = (x) => (x?.project ? x.project : null); // a merged family member's name, null for this project
-function entryRow(e) {
-  const snippet = e.body.reason || e.body.text.split("\n")[0] || "";
-  const g = e.git;
-  return navLink({ href: entryRoute(e), class: `row ${matches(e) ? "" : "dim"}` },
-    el("div", { class: "rt" }, el("span", {}, inline(e.title)), ...entryPills(e)),
-    el("div", { class: "rs" }, snippet.replace(/\*\*|`/g, "")),
-    el("div", { class: "rm" }, [projectOf(e), topicOf(e.file)?.title || e.file, g?.created?.author ? `${g.created.author} · ${g.created.date}` : null, g?.last_touched?.date && g.last_touched.date !== g?.created?.date ? `touched ${g.last_touched.date}` : null].filter(Boolean).join("  ·  ")));
-}
-
 
 // ---------------------------------------------------------------- global strip (numbers on every view)
 function renderStrip() {
@@ -509,17 +439,6 @@ function renderStrip() {
     stat("errors", f.errors, "#findings", f.errors ? "lint-bad hot" : "lint-ok", `keep-the-why-lint ${SCENE.state.linter}`),
     stat("warnings", f.warnings, "#findings", f.warnings ? "lint-warn" : "lint-ok", `keep-the-why-lint ${SCENE.state.linter}`),
   );
-}
-function viewFindings(main) {
-  const f = SCENE.state.findings;
-  main.append(el("h1", {}, "Linter findings"), el("p", { class: "sub" }, `keep-the-why-lint ${SCENE.state.linter} · ${f.errors} error(s), ${f.warnings} warning(s) · structure only, never content`));
-  if (!f.items.length) return main.append(el("p", { class: "center" }, "Clean — nothing to show."));
-  main.append(el("div", { class: "table-wrap" }, el("table", { class: "t findings" }, el("thead", {}, el("tr", {}, ["Severity", "Code", "Where", "Message"].map((h) => el("th", {}, h)))),
-    el("tbody", {}, f.items.map((x) => {
-      const entry = SCENE.state.entries.find((e) => (e.project || null) === (x.project || null) && `${(e.origin?.state?.project || SCENE.state.project).context}${e.localFile || e.file}` === (x.localPath || x.path) && e.line <= x.line && x.line <= e.end_line + 1);
-      return el("tr", {}, el("td", {}, pill(x.severity, `sev-${x.severity}`)), el("td", { class: "mono" }, x.code),
-        el("td", { class: "mono" }, entry ? navLink({ href: entryRoute(entry) }, `${x.path}:${x.line}`) : `${x.path}${x.line ? ":" + x.line : ""}`), el("td", {}, x.message));
-    })))));
 }
 
 // ---------------------------------------------------------------- sidebar
@@ -567,52 +486,6 @@ function markActive() {
 }
 
 // ---------------------------------------------------------------- views
-// the .keep-the-why file itself on the host, beside the card's heading — under the root in a mono repository
-function configFileLink(p) {
-  const href = hostFileLink(canonicalOf(p), p.git?.branch, p.root ? `${p.root.replace(/\/$/, "")}/` : "", p.config_file || ".keep-the-why", null);
-  return href ? [" ", extLink(href, p.config_file || ".keep-the-why", "mono note config-file")] : null;
-}
-// a Config value: the three that are addresses open where they point — canonical and dashboard-state as
-// written, context as the directory on the host (under the root in a mono repository); the rest is text
-function configValue(p, key, v) {
-  const href = key === "canonical" || key === "dashboard-state" ? (/^https?:\/\//.test(v) ? v : null)
-    : key === "context" ? hostTreeLink(canonicalOf(p), p.git?.branch, [p.root, p.context || String(v).replace(/^`|`$/g, "")].filter(Boolean).join("/")) : null;
-  return href ? extLink(href, v, "v mono") : el("span", { class: "v mono" }, v);
-}
-
-function viewOverview(main) {
-  const list = SCENE.state.entries;
-  const p = SCENE.state.project; const g = p.git;
-  if (SCENE.state.merged) main.append(el("div", { class: "family-banner" }, el("b", {}, `Family · ${plural(SCENE.state.family.length, "project")}`), " — ",
-    SCENE.state.family.map((m, i) => [i ? " · " : "", m.project ? el("span", {}, m.project, el("span", { class: "note" }, ` ${SCENE.state.entries.filter((e) => e.project === m.project).length}`)) : el("span", {}, m.name, el("span", { class: "note" }, ` ${SCENE.state.entries.filter((e) => !e.project).length}`))]),
-    SCENE.state.missing?.length ? el("span", { class: "warn" }, ` · ${plural(SCENE.state.missing.length, "member")} not available here`) : null));
-  main.append(
-    el("h1", {}, p.id || p.name),
-    el("p", { class: "sub" }, `${p.context} · schema ${p.schema} · ${p.config["capture-confirmation"] || "?"} · source-reference ${p.config["source-reference"] || "?"}`,
-      g?.available ? [" · ", headPill(g), g.remote ? [" · ", remoteLink(g.remote)] : null, g.fork ? [" · ", forkPill(g)] : null, g.shallow ? " · shallow clone (dates are the clone's edge)" : null] : " · no Git"),
-    // Type, Status and Evidence stacked in one column, the Config beside them
-    el("div", { class: "grid2" },
-      el("div", { class: "overview-stats" },
-        el("div", { class: "card" }, el("h3", {}, "Type"), bars(typeCounts(list), ["decision", "constraint", "workaround", "incident", "undefined"])),
-        el("div", { class: "card" }, el("h3", {}, "Status"), bars(count(list, "status"), STATUS_ORDER)),
-        el("div", { class: "card" }, el("h3", {}, "Evidence"), bars(count(list, "evidence"), EV_ORDER))),
-      el("div", { class: "card" }, el("h3", {}, "Config", configFileLink(p)), el("div", { class: "kv" }, Object.entries(p.config).map(([k, v]) => [el("span", { class: "k" }, k), configValue(p, k, v)])),
-        Object.keys(p.personal_defaults || {}).length ? [el("h3", {}, "Personal defaults offered"), el("div", { class: "kv" }, Object.entries(p.personal_defaults).map(([k, v]) => [el("span", { class: "k" }, k), el("span", { class: "v mono" }, v)]))] : null),
-    ),
-    el("h2", {}, "Topics"),
-    el("div", { class: "topic-cards" }, SCENE.state.topics.map(topicCard)),
-    el("h2", {}, "Recently touched"),
-    el("div", { class: "entry-list" }, [...list].filter((e) => e.git?.last_touched?.date !== undefined).sort((a, b) => ((b.git?.last_touched?.date || "") > (a.git?.last_touched?.date || "") ? 1 : -1)).slice(0, 8).map(entryRow)),
-  );
-}
-function topicCard(t) {
-  return navLink({ class: "topic-card", href: { view: "topic", file: t.file } },
-    el("div", { class: "tt" }, t.title, el("span", { class: "count" }, plural(t.entries, "entry"))),
-    t.project ? el("div", { class: "note" }, t.project) : null,
-    el("div", { class: "td" }, t.index_line || el("span", { class: "note" }, "not described in index.md")),
-    stack(t.evidence, EV_ORDER),
-    el("div", { class: "refs" }, `${t.file} · → ${t.refs_out.length} · ← ${t.refs_in.length}`));
-}
 function viewTopic(main, file) {
   const t = topicOf(file);
   if (!t) return main.append(el("p", { class: "center" }, `No topic ${file}`));
@@ -729,17 +602,7 @@ const entryHostHref = (e) => { const P = hostProjectOf(e); return hostFileLink(c
 const topicHostHref = (t) => { const P = hostProjectOf(t); return hostFileLink(canonicalOf(P), P.git?.branch, hostContextDir(P), t.localFile || t.file, null); };
 // "open source": the Markdown file on the host, beside the copy-link button; nothing without a canonical
 const sourceLink = (href) => href ? extLink(href, "open source", "share-btn source-link") : null;
-async function copyText(text) {
-  try { await navigator.clipboard.writeText(text); return true; } catch { /* no clipboard API: the old way */ }
-  const ta = el("textarea", { style: "position:fixed;opacity:0" }); ta.value = text; document.body.append(ta); ta.select();
-  let ok = false; try { ok = document.execCommand("copy"); } catch {} ta.remove(); return ok;
-}
 function shareButton(e) { return copyLinkButton(shareUrlOf(e), "entry"); }
-function copyLinkButton(s, what) {
-  const b = el("button", { type: "button", class: "share-btn", title: `copy a link to this ${what} — ${s.where}:\n${s.url}`,
-    onclick: async () => { const ok = await copyText(s.url); b.textContent = ok ? "✓ copied" : "copy failed"; b.classList.toggle("done", ok); setTimeout(() => { b.textContent = "⧉ copy link"; b.classList.remove("done"); }, 1800); } }, "⧉ copy link");
-  return b;
-}
 function viewEntry(main, id) {
   const e = entryOf(id);
   if (!e && isUuid(id) && (LIVE() || (PUBLISHED() && canonicalOf(SCENE.state.project)))) return viewEntryElsewhere(main, id);
@@ -795,20 +658,6 @@ const viewFriends = (main) => FAM.friendsView(main, {
       ? () => { CITED.url = backlinksUrl(REGISTRY_URL, canonicalOf(SCENE.self?.project)); loadCited(); } : undefined,
   }),
 });
-function viewQueues(main) {
-  const q = queues();
-  const section = (title, why, list) => el("section", { class: "queue" },
-    el("h2", {}, title, el("span", { class: "count" }, list.length)), el("p", { class: "why" }, why),
-    list.length ? el("div", { class: "entry-list" }, list.map(entryRow)) : el("p", { class: "note" }, "nothing here"));
-  main.append(
-    el("h1", {}, "Queues"), el("p", { class: "sub" }, "What needs a person. The dashboard lists; it does not decide."),
-    section("Open questions", "Status: open — the entry's central question has no answer yet.", q.open),
-    section("Needs review", "Status: needs-review — a Revisit-when trigger fired and nobody re-checked yet.", q["needs-review"]),
-    section("Pending confirmation", "Written in an unattended session where a question would have been asked; never confirmed by anyone.", q["pending-confirmation"]),
-    section("Unknown evidence", "Where the claim came from could not be traced — on any entry still in force, an open question included: Evidence and Status are separate axes. A maintainer can often settle these in a minute.", q.unknown),
-    section("Revisit-when triggers", "The conditions on record. Whether one has fired is a human judgement; the dashboard cannot tell.", q.revisit),
-  );
-}
 // The projects the page holds, each with its state and a link to its dashboard: this one, the family members
 // (the family scope's merge, or the family loaded beside the graph), the friends loaded into the graph with the
 // members their families brought, the projects of the path. One per project — its id beside its canonical, since
@@ -822,59 +671,6 @@ function authorProjects() {
   for (const r of Object.values(FRIENDS.loaded)) { if (!r?.state) continue; for (const m of r.members || [r]) add(m.name || repoLabel(m.canonical), m.canonical, m.state, (m.open || r.open || "").replace("#graph", "#authors") || null, "friend"); }
   for (const t of TRAIL) add(t.name || repoLabel(t.canonical), t.canonical, t.state, t.url?.replace(/#.*$/, "#authors") || null, "path");
   return out;
-}
-// the newest commit of an author among a state's entries, for the profile link on that project's host
-function authorCommitIn(name, state) {
-  let best = null;
-  for (const e of state?.entries || []) for (const c of [e.git?.created, e.git?.last_touched, ...(e.git?.status_history || [])]) if (c?.author === name && c.commit && (!best || (c.date || "") > (best.date || ""))) best = c;
-  return best?.commit || null;
-}
-// The Authors view: every Git author of every project the page holds — this one, the family, the friends, the
-// path — in one table with the sums and a pill per project, and a table per project under it. Names are Git
-// authors as the projects' .mailmap files map them; one name across projects is one row, an anonymized name
-// (author-1) a row per project. A click on a row filters every view to that author. Rows go A–Z by name; a click on
-// a column's name sorts every table by it, from the most for counts and dates, again to turn the order round.
-const AUTHOR_SORT = { key: "author", dir: "asc" };
-function viewAuthors(main) {
-  main.append(el("h1", {}, "Authors"), el("p", { class: "sub" }, "Git authors of the entries — who created, touched, or superseded what, in every project this page holds: this one, its family, the friends in the graph, the path. Git knows names, not who was driving."));
-  if (!SCENE.state.project.git?.available) return main.append(el("p", { class: "center" }, "No Git repository — nothing to attribute."));
-  const projects = authorProjects();
-  const sorted = (list) => sortAuthors(list, AUTHOR_SORT.key, AUTHOR_SORT.dir);
-  const rows = sorted(mergeAuthors(projects.map((P) => ({ name: P.name, canonical: P.canonical, anonymized: P.anonymized, authors: P.state.authors || [] }))));
-  const byName = Object.fromEntries(projects.map((P) => [P.name, P]));
-  const projPill = (per) => { const P = byName[per.project]; const t = `${per.project}: ${per.created} created · ${per.touched} touched · ${per.superseded} superseded${per.first ? ` · ${per.first} → ${per.last}` : ""}`; return P?.open ? el("a", { class: "pill proj-pill", href: P.open, title: t, onclick: (ev) => ev.stopPropagation() }, per.project) : el("span", { class: "pill proj-pill", title: t }, per.project); };
-  const sortBy = (key) => { AUTHOR_SORT.dir = AUTHOR_SORT.key === key ? (AUTHOR_SORT.dir === "asc" ? "desc" : "asc") : AUTHOR_SORTS[key]; AUTHOR_SORT.key = key; render(); };
-  const th = (h) => {
-    const key = h.toLowerCase();
-    if (!(key in AUTHOR_SORTS)) return el("th", {}, h);
-    const on = AUTHOR_SORT.key === key;
-    return el("th", { class: "sortable", "aria-sort": on ? (AUTHOR_SORT.dir === "asc" ? "ascending" : "descending") : "none" },
-      el("button", { type: "button", class: "sort-btn", title: `Sort by ${key}`, onclick: () => sortBy(key) }, h, el("span", { class: "sort-mark" }, on ? (AUTHOR_SORT.dir === "asc" ? " ▲" : " ▼") : "")));
-  };
-  const head = (cols) => el("thead", {}, el("tr", {}, cols.map(th)));
-  const numCells = (a) => [el("td", {}, a.created), el("td", {}, a.touched), el("td", {}, a.superseded), el("td", {}, el("div", { style: "min-width:160px" }, stack(a.evidence, EV_ORDER))), el("td", { class: "mono" }, fmtDate(a.first)), el("td", { class: "mono" }, fmtDate(a.last))];
-  const rowOf = (a, nameCell) => el("tr", { class: `clickable ${SCENE.filter.author === a.name ? "sel" : ""}`, onclick: () => { SCENE.filter.author = SCENE.filter.author === a.name ? "" : a.name; rerender(); } }, nameCell, ...numCells(a));
-  // what was counted, and the friends not loaded yet
-  const g = graph || buildGraph(); const waiting = (g.friends || []).filter((f) => !FRIENDS.loaded[fkey(f.canonical)]);
-  const byRole = (role) => projects.filter((P) => P.role === role).map((P) => P.name);
-  main.append(el("p", { class: "note" }, `Counted: this project`, byRole("family").length ? ` · family: ${byRole("family").join(", ")}` : "", byRole("friend").length ? ` · friends: ${byRole("friend").join(", ")}` : "", byRole("path").length ? ` · path: ${byRole("path").join(", ")}` : "",
-    waiting.length ? [" · ", el("button", { type: "button", class: "link-btn", disabled: FRIENDS.loading, onclick: () => { setFriendsAuto(true); loadFriends(waiting).then(() => { if (onView("authors")) render(); }); } }, FRIENDS.loading ? "loading the friends…" : `load the ${plural(waiting.length, "friend")} not here yet`)] : null));
-  const many = projects.length > 1;
-  const all = el("table", { class: "t" }, head(["Author", ...(many ? ["Projects"] : []), "Created", "Touched", "Superseded", "Evidence of created entries", "First", "Last"]),
-    el("tbody", {}, rows.map((a) => { const P = byName[a.per[0].project]; const link = a.anonymized ? el("span", {}, a.label) : authorLink(a.name, authorCommitIn(a.name, P?.state), P?.state?.project); return rowOf(a, [el("td", {}, link), ...(many ? [el("td", {}, el("div", { class: "proj-pills" }, a.per.map(projPill)))] : [])]); })));
-  main.append(el("div", { class: "table-wrap" }, all), el("p", { class: "note", style: "margin-top:10px" }, "Click a name to open the author's profile on the host; click elsewhere in the row to filter every view to that author, again to clear. Click a column's name to sort by it, again to turn the order round.", many ? " A name that recurs across projects is one row with the sums; a name an export anonymized (author-1) says nothing across projects and stays a row per project." : ""));
-  if (many) {
-    main.append(el("h2", {}, "By project"));
-    for (const P of projects) {
-      const prow = sorted(mergeAuthors([{ name: P.name, canonical: P.canonical, anonymized: P.anonymized, authors: P.state.authors || [] }]));
-      const d = el("details", { class: "authors-project", open: P.role === "self" });
-      d.append(el("summary", {}, el("span", { class: "tt" }, P.name), el("span", { class: "pill" }, P.role === "self" ? "this project" : P.role), el("span", { class: "count" }, plural(prow.length, "author")), P.open && P.role !== "self" ? el("a", { class: "backlink", href: P.open, onclick: (ev) => ev.stopPropagation() }, "open ›") : null));
-      d.append(el("div", { class: "table-wrap" }, el("table", { class: "t" }, head(["Author", "Created", "Touched", "Superseded", "Evidence of created entries", "First", "Last"]),
-        el("tbody", {}, prow.map((a) => rowOf(a, el("td", {}, P.anonymized ? el("span", {}, a.name) : authorLink(a.name, authorCommitIn(a.name, P.state), P.state.project))))))));
-      main.append(d);
-    }
-  }
-  if (SCENE.filter.author) main.append(el("h2", {}, `Entries created by ${SCENE.filter.author}`), el("div", { class: "entry-list" }, SCENE.state.entries.filter((e) => authorOf(e) === SCENE.filter.author).map(entryRow)));
 }
 
 const supersedersOf = (e) => e.uuid ? SCENE.state.entries.filter((x) => x.superseded_by && parseSupersededBy(x.superseded_by)?.uuid === e.uuid) : [];
@@ -1980,6 +1776,16 @@ const THOUGHTS_HOST = {
   listBox: () => $("#thoughts"),
   render: () => render(),
 };
+// what the pages (ktw-pages.js) ask of this host, with every call
+const PAGES_HOST = {
+  inline: THOUGHTS_HOST.inline,
+  authorLink: (name, commit, project) => authorLink(name, commit, project), authorProjects: () => authorProjects(),
+  friendsWaiting: () => ((graph || buildGraph()).friends || []).filter((f) => !FRIENDS.loaded[fkey(f.canonical)]),
+  friendsLoading: () => FRIENDS.loading,
+  loadFriends: (waiting) => { setFriendsAuto(true); loadFriends(waiting).then(() => { if (onView("authors")) render(); }); },
+  render: () => render(), rerender: () => rerender(),
+};
+const entryRow = (e) => PAGES.entryRow(e, PAGES_HOST);
 const holdReading = (g) => THOUGHTS.holdReading(g, THOUGHTS_HOST);
 const renderThoughts = (g) => THOUGHTS.list(g, THOUGHTS_HOST);
 function friendsLegend(g) {
@@ -2252,9 +2058,9 @@ function render() {
   if (v === "graph" && route.alias === "family") { setScope("family", { rerender: false }); setFamilyNeighbours(true); setFamilyEntries(true); nav.go({ view: "graph" }, { replace: true }); viewGraph(main); renderDetailsDefault(); } // an old link to the family graph: the family whole, in the graph and in the scope
   else if (v === "graph" || v === "globe") { viewGraph(main); renderDetailsDefault(); }
   else if (v === "timeline") { TIMELINE.view(main, route.day || null, TIMELINE_HOST); ESC.page = () => TIMELINE.stage()?.reset?.(); renderDetailsDefault(); }
-  else if (v === "authors") { viewAuthors(main); renderDetailsDefault(); }
-  else if (v === "queues") { viewQueues(main); renderDetailsDefault(); }
-  else if (v === "findings") { viewFindings(main); renderDetailsDefault(); }
+  else if (v === "authors") { PAGES.authors(main, PAGES_HOST); renderDetailsDefault(); }
+  else if (v === "queues") { PAGES.queuesPage(main, PAGES_HOST); renderDetailsDefault(); }
+  else if (v === "findings") { PAGES.findings(main, PAGES_HOST); renderDetailsDefault(); }
   else if (v === "family") { FAM.view(main); renderDetailsDefault(); }
   else if (v === "projects") { viewProjects(main); renderDetailsDefault(); }
   else if (v === "friends") { viewFriends(main); renderDetailsDefault(); }
@@ -2264,7 +2070,7 @@ function render() {
   else if (v === "thought") { THOUGHTS.reader(main, route.refs, THOUGHTS_HOST); renderDetailsDefault(); }
   else if (v === "ref") { viewRemoteEntry(main, route.canonical, route.uuid); renderDetailsDefault(); }
   else if (v === "search") { SEARCH.view(main, route.scope, route.q); renderDetailsDefault(); }
-  else { viewOverview(main); renderDetailsDefault(); }
+  else { PAGES.overview(main, PAGES_HOST); renderDetailsDefault(); }
   markActive(); applySide();
   if (v !== "graph") { main.scrollTop = 0; if (narrow()) { const stuck = $("#sidebar").getBoundingClientRect().height; window.scrollTo(0, Math.max(0, main.getBoundingClientRect().top + window.scrollY - stuck - 8)); } }
 }
