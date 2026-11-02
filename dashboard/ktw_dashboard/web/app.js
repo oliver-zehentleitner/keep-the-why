@@ -783,46 +783,18 @@ function findEntry(ref) {
 // It reads the graph of the scope (this project, or the family), with the friends, the path and the followed
 // chains it has — the same data the Graph view shows, laid out as lists; so does the Thoughts page (ktw-thoughts.js).
 const graphForScope = async () => (familyGraphShown() ? buildFamilyGraph() : buildGraph());
-async function viewFriends(main) {
-  main.append(el("h1", {}, "Friends"), el("p", { class: "sub" }, "Repositories the entries here cite outside the family — linked into the graph, never merged into search, queues or counts. A friend in a family comes as the whole family. One hop: a friend's own friends are not loaded; walk there to see them."));
-  const box = el("div", { class: "friends-page" }, el("p", { class: "center" }, "Loading…")); main.append(box);
-  const g = await graphForScope();
-  if (!box.isConnected) return;
-  const list = g.friends || [];
-  const units = friendUnits(g);
-  const failed = list.map((f) => FRIENDS.loaded[fkey(f.canonical)]).filter((r) => r && !r.state);
-  const waiting = list.filter((f) => !FRIENDS.loaded[fkey(f.canonical)]);
-  const kids = [];
-  if (!list.length && !units.length) kids.push(el("p", { class: "empty" }, "No entry here cites a repository outside the family yet. A See line into another project — its canonical and an entry's Id — makes it a friend."));
-  if (!CITED.on && !CITED.loading && backlinksUrl(REGISTRY_URL, canonicalOf(SCENE.self?.project))) kids.push(el("p", {}, el("button", { type: "button", class: "link-btn", title: "who in the Keep the Why registry cites this project — one file from the registry, loaded on this click", onclick: () => { CITED.url = backlinksUrl(REGISTRY_URL, canonicalOf(SCENE.self?.project)); loadCited(); } }, "who in the registry cites this project?")));
-  if (list.length && (!FRIENDS.on || waiting.length)) kids.push(el("p", {}, FRIENDS.loading ? "Loading friends…" : el("button", { type: "button", class: "link-btn", onclick: () => { setFriendsAuto(true); loadFriends(FRIENDS.on ? waiting : list); } }, `load the ${plural(FRIENDS.on ? waiting.length : list.length, "friend")}`)));
-  const ours = g.nodes.filter((n) => n.kind === "entry" && !n.ext);
-  const ourByUuid = Object.fromEntries(ours.filter((n) => n.entry.uuid).map((n) => [n.entry.uuid, n]));
-  const card = (u, i) => {
-    const canons = new Set(u.members.map((m) => fkey(m.canonical)));
-    const theirs = new Map(); for (const m of u.members) for (const e of m.state.entries || []) if (e.uuid) theirs.set(e.uuid, { e, m });
-    const out = []; // our entries citing into the unit
-    for (const n of ours) for (const x of entryRefs(n.entry)) if (x.remote && canons.has(fkey(x.remote)) && theirs.has(x.uuid)) out.push({ from: n, to: theirs.get(x.uuid), kind: x.kind });
-    const back = []; // the unit's entries citing ours
-    for (const [, t] of theirs) for (const x of entryRefs(t.e)) if (x.remote && ourByUuid[x.uuid]) back.push({ from: t, to: ourByUuid[x.uuid], kind: x.kind });
-    const src = u.r.centre?.mode === "live" ? "a checkout on this machine" : `the published export${u.r.state.generated ? `, generated ${u.r.state.generated}` : ""}`;
-    const rel = (a, b, kind) => el("div", { class: "ref" }, a, el("span", { class: "note" }, kind === "superseded" ? " — superseded by — " : " — cites — "), b);
-    return el("section", { class: "friend-card" },
-      el("h2", {}, el("i", { class: "dot", style: `background:transparent;border:2px dashed ${friendColor(i)};width:11px;height:11px;margin-right:8px` }), el("a", { href: u.r.open || "#graph" }, hostMark(u.r.canonical), u.r.name),
-        u.via === "chain" ? el("span", { class: "pill" }, "via a thought") : null),
-      el("p", { class: "note" }, `${u.members.length > 1 ? `A family of ${u.members.length}: ${u.members.map((m) => m.name).join(", ")}. ` : ""}Read from ${src}. ${u.r.canonical}${u.r.forkOf ? ` — a fork of ${u.r.forkOf}, by its own export` : ""}`),
-      el("h3", {}, `Cited from here (${out.length})`),
-      ...(out.length ? out.map((x) => rel(el("a", { href: x.from.href }, x.from.label), el("a", { href: x.to.m.href ? x.to.m.href(x.to.e) : "#graph" }, x.to.e.title, u.members.length > 1 ? el("span", { class: "note" }, ` · ${x.to.m.name}`) : null), x.kind)) : [el("p", { class: "empty" }, u.via === "chain" ? "Nothing here cites it directly — it was reached by following a thought." : "—")]),
-      el("h3", {}, `Citing this project (${back.length})`),
-      ...(back.length ? back.map((x) => rel(el("a", { href: x.from.m.href ? x.from.m.href(x.from.e) : "#graph" }, x.from.e.title), el("a", { href: x.to.href }, x.to.label), x.kind)) : [el("p", { class: "empty" }, "None of its entries cites an entry here.")]));
-  };
-  const friends = units.filter((u) => u.via !== "chain" && u.via !== "cited"), chained = units.filter((u) => u.via === "chain"), citing = units.filter((u) => u.via === "cited");
-  kids.push(...friends.map((u) => card(u, units.indexOf(u))));
-  if (citing.length) kids.push(el("h2", { class: "section" }, "Citing this project — from the registry"), el("p", { class: "note" }, `Repositories in the Keep the Why registry whose entries cite this project, from its backlink file${CITED.checked ? `, built ${CITED.checked}` : ""}. Citations from outside the registry are not in it.`), ...citing.map((u) => card(u, units.indexOf(u))));
-  if (chained.length) kids.push(el("h2", { class: "section" }, "Reached by following a thought"), ...chained.map((u) => card(u, units.indexOf(u))));
-  if (failed.length) kids.push(el("h2", { class: "section" }, "Not loaded"), ...failed.map((r) => el("div", { class: "ref" }, el("a", { href: r.canonical, target: "_blank", rel: "noopener" }, hostMark(r.canonical), repoLabel(r.canonical)), el("span", { class: "note warn" }, ` · ${r.error}`))));
-  setKids(box, ...kids);
-}
+// The Friends page is ktw-family.js's; what only this page has goes in with the call: the graph of the scope, the
+// friends grouped as the graph draws them, their colours, loading them (and keeping that on), and the registry's
+// citations of this project.
+const viewFriends = (main) => FAM.friendsView(main, {
+  graph: graphForScope, units: friendUnits, color: friendColor,
+  load: (list) => { setFriendsAuto(true); loadFriends(list); },
+  cited: () => ({
+    checked: CITED.checked,
+    ask: !CITED.on && !CITED.loading && backlinksUrl(REGISTRY_URL, canonicalOf(SCENE.self?.project))
+      ? () => { CITED.url = backlinksUrl(REGISTRY_URL, canonicalOf(SCENE.self?.project)); loadCited(); } : undefined,
+  }),
+});
 function viewQueues(main) {
   const q = queues();
   const section = (title, why, list) => el("section", { class: "queue" },
