@@ -4,12 +4,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import vm from "node:vm";
 import { JSDOM } from "jsdom";
 
 const dom = new JSDOM("<!doctype html><body></body>", { runScripts: "outside-only" });
 const { window } = dom;
+const realm = dom.getInternalVMContext();
 for (const name of ["ktw-core.js", "ktw-ui.js", "ktw-scene.js", "ktw-pages.js"]) {
-  window.eval(fs.readFileSync(new URL(`../../ktw_dashboard/web/${name}`, import.meta.url), "utf8"));
+  const file = new URL(`../../ktw_dashboard/web/${name}`, import.meta.url);
+  vm.runInContext(fs.readFileSync(file, "utf8"), realm, { filename: file.pathname });
 }
 const { core, scene: sceneLib, views } = window.KeepTheWhy;
 const doc = window.document;
