@@ -3,9 +3,10 @@
 // copy of the HTML whose <script type="module"> is turned into a classic script,
 // since jsdom does not execute module scripts); the test itself runs no code strings.
 import { JSDOM, VirtualConsole } from "jsdom";
+import { moduleAsClassic } from "./classic.mjs";
 import fs from "node:fs";
 
-const html = fs.readFileSync(process.argv[2], "utf8").replace('<script type="module">', "<script>");
+const html = moduleAsClassic(fs.readFileSync(process.argv[2], "utf8"));
 const errors = [];
 const vc = new VirtualConsole();
 vc.on("jsdomError", (e) => errors.push("jsdom: " + (e.detail?.stack || e.message || e).toString().split("\n").slice(0, 2).join(" | ")));

@@ -5,7 +5,8 @@
   "scripts": [
     "ktw-core.js",
     "ktw-scene.js",
-    "ktw-markdown.js"
+    "ktw-markdown.js",
+    "ktw-graph.js"
   ],
   "styles": []
 }

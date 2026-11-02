@@ -18,12 +18,12 @@ const W = new URL("../../ktw_dashboard/web/", import.meta.url).pathname;
 const views = JSON.parse(fs.readFileSync(W + "ktw-views.json", "utf8"));
 const lib = views.scripts.map((n) => fs.readFileSync(W + n, "utf8")).join("\n");
 const app = fs.readFileSync(W + "app.js", "utf8");
-// jsdom runs no module scripts: lib and app go into the page as one classic
-// script, which jsdom runs itself (as in smoke.mjs; this file runs no code
+// jsdom runs no module scripts: the library goes in as classic scripts, the app as a strict function
+// (its names its own, as a module's are — classic.mjs), which jsdom runs itself (as in smoke.mjs; this file runs no code
 // strings). split/join, not replace: the sources contain `$&`-like sequences.
 // the stylesheet inlined as the export does: the page reads its colour tokens (--ktw-*) from it
 const css = fs.readFileSync(W + "style.css", "utf8");
-const html = fs.readFileSync(W + "index.html", "utf8").split('<link rel="stylesheet" href="/static/style.css">').join("<style>\n" + css + "\n</style>").split('<script type="module" src="/static/app.js"></script>').join("<script>" + lib + "\n" + app + "\nwindow.__fg = () => fgraph; window.__g = () => graph; window.__stage = () => STAGE; window.__active = () => [...new Set([graph, fgraph, graph?.runner, fgraph?.runner, STAGE?.graph].filter(Boolean))]; window.__chainAdd = async (canonical, uuid) => { const f = { canonical, uuids: [uuid] }; CHAIN.extra.set(fkey(canonical), f); await loadFriend(f); if (fgraph) fgraph.at = 0; render(); }; // test hooks</script>");
+const html = fs.readFileSync(W + "index.html", "utf8").split('<link rel="stylesheet" href="/static/style.css">').join("<style>\n" + css + "\n</style>").split('<script type="module" src="/static/app.js"></script>').join("<script>" + lib + "</script>\n<script>(function () {\n\"use strict\";\n" + app + "\nwindow.__fg = () => fgraph; window.__g = () => graph; window.__stage = () => STAGE; window.__active = () => [...new Set([graph, fgraph, graph?.runner, fgraph?.runner, STAGE?.graph].filter(Boolean))]; window.__chainAdd = async (canonical, uuid) => { const f = { canonical, uuids: [uuid] }; CHAIN.extra.set(fkey(canonical), f); await loadFriend(f); if (fgraph) fgraph.at = 0; render(); }; // test hooks\n})();</script>");
 
 const GH = "https://github.com/acme";
 const config = (id, lines) => `<!-- keep-the-why:config -->\n- id: ${id}\n${lines.join("\n")}\n<!-- /keep-the-why:config -->\n`;

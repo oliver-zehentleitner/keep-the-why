@@ -22,6 +22,8 @@ function create({ state = null, self = null, day = null, scope = "project" } = {
   const scene = {
     state, self, day, scope,
     focus: null, thought: null,
+    selected: null, // the entry the page shows in its details, by id
+    filter: { status: "", evidence: "", author: "" }, // the sidebar's: what is not matched is dimmed (core entryMatches)
     layout, layoutSettled: false,
     // the graph whose positions the layout follows; null: none is drawn, and the layout is settled here (layoutFor)
     layoutSource: null,
