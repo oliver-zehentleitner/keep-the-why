@@ -92,7 +92,8 @@ test("an entry opened by its Id stays where it is; an old file#anchor moves to t
   }
 });
 
-test("a reference resolved later lands with the host that drew it, whichever host draws next", async () => {
+// a time limit: with one cache for both hosts, B is never asked and the test would wait for ever instead of failing
+test("a reference resolved later lands with the host that drew it, whichever host draws next", { timeout: 5000 }, async () => {
   const P = views.pages.create({ scene: sceneLib.create({ state: entryState }), nav: { ...nav, current: () => ({ view: "entry", uuid: UUID }) }, prefs: { get: () => null, set: () => {} }, ...libs });
   const calls = [];
   const A = entryHost("A", calls), B = entryHost("B", calls);
