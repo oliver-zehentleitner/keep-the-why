@@ -74,18 +74,6 @@ const isLocalPage = () => /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const narrow = () => !!window.matchMedia?.("(max-width: 900px)").matches;
-const el = (tag, attrs = {}, ...kids) => {
-  const n = document.createElement(tag);
-  for (const [k, v] of Object.entries(attrs)) {
-    if (v == null || v === false) continue;
-    if (k === "class") n.className = v;
-    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
-    else n.setAttribute(k, v === true ? "" : v);
-  }
-  for (const k of kids.flat(Infinity)) if (k != null && k !== false) n.append(k.nodeType ? k : document.createTextNode(String(k)));
-  return n;
-};
-const setKids = (node, ...kids) => node.replaceChildren(...kids.flat(Infinity).filter((k) => k != null && k !== false));
 const fmtDate = (d) => d || "—";
 // the platform's mark before a repository's name, from its URL (ktw-core.js HOSTS);
 // none for a host no row knows
@@ -436,6 +424,8 @@ const publicHref = (canonical, root = "", hash = "#overview") => centreUrl({ mod
 // The scene (ktw-scene.js): what every view on the page shares — SCENE.state, what the page shows (this project,
 // or with the family scope the whole family merged, ktw-core.js mergeStates); SCENE.self, this project's own
 // state, always; SCENE.day, the clock; SCENE.focus, SCENE.scope, the layout — and the events views follow.
+// DOM helpers, pills and glyphs every view uses (ktw-ui.js): no state, only nodes
+const { el, setKids, pill, statusPill, evPill, typePills, entryPills, typeGlyphSvg } = globalThis.KeepTheWhy.ui;
 const SCENE = globalThis.KeepTheWhy.scene.create({ scope: prefs.get("scope") || prefs.get("search-scope") || "project" }); // search-scope: the name before the scope switched the graph too
 // The graph view (ktw-graph.js): it draws what the host builds, given the scene, navigation and settings only.
 const GRAPH = globalThis.KeepTheWhy.views.graph.create({ scene: SCENE, nav, prefs });
@@ -448,9 +438,9 @@ const api = (path) => PROJECT ? `${path}?project=${encodeURIComponent(PROJECT)}`
 let CLOCK_N = -1; // how many entries the clock's day shows: a layout settles again only when that changes
 // an entry of this project goes by this project's repository: with one, an entry without a Git date is not committed
 // yet and exists today only; without one there are no days to go by. A foreign entry's export came from a repository.
-const hasRepo = (e) => (e?.origin || e?.project ? true : !!SCENE.state?.project?.git?.available);
-const atClock = (e, ext = false) => existsAt(e, SCENE.day, ext || hasRepo(e));
-const statusNow = (e) => (SCENE.day ? statusAt(e, SCENE.day, hasRepo(e)) || e.status : e.status);
+const hasRepo = (e) => SCENE.hasRepo(e);
+const atClock = (e, ext = false) => SCENE.atClock(e, ext);
+const statusNow = (e) => SCENE.statusNow(e);
 function setClock(day) {
   if (day === SCENE.day) return;
   // the layout settles again only when the set of nodes changed, not on every day the playhead passes
@@ -491,11 +481,6 @@ const renderMarkdown = (md) => MD.render(document, md, { topicHref });
 // a label before a line of Markdown, joined to its first text the way the HTML string joined them
 const labelled = (label, md) => { const f = inline(md); if (f.firstChild?.nodeType === 3) f.firstChild.data = label + f.firstChild.data; else f.prepend(label); return f; };
 // ---------------------------------------------------------------- shared bits
-const pill = (text, cls = "") => el("span", { class: `pill ${cls}` }, text);
-const statusPill = (s) => pill(s || "—", `status-${s}`);
-const evPill = (e) => pill(e || "—", `ev-${e}`);
-const typePills = (types) => (types?.length ? types : ["—"]).map((t) => { const p = pill(typeName(t), "type"); if (t !== typeName(t)) p.title = t; return p; });
-const entryPills = (e) => [...typePills(e.type), statusPill(e.status), evPill(e.evidence)];
 function bars(counts, order, clsPrefix = "") {
   const total = Object.values(counts).reduce((a, b) => a + b, 0) || 1;
   const keys = [...order.filter((k) => k in counts), ...Object.keys(counts).filter((k) => !order.includes(k))];
@@ -2773,20 +2758,6 @@ function stageLegend() {
 // A card's shape is its Type. decision: a plain card with a diamond. constraint: a thick band across the top, a
 // barred square. workaround: a folded corner and a dashed edge, a folded square. incident: a striped band across
 // the top, a triangle with a bar. The glyph as SVG for the legend, and on the canvas.
-// a Type's glyph as SVG nodes, the stage's shapes in small: [element, attributes] per part
-const GLYPHS = {
-  decision: [["path", { d: "M6 1 11 6 6 11 1 6z" }]],
-  constraint: [["path", { d: "M1.5 1.5h9v9h-9z", fill: "none", stroke: "currentColor", "stroke-width": "1.4" }], ["path", { d: "M1.5 5h9v2h-9z" }]],
-  workaround: [["path", { d: "M1.5 1.5h6l3 3v6h-9z", fill: "none", stroke: "currentColor", "stroke-width": "1.4", "stroke-dasharray": "2 1.5" }], ["path", { d: "M7.5 1.5v3h3", fill: "none", stroke: "currentColor", "stroke-width": "1.4" }]],
-  incident: [["path", { d: "M6 1.2 11.2 10.8H.8z", fill: "none", stroke: "currentColor", "stroke-width": "1.4" }], ["path", { d: "M5.3 4.5h1.4v3.2H5.3zM5.3 8.5h1.4v1.3H5.3z" }]],
-};
-function typeGlyphSvg(kind) {
-  const NS = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(NS, "svg");
-  for (const [k, v] of Object.entries({ class: "type-glyph", viewBox: "0 0 12 12", width: "11", height: "11", "aria-hidden": "true", fill: "currentColor" })) svg.setAttribute(k, v);
-  for (const [tag, attrs] of GLYPHS[kind] || []) { const n = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); svg.append(n); }
-  return svg;
-}
 function typeGlyph(ctx, kind, x, y, s) { // `s` its size in pixels, at (x, y) top-left, in the current fill and stroke colour
   ctx.save(); ctx.translate(x, y); ctx.scale(s / 12, s / 12); ctx.lineWidth = 1.5 * 12 / s; ctx.setLineDash([]);
   if (kind === "decision") { ctx.beginPath(); ctx.moveTo(6, 1); ctx.lineTo(11, 6); ctx.lineTo(6, 11); ctx.lineTo(1, 6); ctx.closePath(); ctx.fill(); }

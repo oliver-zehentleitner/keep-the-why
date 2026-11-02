@@ -8,16 +8,13 @@
    globalThis.KeepTheWhy.views.graph, listed in ktw-views.json, tested through the page (canvas-trace.mjs). */
 (function (root) {
 "use strict";
-const { layoutTick, linkExistsAt, existsAt, statusAt, hostOf, filterActive, entryMatches, fkey } = root.KeepTheWhy.core;
+const { layoutTick, linkExistsAt, hostOf, filterActive, entryMatches, fkey } = root.KeepTheWhy.core;
 
 // One graph view per page: create({ scene, nav, prefs }) — the host's scene, navigation and settings.
 function create({ scene, nav, prefs }) {
 const narrow = () => !!root.matchMedia?.("(max-width: 900px)").matches;
-// under the clock: an entry of this project goes by this project's repository — with one, an entry without a
-// Git date is not committed yet and exists today only; a foreign entry's export came from a repository
-const hasRepo = (e) => (e?.origin || e?.project ? true : !!scene.state?.project?.git?.available);
-const atClock = (e, ext = false) => existsAt(e, scene.day, ext || hasRepo(e));
-const statusNow = (e) => (scene.day ? statusAt(e, scene.day, hasRepo(e)) || e.status : e.status);
+const atClock = (e, ext = false) => scene.atClock(e, ext); // the scene's clock (ktw-scene.js)
+const statusNow = (e) => scene.statusNow(e);
 
 // labels per group too — the project's own nodes, the family, the friends, the path — kept per browser, all on by default;
 // on a phone only this project's names: the other groups' topic names pile up on a small screen (hub names always show)

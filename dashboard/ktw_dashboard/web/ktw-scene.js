@@ -32,6 +32,12 @@ function create({ state = null, self = null, day = null, scope = "project" } = {
       subs.get(event).add(fn);
       return () => subs.get(event)?.delete(fn);
     },
+    // The clock's view of an entry. An entry of the project shown goes by its repository: with one, an entry
+    // without a Git date is not committed yet and exists today only; a foreign entry's export came from a
+    // repository. atClock: is it there on the day shown (today with no clock); statusNow: its status then.
+    hasRepo(e) { return e?.origin || e?.project ? true : !!scene.state?.project?.git?.available; },
+    atClock(e, ext = false) { return root.KeepTheWhy.core.existsAt(e, scene.day, ext || scene.hasRepo(e)); },
+    statusNow(e) { return scene.day ? root.KeepTheWhy.core.statusAt(e, scene.day, scene.hasRepo(e)) || e.status : e.status; },
     setDay(d, { grew = false } = {}) { scene.day = d; emit("day", d, { grew }); },
     setFocus(ref) { scene.focus = ref || null; emit("focus", scene.focus); },
     setThought(t) { scene.thought = t || null; emit("thought", scene.thought); },
