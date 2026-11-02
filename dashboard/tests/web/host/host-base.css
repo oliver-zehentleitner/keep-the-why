@@ -1,0 +1,3 @@
+/* the host's element defaults: its own, not the dashboard's */
+body { margin: 0; font: 15px/1.6 Georgia, serif; background: #f4f1ea; color: #222; }
+a { color: #0b5cad; }

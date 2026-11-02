@@ -39,7 +39,8 @@ function rows(given, q) {
   return out.sort((a, b) => compareHits(a.hit, b.hit));
 }
 // the family can be read live, from a published export, or from an export that knows its repository
-const searchScopes = () => (family.live() || family.mode() === "public" || (family.mode() === "export" && !!canonicalOf(scene.state?.project)) ? ["project", "family"] : ["project"]);
+// (outside live mode only through the provider's exportState: without it, family and friends are not offered)
+const searchScopes = () => (family.live() || (family.canExports() && (family.mode() === "public" || (family.mode() === "export" && !!canonicalOf(scene.state?.project)))) ? ["project", "family"] : ["project"]);
 const hasFamily = () => !!(scene.state?.project?.parent || (scene.state?.project?.children || []).length);
 const canFamily = () => searchScopes().includes("family") && hasFamily();
 // friends can be searched where the family can be read, and there are any: entries citing outside the family
@@ -61,8 +62,8 @@ async function view(main, linkScope, q) {
   if (scope !== linkScope) { nav.go({ view: "search", scope, q }, { replace: true }); }
   if (INPUT && root.document.activeElement !== INPUT) INPUT.value = q;
   const terms = searchTerms(q);
-  const sub = el("p", { class: "sub" }, "Searching…");
-  main.append(el("div", { class: "search-head" }, el("h1", {}, "Search ", el("span", { class: "q" }, `“${q}”`)), scopeBar(scope, q)), sub);
+  const sub = el("p", { class: "ktw-sub" }, "Searching…");
+  main.append(el("div", { class: "ktw-search-head" }, el("h1", {}, "Search ", el("span", { class: "ktw-q" }, `“${q}”`)), scopeBar(scope, q)), sub);
   if (terms.length === 0 || q.trim().length < 2) { sub.textContent = "Type at least two characters in the search field and press Enter."; return; }
   const found = await pool(scope);
   if (!onSearch(scope, q)) return; // navigated away meanwhile
@@ -74,40 +75,43 @@ async function view(main, linkScope, q) {
     (terms.length > 1 ? ` · all of: ${terms.join(", ")}` : "") +
     (pageFiltered() ? ` · ${shown} match the sidebar filters, the rest dimmed` : "") +
     " · searched: title, body, Revisit when, Source, Verification, Superseded by, Id, file, type, status, evidence";
-  const box = el("div", { class: "search-page" });
+  const box = el("div", { class: "ktw-search-page" });
+  // a project whose entry texts could not be had was searched without them: said once, above the results
+  const textless = found.groups.filter((g) => g.state.bodiesError);
+  if (textless.length) box.append(el("p", { class: "ktw-note ktw-warn" }, `Searched without the entry texts in ${textless.map((g) => g.member.name).join(", ")}: ${[...new Set(textless.map((g) => g.state.bodiesError))].join("; ")}.`));
   for (const g of found.groups) {
     const mine = hits.filter((r) => r.g === g);
     if (!mine.length) continue;
     const m = g.member;
-    const head = el("div", { class: "sg-head" },
+    const head = el("div", { class: "ktw-sg-head" },
       m.role === "self" ? el("b", {}, m.name) : el("a", { href: m.open || (family.published() ? publicHref(m.canonical, m.root || "") : nav.href({ view: "overview", centre: { mode: "live", project: m.key } })) }, m.name),
-      pill(memberLabel(m), "role"), el("span", { class: "count" }, plural(mine.length, "hit")));
-    box.append(el("section", { class: "sgroup" }, head, m.scope ? el("div", { class: "ms note" }, m.scope) : null,
-      el("div", { class: "entry-list" }, mine.map(({ e, hit }) => {
+      pill(memberLabel(m), "ktw-role"), el("span", { class: "ktw-count" }, plural(mine.length, "hit")));
+    box.append(el("section", { class: "ktw-sgroup" }, head, m.scope ? el("div", { class: "ktw-ms ktw-note" }, m.scope) : null,
+      el("div", { class: "ktw-entry-list" }, mine.map(({ e, hit }) => {
         const gt = e.git;
         const meta = [topicTitle(g.state, e.file), e.file, gt?.created?.author ? `${gt.created.author} · ${gt.created.date}` : null,
           gt?.last_touched?.date && gt.last_touched.date !== gt?.created?.date ? `touched ${gt.last_touched.date}` : null,
           e.uuid ? `Id ${e.uuid.slice(0, 8)}` : null, plural(hit.count, "match").replace("matchs", "matches")].filter(Boolean).join("  ·  ");
-        return el("a", { href: g.href(e), class: `row ${matches(e) ? "" : "dim"}` },
-          el("div", { class: "rt" }, el("span", {}, marked(e.title.replace(/`/g, ""), hit.terms)), ...entryPills(e)),
-          el("div", { class: "rs" }, hitSnippet(hit)),
-          el("div", { class: "rm" }, meta));
+        return el("a", { href: g.href(e), class: `ktw-row ${matches(e) ? "" : "ktw-dim"}` },
+          el("div", { class: "ktw-rt" }, el("span", {}, marked(e.title.replace(/`/g, ""), hit.terms)), ...entryPills(e)),
+          el("div", { class: "ktw-rs" }, hitSnippet(hit)),
+          el("div", { class: "ktw-rm" }, meta));
       }))));
   }
   const wider = scope === "all" ? null : canSearch("all") ? "all" : scope === "project" && canSearch("family") ? "family" : scope === "project" && canSearch("friends") ? "friends" : null;
-  if (!hits.length) box.append(el("p", { class: "center" }, `No entry matches “${q}”`, scope === "project" ? " in this project" : scope === "all" ? " in the family or the friends" : ` in the ${SEARCH_SCOPES[scope]}`,
+  if (!hits.length) box.append(el("p", { class: "ktw-center" }, `No entry matches “${q}”`, scope === "project" ? " in this project" : scope === "all" ? " in the family or the friends" : ` in the ${SEARCH_SCOPES[scope]}`,
     wider ? [" — ", navLink({ href: { view: "search", scope: wider, q: q } }, `search ${SEARCH_SCOPES[wider]}`)] : "", "."));
-  if (found.missing.length) box.append(el("section", { class: "sgroup missing" }, el("div", { class: "sg-head" }, el("b", {}, "Not searched"), el("span", { class: "count" }, found.missing.length)),
-    found.missing.map(({ member: m, reason }) => el("div", { class: "sr-missing" }, el("b", {}, m.name), ` (${memberLabel(m)}) — ${reason}`)),
-    el("p", { class: "note" }, [found.missing.some(({ member: m }) => m.role !== "friend") ? "Family shows how to get a member that is not on this machine. " : "",
+  if (found.missing.length) box.append(el("section", { class: "ktw-sgroup ktw-missing" }, el("div", { class: "ktw-sg-head" }, el("b", {}, "Not searched"), el("span", { class: "ktw-count" }, found.missing.length)),
+    found.missing.map(({ member: m, reason }) => el("div", { class: "ktw-sr-missing" }, el("b", {}, m.name), ` (${memberLabel(m)}) — ${reason}`)),
+    el("p", { class: "ktw-note" }, [found.missing.some(({ member: m }) => m.role !== "friend") ? "Family shows how to get a member that is not on this machine. " : "",
       found.missing.some(({ member: m }) => m.role === "friend") ? "Friends lists the repositories the entries cite outside the family, and what could not be loaded." : ""].join("").trim())));
   main.append(box);
   if (RESTORE_SCROLL) main.scrollTop = RESTORE_SCROLL;
 }
 // the results page's bar: the entry scopes this project can search, and the registry's projects last when the host has them
-const scopeBar = (scope, q) => el("span", { class: "search-scope", title: "where to search — the switch next to the project menu sets the graph and the lists, not the search; registry: a project rather than entries" },
-  ...Object.entries(SEARCH_SCOPES).filter(([k]) => canSearch(k)).map(([k, label]) => navLink({ href: { view: "search", scope: k, q: q }, class: k === scope ? "on" : "" }, label)),
-  host.registryPage ? navLink({ href: { view: "search", scope: "registry", q: q }, class: scope === "registry" ? "on" : "" }, "registry") : null);
+const scopeBar = (scope, q) => el("span", { class: "ktw-search-scope", title: "where to search — the switch next to the project menu sets the graph and the lists, not the search; registry: a project rather than entries" },
+  ...Object.entries(SEARCH_SCOPES).filter(([k]) => canSearch(k)).map(([k, label]) => navLink({ href: { view: "search", scope: k, q: q }, class: k === scope ? "ktw-on" : "" }, label)),
+  host.registryPage ? navLink({ href: { view: "search", scope: "registry", q: q }, class: scope === "registry" ? "ktw-on" : "" }, "registry") : null);
 
 // The dropdown under a search field: this project's hits as they are typed, the wider scopes as its first rows,
 // the host's registry rows after them. A click outside `within` (a selector around the field) closes it.
@@ -127,23 +131,23 @@ function attach({ input, box, within }) {
     const wider = Object.entries(SEARCH_SCOPES).filter(([k]) => k !== "project" && canSearch(k));
     const registry = host.registryRows ? host.registryRows(q, { open: REG.on, expand: () => { REG.on = true; input.focus(); run(); }, run, close }) : [];
     // the wider scopes first, so they are in view however long the list of hits gets
-    box.replaceChildren(...[...wider.map(([k, label]) => navLink({ class: "sr-all sr-scope", href: { view: "search", scope: k, q: q }, onclick: close }, `Search in ${label}`)),
+    box.replaceChildren(...[...wider.map(([k, label]) => navLink({ class: "ktw-sr-all ktw-sr-scope", href: { view: "search", scope: k, q: q }, onclick: close }, `Search in ${label}`)),
       ...registry,
-      el("div", { class: "sr-head" }, shown.length ? `Results in this project${all.length > shown.length ? ` (${shown.length} of ${all.length})` : ` (${all.length})`}` : "Results in this project"),
+      el("div", { class: "ktw-sr-head" }, shown.length ? `Results in this project${all.length > shown.length ? ` (${shown.length} of ${all.length})` : ` (${all.length})`}` : "Results in this project"),
       ...(shown.length ? shown.map(({ e, hit, g }) => el("a", { href: g.href(e), onclick: close },
       el("div", {}, marked(e.title.replace(/`/g, ""), hit.terms)),
-      el("div", { class: "sr-file" }, topicTitle(g.state, e.file)),
-      el("div", { class: "sr-snip" }, hitSnippet(hit)))) : [el("div", { style: "padding:10px 12px;color:var(--fg3)" }, "no matches in this project")]),
-      REG.on ? navLink({ class: "sr-all", href: { view: "search", scope: "registry", q: q }, onclick: close }, "↵  projects in the registry, as a page")
-        : navLink({ class: "sr-all", href: { view: "search", scope: "project", q: q }, onclick: close }, all.length > shown.length ? `↵  all ${all.length} results in this project` : "↵  results page")].filter(Boolean)); // replaceChildren writes a null as the text "null"
+      el("div", { class: "ktw-sr-file" }, topicTitle(g.state, e.file)),
+      el("div", { class: "ktw-sr-snip" }, hitSnippet(hit)))) : [el("div", { style: "padding:10px 12px;color:var(--ktw-fg3, #6f6f7a)" }, "no matches in this project")]),
+      REG.on ? navLink({ class: "ktw-sr-all", href: { view: "search", scope: "registry", q: q }, onclick: close }, "↵  projects in the registry, as a page")
+        : navLink({ class: "ktw-sr-all", href: { view: "search", scope: "project", q: q }, onclick: close }, all.length > shown.length ? `↵  all ${all.length} results in this project` : "↵  results page")].filter(Boolean)); // replaceChildren writes a null as the text "null"
     box.hidden = false; sel = -1;
   };
   input.oninput = run; input.onfocus = () => { if (input.value.trim().length >= 2 && nav.current().view !== "search") run(); };
   input.onkeydown = (ev) => {
     const items = [...box.querySelectorAll("a")];
     if (ev.key === "Escape") { input.blur(); close(); }
-    else if (ev.key === "ArrowDown") { sel = Math.min(items.length - 1, sel + 1); items.forEach((a, i) => a.classList.toggle("sel", i === sel)); items[sel]?.scrollIntoView?.({ block: "nearest" }); ev.preventDefault(); }
-    else if (ev.key === "ArrowUp") { sel = Math.max(0, sel - 1); items.forEach((a, i) => a.classList.toggle("sel", i === sel)); ev.preventDefault(); }
+    else if (ev.key === "ArrowDown") { sel = Math.min(items.length - 1, sel + 1); items.forEach((a, i) => a.classList.toggle("ktw-sel", i === sel)); items[sel]?.scrollIntoView?.({ block: "nearest" }); ev.preventDefault(); }
+    else if (ev.key === "ArrowUp") { sel = Math.max(0, sel - 1); items.forEach((a, i) => a.classList.toggle("ktw-sel", i === sel)); ev.preventDefault(); }
     else if (ev.key === "Enter") {
       ev.preventDefault();
       if (!box.hidden && items[sel]) { items[sel].click(); input.blur(); return; }

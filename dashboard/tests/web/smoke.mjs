@@ -44,46 +44,46 @@ for (const r of routes) {
   if (report[r].textLen < 20) errors.push(`route ${r} rendered almost nothing`);
 }
 report.sidebarLeaves = window.document.querySelectorAll(".tree .leaf").length;
-report.strip = window.document.querySelectorAll("#strip a.stat").length;
-report.entryMiniGraph = window.document.querySelectorAll("#details .mini canvas").length;
+report.strip = window.document.querySelectorAll("#strip a.ktw-stat").length;
+report.entryMiniGraph = window.document.querySelectorAll("#details .ktw-mini canvas").length;
 await go(`#topic/${S.topics[0].file}`);
 {
   // a topic's crumbs carry copy link and open source, the latter the topic file on the host
   const main = window.document.querySelector("main");
-  const src = main.querySelector(".crumbs a.source-link")?.getAttribute("href") || "";
-  if (!main.querySelector(".crumbs button.share-btn")) errors.push("topic: no copy-link button");
-  if (!src.endsWith(`/${S.project.root ? S.project.root + "/" : ""}${S.project.context}${S.topics[0].file}`) || !main.querySelector(".crumbs a.source-link svg.ext-icon")) errors.push("topic: the open-source link is missing or wrong: " + src);
+  const src = main.querySelector(".ktw-crumbs a.ktw-source-link")?.getAttribute("href") || "";
+  if (!main.querySelector(".ktw-crumbs button.ktw-share-btn")) errors.push("topic: no copy-link button");
+  if (!src.endsWith(`/${S.project.root ? S.project.root + "/" : ""}${S.project.context}${S.topics[0].file}`) || !main.querySelector(".ktw-crumbs a.ktw-source-link svg.ktw-ext-icon")) errors.push("topic: the open-source link is missing or wrong: " + src);
 }
 {
   // an entry's crumbs: the same two, open source with the heading's anchor on the host
   await go(`#entry/${encodeURIComponent(S.entries[0].id)}`);
   const main = window.document.querySelector("main");
-  const src = main.querySelector(".crumbs a.source-link")?.getAttribute("href") || "";
+  const src = main.querySelector(".ktw-crumbs a.ktw-source-link")?.getAttribute("href") || "";
   report.sourceLinks = { topic: true, entry: src };
-  if (!main.querySelector(".crumbs button.share-btn")) errors.push("entry: no copy-link button");
+  if (!main.querySelector(".ktw-crumbs button.ktw-share-btn")) errors.push("entry: no copy-link button");
   if (!new RegExp(`/${S.project.root ? S.project.root + "/" : ""}${S.project.context}${S.entries[0].file}#.+$`).test(src)) errors.push("entry: the open-source link is missing or has no anchor: " + src);
 }
-report.topicMiniGraph = window.document.querySelectorAll("#details .mini canvas").length;
+report.topicMiniGraph = window.document.querySelectorAll("#details .ktw-mini canvas").length;
 // content, not only "something rendered": the views built for project families
 const withSee = S.entries.find((e) => e.see?.length);
 const main = window.document.getElementById("main");
 // an export has no family to load: the family graph falls back to the project's own
 await go("#graph/family");
-if (!main.querySelector(".graph-wrap canvas")) errors.push("graph/family in an export: no graph rendered");
+if (!main.querySelector(".ktw-graph-wrap canvas")) errors.push("graph/family in an export: no graph rendered");
 if (window.document.getElementById("scope").hidden === exportFamily) errors.push(`export: the this-project/family switch is ${exportFamily ? "missing for a family member" : "shown without a family"}`);
 // an entry's Source is inline Markdown: a [text](url) in it is a link in the reader's pill and in the side pane, not raw brackets
 const withSourceLink = S.entries.find((e) => /\]\(https?:\/\//.test(e.source || ""));
 if (withSourceLink) {
   await go(`#entry/${encodeURIComponent(withSourceLink.id)}`);
-  const pane = [...window.document.querySelectorAll("#details .kv .v")].find((v) => v.textContent.includes(withSourceLink.source.match(/\[([^\]]+)\]/)[1]));
+  const pane = [...window.document.querySelectorAll("#details .ktw-kv .ktw-v")].find((v) => v.textContent.includes(withSourceLink.source.match(/\[([^\]]+)\]/)[1]));
   if (!pane || !pane.querySelector("a[href^='http']") || /\]\(/.test(pane.textContent)) errors.push("entry side pane: Source shows raw Markdown instead of a link");
-  const pill = [...window.document.querySelectorAll("#main .fields .pill")].find((x) => x.textContent.startsWith("Source"));
+  const pill = [...window.document.querySelectorAll("#main .ktw-fields .ktw-pill")].find((x) => x.textContent.startsWith("Source"));
   if (!pill || !pill.querySelector("a[href^='http']")) errors.push("entry reader: the Source pill shows raw Markdown instead of a link");
 }
 // an author name links to the host (the commit page until a click has looked up the profile)
 if (S.project.git?.available && /^github\.com\//.test(S.project.git.remote || "") && !S.anonymized) {
   await go(`#entry/${encodeURIComponent(S.entries[0].id)}`);
-  const a = window.document.querySelector("#details a.author");
+  const a = window.document.querySelector("#details a.ktw-author");
   if (!a || !/^https:\/\/github\.com\/.+\/commit\/[0-9a-f]+$/.test(a.getAttribute("href") || "")) errors.push("entry details: the author is not linked to the host: " + (a?.getAttribute("href") || "no link"));
 }
 // a static page is published by nature: no local/public switch at all — the family scope reaches the members' exports
@@ -94,21 +94,21 @@ if (S.project.git?.available && /^github\.com\//.test(S.project.git.remote || ""
 }
 // the side-pane graph: near and project in an export (no family), and the switch works
 await go(`#entry/${encodeURIComponent(S.entries[0].id)}`);
-const modes = [...window.document.querySelectorAll("#details .mini-seg:not(.mini-friends):not(.mini-width) button")].map((b) => b.textContent);
+const modes = [...window.document.querySelectorAll("#details .ktw-mini-seg:not(.ktw-mini-friends):not(.ktw-mini-width) button")].map((b) => b.textContent);
 const wantModes = exportFamily ? "near,project,family" : "near,project";
 if (modes.join() !== wantModes) errors.push(`side-pane graph in an export: expected ${wantModes}, got ` + modes.join());
-[...window.document.querySelectorAll("#details .mini-seg:not(.mini-friends):not(.mini-width) button")].find((b) => b.textContent === "project")?.click();
+[...window.document.querySelectorAll("#details .ktw-mini-seg:not(.ktw-mini-friends):not(.ktw-mini-width) button")].find((b) => b.textContent === "project")?.click();
 await tick(50);
-if (window.document.querySelector("#details .mini-seg:not(.mini-friends):not(.mini-width) button.on")?.textContent !== "project" || !window.document.querySelector("#details .mini canvas")) errors.push("side-pane graph: the project switch did not take");
-[...window.document.querySelectorAll("#details .mini-seg:not(.mini-friends):not(.mini-width) button")].find((b) => b.textContent === "near")?.click();
+if (window.document.querySelector("#details .ktw-mini-seg:not(.ktw-mini-friends):not(.ktw-mini-width) button.ktw-on")?.textContent !== "project" || !window.document.querySelector("#details .ktw-mini canvas")) errors.push("side-pane graph: the project switch did not take");
+[...window.document.querySelectorAll("#details .ktw-mini-seg:not(.ktw-mini-friends):not(.ktw-mini-width) button")].find((b) => b.textContent === "near")?.click();
 await tick(50);
 await go("#family");
 const inFamily = !!(S.project.parent || (S.project.children || []).length);
-if (inFamily ? !main.querySelector(".family .member.self") : !/not part of a family/.test(main.textContent)) errors.push("family view: neither a self row (in a family) nor the not-part-of-a-family line");
+if (inFamily ? !main.querySelector(".ktw-family .ktw-member.ktw-self") : !/not part of a family/.test(main.textContent)) errors.push("family view: neither a self row (in a family) nor the not-part-of-a-family line");
 if (withUuid) {
   await go(`#entry/${withUuid.uuid}`);
   if (!main.querySelector("h1")) errors.push("entry by uuid: no reader rendered");
-  const idCell = [...window.document.querySelectorAll("#details .kv .v")].some((n) => n.textContent === withUuid.uuid);
+  const idCell = [...window.document.querySelectorAll("#details .ktw-kv .ktw-v")].some((n) => n.textContent === withUuid.uuid);
   if (!idCell) errors.push("entry by uuid: the details pane does not show the Id");
   // every link to an entry that has an Id carries the Id, not file#anchor — tree, rows, pager, backlinks
   const anchorForm = new Set(S.entries.filter((e) => e.uuid).map((e) => `#entry/${encodeURIComponent(e.id)}`));
@@ -118,7 +118,7 @@ if (withUuid) {
     for (const a of window.document.querySelectorAll('a[href^="#entry/"]')) if (anchorForm.has(a.getAttribute("href"))) stale.add(a.getAttribute("href"));
   }
   if (stale.size) errors.push(`entry links by file#anchor instead of Id: ${[...stale].slice(0, 3).join(", ")}`);
-  if (!window.document.querySelector(".tree .leaf.active")) errors.push("entry by uuid: the tree does not mark the entry");
+  if (!window.document.querySelector(".tree .leaf.ktw-active")) errors.push("entry by uuid: the tree does not mark the entry");
   // an old file#anchor link still opens the entry and the address bar shows the Id from then on
   await go(`#entry/${encodeURIComponent(withUuid.id)}`);
   if (window.location.hash !== `#entry/${withUuid.uuid}`) errors.push("old file#anchor link: not rewritten to the Id address, hash is " + window.location.hash);
@@ -126,7 +126,7 @@ if (withUuid) {
 }
 if (withSee) {
   await go(`#entry/${withSee.uuid || encodeURIComponent(withSee.id)}`);
-  if (![...main.querySelectorAll(".refs-box h3")].some((h) => h.textContent === "See")) errors.push("entry with See lines: no See section in the reader");
+  if (![...main.querySelectorAll(".ktw-refs-box h3")].some((h) => h.textContent === "See")) errors.push("entry with See lines: no See section in the reader");
 }
 // friends: an export offers the repositories its entries cite outside the family
 {
@@ -134,7 +134,7 @@ if (withSee) {
   for (const e of S.entries) for (const r of e.see || []) if (r?.remote && r.remote.toLowerCase() !== own) cited.add(r.remote.toLowerCase());
   await go("#graph");
   await tick(200); // by default the friends load with the graph; with nothing to fetch here they end as "not loaded"
-  const btn = window.document.querySelector(".graph-ui .friends-load, .graph-ui .friends-toggle");
+  const btn = window.document.querySelector(".ktw-graph-ui .ktw-friends-load, .ktw-graph-ui .ktw-friends-toggle");
   report.friends = btn?.textContent || "none";
   if (cited.size && !btn) errors.push(`graph: entries cite ${cited.size} other repositories, but there is no friends control`);
   if (!cited.size && btn) errors.push("graph: a friends control without a cross-project reference");
@@ -142,26 +142,26 @@ if (withSee) {
 // thoughts: the chains of See and Superseded by beside the graph; a click holds one and lists its steps
 {
   await go("#graph"); await tick(100);
-  const heads = [...window.document.querySelectorAll("#thoughts .thought-head")];
+  const heads = [...window.document.querySelectorAll("#thoughts .ktw-thought-head")];
   report.thoughts = heads.map((h) => h.textContent.slice(0, 60));
   if (!window.document.getElementById("thoughts")) errors.push("graph: no thoughts box beside the graph");
   if (heads.length) {
     heads[0].click(); await tick(50);
-    const steps = window.document.querySelectorAll("#thoughts .thought.on .thought-steps li").length;
+    const steps = window.document.querySelectorAll("#thoughts .ktw-thought.ktw-on .ktw-thought-steps li").length;
     if (steps < 4) errors.push("thoughts: a held thought lists fewer than four steps: " + steps);
-    window.document.querySelector("#thoughts .thought.on .thought-head")?.click(); await tick(50);
-    if (window.document.querySelector("#thoughts .thought.on")) errors.push("thoughts: a second click does not let go");
+    window.document.querySelector("#thoughts .ktw-thought.ktw-on .ktw-thought-head")?.click(); await tick(50);
+    if (window.document.querySelector("#thoughts .ktw-thought.ktw-on")) errors.push("thoughts: a second click does not let go");
     // the whole thought in one view: every entry in order, in full, joined by how each follows
-    const read = window.document.querySelector("#thoughts .thought-read");
+    const read = window.document.querySelector("#thoughts .ktw-thought-read");
     await go(read.getAttribute("href"));
     const main = window.document.getElementById("main");
-    report.thoughtView = { h1: main.querySelector("h1")?.textContent, steps: main.querySelectorAll(".thought-step:not(.missing)").length, links: [...main.querySelectorAll(".thought-link")].map((x) => x.textContent) };
+    report.thoughtView = { h1: main.querySelector("h1")?.textContent, steps: main.querySelectorAll(".ktw-thought-step:not(.ktw-missing)").length, links: [...main.querySelectorAll(".ktw-thought-link")].map((x) => x.textContent) };
     if (!/^An? (thought|evolution) in \d+ entries$/.test(report.thoughtView.h1 || "")) errors.push("thought view: no heading: " + report.thoughtView.h1);
     if (report.thoughtView.steps < 4) errors.push("thought view: fewer than four entries shown: " + report.thoughtView.steps);
     if (report.thoughtView.links.length !== report.thoughtView.steps - 1) errors.push("thought view: the joins between the entries are missing");
-    if (!main.querySelector(".thought-step .body")?.textContent.trim()) errors.push("thought view: an entry's body is not shown");
+    if (!main.querySelector(".ktw-thought-step .ktw-body")?.textContent.trim()) errors.push("thought view: an entry's body is not shown");
     // an entry that is a step of a thought says so beside it, with its place
-    await go(main.querySelector(".thought-step h2 a").getAttribute("href"));
+    await go(main.querySelector(".ktw-thought-step h2 a").getAttribute("href"));
     const side = window.document.getElementById("details").textContent;
     if (!/In thoughts \(\d+\)/.test(side) || !/step 1 of \d+/.test(side)) errors.push("entry details: the thoughts it is a step of are not listed");
   }
@@ -175,28 +175,28 @@ if (/\bnull\b/.test(window.document.getElementById("search-results").textContent
 // Enter without a selection: the results page, every hit with its topic
 search.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
 await tick(50); window.dispatchEvent(new window.Event("hashchange")); await tick(150);
-report.searchPage = { hash: window.location.hash, rows: main.querySelectorAll(".search-page .row").length };
+report.searchPage = { hash: window.location.hash, rows: main.querySelectorAll(".ktw-search-page .ktw-row").length };
 if (!/^#search\/(project|family)\//.test(window.location.hash) || !report.searchPage.rows) errors.push("search: Enter did not open a results page with rows: " + JSON.stringify(report.searchPage));
 await go("#overview");
 {
   // the Config card: canonical, dashboard-state and context open where they point, each marked as leaving the page
-  const links = [...window.document.querySelectorAll("main .kv a.ext")];
+  const links = [...window.document.querySelectorAll("main .ktw-kv a.ktw-ext")];
   const byText = Object.fromEntries(links.map((a) => [a.previousSibling?.textContent, a]));
   report.configLinks = Object.fromEntries(links.map((a) => [a.previousSibling?.textContent, a.getAttribute("href")]));
   for (const k of ["canonical", "context"]) if (!byText[k]) errors.push(`overview: the Config value ${k} is not a link`);
-  if (links.some((a) => !a.querySelector("svg.ext-icon") || a.target !== "_blank")) errors.push("overview: a Config link lacks the icon or opens in this tab");
+  if (links.some((a) => !a.querySelector("svg.ktw-ext-icon") || a.target !== "_blank")) errors.push("overview: a Config link lacks the icon or opens in this tab");
   const ctx = byText.context?.getAttribute("href") || "";
   const want = `${S.project.canonical.replace(/\/$/, "")}/tree/${encodeURIComponent(S.project.git?.branch || "HEAD")}/${[S.project.root, S.project.context].filter(Boolean).join("/").replace(/\/$/, "")}`;
   if (ctx !== want) errors.push(`overview: the context link is ${ctx}, expected ${want}`);
-  const cf = window.document.querySelector("main h3 a.config-file")?.getAttribute("href") || "";
+  const cf = window.document.querySelector("main h3 a.ktw-config-file")?.getAttribute("href") || "";
   const wantCf = `${S.project.canonical.replace(/\/$/, "")}/blob/${encodeURIComponent(S.project.git?.branch || "HEAD")}/${S.project.root ? S.project.root + "/" : ""}.keep-the-why`;
   if (cf !== wantCf) errors.push(`overview: the .keep-the-why link is ${cf}, expected ${wantCf}`);
 }
-report.defaultMiniGraph = window.document.querySelectorAll("#details .mini canvas").length;
+report.defaultMiniGraph = window.document.querySelectorAll("#details .ktw-mini canvas").length;
 // unknown evidence is its own axis: the strip counts every entry in force with Evidence unknown, open questions included
 {
   const want = S.entries.filter((e) => e.evidence === "unknown" && e.status !== "superseded").length;
-  const stat = [...window.document.querySelectorAll("#strip a.stat")].find((a) => /unknown evidence/.test(a.textContent));
+  const stat = [...window.document.querySelectorAll("#strip a.ktw-stat")].find((a) => /unknown evidence/.test(a.textContent));
   report.unknownEvidence = stat?.textContent;
   if (!stat || parseInt(stat.textContent, 10) !== want) errors.push(`strip: unknown evidence shows ${stat?.textContent}, the state has ${want}`);
 }
@@ -207,7 +207,7 @@ if (/\bnull\b/.test(window.document.getElementById("project-title").textContent 
 { // the live indicator sits in the status bar, beside the state monitor, and says in a word what it means
   const live = window.document.querySelector("#statusbar #live");
   if (!live) errors.push("live: no indicator in the status bar");
-  else if (live.querySelector(".live-label")?.textContent !== "export" || !live.classList.contains("export")) errors.push(`live: an export should read "export", got "${live.textContent}"`);
+  else if (live.querySelector(".live-label")?.textContent !== "export" || !live.classList.contains("ktw-export")) errors.push(`live: an export should read "export", got "${live.textContent}"`);
   if (window.document.querySelector(".topbar #live")) errors.push("live: still in the top bar");
   if (!window.document.querySelector(".topbar #search-results + #globe-btn")) errors.push("globe: the button should sit right of the search");
 }
@@ -222,7 +222,7 @@ if (S.project.git?.available && /^github\.com\//.test(S.project.git.remote || ""
 {
   // a link to a place is a real anchor whose plain click moves through nav; a modified click is left to the browser
   await go(`#entry/${encodeURIComponent(S.entries[0].id)}`);
-  const crumb = main.querySelector(".crumbs a[href='#overview']");
+  const crumb = main.querySelector(".ktw-crumbs a[href='#overview']");
   const click = (opts) => { const ev = new window.MouseEvent("click", { bubbles: true, cancelable: true, button: 0, ...opts }); crumb.dispatchEvent(ev); return ev.defaultPrevented; };
   report.navLink = { href: crumb?.getAttribute("href"), ctrlLeftToBrowser: crumb ? !click({ ctrlKey: true }) : null, plainThroughNav: crumb ? click({}) : null };
   await tick(120);
@@ -236,7 +236,7 @@ if (S.project.git?.available && /^github\.com\//.test(S.project.git.remote || ""
 {
   // a switch the reader sets is kept under its name of old — ktw-<name> in localStorage — so nobody's settings reset
   await go("#graph");
-  const box = [...window.document.querySelectorAll(".graph-ui label")].find((l) => l.textContent.trim() === "motion")?.querySelector("input");
+  const box = [...window.document.querySelectorAll(".ktw-graph-ui label")].find((l) => l.textContent.trim() === "motion")?.querySelector("input");
   const before = window.localStorage.getItem("ktw-motion");
   if (box) { box.checked = !box.checked; box.dispatchEvent(new window.Event("change")); }
   report.prefs = { before, after: window.localStorage.getItem("ktw-motion"), checked: box?.checked };
@@ -247,7 +247,7 @@ await tick(50);
 report.search = window.document.querySelectorAll("#search-results a").length;
 const sel = window.document.getElementById("f-evidence"); sel.value = "inferred"; sel.dispatchEvent(new window.Event("change"));
 await tick(50);
-report.dimmedAfterFilter = window.document.querySelectorAll(".tree .leaf.dim").length;
+report.dimmedAfterFilter = window.document.querySelectorAll(".tree .leaf.ktw-dim").length;
 report.statusbar = window.document.getElementById("statusbar").textContent.trim().slice(0, 80);
 console.log(JSON.stringify(report, null, 1));
 console.log("ERRORS:", errors.length); for (const e of errors) console.log("  " + e);

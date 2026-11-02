@@ -1,0 +1,23 @@
+/* Host A's theme: every token the views read set to colours of its own (a light, warm theme), so a view that
+   still read a dashboard variable would show the dashboard's dark colour here and stand out. Host B (.plain)
+   sets none and gets the views' fallbacks. */
+#host-a {
+  --ktw-bg: #fffdf7; --ktw-surface: #f7f2e7; --ktw-surface2: #efe7d6; --ktw-line: #d9cdb4;
+  --ktw-fg: #2b2620; --ktw-fg2: #5b5246; --ktw-fg3: #8a7f70;
+  --ktw-accent: #b5492b; --ktw-accent2: #c4612f;
+  --ktw-ok: #2f7d4f; --ktw-warn: #a8740f; --ktw-bad: #b03a2e; --ktw-info: #2c6e9b; --ktw-muted: #7d7468;
+  --ktw-confirmed: #2f7d4f; --ktw-inferred: #a8740f; --ktw-unknown: #b03a2e;
+  --ktw-status-active: #b5492b; --ktw-status-superseded: #9a9183; --ktw-status-open: #2c6e9b;
+  --ktw-status-needs-review: #a8740f; --ktw-status-pending-confirmation: #8e4aa0;
+  --ktw-radius: 3px; --ktw-font: Georgia, serif; --ktw-mono: "Courier New", monospace;
+  --ktw-type-decision: #b5492b; --ktw-type-constraint: #2c6e9b; --ktw-type-workaround: #a8740f; --ktw-type-incident: #b03a2e;
+  --ktw-palette-0: #b5492b; --ktw-palette-1: #2c6e9b; --ktw-palette-2: #2f7d4f; --ktw-palette-3: #a8740f; --ktw-palette-4: #b03a2e;
+  --ktw-palette-5: #8e4aa0; --ktw-palette-6: #1f8a87; --ktw-palette-7: #7a7a1f; --ktw-palette-8: #c46a2f; --ktw-palette-9: #7d7468;
+  background: var(--ktw-bg);
+}
+.host { display: grid; grid-template-columns: 1fr 320px; grid-template-rows: auto 1fr; gap: 12px; padding: 16px; border-bottom: 4px double #999; }
+.host.plain { background: #1e1e22; }
+.host-nav { grid-column: 1 / -1; display: flex; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+.host-main { min-width: 0; }
+.host-aside { min-width: 0; display: flex; flex-direction: column; }
+.host-graph { position: relative; height: 420px; margin: 0; }

@@ -37,10 +37,10 @@ test("svgEl() and the Type glyphs set a style through the CSSOM too", () => {
   const real = dom.window.Element.prototype.setAttribute;
   dom.window.Element.prototype.setAttribute = function (name, value) { calls.push(name); return real.call(this, name, value); };
   try {
-    const n = ui.svgEl("rect", { class: "b", x: 1, style: "opacity:0.5" }, "t");
+    const n = ui.svgEl("rect", { class: "ktw-b", x: 1, style: "opacity:0.5" }, "t");
     assert.ok(!calls.includes("style"), `setAttribute was called for: ${calls.join(", ")}`);
     assert.equal(n.style.opacity, "0.5");
-    assert.equal(n.getAttribute("class"), "b");
+    assert.equal(n.getAttribute("class"), "ktw-b");
     assert.equal(n.namespaceURI, "http://www.w3.org/2000/svg");
     const glyph = ui.typeGlyphSvg("decision");
     assert.ok(glyph.querySelector("*"), "the glyph has its shapes");

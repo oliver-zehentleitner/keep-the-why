@@ -860,6 +860,8 @@ The held thought is the scene's: `scene.pin` holds its ids joined with `|`, `set
 
 **Rejected alternative:** moving the registry search into the library behind a provider method. That would have put a URL only this dashboard uses into a file every host loads, and the globe it belongs with stays in the host anyway. The Friends page stayed out of this step: it reads the host's graph builders and shares its helpers with the Thoughts page, which another step is moving at the same time.
 
+The Friends page followed in its own step (dashboard 0.11.33) and joined the friends in `ktw-family.js` as `family.friendsView(main, host)`. What only the dashboard has goes in with each call: `graph()`, `units(g)` (the friends grouped as the graph draws them, which depends on the graph's layers, the path, followed chains and the globe), `color(i)` and `load(list)`. The registry's citations of this project come through `cited()`, which returns `{ checked, ask }` once the graph is there. A host leaves `cited` out when it has no registry, and the page then shows no registry button. The registry stays the host's for the reason above: the backlink file is the dashboard's index of the public registry, not part of a project's own state. A hub host like Maity would turn it into requests to third-party hosts on behalf of its users. Making `cited` optional rather than required lets such a host show the Friends page without pretending to have a registry.
+
 ## One heading-anchor rule, the host's: the linter holds it, the page mirrors it, and an entry's id is its anchor
 
 **Id:** e8766afe-6da7-45ca-87ab-af4fd01ec891
@@ -937,3 +939,28 @@ The topic page, the entry page (its references both ways, and an Id this state d
 **Reason:** with no `style-src-attr` in the policy, a browser falls back along `style-src-attr` → `style-src` → `default-src`. Under `default-src 'self'` and nothing else, that is `'self'` without `'unsafe-inline'`, and a browser drops a style attribute set as markup. Writes to the element's style object are not covered by the policy. Maity's hub pages answer with that policy, so through `setAttribute` every colour and width the views set would be missing there. No test showed this because jsdom enforces no policy.
 
 **Rejected alternative:** asking hosts to allow `'unsafe-inline'` for styles. That would weaken a policy the hub chose for its own pages, to suit a library it vendors. Moving every inline style into classes was also rejected: a colour per author, family member or Status, and a width per count, are values, not a fixed set.
+## The views' stylesheet styles .ktw-* classes and reads --ktw-* tokens; a host loads its element defaults, then the views, then its own rules
+
+**Id:** 6e03c31b-7f53-4759-86e6-fa3d491ea92a
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** design rev 3.1 §6 (classes and tokens prefixed, a fallback for every token, the host maps its variables), approved by the maintainer; the series' lead, 2026-11-02, on the snapshot rule for the rename, literal tokens, `.ktw-root` as the host's duty, the base.css order and the Chromium check in CI; the two cascade cases below were found by the checks in the pull request
+**Revisit when:** a host needs the views at a specificity its own rules cannot meet, or the views' canvas colours have to follow a theme switch inside one page without a redraw
+**See:** dashboard.md#the-views-set-an-inline-style-through-the-elements-style-object-never-as-an-attribute-their-hosts-run-under-a-strict-content-security-policy — ed0c6c03-06e8-4263-a823-9b357b6c94e6 — as of 2026-11-02
+
+The views' classes carry the `ktw-` prefix, and their rules are `web/ktw-views.css`, listed under `styles` in `ktw-views.json`. The file styles `.ktw-*` classes only and reads `--ktw-*` custom properties only. Every read has a fallback, the dashboard's dark theme, which `ktw-core.js` also holds as `TOKEN_DEFAULTS` for the canvas. Bare elements (headings, links, code, buttons) are styled inside `:where(.ktw-root)`, a class the host puts on every container it mounts views into. `.ktw-aside` marks a side pane. The views' root sets the font family and the text colour, never the size.
+
+A host loads three stylesheets: its element defaults (the dashboard's `base.css`), then `ktw-views.css`, then its own rules (`style.css`). The dashboard sets every token as a literal equal to its own variable, in both themes. The canvas views read the tokens at the element they draw in, not at the page's root.
+
+**Reason:**
+- Without a prefix, a host's own `.pill` or `.card` (Maity has both) would meet the views' rules.
+- `:where()` keeps the scoped element rules at the weight of the bare `h1` or `button` they copy. As `.ktw-root button` they would have outweighed the views' class rules: a check in this step found the mini graph's corner buttons losing their colour that way.
+- The load order keeps every rule's place in the cascade. A host's element default loses a tie to a view's class rule, and a host's own rule wins a tie with a view's, so a host adjusts a view without `!important`. With the dashboard's bare `a:hover` loaded after the views, it would have won over `a.ktw-author`; it loads before them in `base.css`, where it stood before.
+- Literal tokens, because jsdom, which renders the snapshots and the canvas traces, does not resolve a `var()` chain in `getComputedStyle`.
+- Reading at the element, because a host may set the tokens on its container rather than on the root.
+
+**Rejected alternative:**
+- Unprefixed classes inside a scoping container (`.ktw-root .pill`): it raises every rule's weight and still collides with a host's `.pill` inside its own pages.
+- Mapping the tokens as `--ktw-fg: var(--fg)`: the shortest form, and the one the design named, but the canvas would read the text `var(--fg)` under jsdom.
+- Loading `ktw-views.css` after the host's stylesheet: a view would then override the host's own adjustments.

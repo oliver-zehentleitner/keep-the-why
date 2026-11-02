@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Keep the Why — dashboard</title>
 <link rel="icon" href="/static/icon.png">
+<link rel="stylesheet" href="/static/base.css">
+<!--ktw:styles-->
 <link rel="stylesheet" href="/static/style.css">
 <noscript><style>#app { display: none; }</style></noscript>
 </head>
@@ -27,12 +29,12 @@
       <img src="/static/wordmark.png" alt="Keep the Why" height="29" class="wordmark">
     </a>
     <select id="project-select" class="project-select" hidden title="Project"></select>
-    <div id="mode" class="mode" hidden title="Local reads clones and caches on this machine; public reads the family's published exports"><button type="button" data-mode="local">local</button><button type="button" data-mode="public">public</button><span id="mode-note" class="note"></span></div>
-    <div id="scope" class="mode" hidden title="What every view shows: this project, or the whole family tree merged"><button type="button" data-scope="project">this project</button><button type="button" data-scope="family">family</button></div>
+    <div id="mode" class="ktw-mode" hidden title="Local reads clones and caches on this machine; public reads the family's published exports"><button type="button" data-mode="local">local</button><button type="button" data-mode="public">public</button><span id="mode-note" class="ktw-note"></span></div>
+    <div id="scope" class="ktw-mode" hidden title="What every view shows: this project, or the whole family tree merged"><button type="button" data-scope="project">this project</button><button type="button" data-scope="family">family</button></div>
     <div class="project" id="project-title"></div>
     <div class="topbar-right">
       <input id="search" type="search" placeholder="Search entries…  ( / )" autocomplete="off" spellcheck="false">
-      <div id="search-results" class="search-results" hidden></div>
+      <div id="search-results" class="ktw-search-results" hidden></div>
       <a id="globe-btn" class="icon-btn globe-btn" href="#globe" title="The globe: every project in the Keep the Why registry, and the citations between them">🌐</a>
       <button id="theme" class="icon-btn" title="Toggle theme">◐</button>
       <span id="badges" class="icon-btn badges-btn" tabindex="0" title="">⚙<div class="badges-pop" id="badges-pop"></div></span>
@@ -42,7 +44,7 @@
   <nav class="sidebar" id="sidebar">
     <div class="nav">
       <a href="#overview" data-route="overview">Overview</a>
-      <a href="#queues" data-route="queues">Queues <span id="queue-count" class="count"></span></a>
+      <a href="#queues" data-route="queues">Queues <span id="queue-count" class="ktw-count"></span></a>
       <a href="#graph" data-route="graph">Graph</a>
       <a href="#thoughts" data-route="thoughts">Thoughts</a>
       <a href="#timeline" data-route="timeline">Timeline</a>
@@ -56,13 +58,13 @@
       <select id="f-status"><option value="">status: all</option></select>
       <select id="f-evidence"><option value="">evidence: all</option></select>
       <select id="f-author"><option value="">author: all</option></select>
-      <button id="f-clear" class="link-btn" hidden>clear</button>
+      <button id="f-clear" class="ktw-link-btn" hidden>clear</button>
     </div>
-    <div class="tree-head">Topics <span id="tree-count" class="count"></span></div>
+    <div class="tree-head">Topics <span id="tree-count" class="ktw-count"></span></div>
     <div class="tree" id="tree"></div>
   </nav>
-  <main class="main" id="main"></main>
-  <aside class="details" id="details"></aside>
+  <main class="main ktw-root" id="main"></main>
+  <aside class="details ktw-root ktw-aside" id="details"></aside>
   <footer class="statusbar" id="statusbar"></footer>
 </div>
 <!--ktw:views-->

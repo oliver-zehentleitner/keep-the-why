@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- the policy a host like Maity runs under: nothing from elsewhere, no inline script or style -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'">
+<title>Keep the Why views under a foreign host</title>
+<!-- the host's element defaults, then the views' stylesheet, then the host's own rules (docs/dashboard-views.md) -->
+<link rel="stylesheet" href="host-base.css">
+<link rel="stylesheet" href="../../../ktw_dashboard/web/ktw-views.css">
+<link rel="stylesheet" href="host.css">
+<script src="host.js" defer></script>
+</head>
+<body>
+<!-- Two hosts on one page, neither of them the dashboard's: their own layout, navigation (paths, not the
+     dashboard's hash), settings and provider. Host B sets no tokens and gets the views' fallbacks. -->
+<section class="host" id="host-a" data-host="a">
+  <nav class="host-nav"></nav>
+  <main class="host-main ktw-root"></main>
+  <aside class="host-aside ktw-root ktw-aside"></aside>
+</section>
+<section class="host plain" id="host-b" data-host="b">
+  <nav class="host-nav"></nav>
+  <main class="host-main ktw-root"></main>
+  <aside class="host-aside ktw-root ktw-aside"></aside>
+</section>
+<pre id="host-log" hidden></pre>
+</body>
+</html>

@@ -592,6 +592,53 @@ const TYPE_KINDS = ["decision", "constraint", "workaround", "incident"];
 const TYPE_TOKENS = { decision: "--ktw-type-decision", constraint: "--ktw-type-constraint", workaround: "--ktw-type-workaround", incident: "--ktw-type-incident" };
 const PALETTE_SIZE = 10;
 const paletteToken = (i) => `--ktw-palette-${((Math.trunc(i) % PALETTE_SIZE) + PALETTE_SIZE) % PALETTE_SIZE}`;
+// Every token the views read, with the value a host that sets none gets: the dashboard's dark theme. ktw-views.css
+// carries the same values as its var() fallbacks, the dashboard's style.css as its literals (test_views.py holds
+// the three equal). readToken reads one from a computed style, falling back here, so a canvas is never drawn in "".
+const TOKEN_DEFAULTS = Object.freeze({
+  "--ktw-bg": "#1e1e22",
+  "--ktw-surface": "#26262b",
+  "--ktw-surface2": "#2f2f36",
+  "--ktw-line": "#3a3a43",
+  "--ktw-fg": "#dcdce3",
+  "--ktw-fg2": "#a2a2ad",
+  "--ktw-fg3": "#6f6f7a",
+  "--ktw-accent": "#835bec",
+  "--ktw-accent2": "#a98cf5",
+  "--ktw-ok": "#4fbf7a",
+  "--ktw-warn": "#e0a83a",
+  "--ktw-bad": "#e0574f",
+  "--ktw-info": "#4aa3df",
+  "--ktw-muted": "#8b8b98",
+  "--ktw-confirmed": "#4fbf7a",
+  "--ktw-inferred": "#e0a83a",
+  "--ktw-unknown": "#e0574f",
+  "--ktw-status-active": "#835bec",
+  "--ktw-status-superseded": "#6f6f7a",
+  "--ktw-status-open": "#4aa3df",
+  "--ktw-status-needs-review": "#e0a83a",
+  "--ktw-status-pending-confirmation": "#d66fd6",
+  "--ktw-radius": "8px",
+  "--ktw-font": "-apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif",
+  "--ktw-mono": "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+  "--ktw-type-decision": "#835bec",
+  "--ktw-type-constraint": "#4aa3df",
+  "--ktw-type-workaround": "#e0a83a",
+  "--ktw-type-incident": "#e0574f",
+  "--ktw-palette-0": "#835bec",
+  "--ktw-palette-1": "#4aa3df",
+  "--ktw-palette-2": "#4fbf7a",
+  "--ktw-palette-3": "#e0a83a",
+  "--ktw-palette-4": "#e0574f",
+  "--ktw-palette-5": "#d66fd6",
+  "--ktw-palette-6": "#3fbfbf",
+  "--ktw-palette-7": "#b0b04a",
+  "--ktw-palette-8": "#ff8c5a",
+  "--ktw-palette-9": "#8b8b98",
+});
+const readToken = (style, name) => style.getPropertyValue(name).trim() || TOKEN_DEFAULTS[name] || "";
+// a Status or an Evidence value as a CSS colour: var(--ktw-status-open, …), var(--ktw-confirmed, …)
+const valueColor = (v) => { const t = TOKEN_DEFAULTS[`--ktw-status-${v}`] ? `--ktw-status-${v}` : `--ktw-${v}`; return `var(${t}, ${TOKEN_DEFAULTS[t] || "currentColor"})`; };
 // the first of the four kinds an entry's Type names; null when none
 const typeKind = (e) => (e.type || []).map((t) => typeName(t)).find((t) => TYPE_KINDS.includes(t)) || null;
 // the Monday that starts the week of a day
@@ -825,6 +872,7 @@ const topicTitle = (st, file) => st.topics?.find((t) => t.file === file)?.title 
 
 const KTW = (root.KeepTheWhy = root.KeepTheWhy || {});
 KTW.core = Object.freeze({
+  TOKEN_DEFAULTS, readToken, valueColor,
   sameCanonical, exportStateUrl, exportVerdict, resolveSee, layoutTick, settleLayout, NO_FILTER, filterActive, entryMatches, fkey, repoLabel, topicTitle,
   esc, plural, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug,
   hostAnchor, hostFileLink, hostTreeLink, HOSTS, hostOf, canonicalOf, ownerOf, projectLabel,

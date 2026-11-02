@@ -3,13 +3,13 @@
 ## #main
 <h1>
   "Timeline"
-<div class="timeline-head">
-  <div class="timeline-head-text">
-    <p class="sub">
+<div class="ktw-timeline-head">
+  <div class="ktw-timeline-head-text">
+    <p class="ktw-sub">
       "The project day by day. The stage shows what existed on the day shown, the graph beside it the same; the playhead sets the day. The card shows the entry that appeared last by then, or the one clicked on the stage. The bars count the entries by the month their heading first appeared in Git, stacked by author, grey ticks for entries superseded that month."
-    <div class="timeline">
+    <div class="ktw-timeline">
       <svg viewBox="0 0 474 130">
-        <g class="axis">
+        <g class="ktw-axis">
           <line x1="34" x2="474" y1="98" y2="98">
           <text text-anchor="end" x="28" y="101">
             "0"
@@ -27,49 +27,49 @@
             "2026-05"
           <text text-anchor="middle" x="419" y="120">
             "2026-06"
-        <rect class="b" fill="#835bec" height="40" rx="2" width="108" x="35" y="58">
+        <rect class="ktw-b" fill="#835bec" height="40" rx="2" width="108" x="35" y="58">
           <title>
             "2026-03 · Alice Example: 2 — click: that month's entries, and the day moves to its end"
-        <rect class="b" fill="#4fbf7a" height="40" rx="2" width="108" x="35" y="18">
+        <rect class="ktw-b" fill="#4fbf7a" height="40" rx="2" width="108" x="35" y="18">
           <title>
             "2026-03 · Bob Example: 2 — click: that month's entries, and the day moves to its end"
-        <rect class="b" fill="#835bec" height="60" rx="2" width="108" x="145" y="38">
+        <rect class="ktw-b" fill="#835bec" height="60" rx="2" width="108" x="145" y="38">
           <title>
             "2026-04 · Alice Example: 3 — click: that month's entries, and the day moves to its end"
-        <rect class="b" fill="#4aa3df" height="80" rx="2" width="108" x="255" y="18">
+        <rect class="ktw-b" fill="#4aa3df" height="80" rx="2" width="108" x="255" y="18">
           <title>
             "2026-05 · Carol Example: 4 — click: that month's entries, and the day moves to its end"
-        <rect class="sup" height="6" width="3" x="255" y="104">
-        <rect class="b" fill="#4fbf7a" height="20" rx="2" width="108" x="365" y="78">
+        <rect class="ktw-sup" height="6" width="3" x="255" y="104">
+        <rect class="ktw-b" fill="#4fbf7a" height="20" rx="2" width="108" x="365" y="78">
           <title>
             "2026-06 · Bob Example: 1 — click: that month's entries, and the day moves to its end"
-        <line class="now" x1="196.33333333333334" x2="196.33333333333334" y1="14" y2="112">
-        <text class="now-label" text-anchor="start" x="200.33333333333334" y="9">
+        <line class="ktw-now" x1="196.33333333333334" x2="196.33333333333334" y1="14" y2="112">
+        <text class="ktw-now-label" text-anchor="start" x="200.33333333333334" y="9">
           "2026-04-15"
-    <div class="legend">
+    <div class="ktw-legend">
       <span>
-        <i class="sw" style="background: rgb(131, 91, 236);">
+        <i class="ktw-sw" style="background: rgb(131, 91, 236);">
         "Alice Example"
       <span>
-        <i class="sw" style="background: rgb(74, 163, 223);">
+        <i class="ktw-sw" style="background: rgb(74, 163, 223);">
         "Carol Example"
       <span>
-        <i class="sw" style="background: rgb(79, 191, 122);">
+        <i class="ktw-sw" style="background: rgb(79, 191, 122);">
         "Bob Example"
       <span>
-        <i class="sw" style="background: var(--superseded);">
+        <i class="ktw-sw" style="background: var(--ktw-status-superseded, #6f6f7a);">
         "superseded that month"
-    <div class="playhead">
-      <button class="play-jump" title="the first day" type="button">
+    <div class="ktw-playhead">
+      <button class="ktw-play-jump" title="the first day" type="button">
         "⏮"
-      <button class="play-btn" title="play the days — space" type="button">
+      <button class="ktw-play-btn" title="play the days — space" type="button">
         "▶"
-      <button class="play-jump" title="today" type="button">
+      <button class="ktw-play-jump" title="today" type="button">
         "⏭"
-      <input class="playhead-range" max="105" min="0" step="1" title="the day the page shows — drag, or ← → (a day), shift ← → (a week), space plays" type="range">
-      <b class="playhead-day">
+      <input class="ktw-playhead-range" max="105" min="0" step="1" title="the day the page shows — drag, or ← → (a day), shift ← → (a week), space plays" type="range">
+      <b class="ktw-playhead-day">
         "2026-04-15"
-      <select class="play-speed" title="how fast the days pass">
+      <select class="ktw-play-speed" title="how fast the days pass">
         <option value="entry">
           "1 entry /s"
         <option value="0.041666666666666664">
@@ -84,120 +84,120 @@
           "1 month /s"
         <option value="120">
           "4 months /s"
-      <span class="playhead-counts">
+      <span class="ktw-playhead-counts">
         "7 entries by then"
         "· 4 active"
         "· 3 in question"
-  <div class="stage-card-slot">
-    <div class="stage-card">
-      <div class="stage-card-head">
-        <span class="note mono">
+  <div class="ktw-stage-card-slot">
+    <div class="ktw-stage-card">
+      <div class="ktw-stage-card-head">
+        <span class="ktw-note ktw-mono">
           "2026-04-15 09:15 ·"
-          <a class="card-topic" href="#topic/api.md" title="open the topic's page">
+          <a class="ktw-card-topic" href="#topic/api.md" title="open the topic's page">
             "API"
-        <span class="pill">
+        <span class="ktw-pill">
           "latest by then"
       <h3>
         <a href="#entry/f5383416-90c8-4c5c-affc-01c3c67d0518" title="read the whole entry">
           "Pagination uses opaque cursors"
-      <div class="pills">
-        <span class="pill type">
+      <div class="ktw-pills">
+        <span class="ktw-pill ktw-type">
           "decision"
-        <span class="pill status-active">
+        <span class="ktw-pill ktw-status-active">
           "active"
-        <span class="pill ev-confirmed">
+        <span class="ktw-pill ktw-ev-confirmed">
           "confirmed"
-      <div class="body stage-card-body">
+      <div class="ktw-body ktw-stage-card-body">
         <p>
           "Cursors are opaque strings; offsets are not offered."
-        <div class="label rejected">
+        <div class="ktw-label ktw-rejected">
           <b>
             "Rejected alternative"
           <p>
             "page numbers — they skip and repeat rows while the table changes underneath."
-      <div class="stage-card-foot">
-        <span class="note">
+      <div class="ktw-stage-card-foot">
+        <span class="ktw-note">
           "recorded by Alice Example"
         <a href="#entry/f5383416-90c8-4c5c-affc-01c3c67d0518">
           "open ›"
-<div class="stage-wrap" data-settled style="height: 473px;">
-  <canvas class="stage" data-lanes="Sync | Storage | API" height="0" width="0">
-  <div class="stage-tip" hidden>
-  <span class="stage-seg stage-arrange" title="where a card stands: where its node stands in the graph beside (the stage is the graph, time pulled out as depth), or in a lane per topic">
-    <button class="on" type="button">
+<div class="ktw-stage-wrap" data-settled style="height: 473px;">
+  <canvas class="ktw-stage" data-lanes="Sync | Storage | API" height="0" width="0">
+  <div class="ktw-stage-tip" hidden>
+  <span class="ktw-stage-seg ktw-stage-arrange" title="where a card stands: where its node stands in the graph beside (the stage is the graph, time pulled out as depth), or in a lane per topic">
+    <button class="ktw-on" type="button">
       "as the graph"
     <button class type="button">
       "by topic"
-  <span class="stage-seg stage-foreign" title="other repositories' entries — friends, family, path: only the ones a chain of See or Superseded by joins to this project's, every one the graph holds, or none">
-    <span class="seg-label">
+  <span class="ktw-stage-seg ktw-stage-foreign" title="other repositories' entries — friends, family, path: only the ones a chain of See or Superseded by joins to this project's, every one the graph holds, or none">
+    <span class="ktw-seg-label">
       "others"
-    <button class="on" type="button">
+    <button class="ktw-on" type="button">
       "linked"
     <button class type="button">
       "all"
     <button class type="button">
       "none"
-  <button class="stage-reset" title="let go of the held thought and card — every card alike again — and reset the view (Esc)" type="button">
+  <button class="ktw-stage-reset" title="let go of the held thought and card — every card alike again — and reset the view (Esc)" type="button">
     "reset"
-<div class="stage-legend">
-  <span class="grp">
+<div class="ktw-stage-legend">
+  <span class="ktw-grp">
     <span style="color: rgb(131, 91, 236);">
-      <svg aria-hidden="true" class="type-glyph" fill="currentColor" height="11" viewBox="0 0 12 12" width="11">
+      <svg aria-hidden="true" class="ktw-type-glyph" fill="currentColor" height="11" viewBox="0 0 12 12" width="11">
         <path d="M6 1 11 6 6 11 1 6z">
-      <span style="color: var(--fg2);">
+      <span style="color: var(--ktw-fg2, #a2a2ad);">
         "decision"
     <span style="color: rgb(74, 163, 223);">
-      <svg aria-hidden="true" class="type-glyph" fill="currentColor" height="11" viewBox="0 0 12 12" width="11">
+      <svg aria-hidden="true" class="ktw-type-glyph" fill="currentColor" height="11" viewBox="0 0 12 12" width="11">
         <path d="M1.5 1.5h9v9h-9z" fill="none" stroke-width="1.4" stroke="currentColor">
         <path d="M1.5 5h9v2h-9z">
-      <span style="color: var(--fg2);">
+      <span style="color: var(--ktw-fg2, #a2a2ad);">
         "constraint"
     <span style="color: rgb(224, 168, 58);">
-      <svg aria-hidden="true" class="type-glyph" fill="currentColor" height="11" viewBox="0 0 12 12" width="11">
+      <svg aria-hidden="true" class="ktw-type-glyph" fill="currentColor" height="11" viewBox="0 0 12 12" width="11">
         <path d="M1.5 1.5h6l3 3v6h-9z" fill="none" stroke-dasharray="2 1.5" stroke-width="1.4" stroke="currentColor">
         <path d="M7.5 1.5v3h3" fill="none" stroke-width="1.4" stroke="currentColor">
-      <span style="color: var(--fg2);">
+      <span style="color: var(--ktw-fg2, #a2a2ad);">
         "workaround"
     <span style="color: rgb(224, 87, 79);">
-      <svg aria-hidden="true" class="type-glyph" fill="currentColor" height="11" viewBox="0 0 12 12" width="11">
+      <svg aria-hidden="true" class="ktw-type-glyph" fill="currentColor" height="11" viewBox="0 0 12 12" width="11">
         <path d="M6 1.2 11.2 10.8H.8z" fill="none" stroke-width="1.4" stroke="currentColor">
         <path d="M5.3 4.5h1.4v3.2H5.3zM5.3 8.5h1.4v1.3H5.3z">
-      <span style="color: var(--fg2);">
+      <span style="color: var(--ktw-fg2, #a2a2ad);">
         "incident"
     <span>
-      <i class="sw " style="color: var(--muted);">
+      <i class="ktw-sw " style="color: var(--ktw-muted, #8b8b98);">
       <span>
         "no type"
-  <span class="grp" title="Evidence is the fill">
+  <span class="ktw-grp" title="Evidence is the fill">
     <span>
-      <i class="sw solid" style="color: var(--fg2);">
+      <i class="ktw-sw ktw-solid" style="color: var(--ktw-fg2, #a2a2ad);">
       "confirmed"
     <span>
-      <i class="sw hatch" style="color: var(--fg2);">
+      <i class="ktw-sw ktw-hatch" style="color: var(--ktw-fg2, #a2a2ad);">
       "inferred"
     <span>
-      <i class="sw " style="color: var(--fg2);">
+      <i class="ktw-sw " style="color: var(--ktw-fg2, #a2a2ad);">
       "unknown"
-  <span class="grp" title="Status is the edge">
+  <span class="ktw-grp" title="Status is the edge">
     <span>
-      <i class="sw dashed" style="color: var(--fg3);">
+      <i class="ktw-sw ktw-dashed" style="color: var(--ktw-fg3, #6f6f7a);">
       "superseded"
     <span>
-      <i class="sw ring" style="color: var(--fg2);">
+      <i class="ktw-sw ktw-ring" style="color: var(--ktw-fg2, #a2a2ad);">
       "open · needs review · pending"
-<p class="note stage-note">
-  <span class="stage-hint">
+<p class="ktw-note ktw-stage-note">
+  <span class="ktw-stage-hint">
     "On the stage: wheel — a day forward or back, shift for a week · drag — look around · ctrl+wheel — zoom · double-click — reset the view · click a card to read it, the floor to let go. The thoughts beside: point at one to light its chain here and in the graph."
-  <span class="stage-hint-touch">
+  <span class="ktw-stage-hint-touch">
     "On the stage: drag — look around · pinch — zoom · tap a card to read it, the floor to let go. The slider sets the day."
-<div class="entry-list" style="margin-top: 16px;">
+<div class="ktw-entry-list" style="margin-top: 16px;">
 
 ## #details
-<div class="pane-width" title="the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details">
-  <span class="label">
+<div class="ktw-pane-width" title="the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details">
+  <span class="ktw-label">
     "Width"
-  <span class="mini-width">
-    <button class="on" type="button">
+  <span class="ktw-mini-width">
+    <button class="ktw-on" type="button">
       "1×"
     <button class type="button">
       "2×"
@@ -208,76 +208,76 @@
 <div id="thoughts">
   <h3>
     "Thoughts (1)"
-    <span class="thought-min" title="entries a thought has at least — from one link up to the longest chain here">
+    <span class="ktw-thought-min" title="entries a thought has at least — from one link up to the longest chain here">
       "from"
       <button class type="button">
         "2"
       <button class type="button">
         "3"
-      <button class="on" type="button">
+      <button class="ktw-on" type="button">
         "4"
-  <p class="note">
+  <p class="ktw-note">
     "Chains of linked entries — See and Superseded by — first entry first. Point at one to light its path, click to hold it."
-  <div class="thought  ">
-    <button class="thought-head" title="Writes retry three times on a busy lock\n→ The API is versioned in the path\n→ Pagination uses opaque cursors\n→ Errors carry a stable code beside the message" type="button">
-      <span class="count">
+  <div class="ktw-thought  ">
+    <button class="ktw-thought-head" title="Writes retry three times on a busy lock\n→ The API is versioned in the path\n→ Pagination uses opaque cursors\n→ Errors carry a stable code beside the message" type="button">
+      <span class="ktw-count">
         "4"
       "Writes retry three times on a bu… → Errors carry a stable code besid…"
-      <span class="pill warn-pill" title="its first entry's Evidence is unknown: where later entries depend on it, they depend on a reason nobody confirmed">
+      <span class="ktw-pill ktw-warn-pill" title="its first entry's Evidence is unknown: where later entries depend on it, they depend on a reason nobody confirmed">
         "starts unknown"
-      <span class="pill warn-pill" title="step 1: open\nstep 2: pending-confirmation\n3 later steps are linked after it">
+      <span class="ktw-pill ktw-warn-pill" title="step 1: open\nstep 2: pending-confirmation\n3 later steps are linked after it">
         "step in question"
-    <a class="thought-read" href="#thought/682e7ab6-125c-459f-9c67-a3c6b217d8ef,cc7ef11a-f83d-4d95-b45c-d43639003f41,f5383416-90c8-4c5c-affc-01c3c67d0518,f5ac4f25-a9f1-490a-a4ca-62d5f0db4a06" title="read the whole thought — every entry in order, in full">
+    <a class="ktw-thought-read" href="#thought/682e7ab6-125c-459f-9c67-a3c6b217d8ef,cc7ef11a-f83d-4d95-b45c-d43639003f41,f5383416-90c8-4c5c-affc-01c3c67d0518,f5ac4f25-a9f1-490a-a4ca-62d5f0db4a06" title="read the whole thought — every entry in order, in full">
       "read ›"
 <h3>
   "Graph"
-<p class="note">
+<p class="ktw-note">
   "What existed on the day shown, with the status it had then."
-<div class="mini tall">
+<div class="ktw-mini ktw-tall">
   <canvas height="0" width="0">
-  <span class="mini-seg">
-    <span class="mini-title">
+  <span class="ktw-mini-seg">
+    <span class="ktw-mini-title">
       "graph"
-  <span class="mini-hint">
+  <span class="ktw-mini-hint">
     "hover · click"
-  <span class="mini-corner">
-    <button class="mini-corner-btn" title="fit the view: everything in the box" type="button">
+  <span class="ktw-mini-corner">
+    <button class="ktw-mini-corner-btn" title="fit the view: everything in the box" type="button">
       "fit"
-    <button class="mini-corner-btn" title="let go of the held thought — every node alike again (Esc, on a page without a reset of its own)" type="button">
+    <button class="ktw-mini-corner-btn" title="let go of the held thought — every node alike again (Esc, on a page without a reset of its own)" type="button">
       "reset"
-  <button class="mini-open" title="open the full graph — the same level, centred on what is shown here" type="button">
+  <button class="ktw-mini-open" title="open the full graph — the same level, centred on what is shown here" type="button">
     "⤢ full graph"
-  <button class="mini-gear" title="the graph's switches — the same as in the full graph" type="button">
+  <button class="ktw-mini-gear" title="the graph's switches — the same as in the full graph" type="button">
     "⚙"
-  <div class="mini-filters graph-ui" hidden>
-    <span class="ui-group">
+  <div class="ktw-mini-filters ktw-graph-ui" hidden>
+    <span class="ktw-ui-group">
       <label>
         <input checked type="checkbox">
         "entries"
       <label title="the names of this project's topics and entries — topics, and entries when zoomed in">
         <input checked type="checkbox">
         "labels"
-    <span class="ui-group cited-ctl">
+    <span class="ktw-ui-group ktw-cited-ctl">
       <label title="who in the Keep the Why registry cites this project — the registry's backlink file, https://keepthewhy.com/registry/backlinks/github.com/acme/widget.json, loaded on the click and not remembered. Citations from repositories outside the registry are not in it.">
         <input type="checkbox">
         "cited by"
-    <span class="ui-group">
+    <span class="ktw-ui-group">
       <label title="the projects of one owner around a node for the owner — only an owner with more than one project in the graph; the node opens the owner's page">
         <input type="checkbox">
         "owners"
-    <span class="ui-group">
+    <span class="ktw-ui-group">
       <label title="the path's projects in the graph — the projects you came through; unchecked they are hidden, not forgotten (the path bar discards)">
         <input checked type="checkbox">
         "path"
-    <span class="ui-group">
+    <span class="ktw-ui-group">
       <label title="the graph turns very slowly; it stops while you point at it">
         <input checked type="checkbox">
         "motion"
-    <span class="ui-group">
-      <button class="link-btn" title="every switch in this bar on">
+    <span class="ktw-ui-group">
+      <button class="ktw-link-btn" title="every switch in this bar on">
         "select all"
-      <button class="link-btn" title="every switch in this bar off — the project's topics alone">
+      <button class="ktw-link-btn" title="every switch in this bar off — the project's topics alone">
         "unselect all"
-    <span class="ui-group">
-      <button class="link-btn graph-reset" title="fit the graph and let go of every node you placed">
+    <span class="ktw-ui-group">
+      <button class="ktw-link-btn ktw-graph-reset" title="fit the graph and let go of every node you placed">
         "reset"

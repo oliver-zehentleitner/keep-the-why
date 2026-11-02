@@ -1,128 +1,128 @@
 # #topic/storage.md
 
 ## #main
-<div class="crumbs">
+<div class="ktw-crumbs">
   <a href="#overview">
     "Overview"
   "/"
   "storage.md"
-  <button class="share-btn" title="copy a link to this topic — the project's published dashboard:\nhttps://acme.example/keep-the-why-dashboard/#topic/storage.md" type="button">
+  <button class="ktw-share-btn" title="copy a link to this topic — the project's published dashboard:\nhttps://acme.example/keep-the-why-dashboard/#topic/storage.md" type="button">
     "⧉ copy link"
-  <a class="ext share-btn source-link" href="https://github.com/acme/widget/blob/main/context/storage.md" rel="noopener" target="_blank">
+  <a class="ktw-ext ktw-share-btn ktw-source-link" href="https://github.com/acme/widget/blob/main/context/storage.md" rel="noopener" target="_blank">
     "open source"
-    <svg aria-hidden="true" class="ext-icon" viewBox="0 0 24 24">
+    <svg aria-hidden="true" class="ktw-ext-icon" viewBox="0 0 24 24">
       <path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z">
 <h1>
   "Storage"
-<p class="sub">
+<p class="ktw-sub">
   "locks, retries and where files live"
-<div class="grid2">
-  <div class="card">
+<div class="ktw-grid2">
+  <div class="ktw-card">
     <h3>
       "Status"
-    <div class="bars">
-      <span class="k">
+    <div class="ktw-bars">
+      <span class="ktw-k">
         "active"
-      <div class="bar">
-        <i class="active" style="width: 75%;">
-      <span class="v">
+      <div class="ktw-bar">
+        <i class="ktw-active" style="width: 75%;">
+      <span class="ktw-v">
         "3"
-      <span class="k">
+      <span class="ktw-k">
         "open"
-      <div class="bar">
-        <i class="open" style="width: 25%;">
-      <span class="v">
+      <div class="ktw-bar">
+        <i class="ktw-open" style="width: 25%;">
+      <span class="ktw-v">
         "1"
-  <div class="card">
+  <div class="ktw-card">
     <h3>
       "Evidence"
-    <div class="bars">
-      <span class="k">
+    <div class="ktw-bars">
+      <span class="ktw-k">
         "confirmed"
-      <div class="bar">
-        <i class="confirmed" style="width: 25%;">
-      <span class="v">
+      <div class="ktw-bar">
+        <i class="ktw-confirmed" style="width: 25%;">
+      <span class="ktw-v">
         "1"
-      <span class="k">
+      <span class="ktw-k">
         "inferred"
-      <div class="bar">
-        <i class="inferred" style="width: 25%;">
-      <span class="v">
+      <div class="ktw-bar">
+        <i class="ktw-inferred" style="width: 25%;">
+      <span class="ktw-v">
         "1"
-      <span class="k">
+      <span class="ktw-k">
         "unknown"
-      <div class="bar">
-        <i class="unknown" style="width: 50%;">
-      <span class="v">
+      <div class="ktw-bar">
+        <i class="ktw-unknown" style="width: 50%;">
+      <span class="ktw-v">
         "2"
 <h2>
   "Entries"
-<div class="entry-list">
-  <a class="row " href="#entry/682e7ab6-125c-459f-9c67-a3c6b217d8ef">
-    <div class="rt">
+<div class="ktw-entry-list">
+  <a class="ktw-row " href="#entry/682e7ab6-125c-459f-9c67-a3c6b217d8ef">
+    <div class="ktw-rt">
       <span>
         "Writes retry three times on a busy lock"
-      <span class="pill type">
+      <span class="ktw-pill ktw-type">
         "workaround"
-      <span class="pill status-open">
+      <span class="ktw-pill ktw-status-open">
         "open"
-      <span class="pill ev-unknown">
+      <span class="ktw-pill ktw-ev-unknown">
         "unknown"
-    <div class="rs">
+    <div class="ktw-rs">
       "Writes retry three times when the lock is busy, with no backoff."
-    <div class="rm">
+    <div class="ktw-rm">
       "Storage · Bob Example · 2026-03-20"
-  <a class="row " href="#entry/190b1989-a347-471b-8463-4f83b3cfff92">
-    <div class="rt">
+  <a class="ktw-row " href="#entry/190b1989-a347-471b-8463-4f83b3cfff92">
+    <div class="ktw-rt">
       <span>
         "The 2026-03 lock storm"
-      <span class="pill type">
+      <span class="ktw-pill ktw-type">
         "incident"
-      <span class="pill status-active">
+      <span class="ktw-pill ktw-status-active">
         "active"
-      <span class="pill ev-confirmed">
+      <span class="ktw-pill ktw-ev-confirmed">
         "confirmed"
-    <div class="rs">
+    <div class="ktw-rs">
       "A burst of retries held the lock for minutes and stalled the sync."
-    <div class="rm">
+    <div class="ktw-rm">
       "Storage · Bob Example · 2026-03-20 · touched 2026-05-10"
-  <a class="row " href="#entry/c1c37ec2-933b-4ca3-8c16-0a61f908f4bd">
-    <div class="rt">
+  <a class="ktw-row " href="#entry/c1c37ec2-933b-4ca3-8c16-0a61f908f4bd">
+    <div class="ktw-rt">
       <span>
         "Temporary files live beside the database"
-      <span class="pill type" title="undefined — no category fits a file location">
+      <span class="ktw-pill ktw-type" title="undefined — no category fits a file location">
         "undefined"
-      <span class="pill status-active">
+      <span class="ktw-pill ktw-status-active">
         "active"
-      <span class="pill ev-unknown">
+      <span class="ktw-pill ktw-ev-unknown">
         "unknown"
-    <div class="rs">
+    <div class="ktw-rs">
       "Temporary files are written next to the database file, not to the system's temp directory."
-    <div class="rm">
+    <div class="ktw-rm">
       "Storage · Carol Example · 2026-05-10"
-  <a class="row " href="#entry/050ea108-42f3-4f0f-9ea9-dd2156f206d7">
-    <div class="rt">
+  <a class="ktw-row " href="#entry/050ea108-42f3-4f0f-9ea9-dd2156f206d7">
+    <div class="ktw-rt">
       <span>
         "Pasted <b>markup</b> stays text"
-      <span class="pill type">
+      <span class="ktw-pill ktw-type">
         "constraint"
-      <span class="pill status-active">
+      <span class="ktw-pill ktw-status-active">
         "active"
-      <span class="pill ev-inferred">
+      <span class="ktw-pill ktw-ev-inferred">
         "inferred"
-    <div class="rs">
+    <div class="ktw-rs">
       "a log line that reads <b>bold</b> must reach the reader as written, and [a link](javascript:alert(4)) or [another](data:text/html,x) must not become one."
-    <div class="rm">
+    <div class="ktw-rm">
       "Storage · Carol Example · 2026-05-10"
 
 ## #details
-<div class="pane-width" title="the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details">
-  <span class="label">
+<div class="ktw-pane-width" title="the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details">
+  <span class="ktw-label">
     "Width"
-  <span class="mini-width">
+  <span class="ktw-mini-width">
     <button class type="button">
       "1×"
-    <button class="on" type="button">
+    <button class="ktw-on" type="button">
       "2×"
     <button class type="button">
       "3×"
@@ -130,42 +130,42 @@
       "½"
 <h3>
   "Topic"
-<div class="kv">
-  <span class="k">
+<div class="ktw-kv">
+  <span class="ktw-k">
     "file"
-  <span class="v mono">
+  <span class="ktw-v ktw-mono">
     "storage.md"
-  <span class="k">
+  <span class="ktw-k">
     "entries"
-  <span class="v">
+  <span class="ktw-v">
     "4"
 <h3>
   "References out (1)"
-<a class="backlink" href="#topic/sync.md">
+<a class="ktw-backlink" href="#topic/sync.md">
   "Sync"
 <h3>
   "Referenced by (2)"
-<a class="backlink" href="#topic/api.md">
+<a class="ktw-backlink" href="#topic/api.md">
   "API"
-<a class="backlink" href="#topic/sync.md">
+<a class="ktw-backlink" href="#topic/sync.md">
   "Sync"
 <h3>
   "Graph"
-<div class="mini tall">
+<div class="ktw-mini ktw-tall">
   <canvas height="0" width="0">
-  <span class="mini-seg">
-    <button class="on" title="this entry's or topic's neighbourhood" type="button">
+  <span class="ktw-mini-seg">
+    <button class="ktw-on" title="this entry's or topic's neighbourhood" type="button">
       "near"
     <button class title="the whole project" type="button">
       "project"
-  <span class="mini-hint">
+  <span class="ktw-mini-hint">
     "click to open"
-  <span class="mini-corner">
-    <button class="mini-corner-btn" title="fit the view: everything in the box" type="button">
+  <span class="ktw-mini-corner">
+    <button class="ktw-mini-corner-btn" title="fit the view: everything in the box" type="button">
       "fit"
-    <button class="mini-corner-btn" title="let go of the held thought — every node alike again (Esc, on a page without a reset of its own)" type="button">
+    <button class="ktw-mini-corner-btn" title="let go of the held thought — every node alike again (Esc, on a page without a reset of its own)" type="button">
       "reset"
-  <button class="mini-open" title="open the full graph — the same level, centred on what is shown here" type="button">
+  <button class="ktw-mini-open" title="open the full graph — the same level, centred on what is shown here" type="button">
     "⤢ full graph"
   "null"
-  <div class="mini-filters graph-ui" hidden>
+  <div class="ktw-mini-filters ktw-graph-ui" hidden>

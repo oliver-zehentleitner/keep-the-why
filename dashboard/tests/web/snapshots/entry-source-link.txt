@@ -1,64 +1,64 @@
 # #entry/f5ac4f25-a9f1-490a-a4ca-62d5f0db4a06
 
 ## #main
-<div class="reader active">
-  <div class="crumbs">
+<div class="ktw-reader ktw-active">
+  <div class="ktw-crumbs">
     <a href="#overview">
       "Overview"
     "/"
     <a href="#topic/api.md">
       "API"
     "/ line 40"
-    <button class="share-btn" title="copy a link to this entry — the project's published dashboard:\nhttps://acme.example/keep-the-why-dashboard/#entry/f5ac4f25-a9f1-490a-a4ca-62d5f0db4a06" type="button">
+    <button class="ktw-share-btn" title="copy a link to this entry — the project's published dashboard:\nhttps://acme.example/keep-the-why-dashboard/#entry/f5ac4f25-a9f1-490a-a4ca-62d5f0db4a06" type="button">
       "⧉ copy link"
-    <a class="ext share-btn source-link" href="https://github.com/acme/widget/blob/main/context/api.md#errors-carry-a-stable-code-beside-the-message" rel="noopener" target="_blank">
+    <a class="ktw-ext ktw-share-btn ktw-source-link" href="https://github.com/acme/widget/blob/main/context/api.md#errors-carry-a-stable-code-beside-the-message" rel="noopener" target="_blank">
       "open source"
-      <svg aria-hidden="true" class="ext-icon" viewBox="0 0 24 24">
+      <svg aria-hidden="true" class="ktw-ext-icon" viewBox="0 0 24 24">
         <path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z">
   <h1>
     "Errors carry a stable code beside the message"
-  <div class="fields">
-    <span class="pill type">
+  <div class="ktw-fields">
+    <span class="ktw-pill ktw-type">
       "decision"
-    <span class="pill status-active">
+    <span class="ktw-pill ktw-status-active">
       "active"
-    <span class="pill ev-confirmed">
+    <span class="ktw-pill ktw-ev-confirmed">
       "confirmed"
-    <span class="pill">
+    <span class="ktw-pill">
       "Source:"
       <a href="https://github.com/acme/widget/issues/12" rel="noopener noreferrer" target="_blank">
         "issue 12"
-  <div class="body">
+  <div class="ktw-body">
     <p>
       "Each error has a code that never changes and a message that may."
-    <div class="label reason">
+    <div class="ktw-label ktw-reason">
       <b>
         "Reason"
       <p>
         "clients matched on messages and broke on every rewording."
-  <div class="body refs-box">
+  <div class="ktw-body ktw-refs-box">
     <h3>
       "See"
-    <div class="ref">
+    <div class="ktw-ref">
       <a href="#entry/f5383416-90c8-4c5c-affc-01c3c67d0518">
         "Pagination uses opaque cursors"
-      <span class="note">
+      <span class="ktw-note">
         "· API"
-      <span class="note">
+      <span class="ktw-note">
         "· as of 2026-06-01"
-  <div class="pager">
+  <div class="ktw-pager">
     <a href="#entry/f5383416-90c8-4c5c-affc-01c3c67d0518">
       "← Pagination uses opaque cursors"
     <span>
 
 ## #details
-<div class="pane-width" title="the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details">
-  <span class="label">
+<div class="ktw-pane-width" title="the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details">
+  <span class="ktw-label">
     "Width"
-  <span class="mini-width">
+  <span class="ktw-mini-width">
     <button class type="button">
       "1×"
-    <button class="on" type="button">
+    <button class="ktw-on" type="button">
       "2×"
     <button class type="button">
       "3×"
@@ -66,90 +66,90 @@
       "½"
 <h3>
   "Entry"
-<div class="kv">
-  <span class="k">
+<div class="ktw-kv">
+  <span class="ktw-k">
     "Id"
-  <span class="v mono" title="the entry's address — what See and Superseded by lines resolve to">
+  <span class="ktw-v ktw-mono" title="the entry's address — what See and Superseded by lines resolve to">
     "f5ac4f25-a9f1-490a-a4ca-62d5f0db4a06"
-  <span class="k">
+  <span class="ktw-k">
     "at"
-  <span class="v mono">
-    <a class="gh" href="https://github.com/acme/widget/blob/main/context/api.md#errors-carry-a-stable-code-beside-the-message" rel="noopener" target="_blank" title="open on the host">
+  <span class="ktw-v ktw-mono">
+    <a class="ktw-gh" href="https://github.com/acme/widget/blob/main/context/api.md#errors-carry-a-stable-code-beside-the-message" rel="noopener" target="_blank" title="open on the host">
       "api.md#errors-carry-a-stable-code-beside-the-message"
-  <span class="k">
+  <span class="ktw-k">
     "type"
-  <span class="v">
+  <span class="ktw-v">
     "decision"
-  <span class="k">
+  <span class="ktw-k">
     "status"
-  <span class="v">
-    <span class="pill status-active">
+  <span class="ktw-v">
+    <span class="ktw-pill ktw-status-active">
       "active"
-  <span class="k">
+  <span class="ktw-k">
     "evidence"
-  <span class="v">
-    <span class="pill ev-confirmed">
+  <span class="ktw-v">
+    <span class="ktw-pill ktw-ev-confirmed">
       "confirmed"
-  <span class="k">
+  <span class="ktw-k">
     "source"
-  <span class="v">
+  <span class="ktw-v">
     <a href="https://github.com/acme/widget/issues/12" rel="noopener noreferrer" target="_blank">
       "issue 12"
 <h3>
   "Git"
-<div class="kv">
-  <span class="k">
+<div class="ktw-kv">
+  <span class="ktw-k">
     "created"
-  <span class="v">
-    <a class="author" href="https://github.com/acme/widget/commit/9b269ef" rel="noopener" target="_blank" title="Bob Example — open the profile on the host (looked up from commit 9b269ef)">
+  <span class="ktw-v">
+    <a class="ktw-author" href="https://github.com/acme/widget/commit/9b269ef" rel="noopener" target="_blank" title="Bob Example — open the profile on the host (looked up from commit 9b269ef)">
       "Bob Example"
     "· 2026-06-01 ·"
     <code>
       "9b269ef"
-  <span class="k">
+  <span class="ktw-k">
     "last touched"
-  <span class="v">
-    <a class="author" href="https://github.com/acme/widget/commit/9b269ef" rel="noopener" target="_blank" title="Bob Example — open the profile on the host (looked up from commit 9b269ef)">
+  <span class="ktw-v">
+    <a class="ktw-author" href="https://github.com/acme/widget/commit/9b269ef" rel="noopener" target="_blank" title="Bob Example — open the profile on the host (looked up from commit 9b269ef)">
       "Bob Example"
     "· 2026-06-01 ·"
     <code>
       "9b269ef"
 <h3>
   "Status history"
-<ul class="hist">
-  <li class="active">
+<ul class="ktw-hist">
+  <li class="ktw-active">
     "active"
-    <div class="d">
-      <a class="author" href="https://github.com/acme/widget/commit/9b269ef" rel="noopener" target="_blank" title="Bob Example — open the profile on the host (looked up from commit 9b269ef)">
+    <div class="ktw-d">
+      <a class="ktw-author" href="https://github.com/acme/widget/commit/9b269ef" rel="noopener" target="_blank" title="Bob Example — open the profile on the host (looked up from commit 9b269ef)">
         "Bob Example"
       "· 2026-06-01 · 9b269ef"
 <h3>
   "Backlinks (0)"
-<p class="empty">
+<p class="ktw-empty">
   "nothing references api.md"
 <h3>
   "In thoughts (1)"
-<a class="backlink" href="#thought/682e7ab6-125c-459f-9c67-a3c6b217d8ef,cc7ef11a-f83d-4d95-b45c-d43639003f41,f5383416-90c8-4c5c-affc-01c3c67d0518,f5ac4f25-a9f1-490a-a4ca-62d5f0db4a06" title="Writes retry three times on a busy lock\n→ The API is versioned in the path\n→ Pagination uses opaque cursors\n→ Errors carry a stable code beside the message">
+<a class="ktw-backlink" href="#thought/682e7ab6-125c-459f-9c67-a3c6b217d8ef,cc7ef11a-f83d-4d95-b45c-d43639003f41,f5383416-90c8-4c5c-affc-01c3c67d0518,f5ac4f25-a9f1-490a-a4ca-62d5f0db4a06" title="Writes retry three times on a busy lock\n→ The API is versioned in the path\n→ Pagination uses opaque cursors\n→ Errors carry a stable code beside the message">
   "Writes retry three times on a bu… → Errors carry a stable code besid…"
-  <div class="note">
+  <div class="ktw-note">
     "step 4 of 4 · starts unknown · after a step in question"
 <h3>
   "Graph"
-<div class="mini tall">
+<div class="ktw-mini ktw-tall">
   <canvas height="0" width="0">
-  <span class="mini-seg">
-    <button class="on" title="this entry's or topic's neighbourhood" type="button">
+  <span class="ktw-mini-seg">
+    <button class="ktw-on" title="this entry's or topic's neighbourhood" type="button">
       "near"
     <button class title="the whole project" type="button">
       "project"
-  <span class="mini-hint">
+  <span class="ktw-mini-hint">
     "click to open"
-  <span class="mini-corner">
-    <button class="mini-corner-btn" title="fit the view: everything in the box" type="button">
+  <span class="ktw-mini-corner">
+    <button class="ktw-mini-corner-btn" title="fit the view: everything in the box" type="button">
       "fit"
-    <button class="mini-corner-btn" title="let go of the held thought — every node alike again (Esc, on a page without a reset of its own)" type="button">
+    <button class="ktw-mini-corner-btn" title="let go of the held thought — every node alike again (Esc, on a page without a reset of its own)" type="button">
       "reset"
-  <button class="mini-open" title="open the full graph — the same level, centred on what is shown here" type="button">
+  <button class="ktw-mini-open" title="open the full graph — the same level, centred on what is shown here" type="button">
     "⤢ full graph"
   "null"
-  <div class="mini-filters graph-ui" hidden>
+  <div class="ktw-mini-filters ktw-graph-ui" hidden>

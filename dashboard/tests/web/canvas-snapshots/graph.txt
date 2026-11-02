@@ -1,6 +1,6 @@
 # #graph
 
-## canvas 1 — graph-wrap
+## canvas 1 — ktw-graph-wrap
 clearRect(0, 0, 800, 500)
 save()
 translate(400, 250)

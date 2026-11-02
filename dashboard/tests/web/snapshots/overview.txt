@@ -3,368 +3,368 @@
 ## #main
 <h1>
   "acme---widget"
-<p class="sub">
+<p class="ktw-sub">
   "context/ · schema 0.20.3 · confirm-when-unsure · source-reference never"
   "·"
-  <span class="pill" title="branch and commit on GitHub">
-    <a class="gh" href="https://github.com/acme/widget/tree/main" rel="noopener" target="_blank">
+  <span class="ktw-pill" title="branch and commit on GitHub">
+    <a class="ktw-gh" href="https://github.com/acme/widget/tree/main" rel="noopener" target="_blank">
       "main"
     "@"
-    <a class="gh" href="https://github.com/acme/widget/commit/9b269efd6cb77c2921fd4c7077058160739b02d5" rel="noopener" target="_blank" title="9b269efd6cb77c2921fd4c7077058160739b02d5">
+    <a class="ktw-gh" href="https://github.com/acme/widget/commit/9b269efd6cb77c2921fd4c7077058160739b02d5" rel="noopener" target="_blank" title="9b269efd6cb77c2921fd4c7077058160739b02d5">
       "9b269ef"
   "·"
-  <a class="gh" href="https://github.com/acme/widget" rel="noopener" target="_blank">
-    <svg aria-label="GitHub" class="host-mark" role="img" viewBox="0 0 24 24">
+  <a class="ktw-gh" href="https://github.com/acme/widget" rel="noopener" target="_blank">
+    <svg aria-label="GitHub" class="ktw-host-mark" role="img" viewBox="0 0 24 24">
       <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12">
     "github.com/acme/widget"
-<div class="grid2">
-  <div class="overview-stats">
-    <div class="card">
+<div class="ktw-grid2">
+  <div class="ktw-overview-stats">
+    <div class="ktw-card">
       <h3>
         "Type"
-      <div class="bars">
-        <span class="k">
+      <div class="ktw-bars">
+        <span class="ktw-k">
           "decision"
-        <div class="bar">
-          <i class="decision" style="width: 46.15384615384615%;">
-        <span class="v">
+        <div class="ktw-bar">
+          <i class="ktw-decision" style="width: 46.15384615384615%;">
+        <span class="ktw-v">
           "6"
-        <span class="k">
+        <span class="ktw-k">
           "constraint"
-        <div class="bar">
-          <i class="constraint" style="width: 30.76923076923077%;">
-        <span class="v">
+        <div class="ktw-bar">
+          <i class="ktw-constraint" style="width: 30.76923076923077%;">
+        <span class="ktw-v">
           "4"
-        <span class="k">
+        <span class="ktw-k">
           "workaround"
-        <div class="bar">
-          <i class="workaround" style="width: 7.6923076923076925%;">
-        <span class="v">
+        <div class="ktw-bar">
+          <i class="ktw-workaround" style="width: 7.6923076923076925%;">
+        <span class="ktw-v">
           "1"
-        <span class="k">
+        <span class="ktw-k">
           "incident"
-        <div class="bar">
-          <i class="incident" style="width: 7.6923076923076925%;">
-        <span class="v">
+        <div class="ktw-bar">
+          <i class="ktw-incident" style="width: 7.6923076923076925%;">
+        <span class="ktw-v">
           "1"
-        <span class="k">
+        <span class="ktw-k">
           "undefined"
-        <div class="bar">
-          <i class="undefined" style="width: 7.6923076923076925%;">
-        <span class="v">
+        <div class="ktw-bar">
+          <i class="ktw-undefined" style="width: 7.6923076923076925%;">
+        <span class="ktw-v">
           "1"
-    <div class="card">
+    <div class="ktw-card">
       <h3>
         "Status"
-      <div class="bars">
-        <span class="k">
+      <div class="ktw-bars">
+        <span class="ktw-k">
           "active"
-        <div class="bar">
-          <i class="active" style="width: 75%;">
-        <span class="v">
+        <div class="ktw-bar">
+          <i class="ktw-active" style="width: 75%;">
+        <span class="ktw-v">
           "9"
-        <span class="k">
+        <span class="ktw-k">
           "open"
-        <div class="bar">
-          <i class="open" style="width: 8.333333333333334%;">
-        <span class="v">
+        <div class="ktw-bar">
+          <i class="ktw-open" style="width: 8.333333333333334%;">
+        <span class="ktw-v">
           "1"
-        <span class="k">
+        <span class="ktw-k">
           "pending-confirmation"
-        <div class="bar">
-          <i class="pending-confirmation" style="width: 8.333333333333334%;">
-        <span class="v">
+        <div class="ktw-bar">
+          <i class="ktw-pending-confirmation" style="width: 8.333333333333334%;">
+        <span class="ktw-v">
           "1"
-        <span class="k">
+        <span class="ktw-k">
           "superseded"
-        <div class="bar">
-          <i class="superseded" style="width: 8.333333333333334%;">
-        <span class="v">
+        <div class="ktw-bar">
+          <i class="ktw-superseded" style="width: 8.333333333333334%;">
+        <span class="ktw-v">
           "1"
-    <div class="card">
+    <div class="ktw-card">
       <h3>
         "Evidence"
-      <div class="bars">
-        <span class="k">
+      <div class="ktw-bars">
+        <span class="ktw-k">
           "confirmed"
-        <div class="bar">
-          <i class="confirmed" style="width: 50%;">
-        <span class="v">
+        <div class="ktw-bar">
+          <i class="ktw-confirmed" style="width: 50%;">
+        <span class="ktw-v">
           "6"
-        <span class="k">
+        <span class="ktw-k">
           "inferred"
-        <div class="bar">
-          <i class="inferred" style="width: 33.333333333333336%;">
-        <span class="v">
+        <div class="ktw-bar">
+          <i class="ktw-inferred" style="width: 33.333333333333336%;">
+        <span class="ktw-v">
           "4"
-        <span class="k">
+        <span class="ktw-k">
           "unknown"
-        <div class="bar">
-          <i class="unknown" style="width: 16.666666666666668%;">
-        <span class="v">
+        <div class="ktw-bar">
+          <i class="ktw-unknown" style="width: 16.666666666666668%;">
+        <span class="ktw-v">
           "2"
-  <div class="card">
+  <div class="ktw-card">
     <h3>
       "Config"
-      <a class="ext mono note config-file" href="https://github.com/acme/widget/blob/main/.keep-the-why" rel="noopener" target="_blank">
+      <a class="ktw-ext ktw-mono ktw-note ktw-config-file" href="https://github.com/acme/widget/blob/main/.keep-the-why" rel="noopener" target="_blank">
         ".keep-the-why"
-        <svg aria-hidden="true" class="ext-icon" viewBox="0 0 24 24">
+        <svg aria-hidden="true" class="ktw-ext-icon" viewBox="0 0 24 24">
           <path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z">
-    <div class="kv">
-      <span class="k">
+    <div class="ktw-kv">
+      <span class="ktw-k">
         "canonical"
-      <a class="ext v mono" href="https://github.com/acme/widget" rel="noopener" target="_blank">
+      <a class="ktw-ext ktw-v ktw-mono" href="https://github.com/acme/widget" rel="noopener" target="_blank">
         "https://github.com/acme/widget"
-        <svg aria-hidden="true" class="ext-icon" viewBox="0 0 24 24">
+        <svg aria-hidden="true" class="ktw-ext-icon" viewBox="0 0 24 24">
           <path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z">
-      <span class="k">
+      <span class="ktw-k">
         "capture-confirmation"
-      <span class="v mono">
+      <span class="ktw-v ktw-mono">
         "confirm-when-unsure"
-      <span class="k">
+      <span class="ktw-k">
         "context"
-      <a class="ext v mono" href="https://github.com/acme/widget/tree/main/context" rel="noopener" target="_blank">
+      <a class="ktw-ext ktw-v ktw-mono" href="https://github.com/acme/widget/tree/main/context" rel="noopener" target="_blank">
         "`context/`"
-        <svg aria-hidden="true" class="ext-icon" viewBox="0 0 24 24">
+        <svg aria-hidden="true" class="ktw-ext-icon" viewBox="0 0 24 24">
           <path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z">
-      <span class="k">
+      <span class="ktw-k">
         "context-schema"
-      <span class="v mono">
+      <span class="ktw-v ktw-mono">
         "0.20.3"
-      <span class="k">
+      <span class="ktw-k">
         "dashboard-state"
-      <a class="ext v mono" href="https://acme.example/keep-the-why-dashboard/state.json" rel="noopener" target="_blank">
+      <a class="ktw-ext ktw-v ktw-mono" href="https://acme.example/keep-the-why-dashboard/state.json" rel="noopener" target="_blank">
         "https://acme.example/keep-the-why-dashboard/state.json"
-        <svg aria-hidden="true" class="ext-icon" viewBox="0 0 24 24">
+        <svg aria-hidden="true" class="ktw-ext-icon" viewBox="0 0 24 24">
           <path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z">
-      <span class="k">
+      <span class="ktw-k">
         "id"
-      <span class="v mono">
+      <span class="ktw-v ktw-mono">
         "acme---widget"
-      <span class="k">
+      <span class="ktw-k">
         "init"
-      <span class="v mono">
+      <span class="ktw-v ktw-mono">
         "complete"
-      <span class="k">
+      <span class="ktw-k">
         "source-reference"
-      <span class="v mono">
+      <span class="ktw-v ktw-mono">
         "never"
 <h2>
   "Topics"
-<div class="topic-cards">
-  <a class="topic-card" href="#topic/api.md">
-    <div class="tt">
+<div class="ktw-topic-cards">
+  <a class="ktw-topic-card" href="#topic/api.md">
+    <div class="ktw-tt">
       "API"
-      <span class="count">
+      <span class="ktw-count">
         "4 entries"
-    <div class="td">
+    <div class="ktw-td">
       "versioning, limits, pagination and errors"
-    <div class="stack">
-      <i style="width: 75%; background: var(--confirmed);" title="confirmed: 3">
-      <i style="width: 25%; background: var(--inferred);" title="inferred: 1">
-    <div class="refs">
+    <div class="ktw-stack">
+      <i style="width: 75%; background: var(--ktw-confirmed, #4fbf7a);" title="confirmed: 3">
+      <i style="width: 25%; background: var(--ktw-inferred, #e0a83a);" title="inferred: 1">
+    <div class="ktw-refs">
       "api.md · → 1 · ← 0"
-  <a class="topic-card" href="#topic/storage.md">
-    <div class="tt">
+  <a class="ktw-topic-card" href="#topic/storage.md">
+    <div class="ktw-tt">
       "Storage"
-      <span class="count">
+      <span class="ktw-count">
         "4 entries"
-    <div class="td">
+    <div class="ktw-td">
       "locks, retries and where files live"
-    <div class="stack">
-      <i style="width: 25%; background: var(--confirmed);" title="confirmed: 1">
-      <i style="width: 25%; background: var(--inferred);" title="inferred: 1">
-      <i style="width: 50%; background: var(--unknown);" title="unknown: 2">
-    <div class="refs">
+    <div class="ktw-stack">
+      <i style="width: 25%; background: var(--ktw-confirmed, #4fbf7a);" title="confirmed: 1">
+      <i style="width: 25%; background: var(--ktw-inferred, #e0a83a);" title="inferred: 1">
+      <i style="width: 50%; background: var(--ktw-unknown, #e0574f);" title="unknown: 2">
+    <div class="ktw-refs">
       "storage.md · → 1 · ← 2"
-  <a class="topic-card" href="#topic/sync.md">
-    <div class="tt">
+  <a class="ktw-topic-card" href="#topic/sync.md">
+    <div class="ktw-tt">
       "Sync"
-      <span class="count">
+      <span class="ktw-count">
         "4 entries"
-    <div class="td">
+    <div class="ktw-td">
       "how the sync orders snapshot and buffer"
-    <div class="stack">
-      <i style="width: 50%; background: var(--confirmed);" title="confirmed: 2">
-      <i style="width: 50%; background: var(--inferred);" title="inferred: 2">
-    <div class="refs">
+    <div class="ktw-stack">
+      <i style="width: 50%; background: var(--ktw-confirmed, #4fbf7a);" title="confirmed: 2">
+      <i style="width: 50%; background: var(--ktw-inferred, #e0a83a);" title="inferred: 2">
+    <div class="ktw-refs">
       "sync.md · → 1 · ← 1"
 <h2>
   "Recently touched"
-<div class="entry-list">
-  <a class="row " href="#entry/f5ac4f25-a9f1-490a-a4ca-62d5f0db4a06">
-    <div class="rt">
+<div class="ktw-entry-list">
+  <a class="ktw-row " href="#entry/f5ac4f25-a9f1-490a-a4ca-62d5f0db4a06">
+    <div class="ktw-rt">
       <span>
         "Errors carry a stable code beside the message"
-      <span class="pill type">
+      <span class="ktw-pill ktw-type">
         "decision"
-      <span class="pill status-active">
+      <span class="ktw-pill ktw-status-active">
         "active"
-      <span class="pill ev-confirmed">
+      <span class="ktw-pill ktw-ev-confirmed">
         "confirmed"
-    <div class="rs">
+    <div class="ktw-rs">
       "clients matched on messages and broke on every rewording."
-    <div class="rm">
+    <div class="ktw-rm">
       "API · Bob Example · 2026-06-01"
-  <a class="row " href="#entry/f5383416-90c8-4c5c-affc-01c3c67d0518">
-    <div class="rt">
+  <a class="ktw-row " href="#entry/f5383416-90c8-4c5c-affc-01c3c67d0518">
+    <div class="ktw-rt">
       <span>
         "Pagination uses opaque cursors"
-      <span class="pill type">
+      <span class="ktw-pill ktw-type">
         "decision"
-      <span class="pill status-active">
+      <span class="ktw-pill ktw-status-active">
         "active"
-      <span class="pill ev-confirmed">
+      <span class="ktw-pill ktw-ev-confirmed">
         "confirmed"
-    <div class="rs">
+    <div class="ktw-rs">
       "Cursors are opaque strings; offsets are not offered."
-    <div class="rm">
+    <div class="ktw-rm">
       "API · Alice Example · 2026-04-15 · touched 2026-06-01"
-  <a class="row " href="#entry/65568f64-aa13-4915-878d-d5cfe3479e64">
-    <div class="rt">
+  <a class="ktw-row " href="#entry/65568f64-aa13-4915-878d-d5cfe3479e64">
+    <div class="ktw-rt">
       <span>
         "Responses are capped at one megabyte"
-      <span class="pill type">
+      <span class="ktw-pill ktw-type">
         "constraint"
-      <span class="pill status-active">
+      <span class="ktw-pill ktw-status-active">
         "active"
-      <span class="pill ev-confirmed">
+      <span class="ktw-pill ktw-ev-confirmed">
         "confirmed"
-    <div class="rs">
+    <div class="ktw-rs">
       "A response larger than one megabyte is cut and marked as cut."
-    <div class="rm">
+    <div class="ktw-rm">
       "API · Alice Example · 2026-04-15 · touched 2026-06-01"
-  <a class="row " href="#entry/c63efee2-97dd-452a-885f-c793001131b7">
-    <div class="rt">
+  <a class="ktw-row " href="#entry/c63efee2-97dd-452a-885f-c793001131b7">
+    <div class="ktw-rt">
       <span>
         "Clock skew between replicas is tolerated up to a second"
-      <span class="pill type">
+      <span class="ktw-pill ktw-type">
         "constraint"
-      <span class="pill type">
+      <span class="ktw-pill ktw-type">
         "decision"
-      <span class="pill status-active">
+      <span class="ktw-pill ktw-status-active">
         "active"
-      <span class="pill ev-inferred">
+      <span class="ktw-pill ktw-ev-inferred">
         "inferred"
-    <div class="rs">
+    <div class="ktw-rs">
       "Replicas may disagree by up to a second; the versioned replay absorbs it."
-    <div class="rm">
+    <div class="ktw-rm">
       "Sync · Carol Example · 2026-05-10"
-  <a class="row " href="#entry/756f14cb-61c6-4ff2-8dea-29f28c030ca5">
-    <div class="rt">
+  <a class="ktw-row " href="#entry/756f14cb-61c6-4ff2-8dea-29f28c030ca5">
+    <div class="ktw-rt">
       <span>
         "Sync replays the buffer against a versioned snapshot"
-      <span class="pill type">
+      <span class="ktw-pill ktw-type">
         "decision"
-      <span class="pill status-active">
+      <span class="ktw-pill ktw-status-active">
         "active"
-      <span class="pill ev-confirmed">
+      <span class="ktw-pill ktw-ev-confirmed">
         "confirmed"
-    <div class="rs">
+    <div class="ktw-rs">
       "the version makes the ordering explicit, so waiting is no longer needed; cold starts lose the two seconds again."
-    <div class="rm">
+    <div class="ktw-rm">
       "Sync · Carol Example · 2026-05-10"
-  <a class="row " href="#entry/4bc883fc-f8ef-4d90-b90d-0a669f375a70">
-    <div class="rt">
+  <a class="ktw-row " href="#entry/4bc883fc-f8ef-4d90-b90d-0a669f375a70">
+    <div class="ktw-rt">
       <span>
         "Events arrive at most once per second"
-      <span class="pill type">
+      <span class="ktw-pill ktw-type">
         "constraint"
-      <span class="pill status-active">
+      <span class="ktw-pill ktw-status-active">
         "active"
-      <span class="pill ev-inferred">
+      <span class="ktw-pill ktw-ev-inferred">
         "inferred"
-    <div class="rs">
+    <div class="ktw-rs">
       "read from the feed's rate header, not confirmed by its owner."
-    <div class="rm">
+    <div class="ktw-rm">
       "Sync · Alice Example · 2026-03-02 · touched 2026-05-10"
-  <a class="row " href="#entry/3c80c624-2274-497a-a1f0-d8ff65b0e0c3">
-    <div class="rt">
+  <a class="ktw-row " href="#entry/3c80c624-2274-497a-a1f0-d8ff65b0e0c3">
+    <div class="ktw-rt">
       <span>
         "Sync waits for the snapshot before replaying the buffer"
-      <span class="pill type">
+      <span class="ktw-pill ktw-type">
         "decision"
-      <span class="pill status-superseded">
+      <span class="ktw-pill ktw-status-superseded">
         "superseded"
-      <span class="pill ev-confirmed">
+      <span class="ktw-pill ktw-ev-confirmed">
         "confirmed"
-    <div class="rs">
+    <div class="ktw-rs">
       "applying buffered events before the snapshot landed caused duplicate-then-overwritten state. The ordering is not visible in the code."
-    <div class="rm">
+    <div class="ktw-rm">
       "Sync · Alice Example · 2026-03-02 · touched 2026-05-10"
-  <a class="row " href="#entry/050ea108-42f3-4f0f-9ea9-dd2156f206d7">
-    <div class="rt">
+  <a class="ktw-row " href="#entry/050ea108-42f3-4f0f-9ea9-dd2156f206d7">
+    <div class="ktw-rt">
       <span>
         "Pasted <b>markup</b> stays text"
-      <span class="pill type">
+      <span class="ktw-pill ktw-type">
         "constraint"
-      <span class="pill status-active">
+      <span class="ktw-pill ktw-status-active">
         "active"
-      <span class="pill ev-inferred">
+      <span class="ktw-pill ktw-ev-inferred">
         "inferred"
-    <div class="rs">
+    <div class="ktw-rs">
       "a log line that reads <b>bold</b> must reach the reader as written, and [a link](javascript:alert(4)) or [another](data:text/html,x) must not become one."
-    <div class="rm">
+    <div class="ktw-rm">
       "Storage · Carol Example · 2026-05-10"
 
 ## #details
-<div class="pane-width" title="the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details">
-  <span class="label">
+<div class="ktw-pane-width" title="the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details">
+  <span class="ktw-label">
     "Width"
-  <span class="mini-width">
+  <span class="ktw-mini-width">
     <button class type="button">
       "1×"
-    <button class="on" type="button">
+    <button class="ktw-on" type="button">
       "2×"
     <button class type="button">
       "3×"
     <button class type="button">
       "½"
-<div class="mini fill">
+<div class="ktw-mini ktw-fill">
   <canvas height="0" width="0">
-  <span class="mini-seg">
-    <span class="mini-title">
+  <span class="ktw-mini-seg">
+    <span class="ktw-mini-title">
       "graph"
-  <span class="mini-hint">
+  <span class="ktw-mini-hint">
     "hover · click"
-  <span class="mini-corner">
-    <button class="mini-corner-btn" title="fit the view: everything in the box" type="button">
+  <span class="ktw-mini-corner">
+    <button class="ktw-mini-corner-btn" title="fit the view: everything in the box" type="button">
       "fit"
-    <button class="mini-corner-btn" title="let go of the held thought — every node alike again (Esc, on a page without a reset of its own)" type="button">
+    <button class="ktw-mini-corner-btn" title="let go of the held thought — every node alike again (Esc, on a page without a reset of its own)" type="button">
       "reset"
-  <button class="mini-open" title="open the full graph — the same level, centred on what is shown here" type="button">
+  <button class="ktw-mini-open" title="open the full graph — the same level, centred on what is shown here" type="button">
     "⤢ full graph"
-  <button class="mini-gear" title="the graph's switches — the same as in the full graph" type="button">
+  <button class="ktw-mini-gear" title="the graph's switches — the same as in the full graph" type="button">
     "⚙"
-  <div class="mini-filters graph-ui" hidden>
-    <span class="ui-group">
+  <div class="ktw-mini-filters ktw-graph-ui" hidden>
+    <span class="ktw-ui-group">
       <label>
         <input checked type="checkbox">
         "entries"
       <label title="the names of this project's topics and entries — topics, and entries when zoomed in">
         <input checked type="checkbox">
         "labels"
-    <span class="ui-group cited-ctl">
+    <span class="ktw-ui-group ktw-cited-ctl">
       <label title="who in the Keep the Why registry cites this project — the registry's backlink file, https://keepthewhy.com/registry/backlinks/github.com/acme/widget.json, loaded on the click and not remembered. Citations from repositories outside the registry are not in it.">
         <input type="checkbox">
         "cited by"
-    <span class="ui-group">
+    <span class="ktw-ui-group">
       <label title="the projects of one owner around a node for the owner — only an owner with more than one project in the graph; the node opens the owner's page">
         <input type="checkbox">
         "owners"
-    <span class="ui-group">
+    <span class="ktw-ui-group">
       <label title="the path's projects in the graph — the projects you came through; unchecked they are hidden, not forgotten (the path bar discards)">
         <input checked type="checkbox">
         "path"
-    <span class="ui-group">
+    <span class="ktw-ui-group">
       <label title="the graph turns very slowly; it stops while you point at it">
         <input checked type="checkbox">
         "motion"
-    <span class="ui-group">
-      <button class="link-btn" title="every switch in this bar on">
+    <span class="ktw-ui-group">
+      <button class="ktw-link-btn" title="every switch in this bar on">
         "select all"
-      <button class="link-btn" title="every switch in this bar off — the project's topics alone">
+      <button class="ktw-link-btn" title="every switch in this bar off — the project's topics alone">
         "unselect all"
-    <span class="ui-group">
-      <button class="link-btn graph-reset" title="fit the graph and let go of every node you placed">
+    <span class="ktw-ui-group">
+      <button class="ktw-link-btn ktw-graph-reset" title="fit the graph and let go of every node you placed">
         "reset"

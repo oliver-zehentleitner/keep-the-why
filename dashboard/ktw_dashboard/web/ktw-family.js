@@ -24,12 +24,29 @@ const publicHref = (canonical, root = "", route = { view: "overview" }) => nav.h
 const liveHref = (project, route) => nav.href({ ...route, centre: { mode: "live", project } });
 
 // the page's caches over the provider: one request per project, however many ask at once
+// exportState and bodies are optional (docs/dashboard-views.md): without one, the answer says so, and what needs it
+// hides or shows that reason. A host's promise that rejects is an answer with an error too: nothing here throws.
+const NO_EXPORTS = "published exports are not available on this page";
+const NO_BODIES = "entry texts are not available on this page";
+const canExports = () => typeof provider().exportState === "function";
+const canBodies = () => typeof provider().bodies === "function";
+const failed = (err, what) => (err && err.message) || String(err || what);
 const PUBLIC_STATES = {}; // `${canonical}|${root}` -> Promise<{state, url} | {error}>
 function publicState(canonical, root = "") {
   const key = `${canonical}|${root}`;
-  return (PUBLIC_STATES[key] ||= provider().exportState(canonical, root));
+  return (PUBLIC_STATES[key] ||= canExports()
+    ? Promise.resolve().then(() => provider().exportState(canonical, root)).catch((err) => ({ error: failed(err, "could not read the published export"), canonical, root }))
+    : Promise.resolve({ error: NO_EXPORTS, canonical, root }));
 }
-const bodies = (state) => provider().bodies(state).then((r) => r.state);
+// a lean state's entry texts, filled in where the provider can; else state.bodiesError says why they are missing
+function bodies(state) {
+  const lean = state && typeof state.bodies === "string" && !state.bodiesLoaded;
+  if (!canBodies()) { if (lean && !state.bodiesError) state.bodiesError = NO_BODIES; return Promise.resolve(state); }
+  // a failure the provider answers with ({ state, error } or { error }) marks the state as one it rejects does, so a
+  // reader that waits for the texts (thoughts, timeline: !bodiesLoaded && !bodiesError) does not ask again and again
+  const mark = (why) => { if (lean && !state.bodiesLoaded && !state.bodiesError) state.bodiesError = why; };
+  return Promise.resolve().then(() => provider().bodies(state)).then((r) => { if (r?.error) mark(String(r.error)); return r?.state || state; }, (err) => { mark(failed(err, "could not fetch the bodies")); return state; });
+}
 
 // What a search runs over: this project, or every member of its tree — the
 // whole family from the root down, not only the parent chain.
@@ -210,34 +227,34 @@ async function friendPool(given) {
 function publicMemberRow(m, r) {
   const st = r?.state;
   const title = st ? el("a", { href: publicHref(m.canonical, m.root || "") }, m.name) : el("b", {}, m.name);
-  return el("div", { class: `member ${m.role} ${st ? "public" : "none"}`, onmouseenter: () => scene.spot(m.canonical, m.root || ""), onmouseleave: () => scene.spot(null) },
-    el("div", { class: "mr" }, el("span", { class: "role" }, m.role), title, el("span", { class: `pill kind-${st ? "public" : "none"}` }, st ? "published export" : "no public export"),
-      st ? el("span", { class: "pill" }, `generated ${st.generated || "?"}`) : null),
-    m.scope ? el("div", { class: "ms" }, m.scope) : (m.role === "parent" ? el("div", { class: "ms note" }, "holds what is family-wide") : null),
-    el("div", { class: "mm mono" }, m.canonical || m.location, st ? ` · ${st.entries.length} entries · ${st.topics.length} topics · ${r.url}` : r?.error ? ` · ${r.error}` : ""));
+  return el("div", { class: `ktw-member ktw-${m.role} ${st ? "ktw-public" : "ktw-none"}`, onmouseenter: () => scene.spot(m.canonical, m.root || ""), onmouseleave: () => scene.spot(null) },
+    el("div", { class: "ktw-mr" }, el("span", { class: "ktw-role" }, m.role), title, el("span", { class: `ktw-pill ktw-kind-${st ? "ktw-public" : "ktw-none"}` }, st ? "published export" : "no public export"),
+      st ? el("span", { class: "ktw-pill" }, `generated ${st.generated || "?"}`) : null),
+    m.scope ? el("div", { class: "ktw-ms" }, m.scope) : (m.role === "parent" ? el("div", { class: "ktw-ms ktw-note" }, "holds what is family-wide") : null),
+    el("div", { class: "ktw-mm ktw-mono" }, m.canonical || m.location, st ? ` · ${st.entries.length} entries · ${st.topics.length} topics · ${r.url}` : r?.error ? ` · ${r.error}` : ""));
 }
 function memberRow(m) {
   const here = m.role === "self";
   const title = m.key && !here ? el("a", { href: liveHref(m.key, { view: "overview" }) }, m.name) : el("b", {}, m.name);
-  return el("div", { class: `member ${m.role} ${m.available}`, onmouseenter: () => scene.spot(m.canonical, m.root || ""), onmouseleave: () => scene.spot(null) },
-    el("div", { class: "mr" }, el("span", { class: "role" }, m.role), title, el("span", { class: `pill kind-${m.available}` }, here ? "this project" : kindLabel(m.available))),
-    m.scope ? el("div", { class: "ms" }, m.scope) : (m.role === "parent" ? el("div", { class: "ms note" }, "holds what is family-wide") : null),
-    el("div", { class: "mm mono" }, hostMark(m.canonical), m.canonical || m.location || "", m.path && !here ? ` · ${m.path}` : ""),
-    m.fetch ? el("details", { class: "fetch" }, el("summary", {}, "not checked out here — how to get it"),
-      el("p", { class: "note" }, "A working tree, writable (the mapping learns it on next start):"), el("pre", {}, el("code", {}, m.fetch.clone)),
-      el("p", { class: "note" }, "Or the read-only context cache, shared by every project on this machine:"), el("pre", {}, el("code", {}, m.fetch.cache))) : null);
+  return el("div", { class: `ktw-member ktw-${m.role} ktw-${m.available}`, onmouseenter: () => scene.spot(m.canonical, m.root || ""), onmouseleave: () => scene.spot(null) },
+    el("div", { class: "ktw-mr" }, el("span", { class: "ktw-role" }, m.role), title, el("span", { class: `ktw-pill ktw-kind-${m.available}` }, here ? "this project" : kindLabel(m.available))),
+    m.scope ? el("div", { class: "ktw-ms" }, m.scope) : (m.role === "parent" ? el("div", { class: "ktw-ms ktw-note" }, "holds what is family-wide") : null),
+    el("div", { class: "ktw-mm ktw-mono" }, hostMark(m.canonical), m.canonical || m.location || "", m.path && !here ? ` · ${m.path}` : ""),
+    m.fetch ? el("details", { class: "ktw-fetch" }, el("summary", {}, "not checked out here — how to get it"),
+      el("p", { class: "ktw-note" }, "A working tree, writable (the mapping learns it on next start):"), el("pre", {}, el("code", {}, m.fetch.clone)),
+      el("p", { class: "ktw-note" }, "Or the read-only context cache, shared by every project on this machine:"), el("pre", {}, el("code", {}, m.fetch.cache))) : null);
 }
 // the tree as nested rows: every member under the one whose children block lists it
 function treeRows(members, rowOf) {
-  return familyOrder(members).map(([m, d]) => el("div", { class: "tree-row", style: `padding-left:${Math.min(d, 6) * 26}px` }, d ? el("span", { class: "tree-mark" }, "└") : null, rowOf(m)));
+  return familyOrder(members).map(([m, d]) => el("div", { class: "ktw-tree-row", style: `padding-left:${Math.min(d, 6) * 26}px` }, d ? el("span", { class: "ktw-tree-mark" }, "└") : null, rowOf(m)));
 }
 async function view(main) {
   const p = scene.state.project;
-  main.append(el("h1", {}, "Family"), el("p", { class: "sub" }, "The whole tree this project belongs to, from the root down: each project under the one whose children block lists it. That block is the routing — where an entry about something belongs; what is wider than a level goes one level up, to the root at most. Every member can be read; a member checked out here can be written to. Not a dependency graph."));
-  if (!p.parent && !(p.children || []).length) return main.append(el("p", { class: "center" }, "This project is not part of a family: no parent line, no children block in .keep-the-why."));
-  const box = el("div", { class: "family" }); main.append(box);
+  main.append(el("h1", {}, "Family"), el("p", { class: "ktw-sub" }, "The whole tree this project belongs to, from the root down: each project under the one whose children block lists it. That block is the routing — where an entry about something belongs; what is wider than a level goes one level up, to the root at most. Every member can be read; a member checked out here can be written to. Not a dependency graph."));
+  if (!p.parent && !(p.children || []).length) return main.append(el("p", { class: "ktw-center" }, "This project is not part of a family: no parent line, no children block in .keep-the-why."));
+  const box = el("div", { class: "ktw-family" }); main.append(box);
   if (PUBLISHED() && canonicalOf(p)) {
-    box.append(el("p", { class: "center" }, "Reading the family's published exports…"));
+    box.append(el("p", { class: "ktw-center" }, "Reading the family's published exports…"));
     const t = await publicTree();
     const members = [...t.groups.map((g) => g.member), ...t.missing.map((x) => x.member)];
     const results = await Promise.all(members.map((m) => (m.role === "self" || !m.canonical ? null : publicState(m.canonical, m.root || ""))));
@@ -274,8 +291,8 @@ function resetCentre() { TREE = null; TREE_AT = 0; PUBLIC_TREE = null; }
 // registry.
 async function friendsView(main, host) {
   const graphHref = nav.href({ view: "graph" });
-  main.append(el("h1", {}, "Friends"), el("p", { class: "sub" }, "Repositories the entries here cite outside the family — linked into the graph, never merged into search, queues or counts. A friend in a family comes as the whole family. One hop: a friend's own friends are not loaded; walk there to see them."));
-  const box = el("div", { class: "friends-page" }, el("p", { class: "center" }, "Loading…")); main.append(box);
+  main.append(el("h1", {}, "Friends"), el("p", { class: "ktw-sub" }, "Repositories the entries here cite outside the family — linked into the graph, never merged into search, queues or counts. A friend in a family comes as the whole family. One hop: a friend's own friends are not loaded; walk there to see them."));
+  const box = el("div", { class: "ktw-friends-page" }, el("p", { class: "ktw-center" }, "Loading…")); main.append(box);
   const g = await host.graph();
   if (!box.isConnected) return;
   const list = g.friends || [];
@@ -284,9 +301,9 @@ async function friendsView(main, host) {
   const waiting = list.filter((f) => !FRIENDS.loaded[fkey(f.canonical)]);
   const cited = host.cited?.() || {};
   const kids = [];
-  if (!list.length && !units.length) kids.push(el("p", { class: "empty" }, "No entry here cites a repository outside the family yet. A See line into another project — its canonical and an entry's Id — makes it a friend."));
-  if (cited.ask) kids.push(el("p", {}, el("button", { type: "button", class: "link-btn", title: "who in the Keep the Why registry cites this project — one file from the registry, loaded on this click", onclick: () => cited.ask() }, "who in the registry cites this project?")));
-  if (list.length && (!FRIENDS.on || waiting.length)) kids.push(el("p", {}, FRIENDS.loading ? "Loading friends…" : el("button", { type: "button", class: "link-btn", onclick: () => host.load(FRIENDS.on ? waiting : list) }, `load the ${plural(FRIENDS.on ? waiting.length : list.length, "friend")}`)));
+  if (!list.length && !units.length) kids.push(el("p", { class: "ktw-empty" }, "No entry here cites a repository outside the family yet. A See line into another project — its canonical and an entry's Id — makes it a friend."));
+  if (cited.ask) kids.push(el("p", {}, el("button", { type: "button", class: "ktw-link-btn", title: "who in the Keep the Why registry cites this project — one file from the registry, loaded on this click", onclick: () => cited.ask() }, "who in the registry cites this project?")));
+  if (list.length && (!FRIENDS.on || waiting.length)) kids.push(el("p", {}, FRIENDS.loading ? "Loading friends…" : el("button", { type: "button", class: "ktw-link-btn", onclick: () => host.load(FRIENDS.on ? waiting : list) }, `load the ${plural(FRIENDS.on ? waiting.length : list.length, "friend")}`)));
   const ours = g.nodes.filter((n) => n.kind === "entry" && !n.ext);
   const ourByUuid = Object.fromEntries(ours.filter((n) => n.entry.uuid).map((n) => [n.entry.uuid, n]));
   const card = (u, i) => {
@@ -297,27 +314,27 @@ async function friendsView(main, host) {
     const back = []; // the unit's entries citing ours
     for (const [, t] of theirs) for (const x of entryRefs(t.e)) if (x.remote && ourByUuid[x.uuid]) back.push({ from: t, to: ourByUuid[x.uuid], kind: x.kind });
     const src = u.r.centre?.mode === "live" ? "a checkout on this machine" : `the published export${u.r.state.generated ? `, generated ${u.r.state.generated}` : ""}`;
-    const rel = (a, b, kind) => el("div", { class: "ref" }, a, el("span", { class: "note" }, kind === "superseded" ? " — superseded by — " : " — cites — "), b);
-    return el("section", { class: "friend-card" },
-      el("h2", {}, el("i", { class: "dot", style: `background:transparent;border:2px dashed ${host.color(i)};width:11px;height:11px;margin-right:8px` }), el("a", { href: u.r.open || graphHref }, hostMark(u.r.canonical), u.r.name),
-        u.via === "chain" ? el("span", { class: "pill" }, "via a thought") : null),
-      el("p", { class: "note" }, `${u.members.length > 1 ? `A family of ${u.members.length}: ${u.members.map((m) => m.name).join(", ")}. ` : ""}Read from ${src}. ${u.r.canonical}${u.r.forkOf ? ` — a fork of ${u.r.forkOf}, by its own export` : ""}`),
+    const rel = (a, b, kind) => el("div", { class: "ktw-ref" }, a, el("span", { class: "ktw-note" }, kind === "superseded" ? " — superseded by — " : " — cites — "), b);
+    return el("section", { class: "ktw-friend-card" },
+      el("h2", {}, el("i", { class: "ktw-dot", style: `background:transparent;border:2px dashed ${host.color(i)};width:11px;height:11px;margin-right:8px` }), el("a", { href: u.r.open || graphHref }, hostMark(u.r.canonical), u.r.name),
+        u.via === "chain" ? el("span", { class: "ktw-pill" }, "via a thought") : null),
+      el("p", { class: "ktw-note" }, `${u.members.length > 1 ? `A family of ${u.members.length}: ${u.members.map((m) => m.name).join(", ")}. ` : ""}Read from ${src}. ${u.r.canonical}${u.r.forkOf ? ` — a fork of ${u.r.forkOf}, by its own export` : ""}`),
       el("h3", {}, `Cited from here (${out.length})`),
-      ...(out.length ? out.map((x) => rel(el("a", { href: x.from.href }, x.from.label), el("a", { href: x.to.m.href ? x.to.m.href(x.to.e) : graphHref }, x.to.e.title, u.members.length > 1 ? el("span", { class: "note" }, ` · ${x.to.m.name}`) : null), x.kind)) : [el("p", { class: "empty" }, u.via === "chain" ? "Nothing here cites it directly — it was reached by following a thought." : "—")]),
+      ...(out.length ? out.map((x) => rel(el("a", { href: x.from.href }, x.from.label), el("a", { href: x.to.m.href ? x.to.m.href(x.to.e) : graphHref }, x.to.e.title, u.members.length > 1 ? el("span", { class: "ktw-note" }, ` · ${x.to.m.name}`) : null), x.kind)) : [el("p", { class: "ktw-empty" }, u.via === "chain" ? "Nothing here cites it directly — it was reached by following a thought." : "—")]),
       el("h3", {}, `Citing this project (${back.length})`),
-      ...(back.length ? back.map((x) => rel(el("a", { href: x.from.m.href ? x.from.m.href(x.from.e) : graphHref }, x.from.e.title), el("a", { href: x.to.href }, x.to.label), x.kind)) : [el("p", { class: "empty" }, "None of its entries cites an entry here.")]));
+      ...(back.length ? back.map((x) => rel(el("a", { href: x.from.m.href ? x.from.m.href(x.from.e) : graphHref }, x.from.e.title), el("a", { href: x.to.href }, x.to.label), x.kind)) : [el("p", { class: "ktw-empty" }, "None of its entries cites an entry here.")]));
   };
   const friends = units.filter((u) => u.via !== "chain" && u.via !== "cited"), chained = units.filter((u) => u.via === "chain"), citing = units.filter((u) => u.via === "cited");
   kids.push(...friends.map((u) => card(u, units.indexOf(u))));
-  if (citing.length) kids.push(el("h2", { class: "section" }, "Citing this project — from the registry"), el("p", { class: "note" }, `Repositories in the Keep the Why registry whose entries cite this project, from its backlink file${cited.checked ? `, built ${cited.checked}` : ""}. Citations from outside the registry are not in it.`), ...citing.map((u) => card(u, units.indexOf(u))));
-  if (chained.length) kids.push(el("h2", { class: "section" }, "Reached by following a thought"), ...chained.map((u) => card(u, units.indexOf(u))));
-  if (failed.length) kids.push(el("h2", { class: "section" }, "Not loaded"), ...failed.map((r) => el("div", { class: "ref" }, el("a", { href: r.canonical, target: "_blank", rel: "noopener" }, hostMark(r.canonical), repoLabel(r.canonical)), el("span", { class: "note warn" }, ` · ${r.error}`))));
+  if (citing.length) kids.push(el("h2", { class: "ktw-section" }, "Citing this project — from the registry"), el("p", { class: "ktw-note" }, `Repositories in the Keep the Why registry whose entries cite this project, from its backlink file${cited.checked ? `, built ${cited.checked}` : ""}. Citations from outside the registry are not in it.`), ...citing.map((u) => card(u, units.indexOf(u))));
+  if (chained.length) kids.push(el("h2", { class: "ktw-section" }, "Reached by following a thought"), ...chained.map((u) => card(u, units.indexOf(u))));
+  if (failed.length) kids.push(el("h2", { class: "ktw-section" }, "Not loaded"), ...failed.map((r) => el("div", { class: "ktw-ref" }, el("a", { href: r.canonical, target: "_blank", rel: "noopener" }, hostMark(r.canonical), repoLabel(r.canonical)), el("span", { class: "ktw-note ktw-warn" }, ` · ${r.error}`))));
   setKids(box, ...kids);
 }
 
 return Object.freeze({
   mode: () => host.mode(), live: LIVE, published: PUBLISHED,
-  publicState, bodies, tree, memberState, publicTree, publicTreeFrom, pool, friendPool,
+  publicState, bodies, canExports, canBodies, tree, memberState, publicTree, publicTreeFrom, pool, friendPool,
   treeNow: () => TREE, publicTreeNow: () => PUBLIC_TREE, resetCentre,
   friends: FRIENDS, friendCandidates, loadFriend, forgetFriend, liveMember, publicMember,
   view, friendsView,

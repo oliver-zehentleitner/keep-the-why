@@ -3,45 +3,45 @@
 ## #main
 <h1>
   "Authors"
-<p class="sub">
+<p class="ktw-sub">
   "Git authors of the entries — who created, touched, or superseded what, in every project this page holds: this one, its family, the friends in the graph, the path. Git knows names, not who was driving."
-<p class="note">
+<p class="ktw-note">
   "Counted: this project"
-<div class="table-wrap">
-  <table class="t">
+<div class="ktw-table-wrap">
+  <table class="ktw-t">
     <thead>
       <tr>
-        <th aria-sort="ascending" class="sortable">
-          <button class="sort-btn" title="Sort by author" type="button">
+        <th aria-sort="ascending" class="ktw-sortable">
+          <button class="ktw-sort-btn" title="Sort by author" type="button">
             "Author"
-            <span class="sort-mark">
+            <span class="ktw-sort-mark">
               "▲"
-        <th aria-sort="none" class="sortable">
-          <button class="sort-btn" title="Sort by created" type="button">
+        <th aria-sort="none" class="ktw-sortable">
+          <button class="ktw-sort-btn" title="Sort by created" type="button">
             "Created"
-            <span class="sort-mark">
-        <th aria-sort="none" class="sortable">
-          <button class="sort-btn" title="Sort by touched" type="button">
+            <span class="ktw-sort-mark">
+        <th aria-sort="none" class="ktw-sortable">
+          <button class="ktw-sort-btn" title="Sort by touched" type="button">
             "Touched"
-            <span class="sort-mark">
-        <th aria-sort="none" class="sortable">
-          <button class="sort-btn" title="Sort by superseded" type="button">
+            <span class="ktw-sort-mark">
+        <th aria-sort="none" class="ktw-sortable">
+          <button class="ktw-sort-btn" title="Sort by superseded" type="button">
             "Superseded"
-            <span class="sort-mark">
+            <span class="ktw-sort-mark">
         <th>
           "Evidence of created entries"
-        <th aria-sort="none" class="sortable">
-          <button class="sort-btn" title="Sort by first" type="button">
+        <th aria-sort="none" class="ktw-sortable">
+          <button class="ktw-sort-btn" title="Sort by first" type="button">
             "First"
-            <span class="sort-mark">
-        <th aria-sort="none" class="sortable">
-          <button class="sort-btn" title="Sort by last" type="button">
+            <span class="ktw-sort-mark">
+        <th aria-sort="none" class="ktw-sortable">
+          <button class="ktw-sort-btn" title="Sort by last" type="button">
             "Last"
-            <span class="sort-mark">
+            <span class="ktw-sort-mark">
     <tbody>
-      <tr class="clickable ">
+      <tr class="ktw-clickable ">
         <td>
-          <a class="author" href="https://github.com/acme/widget/commit/f7c45b1" rel="noopener" target="_blank" title="Alice Example — open the profile on the host (looked up from commit f7c45b1)">
+          <a class="ktw-author" href="https://github.com/acme/widget/commit/f7c45b1" rel="noopener" target="_blank" title="Alice Example — open the profile on the host (looked up from commit f7c45b1)">
             "Alice Example"
         <td>
           "5"
@@ -51,16 +51,16 @@
           "0"
         <td>
           <div style="min-width: 160px;">
-            <div class="stack">
-              <i style="width: 60%; background: var(--confirmed);" title="confirmed: 3">
-              <i style="width: 40%; background: var(--inferred);" title="inferred: 2">
-        <td class="mono">
+            <div class="ktw-stack">
+              <i style="width: 60%; background: var(--ktw-confirmed, #4fbf7a);" title="confirmed: 3">
+              <i style="width: 40%; background: var(--ktw-inferred, #e0a83a);" title="inferred: 2">
+        <td class="ktw-mono">
           "2026-03-02"
-        <td class="mono">
+        <td class="ktw-mono">
           "2026-04-15"
-      <tr class="clickable ">
+      <tr class="ktw-clickable ">
         <td>
-          <a class="author" href="https://github.com/acme/widget/commit/9b269ef" rel="noopener" target="_blank" title="Bob Example — open the profile on the host (looked up from commit 9b269ef)">
+          <a class="ktw-author" href="https://github.com/acme/widget/commit/9b269ef" rel="noopener" target="_blank" title="Bob Example — open the profile on the host (looked up from commit 9b269ef)">
             "Bob Example"
         <td>
           "3"
@@ -70,16 +70,16 @@
           "0"
         <td>
           <div style="min-width: 160px;">
-            <div class="stack">
-              <i style="width: 66.66666666666667%; background: var(--confirmed);" title="confirmed: 2">
-              <i style="width: 33.333333333333336%; background: var(--unknown);" title="unknown: 1">
-        <td class="mono">
+            <div class="ktw-stack">
+              <i style="width: 66.66666666666667%; background: var(--ktw-confirmed, #4fbf7a);" title="confirmed: 2">
+              <i style="width: 33.333333333333336%; background: var(--ktw-unknown, #e0574f);" title="unknown: 1">
+        <td class="ktw-mono">
           "2026-03-20"
-        <td class="mono">
+        <td class="ktw-mono">
           "2026-06-01"
-      <tr class="clickable ">
+      <tr class="ktw-clickable ">
         <td>
-          <a class="author" href="https://github.com/acme/widget/commit/51344a6" rel="noopener" target="_blank" title="Carol Example — open the profile on the host (looked up from commit 51344a6)">
+          <a class="ktw-author" href="https://github.com/acme/widget/commit/51344a6" rel="noopener" target="_blank" title="Carol Example — open the profile on the host (looked up from commit 51344a6)">
             "Carol Example"
         <td>
           "4"
@@ -89,75 +89,75 @@
           "1"
         <td>
           <div style="min-width: 160px;">
-            <div class="stack">
-              <i style="width: 25%; background: var(--confirmed);" title="confirmed: 1">
-              <i style="width: 50%; background: var(--inferred);" title="inferred: 2">
-              <i style="width: 25%; background: var(--unknown);" title="unknown: 1">
-        <td class="mono">
+            <div class="ktw-stack">
+              <i style="width: 25%; background: var(--ktw-confirmed, #4fbf7a);" title="confirmed: 1">
+              <i style="width: 50%; background: var(--ktw-inferred, #e0a83a);" title="inferred: 2">
+              <i style="width: 25%; background: var(--ktw-unknown, #e0574f);" title="unknown: 1">
+        <td class="ktw-mono">
           "2026-05-10"
-        <td class="mono">
+        <td class="ktw-mono">
           "2026-05-10"
-<p class="note" style="margin-top: 10px;">
+<p class="ktw-note" style="margin-top: 10px;">
   "Click a name to open the author's profile on the host; click elsewhere in the row to filter every view to that author, again to clear. Click a column's name to sort by it, again to turn the order round."
 
 ## #details
-<div class="pane-width" title="the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details">
-  <span class="label">
+<div class="ktw-pane-width" title="the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details">
+  <span class="ktw-label">
     "Width"
-  <span class="mini-width">
+  <span class="ktw-mini-width">
     <button class type="button">
       "1×"
-    <button class="on" type="button">
+    <button class="ktw-on" type="button">
       "2×"
     <button class type="button">
       "3×"
     <button class type="button">
       "½"
-<div class="mini fill">
+<div class="ktw-mini ktw-fill">
   <canvas height="0" width="0">
-  <span class="mini-seg">
-    <span class="mini-title">
+  <span class="ktw-mini-seg">
+    <span class="ktw-mini-title">
       "graph"
-  <span class="mini-hint">
+  <span class="ktw-mini-hint">
     "hover · click"
-  <span class="mini-corner">
-    <button class="mini-corner-btn" title="fit the view: everything in the box" type="button">
+  <span class="ktw-mini-corner">
+    <button class="ktw-mini-corner-btn" title="fit the view: everything in the box" type="button">
       "fit"
-    <button class="mini-corner-btn" title="let go of the held thought — every node alike again (Esc, on a page without a reset of its own)" type="button">
+    <button class="ktw-mini-corner-btn" title="let go of the held thought — every node alike again (Esc, on a page without a reset of its own)" type="button">
       "reset"
-  <button class="mini-open" title="open the full graph — the same level, centred on what is shown here" type="button">
+  <button class="ktw-mini-open" title="open the full graph — the same level, centred on what is shown here" type="button">
     "⤢ full graph"
-  <button class="mini-gear" title="the graph's switches — the same as in the full graph" type="button">
+  <button class="ktw-mini-gear" title="the graph's switches — the same as in the full graph" type="button">
     "⚙"
-  <div class="mini-filters graph-ui" hidden>
-    <span class="ui-group">
+  <div class="ktw-mini-filters ktw-graph-ui" hidden>
+    <span class="ktw-ui-group">
       <label>
         <input checked type="checkbox">
         "entries"
       <label title="the names of this project's topics and entries — topics, and entries when zoomed in">
         <input checked type="checkbox">
         "labels"
-    <span class="ui-group cited-ctl">
+    <span class="ktw-ui-group ktw-cited-ctl">
       <label title="who in the Keep the Why registry cites this project — the registry's backlink file, https://keepthewhy.com/registry/backlinks/github.com/acme/widget.json, loaded on the click and not remembered. Citations from repositories outside the registry are not in it.">
         <input type="checkbox">
         "cited by"
-    <span class="ui-group">
+    <span class="ktw-ui-group">
       <label title="the projects of one owner around a node for the owner — only an owner with more than one project in the graph; the node opens the owner's page">
         <input type="checkbox">
         "owners"
-    <span class="ui-group">
+    <span class="ktw-ui-group">
       <label title="the path's projects in the graph — the projects you came through; unchecked they are hidden, not forgotten (the path bar discards)">
         <input checked type="checkbox">
         "path"
-    <span class="ui-group">
+    <span class="ktw-ui-group">
       <label title="the graph turns very slowly; it stops while you point at it">
         <input checked type="checkbox">
         "motion"
-    <span class="ui-group">
-      <button class="link-btn" title="every switch in this bar on">
+    <span class="ktw-ui-group">
+      <button class="ktw-link-btn" title="every switch in this bar on">
         "select all"
-      <button class="link-btn" title="every switch in this bar off — the project's topics alone">
+      <button class="ktw-link-btn" title="every switch in this bar off — the project's topics alone">
         "unselect all"
-    <span class="ui-group">
-      <button class="link-btn graph-reset" title="fit the graph and let go of every node you placed">
+    <span class="ktw-ui-group">
+      <button class="ktw-link-btn ktw-graph-reset" title="fit the graph and let go of every node you placed">
         "reset"

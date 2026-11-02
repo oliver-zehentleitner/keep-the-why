@@ -55,7 +55,7 @@ export function renderMarkdown(md) {
     while (i < lines.length && lines[i].trim() && !/^\s*(```|~~~|[-*]\s|\d+\.\s|#{1,6}\s)/.test(lines[i])) buf.push(lines[i++]);
     const para = buf.join(" ");
     const m = para.match(LABEL);
-    if (m) out.push(`<div class="label ${cls[m[1]]}"><b>${m[1]}</b><p>${inline(m[2])}</p></div>`);
+    if (m) out.push(`<div class="ktw-label ktw-${cls[m[1]]}"><b>${m[1]}</b><p>${inline(m[2])}</p></div>`);
     else out.push(`<p>${inline(para)}</p>`);
   }
   return out.join("\n");

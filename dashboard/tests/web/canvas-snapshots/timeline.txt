@@ -1,6 +1,6 @@
 # #timeline
 
-## canvas 1 — stage-wrap
+## canvas 1 — ktw-stage-wrap
 clearRect(0, 0, 800, 500)
 lineWidth = 1
 strokeStyle = "#3a3a43"
@@ -877,7 +877,7 @@ fillStyle = "#a2a2ad"
 fillText("API", 521.875, 160.558)
 globalAlpha = 1
 
-## canvas 2 — mini tall
+## canvas 2 — ktw-mini ktw-tall
 clearRect(0, 0, 800, 500)
 save()
 translate(403.678, 240.781)

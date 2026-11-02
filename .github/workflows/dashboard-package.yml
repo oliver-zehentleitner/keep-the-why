@@ -89,6 +89,9 @@ jobs:
       - name: Styles through the CSSOM, as a page under a strict Content-Security-Policy needs them (jsdom)
         run: cd dashboard/tests/web && node --test ui.test.mjs
 
+      - name: The host fixture page, two foreign hosts mounting the views from the manifest (jsdom)
+        run: cd dashboard/tests/web && node host.mjs
+
       - name: Markdown renderer parity with the HTML-string renderer it replaced (jsdom)
         # every body, title and field value of the fixture and of this repository's own export
         run: cd dashboard/tests/web && node parity.mjs fixture/state.json /tmp/ktw-dashboard-export/state.json
@@ -103,3 +106,49 @@ jobs:
       - name: Canvas traces of the graph and the stage over the frozen fixture (jsdom)
         # every drawing call of the settled last frame; a difference fails — what the DOM snapshots cannot see
         run: cd dashboard/tests/web && node canvas-trace.mjs /tmp/ktw-fixture.html
+
+  styles:
+    # The page's computed styles against the branch a pull request targets: the fixture page built from both,
+    # every route at four widths and both themes, in Chromium (the browser resolves var() and @media), and the
+    # same through a cascade computed over jsdom. Any difference fails; a pull request that changes how the page
+    # looks on purpose says so in its body, the way a changed DOM snapshot is named.
+    name: computed styles match the base branch (Chromium)
+    if: github.event_name == 'pull_request'
+    # pinned: Playwright installs Chromium's system libraries only for the Ubuntu releases it supports, and
+    # ubuntu-latest moves ahead of it
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+
+      - name: The fixture page from this pull request and from its base branch
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          python -m pip install --quiet ./lint ./dashboard
+          python dashboard/tests/web/fixture/make_fixture.py --page /tmp/ktw-head.html
+          git worktree add /tmp/ktw-base "origin/$BASE_REF"
+          PYTHONPATH=/tmp/ktw-base/dashboard python /tmp/ktw-base/dashboard/tests/web/fixture/make_fixture.py --page /tmp/ktw-base.html
+
+      - name: Chromium (Playwright)
+        run: cd dashboard/tests/web && npm install --silent --no-audit --no-fund jsdom@24 playwright@1.56.1 && npx playwright install --with-deps chromium
+
+      - name: Computed styles in Chromium, every route, four widths, both themes
+        run: cd dashboard/tests/web && node computed-styles.mjs /tmp/ktw-base.html /tmp/ktw-head.html
+
+      - name: The cascade over jsdom, every route, four widths
+        if: ${{ !cancelled() }}
+        run: cd dashboard/tests/web && node cascade-check.mjs /tmp/ktw-base.html /tmp/ktw-head.html
+
+      - name: The host fixture page in Chromium, under its Content-Security-Policy, with foreign tokens
+        if: ${{ !cancelled() }}
+        run: cd dashboard/tests/web && node host-chromium.mjs

@@ -1,205 +1,205 @@
 # #thought/682e7ab6-125c-459f-9c67-a3c6b217d8ef,cc7ef11a-f83d-4d95-b45c-d43639003f41,f5383416-90c8-4c5c-affc-01c3c67d0518,f5ac4f25-a9f1-490a-a4ca-62d5f0db4a06
 
 ## #main
-<div class="reader thought-reader">
-  <div class="crumbs">
+<div class="ktw-reader ktw-thought-reader">
+  <div class="ktw-crumbs">
     <a href="#graph">
       "Graph"
     "/ thought"
   <h1>
     "A thought in 4 entries"
-  <p class="sub">
+  <p class="ktw-sub">
     "A chain of linked entries, each citing the one before — read from the first to the last. A link says two entries are related: often that one follows from the other, not always."
-  <div class="thought-timeline">
-    <div class="note">
+  <div class="ktw-thought-timeline">
+    <div class="ktw-note">
       "2026-03-20 → 2026-06-01 · grew over 73 days"
-    <div class="timeline-bar">
-      <span class="tick" style="left: 0%;" title="1: 2026-03-20 — Writes retry three times on a busy lock">
+    <div class="ktw-timeline-bar">
+      <span class="ktw-tick" style="left: 0%;" title="1: 2026-03-20 — Writes retry three times on a busy lock">
         "1"
-      <span class="tick" style="left: 35.61643835616438%;" title="2: 2026-04-15 — The API is versioned in the path">
+      <span class="ktw-tick" style="left: 35.61643835616438%;" title="2: 2026-04-15 — The API is versioned in the path">
         "2"
-      <span class="tick" style="left: 35.61643835616438%;" title="3: 2026-04-15 — Pagination uses opaque cursors">
+      <span class="ktw-tick" style="left: 35.61643835616438%;" title="3: 2026-04-15 — Pagination uses opaque cursors">
         "3"
-      <span class="tick" style="left: 100%;" title="4: 2026-06-01 — Errors carry a stable code beside the message">
+      <span class="ktw-tick" style="left: 100%;" title="4: 2026-06-01 — Errors carry a stable code beside the message">
         "4"
-  <div class="thought-warn">
+  <div class="ktw-thought-warn">
     "Its first entry's Evidence is unknown. Where a later step depends on it, it depends on a reason nobody confirmed."
-  <section class="thought-step open">
-    <div class="crumbs">
+  <section class="ktw-thought-step ktw-open">
+    <div class="ktw-crumbs">
       "1 / 4"
       "·"
       <a href="#topic/storage.md">
         "Storage"
       "· 2026-03-20"
-    <div class="thought-warn">
+    <div class="ktw-thought-warn">
       "In question — open. 3 later steps are linked after it — worth checking whether they depend on it."
     <h2>
       <a href="#entry/682e7ab6-125c-459f-9c67-a3c6b217d8ef">
         "Writes retry three times on a busy lock"
-    <div class="fields">
-      <span class="pill type">
+    <div class="ktw-fields">
+      <span class="ktw-pill ktw-type">
         "workaround"
-      <span class="pill status-open">
+      <span class="ktw-pill ktw-status-open">
         "open"
-      <span class="pill ev-unknown">
+      <span class="ktw-pill ktw-ev-unknown">
         "unknown"
-    <div class="body">
+    <div class="ktw-body">
       <p>
         "Writes retry three times when the lock is busy, with no backoff."
-      <div class="label why-open">
+      <div class="ktw-label ktw-why-open">
         <b>
           "Why this needs an answer"
         <p>
           "nobody knows where the three came from, or whether a backoff was ever tried."
-  <div class="thought-link">
+  <div class="ktw-thought-link">
     "↓ cited by"
-  <section class="thought-step pending-confirmation">
-    <div class="crumbs">
+  <section class="ktw-thought-step ktw-pending-confirmation">
+    <div class="ktw-crumbs">
       "2 / 4"
       "·"
       <a href="#topic/api.md">
         "API"
       "· 2026-04-15"
-    <div class="thought-warn">
+    <div class="ktw-thought-warn">
       "In question — pending-confirmation. 2 later steps are linked after it — worth checking whether they depend on it."
     <h2>
       <a href="#entry/cc7ef11a-f83d-4d95-b45c-d43639003f41">
         "The API is versioned in the path"
-    <div class="fields">
-      <span class="pill type">
+    <div class="ktw-fields">
+      <span class="ktw-pill ktw-type">
         "decision"
-      <span class="pill status-pending-confirmation">
+      <span class="ktw-pill ktw-status-pending-confirmation">
         "pending-confirmation"
-      <span class="pill ev-inferred">
+      <span class="ktw-pill ktw-ev-inferred">
         "inferred"
-    <div class="body">
+    <div class="ktw-body">
       <p>
         "Every route starts with"
         <code>
           "/v1/"
         "."
-      <div class="label considered">
+      <div class="ktw-label ktw-considered">
         <b>
           "Considered"
         <p>
           "a version header — invisible in logs and links."
-  <div class="thought-link">
+  <div class="ktw-thought-link">
     "↓ cited by"
-  <section class="thought-step active">
-    <div class="crumbs">
+  <section class="ktw-thought-step ktw-active">
+    <div class="ktw-crumbs">
       "3 / 4"
       "·"
       <a href="#topic/api.md">
         "API"
       "· 2026-04-15"
-    <div class="thought-affected">
+    <div class="ktw-thought-affected">
       "Linked after step 1, which is in question."
     <h2>
       <a href="#entry/f5383416-90c8-4c5c-affc-01c3c67d0518">
         "Pagination uses opaque cursors"
-    <div class="fields">
-      <span class="pill type">
+    <div class="ktw-fields">
+      <span class="ktw-pill ktw-type">
         "decision"
-      <span class="pill status-active">
+      <span class="ktw-pill ktw-status-active">
         "active"
-      <span class="pill ev-confirmed">
+      <span class="ktw-pill ktw-ev-confirmed">
         "confirmed"
-    <div class="body">
+    <div class="ktw-body">
       <p>
         "Cursors are opaque strings; offsets are not offered."
-      <div class="label rejected">
+      <div class="ktw-label ktw-rejected">
         <b>
           "Rejected alternative"
         <p>
           "page numbers — they skip and repeat rows while the table changes underneath."
-  <div class="thought-link">
+  <div class="ktw-thought-link">
     "↓ cited by"
-  <section class="thought-step active">
-    <div class="crumbs">
+  <section class="ktw-thought-step ktw-active">
+    <div class="ktw-crumbs">
       "4 / 4"
       "·"
       <a href="#topic/api.md">
         "API"
       "· 2026-06-01"
-    <div class="thought-affected">
+    <div class="ktw-thought-affected">
       "Linked after step 1, which is in question."
     <h2>
       <a href="#entry/f5ac4f25-a9f1-490a-a4ca-62d5f0db4a06">
         "Errors carry a stable code beside the message"
-    <div class="fields">
-      <span class="pill type">
+    <div class="ktw-fields">
+      <span class="ktw-pill ktw-type">
         "decision"
-      <span class="pill status-active">
+      <span class="ktw-pill ktw-status-active">
         "active"
-      <span class="pill ev-confirmed">
+      <span class="ktw-pill ktw-ev-confirmed">
         "confirmed"
-    <div class="body">
+    <div class="ktw-body">
       <p>
         "Each error has a code that never changes and a message that may."
-      <div class="label reason">
+      <div class="ktw-label ktw-reason">
         <b>
           "Reason"
         <p>
           "clients matched on messages and broke on every rewording."
 
 ## #details
-<div class="pane-width" title="the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details">
-  <span class="label">
+<div class="ktw-pane-width" title="the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details">
+  <span class="ktw-label">
     "Width"
-  <span class="mini-width">
+  <span class="ktw-mini-width">
     <button class type="button">
       "1×"
-    <button class="on" type="button">
+    <button class="ktw-on" type="button">
       "2×"
     <button class type="button">
       "3×"
     <button class type="button">
       "½"
-<div class="mini fill">
+<div class="ktw-mini ktw-fill">
   <canvas height="0" width="0">
-  <span class="mini-seg">
-    <span class="mini-title">
+  <span class="ktw-mini-seg">
+    <span class="ktw-mini-title">
       "graph"
-  <span class="mini-hint">
+  <span class="ktw-mini-hint">
     "hover · click"
-  <span class="mini-corner">
-    <button class="mini-corner-btn" title="fit the view: everything in the box" type="button">
+  <span class="ktw-mini-corner">
+    <button class="ktw-mini-corner-btn" title="fit the view: everything in the box" type="button">
       "fit"
-    <button class="mini-corner-btn" title="let go of the held thought — every node alike again (Esc, on a page without a reset of its own)" type="button">
+    <button class="ktw-mini-corner-btn" title="let go of the held thought — every node alike again (Esc, on a page without a reset of its own)" type="button">
       "reset"
-  <button class="mini-open" title="open the full graph — the same level, centred on what is shown here" type="button">
+  <button class="ktw-mini-open" title="open the full graph — the same level, centred on what is shown here" type="button">
     "⤢ full graph"
-  <button class="mini-gear" title="the graph's switches — the same as in the full graph" type="button">
+  <button class="ktw-mini-gear" title="the graph's switches — the same as in the full graph" type="button">
     "⚙"
-  <div class="mini-filters graph-ui" hidden>
-    <span class="ui-group">
+  <div class="ktw-mini-filters ktw-graph-ui" hidden>
+    <span class="ktw-ui-group">
       <label>
         <input checked type="checkbox">
         "entries"
       <label title="the names of this project's topics and entries — topics, and entries when zoomed in">
         <input checked type="checkbox">
         "labels"
-    <span class="ui-group cited-ctl">
+    <span class="ktw-ui-group ktw-cited-ctl">
       <label title="who in the Keep the Why registry cites this project — the registry's backlink file, https://keepthewhy.com/registry/backlinks/github.com/acme/widget.json, loaded on the click and not remembered. Citations from repositories outside the registry are not in it.">
         <input type="checkbox">
         "cited by"
-    <span class="ui-group">
+    <span class="ktw-ui-group">
       <label title="the projects of one owner around a node for the owner — only an owner with more than one project in the graph; the node opens the owner's page">
         <input type="checkbox">
         "owners"
-    <span class="ui-group">
+    <span class="ktw-ui-group">
       <label title="the path's projects in the graph — the projects you came through; unchecked they are hidden, not forgotten (the path bar discards)">
         <input checked type="checkbox">
         "path"
-    <span class="ui-group">
+    <span class="ktw-ui-group">
       <label title="the graph turns very slowly; it stops while you point at it">
         <input checked type="checkbox">
         "motion"
-    <span class="ui-group">
-      <button class="link-btn" title="every switch in this bar on">
+    <span class="ktw-ui-group">
+      <button class="ktw-link-btn" title="every switch in this bar on">
         "select all"
-      <button class="link-btn" title="every switch in this bar off — the project's topics alone">
+      <button class="ktw-link-btn" title="every switch in this bar off — the project's topics alone">
         "unselect all"
-    <span class="ui-group">
-      <button class="link-btn graph-reset" title="fit the graph and let go of every node you placed">
+    <span class="ktw-ui-group">
+      <button class="ktw-link-btn ktw-graph-reset" title="fit the graph and let go of every node you placed">
         "reset"

@@ -18,6 +18,9 @@ import re
 WEB_DIR = os.path.join(os.path.dirname(__file__), "web")
 MANIFEST = os.path.join(WEB_DIR, "ktw-views.json")
 PLACEHOLDER = "<!--ktw:views-->"
+# the library's stylesheets go in the head ahead of the host's own, so the host's
+# rules come later in the cascade and win a tie (ktw-views.css is the base)
+STYLES_PLACEHOLDER = "<!--ktw:styles-->"
 
 # a listed file is a plain name in web/ with the ktw- prefix — the server
 # serves /static/ by basename, the package ships web/* only
@@ -37,39 +40,40 @@ def manifest() -> dict:
     return data
 
 
-def script_tags() -> str:
-    """The library's tags for the served page, in load order."""
-    data = manifest()
-    tags = [
-        f'<link rel="stylesheet" href="/static/{n}">' for n in data.get("styles", [])
-    ]
-    tags += [f'<script src="/static/{n}"></script>' for n in data.get("scripts", [])]
-    return "\n".join(tags)
-
-
-def inline_tags() -> str:
-    """The library inlined, for an export: one self-contained page."""
-    data = manifest()
+def _inline(kind: str, names: list) -> str:
     out = []
-    for kind, names in (
-        ("style", data.get("styles", [])),
-        ("script", data.get("scripts", [])),
-    ):
-        for name in names:
-            with open(os.path.join(WEB_DIR, name), encoding="utf-8") as fh:
-                text = fh.read()
-            if f"</{kind}" in text.lower():
-                raise ValueError(
-                    f"{name} contains </{kind}, which would end its inlined tag"
-                )
-            out.append(f"<{kind}>\n{text}\n</{kind}>")
+    for name in names:
+        with open(os.path.join(WEB_DIR, name), encoding="utf-8") as fh:
+            text = fh.read()
+        if f"</{kind}" in text.lower():
+            raise ValueError(
+                f"{name} contains </{kind}, which would end its inlined tag"
+            )
+        out.append(f"<{kind}>\n{text}\n</{kind}>")
     return "\n".join(out)
 
 
+def style_tags(inline: bool = False) -> str:
+    """The library's stylesheets, in load order: linked, or inlined for an export."""
+    names = manifest().get("styles", [])
+    if inline:
+        return _inline("style", names)
+    return "\n".join(f'<link rel="stylesheet" href="/static/{n}">' for n in names)
+
+
+def script_tags(inline: bool = False) -> str:
+    """The library's scripts, in load order: linked, or inlined for an export."""
+    names = manifest().get("scripts", [])
+    if inline:
+        return _inline("script", names)
+    return "\n".join(f'<script src="/static/{n}"></script>' for n in names)
+
+
 def page(index_html: str, inline: bool = False) -> str:
-    """`index.html` with the library's tags in place of the placeholder."""
-    if PLACEHOLDER not in index_html:
-        raise ValueError(f"index.html has no {PLACEHOLDER} placeholder")
-    return index_html.replace(
-        PLACEHOLDER, inline_tags() if inline else script_tags(), 1
-    )
+    """`index.html` with the library's stylesheets and scripts in place of their
+    placeholders; inlined, one self-contained page, for an export."""
+    for mark in (STYLES_PLACEHOLDER, PLACEHOLDER):
+        if mark not in index_html:
+            raise ValueError(f"index.html has no {mark} placeholder")
+    html = index_html.replace(STYLES_PLACEHOLDER, style_tags(inline), 1)
+    return html.replace(PLACEHOLDER, script_tags(inline), 1)
