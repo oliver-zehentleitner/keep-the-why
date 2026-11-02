@@ -86,6 +86,9 @@ jobs:
       - name: The pages under two hosts, neither of them the dashboard's (jsdom)
         run: cd dashboard/tests/web && node --test pages.test.mjs
 
+      - name: The host fixture page, two foreign hosts mounting the views from the manifest (jsdom)
+        run: cd dashboard/tests/web && node host.mjs
+
       - name: Markdown renderer parity with the HTML-string renderer it replaced (jsdom)
         # every body, title and field value of the fixture and of this repository's own export
         run: cd dashboard/tests/web && node parity.mjs fixture/state.json /tmp/ktw-dashboard-export/state.json
@@ -140,4 +143,9 @@ jobs:
         run: cd dashboard/tests/web && node computed-styles.mjs /tmp/ktw-base.html /tmp/ktw-head.html
 
       - name: The cascade over jsdom, every route, four widths
+        if: ${{ !cancelled() }}
         run: cd dashboard/tests/web && node cascade-check.mjs /tmp/ktw-base.html /tmp/ktw-head.html
+
+      - name: The host fixture page in Chromium, under its Content-Security-Policy, with foreign tokens
+        if: ${{ !cancelled() }}
+        run: cd dashboard/tests/web && node host-chromium.mjs

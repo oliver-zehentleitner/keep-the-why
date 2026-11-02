@@ -97,6 +97,7 @@ nav:
       - Setup: setup.md
       - Autostart examples: autostart.md
       - CI, dashboard and registry setup: ci-linting.md
+      - Dashboard views for another host: dashboard-views.md
       - Migrations: migrations.md
       - Methodology: methodology.md
       - Continuous capture: continuous-capture.md
