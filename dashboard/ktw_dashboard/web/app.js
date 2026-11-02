@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-const { plural, typeName, isUuid, rawFileUrl, configLine, normalizeState, hostFileLink, hostTreeLink, canonicalOf, parseSupersededBy, kindLabel, groupByFamily, familyRank, familyOrder, searchTerms, searchHit, registryMatches, shuffled, compareHits, snippetAt, highlightParts, resolveLocation, linkFamily, authorLookup, mergeStates, friendsOf, thoughtsOf, thoughtInsights, hostOf, projectLabel, backlinksUrl, citingOf, hostAnchor, seeDay, supersededDay, paletteToken, mergeAuthors, sortAuthors, AUTHOR_SORTS, ownerOf, exportStateUrl, exportVerdict, resolveSee, NO_FILTER, filterActive, entryMatches, fkey } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
+const { plural, typeName, isUuid, rawFileUrl, configLine, normalizeState, hostFileLink, hostTreeLink, canonicalOf, NO_FILTER, familyOrder, parseSupersededBy, kindLabel, groupByFamily, searchTerms, registryMatches, shuffled, resolveLocation, linkFamily, authorLookup, mergeStates, thoughtsOf, thoughtInsights, projectLabel, backlinksUrl, citingOf, hostAnchor, seeDay, supersededDay, paletteToken, mergeAuthors, sortAuthors, AUTHOR_SORTS, ownerOf, exportStateUrl, exportVerdict, resolveSee, filterActive, entryMatches, fkey, repoLabel, topicTitle } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
 const MD = globalThis.KeepTheWhy.markdown; // ktw-markdown.js
 
 // ---------------------------------------------------------------- prefs (host)
@@ -53,14 +53,7 @@ const nav = {
 const onView = (...views) => { const r = nav.current(); return !r.alias && !r.unknown && views.includes(r.view); };
 // a link to a place: a real anchor — middle-click, a new tab and a screen reader work — whose plain click moves
 // through nav. `href` in attrs is the route; it keeps its place among the attributes, so the markup is as before.
-function navLink(attrs, ...kids) {
-  const route = attrs.href; const own = attrs.onclick;
-  return el("a", { ...attrs, href: nav.href(route), onclick: (ev) => {
-    own?.(ev);
-    if (ev.defaultPrevented || ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey || attrs.target) return;
-    ev.preventDefault(); nav.go(route);
-  } }, ...kids);
-}
+const navLink = globalThis.KeepTheWhy.ui.navLinks(nav);
 // The host's own moves, for what is not a place: an address nav.href made
 // (a graph node's), a walk to another centre in place, a reload, and whether
 // the page is on this machine.
@@ -75,16 +68,6 @@ const isLocalPage = () => /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[
 const $ = (sel, root = document) => root.querySelector(sel);
 const narrow = () => !!window.matchMedia?.("(max-width: 900px)").matches;
 const fmtDate = (d) => d || "—";
-// the platform's mark before a repository's name, from its URL (ktw-core.js HOSTS);
-// none for a host no row knows
-function hostMark(url) {
-  const h = hostOf(url); if (!h) return null;
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("viewBox", "0 0 24 24"); svg.setAttribute("class", "host-mark"); svg.setAttribute("role", "img"); svg.setAttribute("aria-label", h.name);
-  // the name as aria-label, not as an SVG title element: that would join the link's text
-  const path = document.createElementNS("http://www.w3.org/2000/svg", "path"); path.setAttribute("d", h.path);
-  svg.append(path); return svg;
-}
 // the "opens elsewhere" mark after a link that leaves the page: a box with an arrow out of it
 function extIcon() {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -124,7 +107,6 @@ const LIVE = () => MODE === "live";
 const STATIC = !!window.__KTW_STATE__;
 const PUBLISHED = () => MODE === "public" || MODE === "export";
 const MY_ROOT = () => (MODE === "export" ? SCENE.self?.project?.root || "" : PUBLIC_ROOT);
-const PUBLIC_STATES = {}; // `${canonical}|${root}` -> Promise<{state, url} | {error}>, one fetch per project however many ask at once
 // A published file of another project: whoever owns that repository chose the
 // URL, so no referrer and no credentials go with the request, a slow host
 // times out, and an oversized answer is refused before it is parsed.
@@ -412,12 +394,9 @@ const HOST = {
   async registryIndex(url) { const text = await fetchForeign(url); noteLoaded(url, text); return JSON.parse(text); },
 };
 // ---------------------------------------------------------------- provider end
-// the page's caches over the provider: one request per project, however many ask at once
-function fetchPublicState(canonical, root = "") {
-  const key = `${canonical}|${root}`;
-  return (PUBLIC_STATES[key] ||= provider().exportState(canonical, root));
-}
-const ensureBodies = (state) => provider().bodies(state).then((r) => r.state);
+// the page's caches over the provider (ktw-family.js): one request per project, however many ask at once
+const fetchPublicState = (canonical, root = "") => FAM.publicState(canonical, root);
+const ensureBodies = (state) => FAM.bodies(state);
 const publicHref = (canonical, root = "", hash = "#overview") => centreUrl({ mode: "public", canonical, root }) + hash;
 
 // ---------------------------------------------------------------- state
@@ -425,13 +404,21 @@ const publicHref = (canonical, root = "", hash = "#overview") => centreUrl({ mod
 // or with the family scope the whole family merged, ktw-core.js mergeStates); SCENE.self, this project's own
 // state, always; SCENE.day, the clock; SCENE.focus, SCENE.scope, the layout — and the events views follow.
 // DOM helpers, pills and glyphs every view uses (ktw-ui.js): no state, only nodes
-const { el, setKids, pill, statusPill, evPill, typePills, entryPills, typeGlyphSvg } = globalThis.KeepTheWhy.ui;
+const { el, setKids, pill, statusPill, evPill, typePills, entryPills, typeGlyphSvg, hostMark, marked } = globalThis.KeepTheWhy.ui;
 const SCENE = globalThis.KeepTheWhy.scene.create({ scope: prefs.get("scope") || prefs.get("search-scope") || "project" }); // search-scope: the name before the scope switched the graph too
 // The graph view (ktw-graph.js): it draws what the host builds, given the scene, navigation and settings only.
 const GRAPH = globalThis.KeepTheWhy.views.graph.create({ scene: SCENE, nav, prefs });
 const { run: runGraph, lightThought, spotIn, projectNodes, miniView, driftOn, setDrift, setLabels } = GRAPH;
 // The timeline's stage (ktw-timeline.js): the same three, and the page around it stays here.
 const TIMELINE = globalThis.KeepTheWhy.views.timeline.create({ scene: SCENE, nav, prefs });
+// The family (ktw-family.js): the tree, the members' states, the friends, the Family page — loaded through the provider,
+// public members only; the mode and the page's root are the host's.
+const FAM = globalThis.KeepTheWhy.views.family.create({ scene: SCENE, nav, provider, host: { mode: () => MODE, root: () => MY_ROOT() } });
+const { publicTree, friendCandidates, loadFriend, liveMember, publicMember } = FAM;
+// The search (ktw-search.js): its scopes, the results page and the dropdown; the registry's page and rows are the host's.
+const SEARCH = globalThis.KeepTheWhy.views.search.create({ scene: SCENE, nav, family: FAM, host: { registryPage: (main, q, ctl) => viewRegistrySearch(main, q, ctl), registryRows: (q, ctl) => registryRows(q, ctl) } });
+const { canFamily, hasFamily } = SEARCH;
+const searchPool = (scope) => SEARCH.pool(scope);
 let PROJECT = QUERY.get("project"); // null: the server's SCENE.selected one
 const api = (path) => PROJECT ? `${path}?project=${encodeURIComponent(PROJECT)}` : path;
 // The clock: the day the page shows — the timeline's playhead. Set while the timeline is open, null
@@ -689,7 +676,6 @@ function resolveRemoteRef(canonical, uuid) {
   })();
   return REMOTE_REFS[key];
 }
-const repoLabel = (canonical) => canonical.replace(/^https:\/\/(github\.com|gitlab\.com|codeberg\.org|bitbucket\.org)\//, "").replace(/^https:\/\//, "");
 function remoteRefLine(ref, label) {
   const lead = () => (label ? el("b", {}, label) : null);
   const date = ref.date ? el("span", { class: "note" }, ` · as of ${ref.date}`) : null;
@@ -1091,58 +1077,6 @@ function familyDeclared() {
   for (const c of p.children || []) out.push({ role: "child", name: c.name, location: c.location, scope: c.scope, canonical: c.location.startsWith("https://") ? c.location : "", root: "" });
   return out;
 }
-function publicMemberRow(m, r) {
-  const st = r?.state;
-  const title = st ? el("a", { href: publicHref(m.canonical, m.root || "") }, m.name) : el("b", {}, m.name);
-  return el("div", { class: `member ${m.role} ${st ? "public" : "none"}`, onmouseenter: () => spotProject(m.canonical, m.root || ""), onmouseleave: () => spotProject(null) },
-    el("div", { class: "mr" }, el("span", { class: "role" }, m.role), title, el("span", { class: `pill kind-${st ? "public" : "none"}` }, st ? "published export" : "no public export"),
-      st ? el("span", { class: "pill" }, `generated ${st.generated || "?"}`) : null),
-    m.scope ? el("div", { class: "ms" }, m.scope) : (m.role === "parent" ? el("div", { class: "ms note" }, "holds what is family-wide") : null),
-    el("div", { class: "mm mono" }, m.canonical || m.location, st ? ` · ${st.entries.length} entries · ${st.topics.length} topics · ${r.url}` : r?.error ? ` · ${r.error}` : ""));
-}
-function memberRow(m) {
-  const here = m.role === "self";
-  const title = m.key && !here ? el("a", { href: nav.href({ view: "overview", centre: { mode: "live", project: m.key } }) }, m.name) : el("b", {}, m.name);
-  return el("div", { class: `member ${m.role} ${m.available}`, onmouseenter: () => spotProject(m.canonical, m.root || ""), onmouseleave: () => spotProject(null) },
-    el("div", { class: "mr" }, el("span", { class: "role" }, m.role), title, el("span", { class: `pill kind-${m.available}` }, here ? "this project" : kindLabel(m.available))),
-    m.scope ? el("div", { class: "ms" }, m.scope) : (m.role === "parent" ? el("div", { class: "ms note" }, "holds what is family-wide") : null),
-    el("div", { class: "mm mono" }, hostMark(m.canonical), m.canonical || m.location || "", m.path && !here ? ` · ${m.path}` : ""),
-    m.fetch ? el("details", { class: "fetch" }, el("summary", {}, "not checked out here — how to get it"),
-      el("p", { class: "note" }, "A working tree, writable (the mapping learns it on next start):"), el("pre", {}, el("code", {}, m.fetch.clone)),
-      el("p", { class: "note" }, "Or the read-only context cache, shared by every project on this machine:"), el("pre", {}, el("code", {}, m.fetch.cache))) : null);
-}
-// the tree as nested rows: every member under the one whose children block lists it
-function treeRows(members, rowOf) {
-  return familyOrder(members).map(([m, d]) => el("div", { class: "tree-row", style: `padding-left:${Math.min(d, 6) * 26}px` }, d ? el("span", { class: "tree-mark" }, "└") : null, rowOf(m)));
-}
-async function viewFamily(main) {
-  const p = SCENE.state.project;
-  main.append(el("h1", {}, "Family"), el("p", { class: "sub" }, "The whole tree this project belongs to, from the root down: each project under the one whose children block lists it. That block is the routing — where an entry about something belongs; what is wider than a level goes one level up, to the root at most. Every member can be read; a member checked out here can be written to. Not a dependency graph."));
-  if (!p.parent && !(p.children || []).length) return main.append(el("p", { class: "center" }, "This project is not part of a family: no parent line, no children block in .keep-the-why."));
-  const box = el("div", { class: "family" }); main.append(box);
-  if (PUBLISHED() && canonicalOf(p)) {
-    box.append(el("p", { class: "center" }, "Reading the family's published exports…"));
-    const t = await publicTree();
-    const members = [...t.groups.map((g) => g.member), ...t.missing.map((x) => x.member)];
-    const results = await Promise.all(members.map((m) => (m.role === "self" || !m.canonical ? null : fetchPublicState(m.canonical, m.root || ""))));
-    const byNode = new Map(members.map((m, i) => [m.node, results[i]]));
-    if (!box.isConnected) return;
-    box.replaceChildren(...treeRows(members, (m) => m.role === "self"
-      ? memberRow({ role: "self", name: p.id || p.name, location: "", scope: m.scope || "", canonical: canonicalOf(p), root: p.root || "", available: "public" })
-      : publicMemberRow(m, byNode.get(m.node))));
-    return;
-  }
-  if (!LIVE()) {
-    // an export knows only its own config: parent and children as declared
-    if (p.parent) box.append(memberRow({ role: "parent", name: p.parent.replace(/^https:\/\//, ""), location: p.parent, scope: "", canonical: p.parent.startsWith("https://") ? p.parent : "", available: "none", fetch: null }));
-    box.append(memberRow({ role: "self", name: p.id || p.name, location: "", scope: "", canonical: canonicalOf(p), root: p.root || "", available: "repository" }));
-    for (const c of p.children || []) box.append(memberRow({ role: "child", name: c.name, location: c.location, scope: c.scope, canonical: c.location.startsWith("https://") ? c.location : "", available: "none", fetch: null }));
-    return;
-  }
-  const members = await fetchTree() || [];
-  if (!box.isConnected) return;
-  box.replaceChildren(...treeRows(members, memberRow));
-}
 let PROJECTS = null; // /api/projects result
 let SELECTED_DEFAULT = null; // the server's own project, for the menu when the URL names none
 async function viewProjects(main) {
@@ -1459,7 +1393,7 @@ const color0 = () => palette(0);
 // friends are not followed. A friend is linked into the graph, never merged:
 // search, queues, counts and the other views stay with the project or family.
 // Its hub shows the entries cited there; a click on the hub goes there, as its name does.
-const FRIENDS = { on: false, loaded: {}, pending: {}, expanded: new Set(), load: false, loading: false };
+const FRIENDS = FAM.friends; // ktw-family.js: { on, loaded, pending, expanded, load, loading }
 // Who in the registry cites this project: its backlink file, fetched from the registry on the click and not
 // remembered — a remembered switch would ask the registry on every reload without one. `list` is in the
 // friends' shape ({ canonical, uuids: the citing entries }), loaded and drawn like friends.
@@ -1539,77 +1473,14 @@ function autoFamily() {
 // the members beside this project: the loaded ones and the ones not available here; before the load, what the config declares
 // the members beside this project: the loaded ones and the ones not available here; before the load, the tree
 // as the server or the published exports gave it — and no number at all while nothing has been fetched
-const familyCount = () => (FAMILY_NB.groups ? FAMILY_NB.groups.length + (FAMILY_NB.missing?.length || 0) : TREE ? TREE.filter((m) => m.role !== "self").length : PUBLIC_TREE?.groups ? PUBLIC_TREE.groups.filter((x) => x.member.role !== "self").length + (PUBLIC_TREE.missing?.length || 0) : null);
+const familyCount = () => (FAMILY_NB.groups ? FAMILY_NB.groups.length + (FAMILY_NB.missing?.length || 0) : FAM.treeNow() ? FAM.treeNow().filter((m) => m.role !== "self").length : FAM.publicTreeNow()?.groups ? FAM.publicTreeNow().groups.filter((x) => x.member.role !== "self").length + (FAM.publicTreeNow().missing?.length || 0) : null);
 function familyMembers() {
   if (!FAMILY_NB_ON || !canFamily() || !FAMILY_NB.groups?.length) return [];
   return FAMILY_NB.groups.map((x, i) => ({ ...(PUBLISHED() ? publicMember(x.member, x.state) : liveMember(x.member, x.state)), color: palette(i + 1) })).filter((m) => m.state && !onPath(m.canonical));
 }
-function friendCandidates(entries, family = []) {
-  const p = SCENE.self?.project || {}; const base = canonicalOf(p); const root = MY_ROOT();
-  const declared = [p.parent, ...(p.children || []).map((c) => c.location)].map((l) => resolveLocation(l, base, root)?.canonical);
-  return friendsOf(entries, [base, ...declared, ...(TREE || []).map((m) => m.canonical), ...family]);
-}
-function loadFriend(f) {
-  const k = fkey(f.canonical);
-  if (FRIENDS.loaded[k]) return Promise.resolve(FRIENDS.loaded[k]);
-  return (FRIENDS.pending[k] ||= (async () => {
-    let r = null;
-    const P = provider();
-    if (P.resolveEntry && P.memberState && f.uuids?.length) {
-      try {
-        const hit = await P.resolveEntry(f.uuids[0]);
-        if (!hit.error) {
-          const m = await memberState(hit.project);
-          if (m.state) r = { ...liveMember({ key: hit.project, name: m.state.project?.id, role: "self" }, m.state), name: m.state.project?.id || repoLabel(f.canonical) };
-        }
-      } catch { /* not known here: the published export */ }
-    }
-    if (!r) {
-      const p = await fetchPublicState(f.canonical, "");
-      r = p.state ? { ...publicMember({ canonical: f.canonical, root: "", name: repoLabel(f.canonical), role: "self" }, p.state), forkOf: p.forkOf || null } : { error: p.error };
-    }
-    r.canonical = f.canonical;
-    // a family is one unit, like a repository: a friend that has one comes with all of it
-    if (r.state) r.members = await friendUnit(r);
-    return (FRIENDS.loaded[k] = r);
-  })());
-}
-// One member of a friend's unit, however it was found
-function liveMember(m, state) {
-  const at = (hash) => centreUrl({ mode: "live", project: m.key }) + hash;
-  return { key: `L:${m.key}`, name: m.name || state.project?.id || m.key, role: m.role, state, canonical: canonicalOf(state.project) || m.canonical || "", root: state.project?.root || "",
-    href: (e) => at(entryHref(e)), topicHref: (file) => at(nav.href({ view: "topic", file: file })), open: at("#graph"), centre: { mode: "live", project: m.key } };
-}
-function publicMember(m, state) {
-  return { key: `P:${fkey(m.canonical)}|${m.root || ""}`, name: m.name, role: m.role, state, canonical: m.canonical, root: m.root || "",
-    href: (e) => publicHref(m.canonical, m.root || "", entryHref(e)), topicHref: (file) => publicHref(m.canonical, m.root || "", nav.href({ view: "topic", file: file })), open: publicHref(m.canonical, m.root || "", "#graph"), centre: { mode: "public", canonical: m.canonical, root: m.root || "" } };
-}
-// The friend's whole family tree — on the live server what it knows about that
-// project, else the members' published exports; members that cannot be read
-// are left out of the unit (the friend itself is always in it).
-async function friendUnit(r) {
-  const p = r.state.project || {};
-  const self = { ...r };
-  if (!p.parent && !(p.children || []).length) return [self];
-  const out = [self];
-  const P = provider();
-  if (r.centre?.mode === "live" && P.family && P.memberState) {
-    try {
-      const fam = await P.family({ project: r.centre.project, tree: true });
-      if (fam.error) throw new Error(fam.error);
-      const members = fam.members.filter((m) => m.role !== "self" && m.key);
-      const states = await Promise.all(members.map((m) => memberState(m.key)));
-      members.forEach((m, i) => { if (states[i].state) out.push(liveMember(m, states[i].state)); });
-      return out;
-    } catch { /* fall back to the published exports */ }
-  }
-  const t = await publicTreeFrom({ state: r.state, canonical: r.canonical, root: p.root || "", name: r.name, href: r.href });
-  for (const g of t.groups) if (g.member.role !== "self") out.push(publicMember(g.member, g.state));
-  return out;
-}
 
 async function loadFriends(list) {
-  if (LIVE()) await fetchTree(); // the whole family is known before anything counts as a friend
+  if (LIVE()) await FAM.tree(); // the whole family is known before anything counts as a friend
   FRIENDS.on = true; FRIENDS.loading = true;
   await Promise.all(list.map(loadFriend));
   FRIENDS.loading = false; // before the render, so the controls show the result
@@ -1869,7 +1740,7 @@ function remember(c, state) {
 // fetched states (friends, members, published exports) stay cached.
 function setCentre(c, state) {
   MODE = c.mode; PUBLIC = c.mode === "public" ? c.canonical : null; PUBLIC_ROOT = c.mode === "public" ? c.root || "" : ""; PROJECT = c.mode === "live" ? c.project || null : null;
-  graph = null; fgraph = null; TREE = null; TREE_AT = 0; TREE_ASKED = false; PUBLIC_TREE = null; LAST_POOL = null;
+  graph = null; fgraph = null; FAM.resetCentre(); TREE_ASKED = false; LAST_POOL = null;
   FRIENDS.on = false; FRIENDS.expanded.clear(); SCENE.setThought(null); MINI = null; CHAIN.extra.clear(); CHAIN.tried.clear();
   FAMILY_NB = { groups: null, missing: [], loading: false }; // the family beside the graph is the new centre's
   GLOBE.extra.clear(); GLOBE.failed.clear(); GLOBE.done = 0; registryOff(); // the globe's waves were counted from the old centre; what was fetched stays in memory
@@ -1887,8 +1758,8 @@ function familyKeys() {
   const p = SCENE.self?.project || {}; const base = canonicalOf(p); const root = p.root || "";
   add(base, root);
   for (const l of [p.parent, ...(p.children || []).map((c) => c.location)]) { const loc = l && resolveLocation(l, base, root); if (loc) add(loc.canonical, loc.root); }
-  for (const m of TREE || []) add(m.canonical, m.root);
-  for (const x of [...(PUBLIC_TREE?.groups || []), ...(PUBLIC_TREE?.missing || [])]) add(x.member.canonical, x.member.root);
+  for (const m of FAM.treeNow() || []) add(m.canonical, m.root);
+  for (const x of [...(FAM.publicTreeNow()?.groups || []), ...(FAM.publicTreeNow()?.missing || [])]) add(x.member.canonical, x.member.root);
   for (const m of familyMembers()) add(m.canonical, m.root);
   for (const G of fgraph?.groups || []) add(G.canonical, G.root);
   return out;
@@ -1975,7 +1846,7 @@ function friendsUi(g) {
 function citedExclude() {
   const p = SCENE.self?.project || {}; const base = canonicalOf(p); const root = MY_ROOT();
   const declared = [p.parent, ...(p.children || []).map((c) => c.location)].map((l) => resolveLocation(l, base, root)?.canonical);
-  return [base, ...declared, ...(TREE || []).map((m) => m.canonical), ...familyMembers().map((m) => m.canonical), ...(PUBLIC_TREE?.groups || []).map((x) => x.member.canonical)];
+  return [base, ...declared, ...(FAM.treeNow() || []).map((m) => m.canonical), ...familyMembers().map((m) => m.canonical), ...(FAM.publicTreeNow()?.groups || []).map((x) => x.member.canonical)];
 }
 async function loadCited() {
   CITED.loading = true; CITED.error = null; render();
@@ -2265,7 +2136,7 @@ async function globeRegistry() {
     // in random order: with many listed, a portion is a sample of the registry, not its first letters
     const list = shuffled((idx.projects || []).filter((p) => p.canonical && !have.has(fkey(p.canonical)) && !GLOBE.registryTried.has(fkey(p.canonical))));
     // a project that failed before is offered again — much of that is temporary; its old error is forgotten for the try
-    for (const p of list) { const k = fkey(p.canonical); if (FRIENDS.loaded[k]?.error) { delete FRIENDS.loaded[k]; delete FRIENDS.pending[k]; delete PUBLIC_STATES[`${p.canonical}|`]; } }
+    for (const p of list) { const k = fkey(p.canonical); if (FRIENDS.loaded[k]?.error) FAM.forgetFriend(p.canonical); }
     if (!list.length) { GLOBE.log.push(goOn ? "registry: every listed project has been tried" : "registry: everything listed is already here"); GLOBE.registry = true; GLOBE.registryLeft = false; return; }
     let ok = 0;
     const took = await globePortions(list,
@@ -2461,7 +2332,7 @@ function graphControlGroups(g, family, view = g) {
 let TREE_ASKED = false;
 function viewGraph(main) {
   // live: the whole family tree is known before anything counts as a friend — the server's own API, no other host
-  if (LIVE() && !TREE && !TREE_ASKED) { TREE_ASKED = true; fetchTree().then((t) => { if (t && onView("graph", "globe")) render(); }); }
+  if (LIVE() && !FAM.treeNow() && !TREE_ASKED) { TREE_ASKED = true; FAM.tree().then((t) => { if (t && onView("graph", "globe")) render(); }); }
   const family = familyGraphShown();
   const wrap = el("div", { class: "graph-wrap" });
   main.append(wrap);
@@ -2555,131 +2426,12 @@ function timelineGraph() {
 const TIMELINE_HOST = { graph: timelineGraph, entryRow: (e) => entryRow(e), renderBody: (md) => renderMarkdown(md), bodies: (st) => ensureBodies(st), render: () => render() };
 const ESC = { page: null, pane: null }; // what Esc does: the page's reset button, else the side pane's graph's; the view sets it, render() clears it
 let TIMELINE_FAMILY_ASKED = false; // the family graph is being built for the timeline
-// ---------------------------------------------------------------- search
-// What a search runs over: this project, or every member of its tree — the
-// whole family from the root down, not only the parent chain. Shared by the
-// dropdown under the search field and the results page (#search/<scope>/<q>).
-let TREE = null; let TREE_AT = 0; // /api/family?tree=1, live mode
-async function fetchTree() {
-  const P = provider(); if (!P.family) return null;
-  if (TREE && Date.now() - TREE_AT < 30000) return TREE;
-  const r = await P.family({ tree: true });
-  if (r.error) TREE = null; else { TREE = r.members; TREE_AT = Date.now(); }
-  return TREE;
-}
-const MEMBER_STATES = {}; // project key -> { at, p: Promise<{state}|{error}> }, live mode
-function memberState(key) {
-  const c = MEMBER_STATES[key];
-  if (c && Date.now() - c.at < 30000) return c.p;
-  const P = provider();
-  const p = P.memberState ? P.memberState(key) : Promise.resolve({ error: "a member's state needs the live server" });
-  MEMBER_STATES[key] = { at: Date.now(), p };
-  return p;
-}
-let PUBLIC_TREE = null; // the tree read from published exports, public mode
-async function publicTree() {
-  if (PUBLIC_TREE) return PUBLIC_TREE;
-  PUBLIC_TREE = await publicTreeFrom({ state: SCENE.self, canonical: canonicalOf(SCENE.state.project), root: MY_ROOT(), name: SCENE.state.project.id || SCENE.state.project.name, href: (e) => entryHref(e) });
-  await Promise.all(PUBLIC_TREE.groups.map((g) => ensureBodies(g.state))); // merged into search and lists: the bodies are needed
-  return PUBLIC_TREE;
-}
-// The family tree around one published project, read from the members'
-// published exports: this page's own (publicTree), or a friend's.
-async function publicTreeFrom(start) {
-  const canon = start.canonical; const myRoot = start.root || "";
-  const keyOf = (c, r) => `${c}|${r}`;
-  const self = { member: { role: "self", name: start.name, canonical: canon, root: myRoot, node: keyOf(canon, myRoot), up: null }, state: start.state, href: start.href };
-  const groups = [self]; const missing = []; const seen = new Set([keyOf(canon, myRoot)]);
-  const label = (loc) => loc.root ? `${loc.canonical.replace(/^https:\/\//, "")}/${loc.root}` : loc.canonical.replace(/^https:\/\//, "");
-  const add = (m, r) => { if (r.state) groups.push({ member: m, state: r.state, href: (e) => publicHref(m.canonical, m.root, entryHref(e)) }); else missing.push({ member: m, reason: r.error }); return r.state; };
-  // up: the parent chain, as far as each level is published
-  let cur = { state: start.state, canonical: canon, root: myRoot }; let depth = 1; let parentKey = null; let below = self.member;
-  while (cur.state?.project?.parent && depth < 12) {
-    const loc = resolveLocation(cur.state.project.parent, cur.canonical, cur.root);
-    if (!loc || seen.has(keyOf(loc.canonical, loc.root))) break;
-    seen.add(keyOf(loc.canonical, loc.root));
-    if (depth === 1) parentKey = keyOf(loc.canonical, loc.root);
-    const m = { role: depth === 1 ? "parent" : depth === 2 ? "grandparent" : "ancestor", depth, name: label(loc), ...loc, node: keyOf(loc.canonical, loc.root), up: null };
-    below.up = m.node; below = m; // the tree's shape: each level names the one above it
-    const st = add(m, await fetchPublicState(loc.canonical, loc.root));
-    cur = { state: st, canonical: loc.canonical, root: loc.root }; depth++;
-  }
-  // down: every published children block, level by level from the top
-  let level = groups.map((g) => ({ state: g.state, canonical: g.member.canonical, root: g.member.root || "", key: keyOf(g.member.canonical, g.member.root || "") }));
-  for (let round = 0; level.length && round < 12; round++) {
-    const next = [];
-    const kids = level.flatMap((l) => (l.state?.project?.children || []).map((c) => ({ c, from: l, loc: resolveLocation(c.location, l.canonical, l.root) })))
-      .filter(({ loc }) => loc && !seen.has(keyOf(loc.canonical, loc.root)));
-    for (const k of kids) seen.add(keyOf(k.loc.canonical, k.loc.root));
-    const results = await Promise.all(kids.map((k) => fetchPublicState(k.loc.canonical, k.loc.root)));
-    kids.forEach((k, i) => {
-      const role = k.from.key === keyOf(canon, myRoot) ? "child" : k.from.key === parentKey ? "sibling" : "relative";
-      const st = add({ role, name: k.c.name, scope: k.c.scope, via: k.from.state?.project?.id || "", ...k.loc, node: keyOf(k.loc.canonical, k.loc.root), up: k.from.key }, results[i]);
-      if (st) next.push({ state: st, canonical: k.loc.canonical, root: k.loc.root, key: keyOf(k.loc.canonical, k.loc.root) });
-    });
-    level = next;
-  }
-  groups.sort((a, b) => familyRank(a.member) - familyRank(b.member));
-  return { groups, missing };
-}
-// { groups: [{ member, state, href(e) }], missing: [{ member, reason }] } — this project first
-// Four scopes, chosen per search (the dropdown's rows, the results page's bar): this project alone,
-// the family tree, the friends, or both. The top bar's scope switch governs the graph and the lists,
-// not the search — Enter in the search field always searches this project.
-const SEARCH_SCOPES = { project: "this project", family: "family", friends: "friends", all: "family & friends" };
-async function searchPool(scope) {
-  const self = { member: { role: "self", name: SCENE.state.project.name || SCENE.state.project.id, canonical: canonicalOf(SCENE.state.project) }, state: SCENE.self, href: (e) => entryHref(e) };
-  if (!(scope in SEARCH_SCOPES) || scope === "project") return { groups: [self], missing: [] };
-  const fam = scope === "friends" ? { groups: [self], missing: [] } : await familyPool(self);
-  if (scope === "family") return fam;
-  const fr = await friendPool(fam);
-  return { groups: [...fam.groups, ...fr.groups], missing: [...fam.missing, ...fr.missing] };
-}
-async function familyPool(self) {
-  if (PUBLISHED()) return publicTree();
-  if (!LIVE()) return { groups: [self], missing: [] };
-  const others = [...(await fetchTree() || [])].filter((m) => m.role !== "self").sort((a, b) => familyRank(a) - familyRank(b));
-  const results = await Promise.all(others.map((m) => m.key ? memberState(m.key) : { error: m.available === "none" ? "not checked out or cached on this machine" : "location unknown" }));
-  const groups = [self]; const missing = [];
-  others.forEach((m, i) => { const r = results[i]; if (r.state) groups.push({ member: m, state: r.state, href: (e) => nav.href({ ...entryRoute(e), centre: { mode: "live", project: m.key } }) }); else missing.push({ member: m, reason: r.error }); });
-  return { groups, missing };
-}
-// The friends of the projects in a pool — the repositories their entries cite outside the family —
-// read the way the graph reads them (loadFriend: a local checkout the live server knows, else the
-// published export), bodies included, since the search reads them. A friend that has a family comes
-// with it, as in the graph. What does not load is listed under "Not searched", never dropped.
-async function friendPool(pool) {
-  if (LIVE()) await fetchTree(); // the whole family is known before anything counts as a friend
-  const known = [...pool.groups.map((g) => g.member.canonical), ...pool.missing.map(({ member: m }) => m.canonical)].filter(Boolean);
-  const list = friendCandidates(pool.groups.flatMap((g) => g.state.entries || []), known);
-  const results = await Promise.all(list.map(loadFriend));
-  const groups = []; const missing = []; const seen = new Set(known.map(fkey));
-  results.forEach((r, i) => {
-    const f = list[i];
-    if (!r.state) { missing.push({ member: { role: "friend", name: repoLabel(f.canonical), canonical: f.canonical }, reason: r.error || "could not load the export" }); return; }
-    for (const u of r.members || [r]) {
-      const k = fkey(u.canonical); if (!k || seen.has(k)) continue; seen.add(k);
-      groups.push({ member: { role: "friend", name: u.name, canonical: u.canonical, root: u.root || "", key: u.key, open: u.open, via: k === fkey(r.canonical) ? "" : r.name }, state: u.state, href: u.href });
-    }
-  });
-  await Promise.all(groups.map((g) => ensureBodies(g.state)));
-  return { groups, missing };
-}
-// every hit, best first; the dropdown keeps this project's hits on top
-function searchRows(pool, q) {
-  const rows = [];
-  for (const g of pool.groups) for (const e of g.state.entries || []) { const hit = searchHit(e, q); if (hit) rows.push({ e, hit, g }); }
-  return rows.sort((a, b) => compareHits(a.hit, b.hit));
-}
-const searchScopes = () => (LIVE() || MODE === "public" || (MODE === "export" && !!canonicalOf(SCENE.state?.project)) ? ["project", "family"] : ["project"]);
+// ---------------------------------------------------------------- search (ktw-search.js) and the scope switch
+// The search itself — scopes, hits, the results page, the dropdown — is ktw-search.js; the registry's page and
+// rows, the top bar's scope switch and the keys stay here.
 // One setting for every view that can span projects (search, graph): this
 // project, or the whole family tree. Kept per browser; a results-page link
 // carries its own scope and sets it.
-const hasFamily = () => !!(SCENE.state?.project?.parent || (SCENE.state?.project?.children || []).length);
-const canFamily = () => searchScopes().includes("family") && hasFamily();
-// friends can be searched where the family can be read, and there are any: entries citing outside the family
-const canFriends = () => searchScopes().includes("family") && !!SCENE.self && friendCandidates(SCENE.self.entries || []).length > 0;
-const canSearch = (s) => s === "project" || (s === "family" ? canFamily() : s === "friends" ? canFriends() : s === "all" ? canFamily() || canFriends() : false);
 const scope = () => (canFamily() && SCENE.scope === "family" ? "family" : "project");
 function markScope() {
   const box = $("#scope"); if (!box) return;
@@ -2697,81 +2449,16 @@ function setScope(v, { rerender: again = true } = {}) {
   showScope();
 }
 function setupScope() { for (const b of $("#scope").querySelectorAll("button")) b.onclick = () => setScope(b.dataset.scope); markScope(); }
-const searchHref = (scope, q) => nav.href({ view: "search", scope, q });
-const onSearch = (scope, q) => { const r = nav.current(); return r.view === "search" && r.scope === scope && r.q === q; }; // still on these results — not navigated away while they loaded
-const memberLabel = (m) => m.role === "self" ? "this project" : m.role === "friend" ? (m.via ? `friend's family, with ${m.via}` : "friend") : m.role === "relative" && m.via ? `relative, via ${m.via}` : m.role;
-const topicTitle = (st, file) => st.topics?.find((t) => t.file === file)?.title || file;
-// text with every search term in a <mark>, as nodes (highlightParts in ktw-core.js)
-const marked = (text, terms) => highlightParts(text, terms).map((p) => (p.mark ? el("mark", {}, p.text) : p.text));
-function hitSnippet(hit) {
-  const w = hit.where; if (!w) return null;
-  const text = snippetAt(w.text.replace(/\*\*|`/g, ""), Math.max(0, w.text.slice(0, w.i).replace(/\*\*|`/g, "").length), w.len);
-  return [w.field === "body" || w.field === "title" ? null : [el("b", {}, `${w.field}:`), " "], marked(text, hit.terms)];
-}
-let RESTORE_SCROLL = 0; // a live update re-renders the results page; its rows arrive after the scroll was restored
-async function viewSearch(main, linkScope, q) {
-  if (linkScope === "registry") return viewRegistrySearch(main, q);
-  const scope = canSearch(linkScope) ? linkScope : "project"; // a shared link may carry a scope this project cannot search: it falls back
-  if (scope !== linkScope) { nav.go({ view: "search", scope, q }, { replace: true }); }
-  const input = $("#search"); if (document.activeElement !== input) input.value = q;
-  const terms = searchTerms(q);
-  const sub = el("p", { class: "sub" }, "Searching…");
-  main.append(el("div", { class: "search-head" }, el("h1", {}, "Search ", el("span", { class: "q" }, `“${q}”`)), searchScopeBar(scope, q)), sub);
-  if (terms.length === 0 || q.trim().length < 2) { sub.textContent = "Type at least two characters in the search field and press Enter."; return; }
-  const pool = await searchPool(scope);
-  if (!onSearch(scope, q)) return; // navigated away meanwhile
-  const rows = searchRows(pool, q);
-  const shown = rows.filter(({ e }) => matches(e)).length;
-  const projectsHit = new Set(rows.map((r) => r.g)).size;
-  sub.textContent = `${plural(rows.length, "entry")} in ${plural(projectsHit, "project")}` +
-    (scope !== "project" ? ` · ${plural(pool.groups.length, "project")} searched` : "") +
-    (terms.length > 1 ? ` · all of: ${terms.join(", ")}` : "") +
-    (pageFiltered() ? ` · ${shown} match the sidebar filters, the rest dimmed` : "") +
-    " · searched: title, body, Revisit when, Source, Verification, Superseded by, Id, file, type, status, evidence";
-  const box = el("div", { class: "search-page" });
-  for (const g of pool.groups) {
-    const mine = rows.filter((r) => r.g === g);
-    if (!mine.length) continue;
-    const m = g.member;
-    const head = el("div", { class: "sg-head" },
-      m.role === "self" ? el("b", {}, m.name) : el("a", { href: m.open || (PUBLISHED() ? publicHref(m.canonical, m.root || "") : nav.href({ view: "overview", centre: { mode: "live", project: m.key } })) }, m.name),
-      pill(memberLabel(m), "role"), el("span", { class: "count" }, plural(mine.length, "hit")));
-    box.append(el("section", { class: "sgroup" }, head, m.scope ? el("div", { class: "ms note" }, m.scope) : null,
-      el("div", { class: "entry-list" }, mine.map(({ e, hit }) => {
-        const gt = e.git;
-        const meta = [topicTitle(g.state, e.file), e.file, gt?.created?.author ? `${gt.created.author} · ${gt.created.date}` : null,
-          gt?.last_touched?.date && gt.last_touched.date !== gt?.created?.date ? `touched ${gt.last_touched.date}` : null,
-          e.uuid ? `Id ${e.uuid.slice(0, 8)}` : null, plural(hit.count, "match").replace("matchs", "matches")].filter(Boolean).join("  ·  ");
-        return el("a", { href: g.href(e), class: `row ${matches(e) ? "" : "dim"}` },
-          el("div", { class: "rt" }, el("span", {}, marked(e.title.replace(/`/g, ""), hit.terms)), ...entryPills(e)),
-          el("div", { class: "rs" }, hitSnippet(hit)),
-          el("div", { class: "rm" }, meta));
-      }))));
-  }
-  const wider = scope === "all" ? null : canSearch("all") ? "all" : scope === "project" && canSearch("family") ? "family" : scope === "project" && canSearch("friends") ? "friends" : null;
-  if (!rows.length) box.append(el("p", { class: "center" }, `No entry matches “${q}”`, scope === "project" ? " in this project" : scope === "all" ? " in the family or the friends" : ` in the ${SEARCH_SCOPES[scope]}`,
-    wider ? [" — ", navLink({ href: { view: "search", scope: wider, q: q } }, `search ${SEARCH_SCOPES[wider]}`)] : "", "."));
-  if (pool.missing.length) box.append(el("section", { class: "sgroup missing" }, el("div", { class: "sg-head" }, el("b", {}, "Not searched"), el("span", { class: "count" }, pool.missing.length)),
-    pool.missing.map(({ member: m, reason }) => el("div", { class: "sr-missing" }, el("b", {}, m.name), ` (${memberLabel(m)}) — ${reason}`)),
-    el("p", { class: "note" }, [pool.missing.some(({ member: m }) => m.role !== "friend") ? "Family shows how to get a member that is not on this machine. " : "",
-      pool.missing.some(({ member: m }) => m.role === "friend") ? "Friends lists the repositories the entries cite outside the family, and what could not be loaded." : ""].join("").trim())));
-  main.append(box);
-  if (RESTORE_SCROLL) main.scrollTop = RESTORE_SCROLL;
-}
-// the results page's bar: the entry scopes this project can search, and the registry's projects last
-const searchScopeBar = (scope, q) => el("span", { class: "search-scope", title: "where to search — the switch next to the project menu sets the graph and the lists, not the search; registry: a project rather than entries" },
-  ...Object.entries(SEARCH_SCOPES).filter(([k]) => canSearch(k)).map(([k, label]) => navLink({ href: { view: "search", scope: k, q: q }, class: k === scope ? "on" : "" }, label)),
-  navLink({ href: { view: "search", scope: "registry", q: q }, class: scope === "registry" ? "on" : "" }, "registry"));
 // #search/registry/<q>: the projects of the registry the words name — name, repository URL, id — from the
 // registry's index, each opening in public mode. Entries are not searched here; the bar leads to the scopes that do.
-async function viewRegistrySearch(main, q) {
+async function viewRegistrySearch(main, q, { scopeBar }) {
   const input = $("#search"); if (document.activeElement !== input) input.value = q;
   const terms = searchTerms(q);
   const sub = el("p", { class: "sub" }, `Reading ${REGISTRY_URL}…`);
-  main.append(el("div", { class: "search-head" }, el("h1", {}, "Search ", el("span", { class: "q" }, `“${q}”`)), searchScopeBar("registry", q)), sub);
+  main.append(el("div", { class: "search-head" }, el("h1", {}, "Search ", el("span", { class: "q" }, `“${q}”`)), scopeBar("registry", q)), sub);
   if (terms.length === 0 || q.trim().length < 2) { sub.textContent = "Type at least two characters in the search field and press Enter."; return; }
   await loadRegistryIndex();
-  if (!onSearch("registry", q)) return; // navigated away meanwhile
+  if (!SEARCH.onSearch("registry", q)) return; // navigated away meanwhile
   if (!REGISTRY.idx) { sub.textContent = `registry not reached — ${REGISTRY.error}`; sub.classList.add("warn"); return; }
   const all = REGISTRY.idx.projects || []; const hits = registryMatches(all, q);
   sub.textContent = `${plural(hits.length, "project")} of ${all.length} in the registry` + (terms.length > 1 ? ` · all of: ${terms.join(", ")}` : "") +
@@ -2786,64 +2473,25 @@ async function viewRegistrySearch(main, q) {
   box.append(el("p", { class: "note" }, "The registry lists repositories with a published Keep the Why dashboard export; ", el("a", { href: "https://keepthewhy.com/registry/", target: "_blank", rel: "noopener" }, "keepthewhy.com/registry"), " says how to be listed."));
   main.append(box);
 }
+// The dropdown's registry rows (ktw-search.js host.registryRows): "Find a project in the registry", a project rather
+// than entries. The registry's index — one file — is read on the click and kept for the page's life; the box's words
+// then filter its projects by name, repository URL and id, as they are typed, and a hit opens the project in public
+// mode, from its published export. The entries of the listed projects are not searched (that is the globe's load,
+// not a search). The row is forgotten with the dropdown.
+function registryRows(q, { open, expand, run, close }) {
+  if (!open) return [el("a", { class: "sr-all sr-registry", href: "#", title: `the Keep the Why registry's index, ${REGISTRY_URL}, read on the click — projects whose name, repository URL or id carry the words typed`, onclick: (ev) => { ev.preventDefault(); expand(); loadRegistryIndex().then(run); } }, "Find a project in the registry")];
+  const head = (t) => el("div", { class: "sr-head" }, t);
+  if (!REGISTRY.idx) return [head("Projects in the registry"), el("div", { class: `sr-note${REGISTRY.loading ? "" : " warn"}` }, REGISTRY.loading ? `reading ${REGISTRY_URL}…` : `registry not reached — ${REGISTRY.error}`)];
+  const all = REGISTRY.idx.projects || []; const hits = registryMatches(all, q);
+  return [head(`Projects in the registry (${hits.length} of ${all.length})`),
+    ...(hits.length ? hits.map((p) => { const h = registryHit(p); return el("a", { href: h.href, onclick: close },
+      el("div", {}, h.name, h.self ? el("span", { class: "sr-file" }, " · this project") : null),
+      el("div", { class: "sr-file" }, h.meta.join(" · "))); })
+      : [el("div", { class: "sr-note" }, "no project in the registry matches")])];
+}
 function setupSearch() {
-  const input = $("#search"); const box = $("#search-results"); let sel = -1; let seq = 0;
-  // "Find a project in the registry": a project rather than entries. The registry's index — one file — is read on
-  // the click and kept for the page's life; the box's words then filter its projects by name, repository URL and
-  // id, as they are typed, and a hit opens the project in public mode, from its published export. The entries of the
-  // listed projects are not searched (that is the globe's load, not a search). The row is forgotten with the dropdown.
-  const REG = { on: false };
-  const close = () => { box.hidden = true; sel = -1; REG.on = false; };
-  const registryRows = (q) => {
-    if (!REG.on) return [el("a", { class: "sr-all sr-registry", href: "#", title: `the Keep the Why registry's index, ${REGISTRY_URL}, read on the click — projects whose name, repository URL or id carry the words typed`, onclick: (ev) => { ev.preventDefault(); REG.on = true; input.focus(); run(); loadRegistryIndex().then(run); } }, "Find a project in the registry")];
-    const head = (t) => el("div", { class: "sr-head" }, t);
-    if (!REGISTRY.idx) return [head("Projects in the registry"), el("div", { class: `sr-note${REGISTRY.loading ? "" : " warn"}` }, REGISTRY.loading ? `reading ${REGISTRY_URL}…` : `registry not reached — ${REGISTRY.error}`)];
-    const all = REGISTRY.idx.projects || []; const hits = registryMatches(all, q);
-    return [head(`Projects in the registry (${hits.length} of ${all.length})`),
-      ...(hits.length ? hits.map((p) => { const h = registryHit(p); return el("a", { href: h.href, onclick: close },
-        el("div", {}, h.name, h.self ? el("span", { class: "sr-file" }, " · this project") : null),
-        el("div", { class: "sr-file" }, h.meta.join(" · "))); })
-        : [el("div", { class: "sr-note" }, "no project in the registry matches")])];
-  };
-  const run = async () => {
-    const q = input.value.trim(); if (q.length < 2 || !SCENE.state) return close();
-    const mine = ++seq;
-    // the dropdown searches this project alone — on hand, nothing to fetch; the wider scopes are its last rows
-    const pool = await searchPool("project");
-    if (mine !== seq) return; // a newer keystroke won
-    const all = searchRows(pool, q);
-    const rows = all.slice(0, 12);
-    const wider = Object.entries(SEARCH_SCOPES).filter(([k]) => k !== "project" && canSearch(k));
-    // the wider scopes first, so they are in view however long the list of hits gets
-    box.replaceChildren(...[...wider.map(([k, label]) => navLink({ class: "sr-all sr-scope", href: { view: "search", scope: k, q: q }, onclick: close }, `Search in ${label}`)),
-      ...registryRows(q),
-      el("div", { class: "sr-head" }, rows.length ? `Results in this project${all.length > rows.length ? ` (${rows.length} of ${all.length})` : ` (${all.length})`}` : "Results in this project"),
-      ...(rows.length ? rows.map(({ e, hit, g }) => el("a", { href: g.href(e), onclick: close },
-      el("div", {}, marked(e.title.replace(/`/g, ""), hit.terms)),
-      el("div", { class: "sr-file" }, topicTitle(g.state, e.file)),
-      el("div", { class: "sr-snip" }, hitSnippet(hit)))) : [el("div", { style: "padding:10px 12px;color:var(--fg3)" }, "no matches in this project")]),
-      REG.on ? navLink({ class: "sr-all", href: { view: "search", scope: "registry", q: q }, onclick: close }, "↵  projects in the registry, as a page")
-        : navLink({ class: "sr-all", href: { view: "search", scope: "project", q: q }, onclick: close }, all.length > rows.length ? `↵  all ${all.length} results in this project` : "↵  results page")].filter(Boolean)); // replaceChildren writes a null as the text "null"
-    box.hidden = false; sel = -1;
-  };
-  input.oninput = run; input.onfocus = () => { if (input.value.trim().length >= 2 && nav.current().view !== "search") run(); };
-  input.onkeydown = (ev) => {
-    const items = [...box.querySelectorAll("a")];
-    if (ev.key === "Escape") { input.blur(); close(); }
-    else if (ev.key === "ArrowDown") { sel = Math.min(items.length - 1, sel + 1); items.forEach((a, i) => a.classList.toggle("sel", i === sel)); items[sel]?.scrollIntoView?.({ block: "nearest" }); ev.preventDefault(); }
-    else if (ev.key === "ArrowUp") { sel = Math.max(0, sel - 1); items.forEach((a, i) => a.classList.toggle("sel", i === sel)); ev.preventDefault(); }
-    else if (ev.key === "Enter") {
-      ev.preventDefault();
-      if (!box.hidden && items[sel]) { items[sel].click(); input.blur(); return; }
-      const q = input.value.trim(); if (q.length < 2) return;
-      const reg = REG.on; seq++; close(); input.blur(); // Enter without a selection: the results page — this project, or the registry's projects when that row is open
-      nav.go({ view: "search", scope: reg ? "registry" : "project", q });
-    }
-  };
-  // a click outside the top bar closes the dropdown. A row's own handler may have re-rendered the dropdown by the time
-  // the event reaches here (the registry row does, after an await): its target is then detached and belongs to no
-  // ancestor — a detached target was in the dropdown, not outside it.
-  document.addEventListener("click", (ev) => { if (ev.target.isConnected && !ev.target.closest(".topbar-right")) close(); });
+  SEARCH.attach({ input: $("#search"), box: $("#search-results"), within: ".topbar-right" });
+  const input = $("#search");
   document.addEventListener("keydown", (ev) => {
     if (ev.target.matches("input,select,textarea") || ev.metaKey || ev.ctrlKey || ev.altKey) return;
     if (ev.key === "/") { ev.preventDefault(); input.focus(); input.select(); }
@@ -2869,7 +2517,7 @@ function render() {
   else if (v === "authors") { viewAuthors(main); renderDetailsDefault(); }
   else if (v === "queues") { viewQueues(main); renderDetailsDefault(); }
   else if (v === "findings") { viewFindings(main); renderDetailsDefault(); }
-  else if (v === "family") { viewFamily(main); renderDetailsDefault(); }
+  else if (v === "family") { FAM.view(main); renderDetailsDefault(); }
   else if (v === "projects") { viewProjects(main); renderDetailsDefault(); }
   else if (v === "friends") { viewFriends(main); renderDetailsDefault(); }
   else if (v === "thoughts") { viewThoughtsPage(main); renderDetailsDefault(); }
@@ -2877,7 +2525,7 @@ function render() {
   else if (v === "entry") viewEntry(main, route.uuid);
   else if (v === "thought") viewThought(main, route.refs);
   else if (v === "ref") { viewRemoteEntry(main, route.canonical, route.uuid); renderDetailsDefault(); }
-  else if (v === "search") { viewSearch(main, route.scope, route.q); renderDetailsDefault(); }
+  else if (v === "search") { SEARCH.view(main, route.scope, route.q); renderDetailsDefault(); }
   else { viewOverview(main); renderDetailsDefault(); }
   markActive(); applySide();
   if (v !== "graph") { main.scrollTop = 0; if (narrow()) { const stuck = $("#sidebar").getBoundingClientRect().height; window.scrollTo(0, Math.max(0, main.getBoundingClientRect().top + window.scrollY - stuck - 8)); } }
@@ -2969,7 +2617,7 @@ function applyState(state) {
   setupMode(); markScope();
   if (STATIC) setupFamilyMenu();
   const main = $("#main"); const scroll = main.scrollTop;
-  RESTORE_SCROLL = scroll;
+  SEARCH.keepScroll(scroll);
   if (scope() === "family") { if (LAST_POOL) mergeWith(LAST_POOL); showScope(); }
   rerender();
   main.scrollTop = scroll;
@@ -3117,7 +2765,7 @@ function setupMode() {
 }
 async function boot() {
   setupTheme(); setupSearch(); setupScope(); setupSideToggle();
-  nav.onChange(() => { RESTORE_SCROLL = 0; render(); });
+  nav.onChange(() => { SEARCH.keepScroll(0); render(); });
   onWalk(onPopState);
   document.addEventListener("click", onLinkClick);
   if (MODE === "public") {
