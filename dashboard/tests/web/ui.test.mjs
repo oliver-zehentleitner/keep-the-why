@@ -31,4 +31,3 @@ test("el() sets a style through the element's style object, not setAttribute", (
     dom.window.Element.prototype.setAttribute = real;
   }
 });
-
