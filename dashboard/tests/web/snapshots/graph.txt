@@ -37,7 +37,7 @@
         "reset"
   <div class="graph-legend">
     <span>
-      <i class="dot" style="background:var(--accent);width:12px;height:12px">
+      <i class="dot" style="background: var(--accent); width: 12px; height: 12px;">
       "topic (size = entries)"
     <span>
       <i class="dot confirmed">
@@ -49,12 +49,12 @@
       <i class="dot unknown">
       "unknown"
     <span>
-      <i class="dot" style="background:transparent;border:1.5px solid var(--fg3)">
+      <i class="dot" style="background: transparent; border: 1.5px solid var(--fg3);">
       "superseded"
     <span>
       "— reference · ··· membership"
     <span class="family">
-      <i class="dot" style="background:var(--accent);width:10px;height:10px">
+      <i class="dot" style="background: var(--accent); width: 10px; height: 10px;">
       <b>
         "acme---widget"
   <button aria-expanded="false" class="graph-toggle ui-toggle" type="button">
@@ -112,7 +112,7 @@
   "Legend"
 <div class="legend-list">
   <span>
-    <i class="dot" style="background:var(--accent);width:12px;height:12px">
+    <i class="dot" style="background: var(--accent); width: 12px; height: 12px;">
     "topic — size follows its entry count"
   <span>
     <i class="dot confirmed">
@@ -124,18 +124,18 @@
     <i class="dot unknown">
     "entry, Evidence unknown"
   <span>
-    <i class="dot" style="background:transparent;border:1.5px solid var(--fg3)">
+    <i class="dot" style="background: transparent; border: 1.5px solid var(--fg3);">
     "superseded — hollow"
   <span>
-    <i class="dot" style="background:var(--bg);border:1.5px solid var(--open)">
+    <i class="dot" style="background: var(--bg); border: 1.5px solid var(--open);">
     "ring — open, needs review, pending"
   <span>
     "solid line — a reference between topics; dotted — membership"
   <span>
-    <i class="dot" style="background:transparent;border:2px dashed var(--fg3);width:10px;height:10px">
+    <i class="dot" style="background: transparent; border: 2px dashed var(--fg3); width: 10px; height: 10px;">
     "friend — a repository cited outside the family, loaded with the graph; a click on its hub or name goes there"
   <span>
-    <i class="dot" style="background:transparent;border:2px dotted var(--fg3);width:10px;height:10px">
+    <i class="dot" style="background: transparent; border: 2px dotted var(--fg3); width: 10px; height: 10px;">
     "path — a project you walked through to get here, numbered in order; a click goes back there"
 <h3>
   "Keys"

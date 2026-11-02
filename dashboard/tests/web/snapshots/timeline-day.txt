@@ -48,16 +48,16 @@
           "2026-04-15"
     <div class="legend">
       <span>
-        <i class="sw" style="background:#835bec">
+        <i class="sw" style="background: rgb(131, 91, 236);">
         "Alice Example"
       <span>
-        <i class="sw" style="background:#4aa3df">
+        <i class="sw" style="background: rgb(74, 163, 223);">
         "Carol Example"
       <span>
-        <i class="sw" style="background:#4fbf7a">
+        <i class="sw" style="background: rgb(79, 191, 122);">
         "Bob Example"
       <span>
-        <i class="sw" style="background:var(--superseded)">
+        <i class="sw" style="background: var(--superseded);">
         "superseded that month"
     <div class="playhead">
       <button class="play-jump" title="the first day" type="button">
@@ -141,56 +141,56 @@
     "reset"
 <div class="stage-legend">
   <span class="grp">
-    <span style="color:#835bec">
+    <span style="color: rgb(131, 91, 236);">
       <svg aria-hidden="true" class="type-glyph" fill="currentColor" height="11" viewBox="0 0 12 12" width="11">
         <path d="M6 1 11 6 6 11 1 6z">
-      <span style="color:var(--fg2)">
+      <span style="color: var(--fg2);">
         "decision"
-    <span style="color:#4aa3df">
+    <span style="color: rgb(74, 163, 223);">
       <svg aria-hidden="true" class="type-glyph" fill="currentColor" height="11" viewBox="0 0 12 12" width="11">
         <path d="M1.5 1.5h9v9h-9z" fill="none" stroke-width="1.4" stroke="currentColor">
         <path d="M1.5 5h9v2h-9z">
-      <span style="color:var(--fg2)">
+      <span style="color: var(--fg2);">
         "constraint"
-    <span style="color:#e0a83a">
+    <span style="color: rgb(224, 168, 58);">
       <svg aria-hidden="true" class="type-glyph" fill="currentColor" height="11" viewBox="0 0 12 12" width="11">
         <path d="M1.5 1.5h6l3 3v6h-9z" fill="none" stroke-dasharray="2 1.5" stroke-width="1.4" stroke="currentColor">
         <path d="M7.5 1.5v3h3" fill="none" stroke-width="1.4" stroke="currentColor">
-      <span style="color:var(--fg2)">
+      <span style="color: var(--fg2);">
         "workaround"
-    <span style="color:#e0574f">
+    <span style="color: rgb(224, 87, 79);">
       <svg aria-hidden="true" class="type-glyph" fill="currentColor" height="11" viewBox="0 0 12 12" width="11">
         <path d="M6 1.2 11.2 10.8H.8z" fill="none" stroke-width="1.4" stroke="currentColor">
         <path d="M5.3 4.5h1.4v3.2H5.3zM5.3 8.5h1.4v1.3H5.3z">
-      <span style="color:var(--fg2)">
+      <span style="color: var(--fg2);">
         "incident"
     <span>
-      <i class="sw " style="color:var(--muted)">
+      <i class="sw " style="color: var(--muted);">
       <span>
         "no type"
   <span class="grp" title="Evidence is the fill">
     <span>
-      <i class="sw solid" style="color:var(--fg2)">
+      <i class="sw solid" style="color: var(--fg2);">
       "confirmed"
     <span>
-      <i class="sw hatch" style="color:var(--fg2)">
+      <i class="sw hatch" style="color: var(--fg2);">
       "inferred"
     <span>
-      <i class="sw " style="color:var(--fg2)">
+      <i class="sw " style="color: var(--fg2);">
       "unknown"
   <span class="grp" title="Status is the edge">
     <span>
-      <i class="sw dashed" style="color:var(--fg3)">
+      <i class="sw dashed" style="color: var(--fg3);">
       "superseded"
     <span>
-      <i class="sw ring" style="color:var(--fg2)">
+      <i class="sw ring" style="color: var(--fg2);">
       "open · needs review · pending"
 <p class="note stage-note">
   <span class="stage-hint">
     "On the stage: wheel — a day forward or back, shift for a week · drag — look around · ctrl+wheel — zoom · double-click — reset the view · click a card to read it, the floor to let go. The thoughts beside: point at one to light its chain here and in the graph."
   <span class="stage-hint-touch">
     "On the stage: drag — look around · pinch — zoom · tap a card to read it, the floor to let go. The slider sets the day."
-<div class="entry-list" style="margin-top:16px">
+<div class="entry-list" style="margin-top: 16px;">
 
 ## #details
 <div class="pane-width" title="the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details">

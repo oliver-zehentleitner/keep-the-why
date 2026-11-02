@@ -7,13 +7,16 @@
 "use strict";
 const { typeName, hostOf, highlightParts } = root.KeepTheWhy.core;
 
-// an element: attributes (class, on<event> handlers, the rest as attributes; null or false leaves one out) and
-// children (nodes, or text; null and false left out, arrays flattened)
+// an element: attributes (class, style through the CSSOM, on<event> handlers, the rest as attributes; null or false
+// leaves one out) and children (nodes, or text; null and false left out, arrays flattened)
 const el = (tag, attrs = {}, ...kids) => {
   const n = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
     if (v == null || v === false) continue;
     if (k === "class") n.className = v;
+    // through the CSSOM: a page under a Content-Security-Policy without 'unsafe-inline' (Maity's hub pages,
+    // default-src 'self') blocks a style attribute set as markup, not the element's style object
+    else if (k === "style") n.style.cssText = v;
     else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
     else n.setAttribute(k, v === true ? "" : v);
   }

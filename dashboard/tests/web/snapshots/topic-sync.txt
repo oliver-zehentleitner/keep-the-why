@@ -24,13 +24,13 @@
       <span class="k">
         "active"
       <div class="bar">
-        <i class="active" style="width:75%">
+        <i class="active" style="width: 75%;">
       <span class="v">
         "3"
       <span class="k">
         "superseded"
       <div class="bar">
-        <i class="superseded" style="width:25%">
+        <i class="superseded" style="width: 25%;">
       <span class="v">
         "1"
   <div class="card">
@@ -40,13 +40,13 @@
       <span class="k">
         "confirmed"
       <div class="bar">
-        <i class="confirmed" style="width:50%">
+        <i class="confirmed" style="width: 50%;">
       <span class="v">
         "2"
       <span class="k">
         "inferred"
       <div class="bar">
-        <i class="inferred" style="width:50%">
+        <i class="inferred" style="width: 50%;">
       <span class="v">
         "2"
 <h2>
