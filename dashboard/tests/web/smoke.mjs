@@ -242,6 +242,14 @@ if (S.project.git?.available && /^github\.com\//.test(S.project.git.remote || ""
   report.prefs = { before, after: window.localStorage.getItem("ktw-motion"), checked: box?.checked };
   if (!box || report.prefs.after !== (box.checked ? "on" : "off")) errors.push("prefs: the motion switch was not kept as ktw-motion — " + JSON.stringify(report.prefs));
 }
+{
+  // the dashboard's own provider names why a lean state it holds no address for stays without its texts, so the
+  // views show that reason rather than the generic one they give an answer that names none
+  const st = { bodies: "state.body.json", entries: [] };
+  const r = await window.__ktwProvider().bodies(st);
+  report.leanWithoutUrl = r?.error || null;
+  if (r?.state !== st || !/^state\.body\.json is named, but not where its state was read from$/.test(r?.error || "")) errors.push("provider: a lean state without an address is not answered with its reason — " + JSON.stringify(r));
+}
 const input = window.document.getElementById("search"); input.value = "retry"; input.dispatchEvent(new window.Event("input"));
 await tick(50);
 report.search = window.document.querySelectorAll("#search-results a").length;

@@ -363,6 +363,7 @@ function provider() {
     memberState: live ? traced(DASHBOARD.memberState) : undefined, resolveEntry: live ? DASHBOARD.resolveEntry : undefined,
   };
 }
+window.__ktwProvider = provider; // test hook (jsdom smoke), not used by the page
 // what only the dashboard's shell asks for — no view does
 const HOST = {
   async projects() { return (await fetch("/api/projects", { cache: "no-store" })).json(); },
