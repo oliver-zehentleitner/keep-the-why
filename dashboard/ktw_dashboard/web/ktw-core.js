@@ -59,7 +59,7 @@ function headingText(title) {
   const plain = (part) => part
     .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
     .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
-    .replace(/(?<!\w)(__?)(?=\S)(.+?)(?<=\S)\1(?!\w)/g, "$2")
+    .replace(/(?<![\p{L}\p{N}_])(__?)(?=\S)(.+?)(?<=\S)\1(?![\p{L}\p{N}_])/gu, "$2") // a word character as Python's \w: any letter or digit, not ASCII only
     .replace(/<\/?([A-Za-z][A-Za-z0-9]*)(?:\s[^<>]*)?\/?>/g, (m, tag) => (INLINE_TAGS.has(tag.toLowerCase()) ? "" : m));
   let out = "", pos = 0;
   for (const m of String(title || "").matchAll(/(`+)(.+?)\1/g)) { out += plain(title.slice(pos, m.index)) + m[2]; pos = m.index + m[0].length; }
