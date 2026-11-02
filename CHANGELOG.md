@@ -40,6 +40,10 @@ All notable changes to this project are documented here. Format follows [Keep a 
 - `context/release-and-distribution.md`, the shell-fence entry: Snyk on skills.sh has warned (medium, W011) since 0.20.1; the entry still said Socket and Snyk pass.
 - Security page: the skills.sh results for 0.20.3 — Socket *Pass* and Snyk *Warn* (medium, W011) as audited 2026-10-21, Gen Agent Trust Hub *Pass* (safe) from its latest audit, of 0.20.2 (2026-10-12). Its categories are now remote code execution, dynamic execution, persistence, indirect prompt injection and external downloads; the page listed the four of the 0.20.1 audit, with command execution where persistence now is.
 
+### Fixed
+
+- `keep-the-why-dashboard` 0.11.39: a host's `bodies` answer that leaves a lean state without its texts and names no error (`{ state }`, or nothing) marks the state with a generic `bodiesError`. Before, the thought reader and the timeline's card asked again on every render. The dashboard's own provider answered a lean state it had no address for that way, and now names the reason. `docs/dashboard-views.md` states the contract: an answer fills the state it was handed and sets `bodiesLoaded`, or says why not.
+
 ## [0.20.3] - 2026-10-21
 
 ### Added

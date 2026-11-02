@@ -256,9 +256,11 @@ const DASHBOARD = {
   // names it) — three quarters of the file, read only when an entry is shown. The graph, the globe and the
   // registry never need them; the centre, the merged family's search and the thought reader do, and ask here
   // first. An older export carries its bodies inline and has no `bodies` field; nothing to fetch then.
-  // { state, url } with the bodies filled in, or { state, url, error } with them missing; asked twice, one fetch.
+  // { state, url } with the bodies filled in (state.bodiesLoaded), or { state, url, error } with them missing;
+  // asked twice, one fetch. A lean state not read through exportState has no address to resolve its file against.
   bodies(state) {
-    if (!state || typeof state.bodies !== "string" || !state.__url) return Promise.resolve({ state, url: state?.__url || null });
+    if (!state || typeof state.bodies !== "string") return Promise.resolve({ state, url: state?.__url || null });
+    if (!state.__url) return Promise.resolve({ state, url: null, error: `${state.bodies} is named, but not where its state was read from` });
     if (state.__bodies) return state.__bodies;
     const url = new URL(state.bodies, state.__url).href;
     state.__bodies = fetchForeign(url).then((text) => {
