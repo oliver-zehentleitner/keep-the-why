@@ -817,7 +817,7 @@ The stage's positions come from the scene. When the host draws a graph beside th
 **Revisit when:** the thoughts list moves into the library (the host's redraw on `pin` goes with it), or the play loop does
 **See:** dashboard.md#the-graph-view-takes-the-scene-nav-and-prefs-only-the-page-state-it-reads-moved-into-the-scene — 3b9cacf9-4e62-48b7-943e-a1650e09f3ce — as of 2026-11-01
 
-`web/ktw-timeline.js` holds the stage: its scene, camera, layout, painter, input and the legend under it, with `create({ scene, nav, prefs })` as all it is given. It also keeps the stage's two settings, where a card stands and which foreign entries show, through prefs. The page around the stage stays with the host for now: the bars, the slider, the card and the play loop. The play state is handed in (`playing`), and `runStage` returns the stage's handle instead of writing it into the page.
+`web/ktw-timeline.js` holds the stage: its scene, camera, layout, painter, input and the legend under it, with `create({ scene, nav, prefs })` as all it is given. It also keeps the stage's two settings, where a card stands and which foreign entries show, through prefs. The page around the stage stays with the host for now: the bars, the slider, the card and the play loop. (The next step moved them too, the same day — see `caf46ca9-ecd0-46cb-b6a5-058c668c2ef7`.) The play state is handed in (`playing`), and `runStage` returns the stage's handle instead of writing it into the page.
 
 The held thought is the scene's: `scene.pin` holds its ids joined with `|`, `setThought(t)` holds a thought and `setThought(null)` lets go, and a change is announced once as `pin`. Lighting a thought while it is pointed at is `scene.light(t)` and leaves the pin as it is; that is the event the graphs light it by. The list of thoughts beside the graph redraws on `pin`, in the host until the thoughts view moves too, so the graph's legend, the stage's reset and the side pane only let go and no longer redraw the list themselves.
 
@@ -825,6 +825,21 @@ The held thought is the scene's: `scene.pin` holds its ids joined with `|`, `set
 
 **Rejected alternative:** `setThought` for both pointing and holding, the first reading of the pin's specification — the problem above. The play loop moving with the stage was also rejected: it drives the slider, the bars and the card, which are the page's.
 
+## The timeline page takes the host's graph builders as callbacks; its clock and play loop moved with it
+
+**Id:** caf46ca9-ecd0-46cb-b6a5-058c668c2ef7
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** the series' lead, 2026-11-01: the timeline view to take the graph builders as host callbacks rather than wait for them to move ("whether they move later is decided separately"); the shape of the callbacks is the implementer's, in the pull request that moved the page
+**Revisit when:** the graph builders move into the library, or a second host shows the timeline and needs a callback this one does not give
+**See:** dashboard.md#the-stage-takes-the-pages-scene-nav-and-prefs-the-thought-held-is-the-scenes-pin — 1d5a2cbf-f61f-4e5a-b5be-722e2258cf7d — as of 2026-11-01
+
+`ktw-timeline.js` holds the whole timeline page now: the clock (`setClock`, with the count of entries that decides when a layout settles again), the play loop and its speeds, the bars, the slider, the card under it and the stage. `view(main, day, host)` shows it, and `host` carries what only the host has: `graph()`, its graph builders (the family's graph when it is shown and built, else the project's, rebuilt while the family's is fetched), `entryRow`, `renderBody` (its Markdown with its topic links), `bodies` (the provider's) and `render`. `leave()` stops the clock when the page goes elsewhere, and `stage()` hands out the stage's handle. The card the graph's preview fills takes `renderBody` and `bodies` as options. Esc stays with the host, which points it at the stage's reset after showing the page.
+
+**Reason:** the graph builders compose the friends, the family and the path layers, which is this dashboard's page logic. Moving them would have pulled half the page along, and the lead decided the timeline should not wait for that. Five callbacks keep the line plain: what is the page's comes in through `host`, and everything else is the scene, nav and prefs. The clock and the play loop drive only the timeline's own parts, so they moved with it.
+
+**Rejected alternative:** waiting for the graph builders to move first — the lead's call. Passing the graph itself instead of a builder was also rejected: the family's graph arrives after the page is first shown, and the page asks again when it does.
 
 ## The thoughts view is handed what only the host has, per call; following a chain stays in the host
 
