@@ -580,6 +580,19 @@ function refLine(ref, label) {
   if (ref.file) return el("div", { class: "ref" }, label ? el("b", {}, label) : null, topicOf(ref.file) ? navLink({ href: { view: "topic", file: ref.file } }, ref.locator) : ref.locator, el("span", { class: "note mono" }, ` · ${ref.uuid || ""}`), el("span", { class: "note warn" }, " · Id not found here — the locator may be stale"), date);
   return el("div", { class: "ref" }, label ? el("b", {}, label) : null, ref.text || "");
 }
+// The address to share an entry by: on a published page (an export, public mode) the page's own address; on
+// the live server — a local address nobody else can open — the project's published dashboard, from its
+// dashboard-state line, when it has one; the local address only as a last resort, and then said so.
+// the address to share for a hash on this page — an entry's or a topic's: the page itself when it is published,
+// else the project's published dashboard (its own entries and topics only), else this machine
+function shareUrlFor(hash, project) {
+  const local = isLocalPage();
+  const here = pageUrl() + hash;
+  if (PUBLISHED() && !local) return { url: here, where: "this page" };
+  const st = project ? null : (SCENE.self?.project?.dashboard_state || SCENE.state?.project?.dashboard_state || "");
+  if (st && /^https:\/\//.test(st)) return { url: st.replace(/state\.json$/, "") + hash, where: "the project's published dashboard" };
+  return { url: here, where: local ? "this machine only — the project publishes no dashboard" : "this page" };
+}
 const shareUrlOf = (e) => shareUrlFor(entryHref(e), e.project);
 // the entry's or topic's file on the host, in the repository it lives in (a merged member's in its own)
 const hostProjectOf = (x) => x.origin?.state?.project || SCENE.state.project;
@@ -1765,7 +1778,6 @@ const THOUGHTS_HOST = {
 };
 // what the pages (ktw-pages.js) ask of this host, with every call
 const PAGES_HOST = {
-  published: () => PUBLISHED(), pageUrl: () => pageUrl(), isLocalPage: () => isLocalPage(),
   inline: THOUGHTS_HOST.inline,
   authorLink: (name, commit, project) => authorLink(name, commit, project), authorProjects: () => authorProjects(),
   friendsWaiting: () => ((graph || buildGraph()).friends || []).filter((f) => !FRIENDS.loaded[fkey(f.canonical)]),
@@ -1774,7 +1786,6 @@ const PAGES_HOST = {
   render: () => render(), rerender: () => rerender(),
 };
 const entryRow = (e) => PAGES.entryRow(e, PAGES_HOST);
-const shareUrlFor = (hash, project) => PAGES.shareUrlFor(hash, project, PAGES_HOST);
 const holdReading = (g) => THOUGHTS.holdReading(g, THOUGHTS_HOST);
 const renderThoughts = (g) => THOUGHTS.list(g, THOUGHTS_HOST);
 function friendsLegend(g) {
