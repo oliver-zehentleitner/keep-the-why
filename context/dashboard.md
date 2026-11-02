@@ -947,6 +947,7 @@ The topic page, the entry page (its references both ways, and an Id this state d
 **Evidence:** confirmed
 **Source:** design rev 3.1 §6 (classes and tokens prefixed, a fallback for every token, the host maps its variables), approved by the maintainer; the series' lead, 2026-11-02, on the snapshot rule for the rename, literal tokens, `.ktw-root` as the host's duty, the base.css order and the Chromium check in CI; the two cascade cases below were found by the checks in the pull request
 **Revisit when:** a host needs the views at a specificity its own rules cannot meet, or the views' canvas colours have to follow a theme switch inside one page without a redraw
+**See:** dashboard.md#the-views-set-an-inline-style-through-the-elements-style-object-never-as-an-attribute-their-hosts-run-under-a-strict-content-security-policy — ed0c6c03-06e8-4263-a823-9b357b6c94e6 — as of 2026-11-02
 
 The views' classes carry the `ktw-` prefix, and their rules are `web/ktw-views.css`, listed under `styles` in `ktw-views.json`. The file styles `.ktw-*` classes only and reads `--ktw-*` custom properties only. Every read has a fallback, the dashboard's dark theme, which `ktw-core.js` also holds as `TOKEN_DEFAULTS` for the canvas. Bare elements (headings, links, code, buttons) are styled inside `:where(.ktw-root)`, a class the host puts on every container it mounts views into. `.ktw-aside` marks a side pane. The views' root sets the font family and the text colour, never the size.
 
