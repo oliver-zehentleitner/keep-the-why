@@ -159,7 +159,8 @@ function parseSupersededBy(value) {
 // `undefined`; the reason stays on the entry (the pill's tooltip, the details pane).
 const typeName = (t) => String(t ?? "").split(/\s+[—–-]\s+/)[0].trim();
 
-const kindLabel = (k) => k === "cache" ? "cache, read only" : k === "repository" ? "repository, read and write" : k === "public" ? "published export" : "not available here";
+// (with a view's words, `tw` from ktw-ui.js words; without them the English)
+const kindLabel = (k, tw = (key, english) => english) => k === "cache" ? tw("family.kind.cache", "cache, read only") : k === "repository" ? tw("family.kind.repository", "repository, read and write") : k === "public" ? tw("family.kind.public", "published export") : tw("family.kind.none", "not available here");
 
 // A family member's place among its siblings: this project first, the ancestors from the top, then
 // parent, siblings, children and the rest of the tree.
