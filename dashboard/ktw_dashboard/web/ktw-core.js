@@ -167,7 +167,7 @@ const typeName = (t) => String(t ?? "").split(/\s+[—–-]\s+/)[0].trim();
 const PLACEHOLDER = /\{(\w+)(?::([^{}]+))?\}/g;
 const MISSING_WARNED = new Set();
 function fillWords(text, params, key = "") {
-  if (!params) return text;
+  params ||= {}; // a text with placeholders and no params at all is the same mistake as a param left out
   // {n:noun} the count and the noun's plural by the core's rule, {n:one|many} the two forms given
   const counted = (n, noun) => { const [one, many] = noun.split("|"); return many == null ? plural(n, one) : `${n} ${n === 1 ? one : many}`; };
   const value = (k, noun) => (noun ? counted(params[k], noun) : String(params[k]));

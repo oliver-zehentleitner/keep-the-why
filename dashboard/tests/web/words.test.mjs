@@ -143,3 +143,20 @@ test("a placeholder without its value stays as written, with one warning per key
   assert.match(warnings[0], /"x\.miss" has no value for \{author\}/);
   assert.match(warnings[1], /"x\.missNode" has no value for \{who\}/);
 });
+
+test("a placeholder with no params at all, omitted or null, warns the same, once per key and name", () => {
+  const warnings = []; const warn = dom.window.console.warn; dom.window.console.warn = (m) => warnings.push(m);
+  try {
+    const tw = ui.words((key) => (key === "x.addedByHost" ? "Hallo {name}" : undefined)); // a translation that adds a placeholder
+    for (let i = 0; i < 2; i++) {
+      assert.equal(ui.english("x.omitted", "Hello {name}"), "Hello {name}");
+      assert.equal(ui.english("x.null", "Hello {name}", null), "Hello {name}");
+      assert.equal(tw("x.addedByHost", "Hello"), "Hallo {name}");
+    }
+    assert.equal(ui.english("x.plain", "Hello"), "Hello");
+  } finally { dom.window.console.warn = warn; }
+  assert.equal(warnings.length, 3, warnings.join("\n"));
+  assert.match(warnings[0], /"x\.omitted" has no value for \{name\}/);
+  assert.match(warnings[1], /"x\.null" has no value for \{name\}/);
+  assert.match(warnings[2], /"x\.addedByHost" has no value for \{name\}/);
+});
