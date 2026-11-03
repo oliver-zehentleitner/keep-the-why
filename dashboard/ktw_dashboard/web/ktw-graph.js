@@ -75,6 +75,20 @@ function hostPath(url) {
 const SETTLE_SLICE_MS = 24, FRAME_LAYOUT_MS = 8;
 const miniView = (g) => (g.miniView ||= { scale: 1, ox: 0, oy: 0, userMoved: false, needFit: true, fitScale: 0 }); // the small graph's own view of a graph the page may show too
 const publishLayout = (g, opts) => scene.publishFrom(g, opts); // the scene's (ktw-scene.js publishFrom)
+// A graph run in a second canvas (the side pane's family graph beside the page's): it reads the graph's data as it
+// is now, through its prototype, so a rebuild of the graph is what it shows; the layout's lifecycle — alpha,
+// placing, relayout and what they leave for the scene — is the graph's own, read and written through, so a placement
+// or a relayout settled in either is settled in both and nothing stale is left for the next rebuild. What the view
+// sets (its switches, what it lights, its loop) is its own. The graph keeps the copy it has now (`runner`); a copy
+// replaced since stops, and the scene takes nothing from it.
+const LIFECYCLE = ["alpha", "placing", "relayout", "relaidOut", "placed", "tree"];
+function runnerOf(g, own = {}) {
+  const r = Object.create(g);
+  for (const k of LIFECYCLE) Object.defineProperty(r, k, { get: () => g[k], set: (v) => { g[k] = v; }, enumerable: true });
+  Object.assign(r, { raf: null, wake: null }, own, { of: g });
+  g.runner = r;
+  return r;
+}
 function runGraph(canvas, g, opts = {}) {
   const mini = !!opts.mini;
   const V = mini ? miniView(g) : g; // the view — zoom and offset — belongs to the canvas: the side pane's small graph keeps its own, the page's survives a visit elsewhere
@@ -276,7 +290,7 @@ function runGraph(canvas, g, opts = {}) {
     }
     ctx.restore();
     drawn = true;
-    if (!canvas.isConnected) { ro.disconnect(); g.raf = null; for (const off of listening) off(); return; }
+    if (!canvas.isConnected || (g.of && g.of.runner !== g)) { ro.disconnect(); g.raf = null; for (const off of listening) off(); return; } // gone, or a copy replaced
     const busy = g.alpha > LAYOUT.MIN_ALPHA || drag || pan || pinch || hover || driftOn();
     g.raf = busy ? requestAnimationFrame(step) : null; // idle: no frames until something happens
   }
@@ -356,7 +370,7 @@ function buildSubgraph(e, prev = {}) {
 
 return Object.freeze({
   assemble, buildSubgraph, buildTopicSubgraph,
-  run: runGraph, lightThought, spotIn, projectNodes, miniView, publishLayout, hostPath,
+  run: runGraph, runnerOf, lightThought, spotIn, projectNodes, miniView, publishLayout, hostPath,
   driftOn, setDrift, labels: () => LABELS, setLabels, labelsOn,
 });
 }

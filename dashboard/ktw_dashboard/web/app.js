@@ -669,7 +669,8 @@ function miniGraph(d, ctx) {
   if (mode === "project") { const g = buildGraph(ctx.entry?.project || ctx.topic?.project || null); holdReading(g); fillFilters(g); cornerFor(g); /* friends are in the gear's groups */ return requestAnimationFrame(() => runGraph(canvas, g, opts)); }
   // family: the family graph's nodes, with switches of their own (entries shown); the zoom is the small graph's own either way
   const note = el("span", { class: "ktw-mini-hint", style: "top:28px;bottom:auto" }, "loading the family…"); box.append(note);
-  const show = (fg) => { note.remove(); if (!canvas.isConnected) return; const mg = { ...fg, showEntries: SHOW_ENTRIES, showLabels: true, raf: null, wake: null, alpha: fg.alpha, of: fg }; fg.runner = mg; holdReading(mg); fillFilters(mg); cornerFor(mg); runGraph(canvas, mg, opts); };
+  // the family graph's data and layout, seen in the side pane (ktw-graph.js runnerOf)
+  const show = (fg) => { note.remove(); if (!canvas.isConnected) return; const mg = GRAPH.runnerOf(fg, { showEntries: SHOW_ENTRIES, showLabels: true }); holdReading(mg); fillFilters(mg); cornerFor(mg); runGraph(canvas, mg, opts); };
   if (fgraph && Date.now() - fgraph.at < 30000) requestAnimationFrame(() => show(fgraph));
   else buildFamilyGraph().then(show);
 }

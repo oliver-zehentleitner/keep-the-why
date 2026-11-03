@@ -58,17 +58,17 @@ function create({ state = null, self = null, day = null, scope = "project" } = {
       emit("layout");
     },
     // a graph that is the layout source — or a copy sharing its nodes (`of`) — publishes after a step what that
-    // step moved (core stepLayout's `placing`, `relayout`, `placed`, `relaidOut`); settled once the one of them that
-    // runs is at rest (the family graph shown beside is its copy's: its own alpha never falls); a step that laid nothing out (the graph turning, a wake) publishes nothing but a
+    // step moved (core stepLayout's `placing`, `relayout`, `placed`, `relaidOut`); settled once it is at rest — a
+    // copy shares the source's lifecycle; a step that laid nothing out (the graph turning, a wake) publishes nothing but a
     // node the copy does not know yet
     publishFrom(g, { force = false } = {}) {
       const src = scene.layoutSource;
-      if (!src || (g !== src && g.of !== src)) return;
+      if (!src || (g !== src && !(g.of === src && src.runner === g))) return; // the source, or the copy it runs now
       const whole = force || !scene.layoutSettled || g.relayout || g.relaidOut;
       const placing = g.placing ? (n) => !!n.seeded : null, placed = g.placed;
       const unknown = !whole && !placing && !placed && src.nodes.some((n) => (n.kind === "entry" || n.kind === "topic") && !layout.has(n.id));
       if (!whole && !placing && !placed && !unknown) return;
-      const settled = Math.min(src.alpha, src.runner?.alpha ?? 1) <= root.KeepTheWhy.core.LAYOUT.MIN_ALPHA;
+      const settled = src.alpha <= root.KeepTheWhy.core.LAYOUT.MIN_ALPHA; // a copy's alpha is the source's (ktw-graph.js runnerOf)
       scene.publishLayout(src.nodes, { settled, only: whole ? null : (n) => !!(placing?.(n) || placed?.has(n)) });
       g.placed = null; g.relaidOut = false;
     },

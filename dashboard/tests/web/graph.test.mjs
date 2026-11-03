@@ -10,6 +10,7 @@ for (const name of ["ktw-core.js", "ktw-ui.js", "ktw-scene.js", "ktw-graph.js"])
   vm.runInThisContext(fs.readFileSync(file, "utf8"), { filename: file.pathname });
 }
 const { core, scene: sceneLib, views } = globalThis.KeepTheWhy;
+const atRest = (g) => { for (let i = 0; i < 3000 && g.alpha > core.LAYOUT.MIN_ALPHA; i++) core.stepLayout(g); return g; };
 
 // a host whose addresses are not the dashboard's hash grammar: a path before the hash
 const nav = { href: (r) => "/maity/p/why" + core.routes.format(r), go: () => {}, current: () => ({ view: "graph" }) };
@@ -57,4 +58,31 @@ test("the neighbourhood of an entry and of a topic", () => {
   const G = make();
   assert.deepEqual(G.buildSubgraph(entries[1]).nodes.map((n) => n.id), ["t:a.md", "t:b.md", "e:a.md#one", "e:b.md#two"], "B's topic is referenced from A, and A cites B");
   assert.deepEqual(G.buildTopicSubgraph(topics[0]).nodes.map((n) => n.id), ["t:a.md", "t:b.md", "e:a.md#one"]);
+});
+
+test("the side pane's copy of a graph shares its layout's lifecycle: a relayout settled there is settled, and nothing moves after", () => {
+  const G = make();
+  const g = core.reheatAfterBuild(Object.assign({ alpha: 1 }, G.assemble(topics, entries))); atRest(g);
+  core.reheatAll(g); // the shape changed (the owners switch, a hub coming in)
+  const r = G.runnerOf(g, { showEntries: true });
+  assert.ok(r.relayout && r.alpha === 1, "the copy sees the graph's relayout");
+  atRest(r); // only the side pane's copy runs
+  assert.ok(!g.relayout && g.alpha <= core.LAYOUT.MIN_ALPHA, "settled in the copy, settled in the graph");
+  const placed = g.nodes.map((n) => [n.x, n.y]);
+  // a rebuild that changes nothing, as the next live update brings
+  Object.assign(g, G.assemble(topics, entries, Object.fromEntries(g.nodes.map((n) => [n.id, n])))); core.reheatAfterBuild(g);
+  assert.ok(g.alpha <= core.LAYOUT.MIN_ALPHA && !g.relayout && !g.placing, "no relayout left over, no new one");
+  assert.equal(r.nodes, g.nodes, "the copy reads the graph's nodes as they are now");
+  atRest(r);
+  assert.deepEqual(g.nodes.map((n) => [n.x, n.y]), placed, "nothing moves");
+  // the side pane shown again: a new copy, the old one stale
+  const r2 = G.runnerOf(g);
+  assert.ok(r2.alpha <= core.LAYOUT.MIN_ALPHA && !r2.relayout, "the new copy starts at rest");
+  assert.ok(g.runner === r2 && r.of.runner !== r, "the graph runs the new copy only");
+  const scene = sceneLib.create(); scene.resetLayout(g); scene.publishFrom(g, { force: true });
+  const before = scene.layout.get(g.nodes[0].id); g.nodes[0].x += 50; g.placed = new Set([g.nodes[0]]);
+  scene.publishFrom(r);
+  assert.deepEqual(scene.layout.get(g.nodes[0].id), before, "the scene takes nothing from a stale copy");
+  scene.publishFrom(r2);
+  assert.equal(scene.layout.get(g.nodes[0].id).x, g.nodes[0].x, "and takes it from the copy run now");
 });

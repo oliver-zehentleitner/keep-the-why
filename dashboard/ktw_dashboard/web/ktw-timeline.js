@@ -85,13 +85,10 @@ function stageCamera(scene, v, o) {
   const zOf = (day) => logDepth(tNow() - dayDiff(o.span.from, day), spanDays, DEPTH_FAR);
   const proj = (x, y, z) => { const s = F / (F + Math.max(z, -F * 0.9)); return [cx() + x * K() * s, horizon() + (camY - y) * KY() * s, s]; };
   const depthAlpha = (z) => Math.max(0.2, Math.min(1, 1.1 - z / (DEPTH_FAR * 1.6)));
-  // the graph's positions, copied while it settles and then kept
-  // (copied until the graph has settled once; from then on only a node not yet known is added — the graph is nudged
-  // awake by a pointed-at thought, and following that would walk the cards along its turn a step per hover). The
-  // family graph runs as the side pane's copy (`runner`), which shares its nodes but settles with an alpha of its
-  // own: the family graph's own never falls, and read alone it kept the cards following the turn for good
-  // the positions: the scene's layout (ktw-scene.js) — the graph beside the stage publishes them while it settles,
-  // and the scene keeps them from then on; with no graph drawn beside the stage, the scene settles them itself
+  // the positions: the scene's layout (ktw-scene.js) — the graph beside the stage publishes what each step lays
+  // out, and the scene keeps every node where it was laid out (the graph turning, or woken for a lit thought, does
+  // not walk the cards along); the family graph shown beside runs as the side pane's copy (`runner`), which shares
+  // its nodes and its layout's lifecycle; with no graph drawn beside the stage, the scene settles them itself
   let sawSettled = false; // whether the layout has settled once: the stage says so (data-settled)
   const positions = () => { const G = scene.G; if (!G) return shared.layout; const L = shared.layoutSource ? shared.layout : shared.layoutFor(G.nodes, G.links); sawSettled = shared.layoutSettled; o.wrap.dataset.settled = sawSettled ? "1" : ""; return L; };
   const gbox = { x0: 0, x1: 1, y0: 0, y1: 1 };
