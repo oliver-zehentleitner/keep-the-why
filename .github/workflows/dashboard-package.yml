@@ -86,6 +86,9 @@ jobs:
       - name: The pages under two hosts, neither of them the dashboard's (jsdom)
         run: cd dashboard/tests/web && node --test pages.test.mjs
 
+      - name: The graph's loop stops before it touches anything once its canvas is gone or its copy replaced (jsdom)
+        run: cd dashboard/tests/web && node --test graph-run.test.mjs
+
       - name: Styles through the CSSOM, as a page under a strict Content-Security-Policy needs them (jsdom)
         run: cd dashboard/tests/web && node --test ui.test.mjs
 

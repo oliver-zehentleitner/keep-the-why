@@ -81,6 +81,7 @@ const publishLayout = (g, opts) => scene.publishFrom(g, opts); // the scene's (k
 // or a relayout settled in either is settled in both and nothing stale is left for the next rebuild. What the view
 // sets (its switches, what it lights, its loop) is its own. The graph keeps the copy it has now (`runner`); a copy
 // replaced since stops, and the scene takes nothing from it.
+const WAKERS = ["mousemove", "mousedown", "wheel", "dblclick", "touchstart", "touchmove", "mouseleave"]; // what wakes a graph's loop
 const LIFECYCLE = ["alpha", "placing", "relayout", "relaidOut", "placed", "tree"];
 function runnerOf(g, own = {}) {
   const r = Object.create(g);
@@ -166,7 +167,13 @@ function runGraph(canvas, g, opts = {}) {
   const ev = (n) => n.entry.evidence;
   const evColor = { confirmed: color("--ktw-confirmed"), inferred: color("--ktw-inferred"), unknown: color("--ktw-unknown") };
   let lastT = 0, frame = 0, drawn = false; // drawn: this canvas has shown the graph once
+  // a loop whose canvas left the page, or a copy the graph replaced since, stops before it touches anything: a frame
+  // already asked for must not turn, place or step the graph's nodes with this view's switches, nor write to the
+  // lifecycle it shares with the copy that runs now
+  const retired = () => !canvas.isConnected || (g.of && g.of.runner !== g);
+  const retire = () => { ro.disconnect(); ro2.disconnect(); for (const off of listening) off(); window.removeEventListener("mouseup", wake); for (const evn of WAKERS) canvas.removeEventListener(evn, wake); g.raf = null; };
   function step(now) {
+    if (retired()) { retire(); return; }
     const dt = lastT && now ? Math.min(100, now - lastT) : 16; lastT = now || 0;
     const drifting = driftOn() && !hover && !drag && !pan && !pinch;
     if (drifting) { const a = DRIFT_RATE * dt, c = Math.cos(a), sn = Math.sin(a); for (const n of g.nodes) { const x = n.x, y = n.y; n.x = x * c - y * sn; n.y = x * sn + y * c; } }
@@ -290,7 +297,7 @@ function runGraph(canvas, g, opts = {}) {
     }
     ctx.restore();
     drawn = true;
-    if (!canvas.isConnected || (g.of && g.of.runner !== g)) { ro.disconnect(); g.raf = null; for (const off of listening) off(); return; } // gone, or a copy replaced
+    if (retired()) { retire(); return; } // gone while it drew
     const busy = g.alpha > LAYOUT.MIN_ALPHA || drag || pan || pinch || hover || driftOn();
     g.raf = busy ? requestAnimationFrame(step) : null; // idle: no frames until something happens
   }
@@ -303,7 +310,7 @@ function runGraph(canvas, g, opts = {}) {
     scene.on("spot", (canonical, root) => spotIn(g, canonical, root)),
     scene.on("wake", () => g.wake?.()),
   ];
-  for (const evn of ["mousemove", "mousedown", "wheel", "dblclick", "touchstart", "touchmove", "mouseleave"]) canvas.addEventListener(evn, wake, { passive: true });
+  for (const evn of WAKERS) canvas.addEventListener(evn, wake, { passive: true });
   window.addEventListener("mouseup", wake);
   g.wake = wake;
   ro.observe(canvas); // re-observe after the resize handler above; a resize wakes the loop
