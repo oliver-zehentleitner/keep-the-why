@@ -60,7 +60,7 @@ function create({ state = null, self = null, day = null, scope = "project" } = {
     publishFrom(g, { force = false } = {}) {
       const src = scene.layoutSource;
       if (!src || (g !== src && g.of !== src)) return;
-      if (!force && g.alpha <= 0.003 && scene.layoutSettled) return;
+      if (!force && g.alpha <= root.KeepTheWhy.core.LAYOUT.MIN_ALPHA && scene.layoutSettled) return;
       scene.publishLayout(src.nodes, { settled: Math.min(src.alpha, src.runner?.alpha ?? 1) <= 0.01 });
     },
     resetLayout(source = null) { layout.clear(); scene.layoutSettled = false; scene.layoutSource = source; },

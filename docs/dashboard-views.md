@@ -84,6 +84,24 @@ Without `ktw-root`, the views' headings, links and code spans take the host's el
 
 `dashboard/tests/web/host/` is a complete small host: two of them on one page, with their own containers, path-style navigation, settings and provider, loading the files from the manifest under a strict policy. Host A's provider has `state`, `bodies` and `exportState`, host B's `state()` alone. `host.js` lists every place with what it must show under each host. `host.mjs` drives it in jsdom, and `host-chromium.mjs` in Chromium under the policy.
 
+### A graph the host builds
+
+A host that builds a graph of its own (the dashboard's family graph and its friends layer are such graphs) leaves a new node's `x` and `y` unset and calls `KeepTheWhy.core.seedLayout(nodes, links)` once its links are in, then `reheatSeeded(g)`. `graph.assemble` does both itself. A node with a position keeps it, so a node carried over from the graph drawn before keeps its place. `seedLayout` places each new node deterministically:
+
+- around the node it hangs on (an entry on its topic, a topic on its project, a member on its parent, a project on its owner), on a golden-angle spiral;
+- without one, around a linked node of its own `unit`;
+- linked to nothing placed, packed outside what is placed, so another unit (a friend, the path) sits apart.
+
+`reheatSeeded` raises the graph's alpha only if the build placed new nodes. Until they come to rest, only they move (`stepLayout`), and the nodes already shown hold still.
+
+The constants are `KeepTheWhy.core.LAYOUT`, each with its reason beside it in `ktw-core.js`:
+- `MAX_STEP`: the most a node moves in one step.
+- `REST`: the largest move under which a layout is at rest.
+- `DECAY` and `MIN_ALPHA`: the cooling.
+- `SEED_GAP` and `SEED_FILL`: how close seeding places its nodes.
+
+With the graph's *motion* off, a graph not yet drawn settles before its first frame and is drawn once it is settled and framed.
+
 ## Styles
 
 Load three stylesheets, in this order:

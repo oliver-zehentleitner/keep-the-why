@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-const { plural, entryRefs, rawFileUrl, configLine, normalizeState, canonicalOf, NO_FILTER, familyOrder, kindLabel, groupByFamily, searchTerms, registryMatches, shuffled, resolveLocation, linkFamily, authorLookup, mergeStates, projectLabel, backlinksUrl, citingOf, paletteToken, ownerOf, exportStateUrl, exportVerdict, fkey, repoLabel } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
+const { plural, seedLayout, reheatSeeded, entryRefs, rawFileUrl, configLine, normalizeState, canonicalOf, NO_FILTER, familyOrder, kindLabel, groupByFamily, searchTerms, registryMatches, shuffled, resolveLocation, linkFamily, authorLookup, mergeStates, projectLabel, backlinksUrl, citingOf, paletteToken, ownerOf, exportStateUrl, exportVerdict, fkey, repoLabel } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
 const MD = globalThis.KeepTheWhy.markdown; // ktw-markdown.js
 
 // ---------------------------------------------------------------- prefs (host)
@@ -669,7 +669,7 @@ function miniGraph(d, ctx) {
   if (mode === "project") { const g = buildGraph(ctx.entry?.project || ctx.topic?.project || null); holdReading(g); fillFilters(g); cornerFor(g); /* friends are in the gear's groups */ return requestAnimationFrame(() => runGraph(canvas, g, opts)); }
   // family: the family graph's nodes, with switches of their own (entries shown); the zoom is the small graph's own either way
   const note = el("span", { class: "ktw-mini-hint", style: "top:28px;bottom:auto" }, "loading the family…"); box.append(note);
-  const show = (fg) => { note.remove(); if (!canvas.isConnected) return; const mg = { ...fg, showEntries: SHOW_ENTRIES, showLabels: true, raf: null, wake: null, alpha: Math.max(fg.alpha, 0.3), of: fg }; fg.runner = mg; holdReading(mg); fillFilters(mg); cornerFor(mg); runGraph(canvas, mg, opts); };
+  const show = (fg) => { note.remove(); if (!canvas.isConnected) return; const mg = { ...fg, showEntries: SHOW_ENTRIES, showLabels: true, raf: null, wake: null, alpha: fg.alpha, of: fg }; fg.runner = mg; holdReading(mg); fillFilters(mg); cornerFor(mg); runGraph(canvas, mg, opts); };
   if (fgraph && Date.now() - fgraph.at < 30000) requestAnimationFrame(() => show(fgraph));
   else buildFamilyGraph().then(show);
 }
@@ -686,7 +686,7 @@ function buildGraph(project = null) {
   if (!project) autoFamily();
   addFriendLayer(graph, prev);
   addOwnerGroups(graph, prev);
-  graph.alpha = Math.max(graph.alpha, 0.6);
+  reheatSeeded(graph); // only what this build placed is laid out; what was placed holds still
   return graph;
 }
 // the neighbourhood of a topic or an entry, for the side pane (ktw-graph.js), seeded from where the full graph's nodes are
@@ -711,29 +711,28 @@ async function buildFamilyGraph() {
   const { parentOf, xrefs } = linkFamily(groups);
   const prev = fgraph ? Object.fromEntries(fgraph.nodes.map((n) => [n.id, n])) : {};
   const nodes = []; const links = []; const index = {};
-  const add = (n, near) => {
+  // a node new to the graph starts where seedLayout (ktw-core.js) puts it, once the links are known; `at` places one
+  const add = (n, at) => {
     const p = prev[n.id];
     if (p) Object.assign(n, { x: p.x, y: p.y, vx: 0, vy: 0, fixed: p.fixed });
-    else { n.x = (near?.x || 0) + (Math.random() - 0.5) * 140; n.y = (near?.y || 0) + (Math.random() - 0.5) * 140; n.vx = n.vy = 0; }
+    else { n.x = at?.x; n.y = at?.y; n.vx = n.vy = 0; }
     index[n.id] = nodes.length; nodes.push(n); return n;
   };
   // this project keeps the local graph's ids, so the SCENE.selected entry and the positions carry over
   const tid = (G, file) => (G.key === "self" ? `t:${file}` : `t:${G.key}:${file}`);
   const eid = (G, id) => (G.key === "self" ? `e:${id}` : `e:${G.key}:${id}`);
-  // this project in the middle, the rest of the family around it — after a move to a member, that one is the middle
-  const R = groups.length > 1 ? 220 + 45 * groups.length : 0;
-  groups.forEach((G, i) => {
-    const ang = (2 * Math.PI * (i - 1)) / Math.max(1, groups.length - 1);
-    const at = G.key === "self" ? { x: 0, y: 0 } : { x: R * Math.cos(ang), y: R * Math.sin(ang) };
+  // this project in the middle, the rest of the family around it, each as far out as its size needs — after a
+  // move to a member, that one is the middle
+  groups.forEach((G) => {
+    const at = G.key === "self" ? { x: 0, y: 0 } : null;
     const hub = add({ id: `p:${G.key}`, kind: "project", self: G.key === "self", label: G.g.member.name, canonical: G.canonical, root: G.root, r: 15, color: G.color, href: memberLink(G.g.member, "#overview"),
       walk: () => (G.key === "self" ? go("#overview") : moveTo({ centre: memberCentre(G.g.member), state: G.state }, "#graph")) }, at);
     for (const t of G.state.topics || []) {
-      const n = add({ id: tid(G, t.file), kind: "topic", fam: G.key !== "self", label: t.title, file: t.file, color: G.color, r: 8 + Math.sqrt(t.entries || 0) * 2.8, href: memberLink(G.g.member, nav.href({ view: "topic", file: t.file })) }, hub);
+      const n = add({ id: tid(G, t.file), kind: "topic", fam: G.key !== "self", label: t.title, file: t.file, color: G.color, r: 8 + Math.sqrt(t.entries || 0) * 2.8, href: memberLink(G.g.member, nav.href({ view: "topic", file: t.file })) });
       links.push({ s: index[hub.id], t: index[n.id], kind: "hub", len: 80 });
     }
     for (const e of G.state.entries || []) {
-      const t = nodes[index[tid(G, e.file)]];
-      add({ id: eid(G, e.id), kind: "entry", fam: G.key !== "self", proj: G.g.member.name, state: G.g.state, label: e.title, file: e.file, entry: e, r: 4.2, href: G.key === "self" ? entryHref(e) : G.g.href(e) }, t || hub);
+      add({ id: eid(G, e.id), kind: "entry", fam: G.key !== "self", proj: G.g.member.name, state: G.g.state, label: e.title, file: e.file, entry: e, r: 4.2, href: G.key === "self" ? entryHref(e) : G.g.href(e) });
     }
     for (const e of G.state.entries || []) {
       const me = index[eid(G, e.id)];
@@ -759,12 +758,13 @@ async function buildFamilyGraph() {
     const k = `${ts}|${tt}`;
     if (ts != null && tt != null && !topicPairs.has(k)) { topicPairs.add(k); links.push({ s: ts, t: tt, kind: "xtopic", len: 220, color: A.color }); }
   }
+  seedLayout(nodes, links);
   fgraph = Object.assign(fgraph || { scale: 0.7, ox: 0, oy: 0, showEntries: SHOW_ENTRIES, showLabels: true, alpha: 1 }, { nodes, links, index, groups, missing: pool.missing, across, at: Date.now() });
   fgraph.friends = friendCandidates(groups.flatMap((G) => G.state.entries || []), [...groups.map((G) => G.canonical), ...pool.missing.map(({ member: m }) => m.canonical)]);
   autoFriends(fgraph);
   addFriendLayer(fgraph, prev);
   addOwnerGroups(fgraph, prev);
-  fgraph.alpha = Math.max(fgraph.alpha, 0.6);
+  reheatSeeded(fgraph);
   return fgraph;
 }
 // a colour token's value (style.css :root); the computed style is live, so a theme switch is read too
@@ -856,7 +856,7 @@ function autoFamily() {
   if (!FAMILY_NB_ON || !canFamily() || FAMILY_NB.groups || FAMILY_NB.loading) return;
   FAMILY_NB.loading = true;
   setTimeout(() => searchPool("family").then((pool) => { FAMILY_NB.groups = pool.groups.filter((x) => x.member.role !== "self"); FAMILY_NB.missing = pool.missing || []; }).catch(() => { FAMILY_NB.groups = []; })
-    .finally(() => { FAMILY_NB.loading = false; if (graph) graph.alpha = Math.max(graph.alpha, 0.6); if (fgraph) fgraph.at = 0; render(); }), 0); // after the graph that asked is drawn
+    .finally(() => { FAMILY_NB.loading = false; if (fgraph) fgraph.at = 0; render(); }), 0); // after the graph that asked is drawn
 }
 // the members beside this project: the loaded ones and the ones not available here; before the load, what the config declares
 // the members beside this project: the loaded ones and the ones not available here; before the load, the tree
@@ -943,10 +943,12 @@ function addFriendLayer(g, prev) {
 function addLinkedLayer(g, prev, items) {
   const { nodes, links, index } = g;
   let unit = null; // the item being placed: its nodes keep together, and apart from the graph's own and the other items'
-  const add = (n, near) => {
+  // a node new to the graph starts where seedLayout (ktw-core.js) puts it, once the links are known: a unit's
+  // nodes around its hub, the unit packed outside the graph by its size; `at` places one
+  const add = (n, at) => {
     const p = prev[n.id];
     if (p) Object.assign(n, { x: p.x, y: p.y, vx: 0, vy: 0, fixed: p.fixed });
-    else { n.x = (near?.x || 0) + (Math.random() - 0.5) * 120; n.y = (near?.y || 0) + (Math.random() - 0.5) * 120; n.vx = n.vy = 0; }
+    else { n.x = at?.x; n.y = at?.y; n.vx = n.vy = 0; }
     n.unit = unit; n.ext = true;
     index[n.id] = nodes.length; nodes.push(n); return n;
   };
@@ -955,7 +957,6 @@ function addLinkedLayer(g, prev, items) {
   const ourUuids = new Set(ours.map((n) => n.entry.uuid).filter(Boolean));
   const pool = new Set(ours.map((n) => n.entry.uuid).filter(Boolean));
   for (const it of items) for (const m of it.members) for (const e of m.state.entries || []) if (e.uuid) pool.add(e.uuid);
-  const R = 680 + 40 * items.length;
   const placed = [];
   // with anything beside it — the family, a friend, the path — the project is a hub too, its topics on spokes, as in
   // the family graph: the parent and child lines, and the path's last step, have something to join, and the centre
@@ -967,7 +968,7 @@ function addLinkedLayer(g, prev, items) {
     selfHub.ext = false; selfHub.unit = null;
     for (const n of nodes) if (n.kind === "topic" && !n.ext) links.push({ s: index[selfHub.id], t: index[n.id], kind: "hub", len: 90 });
   }
-  items.forEach((it, i) => {
+  items.forEach((it) => {
     const col = it.color;
     const canons = new Set(it.members.map((m) => fkey(m.canonical)).filter(Boolean));
     const unitUuids = new Set(it.members.flatMap((m) => (m.state.entries || []).map((e) => e.uuid).filter(Boolean)));
@@ -988,18 +989,15 @@ function addLinkedLayer(g, prev, items) {
       while (stack.length) { const u = stack.pop(); for (const v of adj.get(u) || []) if (!seeds.has(v)) { seeds.add(v); stack.push(v); } }
       cited = seeds;
     }
-    const ang = (2 * Math.PI * i) / items.length + Math.PI / 5;
-    const centre = { x: R * Math.cos(ang), y: R * Math.sin(ang) };
     unit = it.k;
     const idx = {}; // uuid -> node index, across the unit
     const hubs = {};
     const entriesShown = [];
     it.members.forEach((m, j) => {
       const mcol = m.color || col;
-      const off = it.members.length > 1 ? { x: centre.x + 110 * Math.cos((2 * Math.PI * j) / it.members.length), y: centre.y + 110 * Math.sin((2 * Math.PI * j) / it.members.length) } : centre;
       // the hub and its name both go to that project (back along the path for a step of it)
       const walk = it.kind === "trail" ? it.hub : m.centre ? () => moveTo({ centre: m.centre, state: m.state }, "#graph") : m.open ? () => go(m.open) : null;
-      const hub = add({ id: `f:${it.k}:${m.key}`, kind: "project", friend: it.kind === "friend", chain: !!it.chain, hop: it.hop ?? null, citing: j === 0 && !!it.citing, citedOnly: j === 0 && !!it.citedOnly, trail: it.kind === "trail", family: it.kind === "family", label: m.name, canonical: m.canonical, root: m.state?.project?.root || m.root || "", r: it.kind === "family" ? 13 : j === 0 ? 13 : 10, color: mcol, href: m.open || "#graph", action: it.hub, walk }, off);
+      const hub = add({ id: `f:${it.k}:${m.key}`, kind: "project", friend: it.kind === "friend", chain: !!it.chain, hop: it.hop ?? null, citing: j === 0 && !!it.citing, citedOnly: j === 0 && !!it.citedOnly, trail: it.kind === "trail", family: it.kind === "family", label: m.name, canonical: m.canonical, root: m.state?.project?.root || m.root || "", r: it.kind === "family" ? 13 : j === 0 ? 13 : 10, color: mcol, href: m.open || "#graph", action: it.hub, walk });
       if (selfHub && it.kind === "family" && m.role === "child") links.push({ s: index[hub.id], t: index[selfHub.id], kind: "family", len: 260 });
       if (selfHub && it.kind === "family" && m.role === "parent") links.push({ s: index[selfHub.id], t: index[hub.id], kind: "family", len: 260 });
       hubs[m.key] = index[hub.id];
@@ -1012,13 +1010,13 @@ function addLinkedLayer(g, prev, items) {
       for (const t of m.state.topics || []) {
         if (!allOfM && !files.has(t.file)) continue;
         const act = it.topic(m);
-        const n = add({ id: `ft:${it.k}:${m.key}:${t.file}`, kind: "topic", kin, label: t.title, file: t.file, color: mcol, r: 7 + Math.sqrt(t.entries || 0) * 2.4, href: m.topicHref ? m.topicHref(t.file) : "#graph", action: act ? () => act(t.file) : null }, hub);
+        const n = add({ id: `ft:${it.k}:${m.key}:${t.file}`, kind: "topic", kin, label: t.title, file: t.file, color: mcol, r: 7 + Math.sqrt(t.entries || 0) * 2.4, href: m.topicHref ? m.topicHref(t.file) : "#graph", action: act ? () => act(t.file) : null });
         tIdx[t.file] = index[n.id];
         links.push({ s: index[hub.id], t: tIdx[t.file], kind: "hub", len: 70 });
       }
       for (const e of own) {
         const act = it.entry(m);
-        const n = add({ id: `fe:${it.k}:${m.key}:${e.id}`, kind: "entry", kin, proj: m.name, state: m.state, label: e.title, file: e.file, entry: e, r: 4.2, href: m.href ? m.href(e) : "#graph", action: act ? () => act(e) : null }, nodes[tIdx[e.file]] || hub);
+        const n = add({ id: `fe:${it.k}:${m.key}:${e.id}`, kind: "entry", kin, proj: m.name, state: m.state, label: e.title, file: e.file, entry: e, r: 4.2, href: m.href ? m.href(e) : "#graph", action: act ? () => act(e) : null });
         if (e.uuid) idx[e.uuid] = index[n.id];
         if (tIdx[e.file] != null) links.push({ s: index[n.id], t: tIdx[e.file], kind: "member", len: 40 });
         entriesShown.push(e);
@@ -1057,6 +1055,7 @@ function addLinkedLayer(g, prev, items) {
     if (P.it.next) { const Q = placed.find((q) => q.it.k === P.it.next); if (Q) links.push({ s: P.firstHub, t: Q.firstHub, kind: "trail", len: 360 }); }
     else if (P.it.kind === "trail" && selfHub) links.push({ s: P.firstHub, t: index[selfHub.id], kind: "trail", len: 360 }); // the last step walked from leads here
   }
+  seedLayout(nodes, links);
 }
 // The owners: with "owners" on, the projects in the graph that share an owner — the account or group before the
 // repository's name in its address — are tied to one node for that owner, and pulled together around it. Only an
@@ -1481,7 +1480,7 @@ function globeIntro() {
   document.body.append(box);
 }
 // what a wave brought in may lie outside the view: frame the whole graph again, whatever the reader had moved
-function globeRefit() { for (const x of [graph, fgraph]) if (x) { x.userMoved = false; x.alpha = Math.max(x.alpha, 0.5); } }
+function globeRefit() { for (const x of [graph, fgraph]) if (x) { x.userMoved = false; x.needFit = true; x.wake?.(); } } // framed anew; what is laid out stays
 function globeClear() { globeRefit(); GLOBE.extra.clear(); GLOBE.failed.clear(); GLOBE.done = 0; registryOff(); GLOBE.log = []; if (fgraph) fgraph.at = 0; render(); }
 function globeUi(g) {
   if (!GLOBE.view) return null;

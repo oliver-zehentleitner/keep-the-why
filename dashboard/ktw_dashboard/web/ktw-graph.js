@@ -8,7 +8,7 @@
    globalThis.KeepTheWhy.views.graph, listed in ktw-views.json, tested through the page (canvas-trace.mjs). */
 (function (root) {
 "use strict";
-const { layoutTick, linkExistsAt, hostOf, filterActive, entryMatches, fkey, linkFamily, seeDay, supersededDay, parseSupersededBy, readToken } = root.KeepTheWhy.core;
+const { stepLayout, seedLayout, LAYOUT, linkExistsAt, hostOf, filterActive, entryMatches, fkey, linkFamily, seeDay, supersededDay, parseSupersededBy, readToken } = root.KeepTheWhy.core;
 
 // One graph view per page: create({ scene, nav, prefs }) — the host's scene, navigation and settings.
 function create({ scene, nav, prefs }) {
@@ -65,6 +65,9 @@ function hostPath(url) {
   if (!HOST_PATHS.has(h.name)) HOST_PATHS.set(h.name, new Path2D(h.path));
   return HOST_PATHS.get(h.name);
 }
+// how long a frame may spend settling a graph not drawn yet (motion off): most of a 60 Hz frame, so the page
+// still answers while a large family settles over a second or two
+const SETTLE_SLICE_MS = 12;
 const miniView = (g) => (g.miniView ||= { scale: 1, ox: 0, oy: 0, userMoved: false, needFit: true, fitScale: 0 }); // the small graph's own view of a graph the page may show too
 const publishLayout = (g, opts) => scene.publishFrom(g, opts); // the scene's (ktw-scene.js publishFrom)
 function runGraph(canvas, g, opts = {}) {
@@ -143,18 +146,27 @@ function runGraph(canvas, g, opts = {}) {
   });
   const ev = (n) => n.entry.evidence;
   const evColor = { confirmed: color("--ktw-confirmed"), inferred: color("--ktw-inferred"), unknown: color("--ktw-unknown") };
-  let lastT = 0, frame = 0;
+  let lastT = 0, frame = 0, drawn = false; // drawn: this canvas has shown the graph once
   function step(now) {
     const dt = lastT && now ? Math.min(100, now - lastT) : 16; lastT = now || 0;
     const drifting = driftOn() && !hover && !drag && !pan && !pinch;
     if (drifting) { const a = DRIFT_RATE * dt, c = Math.cos(a), sn = Math.sin(a); for (const n of g.nodes) { const x = n.x, y = n.y; n.x = x * c - y * sn; n.y = x * sn + y * c; } }
     // settled and only turning: every other frame is enough
-    if (drifting && g.alpha <= 0.003 && (frame++ & 1)) { g.raf = canvas.isConnected ? requestAnimationFrame(step) : null; return; }
+    if (drifting && g.alpha <= LAYOUT.MIN_ALPHA && (frame++ & 1)) { g.raf = canvas.isConnected ? requestAnimationFrame(step) : null; return; }
     const ns = g.nodes.filter(visible);
-    if (g.alpha > 0.003) g.alpha = layoutTick(g.nodes, g.links, g.alpha, { visible, linkOn }); // the forces are ktw-core.js's
+    const was = g.alpha;
+    // the forces are ktw-core.js's. With motion off, a graph not shown yet settles first, in slices of a frame's
+    // time, and is drawn once, settled and framed; with motion on, it settles a step a frame, as it is drawn.
+    if (!drawn && !driftOn() && g.alpha > LAYOUT.MIN_ALPHA) {
+      const t0 = performance.now();
+      do stepLayout(g, { visible, linkOn }); while (g.alpha > LAYOUT.MIN_ALPHA && performance.now() - t0 < SETTLE_SLICE_MS);
+      if (g.alpha > LAYOUT.MIN_ALPHA) { publishLayout(g); g.raf = canvas.isConnected ? requestAnimationFrame(step) : null; return; }
+    } else if (g.alpha > LAYOUT.MIN_ALPHA) stepLayout(g, { visible, linkOn });
     publishLayout(g);
-    // keep the canvas framed on the nodes while they settle: the small one always, the family graph until the person moves it
-    if ((mini || ((opts.fit || V.needFit) && !V.userMoved)) && (g.alpha > 0.01 || V.needFit) && W && H) {
+    const settledNow = was > LAYOUT.MIN_ALPHA && g.alpha <= LAYOUT.MIN_ALPHA;
+    // keep the canvas framed on the nodes while they settle, and once more where they came to rest: the small one
+    // always, the family graph until the person moves it
+    if ((mini || ((opts.fit || V.needFit) && !V.userMoved)) && (g.alpha > 0.01 || V.needFit || settledNow) && W && H) {
       let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
       for (const n of ns) { minX = Math.min(minX, n.x - n.r); maxX = Math.max(maxX, n.x + n.r); minY = Math.min(minY, n.y - n.r); maxY = Math.max(maxY, n.y + n.r + 18); }
       const pad = mini || narrow() ? 60 : 140;
@@ -251,8 +263,9 @@ function runGraph(canvas, g, opts = {}) {
       }
     }
     ctx.restore();
+    drawn = true;
     if (!canvas.isConnected) { ro.disconnect(); g.raf = null; for (const off of listening) off(); return; }
-    const busy = g.alpha > 0.003 || drag || pan || pinch || hover || driftOn();
+    const busy = g.alpha > LAYOUT.MIN_ALPHA || drag || pan || pinch || hover || driftOn();
     g.raf = busy ? requestAnimationFrame(step) : null; // idle: no frames until something happens
   }
   const wake = () => { if (!g.raf && canvas.isConnected) g.raf = requestAnimationFrame(step); };
@@ -274,11 +287,12 @@ function runGraph(canvas, g, opts = {}) {
 }
 
 // ---- the graph's data: nodes and links from topics and entries, and the neighbourhood of a topic or an entry. Links
-// go through nav; `prev` holds the nodes of a graph drawn before, so a node keeps its place.
+// go through nav; `prev` holds the nodes of a graph drawn before, so a node keeps its place. A node new to the
+// graph starts where ktw-core.js seedLayout puts it, once the links are known.
 function seedNode(n, prev) {
   const p = prev[n.id];
   if (p) Object.assign(n, { x: p.x, y: p.y, vx: 0, vy: 0, fixed: p.fixed });
-  else { n.x = (Math.random() - 0.5) * 600; n.y = (Math.random() - 0.5) * 400; n.vx = n.vy = 0; }
+  else { n.x = n.y = undefined; n.vx = n.vy = 0; }
   return n;
 }
 function assemble(topics, entries, prev = {}) {
@@ -304,6 +318,7 @@ function assemble(topics, entries, prev = {}) {
     const ts = index[`t:${a.file}`], tt = index[`t:${b.file}`]; const k = `${ts}|${tt}`;
     if (a.file !== b.file && ts != null && tt != null && !tpairs.has(k)) { tpairs.add(k); links.push({ s: ts, t: tt, kind: "xtopic", len: 200, day }); }
   }
+  seedLayout(nodes, links);
   return { nodes, links, index };
 }
 // the Ids an entry points at, and the entries of `list` that point at it

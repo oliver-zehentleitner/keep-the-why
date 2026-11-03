@@ -43,6 +43,16 @@ test("assemble keeps a node where a graph drawn before had it", () => {
   assert.deepEqual([t.x, t.y, t.vx, t.vy, t.fixed], [5, 7, 0, 0, true]);
 });
 
+test("assemble seeds the nodes it has no place for, the same way every time, each near its topic", () => {
+  const a = make().assemble(topics, entries), b = make().assemble(topics, entries);
+  assert.ok(a.nodes.every((n) => Number.isFinite(n.x) && Number.isFinite(n.y) && n.seeded), "every new node placed, and marked as seeded");
+  assert.deepEqual(a.nodes.map((n) => [n.x, n.y]), b.nodes.map((n) => [n.x, n.y]), "no randomness");
+  const at = (g, id) => g.nodes[g.index[id]];
+  assert.ok(Math.hypot(at(a, "e:a.md#one").x - at(a, "t:a.md").x, at(a, "e:a.md#one").y - at(a, "t:a.md").y) < 120, "an entry starts near its topic");
+  const kept = make().assemble(topics, entries, { "t:a.md": { x: 5, y: 7 } });
+  assert.ok(!at(kept, "t:a.md").seeded && at(kept, "e:a.md#one").seeded, "a node kept from before is not seeded again");
+});
+
 test("the neighbourhood of an entry and of a topic", () => {
   const G = make();
   assert.deepEqual(G.buildSubgraph(entries[1]).nodes.map((n) => n.id), ["t:a.md", "t:b.md", "e:a.md#one", "e:b.md#two"], "B's topic is referenced from A, and A cites B");
