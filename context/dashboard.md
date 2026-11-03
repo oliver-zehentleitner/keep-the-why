@@ -1042,3 +1042,22 @@ A step reads the shown nodes into plain arrays once, so the pair loop does no pr
 - **Clearing the positions on the current graph and calling `seedLayout` once:** fewer lines, but not the layout a page load gives, for the two-pass reason above.
 - **Folding it into *reset*:** reset sets the state straight (the thought held, the stage), and the maintainer wanted the two kept apart.
 - **A neighbourhood redraw that builds only the neighbourhood from no positions:** it looks right until the next build of the neighbourhood (another page and back, a live update), which takes the full graph's positions again and brings back the layout the redraw had dropped. The maintainer chose that a redraw there sticks.
+
+
+## A host's words for the views' UI text: the English at each call, the catalogue beside the manifest, the data's words untranslated
+
+**Id:** 3b43e8a3-2924-4d11-ba3d-8bf497bbe8ca
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** the card for a host's words (a second host serves several languages), agreed with the maintainer as its own release after 0.11.42; the shape below was proposed by the implementer and approved by the project's lead, with three additions (a warning once per key, literal keys enforced, the untranslated vocabulary named in the docs), 2026-11-03
+**Revisit when:** a host needs the spec's vocabulary or the body labels in its language too, or the views get a build step that could generate the English from one file
+
+Every view takes `words: (key, params) => string | undefined` on `create`, and its UI text goes through one call, `tw(key, english, params)` (`ui.words`). The English stands at the call as a string literal. `ktw-words.json` beside the manifest lists every key with it, and a test holds the two equal in both directions and fails on a key that is not a literal. Placeholders fill from `params` in either text. `{n:noun}` is the English plural only, and a host's text writes `{n}` with its own rules. A param that is a node goes in at its placeholder, so a sentence with a link in it stays one key. `undefined` falls back to the English quietly. A throw or an answer that is not a string falls back too, with one warning per key. The data's own words stay as written: entry text, the values of Status, Evidence and Type, the field names, the body labels. The dashboard passes no words, and its pages are unchanged node for node.
+
+**Reason:** the views are classic scripts without a build or a fetch, so English kept only in the JSON would need a second copy as a script all the same. At the call it is read where it is used, and the test keeps the catalogue honest. A node at its placeholder lets a language put the link where its word order wants it. The spec's vocabulary is what the entries are written in, and translating it in the page would show words no entry contains.
+
+**Rejected alternative:**
+- **The English only in `ktw-words.json`, looked up by key:** one source, but the lib would have to load JSON before drawing anything, or carry it twice.
+- **Splitting a sentence around a node into separate keys:** no placeholders for nodes, but the pieces fix the English word order for every language.
+- **A silent fallback for a hook that throws or answers a non-string:** quieter, but a broken catalogue would pass unseen; one warning per key shows it without flooding the console.
