@@ -14,7 +14,12 @@ function realm(motion) {
   const w = dom.window;
   w.requestAnimationFrame = (fn) => frames.push(fn);
   w.cancelAnimationFrame = () => {};
-  w.ResizeObserver = class { observe() {} disconnect() {} };
+  const observers = []; // every ResizeObserver made, and whether it was let go
+  w.ResizeObserver = class { constructor() { this.on = true; observers.push(this); } observe() {} disconnect() { this.on = false; } };
+  const held = new Map(); // the window's listeners, by type: what a loop holds the page by
+  const add = w.addEventListener.bind(w), remove = w.removeEventListener.bind(w);
+  w.addEventListener = (t, fn, o) => { if (!held.has(t)) held.set(t, new Set()); held.get(t).add(fn); add(t, fn, o); };
+  w.removeEventListener = (t, fn, o) => { held.get(t)?.delete(fn); remove(t, fn, o); };
   w.matchMedia = () => ({ matches: false });
   w.Path2D = class {};
   w.HTMLCanvasElement.prototype.getContext = () => new Proxy({}, { get: (t, k) => (k === "measureText" ? (s) => ({ width: String(s).length * 6 }) : () => {}), set: () => true });
@@ -33,9 +38,11 @@ function realm(motion) {
     for (let e = 0; e < 6; e++) entries.push({ id: `t${t}.md#e${e}`, file: `t${t}.md`, uuid: `00000000-0000-4000-8000-0000000${t}${e}000`.slice(0, 36), title: `E${t}.${e}`, refs: [], see: [], git: {} });
   }
   const scene = sceneLib.create({ state: { topics, entries } });
+  let subs = 0; const on = scene.on; scene.on = (e, fn) => { subs++; const off = on(e, fn); let done = false; return () => { if (!done) { done = true; subs--; } return off(); }; };
   const G = views.graph.create({ scene, nav, prefs });
   const fg = core.reheatAll(Object.assign({ scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true }, G.assemble(topics, entries)));
-  return { w, core, G, fg };
+  const counts = () => ({ mouseup: held.get("mouseup")?.size || 0, subs, observers: observers.filter((o) => o.on).length });
+  return { w, core, G, fg, scene, counts };
 }
 const snap = (fg) => ({ at: fg.nodes.map((n) => [n.x, n.y]), alpha: fg.alpha, relayout: fg.relayout, placing: !!fg.placing });
 
@@ -73,4 +80,71 @@ test("the copy that runs now does lay the graph out", () => {
   const before = snap(fg);
   frames.shift()(16);
   assert.ok(fg.alpha < before.alpha, "it steps the shared layout");
+});
+
+// what one running loop holds: the window's mouseup twice (the wake, the end of a drag or pan), five scene events, two
+// resize observers
+const ONE = { mouseup: 2, subs: 5, observers: 2 };
+const plus = (a, b, k = 1) => ({ mouseup: a.mouseup + k * b.mouseup, subs: a.subs + k * b.subs, observers: a.observers + k * b.observers });
+
+for (const motion of ["on", "off"]) {
+  test(`a copy replaced lets go of everything it held, at once (motion ${motion})`, () => {
+    const { w, G, fg, counts } = realm(motion); frames.length = 0;
+    const base = counts();
+    const r1 = G.runnerOf(fg); G.run(w.document.body.appendChild(w.document.createElement("canvas")), r1, {});
+    assert.deepEqual(counts(), plus(base, ONE), "a running loop holds its listeners and observers");
+    G.runnerOf(fg); // shown anew in the side pane
+    assert.deepEqual(counts(), base, "the window's listeners, the scene's events and both observers let go");
+    frames.shift()?.(16);
+    assert.deepEqual(counts(), base, "and its last frame takes nothing back");
+  });
+
+  test(`a canvas gone with a frame still asked for lets go at that frame (motion ${motion})`, () => {
+    const { w, G, fg, counts } = realm(motion); frames.length = 0;
+    const base = counts();
+    const c = w.document.body.appendChild(w.document.createElement("canvas"));
+    G.run(c, G.runnerOf(fg), {}); c.remove();
+    frames.shift()(16);
+    assert.deepEqual(counts(), base);
+  });
+
+  test(`the graph run again on another canvas retires the loop before (motion ${motion})`, () => {
+    const { w, G, fg, counts } = realm(motion); frames.length = 0;
+    const base = counts();
+    G.run(w.document.body.appendChild(w.document.createElement("canvas")), fg, {});
+    G.run(w.document.body.appendChild(w.document.createElement("canvas")), fg, {});
+    assert.deepEqual(counts(), plus(base, ONE), "one loop's worth, not two");
+  });
+}
+
+test("an idle loop whose canvas left the page lets go at the next event that would wake it", () => {
+  const { w, G, fg, scene, counts } = realm("off"); frames.length = 0;
+  const base = counts();
+  const c = w.document.body.appendChild(w.document.createElement("canvas"));
+  G.run(c, fg, {});
+  for (let i = 0; i < 5000 && frames.length; i++) frames.shift()(16 * (i + 1));
+  assert.equal(frames.length, 0, "settled: no frames asked for");
+  assert.deepEqual(counts(), plus(base, ONE), "idle, it still holds what it needs to wake");
+  c.remove();
+  scene.wake();
+  assert.deepEqual(counts(), base, "the scene's next event finds it retired");
+  assert.equal(frames.length, 0, "and asks for no frame");
+});
+
+test("an idle loop whose canvas left the page lets go at the pointer's next mouseup too", () => {
+  const { w, G, fg, counts } = realm("off"); frames.length = 0;
+  const base = counts();
+  const c = w.document.body.appendChild(w.document.createElement("canvas"));
+  G.run(c, fg, {});
+  for (let i = 0; i < 5000 && frames.length; i++) frames.shift()(16 * (i + 1));
+  c.remove(); w.dispatchEvent(new w.Event("mouseup"));
+  assert.deepEqual(counts(), base);
+});
+
+test("the side pane's copy started leaves the graph's own loop running", () => {
+  const { w, G, fg, counts } = realm("off"); frames.length = 0;
+  const base = counts();
+  G.run(w.document.body.appendChild(w.document.createElement("canvas")), fg, {});
+  G.run(w.document.body.appendChild(w.document.createElement("canvas")), G.runnerOf(fg), {});
+  assert.deepEqual(counts(), plus(base, ONE, 2), "two loops: the page's graph and the side pane's copy");
 });

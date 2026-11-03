@@ -84,9 +84,10 @@ const publishLayout = (g, opts) => scene.publishFrom(g, opts); // the scene's (k
 const WAKERS = ["mousemove", "mousedown", "wheel", "dblclick", "touchstart", "touchmove", "mouseleave"]; // what wakes a graph's loop
 const LIFECYCLE = ["alpha", "placing", "relayout", "relaidOut", "placed", "tree"];
 function runnerOf(g, own = {}) {
+  g.runner?.stopLoop?.(); // the copy before is done
   const r = Object.create(g);
   for (const k of LIFECYCLE) Object.defineProperty(r, k, { get: () => g[k], set: (v) => { g[k] = v; }, enumerable: true });
-  Object.assign(r, { raf: null, wake: null }, own, { of: g });
+  Object.assign(r, { raf: null, wake: null, stopLoop: null }, own, { of: g }); // its loop's own, not the graph's through the prototype
   g.runner = r;
   return r;
 }
@@ -132,7 +133,8 @@ function runGraph(canvas, g, opts = {}) {
   const walkTo = (n) => (n.self ? null : n.walk ? n.walk() : nav.open(n.href));
   const screenOf = (n) => [W / 2 + g.ox + n.x * g.scale, H / 2 + g.oy + n.y * g.scale];
   const open = (n) => (n.kind === "project" || n.kind === "owner" ? walkTo(n) : n.kind === "entry" && opts.onEntry ? opts.onEntry(n, ...screenOf(n)) : n.kind === "topic" && opts.onTopic ? opts.onTopic(n, ...screenOf(n)) : n.action ? n.action() : nav.open(n.href));
-  window.addEventListener("mouseup", () => { if (nameDown) { const n = nameDown; nameDown = null; walkTo(n); return; } if (drag && !moved) open(drag); else if (pan && !moved) opts.onBlank?.(); drag = null; pan = null; canvas.classList.remove("ktw-grabbing"); });
+  const onUp = () => { if (nameDown) { const n = nameDown; nameDown = null; walkTo(n); return; } if (drag && !moved) open(drag); else if (pan && !moved) opts.onBlank?.(); drag = null; pan = null; canvas.classList.remove("ktw-grabbing"); };
+  window.addEventListener("mouseup", onUp); // a drag or a pan ends wherever the button comes up
   canvas.onmouseleave = () => { hover = null; hoverName = null; };
   canvas.onwheel = (ev) => { ev.preventDefault(); V.userMoved = true; const r = canvas.getBoundingClientRect(); zoomTo(V.scale * Math.exp(-ev.deltaY * 0.0012), ev.clientX - r.left - W / 2, ev.clientY - r.top - H / 2); };
   canvas.ondblclick = (ev) => { const r = canvas.getBoundingClientRect(); const n = pick(ev.clientX - r.left, ev.clientY - r.top); if (n) { n.fixed = false; g.alpha = 0.4; } };
@@ -170,8 +172,21 @@ function runGraph(canvas, g, opts = {}) {
   // a loop whose canvas left the page, or a copy the graph replaced since, stops before it touches anything: a frame
   // already asked for must not turn, place or step the graph's nodes with this view's switches, nor write to the
   // lifecycle it shares with the copy that runs now
-  const retired = () => !canvas.isConnected || (g.of && g.of.runner !== g);
-  const retire = () => { ro.disconnect(); ro2.disconnect(); for (const off of listening) off(); window.removeEventListener("mouseup", wake); for (const evn of WAKERS) canvas.removeEventListener(evn, wake); g.raf = null; };
+  // It lets go of everything it holds once (retire): the observers, the scene's events, the window's and the
+  // canvas's listeners. A loop learns it is done in three ways: the graph runs again elsewhere, or runs another copy
+  // (the next loop retires the one before, runnerOf the copy before); or anything that would wake it — a frame, the
+  // scene, a resize, the pointer — finds it retired, so an idle loop whose canvas left the page lets go at the next
+  // such event instead of holding the canvas and its graph for good.
+  let gone = false;
+  const retired = () => gone || !canvas.isConnected || (g.of && g.of.runner !== g);
+  const retire = () => {
+    if (gone) return; gone = true;
+    ro.disconnect(); ro2.disconnect(); for (const off of listening) off();
+    window.removeEventListener("mouseup", wake); window.removeEventListener("mouseup", onUp); for (const evn of WAKERS) canvas.removeEventListener(evn, wake);
+    if (g.stopLoop === retire) g.stopLoop = null;
+    g.raf = null;
+  };
+  const live = (fn) => (...a) => (retired() ? retire() : fn(...a)); // a listener that first asks whether its loop is done
   function step(now) {
     if (retired()) { retire(); return; }
     const dt = lastT && now ? Math.min(100, now - lastT) : 16; lastT = now || 0;
@@ -301,21 +316,22 @@ function runGraph(canvas, g, opts = {}) {
     const busy = g.alpha > LAYOUT.MIN_ALPHA || drag || pan || pinch || hover || driftOn();
     g.raf = busy ? requestAnimationFrame(step) : null; // idle: no frames until something happens
   }
-  const wake = () => { if (!g.raf && canvas.isConnected) g.raf = requestAnimationFrame(step); };
-  // the scene's changes this graph follows, until its canvas leaves the page
+  const wake = live(() => { if (!g.raf) g.raf = requestAnimationFrame(step); });
+  // the scene's changes this graph follows, until its loop is done
   const listening = [
-    scene.on("day", () => g.wake?.()), // what the day brings into view is laid out by the step (placeShown); the rest stays
-    scene.on("focus", () => g.wake?.()),
-    scene.on("thought", (t) => lightThought(g, t)),
-    scene.on("spot", (canonical, root) => spotIn(g, canonical, root)),
-    scene.on("wake", () => g.wake?.()),
+    scene.on("day", wake), // what the day brings into view is laid out by the step (placeShown); the rest stays
+    scene.on("focus", wake),
+    scene.on("thought", live((t) => lightThought(g, t))),
+    scene.on("spot", live((canonical, root) => spotIn(g, canonical, root))),
+    scene.on("wake", wake),
   ];
   for (const evn of WAKERS) canvas.addEventListener(evn, wake, { passive: true });
   window.addEventListener("mouseup", wake);
   g.wake = wake;
   ro.observe(canvas); // re-observe after the resize handler above; a resize wakes the loop
-  const ro2 = new ResizeObserver(() => { resize(); if ((mini || opts.fit) && !V.userMoved) V.needFit = true; wake(); }); ro2.observe(canvas); // reframed, not laid out again
+  const ro2 = new ResizeObserver(live(() => { resize(); if ((mini || opts.fit) && !V.userMoved) V.needFit = true; wake(); })); ro2.observe(canvas); // reframed, not laid out again
   if (g.raf) cancelAnimationFrame(g.raf);
+  g.stopLoop?.(); g.stopLoop = retire; // this graph's loop before, on another canvas, is done
   g.raf = requestAnimationFrame(step);
 }
 
