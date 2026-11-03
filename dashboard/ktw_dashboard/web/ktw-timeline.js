@@ -9,12 +9,14 @@
    script on globalThis.KeepTheWhy.views.timeline, listed in ktw-views.json, traced on the canvas (canvas-trace.mjs). */
 (function (root) {
 "use strict";
-const { TYPE_KINDS, TYPE_TOKENS, SHELF, addDays, createdOn, dayDiff, daySpan, existsAt, statusAt, linkExistsAt, logDepth, markLinked, percentileBox, pushApart, stageCards, stageHeight, stageLanes, stageLinks, stampLabel, typeKind, filterActive, entryMatches, plural, timeGrid, todayISO, paletteToken, readToken } = root.KeepTheWhy.core;
-const { el, svgEl, setKids, statusPill, evPill, typePills, typeGlyphSvg } = root.KeepTheWhy.ui;
+const { TYPE_KINDS, TYPE_TOKENS, SHELF, addDays, createdOn, dayDiff, daySpan, existsAt, statusAt, linkExistsAt, logDepth, markLinked, percentileBox, pushApart, stageCards, stageHeight, stageLanes, stageLinks, stampLabel, typeKind, filterActive, entryMatches, timeGrid, todayISO, paletteToken, readToken } = root.KeepTheWhy.core;
+const { el, svgEl, setKids, statusPill, evPill, typePills, typeGlyphSvg, words: wordsOf } = root.KeepTheWhy.ui;
 
-// One stage view per page: create({ scene, nav, prefs }). The page's scene is `shared` here: `scene` is the stage's
-// own (stageScene — its cards, lanes and links), as it always was.
-function create({ scene: shared, nav, prefs }) {
+// One stage view per page: create({ scene, nav, prefs, words }). The page's scene is `shared` here: `scene` is the
+// stage's own (stageScene — its cards, lanes and links), as it always was. `words` is the host's hook for the UI
+// text (ktw-ui.js words).
+function create({ scene: shared, nav, prefs, words }) {
+const tw = wordsOf(words);
 const narrow = () => !!root.matchMedia?.("(max-width: 900px)").matches;
 let ROOT_STYLE = null;
 const token = (name) => readToken((ROOT_STYLE ||= getComputedStyle(document.documentElement)), name);
@@ -32,9 +34,9 @@ const foreignShown = (c) => !c.ext || FOREIGN === "all" || (FOREIGN === "linked"
 function stageLegend() {
   const sw = (cls, style) => el("i", { class: `ktw-sw ${cls}`, style });
   return el("div", { class: "ktw-stage-legend" },
-    el("span", { class: "ktw-grp" }, ...TYPE_KINDS.map((k) => el("span", { style: `color:${token(TYPE_TOKENS[k])}` }, typeGlyphSvg(k), " ", el("span", { style: "color:var(--ktw-fg2, #a2a2ad)" }, k))), el("span", {}, sw("", "color:var(--ktw-muted, #8b8b98)"), el("span", {}, "no type"))),
-    el("span", { class: "ktw-grp", title: "Evidence is the fill" }, el("span", {}, sw("ktw-solid", "color:var(--ktw-fg2, #a2a2ad)"), "confirmed"), el("span", {}, sw("ktw-hatch", "color:var(--ktw-fg2, #a2a2ad)"), "inferred"), el("span", {}, sw("", "color:var(--ktw-fg2, #a2a2ad)"), "unknown")),
-    el("span", { class: "ktw-grp", title: "Status is the edge" }, el("span", {}, sw("ktw-dashed", "color:var(--ktw-fg3, #6f6f7a)"), "superseded"), el("span", {}, sw("ktw-ring", "color:var(--ktw-fg2, #a2a2ad)"), "open · needs review · pending")));
+    el("span", { class: "ktw-grp" }, ...TYPE_KINDS.map((k) => el("span", { style: `color:${token(TYPE_TOKENS[k])}` }, typeGlyphSvg(k), " ", el("span", { style: "color:var(--ktw-fg2, #a2a2ad)" }, k))), el("span", {}, sw("", "color:var(--ktw-muted, #8b8b98)"), el("span", {}, tw("timeline.legend.noType", "no type")))),
+    el("span", { class: "ktw-grp", title: tw("timeline.legend.evidence", "Evidence is the fill") }, el("span", {}, sw("ktw-solid", "color:var(--ktw-fg2, #a2a2ad)"), "confirmed"), el("span", {}, sw("ktw-hatch", "color:var(--ktw-fg2, #a2a2ad)"), "inferred"), el("span", {}, sw("", "color:var(--ktw-fg2, #a2a2ad)"), "unknown")),
+    el("span", { class: "ktw-grp", title: tw("timeline.legend.status", "Status is the edge") }, el("span", {}, sw("ktw-dashed", "color:var(--ktw-fg3, #6f6f7a)"), "superseded"), el("span", {}, sw("ktw-ring", "color:var(--ktw-fg2, #a2a2ad)"), tw("timeline.legend.inQuestion", "open · needs review · pending"))));
 }
 
 // A card's shape is its Type. decision: a plain card with a diamond. constraint: a thick band across the top, a
@@ -377,7 +379,7 @@ const authorColor = (name) => palette(Math.max(0, shared.state.authors.findIndex
 // slid through in that second (several entries of one day are one step); frac: the part of a step between two
 // whole ones, for the stage's motion; jump: the days the current step spans (1 for a speed in days)
 const PLAY = { on: false, speed: 7, raf: null, last: 0, acc: 0, frac: 0, jump: 1 };
-const SPEEDS = [["entry", "1 entry /s"], [1 / 24, "1 hour /s"], [3 / 24, "3 hours /s"], [1, "1 day /s"], [7, "1 week /s"], [30, "1 month /s"], [120, "4 months /s"]];
+const SPEEDS = [["entry", tw("timeline.speed.entry", "1 entry /s")], [1 / 24, tw("timeline.speed.hour", "1 hour /s")], [3 / 24, tw("timeline.speed.hours3", "3 hours /s")], [1, tw("timeline.speed.day", "1 day /s")], [7, tw("timeline.speed.week", "1 week /s")], [30, tw("timeline.speed.month", "1 month /s")], [120, tw("timeline.speed.months4", "4 months /s")]];
 // The stage (ktw-timeline.js) keeps its two settings — where a card stands ("graph" or "topics"), which other
 // repositories' entries show ("linked", "all", "none") — per browser; the page's switches set them and redraw.
 function setStageArrange(v) { setArrange(v); STAGE?.relax?.(); STAGE?.wake?.(); }
@@ -391,26 +393,26 @@ const stageSeg = (cls, title, options, current, pick, label = null) => el("span"
 function view(main, day, host) {
   HOST = host;
   ROOT_STYLE = getComputedStyle(main); // the tokens as the view's container inherits them
-  main.append(el("h1", {}, "Timeline"));
-  if (!shared.state.project.git?.available) return main.append(el("p", { class: "ktw-center" }, "No Git repository — no dates to draw."));
-  if (shared.state.project.git.shallow) main.append(el("p", { class: "ktw-sub ktw-warn" }, "Shallow clone: the history stops at the clone's edge, so every entry older than that appears to start there. Fetch the full history (git fetch --unshallow) for real dates."));
-  const sub = el("p", { class: "ktw-sub" }, "The project day by day. The stage shows what existed on the day shown, the graph beside it the same; the playhead sets the day. The card shows the entry that appeared last by then, or the one clicked on the stage. The bars count the entries by the month their heading first appeared in Git, stacked by author, grey ticks for entries superseded that month.");
+  main.append(el("h1", {}, tw("timeline.heading", "Timeline")));
+  if (!shared.state.project.git?.available) return main.append(el("p", { class: "ktw-center" }, tw("timeline.noGit", "No Git repository — no dates to draw.")));
+  if (shared.state.project.git.shallow) main.append(el("p", { class: "ktw-sub ktw-warn" }, tw("timeline.shallow", "Shallow clone: the history stops at the clone's edge, so every entry older than that appears to start there. Fetch the full history (git fetch --unshallow) for real dates.")));
+  const sub = el("p", { class: "ktw-sub" }, tw("timeline.sub", "The project day by day. The stage shows what existed on the day shown, the graph beside it the same; the playhead sets the day. The card shows the entry that appeared last by then, or the one clicked on the stage. The bars count the entries by the month their heading first appeared in Git, stacked by author, grey ticks for entries superseded that month."));
   // the graph the stage is a view of and the thoughts beside it are drawn from: the family graph with the family
   // scope (built once it is asked for, the view rendered again when it arrives), else this project's
   const g = host.graph(); // the host's graph builders: which graph the stage stands on (the family's, when it is shown and built)
   // the clock runs from the first day of any entry on the page — ours, or one a friend, the family or the path brought — to today
   const span = daySpan([...shared.state.entries, ...g.nodes.filter((n) => n.kind === "entry" && n.entry).map((n) => n.entry)]);
-  if (!span) return main.append(sub, el("p", { class: "ktw-center" }, "Nothing dated yet."));
+  if (!span) return main.append(sub, el("p", { class: "ktw-center" }, tw("timeline.undated", "Nothing dated yet.")));
   const clamp = (d) => (d < span.from ? span.from : d > span.to ? span.to : d);
   const bars = timelineBars(main, span, (d) => setDay(d));
   const listBox = el("div", { class: "ktw-entry-list", style: "margin-top:16px" });
   bars.onMonth = (k, entries) => { listBox.replaceChildren(el("h2", {}, k), ...entries.map(HOST.entryRow)); };
   // the playhead: a slider over the days, play with a speed, the counts of the day
   const grid = timeGrid(span); const big = grid.hours ? 24 : 7; // a step: an hour or a day; shift: a day or a week
-  const range = el("input", { type: "range", min: 0, max: grid.steps, step: 1, class: "ktw-playhead-range", title: grid.hours ? "the hour the page shows — drag, or ← → (an hour), shift ← → (a day), space plays" : "the day the page shows — drag, or ← → (a day), shift ← → (a week), space plays" });
+  const range = el("input", { type: "range", min: 0, max: grid.steps, step: 1, class: "ktw-playhead-range", title: grid.hours ? tw("timeline.range.hours", "the hour the page shows — drag, or ← → (an hour), shift ← → (a day), space plays") : tw("timeline.range.days", "the day the page shows — drag, or ← → (a day), shift ← → (a week), space plays") });
   const dayLabel = el("b", { class: "ktw-playhead-day" }); const counts = el("span", { class: "ktw-playhead-counts" });
-  const playBtn = el("button", { type: "button", class: "ktw-play-btn", title: "play the days — space" });
-  const speedSel = el("select", { class: "ktw-play-speed", title: "how fast the days pass" }, SPEEDS.map(([v, l]) => el("option", { value: v }, l)));
+  const playBtn = el("button", { type: "button", class: "ktw-play-btn", title: tw("timeline.play", "play the days — space") });
+  const speedSel = el("select", { class: "ktw-play-speed", title: tw("timeline.speedTitle", "how fast the days pass") }, SPEEDS.map(([v, l]) => el("option", { value: v }, l)));
   speedSel.onchange = () => { PLAY.speed = speedSel.value === "entry" ? "entry" : Number(speedSel.value) || 7; PLAY.acc = 0; PLAY.frac = 0; PLAY.jump = 1; };
   for (const opt of speedSel.options) if (opt.value === String(PLAY.speed) || (opt.value !== "entry" && Math.abs(Number(opt.value) - PLAY.speed) < 1e-9)) opt.selected = true;
   // the days entries appeared on, for the "1 entry /s" speed: ours and the graph's foreign ones, as the span counts them
@@ -420,7 +422,7 @@ function view(main, day, host) {
     const d = shared.day || span.to;
     range.value = grid.stepOf(d); dayLabel.textContent = grid.label(d); bars.mark(d, grid.label(d));
     const here = shared.state.entries.filter((e) => shared.atClock(e)); const st = count(here.map((e) => ({ s: shared.statusNow(e) })), "s"); const open = (st.open || 0) + (st["needs-review"] || 0) + (st["pending-confirmation"] || 0);
-    setKids(counts, `${plural(here.length, "entry")} by then`, st.active ? ` · ${st.active} active` : "", st.superseded ? ` · ${st.superseded} superseded` : "", open ? ` · ${open} in question` : "");
+    setKids(counts, tw("timeline.counts.byThen", "{n:entry} by then", { n: here.length }), st.active ? tw("timeline.counts.active", " · {n} active", { n: st.active }) : "", st.superseded ? tw("timeline.counts.superseded", " · {n} superseded", { n: st.superseded }) : "", open ? tw("timeline.counts.inQuestion", " · {n} in question", { n: open }) : "");
     playBtn.textContent = PLAY.on ? "⏸" : "▶"; playBtn.classList.toggle("ktw-on", PLAY.on);
     card.refresh();
     try { nav.go({ view: "timeline", day: d === span.to ? null : grid.url(d) }, { replace: true }); } catch {}
@@ -458,15 +460,15 @@ function view(main, day, host) {
   // the stage and its switches
   const wrap = el("div", { class: "ktw-stage-wrap" }); const canvas = el("canvas", { class: "ktw-stage" }); const tip = el("div", { class: "ktw-stage-tip", hidden: true });
   wrap.append(canvas, tip,
-    stageSeg("ktw-stage-arrange", "where a card stands: where its node stands in the graph beside (the stage is the graph, time pulled out as depth), or in a lane per topic", [["graph", "as the graph"], ["topics", "by topic"]], ARRANGE, setStageArrange),
-    stageSeg("ktw-stage-foreign", "other repositories' entries — friends, family, path: only the ones a chain of See or Superseded by joins to this project's, every one the graph holds, or none", [["linked", "linked"], ["all", "all"], ["none", "none"]], FOREIGN, setStageForeign, "others"),
-    el("button", { type: "button", class: "ktw-stage-reset", title: "let go of the held thought and card — every card alike again — and reset the view (Esc)", onclick: () => STAGE?.reset?.() }, "reset"));
+    stageSeg("ktw-stage-arrange", tw("timeline.arrange.title", "where a card stands: where its node stands in the graph beside (the stage is the graph, time pulled out as depth), or in a lane per topic"), [["graph", tw("timeline.arrange.graph", "as the graph")], ["topics", tw("timeline.arrange.topics", "by topic")]], ARRANGE, setStageArrange),
+    stageSeg("ktw-stage-foreign", tw("timeline.foreign.title", "other repositories' entries — friends, family, path: only the ones a chain of See or Superseded by joins to this project's, every one the graph holds, or none"), [["linked", tw("timeline.foreign.linked", "linked")], ["all", tw("timeline.foreign.all", "all")], ["none", tw("timeline.foreign.none", "none")]], FOREIGN, setStageForeign, tw("timeline.foreign.label", "others")),
+    el("button", { type: "button", class: "ktw-stage-reset", title: tw("timeline.reset.title", "let go of the held thought and card — every card alike again — and reset the view (Esc)"), onclick: () => STAGE?.reset?.() }, tw("timeline.reset.label", "reset")));
   main.append(el("div", { class: "ktw-timeline-head" },
       el("div", { class: "ktw-timeline-head-text" }, sub, bars.node, bars.legend,
-        el("div", { class: "ktw-playhead" }, jump(() => span.from, "the first day", "⏮"), playBtn, jump(() => span.to, "today", "⏭"), range, dayLabel, speedSel, counts)),
+        el("div", { class: "ktw-playhead" }, jump(() => span.from, tw("timeline.jump.first", "the first day"), "⏮"), playBtn, jump(() => span.to, tw("timeline.jump.today", "today"), "⏭"), range, dayLabel, speedSel, counts)),
       el("div", { class: "ktw-stage-card-slot" }, card.node)),
     wrap, stageLegend(),
-    el("p", { class: "ktw-note ktw-stage-note" }, el("span", { class: "ktw-stage-hint" }, (grid.hours ? "On the stage: wheel — an hour forward or back, shift for a day ·" : "On the stage: wheel — a day forward or back, shift for a week ·") + " drag — look around · ctrl+wheel — zoom · double-click — reset the view · click a card to read it, the floor to let go. The thoughts beside: point at one to light its chain here and in the graph."), el("span", { class: "ktw-stage-hint-touch" }, "On the stage: drag — look around · pinch — zoom · tap a card to read it, the floor to let go. The slider sets the day.")),
+    el("p", { class: "ktw-note ktw-stage-note" }, el("span", { class: "ktw-stage-hint" }, grid.hours ? tw("timeline.hint.hours", "On the stage: wheel — an hour forward or back, shift for a day · drag — look around · ctrl+wheel — zoom · double-click — reset the view · click a card to read it, the floor to let go. The thoughts beside: point at one to light its chain here and in the graph.") : tw("timeline.hint.days", "On the stage: wheel — a day forward or back, shift for a week · drag — look around · ctrl+wheel — zoom · double-click — reset the view · click a card to read it, the floor to let go. The thoughts beside: point at one to light its chain here and in the graph.")), el("span", { class: "ktw-stage-hint-touch" }, tw("timeline.hint.touch", "On the stage: drag — look around · pinch — zoom · tap a card to read it, the floor to let go. The slider sets the day."))),
     listBox);
   shared.day = null; setClock(day && DAY_RE.test(day) ? clamp(grid.toClock(day)) : span.to); upd();
   STAGE = runStage(canvas, { wrap, tip, span, graph: g, graphBeside: !narrow(), setDay, stepBy, big, play, playing: PLAY, open: card.hold, close: card.release, onClose: (h) => { if (STAGE === h) STAGE = null; } }); // the side pane draws no graph on a narrow screen (miniGraph)
@@ -504,13 +506,13 @@ function timelineBars(main, span, setDay) {
   const monthX = (d) => { const i = all.indexOf(d.slice(0, 7)); if (i < 0) return d < all[0] ? padL : Wd; const dim = new Date(Date.UTC(+d.slice(0, 4), +d.slice(5, 7), 0)).getUTCDate(); return padL + (i + (Math.min(+d.slice(8, 10), dim) - 1) / dim) * colW + 1; };
   const marker = ns("line", { class: "ktw-now", x1: padL, x2: padL, y1: padT - 4, y2: Hd - padB + 14 }); const markerLabel = ns("text", { class: "ktw-now-label", x: padL, y: 9, "text-anchor": "start" }, "");
   const out = { node: el("div", { class: "ktw-timeline" }, svg), onMonth: null,
-    legend: el("div", { class: "ktw-legend" }, shared.state.authors.map((a) => el("span", {}, el("i", { class: "ktw-sw", style: `background:${authorColor(a.name)}` }), a.name)), el("span", {}, el("i", { class: "ktw-sw", style: "background:var(--ktw-status-superseded, #6f6f7a)" }), "superseded that month")),
+    legend: el("div", { class: "ktw-legend" }, shared.state.authors.map((a) => el("span", {}, el("i", { class: "ktw-sw", style: `background:${authorColor(a.name)}` }), a.name)), el("span", {}, el("i", { class: "ktw-sw", style: "background:var(--ktw-status-superseded, #6f6f7a)" }), tw("timeline.bars.superseded", "superseded that month"))),
     mark: (d, label = d) => { const x = monthX(d); marker.setAttribute("x1", x); marker.setAttribute("x2", x); markerLabel.setAttribute("x", Math.min(Wd - 64, x + 4)); markerLabel.textContent = label; } };
   all.forEach((k, i) => {
     const x = padL + i * colW + 1; let yTop = scaleY(0);
     for (const a of shared.state.authors.map((a) => a.name)) {
       const v = months[k]?.[a]; if (!v) continue; const h = scaleY(0) - scaleY(v); yTop -= h;
-      const rect = ns("rect", { class: "ktw-b", x, y: yTop, width: bw, height: h, fill: authorColor(a), rx: 2 }); rect.append(ns("title", {}, `${k} · ${a}: ${v} — click: that month's entries, and the day moves to its end`));
+      const rect = ns("rect", { class: "ktw-b", x, y: yTop, width: bw, height: h, fill: authorColor(a), rx: 2 }); rect.append(ns("title", {}, tw("timeline.bars.title", "{month} · {author}: {n} — click: that month's entries, and the day moves to its end", { month: k, author: a, n: v })));
       rect.addEventListener("click", () => { out.onMonth?.(k, created.filter((e) => e.git.created.date.startsWith(k))); const last = new Date(Date.UTC(+k.slice(0, 4), +k.slice(5, 7), 0)).toISOString().slice(0, 10); setDay(last < span.from ? span.from : last > span.to ? span.to : last); });
       svg.append(rect);
     }
@@ -532,12 +534,12 @@ function fillEntryCard(node, e, { lane, href, state, day, badge, again, onOpen =
   // a friend's entry opens by walking to that project in place (the node's action), not by a plain link
   const link = (text, extra = {}) => el("a", { href, ...extra, onclick: onOpen ? (ev) => { ev.preventDefault(); onOpen(); } : null }, text);
   // the topic in the head is a link where there is somewhere to go: the topic's preview in the graph, its page on the timeline
-  const topicLink = topic ? el("a", { class: "ktw-card-topic", href: topic.href || "#", title: topic.title || "the topic", onclick: topic.onClick ? (ev) => { ev.preventDefault(); topic.onClick(); } : null }, lane) : lane;
-  setKids(node, el("div", { class: "ktw-stage-card-head" }, el("span", { class: "ktw-note ktw-mono" }, `${stampLabel(createdOn(e)) || "today"} · `, topicLink), badge),
-    el("h3", {}, link(e.title.replace(/`/g, ""), { title: "read the whole entry" })),
+  const topicLink = topic ? el("a", { class: "ktw-card-topic", href: topic.href || "#", title: topic.title || tw("timeline.card.topic", "the topic"), onclick: topic.onClick ? (ev) => { ev.preventDefault(); topic.onClick(); } : null }, lane) : lane;
+  setKids(node, el("div", { class: "ktw-stage-card-head" }, el("span", { class: "ktw-note ktw-mono" }, `${stampLabel(createdOn(e)) || tw("timeline.card.today", "today")} · `, topicLink), badge),
+    el("h3", {}, link(e.title.replace(/`/g, ""), { title: tw("timeline.card.readTitle", "read the whole entry") })),
     el("div", { class: "ktw-pills" }, ...typePills(e.type), statusPill((day ? statusAt(e, day, state !== shared.self || shared.hasRepo(e)) : null) || e.status), evPill(e.evidence)),
-    body ? el("div", { class: "ktw-body ktw-stage-card-body" }, renderBody(body)) : el("p", { class: "ktw-empty ktw-stage-card-body" }, typeof (state || shared.state).bodies === "string" ? "loading the text…" : "no text"),
-    el("div", { class: "ktw-stage-card-foot" }, e.git?.created?.author ? el("span", { class: "ktw-note" }, `recorded by ${e.git.created.author}`) : el("span"), link("open ›")));
+    body ? el("div", { class: "ktw-body ktw-stage-card-body" }, renderBody(body)) : el("p", { class: "ktw-empty ktw-stage-card-body" }, typeof (state || shared.state).bodies === "string" ? tw("timeline.card.loading", "loading the text…") : tw("timeline.card.noText", "no text")),
+    el("div", { class: "ktw-stage-card-foot" }, e.git?.created?.author ? el("span", { class: "ktw-note" }, tw("timeline.card.recordedBy", "recorded by {author}", { author: e.git.created.author })) : el("span"), link(tw("timeline.card.open", "open ›"))));
   const st = state || shared.self;
   if (st && typeof st.bodies === "string" && !st.bodiesLoaded && !st.bodiesError) bodies(st).then(() => { if (node.isConnected) again?.(); });
 }
@@ -546,11 +548,11 @@ function entryCard(span) {
   const node = el("div", { class: "ktw-stage-card" }); let held = null; // the held entry's Id
   const latest = (d) => { let best = null; for (const e of shared.state.entries) { if (!existsAt(e, d, shared.hasRepo(e))) continue; const c = createdOn(e) || span.to; if (!best || c >= best.c) best = { e, c }; } return best?.e || null; };
   const fill = (e, isHeld, c = null) => fillEntryCard(node, e, { lane: c?.lane?.title || laneTitle(e), href: c?.href || entryHref(e), state: c?.state || shared.self, day: shared.day || span.to,
-    topic: !(c?.ext) && !e.project ? { title: "open the topic's page", href: nav.href({ view: "topic", file: e.file }) } : null,
-    badge: isHeld ? el("button", { type: "button", class: "ktw-pill ktw-stage-card-held", title: "let go — back to the latest entry by the day shown", onclick: () => STAGE?.close?.() }, "picked ", el("b", {}, "×")) : el("span", { class: "ktw-pill" }, "latest by then"),
+    topic: !(c?.ext) && !e.project ? { title: tw("timeline.card.topicPage", "open the topic's page"), href: nav.href({ view: "topic", file: e.file }) } : null,
+    badge: isHeld ? el("button", { type: "button", class: "ktw-pill ktw-stage-card-held", title: tw("timeline.card.letGoTitle", "let go — back to the latest entry by the day shown"), onclick: () => STAGE?.close?.() }, tw("timeline.card.picked", "picked {x}", { x: el("b", {}, "×") })) : el("span", { class: "ktw-pill" }, tw("timeline.card.latest", "latest by then")),
     again: () => { if (held ? held === (e.uuid || e.id) : latest(shared.day || span.to) === e) fill(e, isHeld, c); } });
   return { node,
-    refresh: () => { if (held) return; const e = latest(shared.day || span.to); if (e) fill(e, false); else setKids(node, el("p", { class: "ktw-empty" }, "No entry by this day.")); },
+    refresh: () => { if (held) return; const e = latest(shared.day || span.to); if (e) fill(e, false); else setKids(node, el("p", { class: "ktw-empty" }, tw("timeline.card.none", "No entry by this day."))); },
     hold: (e, c) => { held = e.uuid || e.id; shared.selected = e.id; fill(e, true, c); },
     release: () => { held = null; shared.selected = null; const e = latest(shared.day || span.to); if (e) fill(e, false); } };
 }
