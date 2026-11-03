@@ -933,6 +933,34 @@ const report = {};
   window.close();
 }
 {
+  // redraw after a session of dragging and loading more — the maintainer's case: nodes dragged and pinned, then a
+  // wave of the globe brings another repository in, then redraw. The layout is the one a fresh build of the same
+  // data gives: another page, the same wave loaded and nothing dragged, redrawn, has every node at the same place.
+  const session = async (drag) => {
+    const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/refs`)}#globe`, html, { "ktw-globe-intro": "off", "ktw-motion": "off" });
+    const d = window.document; const g = () => window.__g();
+    const quiet = async () => { for (let i = 0; i < 300 && g().alpha > 0.003; i++) await tick(100); };
+    await tick(700); await quiet();
+    if (drag) for (const n of g().nodes.filter((m) => m.kind === "topic").slice(0, 3)) { n.x += 250; n.y -= 180; n.fixed = true; }
+    if (drag) { g().alpha = 0.3; g().wake?.(); await tick(200); await quiet(); }
+    const sel = d.querySelector(".ktw-graph-ui .globe-ctl select"); sel.value = "1"; sel.dispatchEvent(new window.Event("change")); await tick(200);
+    [...d.querySelectorAll(".ktw-graph-ui .globe-ctl button")].find((b) => b.textContent === "go")?.click(); await tick(300);
+    [...(d.querySelector(".globe-dialog")?.querySelectorAll("button") || [])].find((b) => b.textContent === "load them")?.click(); await tick(600); await quiet();
+    const loaded = g().nodes.some((n) => n.kind === "project" && n.label === "acme/far");
+    d.querySelector(".ktw-graph-corner-redraw")?.click(); await tick(400); await quiet();
+    const at = Object.fromEntries(g().nodes.map((n) => [n.id, [n.x, n.y]]));
+    const held = g().nodes.filter((n) => n.fixed).length;
+    window.close();
+    return { at, loaded, held };
+  };
+  const used = await session(true), fresh = await session(false);
+  let diff = 0; for (const [id, [x, y]] of Object.entries(fresh.at)) { const q = used.at[id]; diff = Math.max(diff, q ? Math.hypot(q[0] - x, q[1] - y) : Infinity); }
+  report.redrawAfterSession = { nodes: Object.keys(fresh.at).length, same: Object.keys(fresh.at).length === Object.keys(used.at).length, diff, held: used.held, loaded: used.loaded && fresh.loaded };
+  if (!report.redrawAfterSession.loaded) errors.push("redraw after a session: the wave did not bring acme/far in — the test does not cover loading more");
+  if (diff !== 0 || !report.redrawAfterSession.same) errors.push("redraw after dragging and loading more is not the layout of a fresh build of the same data — " + JSON.stringify(report.redrawAfterSession));
+  if (used.held) errors.push("redraw after a session: nodes placed by hand are still held");
+}
+{
   // redraw on the graph page: every node you placed let go, and the same layout every time — dragged nodes leave no trace
   const web = FILES["https://acme.github.io/web/state.json"];
   const page = html.replace("<script>", `<script>window.__KTW_STATE__ = ${JSON.stringify({ ...web, exported: true }).replace(/</g, "\u003c")};</script><script>`);
