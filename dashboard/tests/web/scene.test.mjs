@@ -29,21 +29,61 @@ test("the scene holds what the views share and tells its subscribers when it cha
   assert.equal(scene.focus, null);
 });
 
-test("the layout follows its source while it settles, then keeps what it has and only adds", () => {
+test("the layout copies what its source lays out: all of it while it first settles, then only what a step moved", () => {
   const scene = create();
   const nodes = [{ id: "t", kind: "topic", x: 1, y: 2 }, { id: "e", kind: "entry", x: 3, y: 4 }, { id: "p", kind: "project", x: 9, y: 9 }];
-  scene.resetLayout({ nodes });
+  const g = { nodes, alpha: 1 };
+  scene.resetLayout(g);
   let told = 0; scene.on("layout", () => told++);
-  scene.publishLayout(nodes);
+  scene.publishFrom(g);
   assert.deepEqual([...scene.layout.keys()], ["t", "e"], "entries and topics only");
-  nodes[0].x = 5; scene.publishLayout(nodes, { settled: true });
-  assert.deepEqual(scene.layout.get("t"), { x: 5, y: 2 });
-  nodes[0].x = 7; nodes.push({ id: "n", kind: "entry", x: 0, y: 1 }); scene.publishLayout(nodes);
-  assert.deepEqual(scene.layout.get("t"), { x: 5, y: 2 }, "settled: known positions are kept");
+  nodes[0].x = 5; g.alpha = 0; scene.publishFrom(g);
+  assert.deepEqual(scene.layout.get("t"), { x: 5, y: 2 }); assert.equal(scene.layoutSettled, true);
+  nodes[0].x = 7; scene.publishFrom(g);
+  assert.deepEqual(scene.layout.get("t"), { x: 5, y: 2 }, "settled, the graph turning: nothing is copied");
+  assert.equal(told, 2, "and the scene says nothing");
+  nodes.push({ id: "n", kind: "entry", x: 0, y: 1, seeded: true }); scene.publishFrom(g);
   assert.deepEqual(scene.layout.get("n"), { x: 0, y: 1 }, "a node not yet known is added");
-  assert.equal(told, 3);
+  assert.deepEqual(scene.layout.get("t"), { x: 5, y: 2 }, "the rest kept");
+  // a placement: the node it lays out is copied while it moves, and once more where it came to rest
+  Object.assign(g, { alpha: 1, placing: true }); nodes[3].x = 4; scene.publishFrom(g);
+  assert.deepEqual(scene.layout.get("n"), { x: 4, y: 1 }); assert.equal(scene.layoutSettled, true);
+  delete nodes[3].seeded; nodes[3].x = 4.05; Object.assign(g, { alpha: 0, placing: false, placed: new Set([nodes[3]]) }); scene.publishFrom(g);
+  assert.deepEqual(scene.layout.get("n"), { x: 4.05, y: 1 }, "its final place"); assert.equal(g.placed, null, "taken");
+  assert.deepEqual(scene.layout.get("t"), { x: 5, y: 2 }, "the placed nodes kept");
+  // a relayout (the graph's shape changed): all of it again, and once more at rest
+  Object.assign(g, { alpha: 1, relayout: true }); nodes[0].x = 8; scene.publishFrom(g);
+  assert.deepEqual(scene.layout.get("t"), { x: 8, y: 2 });
+  nodes[0].x = 8.01; Object.assign(g, { alpha: 0, relayout: false, relaidOut: true }); scene.publishFrom(g);
+  assert.deepEqual(scene.layout.get("t"), { x: 8.01, y: 2 }); assert.equal(g.relaidOut, false);
   scene.resetLayout(null);
   assert.equal(scene.layout.size, 0); assert.equal(scene.layoutSettled, false); assert.equal(scene.layoutSource, null);
+});
+
+test("settled is said only at rest, at the core's floor", () => {
+  const scene = create(); const g = { nodes: [{ id: "t", kind: "topic", x: 0, y: 0 }], alpha: 0.008 };
+  scene.resetLayout(g); scene.publishFrom(g);
+  assert.equal(scene.layoutSettled, false, "an alpha of 0.008 is still moving (the floor is LAYOUT.MIN_ALPHA, 0.003)");
+  g.alpha = 0.003; scene.publishFrom(g);
+  assert.equal(scene.layoutSettled, true);
+});
+
+test("the stage's layout follows the graph through every day step: each shown node where the graph has it", () => {
+  const core = globalThis.KeepTheWhy.core;
+  const nodes = [], links = [];
+  for (let t = 0; t < 6; t++) { nodes.push({ id: `t${t}`, kind: "topic", r: 12 }); const ti = nodes.length - 1; if (t) links.push({ s: ti, t: ti - 1, kind: "topic", len: 150 });
+    for (let e = 0; e < 12; e++) { nodes.push({ id: `e${t}.${e}`, kind: "entry", r: 4.2, day: (t * 12 + e) % 8 }); links.push({ s: nodes.length - 1, t: ti, kind: "member", len: 42 }); } }
+  core.seedLayout(nodes, links);
+  const g = core.reheatSeeded({ nodes, links, alpha: 1 });
+  const scene = create(); scene.resetLayout(g);
+  let day = 2; const visible = (n) => n.kind !== "entry" || n.day <= day;
+  // the graph's loop: what is newly shown is placed, a step, and the scene takes what the step laid out
+  const settle = () => { for (let i = 0; i < 2000 && (g.alpha > core.LAYOUT.MIN_ALPHA || g.placed || g.relaidOut); i++) { if (!g.placing && !g.relayout) core.placeShown(g, { visible }); if (g.alpha > core.LAYOUT.MIN_ALPHA) core.stepLayout(g, { visible }); scene.publishFrom(g); } };
+  const off = () => { let d = 0; for (const n of nodes) if (visible(n)) { const q = scene.layout.get(n.id); d = Math.max(d, q ? Math.hypot(q.x - n.x, q.y - n.y) : Infinity); } return d; };
+  settle(); assert.equal(off(), 0, "settled: the copy is the graph");
+  for (day = 3; day <= 7; day++) { core.placeShown(g, { visible }); settle(); assert.equal(off(), 0, `day ${day}: the copy is the graph, the nodes the day brought included`); }
+  // a relayout (the shape changed), followed as well
+  core.reheatAll(g); settle(); assert.equal(off(), 0, "after a relayout");
 });
 
 test("with no graph drawn, the scene settles the layout itself; with one, it waits for it", () => {

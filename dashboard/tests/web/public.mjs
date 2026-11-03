@@ -23,7 +23,7 @@ const app = fs.readFileSync(W + "app.js", "utf8");
 // strings). split/join, not replace: the sources contain `$&`-like sequences.
 // the stylesheet inlined as the export does: the page reads its colour tokens (--ktw-*) from it
 const css = fs.readFileSync(W + "style.css", "utf8");
-const html = fs.readFileSync(W + "index.html", "utf8").split('<link rel="stylesheet" href="/static/style.css">').join("<style>\n" + css + "\n</style>").split('<script type="module" src="/static/app.js"></script>').join("<script>" + lib + "</script>\n<script>(function () {\n\"use strict\";\n" + app + "\nwindow.__fg = () => fgraph; window.__g = () => graph; window.__stage = () => TIMELINE.stage(); window.__active = () => [...new Set([graph, fgraph, graph?.runner, fgraph?.runner, TIMELINE.stage()?.graph].filter(Boolean))]; window.__chainAdd = async (canonical, uuid) => { const f = { canonical, uuids: [uuid] }; CHAIN.extra.set(fkey(canonical), f); await loadFriend(f); if (fgraph) fgraph.at = 0; render(); }; // test hooks\n})();</script>");
+const html = fs.readFileSync(W + "index.html", "utf8").split('<link rel="stylesheet" href="/static/style.css">').join("<style>\n" + css + "\n</style>").split('<script type="module" src="/static/app.js"></script>').join("<script>" + lib + "</script>\n<script>(function () {\n\"use strict\";\n" + app + "\nwindow.__fg = () => fgraph; window.__g = () => graph; window.__globeRefit = () => globeRefit(); window.__stage = () => TIMELINE.stage(); window.__active = () => [...new Set([graph, fgraph, graph?.runner, fgraph?.runner, TIMELINE.stage()?.graph].filter(Boolean))]; window.__chainAdd = async (canonical, uuid) => { const f = { canonical, uuids: [uuid] }; CHAIN.extra.set(fkey(canonical), f); await loadFriend(f); if (fgraph) fgraph.at = 0; render(); }; // test hooks\n})();</script>");
 
 const GH = "https://github.com/acme";
 const config = (id, lines) => `<!-- keep-the-why:config -->\n- id: ${id}\n${lines.join("\n")}\n<!-- /keep-the-why:config -->\n`;
@@ -1055,6 +1055,18 @@ const report = {};
   for (const [k, v] of Object.entries(want)) if (order[k]?.join() !== v) errors.push(`authors sort (${k}): ${order[k]?.join()} — want ${v}`);
   if (!/Created/.test(order.createdSort)) errors.push("authors sort: the sorted column is not marked: " + order.createdSort);
   if ([...d.querySelectorAll("main table.ktw-t th")].find((th) => /Evidence/.test(th.textContent))?.querySelector(".ktw-sort-btn")) errors.push("authors sort: the evidence column should not sort");
+  window.close();
+}
+{
+  // a globe wave that ends with the globe not shown (the reader went back to the graph, or the family scope's graph
+  // was the one shown) frames nothing: the desktop project graph stays at its scale, with no fit left waiting
+  const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/refs`)}#graph`);
+  for (const end = Date.now() + 30000; (window.__g()?.alpha ?? 1) > 0.003 && Date.now() < end; ) await tick(100);
+  const before = window.__g().scale;
+  window.__globeRefit(); await tick(400);
+  const g = window.__g();
+  report.globeRefitAway = { before, scale: g.scale, needFit: !!g.needFit };
+  if (before !== 1 || g.scale !== 1 || g.needFit) errors.push("globe: a wave ending away from the globe refitted the project graph — " + JSON.stringify(report.globeRefitAway));
   window.close();
 }
 {

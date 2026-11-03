@@ -11,7 +11,7 @@ import fs from "node:fs";
 import vm from "node:vm";
 
 vm.runInThisContext(fs.readFileSync(new URL("../../ktw_dashboard/web/ktw-core.js", import.meta.url), "utf8"));
-const { LAYOUT, seedLayout, carryNode, reheatSeeded, placeShown, stepLayout } = globalThis.KeepTheWhy.core;
+const { LAYOUT, seedLayout, carryNode, reheatSeeded, reheatAfterBuild, placeShown, stepLayout } = globalThis.KeepTheWhy.core;
 
 // a deterministic count sequence, so the family has uneven topics without randomness in the test either
 const sizes = (n, total, k) => { const w = Array.from({ length: n }, (_, i) => 1 + ((i * k) % 7)); const sum = w.reduce((a, b) => a + b, 0); return w.map((x) => Math.max(1, Math.round((x / sum) * total))); };
@@ -45,7 +45,7 @@ function friend(g, key, nt, ne, prev = {}) {
     const ti = add({ id: `ft:${key}:${t}`, kind: "topic", r: 7 + Math.sqrt(c) * 2.4 }); links.push({ s: hub, t: ti, kind: "hub", len: 70 });
     for (let e = 0; e < c; e++) { const ei = add({ id: `fe:${key}:${t}:${e}`, kind: "entry", r: 4.2 }); links.push({ s: ei, t: ti, kind: "member", len: 40 }); mine.push(ei); }
   });
-  for (let k = 0; k < 4; k++) links.push({ s: index[`e:0:0:${k}`], t: mine[k * 3], kind: "see", len: 170 });
+  for (let k = 0; k < 4; k++) { const from = index[`e:0:0:${k}`] ?? index[`e:0:${k}`]; if (from != null) links.push({ s: from, t: mine[k * 3], kind: "see", len: 170 }); } // cited from this project's first topic
   return g;
 }
 // a part linked to nothing: a topic with its entries and no project
@@ -194,4 +194,72 @@ test("a rebuild while a placement is still running carries it on, and the nodes 
   assert.equal(jump, 0, "the nodes placed before the friend came hold still through both rebuilds");
   const all = shape(k.nodes);
   assert.ok(all.far <= 4 * all.median, "nothing left far out");
+});
+
+// A project graph as assemble and addLinkedLayer give it: topics and entries with no hub of their own; once a neighbour
+// comes in (`withSelf`), the project gets a hub at the centre (p:self) and its topics hang on it, beside a friend.
+function projectGraph(prev = {}, { withSelf = false, owners = false } = {}) {
+  const nodes = [], links = [], index = {};
+  const add = (n, at) => { const p = prev[n.id]; if (p) carryNode(n, p); else { n.x = at?.x; n.y = at?.y; n.vx = n.vy = 0; if (at) n.seeded = true; } index[n.id] = nodes.length; nodes.push(n); return nodes.length - 1; };
+  const per = sizes(30, 420, 4);
+  per.forEach((c, t) => {
+    const ti = add({ id: `t:${t}`, kind: "topic", r: 8 + Math.sqrt(c) * 3.2 });
+    for (let e = 0; e < c; e++) links.push({ s: add({ id: `e:${t}:${e}`, kind: "entry", r: 4.2 }), t: ti, kind: "member", len: 46 });
+    if (t) links.push({ s: ti, t: index[`t:${t - 1}`], kind: "topic", len: 170 });
+  });
+  const g = { nodes, links, index };
+  if (withSelf) {
+    const self = add({ id: "p:self", kind: "project", r: 15 }, { x: 0, y: 0 });
+    per.forEach((c, t) => links.push({ s: self, t: index[`t:${t}`], kind: "hub", len: 90 }));
+    friend(g, "f1", 5, 50, prev);
+    if (owners) { // the self hub and the friend's share an owner
+      const o = add({ id: "o:acme", kind: "owner", ext: true, unit: "o:acme", r: 17 }, { x: 0, y: 0 });
+      nodes[self].owner = nodes[index["f:f1"]].owner = "o:acme";
+      links.push({ s: o, t: self, kind: "owner", len: 190 }, { s: o, t: index["f:f1"], kind: "owner", len: 190 });
+    }
+  }
+  seedLayout(nodes, links);
+  return g;
+}
+const rebuildOf = (prevG, opts) => { const g = projectGraph(prevOf(prevG, prevG.alpha), opts); g.alpha = prevG.alpha; g.tree = prevG.tree; g.relayout = prevG.relayout; g.placing = prevG.placing; return reheatAfterBuild(g); };
+
+test("a neighbour coming in on a settled project graph gives it its hub, and the graph is laid out anew around it", { timeout: 180000 }, () => {
+  const g = reheatAfterBuild(Object.assign(projectGraph(), { alpha: 1 })); run(g);
+  const h = rebuildOf(g, { withSelf: true });
+  assert.ok(h.relayout && h.alpha === 1 && !h.placing, "the topics hang on a hub now: the shape changed, and the whole graph is laid out");
+  run(h);
+  const self = h.nodes[h.index["p:self"]], topics = h.nodes.filter((n) => n.kind === "topic" && !n.ext);
+  const d = topics.map((t) => Math.hypot(t.x - self.x, t.y - self.y)).sort((a, b) => a - b);
+  assert.ok(!self.seeded && h.alpha === 0, "laid out and at rest");
+  assert.ok(d[d.length >> 1] < 400, `the hub's lines act: its topics around it (median ${Math.round(d[d.length >> 1])})`);
+  const cx = topics.reduce((a, t) => a + t.x, 0) / topics.length, cy = topics.reduce((a, t) => a + t.y, 0) / topics.length;
+  assert.ok(Math.hypot(self.x - cx, self.y - cy) < 150, "the hub stands among its topics, not frozen on one of them");
+  // nothing new after that: the next rebuild moves nothing
+  const k = rebuildOf(h, { withSelf: true });
+  assert.ok(k.alpha === 0 && !k.relayout, "the same shape again: nothing to lay out");
+});
+
+test("owners switched on at rest regroup the projects; switched off, they let go", { timeout: 180000 }, () => {
+  const g = reheatAfterBuild(Object.assign(projectGraph({}, { withSelf: true }), { alpha: 1 })); run(g);
+  const on = rebuildOf(g, { withSelf: true, owners: true });
+  assert.ok(on.relayout, "the projects hang on an owner now: laid out anew");
+  run(on);
+  const o = on.nodes[on.index["o:acme"]], self = on.nodes[on.index["p:self"]], fr = on.nodes[on.index["f:f1"]];
+  const tie = (a) => Math.hypot(a.x - o.x, a.y - o.y);
+  assert.ok(tie(self) < 400 && tie(fr) < 400, `both projects drawn to their owner (${Math.round(tie(self))}, ${Math.round(tie(fr))})`);
+  const before = Math.hypot(g.nodes[g.index["f:f1"]].x - g.nodes[g.index["p:self"]].x, g.nodes[g.index["f:f1"]].y - g.nodes[g.index["p:self"]].y);
+  assert.ok(Math.hypot(fr.x - self.x, fr.y - self.y) < before, "the two projects of one owner closer than as strangers");
+  const off = rebuildOf(on, { withSelf: true });
+  assert.ok(off.relayout, "let go of their owner: laid out anew");
+});
+
+test("a rebuild that only adds nodes does not reshape: the placed nodes hold", { timeout: 180000 }, () => {
+  const g = reheatAfterBuild(Object.assign(projectGraph({}, { withSelf: true }), { alpha: 1 })); run(g);
+  const placed = new Map(g.nodes.map((n) => [n.id, [n.x, n.y]]));
+  const h = projectGraph(prevOf(g, 0), { withSelf: true }); friend(h, "f2", 3, 20, prevOf(g, 0)); seedLayout(h.nodes, h.links);
+  Object.assign(h, { alpha: 0, tree: g.tree }); reheatAfterBuild(h);
+  assert.ok(h.placing && !h.relayout, "only the new friend is laid out");
+  run(h);
+  let jump = 0; for (const n of h.nodes) { const p = placed.get(n.id); if (p) jump = Math.max(jump, Math.hypot(n.x - p[0], n.y - p[1])); }
+  assert.equal(jump, 0);
 });

@@ -92,7 +92,7 @@ function stageCamera(scene, v, o) {
   // own: the family graph's own never falls, and read alone it kept the cards following the turn for good
   // the positions: the scene's layout (ktw-scene.js) — the graph beside the stage publishes them while it settles,
   // and the scene keeps them from then on; with no graph drawn beside the stage, the scene settles them itself
-  let sawSettled = false; // the stage follows the layout until it has drawn it settled once
+  let sawSettled = false; // whether the layout has settled once: the stage says so (data-settled)
   const positions = () => { const G = scene.G; if (!G) return shared.layout; const L = shared.layoutSource ? shared.layout : shared.layoutFor(G.nodes, G.links); sawSettled = shared.layoutSettled; o.wrap.dataset.settled = sawSettled ? "1" : ""; return L; };
   const gbox = { x0: 0, x1: 1, y0: 0, y1: 1 };
   const measureGraph = (shownCards) => { const P = positions(); const xs = [], ys = []; for (const c of shownCards) { const q = P.get(c.nid); if (q) { xs.push(q.x); ys.push(q.y); } } const b = percentileBox(xs, ys); if (b) Object.assign(gbox, b); };
@@ -105,7 +105,7 @@ function stageCamera(scene, v, o) {
   const chrome = () => (narrow() ? 60 : 108); // the top bar, the strip, the status bar
   const fitHeight = () => { const h = stageHeight(baseK() * 3.15 + 60, window.innerHeight - chrome() - roomAbove() - roomBelow()); if (Math.abs(h - o.wrap.getBoundingClientRect().height) > 2) o.wrap.style.height = `${h}px`; };
   const zFar = () => Math.max(1, logDepth(tNow() + 20, spanDays, DEPTH_FAR)); // the floor's far edge: a little beyond the first day
-  return { camY, floorY, asGraph, K, KY, planeHalf, now, zOf, zFar, proj, depthAlpha, measureGraph, basePos, fitHeight, following: () => asGraph() && !sawSettled };
+  return { camY, floorY, asGraph, K, KY, planeHalf, now, zOf, zFar, proj, depthAlpha, measureGraph, basePos, fitHeight, following: asGraph }; // the scene says "layout" only when a node was laid out: the cards follow every placement
 }
 
 // The layout: which cards show, where each stands, and the pushes that keep them apart. A push is an offset on the

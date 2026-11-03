@@ -91,7 +91,12 @@ A graph is one object the host keeps across rebuilds (`{ nodes, links, index, al
 1. **Build.** Build the nodes and links, or take them from `graph.assemble(topics, entries, prev)`, where `prev` maps the previous graph's nodes by id.
 2. **Carry the old nodes.** Bring each node of the previous graph over with `KeepTheWhy.core.carryNode(n, prev[id])`. It keeps the node's place, whether it was held, and whether it was still to be laid out (`seeded`). `assemble` does this for its own nodes.
 3. **Seed the new nodes.** Leave a new node's `x` and `y` unset and call `seedLayout(nodes, links)` once the links are in. `assemble` does this as well.
-4. **Merge and reheat.** Merge the result into the kept graph object, then call `reheatSeeded(g)`. `assemble` does not do this step: it cannot see the kept object. If the rebuild changes how the graph hangs together rather than what is in it (the dashboard's owners switch), call `reheatAll(g)` instead. The dashboard's `buildGraph` in `app.js` does this whole rebuild.
+4. **Merge and reheat.** Merge the result into the kept graph object, then call `reheatAfterBuild(g)`. `assemble` does not do this step: it cannot see the kept object. The dashboard's `buildGraph` in `app.js` does this whole rebuild.
+
+`reheatAfterBuild` applies the same rule to every rebuild. It compares what each node hangs on (`g.tree`) with the previous build:
+- **A shape change.** A node already laid out now hangs on another node, or on none. Examples: a project tied to an owner or let go; topics gathered on their project's hub once a neighbour comes in. The whole graph is laid out again (`reheatAll`), and a rebuild that comes while that runs carries it on.
+- **Additions only.** A rebuild that only adds nodes lays out those alone (`reheatSeeded`).
+- **No change.** A rebuild that adds nothing moves nothing.
 
 `seedLayout` places each new node deterministically:
 
@@ -99,7 +104,7 @@ A graph is one object the host keeps across rebuilds (`{ nodes, links, index, al
 - without one, around a linked node of its own `unit`;
 - linked to nothing placed, packed outside what is placed, so another unit (a friend, the path) sits apart.
 
-`reheatSeeded` raises the graph's alpha only if the build placed new nodes. Until they come to rest, only they move (`stepLayout`), and the nodes already shown hold still. A node that comes into view later (the day, a lit thought, the entries switch) is laid out the same way. `placeShown` places it anew where it hangs now, and only it moves.
+While new nodes are placed, only they move (`stepLayout`), and the nodes already shown hold still. A node that comes into view later (the day, a lit thought, the entries switch) is laid out the same way. `placeShown` places it anew where it hangs now, and only it moves. The scene's layout, which the timeline's stage stands its cards on, copies the nodes each step laid out, and their final places once they are at rest.
 
 The constants are `KeepTheWhy.core.LAYOUT`, each with its reason beside it in `ktw-core.js`:
 - `MAX_STEP`: the most a node moves in one step.

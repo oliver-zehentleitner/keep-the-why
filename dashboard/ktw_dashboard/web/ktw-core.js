@@ -979,9 +979,26 @@ function layoutTick(nodes, links, alpha, { visible = () => true, linkOn = () => 
 // laid out if it was not yet (seeded) — a node seeded while hidden, or one a placement had not settled when the
 // rebuild came, keeps its turn. Every path that rebuilds a graph from its predecessor carries its nodes this way.
 function carryNode(n, p) { n.x = p.x; n.y = p.y; n.vx = 0; n.vy = 0; n.fixed = p.fixed; if (p.seeded) n.seeded = true; return n; }
-// A rebuild that changes how the graph hangs together, not only what is in it (the owners switch ties projects to
-// an owner, or lets them go): every node may need another place, so the whole graph is laid out again.
-function reheatAll(g) { g.alpha = 1; g.placing = false; return g; }
+// A rebuild that changes how the graph hangs together, not only what is in it: every node may need another place,
+// so the whole graph is laid out again (`relayout`, until it is at rest).
+function reheatAll(g) { g.alpha = 1; g.placing = false; g.relayout = true; return g; }
+// what each node hangs on (TREE_LINK), by id: the graph's shape, which a rebuild compares with the one before
+function treeOf(nodes, links) {
+  const up = new Map(nodes.map((n) => [n.id, ""]));
+  for (const l of links) { const end = TREE_LINK[l.kind]; if (!end || !nodes[l.s] || !nodes[l.t]) continue; const c = nodes[end === "s" ? l.s : l.t], p = nodes[end === "s" ? l.t : l.s]; if (!up.get(c.id)) up.set(c.id, p.id); }
+  return up;
+}
+// The one rule for a graph after a rebuild, whatever brought it (a live update, the family, friends, the path, the
+// owners switch). A node already laid out that now hangs on another node, or on none — a project tied to an owner
+// or let go, topics gathered on their project's hub once a neighbour comes in — changes the graph's shape, and the
+// whole graph is laid out again (reheatAll), and a rebuild that comes while that runs carries it on. A rebuild that
+// only adds nodes lays out those alone (reheatSeeded), and one that adds none moves nothing. `g.tree` keeps the
+// shape for the next rebuild.
+function reheatAfterBuild(g) {
+  const before = g.tree, now = treeOf(g.nodes, g.links); g.tree = now;
+  const reshaped = !!before && g.nodes.some((n) => !n.seeded && before.has(n.id) && before.get(n.id) !== now.get(n.id));
+  return reshaped || g.relayout ? reheatAll(g) : reheatSeeded(g);
+}
 // A graph's layout after a build: the nodes seedLayout placed need the full strength of a fresh layout, and
 // only they move (`placing`); a build that placed none (a live update, a reload of the same states) leaves the
 // alpha as it was — nothing to lay out, so nothing moves.
@@ -989,6 +1006,7 @@ function reheatSeeded(g) { if (g.nodes.some((n) => n.seeded)) { g.alpha = 1; g.p
 // The nodes shown that are not laid out yet — seeded while hidden, then brought into view by the day, a lit
 // thought or a switch — placed anew where they hang now, and laid out alone. Returns whether there were any.
 function placeShown(g, { visible = () => true } = {}) {
+  if (g.relayout) return false; // the whole graph is being laid out, the new nodes with it
   const fresh = g.nodes.filter((n) => n.seeded && visible(n));
   if (!fresh.length) return false;
   for (const n of fresh) n.x = n.y = undefined;
@@ -999,9 +1017,15 @@ function placeShown(g, { visible = () => true } = {}) {
 // `placing`, only the nodes not laid out yet (seeded) move; the nodes already placed hold still, so a family, a
 // friend, a live update or a new day coming in does not shake what is already shown. Settled, the seeded nodes
 // that were shown count as laid out; one still hidden keeps waiting for its turn. Returns the alpha left.
+// The nodes whose placement settled in this step are kept in `g.placed`, and a relayout that settled marks
+// `g.relaidOut`, until the scene has taken the final positions (ktw-scene.js publishFrom).
 function stepLayout(g, { visible = () => true, linkOn } = {}) {
   g.alpha = layoutTick(g.nodes, g.links, g.alpha, { visible, linkOn, moving: g.placing ? (n) => !!n.seeded : null });
-  if (g.alpha <= LAYOUT.MIN_ALPHA) { for (const n of g.nodes) if (n.seeded && visible(n)) delete n.seeded; g.placing = false; }
+  if (g.alpha <= LAYOUT.MIN_ALPHA) {
+    for (const n of g.nodes) if (n.seeded && visible(n)) { delete n.seeded; (g.placed ||= new Set()).add(n); }
+    if (g.relayout) g.relaidOut = true; // the whole layout came to rest: the scene takes it once more
+    g.placing = false; g.relayout = false;
+  }
   return g.alpha;
 }
 // every step until the layout has settled (at rest, or alpha at or under `until`), or `maxTicks`; returns the
@@ -1032,7 +1056,7 @@ const topicTitle = (st, file) => st.topics?.find((t) => t.file === file)?.title 
 const KTW = (root.KeepTheWhy = root.KeepTheWhy || {});
 KTW.core = Object.freeze({
   TOKEN_DEFAULTS, readToken, valueColor,
-  sameCanonical, exportStateUrl, exportVerdict, resolveSee, LAYOUT, seedLayout, layoutTick, carryNode, reheatAll, reheatSeeded, placeShown, stepLayout, settleLayout, NO_FILTER, filterActive, entryMatches, fkey, repoLabel, topicTitle,
+  sameCanonical, exportStateUrl, exportVerdict, resolveSee, LAYOUT, seedLayout, layoutTick, carryNode, reheatAll, treeOf, reheatAfterBuild, reheatSeeded, placeShown, stepLayout, settleLayout, NO_FILTER, filterActive, entryMatches, fkey, repoLabel, topicTitle,
   esc, plural, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug,
   hostAnchor, hostFileLink, hostTreeLink, HOSTS, hostOf, canonicalOf, ownerOf, projectLabel,
   parseSupersededBy, entryRefs, typeName, kindLabel, familyRank, familyOrder, groupByFamily, shuffled, searchTerms,

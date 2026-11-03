@@ -161,7 +161,7 @@ function runGraph(canvas, g, opts = {}) {
     const ns = g.nodes.filter(visible);
     // a node shown that is not laid out yet — the day, a lit thought or the entries switch brought it into view — is
     // placed where it hangs now and laid out, alone (core placeShown)
-    if (!g.placing && g.nodes.some((n) => n.seeded && visible(n))) placeShown(g, { visible });
+    if (!g.placing && !g.relayout && g.nodes.some((n) => n.seeded && visible(n))) placeShown(g, { visible });
     const was = g.alpha;
     // the forces are ktw-core.js's. With motion off, a graph not shown yet settles first, in slices of a frame's
     // time, and is drawn once, settled and framed; with motion on, it settles a step a frame, as it is drawn.

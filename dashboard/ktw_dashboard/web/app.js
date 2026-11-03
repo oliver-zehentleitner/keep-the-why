@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-const { plural, seedLayout, carryNode, reheatAll, reheatSeeded, entryRefs, rawFileUrl, configLine, normalizeState, canonicalOf, NO_FILTER, familyOrder, kindLabel, groupByFamily, searchTerms, registryMatches, shuffled, resolveLocation, linkFamily, authorLookup, mergeStates, projectLabel, backlinksUrl, citingOf, paletteToken, ownerOf, exportStateUrl, exportVerdict, fkey, repoLabel } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
+const { plural, seedLayout, carryNode, reheatAfterBuild, entryRefs, rawFileUrl, configLine, normalizeState, canonicalOf, NO_FILTER, familyOrder, kindLabel, groupByFamily, searchTerms, registryMatches, shuffled, resolveLocation, linkFamily, authorLookup, mergeStates, projectLabel, backlinksUrl, citingOf, paletteToken, ownerOf, exportStateUrl, exportVerdict, fkey, repoLabel } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
 const MD = globalThis.KeepTheWhy.markdown; // ktw-markdown.js
 
 // ---------------------------------------------------------------- prefs (host)
@@ -685,9 +685,8 @@ function buildGraph(project = null) {
   autoFriends(graph);
   if (!project) autoFamily();
   addFriendLayer(graph, prev);
-  const regrouped = addOwnerGroups(graph, prev);
-  reheatSeeded(graph); // only what this build placed is laid out; what was placed holds still
-  if (regrouped) reheatAll(graph); // the owners switch: the projects hang on owners now, or no longer
+  addOwnerGroups(graph, prev);
+  reheatAfterBuild(graph); // the one rule (core): only what this build added is laid out, unless it changed the graph's shape
   return graph;
 }
 // the neighbourhood of a topic or an entry, for the side pane (ktw-graph.js), seeded from where the full graph's nodes are
@@ -716,7 +715,7 @@ async function buildFamilyGraph() {
   const add = (n, at) => {
     const p = prev[n.id];
     if (p) carryNode(n, p);
-    else { n.x = at?.x; n.y = at?.y; n.vx = n.vy = 0; }
+    else { n.x = at?.x; n.y = at?.y; n.vx = n.vy = 0; n.seeded = true; } // new: still to be laid out, wherever it starts
     index[n.id] = nodes.length; nodes.push(n); return n;
   };
   // this project keeps the local graph's ids, so the SCENE.selected entry and the positions carry over
@@ -764,9 +763,8 @@ async function buildFamilyGraph() {
   fgraph.friends = friendCandidates(groups.flatMap((G) => G.state.entries || []), [...groups.map((G) => G.canonical), ...pool.missing.map(({ member: m }) => m.canonical)]);
   autoFriends(fgraph);
   addFriendLayer(fgraph, prev);
-  const regrouped = addOwnerGroups(fgraph, prev);
-  reheatSeeded(fgraph);
-  if (regrouped) reheatAll(fgraph);
+  addOwnerGroups(fgraph, prev);
+  reheatAfterBuild(fgraph);
   return fgraph;
 }
 // a colour token's value (style.css :root); the computed style is live, so a theme switch is read too
@@ -950,7 +948,7 @@ function addLinkedLayer(g, prev, items) {
   const add = (n, at) => {
     const p = prev[n.id];
     if (p) carryNode(n, p);
-    else { n.x = at?.x; n.y = at?.y; n.vx = n.vy = 0; }
+    else { n.x = at?.x; n.y = at?.y; n.vx = n.vy = 0; n.seeded = true; } // new: still to be laid out, wherever it starts
     n.unit = unit; n.ext = true;
     index[n.id] = nodes.length; nodes.push(n); return n;
   };
@@ -1064,10 +1062,8 @@ function addLinkedLayer(g, prev, items) {
 // owner with more than one project here gets a node; a project alone stays as it is. The node opens the owner's
 // page on the host. Every hub counts as a project, so the members of a family in one repository count each. A family
 // keeps its shape: only its root hangs on the owner, the members below hang on their parent as they already do.
-// Returns whether the owners differ from the graph drawn before (`prev`): the graph then hangs together otherwise.
 function addOwnerGroups(g, prev) {
-  const had = Object.keys(prev).filter((id) => id.startsWith("o:")).sort().join("|");
-  if (!OWNER_GROUPS) return had !== "";
+  if (!OWNER_GROUPS) return;
   const { nodes, links, index } = g;
   const groups = new Map();
   for (const n of nodes) {
@@ -1082,7 +1078,8 @@ function addOwnerGroups(g, prev) {
     if (hubs.length < 2) continue;
     const id = `o:${o.key}`; const p = prev[id];
     const cx = hubs.reduce((a, n) => a + n.x, 0) / hubs.length, cy = hubs.reduce((a, n) => a + n.y, 0) / hubs.length;
-    const owner = { id, kind: "owner", ext: true, unit: id, label: o.label, canonical: o.url, r: 17, x: p ? p.x : cx, y: p ? p.y : cy, vx: 0, vy: 0, fixed: p?.fixed, href: o.url, walk: () => window.open(o.url, "_blank", "noopener") };
+    const owner = { id, kind: "owner", ext: true, unit: id, label: o.label, canonical: o.url, r: 17, x: cx, y: cy, vx: 0, vy: 0, href: o.url, walk: () => window.open(o.url, "_blank", "noopener") };
+    if (p) carryNode(owner, p); else owner.seeded = true; // placed at its projects' centre, after they were seeded (TREE_LINK.owner then gives the graph its shape)
     index[id] = nodes.length; nodes.push(owner);
     for (const n of hubs) {
       n.owner = id;
@@ -1092,7 +1089,6 @@ function addOwnerGroups(g, prev) {
       for (const pre of [`${o.key}/`, `${o.label.toLowerCase()}/`, `${o.label.toLowerCase().replace(/\//g, "---")}---`]) if (lc.startsWith(pre) && lc.length > pre.length) { n.label = n.label.slice(pre.length); break; }
     }
   }
-  return nodes.filter((n) => n.kind === "owner").map((n) => n.id).sort().join("|") !== had;
 }
 
 // ---------------------------------------------------------------- path
@@ -1485,7 +1481,9 @@ function globeIntro() {
   document.body.append(box);
 }
 // what a wave brought in may lie outside the view: frame the whole graph again, whatever the reader had moved
-function globeRefit() { for (const x of [graph, fgraph]) if (x) { x.userMoved = false; x.needFit = true; x.wake?.(); } } // framed anew; what is laid out stays
+// framed anew, what is laid out staying: only the graph the globe shows, and only while it shows one — a wave that
+// ends after the reader left the globe must not leave a fit waiting for the project graph, which stays at its scale
+function globeRefit() { const x = GLOBE.view ? (familyGraphShown() ? fgraph : graph) : null; if (x) { x.userMoved = false; x.needFit = true; x.wake?.(); } }
 function globeClear() { globeRefit(); GLOBE.extra.clear(); GLOBE.failed.clear(); GLOBE.done = 0; registryOff(); GLOBE.log = []; if (fgraph) fgraph.at = 0; render(); }
 function globeUi(g) {
   if (!GLOBE.view) return null;
