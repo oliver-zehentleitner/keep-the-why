@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-const { plural, seedLayout, carryNode, reheatAfterBuild, entryRefs, rawFileUrl, configLine, normalizeState, canonicalOf, NO_FILTER, familyOrder, kindLabel, groupByFamily, searchTerms, registryMatches, shuffled, resolveLocation, linkFamily, authorLookup, mergeStates, projectLabel, backlinksUrl, citingOf, paletteToken, ownerOf, exportStateUrl, exportVerdict, fkey, repoLabel } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
+const { plural, seedLayout, carryNode, reheatAfterBuild, reheatAll, entryRefs, rawFileUrl, configLine, normalizeState, canonicalOf, NO_FILTER, familyOrder, kindLabel, groupByFamily, searchTerms, registryMatches, shuffled, resolveLocation, linkFamily, authorLookup, mergeStates, projectLabel, backlinksUrl, citingOf, paletteToken, ownerOf, exportStateUrl, exportVerdict, fkey, repoLabel } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
 const MD = globalThis.KeepTheWhy.markdown; // ktw-markdown.js
 
 // ---------------------------------------------------------------- prefs (host)
@@ -651,6 +651,7 @@ function miniGraph(d, ctx) {
   // fit and reset beside it, for the graph this box runs: fit the view, let go of the held thought
   const corner = el("span", { class: "ktw-mini-corner" });
   const cornerFor = (g) => { const letGo = () => { SCENE.setThought(null); focusStep(null); lightThought(g, null); g.wake?.(); }; ESC.pane = letGo; setKids(corner,
+    el("button", { type: "button", class: "ktw-mini-corner-btn", title: REDRAW_TITLE, "aria-label": REDRAW_TITLE, onclick: () => redrawGraph(g) }, "redraw"),
     el("button", { type: "button", class: "ktw-mini-corner-btn", title: "fit the view: everything in the box", onclick: () => { const v = miniView(g); v.userMoved = false; v.needFit = true; g.wake?.(); } }, "fit"),
     el("button", { type: "button", class: "ktw-mini-corner-btn", title: "let go of the held thought — every node alike again (Esc, on a page without a reset of its own)", onclick: letGo }, "reset")); };
   box.append(canvas, seg, el("span", { class: "ktw-mini-hint" }, mode === "near" ? "click to open" : "hover · click"), corner, full, mode !== "near" ? gear : null, filters);
@@ -678,8 +679,13 @@ function miniGraph(d, ctx) {
 let MINI_FILTERS = false; // the side pane graph's switches, folded unless opened
 let graph = null; // the full graph persists across re-renders so positions survive live updates
 let GRAPH_CENTER = null; // { entry } or { topic }: centre the full graph there once, coming from the side pane
+const REDRAW_TITLE = "redraw the graph: laid out anew from the start, every node you placed let go, as a fresh load lays it out — the thought held and the switches stay";
+// redraw: the next build of that graph starts from no positions, as a fresh page load of the same data does, and
+// lays the whole of it out (redrawGraph)
+const REDRAW = { graph: false, family: false, near: false };
 function buildGraph(project = null) {
-  const prev = graph ? Object.fromEntries(graph.nodes.map((n) => [n.id, n])) : {};
+  const fresh = REDRAW.graph; REDRAW.graph = false;
+  const prev = graph && !fresh ? Object.fromEntries(graph.nodes.map((n) => [n.id, n])) : {};
   const entries = SCENE.state.entries.filter((e) => (e.project || null) === project);
   graph = Object.assign(graph || { scale: 1, ox: 0, oy: 0, showEntries: SHOW_ENTRIES, showLabels: true, alpha: 1 }, assemble(SCENE.state.topics.filter((t) => (t.project || null) === project), entries, prev));
   graph.friends = project ? [] : friendCandidates(entries);
@@ -688,10 +694,24 @@ function buildGraph(project = null) {
   addFriendLayer(graph, prev);
   addOwnerGroups(graph, prev);
   reheatAfterBuild(graph); // the one rule (core): only what this build added is laid out, unless it changed the graph's shape
+  if (fresh) redrawn(graph);
   return graph;
 }
 // the neighbourhood of a topic or an entry, for the side pane (ktw-graph.js), seeded from where the full graph's nodes are
-const prevNodes = () => (graph ? Object.fromEntries(graph.nodes.map((n) => [n.id, n])) : {});
+const prevNodes = () => { const fresh = REDRAW.near; REDRAW.near = false; return graph && !fresh ? Object.fromEntries(graph.nodes.map((n) => [n.id, n])) : {}; };
+// Redraw: a graph laid out from the start, as a fresh page load of the same data lays it out — every position
+// dropped, the nodes placed by hand let go, seeded anew (core seedLayout, deterministic), the whole of it laid out
+// (reheatAll) and framed once it is at rest. Unlike reset, nothing else changes: the thought held, the switches,
+// the scope stay as they are. `g` is the graph a canvas runs: the project's, the family's (or the side pane's copy
+// of it), or the side pane's neighbourhood.
+function redrawGraph(g) {
+  const of = g.of || g;
+  if (of === graph) REDRAW.graph = true;
+  else if (of === fgraph) { REDRAW.family = true; fgraph.at = 0; }
+  else REDRAW.near = true;
+  render();
+}
+function redrawn(g) { reheatAll(g); g.userMoved = false; g.needFit = true; if (g.miniView) Object.assign(g.miniView, { userMoved: false, needFit: true }); }
 const buildTopicSubgraph = (t) => GRAPH.buildTopicSubgraph(t, prevNodes());
 const buildSubgraph = (e) => GRAPH.buildSubgraph(e, prevNodes());
 // The family graph: every project of the tree as a hub in its own colour,
@@ -710,7 +730,8 @@ async function buildFamilyGraph() {
     role: g.member.role, state: g.state, color: i === 0 ? color0() : palette(i),
   }));
   const { parentOf, xrefs } = linkFamily(groups);
-  const prev = fgraph ? Object.fromEntries(fgraph.nodes.map((n) => [n.id, n])) : {};
+  const fresh = REDRAW.family; REDRAW.family = false;
+  const prev = fgraph && !fresh ? Object.fromEntries(fgraph.nodes.map((n) => [n.id, n])) : {};
   const nodes = []; const links = []; const index = {};
   // a node new to the graph starts where seedLayout (ktw-core.js) puts it, once the links are known; `at` places one
   const add = (n, at) => {
@@ -766,6 +787,7 @@ async function buildFamilyGraph() {
   addFriendLayer(fgraph, prev);
   addOwnerGroups(fgraph, prev);
   reheatAfterBuild(fgraph);
+  if (fresh) redrawn(fgraph);
   return fgraph;
 }
 // a colour token's value (style.css :root); the computed style is live, so a theme switch is read too
@@ -1656,7 +1678,9 @@ function viewGraph(main) {
     const cornerReset = el("button", { type: "button", class: "ktw-graph-corner ktw-graph-corner-reset", title: "let go of the held thought — every node alike again (Esc does this and the bar's reset)", onclick: letGo }, "reset");
     // fit: nothing changes but the view — zoomed and centred so that everything is in the box, and stays in it while the graph turns
     const cornerFit = el("button", { type: "button", class: "ktw-graph-corner ktw-graph-corner-fit", title: "fit the view: everything in the box, centred on the point the graph turns around", onclick: () => { g.userMoved = false; g.needFit = true; g.wake?.(); } }, "fit");
-    wrap.replaceChildren(canvas, ui, legend, ...[pathBar()].filter(Boolean), toggle("ui", "Layers", "legend"), toggle("legend", "Legend", "ui"), cornerFit, cornerReset,
+    // redraw: the graph laid out anew from the start, as a fresh load lays it out, and framed — the rest stays
+    const cornerRedraw = el("button", { type: "button", class: "ktw-graph-corner ktw-graph-corner-redraw", title: REDRAW_TITLE, "aria-label": REDRAW_TITLE, onclick: () => redrawGraph(g) }, "redraw");
+    wrap.replaceChildren(canvas, ui, legend, ...[pathBar()].filter(Boolean), toggle("ui", "Layers", "legend"), toggle("legend", "Legend", "ui"), cornerRedraw, cornerFit, cornerReset,
       el("div", { class: "ktw-graph-hint" }, family ? "family — a project's name goes there, in place · drag nodes · wheel zoom · drag background to pan" : "drag nodes · wheel zoom · drag background to pan · click to open"),
       el("div", { class: "ktw-graph-hint-touch" }, "pinch to zoom · drag to pan · tap to open"));
     // on a phone the graph opens fitted to the screen, also one that settled earlier and was moved then

@@ -23,7 +23,7 @@ const app = fs.readFileSync(W + "app.js", "utf8");
 // strings). split/join, not replace: the sources contain `$&`-like sequences.
 // the stylesheet inlined as the export does: the page reads its colour tokens (--ktw-*) from it
 const css = fs.readFileSync(W + "style.css", "utf8");
-const html = fs.readFileSync(W + "index.html", "utf8").split('<link rel="stylesheet" href="/static/style.css">').join("<style>\n" + css + "\n</style>").split('<script type="module" src="/static/app.js"></script>').join("<script>" + lib + "</script>\n<script>(function () {\n\"use strict\";\n" + app + "\nwindow.__fg = () => fgraph; window.__g = () => graph; window.__globeRefit = () => globeRefit(); window.__stage = () => TIMELINE.stage(); window.__active = () => [...new Set([graph, fgraph, graph?.runner, fgraph?.runner, TIMELINE.stage()?.graph].filter(Boolean))]; window.__chainAdd = async (canonical, uuid) => { const f = { canonical, uuids: [uuid] }; CHAIN.extra.set(fkey(canonical), f); await loadFriend(f); if (fgraph) fgraph.at = 0; render(); }; // test hooks\n})();</script>");
+const html = fs.readFileSync(W + "index.html", "utf8").split('<link rel="stylesheet" href="/static/style.css">').join("<style>\n" + css + "\n</style>").split('<script type="module" src="/static/app.js"></script>').join("<script>" + lib + "</script>\n<script>(function () {\n\"use strict\";\n" + app + "\nwindow.__fg = () => fgraph; window.__g = () => graph; window.__globeRefit = () => globeRefit(); window.__scene = () => SCENE; window.__stage = () => TIMELINE.stage(); window.__active = () => [...new Set([graph, fgraph, graph?.runner, fgraph?.runner, TIMELINE.stage()?.graph].filter(Boolean))]; window.__chainAdd = async (canonical, uuid) => { const f = { canonical, uuids: [uuid] }; CHAIN.extra.set(fkey(canonical), f); await loadFriend(f); if (fgraph) fgraph.at = 0; render(); }; // test hooks\n})();</script>");
 
 const GH = "https://github.com/acme";
 const config = (id, lines) => `<!-- keep-the-why:config -->\n- id: ${id}\n${lines.join("\n")}\n<!-- /keep-the-why:config -->\n`;
@@ -907,6 +907,54 @@ const report = {};
   if (window.__stage?.()?.graph !== window.__fg?.()) errors.push("timeline (family export): the stage does not stand on the family graph — the test does not cover the case");
   if (!window.__fg?.()?.runner) errors.push("timeline (family export): the family graph has no running copy in the side pane — the test does not cover the case");
   if (!settled) errors.push("timeline (family export): the stage never saw the family graph settle — a hover would move every card");
+  window.close();
+}
+{
+  // redraw in the side pane of a family member's timeline: the family graph laid out anew from the start, and the
+  // stage's copy follows it to the end (motion off: a turning graph is, by design, not followed)
+  const web = FILES["https://acme.github.io/web/state.json"];
+  const dated = { ...web, exported: true, entries: web.entries.map((e) => ({ ...e, git: { created: { date: "2026-09-20", author: "Web Author" } } })) };
+  const page = html.replace("<script>", `<script>window.__KTW_STATE__ = ${JSON.stringify(dated).replace(/</g, "\\u003c")};</script><script>`);
+  const window = await open("http://localhost/web/keep-the-why-dashboard/#timeline", page, { "ktw-motion": "off" });
+  const d = window.document;
+  for (let i = 0; i < 60 && d.querySelector(".ktw-stage-wrap")?.dataset.settled !== "1"; i++) await tick(250);
+  const quiet = async (gr) => { for (let i = 0; i < 300 && (gr().alpha > 0.003 || gr().placed || gr().relaidOut); i++) await tick(100); };
+  const redrawBtn = [...d.querySelectorAll(".ktw-mini-corner-btn")].find((b) => b.textContent === "redraw");
+  if (!redrawBtn || !redrawBtn.getAttribute("aria-label")) errors.push("redraw: the side pane has no redraw beside fit and reset, or it has no label");
+  else {
+    window.__fg().nodes.find((n) => n.kind === "entry").fixed = true;
+    redrawBtn.click(); await tick(400); await quiet(() => window.__fg()); await tick(300);
+    const fg = window.__fg(), L = window.__scene().layout;
+    let off = 0; for (const n of fg.nodes) if (n.kind === "entry" || n.kind === "topic") { const q = L.get(n.id); off = Math.max(off, q ? Math.hypot(q.x - n.x, q.y - n.y) : Infinity); }
+    report.redrawStage = { off, fixed: fg.nodes.filter((n) => n.fixed).length };
+    if (off !== 0) errors.push("redraw: the stage's layout is not where the family graph laid its nodes out — " + JSON.stringify(report.redrawStage));
+    if (report.redrawStage.fixed) errors.push("redraw: a node placed by hand was not let go");
+  }
+  window.close();
+}
+{
+  // redraw on the graph page: every node you placed let go, and the same layout every time — dragged nodes leave no trace
+  const web = FILES["https://acme.github.io/web/state.json"];
+  const page = html.replace("<script>", `<script>window.__KTW_STATE__ = ${JSON.stringify({ ...web, exported: true }).replace(/</g, "\u003c")};</script><script>`);
+  const window = await open("http://localhost/web/keep-the-why-dashboard/#graph", page, { "ktw-motion": "off" }); // the slow turn goes by the clock
+  const d = window.document;
+  const shownG = () => window.__fg?.() || window.__g();
+  const quiet = async () => { for (let i = 0; i < 300 && shownG().alpha > 0.003; i++) await tick(100); };
+  await tick(600); await quiet();
+  const btn = () => d.querySelector(".ktw-graph-corner-redraw");
+  if (!btn() || !/redraw the graph/.test(btn().getAttribute("aria-label") || "") || btn().tagName !== "BUTTON") errors.push("redraw: the graph has no redraw button beside fit and reset, with a label, reachable by keyboard");
+  else {
+    const at = () => Object.fromEntries(shownG().nodes.map((n) => [n.id, [n.x, n.y]]));
+    btn().click(); await tick(400); await quiet();
+    const first = at();
+    const n = shownG().nodes.find((m) => m.kind === "topic"); n.x += 300; n.y -= 200; n.fixed = true; shownG().alpha = 0.3; shownG().wake?.(); await tick(300); await quiet();
+    btn().click(); await tick(400); await quiet();
+    const second = at(); const g = shownG();
+    let diff = 0; for (const [id, [x, y]] of Object.entries(first)) { const q = second[id]; diff = Math.max(diff, q ? Math.hypot(q[0] - x, q[1] - y) : Infinity); }
+    report.redraw = { nodes: Object.keys(first).length, diff, fixed: g.nodes.filter((m) => m.fixed).length, alpha: g.alpha };
+    if (diff !== 0 || Object.keys(first).length !== Object.keys(second).length) errors.push("redraw: two redraws, a drag between them, do not give the same layout — " + JSON.stringify(report.redraw));
+    if (report.redraw.fixed) errors.push("redraw: the node placed by hand is still held");
+  }
   window.close();
 }
 {

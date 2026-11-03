@@ -122,6 +122,8 @@
   <span class="ktw-mini-hint">
     "click to open"
   <span class="ktw-mini-corner">
+    <button aria-label="redraw the graph: laid out anew from the start, every node you placed let go, as a fresh load lays it out — the thought held and the switches stay" class="ktw-mini-corner-btn" title="redraw the graph: laid out anew from the start, every node you placed let go, as a fresh load lays it out — the thought held and the switches stay" type="button">
+      "redraw"
     <button class="ktw-mini-corner-btn" title="fit the view: everything in the box" type="button">
       "fit"
     <button class="ktw-mini-corner-btn" title="let go of the held thought — every node alike again (Esc, on a page without a reset of its own)" type="button">
