@@ -263,3 +263,18 @@ test("a rebuild that only adds nodes does not reshape: the placed nodes hold", {
   let jump = 0; for (const n of h.nodes) { const p = placed.get(n.id); if (p) jump = Math.max(jump, Math.hypot(n.x - p[0], n.y - p[1])); }
   assert.equal(jump, 0);
 });
+
+test("a node shown during a relayout is laid out with the whole graph, not on its own", { timeout: 180000 }, () => {
+  const g = reheatAfterBuild(Object.assign(projectGraph(), { alpha: 1 })); run(g);
+  // the shape changes while an entry, seeded while hidden, comes into view
+  const shownLate = g.nodes.find((n) => n.kind === "entry"); shownLate.seeded = true;
+  const h = rebuildOf(g, { withSelf: true });
+  assert.ok(h.relayout, "a relayout runs");
+  assert.equal(placeShown(h), false, "placeShown leaves a running relayout alone");
+  assert.ok(h.relayout && !h.placing, "the relayout goes on, every node free");
+  const before = h.nodes.map((n) => [n.x, n.y]); stepLayout(h);
+  const movedOld = h.nodes.filter((n, i) => !n.seeded && Math.hypot(n.x - before[i][0], n.y - before[i][1]) > 1e-9).length;
+  assert.ok(movedOld > 100, `the nodes already laid out move with it (${movedOld})`);
+  run(h);
+  assert.ok(h.nodes.every((n) => !n.seeded) && h.alpha === 0, "and the late one is laid out with the rest");
+});
