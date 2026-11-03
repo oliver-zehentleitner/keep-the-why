@@ -129,3 +129,17 @@ test("the core's UI text takes a view's words: a member's availability, the reas
   assert.equal(core.exportStateUrl("- dashboard-state: http://a", "raw", tw).error, "kein https: http://a");
   assert.equal(core.exportStateUrl("- dashboard-state: http://a", "raw").error, "dashboard-state is not an https URL: http://a");
 });
+
+test("a placeholder without its value stays as written, with one warning per key and name", () => {
+  const warnings = []; const warn = dom.window.console.warn; dom.window.console.warn = (m) => warnings.push(m);
+  try {
+    assert.equal(ui.english("x.miss", "by {author} on {date}", { author: undefined, date: "2026-11-03" }), "by {author} on 2026-11-03");
+    assert.equal(ui.english("x.miss", "by {author} on {date}", { author: null, date: "2026-11-03" }), "by {author} on 2026-11-03");
+    const link = doc.createElement("a");
+    const parts = Array.from(ui.english("x.missNode", "{who} — {link}", { who: undefined, link }));
+    assert.equal(parts[0], "{who} — "); assert.equal(parts[1], link);
+  } finally { dom.window.console.warn = warn; }
+  assert.equal(warnings.length, 2, warnings.join("\n"));
+  assert.match(warnings[0], /"x\.miss" has no value for \{author\}/);
+  assert.match(warnings[1], /"x\.missNode" has no value for \{who\}/);
+});

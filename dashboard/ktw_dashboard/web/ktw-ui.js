@@ -27,7 +27,7 @@ function words(hook = null) {
       if (typeof answer === "string") text = answer;
       else if (answer !== undefined) warn(key, `— the hook answered ${answer === null ? "null" : typeof answer}, not a string`);
     }
-    return fillWords(text, params);
+    return fillWords(text, params, key);
   };
 }
 // the English, for a call made without a view's own (a host that passes no words gets this too)

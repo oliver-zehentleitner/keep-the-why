@@ -16,6 +16,7 @@ export async function openPage(file) {
   const vc = new VirtualConsole();
   vc.on("jsdomError", (e) => errors.push("jsdom: " + (e.detail?.stack || e.message || e).toString().split("\n").slice(0, 2).join(" | ")));
   vc.on("error", (...a) => errors.push("console: " + a.join(" ")));
+  vc.on("warn", (...a) => errors.push("console.warn: " + a.join(" "))); // a words warning (ktw-core.js fillWords) fails the run
   const dom = new JSDOM(html, {
     runScripts: "dangerously",
     pretendToBeVisual: true,

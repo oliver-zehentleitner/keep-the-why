@@ -161,20 +161,24 @@ const typeName = (t) => String(t ?? "").split(/\s+[—–-]\s+/)[0].trim();
 
 // The views' words (ktw-ui.js words) fill a text's placeholders from `params` here — {name} the value, {n:noun} a
 // count with its noun's plural, {n:one|many} with the two forms given, a param that is a node put in at its
-// placeholder (the parts then an array, which el() flattens).
+// placeholder (the parts then an array, which el() flattens). A placeholder whose param is missing, null or
+// undefined stays as written, and says so: a console warning once per key and name, so a call that forgot a value
+// is seen on the page and in the console, never shown as "undefined".
 const PLACEHOLDER = /\{(\w+)(?::([^{}]+))?\}/g;
-function fillWords(text, params) {
+const MISSING_WARNED = new Set();
+function fillWords(text, params, key = "") {
   if (!params) return text;
   // {n:noun} the count and the noun's plural by the core's rule, {n:one|many} the two forms given
   const counted = (n, noun) => { const [one, many] = noun.split("|"); return many == null ? plural(n, one) : `${n} ${n === 1 ? one : many}`; };
   const value = (k, noun) => (noun ? counted(params[k], noun) : String(params[k]));
-  if (!Object.values(params).some((v) => v?.nodeType)) return text.replace(PLACEHOLDER, (m, k, noun) => (params[k] == null ? m : value(k, noun)));
+  const missing = (name) => { const id = `${key}\u0000${name}`; if (MISSING_WARNED.has(id)) return; MISSING_WARNED.add(id); console.warn(`KeepTheWhy words: "${key}" has no value for {${name}}; the placeholder is shown`); };
+  if (!Object.values(params).some((v) => v?.nodeType)) return text.replace(PLACEHOLDER, (m, k, noun) => (params[k] == null ? (missing(k), m) : value(k, noun)));
   // the text between two nodes is one part, its values filled in: one text node, as a template literal gave
   const parts = []; let at = 0, run = "";
   for (const m of text.matchAll(PLACEHOLDER)) {
     const v = params[m[1]];
     run += text.slice(at, m.index); at = m.index + m[0].length;
-    if (v == null) run += m[0];
+    if (v == null) { missing(m[1]); run += m[0]; }
     else if (!v.nodeType) run += value(m[1], m[2]);
     else { if (run) parts.push(run); run = ""; parts.push(v); }
   }
@@ -183,7 +187,7 @@ function fillWords(text, params) {
   return parts;
 }
 // A core function whose text is UI text takes a view's words last (`tw`, ktw-ui.js words); without them the English
-const ENGLISH = (key, english, params) => fillWords(english, params);
+const ENGLISH = (key, english, params) => fillWords(english, params, key);
 // (with a view's words, `tw` from ktw-ui.js words; without them the English)
 const kindLabel = (k, tw = ENGLISH) => k === "cache" ? tw("family.kind.cache", "cache, read only") : k === "repository" ? tw("family.kind.repository", "repository, read and write") : k === "public" ? tw("family.kind.public", "published export") : tw("family.kind.none", "not available here");
 
