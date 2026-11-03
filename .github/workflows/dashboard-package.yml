@@ -72,7 +72,7 @@ jobs:
         run: node --check dashboard/ktw_dashboard/web/app.js && for f in dashboard/ktw_dashboard/web/ktw-*.js; do node --check "$f"; done
 
       - name: Unit-test the page's pure part (node:test, no dependencies)
-        run: node --test dashboard/tests/web/core.test.mjs dashboard/tests/web/markdown.test.mjs dashboard/tests/web/scene.test.mjs dashboard/tests/web/thoughts.test.mjs dashboard/tests/web/graph.test.mjs
+        run: node --test dashboard/tests/web/core.test.mjs dashboard/tests/web/markdown.test.mjs dashboard/tests/web/scene.test.mjs dashboard/tests/web/thoughts.test.mjs dashboard/tests/web/graph.test.mjs dashboard/tests/web/layout.test.mjs
 
       - name: Export and drive every route in jsdom
         run: |
@@ -85,6 +85,9 @@ jobs:
 
       - name: The pages under two hosts, neither of them the dashboard's (jsdom)
         run: cd dashboard/tests/web && node --test pages.test.mjs
+
+      - name: The graph's loop stops before it touches anything once its canvas is gone or its copy replaced (jsdom)
+        run: cd dashboard/tests/web && node --test graph-run.test.mjs
 
       - name: Styles through the CSSOM, as a page under a strict Content-Security-Policy needs them (jsdom)
         run: cd dashboard/tests/web && node --test ui.test.mjs

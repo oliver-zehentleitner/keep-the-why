@@ -84,6 +84,36 @@ Without `ktw-root`, the views' headings, links and code spans take the host's el
 
 `dashboard/tests/web/host/` is a complete small host: two of them on one page, with their own containers, path-style navigation, settings and provider, loading the files from the manifest under a strict policy. Host A's provider has `state`, `bodies` and `exportState`, host B's `state()` alone. `host.js` lists every place with what it must show under each host. `host.mjs` drives it in jsdom, and `host-chromium.mjs` in Chromium under the policy.
 
+### A graph the host builds
+
+A graph is one object the host keeps across rebuilds (`{ nodes, links, index, alpha, … }`). The graph view runs it, and every rebuild starts from the graph drawn before. A rebuild goes like this:
+
+1. **Build.** Build the nodes and links, or take them from `graph.assemble(topics, entries, prev)`, where `prev` maps the previous graph's nodes by id.
+2. **Carry the old nodes.** Bring each node of the previous graph over with `KeepTheWhy.core.carryNode(n, prev[id])`. It keeps the node's place, whether it was held, and whether it was still to be laid out (`seeded`). `assemble` does this for its own nodes.
+3. **Seed the new nodes.** Leave a new node's `x` and `y` unset and call `seedLayout(nodes, links)` once the links are in. `assemble` does this as well.
+4. **Merge and reheat.** Merge the result into the kept graph object, then call `reheatAfterBuild(g)`. `assemble` does not do this step: it cannot see the kept object. The dashboard's `buildGraph` in `app.js` does this whole rebuild.
+
+`reheatAfterBuild` applies the same rule to every rebuild. It compares what each node hangs on (`g.tree`) with the previous build:
+- **A shape change.** A node already laid out now hangs on another node, or on none. Examples: a project tied to an owner or let go; topics gathered on their project's hub once a neighbour comes in. The whole graph is laid out again (`reheatAll`), and a rebuild that comes while that runs carries it on.
+- **Additions only.** A rebuild that only adds nodes lays out those alone (`reheatSeeded`).
+- **No change.** A rebuild that adds nothing moves nothing.
+
+`seedLayout` places each new node deterministically:
+
+- around the node it hangs on (an entry on its topic, a topic on its project, a member on its parent, a project on its owner), on a golden-angle spiral;
+- without one, around a linked node of its own `unit`;
+- linked to nothing placed, packed outside what is placed, so another unit (a friend, the path) sits apart.
+
+While new nodes are placed, only they move (`stepLayout`), and the nodes already shown hold still. A node that comes into view later (the day, a lit thought, the entries switch) is laid out the same way. `placeShown` places it anew where it hangs now, and only it moves. The scene's layout, which the timeline's stage stands its cards on, copies the nodes each step laid out, and their final places once they are at rest.
+
+The constants are `KeepTheWhy.core.LAYOUT`, each with its reason beside it in `ktw-core.js`:
+- `MAX_STEP`: the most a node moves in one step.
+- `REST`: the largest move under which a layout is at rest.
+- `DECAY` and `MIN_ALPHA`: the cooling.
+- `SEED_GAP` and `SEED_FILL`: how close seeding places its nodes.
+
+With the graph's *motion* off, a graph not yet drawn settles before its first frame and is drawn once it is settled and framed.
+
 ## Styles
 
 Load three stylesheets, in this order:

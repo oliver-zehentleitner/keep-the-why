@@ -23,7 +23,7 @@ const app = fs.readFileSync(W + "app.js", "utf8");
 // strings). split/join, not replace: the sources contain `$&`-like sequences.
 // the stylesheet inlined as the export does: the page reads its colour tokens (--ktw-*) from it
 const css = fs.readFileSync(W + "style.css", "utf8");
-const html = fs.readFileSync(W + "index.html", "utf8").split('<link rel="stylesheet" href="/static/style.css">').join("<style>\n" + css + "\n</style>").split('<script type="module" src="/static/app.js"></script>').join("<script>" + lib + "</script>\n<script>(function () {\n\"use strict\";\n" + app + "\nwindow.__fg = () => fgraph; window.__g = () => graph; window.__stage = () => TIMELINE.stage(); window.__active = () => [...new Set([graph, fgraph, graph?.runner, fgraph?.runner, TIMELINE.stage()?.graph].filter(Boolean))]; window.__chainAdd = async (canonical, uuid) => { const f = { canonical, uuids: [uuid] }; CHAIN.extra.set(fkey(canonical), f); await loadFriend(f); if (fgraph) fgraph.at = 0; render(); }; // test hooks\n})();</script>");
+const html = fs.readFileSync(W + "index.html", "utf8").split('<link rel="stylesheet" href="/static/style.css">').join("<style>\n" + css + "\n</style>").split('<script type="module" src="/static/app.js"></script>').join("<script>" + lib + "</script>\n<script>(function () {\n\"use strict\";\n" + app + "\nwindow.__fg = () => fgraph; window.__g = () => graph; window.__globeRefit = () => globeRefit(); window.__stage = () => TIMELINE.stage(); window.__active = () => [...new Set([graph, fgraph, graph?.runner, fgraph?.runner, TIMELINE.stage()?.graph].filter(Boolean))]; window.__chainAdd = async (canonical, uuid) => { const f = { canonical, uuids: [uuid] }; CHAIN.extra.set(fkey(canonical), f); await loadFriend(f); if (fgraph) fgraph.at = 0; render(); }; // test hooks\n})();</script>");
 
 const GH = "https://github.com/acme";
 const config = (id, lines) => `<!-- keep-the-why:config -->\n- id: ${id}\n${lines.join("\n")}\n<!-- /keep-the-why:config -->\n`;
@@ -1058,6 +1058,18 @@ const report = {};
   window.close();
 }
 {
+  // a globe wave that ends with the globe not shown (the reader went back to the graph, or the family scope's graph
+  // was the one shown) frames nothing: the desktop project graph stays at its scale, with no fit left waiting
+  const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/refs`)}#graph`);
+  for (const end = Date.now() + 30000; (window.__g()?.alpha ?? 1) > 0.003 && Date.now() < end; ) await tick(100);
+  const before = window.__g().scale;
+  window.__globeRefit(); await tick(400);
+  const g = window.__g();
+  report.globeRefitAway = { before, scale: g.scale, needFit: !!g.needFit };
+  if (before !== 1 || g.scale !== 1 || g.needFit) errors.push("globe: a wave ending away from the globe refitted the project graph — " + JSON.stringify(report.globeRefitAway));
+  window.close();
+}
+{
   // owners: off by default; on, the acme projects in the graph are tied to one node for acme, which opens acme's page
   // (the family graph here: the family comes whole by default)
   const shown = (w) => w.__fg?.() || w.__g();
@@ -1067,6 +1079,23 @@ const report = {};
   if (g.nodes.some((n) => n.kind === "owner")) errors.push("owners: an owner node with the switch off (the default)");
   const box = [...window.document.querySelectorAll(".ktw-graph-ui label")].find((l) => l.textContent === "owners")?.querySelector("input");
   if (!box || box.checked) errors.push("owners: the switch is missing from the graph bar, or on by default");
+  // switched on once the graph has settled: the owner's node comes in and the projects regroup around it — the
+  // graph hangs together otherwise now, so it is laid out anew, not only the owner's node
+  if (box) {
+    const settle = async () => { for (const end = Date.now() + 30000; shown(window).alpha > 0.003 && Date.now() < end; ) await tick(100); };
+    await settle();
+    const at = (gr) => new Map(gr.nodes.filter((n) => n.kind === "project").map((n) => [n.id, [n.x, n.y]]));
+    const before = at(shown(window)); const settledBefore = shown(window).alpha;
+    box.checked = true; box.dispatchEvent(new window.Event("change"));
+    await tick(300); await settle();
+    const after = shown(window); const owner = after.nodes.find((n) => n.kind === "owner");
+    let moved = 0; for (const [id, [x, y]] of before) { const n = after.nodes.find((m) => m.id === id); if (n) moved = Math.max(moved, Math.hypot(n.x - x, n.y - y)); }
+    const suite = after.nodes.find((n) => n.kind === "project" && n.label === "suite");
+    const tie = owner && suite ? Math.hypot(owner.x - suite.x, owner.y - suite.y) : null;
+    report.ownersLate = { settledBefore, moved: Math.round(moved), tie: tie && Math.round(tie), alpha: after.alpha };
+    if (settledBefore > 0.003) errors.push("owners, switched on late: the graph had not settled before the switch — " + JSON.stringify(report.ownersLate));
+    if (!owner || moved < 5 || !(tie > 60 && tie < 400) || after.alpha > 0.003) errors.push("owners, switched on late: the projects did not regroup around the owner — " + JSON.stringify(report.ownersLate));
+  }
   window.close();
   window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/web`)}#graph`, html, { "ktw-owner-groups": "on" });
   await tick(600);

@@ -980,3 +980,46 @@ A host's provider may leave out `exportState` and `bodies`, and the views wrap b
 **Reason:** the thought reader and the timeline's card ask for the texts while a state is lean and unmarked (`!bodiesLoaded && !bodiesError`), and they ask again on every render. An answer that settles neither field leaves them asking for as long as the page is open. A host the views were not written against must not be able to put them in that loop, so the wrapper settles the state whatever comes back. A view that waits on a promise a host might reject would need a catch at every call site; one wrapper keeps them out.
 
 **Rejected alternative:** a guard in each reader, such as asking once per state and render. It would hide the loop in two views and leave the third that asks to find it again. Treating a resolved answer without an error as a success: the views could not tell a host that filled nothing from one that filled the texts, and a lean state would stay lean with no reason shown.
+
+## A graph's new nodes are seeded where they hang, never at random; a step is capped, a rebuild lays out only what it added
+
+**Id:** a707f5d8-d5ec-46ee-b661-74576ccc7f93
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** the maintainer's report, 2026-11-02, of the family graph on Maity's Keep the Why (about 930 entries over three members). It started tiny, nodes flew in from everywhere and jittered while it loaded, it sometimes never settled, and a part stayed stuck far from the rest. The series' lead, 2026-11-03, set the card and its rulings: the cause fixed rather than constants tuned; the project graph on a desktop at scale 1; a test of a rebuild in which already placed nodes must not jump; the constants named with their reasons; the same input giving the same layout; the timeline's day step to follow the same rule in the same pull request, since it has the same cause; every structural change (a new hub, an owner, a node shown or hidden, a rebuild) through one placement lifecycle, with the stage's layout following it, after the review found the owners switch and the project's hub frozen on a settled graph and the stage's copy left behind. The diagnosis and the measurements are the implementer's, in the pull request that made the change.
+**Revisit when:** a graph is too large for the step's pairwise repulsion to settle in a few seconds (Barnes–Hut is the next step), or a rebuild should let the nodes already shown make room for what it added
+**See:** dashboard.md#what-the-canvases-draw-is-checked-as-a-trace-of-drawing-calls-not-with-screenshots — 135df818-879e-4f9c-a42b-303c2811b678 — as of 2026-11-03
+
+`ktw-core.js` `seedLayout` places every node without a position. A node goes around the node it hangs on (entry on topic, topic on project, member on parent, project on owner), on a golden-angle spiral, as far out as its own subtree needs. A node without such a node goes around a linked node of its own unit. A part linked to nothing placed is packed outside what is placed, so a friend sits apart and never far off. All three graphs seed this way: the project's (`assemble`), the family's and the friends layer. `Math.random` is gone from them.
+
+`layoutTick` keeps its forces with three changes:
+- two nodes repel as if no closer than their radii;
+- a step moves a node at most `LAYOUT.MAX_STEP`;
+- a step whose largest move is under `LAYOUT.REST` returns 0, at rest.
+
+A build that placed new nodes raises the alpha to 1 (`reheatSeeded`). Until they are at rest, only they move (`stepLayout`). A build that placed none leaves the layout alone. A node seeded while hidden stays seeded until it is shown. When the timeline's day, a lit thought or the entries switch brings it into view, `placeShown` places it anew where it hangs and lays it out alone. A hover, a resize and a theme switch only wake the loop to draw. They used to raise the alpha a little to get frames, and each time that nudged the whole layout. A rebuild carries each node of the graph drawn before through `carryNode`. A node keeps its place, whether it was held, and whether it was still to be laid out. A node seeded while hidden therefore keeps its turn, and a rebuild in the middle of a placement continues it. One rule decides what a rebuild lays out (`reheatAfterBuild`), whatever brought the rebuild. A rebuild compares what each node hangs on with the build before:
+- **The shape changed.** A node already laid out now hangs on another node, or on none. The owners switch ties projects to an owner or lets them go. The project's hub gathers its topics once a neighbour comes in. Either way the whole graph is laid out again (`reheatAll`), and a rebuild while that runs carries it on.
+- **Nodes were added.** Only they are laid out.
+- **Nothing was added.** Nothing moves.
+
+The scene's layout, which the timeline's stage stands its cards on, copies what each step laid out: all of it while the graph first settles or is laid out anew, and the placed nodes while they move and once more at rest. The side pane's copy of the family graph (`runnerOf`) reads the graph's data through its prototype and shares its layout's lifecycle, read and written through. A placement or a relayout that settles in the copy has settled in the graph too, so the next rebuild finds nothing stale. A copy replaced since stops, and the scene takes nothing from it.
+
+A step reads the shown nodes into plain arrays once, so the pair loop does no property reads or calls. On 1,180 nodes that brought a step from 18.5 ms to 7.6 ms in V8, with the same arithmetic in the same order. A frame that draws spends up to 8 ms on steps. A graph not drawn yet with motion off takes 24 ms slices and says "laying out … nodes" until it is settled. With *motion* off, a graph not yet drawn settles in slices of a frame and is drawn once it is settled and framed. A graph that fits its canvas fits once more where it came to rest.
+
+**Reason:**
+- **The explosion.** On a synthetic family of 1,015 nodes, random seeding put dozens of entries inside a 140-unit box around their topic. Repulsion grows as 1/d², and in the first steps a node moved 27,945 units in one step. The fit then framed the scattered nodes, so the graph started tiny. They flew back in for hundreds of steps.
+- **Every build started it again.** The friends, the family's neighbours and a live update each reseeded their new nodes the same way and reheated the whole graph to 0.6.
+- **The cooling does not reach equilibrium.** It stops the layout before it is in balance. Reheated with nothing added, the same family moved up to 128 units. So a build that adds nothing must not reheat at all, and one that adds nodes must not move the rest.
+- **What the new layout measures.** At 1,193 nodes with friends and a loose part, the steps never exceed the cap. The layout is at rest in about 300 steps. No family node is past twice the median distance, and a rebuild that adds 69 nodes moves no placed node at all. Neither does a day step that brings entries into view. The same input gives the same layout, so the canvas traces hold.
+
+**Rejected alternative:**
+- **Faster cooling to settle sooner:** at 0.975 or less a step, the friends ended farther out (3.7× to 4.0× the median, against 3.2×).
+- **Two entries repelling only within a short reach, through a grid:** a step got 1.45× faster, and the force model changed for it. The plain arrays gained more and changed nothing.
+- **Tuning the constants** (more damping, weaker repulsion) under random seeding: the cause is where the nodes start, and any random start can put two of them on one spot.
+- **An alpha held above a floor until the layout is at rest:** at a floor of 0.05 to 0.2, a 1,000-entry family still moved after 3,000 steps.
+- **Slower cooling:** at 0.996 a step instead of 0.985 it took 2.6 times the steps, and a reheat moved it farther, not less.
+- **The side pane's copy as a spread of the graph (`{ ...fg }`):** it shared the nodes but not the lifecycle flags. A relayout it settled stayed open in the graph, and the next unchanged rebuild laid everything out again.
+- **One fix per case:** a flag for the owners switch, another for the project's hub. The review showed both were one class, a change of shape on a settled graph, and a third case would have needed a third flag.
+- **Reheating the whole graph after a build at a lower alpha:** with the old nodes free, a rebuild still moved them 125 to 220 units, whatever the alpha.
+- **A force library, or Barnes–Hut repulsion:** the page has no dependencies, and the pairwise step still fits a frame at this size.

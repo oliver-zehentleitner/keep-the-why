@@ -48,20 +48,29 @@ function create({ state = null, self = null, day = null, scope = "project" } = {
     spot(canonical, rt) { emit("spot", canonical, rt); },
     setScope(v) { scene.scope = v; emit("scope", v); },
     wake() { emit("wake"); },
-    // The layout source's positions: copied while it settles, then kept — from then on only a node not yet
-    // known is added, so the graph nudged awake later (a thought pointed at) does not walk the copy along.
-    publishLayout(nodes, { settled = false } = {}) {
-      for (const n of nodes) if ((n.kind === "entry" || n.kind === "topic") && (!scene.layoutSettled || !layout.has(n.id))) layout.set(n.id, { x: n.x, y: n.y });
+    // The layout source's positions. A node's place is copied while it is being laid out: the whole graph on its
+    // first settle and on a relayout, the nodes a placement lays out while it runs and once more where they came
+    // to rest. A node laid out stays as it was copied, so the graph turning, or woken for a lit thought, does not
+    // walk the copy along. `only(n)`: the nodes that moved; without it, all of them.
+    publishLayout(nodes, { settled = false, only = null } = {}) {
+      for (const n of nodes) if ((n.kind === "entry" || n.kind === "topic") && (!only || only(n) || !layout.has(n.id))) layout.set(n.id, { x: n.x, y: n.y });
       if (settled) scene.layoutSettled = true;
       emit("layout");
     },
-    // a graph that is the layout source — or a copy sharing its nodes (`of`) — publishes after a step; settled
-    // once both it and its copy (`runner`) are; a step that moved nothing after that publishes nothing
+    // a graph that is the layout source — or a copy sharing its nodes (`of`) — publishes after a step what that
+    // step moved (core stepLayout's `placing`, `relayout`, `placed`, `relaidOut`); settled once it is at rest — a
+    // copy shares the source's lifecycle; a step that laid nothing out (the graph turning, a wake) publishes nothing but a
+    // node the copy does not know yet
     publishFrom(g, { force = false } = {}) {
       const src = scene.layoutSource;
-      if (!src || (g !== src && g.of !== src)) return;
-      if (!force && g.alpha <= 0.003 && scene.layoutSettled) return;
-      scene.publishLayout(src.nodes, { settled: Math.min(src.alpha, src.runner?.alpha ?? 1) <= 0.01 });
+      if (!src || (g !== src && !(g.of === src && src.runner === g))) return; // the source, or the copy it runs now
+      const whole = force || !scene.layoutSettled || g.relayout || g.relaidOut;
+      const placing = g.placing ? (n) => !!n.seeded : null, placed = g.placed;
+      const unknown = !whole && !placing && !placed && src.nodes.some((n) => (n.kind === "entry" || n.kind === "topic") && !layout.has(n.id));
+      if (!whole && !placing && !placed && !unknown) return;
+      const settled = src.alpha <= root.KeepTheWhy.core.LAYOUT.MIN_ALPHA; // a copy's alpha is the source's (ktw-graph.js runnerOf)
+      scene.publishLayout(src.nodes, { settled, only: whole ? null : (n) => !!(placing?.(n) || placed?.has(n)) });
+      g.placed = null; g.relaidOut = false;
     },
     resetLayout(source = null) { layout.clear(); scene.layoutSettled = false; scene.layoutSource = source; },
     // The layout for these nodes and links: the source's, or — with no source — settled here at once, without a

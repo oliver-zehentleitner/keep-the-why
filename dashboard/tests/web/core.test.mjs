@@ -761,9 +761,12 @@ test("the layout steps without a canvas: it moves what is shown, leaves what is 
   // the same start gives the same layout: no randomness inside the step
   const h = mk(); layoutTick(h.nodes, h.links, 1, opts);
   assert.deepEqual(h.nodes.map((n) => [n.x, n.y]), g.nodes.map((n) => [n.x, n.y]));
-  // settled: the alpha left is at the threshold, and the spring has pulled a and b toward its length
+  // settled: at rest (the step's largest move under LAYOUT.REST, so the alpha left is 0) before alpha has
+  // cooled to its floor, and the spring has pulled a and b toward its length
   const s = mk(); const left = settleLayout(s.nodes, s.links, opts);
-  assert.ok(left <= 0.003 && left > 0.003 * 0.985, `settles at the threshold, got ${left}`);
+  assert.equal(left, 0, `settles at rest, got ${left}`);
+  const r = mk(); let a = 1, steps = 0; while (a > core.LAYOUT.MIN_ALPHA) { a = layoutTick(r.nodes, r.links, a, opts); steps++; }
+  assert.ok(a === 0 && steps < Math.log(core.LAYOUT.MIN_ALPHA) / Math.log(core.LAYOUT.DECAY), `at rest before the alpha floor (${steps} steps)`);
   assert.ok(Math.hypot(s.nodes[1].x - s.nodes[0].x, s.nodes[1].y - s.nodes[0].y) > 20, "the spring has opened the pair up");
   assert.equal(settleLayout(mk().nodes, [], { maxTicks: 3 }), 1 * 0.985 * 0.985 * 0.985, "maxTicks bounds the run");
 });

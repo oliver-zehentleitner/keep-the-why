@@ -822,36 +822,219 @@ function formatRoute(route) {
 }
 const routes = Object.freeze({ PAGES, parse: parseRoute, format: formatRoute });
 
+// The graph's layout constants, named so a change to one is a change to a decision (context/dashboard.md: a
+// graph's new nodes are seeded where they hang, never at random; a step is capped, a rebuild lays out only what
+// it added).
+const LAYOUT = Object.freeze({
+  // The most a node moves in one step, in the graph's units (an entry's dot has a radius of 4.2). Repulsion
+  // grows as 1/d²: two nodes that start close would otherwise be thrown thousands of units out in a step.
+  MAX_STEP: 30,
+  // The largest move of a step under which the layout is at rest: a tenth of a unit, under a pixel at any zoom
+  // the page uses, so nothing visible moves any more and drawing on would only spend the battery.
+  REST: 0.1,
+  // alpha's cooling per step, and the alpha at which a layout counts as settled however much still moves: from
+  // 1, about 385 steps.
+  DECAY: 0.985,
+  MIN_ALPHA: 0.003,
+  // Seeding: the room left between two neighbours on a spiral, beyond their radii, and the share of their
+  // discs' area a ring of children takes. The forces settle a family much narrower than discs side by side
+  // (entries of neighbouring topics interleave). Seeded at the full area, a family of a thousand entries started
+  // near three times as wide as it came to rest, drew together for hundreds of steps and packed a friend that far
+  // out; at half the area it starts under twice as wide, and closer still the seeds overlap and push apart.
+  SEED_GAP: 2,
+  SEED_FILL: 0.5,
+});
+// a link kind that makes a tree, and which end of it is the child: an entry hangs on its topic, a topic on its
+// project, a family member's project on its parent's, a project on its owner
+const TREE_LINK = Object.freeze({ member: "s", hub: "t", family: "s", owner: "t" });
+const GOLDEN = Math.PI * (3 - Math.sqrt(5));
+
+// Where a node without a position (x or y not a number) starts — never at random, so the same graph comes out
+// the same every time. It is placed around the node it hangs on (TREE_LINK) on a golden-angle spiral, past
+// that node's other children, each child as far out as its own subtree needs; a node with no placed node above
+// it, around a placed node of its own unit it links to. A part linked to nothing placed in its unit — another
+// unit (a friend, the path) is kept apart — is packed outside what is placed, by its size, touching nothing
+// packed before it; the first part of all at the origin. A node with a position keeps it. A node placed here is
+// marked `seeded` until the layout has settled it (stepLayout). Returns the nodes.
+function seedLayout(nodes, links) {
+  const N = nodes.length, gap = LAYOUT.SEED_GAP;
+  const placed = (i) => Number.isFinite(nodes[i].x) && Number.isFinite(nodes[i].y);
+  const parent = new Array(N).fill(-1), plen = new Array(N).fill(0), kids = Array.from({ length: N }, () => []), adj = Array.from({ length: N }, () => []);
+  for (const l of links) {
+    if (l.s == null || l.t == null || l.s === l.t || !nodes[l.s] || !nodes[l.t]) continue;
+    adj[l.s].push([l.t, l.len || 0]); adj[l.t].push([l.s, l.len || 0]);
+    const end = TREE_LINK[l.kind]; if (!end) continue;
+    const c = end === "s" ? l.s : l.t, p = end === "s" ? l.t : l.s;
+    if (parent[c] !== -1) continue;
+    let up = p, loop = false; for (let hops = 0; up !== -1 && hops <= N; hops++) { if (up === c) { loop = true; break; } up = parent[up]; }
+    if (loop) continue; // a tree link that would close a circle is an ordinary link
+    parent[c] = p; plen[c] = l.len || 0; kids[p].push(c);
+  }
+  const area = (e) => Math.PI * (e + gap) * (e + gap);
+  const ext = new Array(N).fill(-1); // how far a node's subtree reaches from it, laid out as below
+  const extent = (i) => {
+    if (ext[i] >= 0) return ext[i];
+    ext[i] = nodes[i].r || 0; // a guard while its children are measured
+    let acc = 0, far = nodes[i].r || 0;
+    for (const c of order(kids[i])) { const e = extent(c); const rho = ring(i, c, e) + Math.sqrt((acc * LAYOUT.SEED_FILL) / Math.PI); far = Math.max(far, rho + e); acc += area(e); }
+    return (ext[i] = far);
+  };
+  const ring = (p, c, e) => Math.max(plen[c] || 0, (nodes[p].r || 0) + e + gap); // a child's nearest distance to its parent
+  const order = (list) => list.slice().sort((a, b) => extent(b) - extent(a) || a - b); // the widest first, then as given
+  const acc = new Array(N).fill(-1), count = new Array(N).fill(0);
+  const room = (p) => { if (acc[p] < 0) { acc[p] = 0; for (const c of kids[p]) if (placed(c)) { acc[p] += area(extent(c)); count[p]++; } } };
+  const at = (i, x, y) => { const n = nodes[i]; n.x = x; n.y = y; n.vx = 0; n.vy = 0; n.seeded = true; };
+  const around = (c, p, len = plen[c]) => {
+    room(p); const e = extent(c);
+    const rho = Math.max(len || 0, (nodes[p].r || 0) + e + gap) + Math.sqrt((acc[p] * LAYOUT.SEED_FILL) / Math.PI);
+    const g = parent[p] !== -1 && placed(parent[p]) ? Math.atan2(nodes[p].y - nodes[parent[p]].y, nodes[p].x - nodes[parent[p]].x) : 0; // away from where the parent hangs
+    const ang = g + count[p] * GOLDEN;
+    at(c, nodes[p].x + rho * Math.cos(ang), nodes[p].y + rho * Math.sin(ang));
+    acc[p] += area(e); count[p]++;
+  };
+  const queue = []; for (let i = 0; i < N; i++) if (placed(i)) queue.push(i);
+  const drain = () => { while (queue.length) { const u = queue.shift(); for (const c of order(kids[u])) if (!placed(c)) { around(c, u); queue.push(c); } } };
+  const top = (v) => { let t = v; for (let hops = 0; parent[t] !== -1 && !placed(parent[t]) && hops < N; hops++) t = parent[t]; return t; };
+  // the parts packed so far, as discs; the first is what was placed before any packing, around the origin
+  let discs = null;
+  const pack = (t) => {
+    const e = extent(t);
+    if (!discs) {
+      let R = -1; for (let i = 0; i < N; i++) if (placed(i)) R = Math.max(R, Math.hypot(nodes[i].x, nodes[i].y) + (nodes[i].r || 0));
+      if (R < 0) { at(t, 0, 0); discs = [{ x: 0, y: 0, e }]; return; }
+      discs = [{ x: 0, y: 0, e: R }];
+    }
+    // the nearest ring around the first disc where this part touches no disc, tried at golden-angle turns
+    const free = (x, y) => discs.every((d) => Math.hypot(x - d.x, y - d.y) >= d.e + e + gap);
+    for (let rho = discs[0].e + e + gap; ; rho += e + gap) {
+      for (let k = 0; k < 24; k++) {
+        const ang = (discs.length - 1 + k) * GOLDEN, x = rho * Math.cos(ang), y = rho * Math.sin(ang);
+        if (free(x, y)) { at(t, x, y); discs.push({ x, y, e }); return; }
+      }
+    }
+  };
+  drain();
+  for (;;) {
+    let todo = -1, near = -1, len = 0;
+    for (let v = 0; v < N && near < 0; v++) {
+      if (placed(v)) continue;
+      if (todo < 0) todo = v;
+      for (const [u, l] of adj[v]) if (placed(u) && (nodes[u].unit || "") === (nodes[v].unit || "")) { todo = v; near = u; len = l; break; }
+    }
+    if (todo < 0) break;
+    const t = top(todo);
+    if (near >= 0) around(t, near, t === todo ? len : 0);
+    else pack(t);
+    queue.push(t); drain();
+  }
+  return nodes;
+}
+
 // The graph's layout, one step at a time and without a canvas: repulsion between the shown nodes, springs
-// along the shown links, a pull to the centre, then the velocities applied and damped. `alpha` is how much
-// the step may still move things; the step returns the next one. `visible(n)` and `linkOn(l)` are the view's:
-// what the clock and the switches show. The page runs a step per frame; settleLayout runs them all at once,
-// for a view that needs the positions with no graph drawn.
-function layoutTick(nodes, links, alpha, { visible = () => true, linkOn = () => true } = {}) {
+// along the shown links, a pull to the centre, then the velocities applied, damped and capped at
+// LAYOUT.MAX_STEP. `alpha` is how much the step may still move things; the step returns the next one, and 0
+// once its largest move is under LAYOUT.REST: the layout is at rest. `visible(n)` and `linkOn(l)` are the
+// view's: what the clock and the switches show. The page runs steps per frame; settleLayout runs them all at
+// once, for a view that needs the positions with no graph drawn.
+function layoutTick(nodes, links, alpha, { visible = () => true, linkOn = () => true, moving = null } = {}) {
   const ns = nodes.filter(visible);
   const k = alpha;
-  // repulsion
-  for (let i = 0; i < ns.length; i++) for (let j = i + 1; j < ns.length; j++) {
-    const a = ns[i], b = ns[j]; let dx = b.x - a.x, dy = b.y - a.y; let d2 = dx * dx + dy * dy + 0.01;
-    const hubs = a.kind === "project" && b.kind === "project";
-    const apart = (a.unit || "") !== (b.unit || "") && !(a.owner && a.owner === b.owner); // this graph and a friend, or two friends: a family keeps together, strangers keep their distance — and so do projects bundled under one owner
-    if (d2 > (hubs ? (apart ? 9000000 : 4000000) : apart ? 640000 : 250000)) continue;
-    const base = hubs ? (apart ? 70000 : 22000) : a.kind === "entry" && b.kind === "entry" ? 260 : a.kind === "entry" || b.kind === "entry" ? 900 : 2600;
-    const rep = (apart && !hubs ? base * 2.5 : base) / d2; const d = Math.sqrt(d2);
-    const fx = (dx / d) * rep * k, fy = (dy / d) * rep * k;
-    if (!a.fixed) { a.vx -= fx; a.vy -= fy; } if (!b.fixed) { b.vx += fx; b.vy += fy; }
+  const still = (n) => n.fixed || (moving && !moving(n)); // `moving(n)`: only those move, the rest hold as if fixed
+  // the shown nodes as plain arrays, read once a step: the pair loop below is the step's whole cost (n² / 2 pairs),
+  // and a property read or a call per pair was most of it. The arithmetic and its order are as on the nodes.
+  const S = ns.length, X = new Float64Array(S), Y = new Float64Array(S), R = new Float64Array(S), VX = new Float64Array(S), VY = new Float64Array(S);
+  const HOLD = new Uint8Array(S), KIND = new Uint8Array(S), UNIT = new Int32Array(S), OWNER = new Int32Array(S); // KIND: 0 entry, 1 other, 2 project
+  const ids = new Map(); const idOf = (v) => { if (!ids.has(v)) ids.set(v, ids.size); return ids.get(v); };
+  for (let i = 0; i < S; i++) {
+    const n = ns[i]; X[i] = n.x; Y[i] = n.y; R[i] = n.r || 0; VX[i] = n.vx; VY[i] = n.vy; HOLD[i] = still(n) ? 1 : 0;
+    KIND[i] = n.kind === "entry" ? 0 : n.kind === "project" ? 2 : 1; UNIT[i] = idOf(n.unit || ""); OWNER[i] = n.owner ? idOf(`owner:${n.owner}`) : -1;
   }
+  // repulsion, never from closer than the two nodes' radii: two nodes on one spot push apart, not out
+  for (let i = 0; i < S; i++) for (let j = i + 1; j < S; j++) {
+    const sa = HOLD[i], sb = HOLD[j]; if (sa && sb) continue; let dx = X[j] - X[i], dy = Y[j] - Y[i];
+    if (!dx && !dy) { const ang = (i * 7 + j) * GOLDEN; dx = Math.cos(ang) * 0.01; dy = Math.sin(ang) * 0.01; } // one spot: a direction of their own
+    const m = R[i] + R[j]; const near2 = dx * dx + dy * dy + 0.01; const d2 = Math.max(near2, m * m);
+    const hubs = KIND[i] === 2 && KIND[j] === 2;
+    const apart = UNIT[i] !== UNIT[j] && !(OWNER[i] >= 0 && OWNER[i] === OWNER[j]); // this graph and a friend, or two friends: a family keeps together, strangers keep their distance — and so do projects bundled under one owner
+    if (d2 > (hubs ? (apart ? 9000000 : 4000000) : apart ? 640000 : 250000)) continue;
+    const base = hubs ? (apart ? 70000 : 22000) : KIND[i] === 0 && KIND[j] === 0 ? 260 : KIND[i] === 0 || KIND[j] === 0 ? 900 : 2600;
+    const rep = (apart && !hubs ? base * 2.5 : base) / d2; const d = Math.sqrt(near2);
+    const fx = (dx / d) * rep * k, fy = (dy / d) * rep * k;
+    if (!sa) { VX[i] -= fx; VY[i] -= fy; } if (!sb) { VX[j] += fx; VY[j] += fy; }
+  }
+  for (let i = 0; i < S; i++) { ns[i].vx = VX[i]; ns[i].vy = VY[i]; }
   // springs
-  for (const l of links) { if (!linkOn(l)) continue; const a = nodes[l.s], b = nodes[l.t]; const dx = b.x - a.x, dy = b.y - a.y; const d = Math.hypot(dx, dy) || 0.01; const f = (d - l.len) * (l.kind === "member" || l.kind === "hub" || l.kind === "owner" ? 0.05 : l.kind === "family" ? 0.03 : 0.02) * k; const fx = (dx / d) * f, fy = (dy / d) * f; if (!a.fixed) { a.vx += fx; a.vy += fy; } if (!b.fixed) { b.vx -= fx; b.vy -= fy; } }
-  // gravity + integrate
-  for (const n of ns) { if (n.fixed) continue; const gr = n.ext ? 0.0015 : 0.004; n.vx -= n.x * gr * k; n.vy -= n.y * gr * k; n.vx *= 0.82; n.vy *= 0.82; n.x += n.vx; n.y += n.vy; }
-  return alpha * 0.985;
+  for (const l of links) { if (!linkOn(l)) continue; const a = nodes[l.s], b = nodes[l.t]; const sa = still(a), sb = still(b); if (sa && sb) continue; const dx = b.x - a.x, dy = b.y - a.y; const d = Math.hypot(dx, dy) || 0.01; const f = (d - l.len) * (l.kind === "member" || l.kind === "hub" || l.kind === "owner" ? 0.05 : l.kind === "family" ? 0.03 : 0.02) * k; const fx = (dx / d) * f, fy = (dy / d) * f; if (!sa) { a.vx += fx; a.vy += fy; } if (!sb) { b.vx -= fx; b.vy -= fy; } }
+  // gravity + integrate, each move capped
+  let moved = 0;
+  for (const n of ns) {
+    if (still(n)) continue;
+    const gr = n.ext ? 0.0015 : 0.004; n.vx -= n.x * gr * k; n.vy -= n.y * gr * k; n.vx *= 0.82; n.vy *= 0.82;
+    const v = Math.hypot(n.vx, n.vy); if (v > LAYOUT.MAX_STEP) { n.vx *= LAYOUT.MAX_STEP / v; n.vy *= LAYOUT.MAX_STEP / v; }
+    n.x += n.vx; n.y += n.vy; moved = Math.max(moved, Math.min(v, LAYOUT.MAX_STEP));
+  }
+  return moved < LAYOUT.REST ? 0 : alpha * LAYOUT.DECAY;
 }
-// every step until the layout has settled (alpha at or under `until`), or `maxTicks`; returns the alpha left
-function settleLayout(nodes, links, { alpha = 1, until = 0.003, maxTicks = 2000, visible, linkOn } = {}) {
-  let a = alpha, t = 0;
-  while (a > until && t++ < maxTicks) a = layoutTick(nodes, links, a, { visible, linkOn });
-  return a;
+// A node of the graph drawn before, carried into a rebuild: where it stood, held if it was held, and still to be
+// laid out if it was not yet (seeded) — a node seeded while hidden, or one a placement had not settled when the
+// rebuild came, keeps its turn. Every path that rebuilds a graph from its predecessor carries its nodes this way.
+function carryNode(n, p) { n.x = p.x; n.y = p.y; n.vx = 0; n.vy = 0; n.fixed = p.fixed; if (p.seeded) n.seeded = true; return n; }
+// A rebuild that changes how the graph hangs together, not only what is in it: every node may need another place,
+// so the whole graph is laid out again (`relayout`, until it is at rest).
+function reheatAll(g) { g.alpha = 1; g.placing = false; g.relayout = true; return g; }
+// what each node hangs on (TREE_LINK), by id: the graph's shape, which a rebuild compares with the one before
+function treeOf(nodes, links) {
+  const up = new Map(nodes.map((n) => [n.id, ""]));
+  for (const l of links) { const end = TREE_LINK[l.kind]; if (!end || !nodes[l.s] || !nodes[l.t]) continue; const c = nodes[end === "s" ? l.s : l.t], p = nodes[end === "s" ? l.t : l.s]; if (!up.get(c.id)) up.set(c.id, p.id); }
+  return up;
+}
+// The one rule for a graph after a rebuild, whatever brought it (a live update, the family, friends, the path, the
+// owners switch). A node already laid out that now hangs on another node, or on none — a project tied to an owner
+// or let go, topics gathered on their project's hub once a neighbour comes in — changes the graph's shape, and the
+// whole graph is laid out again (reheatAll), and a rebuild that comes while that runs carries it on. A rebuild that
+// only adds nodes lays out those alone (reheatSeeded), and one that adds none moves nothing. `g.tree` keeps the
+// shape for the next rebuild.
+function reheatAfterBuild(g) {
+  const before = g.tree, now = treeOf(g.nodes, g.links); g.tree = now;
+  const reshaped = !!before && g.nodes.some((n) => !n.seeded && before.has(n.id) && before.get(n.id) !== now.get(n.id));
+  return reshaped || g.relayout ? reheatAll(g) : reheatSeeded(g);
+}
+// A graph's layout after a build: the nodes seedLayout placed need the full strength of a fresh layout, and
+// only they move (`placing`); a build that placed none (a live update, a reload of the same states) leaves the
+// alpha as it was — nothing to lay out, so nothing moves.
+function reheatSeeded(g) { if (g.nodes.some((n) => n.seeded)) { g.alpha = 1; g.placing = true; } return g; }
+// The nodes shown that are not laid out yet — seeded while hidden, then brought into view by the day, a lit
+// thought or a switch — placed anew where they hang now, and laid out alone. Returns whether there were any.
+function placeShown(g, { visible = () => true } = {}) {
+  if (g.relayout) return false; // the whole graph is being laid out, the new nodes with it
+  const fresh = g.nodes.filter((n) => n.seeded && visible(n));
+  if (!fresh.length) return false;
+  for (const n of fresh) n.x = n.y = undefined;
+  seedLayout(g.nodes, g.links); g.alpha = 1; g.placing = true;
+  return true;
+}
+// One step of a graph's layout ({ nodes, links, alpha, placing }), as the page and settleLayout run it. While
+// `placing`, only the nodes not laid out yet (seeded) move; the nodes already placed hold still, so a family, a
+// friend, a live update or a new day coming in does not shake what is already shown. Settled, the seeded nodes
+// that were shown count as laid out; one still hidden keeps waiting for its turn. Returns the alpha left.
+// The nodes whose placement settled in this step are kept in `g.placed`, and a relayout that settled marks
+// `g.relaidOut`, until the scene has taken the final positions (ktw-scene.js publishFrom).
+function stepLayout(g, { visible = () => true, linkOn } = {}) {
+  g.alpha = layoutTick(g.nodes, g.links, g.alpha, { visible, linkOn, moving: g.placing ? (n) => !!n.seeded : null });
+  if (g.alpha <= LAYOUT.MIN_ALPHA) {
+    for (const n of g.nodes) if (n.seeded && visible(n)) { delete n.seeded; (g.placed ||= new Set()).add(n); }
+    if (g.relayout) g.relaidOut = true; // the whole layout came to rest: the scene takes it once more
+    g.placing = false; g.relayout = false;
+  }
+  return g.alpha;
+}
+// every step until the layout has settled (at rest, or alpha at or under `until`), or `maxTicks`; returns the
+// alpha left
+function settleLayout(nodes, links, { alpha = 1, until = LAYOUT.MIN_ALPHA, maxTicks = 2000, visible, linkOn } = {}) {
+  const g = { nodes, links, alpha, placing: nodes.some((n) => n.seeded) }; let t = 0;
+  while (g.alpha > until && t++ < maxTicks) stepLayout(g, { visible, linkOn });
+  if (g.alpha > LAYOUT.MIN_ALPHA) for (const n of nodes) if (n.seeded && (!visible || visible(n))) delete n.seeded; // stopped by maxTicks or `until`: placed as they are
+  return g.alpha;
 }
 
 // The sidebar's filter — status, evidence, author, each empty for any — and whether an entry passes it.
@@ -873,7 +1056,7 @@ const topicTitle = (st, file) => st.topics?.find((t) => t.file === file)?.title 
 const KTW = (root.KeepTheWhy = root.KeepTheWhy || {});
 KTW.core = Object.freeze({
   TOKEN_DEFAULTS, readToken, valueColor,
-  sameCanonical, exportStateUrl, exportVerdict, resolveSee, layoutTick, settleLayout, NO_FILTER, filterActive, entryMatches, fkey, repoLabel, topicTitle,
+  sameCanonical, exportStateUrl, exportVerdict, resolveSee, LAYOUT, seedLayout, layoutTick, carryNode, reheatAll, treeOf, reheatAfterBuild, reheatSeeded, placeShown, stepLayout, settleLayout, NO_FILTER, filterActive, entryMatches, fkey, repoLabel, topicTitle,
   esc, plural, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug,
   hostAnchor, hostFileLink, hostTreeLink, HOSTS, hostOf, canonicalOf, ownerOf, projectLabel,
   parseSupersededBy, entryRefs, typeName, kindLabel, familyRank, familyOrder, groupByFamily, shuffled, searchTerms,

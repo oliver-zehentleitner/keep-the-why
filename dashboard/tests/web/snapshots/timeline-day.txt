@@ -120,7 +120,7 @@
           "recorded by Alice Example"
         <a href="#entry/f5383416-90c8-4c5c-affc-01c3c67d0518">
           "open ›"
-<div class="ktw-stage-wrap" data-settled style="height: 473px;">
+<div class="ktw-stage-wrap" data-settled="1" style="height: 473px;">
   <canvas class="ktw-stage" data-lanes="Sync | Storage | API" height="0" width="0">
   <div class="ktw-stage-tip" hidden>
   <span class="ktw-stage-seg ktw-stage-arrange" title="where a card stands: where its node stands in the graph beside (the stage is the graph, time pulled out as depth), or in a lane per topic">
