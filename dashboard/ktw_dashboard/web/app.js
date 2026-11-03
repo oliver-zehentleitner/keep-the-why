@@ -684,7 +684,7 @@ let GRAPH_CENTER = null; // { entry } or { topic }: centre the full graph there 
 const REDRAW_TITLE = "redraw the graph: laid out anew from the start, every node you placed let go, as a fresh load lays it out — the thought held and the switches stay";
 // redraw: the next build of that graph starts from no positions, as a fresh page load of the same data does, and
 // lays the whole of it out (redrawGraph)
-const REDRAW = { graph: false, family: false, near: false };
+const REDRAW = { graph: false, family: false };
 function buildGraph(project = null) {
   const fresh = REDRAW.graph; REDRAW.graph = false;
   const prev = graph && !fresh ? Object.fromEntries(graph.nodes.map((n) => [n.id, n])) : {};
@@ -699,23 +699,28 @@ function buildGraph(project = null) {
   if (fresh) redrawn(graph);
   return graph;
 }
-// the neighbourhood of a topic or an entry, for the side pane (ktw-graph.js), seeded from where the full graph's nodes are
-const prevNodes = () => { const fresh = REDRAW.near; REDRAW.near = false; return graph && !fresh ? Object.fromEntries(graph.nodes.map((n) => [n.id, n])) : {}; };
+// the neighbourhood of a topic or an entry, for the side pane (ktw-graph.js), seeded from where the full graph's
+// nodes are; a redraw asked for there builds the full graph anew first, so the neighbourhood comes from that fresh
+// layout, as on a fresh page load, and stays so on every build after it
+const prevNodes = (project) => {
+  if (REDRAW.graph && graph) buildGraph(project);
+  return graph ? Object.fromEntries(graph.nodes.map((n) => [n.id, n])) : {};
+};
 // Redraw: a graph laid out from the start, as a fresh page load of the same data lays it out — every position
 // dropped, the nodes placed by hand let go, seeded anew (core seedLayout, deterministic), the whole of it laid out
 // (reheatAll) and framed once it is at rest. Unlike reset, nothing else changes: the thought held, the switches,
 // the scope stay as they are. `g` is the graph a canvas runs: the project's, the family's (or the side pane's copy
-// of it), or the side pane's neighbourhood.
+// of it), or the side pane's neighbourhood — which is built from the full graph's positions, so its redraw is the
+// full graph's (prevNodes): one kept only in the neighbourhood would be gone on the next build of it.
 function redrawGraph(g) {
   const of = g.of || g;
-  if (of === graph) REDRAW.graph = true;
-  else if (of === fgraph) { REDRAW.family = true; fgraph.at = 0; }
-  else REDRAW.near = true;
+  if (of === fgraph) { REDRAW.family = true; fgraph.at = 0; }
+  else REDRAW.graph = true;
   render();
 }
 function redrawn(g) { reheatAll(g); g.userMoved = false; g.needFit = true; if (g.miniView) Object.assign(g.miniView, { userMoved: false, needFit: true }); }
-const buildTopicSubgraph = (t) => GRAPH.buildTopicSubgraph(t, prevNodes());
-const buildSubgraph = (e) => GRAPH.buildSubgraph(e, prevNodes());
+const buildTopicSubgraph = (t) => GRAPH.buildTopicSubgraph(t, prevNodes(t.project || null));
+const buildSubgraph = (e) => GRAPH.buildSubgraph(e, prevNodes(e.project || null));
 // The family graph: every project of the tree as a hub in its own colour,
 // its topics and entries around it, parent and child projects joined, and
 // the See and Superseded by lines between entries drawn across projects.

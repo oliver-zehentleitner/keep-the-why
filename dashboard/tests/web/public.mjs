@@ -961,9 +961,10 @@ const report = {};
   if (used.held) errors.push("redraw after a session: nodes placed by hand are still held");
 }
 {
-  // redraw in the side pane's neighbourhood graph (near): it is built from where the full graph has its nodes, and a
-  // redraw builds it from no positions instead. The page that has laid the full graph out, then dragged a node
-  // here and redrawn, comes out as a page that never built the full graph: a fresh build of the neighbourhood.
+  // redraw in the side pane's neighbourhood graph (near): it is built from where the full graph has its nodes, so a
+  // redraw there redraws the full graph and builds the neighbourhood from that. The page that has laid the full graph
+  // out, then dragged a node here and redrawn, comes out as a fresh page load: the neighbourhood a fresh build of it,
+  // still after another page and back, and the full graph, opened then, a fresh load of it.
   const fx = JSON.parse(fs.readFileSync(new URL("./fixture/state.json", import.meta.url), "utf8"));
   const page = html.replace("<script>", `<script>window.__KTW_STATE__ = ${JSON.stringify({ ...fx, exported: true }).replace(/</g, "\\u003c")};</script><script>`);
   const entry = fx.entries.find((e) => e.uuid);
@@ -972,27 +973,51 @@ const report = {};
     const d = window.document;
     const quiet = async (g) => { for (let i = 0; i < 300 && (g()?.alpha ?? 1) > 0.003; i++) await tick(100); };
     await tick(500);
-    if (laidOut) { await quiet(() => window.__g()); window.location.hash = `#entry/${entry.uuid}`; window.dispatchEvent(new window.Event("hashchange")); await tick(400); }
+    if (laidOut) {
+      await quiet(() => window.__g());
+      // a node of the full graph placed by hand there, which its redraw lets go
+      const t = window.__g().nodes.find((n) => n.kind === "topic"); t.x += 260; t.y -= 170; t.fixed = true; window.__g().alpha = 0.3; window.__g().wake?.(); await tick(200); await quiet(() => window.__g());
+      window.location.hash = `#entry/${entry.uuid}`; window.dispatchEvent(new window.Event("hashchange")); await tick(400);
+    }
     [...d.querySelectorAll(".ktw-mini-seg button")].find((b) => b.textContent === "near")?.click(); await tick(300);
     await quiet(() => window.__ktwNear?.());
     const pre = Object.fromEntries((window.__ktwNear()?.nodes || []).map((n) => [n.id, [n.x, n.y]])); // before the redraw
     if (drag) { const n = window.__ktwNear().nodes[0]; n.x += 200; n.y -= 120; n.fixed = true; }
     const btn = [...d.querySelectorAll(".ktw-mini-corner-btn")].find((b) => b.textContent === "redraw");
-    btn?.click(); await tick(300); await quiet(() => window.__ktwNear?.());
+    if (drag) { btn?.click(); await tick(300); await quiet(() => window.__ktwNear?.()); }
+    const pos = (g) => (g ? Object.fromEntries(g.nodes.map((n) => [n.id, [n.x, n.y]])) : {});
     const g = window.__ktwNear?.();
-    const at = g ? Object.fromEntries(g.nodes.map((n) => [n.id, [n.x, n.y]])) : {};
-    const out = { at, pre, held: g ? g.nodes.filter((n) => n.fixed).length : -1, hadButton: !!btn };
+    const at = pos(g);
+    const held = g ? g.nodes.filter((n) => n.fixed).length : -1;
+    // the page rendered again: another entry, then this one back — its neighbourhood built anew from the full graph
+    const go = async (hash) => { window.location.hash = hash; window.dispatchEvent(new window.Event("hashchange")); await tick(400); };
+    await go(`#entry/${other.uuid}`); await go(`#entry/${entry.uuid}`); await quiet(() => window.__ktwNear?.());
+    const again = pos(window.__ktwNear?.());
+    // and the full graph opened
+    await go("#graph"); await quiet(() => window.__g());
+    const full = pos(window.__g()); const fullHeld = window.__g().nodes.filter((n) => n.fixed).length;
+    window.close();
+    return { at, again, full, fullHeld, pre, held, hadButton: !!btn };
+  };
+  const other = fx.entries.find((e) => e.uuid && e.file !== entry.file);
+  const used = await near(true, true), fresh = await near(false, false);
+  const gap = (a, b) => { let d = 0; for (const [id, [x, y]] of Object.entries(a)) { const q = b[id]; d = Math.max(d, q ? Math.hypot(q[0] - x, q[1] - y) : Infinity); } return Object.keys(a).length === Object.keys(b).length ? d : Infinity; };
+  // a fresh load of the full graph, straight at it
+  const freshFull = await (async () => {
+    const window = await open("http://localhost/x/keep-the-why-dashboard/#graph", page, { "ktw-motion": "off" });
+    await tick(500); for (let i = 0; i < 300 && window.__g().alpha > 0.003; i++) await tick(100);
+    const out = Object.fromEntries(window.__g().nodes.map((n) => [n.id, [n.x, n.y]]));
     window.close();
     return out;
-  };
-  const used = await near(true, true), fresh = await near(false, false);
-  let diff = 0; for (const [id, [x, y]] of Object.entries(fresh.at)) { const q = used.at[id]; diff = Math.max(diff, q ? Math.hypot(q[0] - x, q[1] - y) : Infinity); }
-  let before = 0; for (const [id, [x, y]] of Object.entries(fresh.at)) { const q = used.pre[id]; before = Math.max(before, q ? Math.hypot(q[0] - x, q[1] - y) : Infinity); }
-  report.redrawNear = { nodes: Object.keys(fresh.at).length, same: Object.keys(fresh.at).length === Object.keys(used.at).length, diff, held: used.held, beforeRedraw: before };
+  })();
+  report.redrawNear = { nodes: Object.keys(fresh.at).length, diff: gap(fresh.at, used.at), again: gap(fresh.at, used.again), full: gap(freshFull, used.full), freshEntryFull: gap(freshFull, fresh.full), held: used.held, fullHeld: used.fullHeld, beforeRedraw: gap(fresh.at, used.pre) };
   if (!used.hadButton || !fresh.hadButton) errors.push("redraw (near): the side pane's neighbourhood graph has no redraw");
-  if (!(before > 1)) errors.push("redraw (near): before the redraw the neighbourhood was already where a fresh build puts it — the test does not tell the two apart");
-  if (!report.redrawNear.nodes || diff !== 0 || !report.redrawNear.same) errors.push("redraw (near) after the full graph was laid out and a node dragged is not a fresh build of the neighbourhood — " + JSON.stringify(report.redrawNear));
-  if (used.held) errors.push("redraw (near): the node placed by hand is still held");
+  if (!other) errors.push("redraw (near): the fixture has no entry in another topic to go to and back");
+  if (!(report.redrawNear.beforeRedraw > 1)) errors.push("redraw (near): before the redraw the neighbourhood was already where a fresh build puts it — the test does not tell the two apart");
+  if (!report.redrawNear.nodes || report.redrawNear.diff !== 0) errors.push("redraw (near) after the full graph was laid out and a node dragged is not a fresh build of the neighbourhood — " + JSON.stringify(report.redrawNear));
+  if (report.redrawNear.again !== 0) errors.push("redraw (near) is gone on the next build of the neighbourhood (another page and back) — " + JSON.stringify(report.redrawNear));
+  if (report.redrawNear.full !== 0 || report.redrawNear.freshEntryFull !== 0) errors.push("redraw (near): the full graph opened after it is not a fresh load of it — " + JSON.stringify(report.redrawNear));
+  if (used.held || used.fullHeld) errors.push("redraw (near): a node placed by hand, in the neighbourhood or the full graph, is still held — " + JSON.stringify(report.redrawNear));
 }
 {
   // redraw on the graph page: every node you placed let go, and the same layout every time — dragged nodes leave no trace
