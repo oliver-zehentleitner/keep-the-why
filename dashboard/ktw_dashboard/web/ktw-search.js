@@ -103,11 +103,14 @@ async function view(main, linkScope, q) {
   }
   const wider = scope === "all" ? null : canSearch("all") ? "all" : scope === "project" && canSearch("family") ? "family" : scope === "project" && canSearch("friends") ? "friends" : null;
   if (!hits.length) {
-    const more = wider ? navLink({ href: { view: "search", scope: wider, q: q } }, tw("search.wider", "search {scope}", { scope: scopeLabel(wider) })) : null;
-    const none = scope === "project" ? (more ? tw("search.none.projectMore", "No entry matches “{q}” in this project — {more}.", { q, more }) : tw("search.none.project", "No entry matches “{q}” in this project.", { q }))
-      : scope === "all" ? tw("search.none.all", "No entry matches “{q}” in the family or the friends.", { q })
-      : more ? tw("search.none.scopeMore", "No entry matches “{q}” in the {scope} — {more}.", { q, scope: scopeLabel(scope), more }) : tw("search.none.scope", "No entry matches “{q}” in the {scope}.", { q, scope: scopeLabel(scope) });
-    box.append(el("p", { class: "ktw-center" }, none));
+    // the sentence's parts are nodes at their placeholders: a host's words may put them in another order, and
+    // without words the paragraph has the text nodes it always had — where, the wider search (or an empty text), "."
+    const text = (t) => root.document.createTextNode(t);
+    const where = text(scope === "project" ? tw("search.none.inProject", " in this project") : scope === "all" ? tw("search.none.inAll", " in the family or the friends") : tw("search.none.inScope", " in the {scope}", { scope: scopeLabel(scope) }));
+    const more = root.document.createDocumentFragment();
+    if (wider) more.append(...[tw("search.none.more", " — {link}", { link: navLink({ href: { view: "search", scope: wider, q: q } }, tw("search.wider", "search {scope}", { scope: scopeLabel(wider) })) })].flat().map((x) => (x.nodeType ? x : text(x))));
+    else more.append(text(""));
+    box.append(el("p", { class: "ktw-center" }, tw("search.none", "No entry matches “{q}”{where}{more}.", { q, where, more })));
   }
   if (found.missing.length) box.append(el("section", { class: "ktw-sgroup ktw-missing" }, el("div", { class: "ktw-sg-head" }, el("b", {}, tw("search.notSearched", "Not searched")), el("span", { class: "ktw-count" }, found.missing.length)),
     found.missing.map(({ member: m, reason }) => el("div", { class: "ktw-sr-missing" }, el("b", {}, m.name), tw("search.missingWhy", " ({role}) — {reason}", { role: memberLabel(m), reason }))),

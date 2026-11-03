@@ -99,6 +99,8 @@ const routes = [
   ["entry-undefined-type", `#entry/${byTitle("Temporary files").uuid}`],
   ["entry-hostile-text", `#entry/${byTitle("Pasted").uuid}`],
   ["search", "#search/self/snapshot"],
+  // no hit: the sentence's text nodes as they were before the views' words (the wider search: public.mjs)
+  ["search-none", "#search/project/zzzznotfoundzzzz"],
 ];
 const results = new Map();
 let shell = null;
