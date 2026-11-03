@@ -3,7 +3,8 @@
 // An element added shifts every path after it, so the trees would differ on every route. Each element named here
 // is left out of the pairing, with its subtree, and the paths count its siblings as if it were not there. Its
 // parent's box grows with it: in Chromium, only the properties that resolve to that box's size and position may
-// differ on the parent (PARENT_BOX), nothing else.
+// differ on the parent (PARENT_BOX), nothing else — its width and where it starts, and the two origins that resolve
+// as a share of that width (50% 50% by default, computed in px).
 //
 // An entry names exactly the element added, by a selector no other element matches, with its reason. A check
 // fails when an entry matches nothing in the page under test, or anything in the base: the list cannot go stale
@@ -12,4 +13,4 @@ export const ADDED = [
   { selector: "button.ktw-graph-corner-redraw", why: "redraw (#758): the graph's corner control, beside fit and reset" },
   { selector: '.ktw-mini-corner > button.ktw-mini-corner-btn[aria-label^="redraw the graph"]', why: "redraw (#758): the side pane graph's corner control, before fit and reset" },
 ];
-export const PARENT_BOX = ["width", "inline-size", "left", "inset-inline-start"];
+export const PARENT_BOX = ["width", "inline-size", "left", "inset-inline-start", "transform-origin", "perspective-origin"];
