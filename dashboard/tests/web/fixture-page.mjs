@@ -72,11 +72,9 @@ export function routesOf(S) {
     ["entry-undefined-type", `#entry/${byTitle("Temporary files").uuid}`],
     ["entry-hostile-text", `#entry/${byTitle("Pasted").uuid}`],
     ["search", "#search/self/snapshot"],
-    // no hit in each scope (the wider search with its link: public.mjs), a query too short, a topic and an entry
-    // that do not exist
+    // no hit (the fixture has no family, so a wider scope falls back to this one: the family and all scopes, and the
+    // wider search with its link, are public.mjs's), a query too short, a topic and an entry that do not exist
     ["search-none", "#search/project/zzzznotfoundzzzz"],
-    ["search-none-family", "#search/family/zzzznotfoundzzzz"],
-    ["search-none-all", "#search/all/zzzznotfoundzzzz"],
     ["search-short", "#search/project/z"],
     ["topic-missing", "#topic/no-such-topic.md"],
     ["entry-missing", "#entry/no-such-entry"],
