@@ -300,9 +300,9 @@ function runGraph(canvas, g, opts = {}) {
         ctx.font = hubName ? `600 ${(mini ? 12 : 13) / V.scale}px ${color("--ktw-font") || "sans-serif"}` : `${(mini ? 11 : 12) / V.scale}px ${color("--ktw-font") || "sans-serif"}`;
         const lbl = n.label.replace(/`/g, ""); const txt = lbl.length > maxLen ? lbl.slice(0, maxLen - 2) + "…" : lbl;
         const mark = hubName ? hostPath(n.canonical) : null; const iw = mark ? (mini ? 12 : 13) / V.scale : 0; const gap = mark ? 4 / V.scale : 0;
-        const tw = ctx.measureText(txt).width; const y = n.y + n.r + 3 / V.scale;
-        const left = n.x - (tw + iw + gap) / 2; const tx = left + iw + gap + tw / 2; // the mark before the name, the pair centred
-        const box = { x0: left - 3 / V.scale, y0: y - 1 / V.scale, x1: tx + tw / 2 + 3 / V.scale, y1: y + 15 / V.scale };
+        const textW = ctx.measureText(txt).width; const y = n.y + n.r + 3 / V.scale;
+        const left = n.x - (textW + iw + gap) / 2; const tx = left + iw + gap + textW / 2; // the mark before the name, the pair centred
+        const box = { x0: left - 3 / V.scale, y0: y - 1 / V.scale, x1: tx + textW / 2 + 3 / V.scale, y1: y + 15 / V.scale };
         if (!must && !free(box)) continue;
         placed.push(box);
         ctx.fillStyle = color("--ktw-bg"); ctx.globalAlpha = faded ? 0.4 : 0.75; ctx.fillRect(box.x0, box.y0, box.x1 - box.x0, 15 / V.scale); ctx.globalAlpha = faded ? 0.5 : 1;
