@@ -1003,7 +1003,7 @@ A build that placed new nodes raises the alpha to 1 (`reheatSeeded`). Until they
 - **Nodes were added.** Only they are laid out.
 - **Nothing was added.** Nothing moves.
 
-The scene's layout, which the timeline's stage stands its cards on, copies what each step laid out: all of it while the graph first settles or is laid out anew, and the placed nodes while they move and once more at rest.
+The scene's layout, which the timeline's stage stands its cards on, copies what each step laid out: all of it while the graph first settles or is laid out anew, and the placed nodes while they move and once more at rest. The side pane's copy of the family graph (`runnerOf`) reads the graph's data through its prototype and shares its layout's lifecycle, read and written through. A placement or a relayout that settles in the copy has settled in the graph too, so the next rebuild finds nothing stale. A copy replaced since stops, and the scene takes nothing from it.
 
 A step reads the shown nodes into plain arrays once, so the pair loop does no property reads or calls. On 1,180 nodes that brought a step from 18.5 ms to 7.6 ms in V8, with the same arithmetic in the same order. A frame that draws spends up to 8 ms on steps. A graph not drawn yet with motion off takes 24 ms slices and says "laying out … nodes" until it is settled. With *motion* off, a graph not yet drawn settles in slices of a frame and is drawn once it is settled and framed. A graph that fits its canvas fits once more where it came to rest.
 
@@ -1019,6 +1019,7 @@ A step reads the shown nodes into plain arrays once, so the pair loop does no pr
 - **Tuning the constants** (more damping, weaker repulsion) under random seeding: the cause is where the nodes start, and any random start can put two of them on one spot.
 - **An alpha held above a floor until the layout is at rest:** at a floor of 0.05 to 0.2, a 1,000-entry family still moved after 3,000 steps.
 - **Slower cooling:** at 0.996 a step instead of 0.985 it took 2.6 times the steps, and a reheat moved it farther, not less.
+- **The side pane's copy as a spread of the graph (`{ ...fg }`):** it shared the nodes but not the lifecycle flags. A relayout it settled stayed open in the graph, and the next unchanged rebuild laid everything out again.
 - **One fix per case:** a flag for the owners switch, another for the project's hub. The review showed both were one class, a change of shape on a settled graph, and a third case would have needed a third flag.
 - **Reheating the whole graph after a build at a lower alpha:** with the old nodes free, a rebuild still moved them 125 to 220 units, whatever the alpha.
 - **A force library, or Barnes–Hut repulsion:** the page has no dependencies, and the pairwise step still fits a frame at this size.
