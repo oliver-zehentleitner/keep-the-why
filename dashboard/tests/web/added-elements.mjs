@@ -9,8 +9,5 @@
 // An entry names exactly the element added, by a selector no other element matches, with its reason. A check
 // fails when an entry matches nothing in the page under test, or anything in the base: the list cannot go stale
 // or hide more than it says. Entries go once the change is on the target branch.
-export const ADDED = [
-  { selector: "button.ktw-graph-corner-redraw", why: "redraw (#758): the graph's corner control, beside fit and reset" },
-  { selector: '.ktw-mini-corner > button.ktw-mini-corner-btn[aria-label^="redraw the graph"]', why: "redraw (#758): the side pane graph's corner control, before fit and reset" },
-];
+export const ADDED = [];
 export const PARENT_BOX = ["width", "inline-size", "left", "inset-inline-start", "transform-origin", "perspective-origin"];

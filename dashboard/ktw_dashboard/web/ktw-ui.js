@@ -5,7 +5,35 @@
    A classic script on globalThis.KeepTheWhy.ui, listed in ktw-views.json after the core. */
 (function (root) {
 "use strict";
-const { typeName, hostOf, highlightParts } = root.KeepTheWhy.core;
+const { typeName, hostOf, highlightParts, fillWords } = root.KeepTheWhy.core;
+
+// The views' words: `words(hook)` gives `tw(key, english, params)`, the one way a view's UI text reaches the page.
+// The host's hook — `(key, params) => string | undefined`, the `words` option of every views.*.create — answers a
+// key with its own language; undefined is "not in my catalogue" and the English is used, quietly. A throw or an
+// answer that is not a string falls back to the English too, with a console warning once per key, so a broken
+// catalogue is seen without a flood. Either text has its placeholders filled from `params`: {name} the value, {n:noun}
+// a count with its noun ({n:one|many} where the core's plural rule does not fit; English only: a host's own text says {n} and its own plural), and a param that is a
+// node goes in at its placeholder, wherever the host's word order puts it — then tw gives the parts as an array, which
+// el() flattens. Every key and its English is listed in ktw-words.json; keys and English are string literals at
+// every call, so the catalogue is what the code says (words.test.mjs).
+function words(hook = null) {
+  const warned = new Set();
+  const warn = (key, why) => { if (warned.has(key)) return; warned.add(key); console.warn(`KeepTheWhy words: "${key}" ${why}; the English is used`); };
+  return function tw(key, english, params = null) {
+    let text = english;
+    if (typeof hook === "function") {
+      let answer;
+      try { answer = hook(key, params || {}); } catch (e) { warn(key, `— the hook threw: ${e?.message || e}`); answer = undefined; }
+      if (typeof answer === "string") text = answer;
+      else if (answer !== undefined) warn(key, `— the hook answered ${answer === null ? "null" : typeof answer}, not a string`);
+    }
+    return fillWords(text, params, key);
+  };
+}
+// the English, for a call made without a view's own (a host that passes no words gets this too)
+const english = words();
+// a family member's role as a word (ktw-family.js gives the roles); a role no row names is shown as it is
+const roleWord = (tw, role) => ({ self: tw("role.self", "self"), parent: tw("role.parent", "parent"), grandparent: tw("role.grandparent", "grandparent"), ancestor: tw("role.ancestor", "ancestor"), child: tw("role.child", "child"), sibling: tw("role.sibling", "sibling"), relative: tw("role.relative", "relative"), friend: tw("role.friend", "friend") })[role] ?? role;
 
 // Attributes on an element, HTML or SVG: class; style through the CSSOM — a page under a Content-Security-Policy
 // without 'unsafe-inline' (Maity's hub pages, default-src 'self') drops a style attribute set as markup, not the
@@ -90,18 +118,19 @@ const remoteLink = (remote) => el("a", { class: "ktw-gh", href: `https://${remot
 const onGitHub = (g) => !!g?.remote && /^github\.com\//.test(g.remote);
 // a fork checkout: `origin` is the fork, the published repository is elsewhere — read from
 // the `upstream` remote, or from `canonical` in .keep-the-why differing from `origin`
-const forkTitle = (f) => f.by === "upstream" ? "this checkout has an `upstream` remote: origin is a fork of it" : "origin differs from the project's `canonical` (.keep-the-why): this checkout is a fork or mirror of it";
-const forkPill = (g) => g?.fork ? el("span", { class: "ktw-pill ktw-fork", title: forkTitle(g.fork) }, "fork of ", remoteLink(g.fork.of)) : null;
-const headPill = (g) => {
+// (these two take the view's words, `tw`, last; without them the English)
+const forkTitle = (f, tw) => f.by === "upstream" ? tw("ui.fork.byUpstream", "this checkout has an `upstream` remote: origin is a fork of it") : tw("ui.fork.byCanonical", "origin differs from the project's `canonical` (.keep-the-why): this checkout is a fork or mirror of it");
+const forkPill = (g, tw = english) => g?.fork ? el("span", { class: "ktw-pill ktw-fork", title: forkTitle(g.fork, tw) }, tw("ui.fork.of", "fork of {remote}", { remote: remoteLink(g.fork.of) })) : null;
+const headPill = (g, tw = english) => {
   if (!g?.available) return null;
   const branch = g.branch && g.branch !== "HEAD" ? g.branch : null;
-  if (!onGitHub(g)) return el("span", { class: "ktw-pill", title: g.remote || "" }, `${branch || "detached"}@${g.head}`);
+  if (!onGitHub(g)) return el("span", { class: "ktw-pill", title: g.remote || "" }, `${branch || tw("ui.head.detached", "detached")}@${g.head}`);
   const base = `https://${g.remote}`;
-  return el("span", { class: "ktw-pill", title: "branch and commit on GitHub" },
-    branch ? el("a", { class: "ktw-gh", href: `${base}/tree/${encodeURIComponent(branch)}`, target: "_blank", rel: "noopener" }, branch) : "detached", "@",
+  return el("span", { class: "ktw-pill", title: tw("ui.head.onGitHub", "branch and commit on GitHub") },
+    branch ? el("a", { class: "ktw-gh", href: `${base}/tree/${encodeURIComponent(branch)}`, target: "_blank", rel: "noopener" }, branch) : tw("ui.head.detached", "detached"), "@",
     el("a", { class: "ktw-gh", href: `${base}/commit/${g.head_full || g.head}`, target: "_blank", rel: "noopener", title: g.head_full || g.head }, g.head));
 };
 
 const KTW = (root.KeepTheWhy = root.KeepTheWhy || {});
-KTW.ui = Object.freeze({ el, svgEl, setAttrs, setKids, pill, statusPill, evPill, typePills, entryPills, GLYPHS, typeGlyphSvg, hostMark, marked, navLinks, extLink, remoteLink, forkPill, headPill });
+KTW.ui = Object.freeze({ words, english, roleWord, el, svgEl, setAttrs, setKids, pill, statusPill, evPill, typePills, entryPills, GLYPHS, typeGlyphSvg, hostMark, marked, navLinks, extLink, remoteLink, forkPill, headPill });
 })(globalThis);

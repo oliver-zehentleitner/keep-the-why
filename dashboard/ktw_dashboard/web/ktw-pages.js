@@ -10,15 +10,16 @@
    listed in ktw-views.json. */
 (function (root) {
 "use strict";
-const { plural, typeName, isUuid, canonicalOf, hostFileLink, hostTreeLink, hostAnchor, parseSupersededBy, resolveSee, repoLabel, topicTitle, mergeAuthors, sortAuthors, AUTHOR_SORTS, filterActive, entryMatches, valueColor } = root.KeepTheWhy.core;
+const { typeName, isUuid, canonicalOf, hostFileLink, hostTreeLink, hostAnchor, parseSupersededBy, resolveSee, repoLabel, topicTitle, mergeAuthors, sortAuthors, AUTHOR_SORTS, filterActive, entryMatches, valueColor } = root.KeepTheWhy.core;
 const ui = root.KeepTheWhy.ui;
 const { el, setKids, pill, statusPill, evPill, entryPills, hostMark, extLink, remoteLink, forkPill, headPill } = ui;
 const fmtDate = (d) => d || "—";
 
-// One pages view per page: create({ scene, nav, prefs, family, search }) — the family (ktw-family.js) loads the
-// published exports an Id or a reference is looked for in, through its provider; the search (ktw-search.js) knows
-// whether there is a family and gathers it.
-function create({ scene, nav, prefs, family, search }) {
+// One pages view per page: create({ scene, nav, prefs, family, search, words }) — the family (ktw-family.js) loads
+// the published exports an Id or a reference is looked for in, through its provider; the search (ktw-search.js)
+// knows whether there is a family and gathers it; `words` is the host's hook for the UI text (ktw-ui.js words).
+function create({ scene, nav, prefs, family, search, words }) {
+const tw = ui.words(words);
 // prefs: no page keeps a setting yet; taken all the same, so every view is made the same way
 const navLink = ui.navLinks(nav); // a link to a place, moving through nav
 
@@ -50,7 +51,7 @@ function bars(counts, order, clsPrefix = "") {
   const total = Object.values(counts).reduce((a, b) => a + b, 0) || 1;
   const keys = [...order.filter((k) => k in counts), ...Object.keys(counts).filter((k) => !order.includes(k))];
   return el("div", { class: "ktw-bars" }, keys.map((k) => [
-    el("span", { class: "ktw-k" }, k || "(none)"),
+    el("span", { class: "ktw-k" }, k && k !== "(none)" ? k : tw("pages.bars.none", "(none)")),
     el("div", { class: "ktw-bar" }, el("i", { class: `ktw-${clsPrefix}${k}`, style: `width:${(100 * counts[k]) / total}%` })),
     el("span", { class: "ktw-v" }, counts[k]),
   ]));
@@ -68,9 +69,9 @@ const projectOf = (x) => (x?.project ? x.project : null); // a merged family mem
 
 function viewFindings(main) {
   const f = scene.state.findings;
-  main.append(el("h1", {}, "Linter findings"), el("p", { class: "ktw-sub" }, `keep-the-why-lint ${scene.state.linter} · ${f.errors} error(s), ${f.warnings} warning(s) · structure only, never content`));
-  if (!f.items.length) return main.append(el("p", { class: "ktw-center" }, "Clean — nothing to show."));
-  main.append(el("div", { class: "ktw-table-wrap" }, el("table", { class: "ktw-t ktw-findings" }, el("thead", {}, el("tr", {}, ["Severity", "Code", "Where", "Message"].map((h) => el("th", {}, h)))),
+  main.append(el("h1", {}, tw("pages.findings.heading", "Linter findings")), el("p", { class: "ktw-sub" }, tw("pages.findings.sub", "keep-the-why-lint {linter} · {errors} error(s), {warnings} warning(s) · structure only, never content", { linter: scene.state.linter, errors: f.errors, warnings: f.warnings })));
+  if (!f.items.length) return main.append(el("p", { class: "ktw-center" }, tw("pages.findings.clean", "Clean — nothing to show.")));
+  main.append(el("div", { class: "ktw-table-wrap" }, el("table", { class: "ktw-t ktw-findings" }, el("thead", {}, el("tr", {}, [tw("pages.findings.severity", "Severity"), tw("pages.findings.code", "Code"), tw("pages.findings.where", "Where"), tw("pages.findings.message", "Message")].map((h) => el("th", {}, h)))),
     el("tbody", {}, f.items.map((x) => {
       const entry = scene.state.entries.find((e) => (e.project || null) === (x.project || null) && `${(e.origin?.state?.project || scene.state.project).context}${e.localFile || e.file}` === (x.localPath || x.path) && e.line <= x.line && x.line <= e.end_line + 1);
       return el("tr", {}, el("td", {}, pill(x.severity, `ktw-sev-${x.severity}`)), el("td", { class: "ktw-mono" }, x.code),
@@ -93,9 +94,9 @@ function configValue(p, key, v) {
 
 function topicCard(t) {
   return navLink({ class: "ktw-topic-card", href: { view: "topic", file: t.file } },
-    el("div", { class: "ktw-tt" }, t.title, el("span", { class: "ktw-count" }, plural(t.entries, "entry"))),
+    el("div", { class: "ktw-tt" }, t.title, el("span", { class: "ktw-count" }, tw("pages.topicCard.entries", "{n:entry}", { n: t.entries }))),
     t.project ? el("div", { class: "ktw-note" }, t.project) : null,
-    el("div", { class: "ktw-td" }, t.index_line || el("span", { class: "ktw-note" }, "not described in index.md")),
+    el("div", { class: "ktw-td" }, t.index_line || el("span", { class: "ktw-note" }, tw("pages.topicCard.undescribed", "not described in index.md"))),
     stack(t.evidence, EV_ORDER),
     el("div", { class: "ktw-refs" }, `${t.file} · → ${t.refs_out.length} · ← ${t.refs_in.length}`));
 }
@@ -107,9 +108,11 @@ async function copyText(text) {
   let ok = false; try { ok = document.execCommand("copy"); } catch {} ta.remove(); return ok;
 }
 
+// the button that copies a link to a topic or an entry (`what`: "topic" or "entry")
 function copyLinkButton(s, what) {
-  const b = el("button", { type: "button", class: "ktw-share-btn", title: `copy a link to this ${what} — ${s.where}:\n${s.url}`,
-    onclick: async () => { const ok = await copyText(s.url); b.textContent = ok ? "✓ copied" : "copy failed"; b.classList.toggle("ktw-done", ok); setTimeout(() => { b.textContent = "⧉ copy link"; b.classList.remove("ktw-done"); }, 1800); } }, "⧉ copy link");
+  const title = what === "topic" ? tw("pages.copy.topicTitle", "copy a link to this topic — {where}:\n{url}", s) : tw("pages.copy.entryTitle", "copy a link to this entry — {where}:\n{url}", s);
+  const b = el("button", { type: "button", class: "ktw-share-btn", title,
+    onclick: async () => { const ok = await copyText(s.url); b.textContent = ok ? tw("pages.copy.done", "✓ copied") : tw("pages.copy.failed", "copy failed"); b.classList.toggle("ktw-done", ok); setTimeout(() => { b.textContent = tw("pages.copy.label", "⧉ copy link"); b.classList.remove("ktw-done"); }, 1800); } }, tw("pages.copy.label", "⧉ copy link"));
   return b;
 }
 
@@ -126,6 +129,8 @@ function authorCommitIn(name, state) {
 // (author-1) a row per project. A click on a row filters every view to that author. Rows go A–Z by name; a click on
 // a column's name sorts every table by it, from the most for counts and dates, again to turn the order round.
 const AUTHOR_SORT = { key: "author", dir: "asc" };
+// the kind of project an author was counted in (H.authorProjects: self, family, friend, path)
+const authorRole = (role) => ({ family: tw("pages.authors.role.family", "family"), friend: tw("pages.authors.role.friend", "friend"), path: tw("pages.authors.role.path", "path") })[role] ?? role;
 
 // What uses the host is made once per host, so every closure it leaves behind — a button clicked later, a list
 // drawn again — keeps the host of the call that made it, whichever host draws next.
@@ -145,30 +150,30 @@ function forHost(H) {
     return navLink({ href: entryRoute(e), class: `ktw-row ${matches(e) ? "" : "ktw-dim"}` },
       el("div", { class: "ktw-rt" }, el("span", {}, inline(e.title)), ...entryPills(e)),
       el("div", { class: "ktw-rs" }, snippet.replace(/\*\*|`/g, "")),
-      el("div", { class: "ktw-rm" }, [projectOf(e), topicOf(e.file)?.title || e.file, g?.created?.author ? `${g.created.author} · ${g.created.date}` : null, g?.last_touched?.date && g.last_touched.date !== g?.created?.date ? `touched ${g.last_touched.date}` : null].filter(Boolean).join("  ·  ")));
+      el("div", { class: "ktw-rm" }, [projectOf(e), topicOf(e.file)?.title || e.file, g?.created?.author ? `${g.created.author} · ${g.created.date}` : null, g?.last_touched?.date && g.last_touched.date !== g?.created?.date ? tw("pages.row.touched", "touched {date}", { date: g.last_touched.date }) : null].filter(Boolean).join("  ·  ")));
   }
   function viewOverview(main) {
     const list = scene.state.entries;
     const p = scene.state.project; const g = p.git;
-    if (scene.state.merged) main.append(el("div", { class: "ktw-family-banner" }, el("b", {}, `Family · ${plural(scene.state.family.length, "project")}`), " — ",
+    if (scene.state.merged) main.append(el("div", { class: "ktw-family-banner" }, el("b", {}, tw("pages.overview.family", "Family · {n:project}", { n: scene.state.family.length })), " — ",
       scene.state.family.map((m, i) => [i ? " · " : "", m.project ? el("span", {}, m.project, el("span", { class: "ktw-note" }, ` ${scene.state.entries.filter((e) => e.project === m.project).length}`)) : el("span", {}, m.name, el("span", { class: "ktw-note" }, ` ${scene.state.entries.filter((e) => !e.project).length}`))]),
-      scene.state.missing?.length ? el("span", { class: "ktw-warn" }, ` · ${plural(scene.state.missing.length, "member")} not available here`) : null));
+      scene.state.missing?.length ? el("span", { class: "ktw-warn" }, tw("pages.overview.missing", " · {n:member} not available here", { n: scene.state.missing.length })) : null));
     main.append(
       el("h1", {}, p.id || p.name),
-      el("p", { class: "ktw-sub" }, `${p.context} · schema ${p.schema} · ${p.config["capture-confirmation"] || "?"} · source-reference ${p.config["source-reference"] || "?"}`,
-        g?.available ? [" · ", headPill(g), g.remote ? [" · ", remoteLink(g.remote)] : null, g.fork ? [" · ", forkPill(g)] : null, g.shallow ? " · shallow clone (dates are the clone's edge)" : null] : " · no Git"),
+      el("p", { class: "ktw-sub" }, tw("pages.overview.sub", "{context} · schema {schema} · {confirmation} · source-reference {sourceReference}", { context: p.context, schema: p.schema, confirmation: p.config["capture-confirmation"] || "?", sourceReference: p.config["source-reference"] || "?" }),
+        g?.available ? [" · ", headPill(g, tw), g.remote ? [" · ", remoteLink(g.remote)] : null, g.fork ? [" · ", forkPill(g, tw)] : null, g.shallow ? tw("pages.overview.shallow", " · shallow clone (dates are the clone's edge)") : null] : tw("pages.overview.noGit", " · no Git")),
       // Type, Status and Evidence stacked in one column, the Config beside them
       el("div", { class: "ktw-grid2" },
         el("div", { class: "ktw-overview-stats" },
           el("div", { class: "ktw-card" }, el("h3", {}, "Type"), bars(typeCounts(list), ["decision", "constraint", "workaround", "incident", "undefined"])),
           el("div", { class: "ktw-card" }, el("h3", {}, "Status"), bars(count(list, "status"), STATUS_ORDER)),
           el("div", { class: "ktw-card" }, el("h3", {}, "Evidence"), bars(count(list, "evidence"), EV_ORDER))),
-        el("div", { class: "ktw-card" }, el("h3", {}, "Config", configFileLink(p)), el("div", { class: "ktw-kv" }, Object.entries(p.config).map(([k, v]) => [el("span", { class: "ktw-k" }, k), configValue(p, k, v)])),
-          Object.keys(p.personal_defaults || {}).length ? [el("h3", {}, "Personal defaults offered"), el("div", { class: "ktw-kv" }, Object.entries(p.personal_defaults).map(([k, v]) => [el("span", { class: "ktw-k" }, k), el("span", { class: "ktw-v ktw-mono" }, v)]))] : null),
+        el("div", { class: "ktw-card" }, el("h3", {}, tw("pages.overview.config", "Config"), configFileLink(p)), el("div", { class: "ktw-kv" }, Object.entries(p.config).map(([k, v]) => [el("span", { class: "ktw-k" }, k), configValue(p, k, v)])),
+          Object.keys(p.personal_defaults || {}).length ? [el("h3", {}, tw("pages.overview.personalDefaults", "Personal defaults offered")), el("div", { class: "ktw-kv" }, Object.entries(p.personal_defaults).map(([k, v]) => [el("span", { class: "ktw-k" }, k), el("span", { class: "ktw-v ktw-mono" }, v)]))] : null),
       ),
-      el("h2", {}, "Topics"),
+      el("h2", {}, tw("pages.overview.topics", "Topics")),
       el("div", { class: "ktw-topic-cards" }, scene.state.topics.map(topicCard)),
-      el("h2", {}, "Recently touched"),
+      el("h2", {}, tw("pages.overview.recent", "Recently touched")),
       el("div", { class: "ktw-entry-list" }, [...list].filter((e) => e.git?.last_touched?.date !== undefined).sort((a, b) => ((b.git?.last_touched?.date || "") > (a.git?.last_touched?.date || "") ? 1 : -1)).slice(0, 8).map(entryRow)),
     );
   }
@@ -176,31 +181,42 @@ function forHost(H) {
     const q = queues();
     const section = (title, why, list) => el("section", { class: "ktw-queue" },
       el("h2", {}, title, el("span", { class: "ktw-count" }, list.length)), el("p", { class: "ktw-why" }, why),
-      list.length ? el("div", { class: "ktw-entry-list" }, list.map(entryRow)) : el("p", { class: "ktw-note" }, "nothing here"));
+      list.length ? el("div", { class: "ktw-entry-list" }, list.map(entryRow)) : el("p", { class: "ktw-note" }, tw("pages.queues.empty", "nothing here")));
     main.append(
-      el("h1", {}, "Queues"), el("p", { class: "ktw-sub" }, "What needs a person. The dashboard lists; it does not decide."),
-      section("Open questions", "Status: open — the entry's central question has no answer yet.", q.open),
-      section("Needs review", "Status: needs-review — a Revisit-when trigger fired and nobody re-checked yet.", q["needs-review"]),
-      section("Pending confirmation", "Written in an unattended session where a question would have been asked; never confirmed by anyone.", q["pending-confirmation"]),
-      section("Unknown evidence", "Where the claim came from could not be traced — on any entry still in force, an open question included: Evidence and Status are separate axes. A maintainer can often settle these in a minute.", q.unknown),
-      section("Revisit-when triggers", "The conditions on record. Whether one has fired is a human judgement; the dashboard cannot tell.", q.revisit),
+      el("h1", {}, tw("pages.queues.heading", "Queues")), el("p", { class: "ktw-sub" }, tw("pages.queues.sub", "What needs a person. The dashboard lists; it does not decide.")),
+      section(tw("pages.queues.open", "Open questions"), tw("pages.queues.openWhy", "Status: open — the entry's central question has no answer yet."), q.open),
+      section(tw("pages.queues.needsReview", "Needs review"), tw("pages.queues.needsReviewWhy", "Status: needs-review — a Revisit-when trigger fired and nobody re-checked yet."), q["needs-review"]),
+      section(tw("pages.queues.pending", "Pending confirmation"), tw("pages.queues.pendingWhy", "Written in an unattended session where a question would have been asked; never confirmed by anyone."), q["pending-confirmation"]),
+      section(tw("pages.queues.unknown", "Unknown evidence"), tw("pages.queues.unknownWhy", "Where the claim came from could not be traced — on any entry still in force, an open question included: Evidence and Status are separate axes. A maintainer can often settle these in a minute."), q.unknown),
+      section(tw("pages.queues.revisit", "Revisit-when triggers"), tw("pages.queues.revisitWhy", "The conditions on record. Whether one has fired is a human judgement; the dashboard cannot tell."), q.revisit),
     );
   }
   function viewAuthors(main) {
-    main.append(el("h1", {}, "Authors"), el("p", { class: "ktw-sub" }, "Git authors of the entries — who created, touched, or superseded what, in every project this page holds: this one, its family, the friends in the graph, the path. Git knows names, not who was driving."));
-    if (!scene.state.project.git?.available) return main.append(el("p", { class: "ktw-center" }, "No Git repository — nothing to attribute."));
+    main.append(el("h1", {}, tw("pages.authors.heading", "Authors")), el("p", { class: "ktw-sub" }, tw("pages.authors.sub", "Git authors of the entries — who created, touched, or superseded what, in every project this page holds: this one, its family, the friends in the graph, the path. Git knows names, not who was driving.")));
+    if (!scene.state.project.git?.available) return main.append(el("p", { class: "ktw-center" }, tw("pages.authors.noGit", "No Git repository — nothing to attribute.")));
     const projects = H.authorProjects();
     const sorted = (list) => sortAuthors(list, AUTHOR_SORT.key, AUTHOR_SORT.dir);
     const rows = sorted(mergeAuthors(projects.map((P) => ({ name: P.name, canonical: P.canonical, anonymized: P.anonymized, authors: P.state.authors || [] }))));
     const byName = Object.fromEntries(projects.map((P) => [P.name, P]));
-    const projPill = (per) => { const P = byName[per.project]; const t = `${per.project}: ${per.created} created · ${per.touched} touched · ${per.superseded} superseded${per.first ? ` · ${per.first} → ${per.last}` : ""}`; return P?.open ? el("a", { class: "ktw-pill ktw-proj-pill", href: P.open, title: t, onclick: (ev) => ev.stopPropagation() }, per.project) : el("span", { class: "ktw-pill ktw-proj-pill", title: t }, per.project); };
+    const projPill = (per) => { const P = byName[per.project]; const t = per.first ? tw("pages.authors.perProjectSpan", "{project}: {created} created · {touched} touched · {superseded} superseded · {first} → {last}", per) : tw("pages.authors.perProject", "{project}: {created} created · {touched} touched · {superseded} superseded", per); return P?.open ? el("a", { class: "ktw-pill ktw-proj-pill", href: P.open, title: t, onclick: (ev) => ev.stopPropagation() }, per.project) : el("span", { class: "ktw-pill ktw-proj-pill", title: t }, per.project); };
     const sortBy = (key) => { AUTHOR_SORT.dir = AUTHOR_SORT.key === key ? (AUTHOR_SORT.dir === "asc" ? "desc" : "asc") : AUTHOR_SORTS[key]; AUTHOR_SORT.key = key; H.render(); };
-    const th = (h) => {
-      const key = h.toLowerCase();
+    // a column: its name, and the title of the button that sorts by it (the columns AUTHOR_SORTS names)
+    const COLUMNS = {
+      author: [tw("pages.authors.col.author", "Author"), tw("pages.authors.sortBy.author", "Sort by author")],
+      projects: [tw("pages.authors.col.projects", "Projects"), tw("pages.authors.sortBy.projects", "Sort by projects")],
+      created: [tw("pages.authors.col.created", "Created"), tw("pages.authors.sortBy.created", "Sort by created")],
+      touched: [tw("pages.authors.col.touched", "Touched"), tw("pages.authors.sortBy.touched", "Sort by touched")],
+      superseded: [tw("pages.authors.col.superseded", "Superseded"), tw("pages.authors.sortBy.superseded", "Sort by superseded")],
+      evidence: [tw("pages.authors.col.evidence", "Evidence of created entries")],
+      first: [tw("pages.authors.col.first", "First"), tw("pages.authors.sortBy.first", "Sort by first")],
+      last: [tw("pages.authors.col.last", "Last"), tw("pages.authors.sortBy.last", "Sort by last")],
+    };
+    const th = (key) => {
+      const [h, sortTitle] = COLUMNS[key];
       if (!(key in AUTHOR_SORTS)) return el("th", {}, h);
       const on = AUTHOR_SORT.key === key;
       return el("th", { class: "ktw-sortable", "aria-sort": on ? (AUTHOR_SORT.dir === "asc" ? "ascending" : "descending") : "none" },
-        el("button", { type: "button", class: "ktw-sort-btn", title: `Sort by ${key}`, onclick: () => sortBy(key) }, h, el("span", { class: "ktw-sort-mark" }, on ? (AUTHOR_SORT.dir === "asc" ? " ▲" : " ▼") : "")));
+        el("button", { type: "button", class: "ktw-sort-btn", title: sortTitle, onclick: () => sortBy(key) }, h, el("span", { class: "ktw-sort-mark" }, on ? (AUTHOR_SORT.dir === "asc" ? " ▲" : " ▼") : "")));
     };
     const head = (cols) => el("thead", {}, el("tr", {}, cols.map(th)));
     const numCells = (a) => [el("td", {}, a.created), el("td", {}, a.touched), el("td", {}, a.superseded), el("td", {}, el("div", { style: "min-width:160px" }, stack(a.evidence, EV_ORDER))), el("td", { class: "ktw-mono" }, fmtDate(a.first)), el("td", { class: "ktw-mono" }, fmtDate(a.last))];
@@ -208,39 +224,39 @@ function forHost(H) {
     // what was counted, and the friends not loaded yet
     const waiting = H.friendsWaiting();
     const byRole = (role) => projects.filter((P) => P.role === role).map((P) => P.name);
-    main.append(el("p", { class: "ktw-note" }, `Counted: this project`, byRole("family").length ? ` · family: ${byRole("family").join(", ")}` : "", byRole("friend").length ? ` · friends: ${byRole("friend").join(", ")}` : "", byRole("path").length ? ` · path: ${byRole("path").join(", ")}` : "",
-      waiting.length ? [" · ", el("button", { type: "button", class: "ktw-link-btn", disabled: H.friendsLoading(), onclick: () => H.loadFriends(waiting) }, H.friendsLoading() ? "loading the friends…" : `load the ${plural(waiting.length, "friend")} not here yet`)] : null));
+    main.append(el("p", { class: "ktw-note" }, tw("pages.authors.counted", "Counted: this project"), byRole("family").length ? tw("pages.authors.countedFamily", " · family: {names}", { names: byRole("family").join(", ") }) : "", byRole("friend").length ? tw("pages.authors.countedFriends", " · friends: {names}", { names: byRole("friend").join(", ") }) : "", byRole("path").length ? tw("pages.authors.countedPath", " · path: {names}", { names: byRole("path").join(", ") }) : "",
+      waiting.length ? [" · ", el("button", { type: "button", class: "ktw-link-btn", disabled: H.friendsLoading(), onclick: () => H.loadFriends(waiting) }, H.friendsLoading() ? tw("pages.authors.friendsLoading", "loading the friends…") : tw("pages.authors.loadFriends", "load the {n:friend} not here yet", { n: waiting.length }))] : null));
     const many = projects.length > 1;
-    const all = el("table", { class: "ktw-t" }, head(["Author", ...(many ? ["Projects"] : []), "Created", "Touched", "Superseded", "Evidence of created entries", "First", "Last"]),
+    const all = el("table", { class: "ktw-t" }, head(["author", ...(many ? ["projects"] : []), "created", "touched", "superseded", "evidence", "first", "last"]),
       el("tbody", {}, rows.map((a) => { const P = byName[a.per[0].project]; const link = a.anonymized ? el("span", {}, a.label) : H.authorLink(a.name, authorCommitIn(a.name, P?.state), P?.state?.project); return rowOf(a, [el("td", {}, link), ...(many ? [el("td", {}, el("div", { class: "ktw-proj-pills" }, a.per.map(projPill)))] : [])]); })));
-    main.append(el("div", { class: "ktw-table-wrap" }, all), el("p", { class: "ktw-note", style: "margin-top:10px" }, "Click a name to open the author's profile on the host; click elsewhere in the row to filter every view to that author, again to clear. Click a column's name to sort by it, again to turn the order round.", many ? " A name that recurs across projects is one row with the sums; a name an export anonymized (author-1) says nothing across projects and stays a row per project." : ""));
+    main.append(el("div", { class: "ktw-table-wrap" }, all), el("p", { class: "ktw-note", style: "margin-top:10px" }, tw("pages.authors.howTo", "Click a name to open the author's profile on the host; click elsewhere in the row to filter every view to that author, again to clear. Click a column's name to sort by it, again to turn the order round."), many ? tw("pages.authors.howToMany", " A name that recurs across projects is one row with the sums; a name an export anonymized (author-1) says nothing across projects and stays a row per project.") : ""));
     if (many) {
-      main.append(el("h2", {}, "By project"));
+      main.append(el("h2", {}, tw("pages.authors.byProject", "By project")));
       for (const P of projects) {
         const prow = sorted(mergeAuthors([{ name: P.name, canonical: P.canonical, anonymized: P.anonymized, authors: P.state.authors || [] }]));
         const d = el("details", { class: "ktw-authors-project", open: P.role === "self" });
-        d.append(el("summary", {}, el("span", { class: "ktw-tt" }, P.name), el("span", { class: "ktw-pill" }, P.role === "self" ? "this project" : P.role), el("span", { class: "ktw-count" }, plural(prow.length, "author")), P.open && P.role !== "self" ? el("a", { class: "ktw-backlink", href: P.open, onclick: (ev) => ev.stopPropagation() }, "open ›") : null));
-        d.append(el("div", { class: "ktw-table-wrap" }, el("table", { class: "ktw-t" }, head(["Author", "Created", "Touched", "Superseded", "Evidence of created entries", "First", "Last"]),
+        d.append(el("summary", {}, el("span", { class: "ktw-tt" }, P.name), el("span", { class: "ktw-pill" }, P.role === "self" ? tw("pages.authors.thisProject", "this project") : authorRole(P.role)), el("span", { class: "ktw-count" }, tw("pages.authors.count", "{n:author}", { n: prow.length })), P.open && P.role !== "self" ? el("a", { class: "ktw-backlink", href: P.open, onclick: (ev) => ev.stopPropagation() }, tw("pages.open", "open ›")) : null));
+        d.append(el("div", { class: "ktw-table-wrap" }, el("table", { class: "ktw-t" }, head(["author", "created", "touched", "superseded", "evidence", "first", "last"]),
           el("tbody", {}, prow.map((a) => rowOf(a, el("td", {}, P.anonymized ? el("span", {}, a.name) : H.authorLink(a.name, authorCommitIn(a.name, P.state), P.state.project))))))));
         main.append(d);
       }
     }
-    if (scene.filter.author) main.append(el("h2", {}, `Entries created by ${scene.filter.author}`), el("div", { class: "ktw-entry-list" }, scene.state.entries.filter((e) => authorOf(e) === scene.filter.author).map(entryRow)));
+    if (scene.filter.author) main.append(el("h2", {}, tw("pages.authors.createdBy", "Entries created by {author}", { author: scene.filter.author })), el("div", { class: "ktw-entry-list" }, scene.state.entries.filter((e) => authorOf(e) === scene.filter.author).map(entryRow)));
   }
   // the topic and entry pages, an entry in another repository (#ref/…), the references, the details pane
   function viewTopic(main, file) {
     const t = topicOf(file);
-    if (!t) return main.append(el("p", { class: "ktw-center" }, `No topic ${file}`));
+    if (!t) return main.append(el("p", { class: "ktw-center" }, tw("pages.topic.none", "No topic {file}", { file })));
     const list = entriesOf(file);
     main.append(
-      el("div", { class: "ktw-crumbs" }, navLink({ href: { view: "overview" } }, "Overview"), " / ", t.file, copyLinkButton(H.shareUrl({ view: "topic", file: t.file }, t.project), "topic"), sourceLink(topicHostHref(t))),
+      el("div", { class: "ktw-crumbs" }, navLink({ href: { view: "overview" } }, tw("pages.crumbs.overview", "Overview")), " / ", t.file, copyLinkButton(H.shareUrl({ view: "topic", file: t.file }, t.project), "topic"), sourceLink(topicHostHref(t))),
       el("h1", {}, t.title),
       el("p", { class: "ktw-sub" }, t.index_line || "—"),
       el("div", { class: "ktw-grid2" },
         el("div", { class: "ktw-card" }, el("h3", {}, "Status"), bars(t.status, STATUS_ORDER)),
         el("div", { class: "ktw-card" }, el("h3", {}, "Evidence"), bars(t.evidence, EV_ORDER)),
       ),
-      el("h2", {}, "Entries"),
+      el("h2", {}, tw("pages.topic.entries", "Entries")),
       el("div", { class: "ktw-entry-list" }, list.map(entryRow)),
     );
     renderDetailsTopic(t);
@@ -248,23 +264,23 @@ function forHost(H) {
   async function viewEntryElsewhere(main, uuid) {
     if (H.published()) {
       // an Id this export does not carry: look through the family's published exports
-      main.append(el("p", { class: "ktw-center" }, `Looking for ${uuid} in the family's published exports…`));
+      main.append(el("p", { class: "ktw-center" }, tw("pages.lookup.family", "Looking for {uuid} in the family's published exports…", { uuid })));
       const t = await family.publicTree();
       for (const g of t.groups) {
         if (g.member.role === "self") continue;
         if (g.state.entries?.some((e) => e.uuid === uuid)) { nav.go({ view: "entry", uuid, centre: { mode: "public", canonical: g.member.canonical, root: g.member.root || "" } }); return; }
       }
-      return setKids(main, el("p", { class: "ktw-center" }, `No entry with Id ${uuid} in this export, nor in the family's published exports.`));
+      return setKids(main, el("p", { class: "ktw-center" }, tw("pages.lookup.familyNone", "No entry with Id {uuid} in this export, nor in the family's published exports.", { uuid })));
     }
     // an Id this project does not carry: ask the server which known project does
-    main.append(el("p", { class: "ktw-center" }, `Looking for ${uuid} in the other projects known here…`));
+    main.append(el("p", { class: "ktw-center" }, tw("pages.lookup.live", "Looking for {uuid} in the other projects known here…", { uuid })));
     try {
       const P = H.provider(); if (!P.resolveEntry) throw new Error();
       const hit = await P.resolveEntry(uuid);
       if (hit.error) throw new Error(hit.error);
       if (hit.project === (H.project() || null)) return;
       nav.go({ view: "entry", uuid, centre: { mode: "live", project: hit.project } });
-    } catch { setKids(main, el("p", { class: "ktw-center" }, `No entry with Id ${uuid} in this project, nor in any other project known here. A family member that is not checked out can be cloned or cached — see Family.`)); }
+    } catch { setKids(main, el("p", { class: "ktw-center" }, tw("pages.lookup.liveNone", "No entry with Id {uuid} in this project, nor in any other project known here. A family member that is not checked out can be cloned or cached — see Family.", { uuid }))); }
   }
   // #ref/<canonical>/<uuid>: an entry in another repository, family or not — a
   // reference row's link before it resolved, or a link someone shared. Resolved
@@ -273,10 +289,10 @@ function forHost(H) {
   async function viewRemoteEntry(main, canonical, uuid) {
     const here = byUuid()[uuid];
     if (here) { nav.go(entryRoute(here), { replace: true }); return H.render(); }
-    main.append(el("p", { class: "ktw-center" }, `Looking for ${uuid} in ${repoLabel(canonical)}…`));
+    main.append(el("p", { class: "ktw-center" }, tw("pages.lookup.remote", "Looking for {uuid} in {repo}…", { uuid, repo: repoLabel(canonical) })));
     const r = await resolveRemoteRef(canonical, uuid);
     if (r.entry) { nav.go(r.route); return; }
-    setKids(main, el("div", { class: "ktw-center" }, el("p", {}, `Cannot open ${uuid} in ${repoLabel(canonical)}: ${r.error}.`),
+    setKids(main, el("div", { class: "ktw-center" }, el("p", {}, tw("pages.lookup.remoteNone", "Cannot open {uuid} in {repo}: {error}.", { uuid, repo: repoLabel(canonical), error: r.error })),
       el("p", { class: "ktw-note" }, el("a", { href: canonical, target: "_blank", rel: "noopener" }, canonical.replace(/^https:\/\//, "")))));
   }
   // A reference into another repository, resolved when it is shown: the entry
@@ -290,7 +306,7 @@ function forHost(H) {
     if (!REMOTE_REFS[key]) REMOTE_REFS[key] = (async () => {
       const P = H.provider();
       const known = P.resolveEntry ? await P.resolveEntry(uuid) : null; // the rules are resolveSee's (ktw-core.js)
-      const r = resolveSee(uuid, { known, published: known && !known.error ? null : await family.publicState(canonical, "") });
+      const r = resolveSee(uuid, { known, published: known && !known.error ? null : await family.publicState(canonical, ""), tw });
       if (r.error) return { error: r.error };
       return { entry: r.entry, route: { view: "entry", uuid, centre: r.via === "live" ? { mode: "live", project: r.project } : { mode: "public", canonical, root: "" } } };
     })().catch((err) => ({ error: err?.message || String(err) })); // a host's lookup that throws is a reference not resolved
@@ -298,16 +314,16 @@ function forHost(H) {
   }
   function remoteRefLine(ref, label) {
     const lead = () => (label ? el("b", {}, label) : null);
-    const date = ref.date ? el("span", { class: "ktw-note" }, ` · as of ${ref.date}`) : null;
-    const repo = () => el("a", { class: "ktw-note", href: ref.remote, target: "_blank", rel: "noopener", title: "the repository on its host" }, " · repository");
+    const date = ref.date ? el("span", { class: "ktw-note" }, tw("pages.ref.asOf", " · as of {date}", { date: ref.date })) : null;
+    const repo = () => el("a", { class: "ktw-note", href: ref.remote, target: "_blank", rel: "noopener", title: tw("pages.ref.repositoryTitle", "the repository on its host") }, tw("pages.ref.repository", " · repository"));
     const row = el("div", { class: "ktw-ref ktw-remote" }, lead(), navLink({ href: { view: "ref", canonical: ref.remote, uuid: ref.uuid } }, hostMark(ref.remote), repoLabel(ref.remote)),
-      el("span", { class: "ktw-note ktw-mono" }, ` · ${ref.uuid}`), el("span", { class: "ktw-note" }, " · resolving…"), date, repo());
+      el("span", { class: "ktw-note ktw-mono" }, ` · ${ref.uuid}`), el("span", { class: "ktw-note" }, tw("pages.ref.resolving", " · resolving…")), date, repo());
     resolveRemoteRef(ref.remote, ref.uuid).then((r) => {
       if (r.entry) {
         const e = r.entry; const state = [e.status, e.evidence].filter(Boolean).join(" · ");
         setKids(row, lead(), navLink({ href: r.route }, e.title || ref.uuid), el("span", { class: "ktw-note" }, " · ", hostMark(ref.remote), `${repoLabel(ref.remote)}${state ? " · " + state : ""}`), date, repo());
       } else {
-        setKids(row, lead(), el("a", { href: ref.remote, target: "_blank", rel: "noopener" }, hostMark(ref.remote), repoLabel(ref.remote)), el("span", { class: "ktw-note ktw-mono" }, ` · ${ref.uuid}`), el("span", { class: "ktw-note ktw-warn" }, ` · not resolved: ${r.error}`), date);
+        setKids(row, lead(), el("a", { href: ref.remote, target: "_blank", rel: "noopener" }, hostMark(ref.remote), repoLabel(ref.remote)), el("span", { class: "ktw-note ktw-mono" }, ` · ${ref.uuid}`), el("span", { class: "ktw-note ktw-warn" }, tw("pages.ref.notResolved", " · not resolved: {error}", { error: r.error })), date);
       }
     });
     return row;
@@ -315,11 +331,11 @@ function forHost(H) {
   function refLine(ref, label) {
     // one See / Superseded by reference as a row: local -> the entry here; remote -> the canonical, and the Id to find it there
     const target = ref.uuid ? byUuid()[ref.uuid] : null;
-    const date = ref.date ? el("span", { class: "ktw-note" }, ` · as of ${ref.date}`) : null;
+    const date = ref.date ? el("span", { class: "ktw-note" }, tw("pages.ref.asOf", " · as of {date}", { date: ref.date })) : null;
     if (target) return el("div", { class: "ktw-ref" }, label ? el("b", {}, label) : null, navLink({ href: entryRoute(target) }, target.title), el("span", { class: "ktw-note" }, ` · ${topicOf(target.file)?.title || target.file}`), date);
     if (ref.remote && ref.uuid) return remoteRefLine(ref, label);
     if (ref.remote) return el("div", { class: "ktw-ref" }, label ? el("b", {}, label) : null, el("a", { href: ref.remote, target: "_blank", rel: "noopener" }, ref.remote.replace(/^https:\/\//, "")), date);
-    if (ref.file) return el("div", { class: "ktw-ref" }, label ? el("b", {}, label) : null, topicOf(ref.file) ? navLink({ href: { view: "topic", file: ref.file } }, ref.locator) : ref.locator, el("span", { class: "ktw-note ktw-mono" }, ` · ${ref.uuid || ""}`), el("span", { class: "ktw-note ktw-warn" }, " · Id not found here — the locator may be stale"), date);
+    if (ref.file) return el("div", { class: "ktw-ref" }, label ? el("b", {}, label) : null, topicOf(ref.file) ? navLink({ href: { view: "topic", file: ref.file } }, ref.locator) : ref.locator, el("span", { class: "ktw-note ktw-mono" }, ` · ${ref.uuid || ""}`), el("span", { class: "ktw-note ktw-warn" }, tw("pages.ref.stale", " · Id not found here — the locator may be stale")), date);
     return el("div", { class: "ktw-ref" }, label ? el("b", {}, label) : null, ref.text || "");
   }
   const shareUrlOf = (e) => H.shareUrl(entryRoute(e), e.project); // the host knows its own absolute address
@@ -330,21 +346,21 @@ function forHost(H) {
   const entryHostHref = (e) => { const P = hostProjectOf(e); return hostFileLink(canonicalOf(P), P.git?.branch, hostContextDir(P), e.localFile || e.file, hostAnchor(e.title)); }; // GitHub's anchor, not the entry id
   const topicHostHref = (t) => { const P = hostProjectOf(t); return hostFileLink(canonicalOf(P), P.git?.branch, hostContextDir(P), t.localFile || t.file, null); };
   // "open source": the Markdown file on the host, beside the copy-link button; nothing without a canonical
-  const sourceLink = (href) => href ? extLink(href, "open source", "ktw-share-btn ktw-source-link") : null;
+  const sourceLink = (href) => href ? extLink(href, tw("pages.openSource", "open source"), "ktw-share-btn ktw-source-link") : null;
   function shareButton(e) { return copyLinkButton(shareUrlOf(e), "entry"); }
   function viewEntry(main, id) {
     const e = entryOf(id);
     if (!e && isUuid(id) && (H.live() || (H.published() && canonicalOf(scene.state.project)))) return viewEntryElsewhere(main, id);
-    if (!e) return main.append(el("p", { class: "ktw-center" }, "No such entry"));
+    if (!e) return main.append(el("p", { class: "ktw-center" }, tw("pages.entry.none", "No such entry")));
     if (nav.current().uuid !== entryRoute(e).uuid) nav.go(entryRoute(e), { replace: true }); // an old file#anchor link shows the Id address from here on
     const list = entriesOf(e.file); const idx = list.indexOf(e);
     const t = topicOf(e.file);
     PROJ = e.project || null;
     const r = el("div", { class: `ktw-reader ktw-${e.status}` },
-      el("div", { class: "ktw-crumbs" }, navLink({ href: { view: "overview" } }, "Overview"), " / ", navLink({ href: { view: "topic", file: e.file } }, t?.title || e.file), ` / line ${e.line}`, shareButton(e), sourceLink(entryHostHref(e))),
+      el("div", { class: "ktw-crumbs" }, navLink({ href: { view: "overview" } }, tw("pages.crumbs.overview", "Overview")), " / ", navLink({ href: { view: "topic", file: e.file } }, t?.title || e.file), tw("pages.crumbs.line", " / line {line}", { line: e.line }), shareButton(e), sourceLink(entryHostHref(e))),
       el("h1", {}, inline(e.title)),
       el("div", { class: "ktw-fields" }, ...entryPills(e), e.source ? el("span", { class: "ktw-pill" }, labelled("Source: ", e.source)) : null, e.verification ? el("span", { class: "ktw-pill" }, labelled("Verification: ", e.verification.split(/\s[—-]\s/)[0])) : null),
-      el("div", { class: "ktw-body" }, renderMarkdown(e.body.text || "_(no body)_")),
+      el("div", { class: "ktw-body" }, renderMarkdown(e.body.text || tw("pages.entry.noBody", "_(no body)_"))),
       e.revisit_when ? el("div", { class: "ktw-body" }, el("div", { class: "ktw-label" }, el("b", {}, "Revisit when"), el("p", {}, inline(e.revisit_when)))) : null,
       refsBox(e),
       el("div", { class: "ktw-pager" },
@@ -366,12 +382,12 @@ function forHost(H) {
     const sup = supersedersOf(e), seen = seenFrom(e, scene.state.entries);
     const box = el("div", { class: "ktw-body ktw-refs-box" },
       e.see?.length ? [el("h3", {}, "See"), ...e.see.map((r) => refLine(r))] : null,
-      e.superseded_by ? [el("h3", {}, "Superseded by"), (() => { const sb = parseSupersededBy(e.superseded_by); return sb.none != null ? el("div", { class: "ktw-ref" }, el("i", {}, "none"), el("span", { class: "ktw-note" }, ` — ${sb.none}`)) : refLine(sb); })()] : null,
-      back("Supersedes", sup.map(localRow)), back("Referenced by (See)", seen.map(localRow)));
+      e.superseded_by ? [el("h3", {}, "Superseded by"), (() => { const sb = parseSupersededBy(e.superseded_by); return sb.none != null ? el("div", { class: "ktw-ref" }, el("i", {}, tw("pages.refs.none", "none")), el("span", { class: "ktw-note" }, ` — ${sb.none}`)) : refLine(sb); })()] : null,
+      back(tw("pages.refs.supersedes", "Supersedes"), sup.map(localRow)), back(tw("pages.refs.seenFrom", "Referenced by (See)"), seen.map(localRow)));
     if (scene.state.merged) return box.childNodes.length ? box : null; // the merged family holds every reference
     const family = e.uuid && search.canFamily();
     if (family && scene.scope === "family" && !scene.state.merged) {
-      const more = el("div", {}, el("p", { class: "ktw-note" }, "Looking for references from the rest of the family…")); box.append(more);
+      const more = el("div", {}, el("p", { class: "ktw-note" }, tw("pages.refs.looking", "Looking for references from the rest of the family…"))); box.append(more);
       search.pool("family").then((pool) => {
         const sups = [], sees = [];
         for (const g of pool.groups) {
@@ -379,19 +395,19 @@ function forHost(H) {
           const row = (x) => el("div", { class: "ktw-ref" }, el("a", { href: g.href(x) }, x.title), el("span", { class: "ktw-note" }, ` · ${g.member.name} · ${topicTitle(g.state, x.file)}`));
           for (const x of g.state.entries || []) { if (x.superseded_by && parseSupersededBy(x.superseded_by)?.uuid === e.uuid) sups.push(row(x)); if ((x.see || []).some((r) => r?.uuid === e.uuid)) sees.push(row(x)); }
         }
-        setKids(more, back("Supersedes, elsewhere in the family", sups), back("Referenced by (See), elsewhere in the family", sees),
-          pool.missing.length ? el("p", { class: "ktw-note" }, `${plural(pool.missing.length, "family member")} not available here — not looked through.`) : null);
-        if (!sups.length && !sees.length && !pool.missing.length) more.replaceChildren(el("p", { class: "ktw-note" }, "No references to this entry from the rest of the family."));
+        setKids(more, back(tw("pages.refs.supersedesFamily", "Supersedes, elsewhere in the family"), sups), back(tw("pages.refs.seenFromFamily", "Referenced by (See), elsewhere in the family"), sees),
+          pool.missing.length ? el("p", { class: "ktw-note" }, tw("pages.refs.familyMissing", "{n:family member} not available here — not looked through.", { n: pool.missing.length })) : null);
+        if (!sups.length && !sees.length && !pool.missing.length) more.replaceChildren(el("p", { class: "ktw-note" }, tw("pages.refs.familyNone", "No references to this entry from the rest of the family.")));
       });
-    } else if (family) box.append(el("p", { class: "ktw-note" }, "References from the rest of the family show with the family scope — the switch next to the project menu."));
+    } else if (family) box.append(el("p", { class: "ktw-note" }, tw("pages.refs.familyScope", "References from the rest of the family show with the family scope — the switch next to the project menu.")));
     return box.childNodes.length ? box : null;
   }
 
   function renderDetailsTopic(t) {
     const d = H.details(); d.replaceChildren();
-    d.append(el("h3", {}, "Topic"), el("div", { class: "ktw-kv" }, el("span", { class: "ktw-k" }, "file"), el("span", { class: "ktw-v ktw-mono" }, t.file), el("span", { class: "ktw-k" }, "entries"), el("span", { class: "ktw-v" }, t.entries)));
-    d.append(el("h3", {}, `References out (${t.refs_out.length})`), ...(t.refs_out.length ? t.refs_out.map((f) => navLink({ class: "ktw-backlink", href: { view: "topic", file: f } }, topicOf(f)?.title || f)) : [el("p", { class: "ktw-empty" }, "none")]));
-    d.append(el("h3", {}, `Referenced by (${t.refs_in.length})`), ...(t.refs_in.length ? t.refs_in.map((f) => navLink({ class: "ktw-backlink", href: { view: "topic", file: f } }, topicOf(f)?.title || f)) : [el("p", { class: "ktw-empty" }, "none")]));
+    d.append(el("h3", {}, tw("pages.details.topic", "Topic")), el("div", { class: "ktw-kv" }, el("span", { class: "ktw-k" }, tw("pages.details.file", "file")), el("span", { class: "ktw-v ktw-mono" }, t.file), el("span", { class: "ktw-k" }, tw("pages.details.entries", "entries")), el("span", { class: "ktw-v" }, t.entries)));
+    d.append(el("h3", {}, tw("pages.details.refsOut", "References out ({n})", { n: t.refs_out.length })), ...(t.refs_out.length ? t.refs_out.map((f) => navLink({ class: "ktw-backlink", href: { view: "topic", file: f } }, topicOf(f)?.title || f)) : [el("p", { class: "ktw-empty" }, tw("pages.details.none", "none"))]));
+    d.append(el("h3", {}, tw("pages.details.refsIn", "Referenced by ({n})", { n: t.refs_in.length })), ...(t.refs_in.length ? t.refs_in.map((f) => navLink({ class: "ktw-backlink", href: { view: "topic", file: f } }, topicOf(f)?.title || f)) : [el("p", { class: "ktw-empty" }, tw("pages.details.none", "none"))]));
     H.miniGraph(d, { topic: t });
   }
   function renderDetailsEntry(e) {
@@ -399,10 +415,10 @@ function forHost(H) {
     const g = e.git;
     const P = hostProjectOf(e); // a merged member's entry lives in its own repository
     const hostHref = entryHostHref(e);
-    d.append(el("h3", {}, "Entry"), el("div", { class: "ktw-kv" },
-      e.uuid ? [el("span", { class: "ktw-k" }, "Id"), el("span", { class: "ktw-v ktw-mono", title: "the entry's address — what See and Superseded by lines resolve to" }, e.uuid)] : null,
-      e.project ? [el("span", { class: "ktw-k" }, "project"), el("span", { class: "ktw-v" }, e.origin?.href ? el("a", { href: H.memberLink(e.origin.member, "#overview") }, e.project) : e.project)] : null,
-      el("span", { class: "ktw-k" }, "at"), el("span", { class: "ktw-v ktw-mono" }, hostHref ? el("a", { class: "ktw-gh", href: hostHref, target: "_blank", rel: "noopener", title: "open on the host" }, e.id) : e.id),
+    d.append(el("h3", {}, tw("pages.details.entry", "Entry")), el("div", { class: "ktw-kv" },
+      e.uuid ? [el("span", { class: "ktw-k" }, "Id"), el("span", { class: "ktw-v ktw-mono", title: tw("pages.details.idTitle", "the entry's address — what See and Superseded by lines resolve to") }, e.uuid)] : null,
+      e.project ? [el("span", { class: "ktw-k" }, tw("pages.details.project", "project")), el("span", { class: "ktw-v" }, e.origin?.href ? el("a", { href: H.memberLink(e.origin.member, "#overview") }, e.project) : e.project)] : null,
+      el("span", { class: "ktw-k" }, tw("pages.details.at", "at")), el("span", { class: "ktw-v ktw-mono" }, hostHref ? el("a", { class: "ktw-gh", href: hostHref, target: "_blank", rel: "noopener", title: tw("pages.details.openOnHost", "open on the host") }, e.id) : e.id),
       el("span", { class: "ktw-k" }, "type"), el("span", { class: "ktw-v" }, (e.type || []).join(", ") || "—"),
       el("span", { class: "ktw-k" }, "status"), el("span", { class: "ktw-v" }, statusPill(e.status)),
       el("span", { class: "ktw-k" }, "evidence"), el("span", { class: "ktw-v" }, evPill(e.evidence)),
@@ -410,26 +426,26 @@ function forHost(H) {
       e.verification ? [el("span", { class: "ktw-k" }, "verification"), el("span", { class: "ktw-v" }, inline(e.verification))] : null,
       e.revisit_when ? [el("span", { class: "ktw-k" }, "revisit when"), el("span", { class: "ktw-v" }, inline(e.revisit_when))] : null,
     ));
-    d.append(el("h3", {}, "Git"));
-    if (!g) d.append(el("p", { class: "ktw-empty" }, scene.state.project.git?.available ? "not in Git yet" : "no repository"));
+    d.append(el("h3", {}, tw("pages.details.git", "Git")));
+    if (!g) d.append(el("p", { class: "ktw-empty" }, scene.state.project.git?.available ? tw("pages.details.notInGit", "not in Git yet") : tw("pages.details.noRepository", "no repository")));
     else {
       const who = (c) => c ? [H.authorLink(c.author, c.commit, P), `${c.date ? " · " + c.date : ""}${c.commit ? " · " : ""}`, c.commit ? el("code", {}, c.commit) : null] : ["—"];
       d.append(el("div", { class: "ktw-kv" },
-        el("span", { class: "ktw-k" }, "created"), el("span", { class: "ktw-v" }, ...who(g.created)),
-        el("span", { class: "ktw-k" }, "last touched"), el("span", { class: "ktw-v" }, ...who(g.last_touched))));
-      if (g.status_history?.length) d.append(el("h3", {}, "Status history"), el("ul", { class: "ktw-hist" }, g.status_history.map((h) => el("li", { class: `ktw-${h.status}` }, `${h.status}`, el("div", { class: "ktw-d" }, H.authorLink(h.author, h.commit, P), ` · ${h.date} · ${h.commit}`)))));
+        el("span", { class: "ktw-k" }, tw("pages.details.created", "created")), el("span", { class: "ktw-v" }, ...who(g.created)),
+        el("span", { class: "ktw-k" }, tw("pages.details.lastTouched", "last touched")), el("span", { class: "ktw-v" }, ...who(g.last_touched))));
+      if (g.status_history?.length) d.append(el("h3", {}, tw("pages.details.statusHistory", "Status history")), el("ul", { class: "ktw-hist" }, g.status_history.map((h) => el("li", { class: `ktw-${h.status}` }, `${h.status}`, el("div", { class: "ktw-d" }, H.authorLink(h.author, h.commit, P), ` · ${h.date} · ${h.commit}`)))));
     }
     const back = scene.state.entries.filter((x) => x.id !== e.id && x.refs.includes(e.file));
-    d.append(el("h3", {}, `Backlinks (${back.length})`), ...(back.length ? back.map((x) => navLink({ class: "ktw-backlink", href: entryRoute(x) }, x.title, el("div", { class: "ktw-note" }, topicOf(x.file)?.title || x.file))) : [el("p", { class: "ktw-empty" }, `nothing references ${e.file}`)]));
+    d.append(el("h3", {}, tw("pages.details.backlinks", "Backlinks ({n})", { n: back.length })), ...(back.length ? back.map((x) => navLink({ class: "ktw-backlink", href: entryRoute(x) }, x.title, el("div", { class: "ktw-note" }, topicOf(x.file)?.title || x.file))) : [el("p", { class: "ktw-empty" }, tw("pages.details.noBacklinks", "nothing references {file}", { file: e.file }))]));
     // the thoughts this entry is a step of — in the graph of the scope, friends and path included
     const mine = H.entryThoughts(e);
     const resting = new Set(); for (const { t, i } of mine) if (t.ins.shaky.some((x) => x.i === i)) for (const j of t.steps.slice(i + 1)) resting.add(j);
-    if (resting.size) d.append(el("h3", {}, `Linked after this (${resting.size})`), el("p", { class: "ktw-note" }, `This entry is in question (${e.status}); these later entries are linked after it — check whether they depend on it.`), ...[...resting].map((n) => el("a", { class: "ktw-backlink", href: n.href }, n.label, el("div", { class: "ktw-note" }, H.thoughts.projOf(n)))));
-    if (mine.length) d.append(el("h3", {}, `In thoughts (${mine.length})`), ...mine.map(({ t, i }) => navLink({ class: "ktw-backlink", href: H.thoughts.thoughtRoute(t), title: t.steps.map((n) => n.label).join("\n→ ") },
+    if (resting.size) d.append(el("h3", {}, tw("pages.details.linkedAfter", "Linked after this ({n})", { n: resting.size })), el("p", { class: "ktw-note" }, tw("pages.details.linkedAfterWhy", "This entry is in question ({status}); these later entries are linked after it — check whether they depend on it.", { status: e.status })), ...[...resting].map((n) => el("a", { class: "ktw-backlink", href: n.href }, n.label, el("div", { class: "ktw-note" }, H.thoughts.projOf(n)))));
+    if (mine.length) d.append(el("h3", {}, tw("pages.details.inThoughts", "In thoughts ({n})", { n: mine.length })), ...mine.map(({ t, i }) => navLink({ class: "ktw-backlink", href: H.thoughts.thoughtRoute(t), title: t.steps.map((n) => n.label).join("\n→ ") },
       `${H.thoughts.shortLabel(t.steps[0])} → ${H.thoughts.shortLabel(t.steps[t.steps.length - 1])}`,
-      el("div", { class: "ktw-note" }, `step ${i + 1} of ${t.steps.length}${t.evolution ? " · evolution" : ""}${t.ends.length ? " · continues ↗" : ""}${t.ins.weakOrigin ? ` · starts ${t.ins.weakOrigin}` : ""}${t.ins.affected.includes(i) ? " · after a step in question" : ""}`))));
-    if (e.refs.length) d.append(el("h3", {}, "References"), ...e.refs.map((f) => navLink({ class: "ktw-backlink", href: { view: "topic", file: f } }, topicOf(f)?.title || f)));
-    if (e.findings.length) d.append(el("h3", {}, "Linter"), ...e.findings.map((f) => el("div", { class: "ktw-finding" }, pill(f.code, `ktw-sev-${f.severity}`), ` line ${f.line}: ${f.message}`)));
+      el("div", { class: "ktw-note" }, tw("pages.details.step", "step {i} of {n}", { i: i + 1, n: t.steps.length }) + (t.evolution ? tw("pages.details.evolution", " · evolution") : "") + (t.ends.length ? tw("pages.details.continues", " · continues ↗") : "") + (t.ins.weakOrigin ? tw("pages.details.startsWeak", " · starts {evidence}", { evidence: t.ins.weakOrigin }) : "") + (t.ins.affected.includes(i) ? tw("pages.details.afterShaky", " · after a step in question") : "")))));
+    if (e.refs.length) d.append(el("h3", {}, tw("pages.details.references", "References")), ...e.refs.map((f) => navLink({ class: "ktw-backlink", href: { view: "topic", file: f } }, topicOf(f)?.title || f)));
+    if (e.findings.length) d.append(el("h3", {}, tw("pages.details.linter", "Linter")), ...e.findings.map((f) => el("div", { class: "ktw-finding" }, pill(f.code, `ktw-sev-${f.severity}`), tw("pages.details.finding", " line {line}: {message}", f))));
     H.miniGraph(H.details(), { entry: e });
   }
   const pages = { entryRow, viewOverview, viewQueues, viewAuthors, viewTopic, viewEntry, viewRemoteEntry };

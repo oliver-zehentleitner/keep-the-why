@@ -9,12 +9,16 @@
    listed in ktw-views.json, tested through the page (snapshot.mjs). */
 (function (root) {
 "use strict";
-const { canonicalOf, resolveLocation, familyRank, familyOrder, friendsOf, fkey, repoLabel, kindLabel, plural, entryRefs } = root.KeepTheWhy.core;
-const { el, setKids, hostMark } = root.KeepTheWhy.ui;
+const { canonicalOf, resolveLocation, familyRank, familyOrder, friendsOf, fkey, repoLabel, kindLabel, entryRefs } = root.KeepTheWhy.core;
+const { el, setKids, hostMark, words: wordsOf, roleWord } = root.KeepTheWhy.ui;
 
-// One family per page: create({ scene, nav, provider, host }) — provider() returns the methods the current mode
-// can answer (the dashboard's provider), host the two questions above.
-function create({ scene, nav, provider, host }) {
+// One family per page: create({ scene, nav, provider, host, words }) — provider() returns the methods the current
+// mode can answer (the dashboard's provider), host the two questions above, words the host's hook for the UI text
+// (ktw-ui.js words), the reasons a member did not load included.
+function create({ scene, nav, provider, host, words }) {
+const tw = wordsOf(words);
+// how a member is available (the live server's family: cache, repository, public, none), in the host's words
+const kindWord = (k) => kindLabel(k, tw);
 const LIVE = () => host.mode() === "live";
 const PUBLISHED = () => host.mode() === "public" || host.mode() === "export";
 const entryRoute = (e) => ({ view: "entry", uuid: e.uuid || e.id });
@@ -26,9 +30,9 @@ const liveHref = (project, route) => nav.href({ ...route, centre: { mode: "live"
 // the page's caches over the provider: one request per project, however many ask at once
 // exportState and bodies are optional (docs/dashboard-views.md): without one, the answer says so, and what needs it
 // hides or shows that reason. A host's promise that rejects is an answer with an error too: nothing here throws.
-const NO_EXPORTS = "published exports are not available on this page";
-const NO_BODIES = "entry texts are not available on this page";
-const NOT_FILLED = "the host answered without the entry texts";
+const NO_EXPORTS = tw("family.why.noExports", "published exports are not available on this page");
+const NO_BODIES = tw("family.why.noBodies", "entry texts are not available on this page");
+const NOT_FILLED = tw("family.why.notFilled", "the host answered without the entry texts");
 const canExports = () => typeof provider().exportState === "function";
 const canBodies = () => typeof provider().bodies === "function";
 const failed = (err, what) => (err && err.message) || String(err || what);
@@ -36,7 +40,7 @@ const PUBLIC_STATES = {}; // `${canonical}|${root}` -> Promise<{state, url} | {e
 function publicState(canonical, root = "") {
   const key = `${canonical}|${root}`;
   return (PUBLIC_STATES[key] ||= canExports()
-    ? Promise.resolve().then(() => provider().exportState(canonical, root)).catch((err) => ({ error: failed(err, "could not read the published export"), canonical, root }))
+    ? Promise.resolve().then(() => provider().exportState(canonical, root)).catch((err) => ({ error: failed(err, tw("family.why.exportFailed", "could not read the published export")), canonical, root }))
     : Promise.resolve({ error: NO_EXPORTS, canonical, root }));
 }
 // a lean state's entry texts, filled in where the provider can; else state.bodiesError says why they are missing.
@@ -49,7 +53,7 @@ function bodies(state) {
   if (!canBodies()) { if (lean && !state.bodiesError) state.bodiesError = NO_BODIES; return Promise.resolve(state); }
   const mark = (why) => { if (lean && !state.bodiesLoaded && !state.bodiesError) state.bodiesError = why; };
   return Promise.resolve().then(() => provider().bodies(state))
-    .then((r) => { mark(r?.error ? String(r.error) : NOT_FILLED); return r?.state || state; }, (err) => { mark(failed(err, "could not fetch the bodies")); return state; });
+    .then((r) => { mark(r?.error ? String(r.error) : NOT_FILLED); return r?.state || state; }, (err) => { mark(failed(err, tw("family.why.bodiesFailed", "could not fetch the bodies"))); return state; });
 }
 
 // What a search runs over: this project, or every member of its tree — the
@@ -67,7 +71,7 @@ function memberState(key) {
   const c = MEMBER_STATES[key];
   if (c && Date.now() - c.at < 30000) return c.p;
   const P = provider();
-  const p = P.memberState ? P.memberState(key) : Promise.resolve({ error: "a member's state needs the live server" });
+  const p = P.memberState ? P.memberState(key) : Promise.resolve({ error: tw("family.why.needsLive", "a member's state needs the live server") });
   MEMBER_STATES[key] = { at: Date.now(), p };
   return p;
 }
@@ -122,7 +126,7 @@ async function pool(self) {
   if (PUBLISHED()) return publicTree();
   if (!LIVE()) return { groups: [self], missing: [] };
   const others = [...(await tree() || [])].filter((m) => m.role !== "self").sort((a, b) => familyRank(a) - familyRank(b));
-  const results = await Promise.all(others.map((m) => m.key ? memberState(m.key) : { error: m.available === "none" ? "not checked out or cached on this machine" : "location unknown" }));
+  const results = await Promise.all(others.map((m) => m.key ? memberState(m.key) : { error: m.available === "none" ? tw("family.why.notHere", "not checked out or cached on this machine") : tw("family.why.noLocation", "location unknown") }));
   const groups = [self]; const missing = [];
   others.forEach((m, i) => { const r = results[i]; if (r.state) groups.push({ member: m, state: r.state, href: (e) => liveHref(m.key, entryRoute(e)) }); else missing.push({ member: m, reason: r.error }); });
   return { groups, missing };
@@ -217,7 +221,7 @@ async function friendPool(given) {
   const groups = []; const missing = []; const seen = new Set(known.map(fkey));
   results.forEach((r, i) => {
     const f = list[i];
-    if (!r.state) { missing.push({ member: { role: "friend", name: repoLabel(f.canonical), canonical: f.canonical }, reason: r.error || "could not load the export" }); return; }
+    if (!r.state) { missing.push({ member: { role: "friend", name: repoLabel(f.canonical), canonical: f.canonical }, reason: r.error || tw("family.why.friendFailed", "could not load the export") }); return; }
     for (const u of r.members || [r]) {
       const k = fkey(u.canonical); if (!k || seen.has(k)) continue; seen.add(k);
       groups.push({ member: { role: "friend", name: u.name, canonical: u.canonical, root: u.root || "", key: u.key, open: u.open, via: k === fkey(r.canonical) ? "" : r.name }, state: u.state, href: u.href });
@@ -232,21 +236,21 @@ function publicMemberRow(m, r) {
   const st = r?.state;
   const title = st ? el("a", { href: publicHref(m.canonical, m.root || "") }, m.name) : el("b", {}, m.name);
   return el("div", { class: `ktw-member ktw-${m.role} ${st ? "ktw-public" : "ktw-none"}`, onmouseenter: () => scene.spot(m.canonical, m.root || ""), onmouseleave: () => scene.spot(null) },
-    el("div", { class: "ktw-mr" }, el("span", { class: "ktw-role" }, m.role), title, el("span", { class: `ktw-pill ktw-kind-${st ? "ktw-public" : "ktw-none"}` }, st ? "published export" : "no public export"),
-      st ? el("span", { class: "ktw-pill" }, `generated ${st.generated || "?"}`) : null),
-    m.scope ? el("div", { class: "ktw-ms" }, m.scope) : (m.role === "parent" ? el("div", { class: "ktw-ms ktw-note" }, "holds what is family-wide") : null),
-    el("div", { class: "ktw-mm ktw-mono" }, m.canonical || m.location, st ? ` · ${st.entries.length} entries · ${st.topics.length} topics · ${r.url}` : r?.error ? ` · ${r.error}` : ""));
+    el("div", { class: "ktw-mr" }, el("span", { class: "ktw-role" }, roleWord(tw, m.role)), title, el("span", { class: `ktw-pill ktw-kind-${st ? "ktw-public" : "ktw-none"}` }, st ? tw("family.kind.public", "published export") : tw("family.row.noExport", "no public export")),
+      st ? el("span", { class: "ktw-pill" }, tw("family.row.generated", "generated {date}", { date: st.generated || "?" })) : null),
+    m.scope ? el("div", { class: "ktw-ms" }, m.scope) : (m.role === "parent" ? el("div", { class: "ktw-ms ktw-note" }, tw("family.row.parentHolds", "holds what is family-wide")) : null),
+    el("div", { class: "ktw-mm ktw-mono" }, m.canonical || m.location, st ? tw("family.row.counts", " · {entries} entries · {topics} topics · {url}", { entries: st.entries.length, topics: st.topics.length, url: r.url }) : r?.error ? ` · ${r.error}` : ""));
 }
 function memberRow(m) {
   const here = m.role === "self";
   const title = m.key && !here ? el("a", { href: liveHref(m.key, { view: "overview" }) }, m.name) : el("b", {}, m.name);
   return el("div", { class: `ktw-member ktw-${m.role} ktw-${m.available}`, onmouseenter: () => scene.spot(m.canonical, m.root || ""), onmouseleave: () => scene.spot(null) },
-    el("div", { class: "ktw-mr" }, el("span", { class: "ktw-role" }, m.role), title, el("span", { class: `ktw-pill ktw-kind-${m.available}` }, here ? "this project" : kindLabel(m.available))),
-    m.scope ? el("div", { class: "ktw-ms" }, m.scope) : (m.role === "parent" ? el("div", { class: "ktw-ms ktw-note" }, "holds what is family-wide") : null),
+    el("div", { class: "ktw-mr" }, el("span", { class: "ktw-role" }, roleWord(tw, m.role)), title, el("span", { class: `ktw-pill ktw-kind-${m.available}` }, here ? tw("family.row.thisProject", "this project") : kindWord(m.available))),
+    m.scope ? el("div", { class: "ktw-ms" }, m.scope) : (m.role === "parent" ? el("div", { class: "ktw-ms ktw-note" }, tw("family.row.parentHolds", "holds what is family-wide")) : null),
     el("div", { class: "ktw-mm ktw-mono" }, hostMark(m.canonical), m.canonical || m.location || "", m.path && !here ? ` · ${m.path}` : ""),
-    m.fetch ? el("details", { class: "ktw-fetch" }, el("summary", {}, "not checked out here — how to get it"),
-      el("p", { class: "ktw-note" }, "A working tree, writable (the mapping learns it on next start):"), el("pre", {}, el("code", {}, m.fetch.clone)),
-      el("p", { class: "ktw-note" }, "Or the read-only context cache, shared by every project on this machine:"), el("pre", {}, el("code", {}, m.fetch.cache))) : null);
+    m.fetch ? el("details", { class: "ktw-fetch" }, el("summary", {}, tw("family.fetch.summary", "not checked out here — how to get it")),
+      el("p", { class: "ktw-note" }, tw("family.fetch.clone", "A working tree, writable (the mapping learns it on next start):")), el("pre", {}, el("code", {}, m.fetch.clone)),
+      el("p", { class: "ktw-note" }, tw("family.fetch.cache", "Or the read-only context cache, shared by every project on this machine:")), el("pre", {}, el("code", {}, m.fetch.cache))) : null);
 }
 // the tree as nested rows: every member under the one whose children block lists it
 function treeRows(members, rowOf) {
@@ -254,11 +258,11 @@ function treeRows(members, rowOf) {
 }
 async function view(main) {
   const p = scene.state.project;
-  main.append(el("h1", {}, "Family"), el("p", { class: "ktw-sub" }, "The whole tree this project belongs to, from the root down: each project under the one whose children block lists it. That block is the routing — where an entry about something belongs; what is wider than a level goes one level up, to the root at most. Every member can be read; a member checked out here can be written to. Not a dependency graph."));
-  if (!p.parent && !(p.children || []).length) return main.append(el("p", { class: "ktw-center" }, "This project is not part of a family: no parent line, no children block in .keep-the-why."));
+  main.append(el("h1", {}, tw("family.page.heading", "Family")), el("p", { class: "ktw-sub" }, tw("family.page.sub", "The whole tree this project belongs to, from the root down: each project under the one whose children block lists it. That block is the routing — where an entry about something belongs; what is wider than a level goes one level up, to the root at most. Every member can be read; a member checked out here can be written to. Not a dependency graph.")));
+  if (!p.parent && !(p.children || []).length) return main.append(el("p", { class: "ktw-center" }, tw("family.page.none", "This project is not part of a family: no parent line, no children block in .keep-the-why.")));
   const box = el("div", { class: "ktw-family" }); main.append(box);
   if (PUBLISHED() && canonicalOf(p)) {
-    box.append(el("p", { class: "ktw-center" }, "Reading the family's published exports…"));
+    box.append(el("p", { class: "ktw-center" }, tw("family.page.reading", "Reading the family's published exports…")));
     const t = await publicTree();
     const members = [...t.groups.map((g) => g.member), ...t.missing.map((x) => x.member)];
     const results = await Promise.all(members.map((m) => (m.role === "self" || !m.canonical ? null : publicState(m.canonical, m.root || ""))));
@@ -295,8 +299,8 @@ function resetCentre() { TREE = null; TREE_AT = 0; PUBLIC_TREE = null; }
 // registry.
 async function friendsView(main, host) {
   const graphHref = nav.href({ view: "graph" });
-  main.append(el("h1", {}, "Friends"), el("p", { class: "ktw-sub" }, "Repositories the entries here cite outside the family — linked into the graph, never merged into search, queues or counts. A friend in a family comes as the whole family. One hop: a friend's own friends are not loaded; walk there to see them."));
-  const box = el("div", { class: "ktw-friends-page" }, el("p", { class: "ktw-center" }, "Loading…")); main.append(box);
+  main.append(el("h1", {}, tw("friends.heading", "Friends")), el("p", { class: "ktw-sub" }, tw("friends.sub", "Repositories the entries here cite outside the family — linked into the graph, never merged into search, queues or counts. A friend in a family comes as the whole family. One hop: a friend's own friends are not loaded; walk there to see them.")));
+  const box = el("div", { class: "ktw-friends-page" }, el("p", { class: "ktw-center" }, tw("friends.loadingPage", "Loading…"))); main.append(box);
   const g = await host.graph();
   if (!box.isConnected) return;
   const list = g.friends || [];
@@ -305,9 +309,9 @@ async function friendsView(main, host) {
   const waiting = list.filter((f) => !FRIENDS.loaded[fkey(f.canonical)]);
   const cited = host.cited?.() || {};
   const kids = [];
-  if (!list.length && !units.length) kids.push(el("p", { class: "ktw-empty" }, "No entry here cites a repository outside the family yet. A See line into another project — its canonical and an entry's Id — makes it a friend."));
-  if (cited.ask) kids.push(el("p", {}, el("button", { type: "button", class: "ktw-link-btn", title: "who in the Keep the Why registry cites this project — one file from the registry, loaded on this click", onclick: () => cited.ask() }, "who in the registry cites this project?")));
-  if (list.length && (!FRIENDS.on || waiting.length)) kids.push(el("p", {}, FRIENDS.loading ? "Loading friends…" : el("button", { type: "button", class: "ktw-link-btn", onclick: () => host.load(FRIENDS.on ? waiting : list) }, `load the ${plural(FRIENDS.on ? waiting.length : list.length, "friend")}`)));
+  if (!list.length && !units.length) kids.push(el("p", { class: "ktw-empty" }, tw("friends.none", "No entry here cites a repository outside the family yet. A See line into another project — its canonical and an entry's Id — makes it a friend.")));
+  if (cited.ask) kids.push(el("p", {}, el("button", { type: "button", class: "ktw-link-btn", title: tw("friends.citedTitle", "who in the Keep the Why registry cites this project — one file from the registry, loaded on this click"), onclick: () => cited.ask() }, tw("friends.cited", "who in the registry cites this project?"))));
+  if (list.length && (!FRIENDS.on || waiting.length)) kids.push(el("p", {}, FRIENDS.loading ? tw("friends.loading", "Loading friends…") : el("button", { type: "button", class: "ktw-link-btn", onclick: () => host.load(FRIENDS.on ? waiting : list) }, tw("friends.load", "load the {n:friend}", { n: FRIENDS.on ? waiting.length : list.length }))));
   const ours = g.nodes.filter((n) => n.kind === "entry" && !n.ext);
   const ourByUuid = Object.fromEntries(ours.filter((n) => n.entry.uuid).map((n) => [n.entry.uuid, n]));
   const card = (u, i) => {
@@ -317,22 +321,22 @@ async function friendsView(main, host) {
     for (const n of ours) for (const x of entryRefs(n.entry)) if (x.remote && canons.has(fkey(x.remote)) && theirs.has(x.uuid)) out.push({ from: n, to: theirs.get(x.uuid), kind: x.kind });
     const back = []; // the unit's entries citing ours
     for (const [, t] of theirs) for (const x of entryRefs(t.e)) if (x.remote && ourByUuid[x.uuid]) back.push({ from: t, to: ourByUuid[x.uuid], kind: x.kind });
-    const src = u.r.centre?.mode === "live" ? "a checkout on this machine" : `the published export${u.r.state.generated ? `, generated ${u.r.state.generated}` : ""}`;
-    const rel = (a, b, kind) => el("div", { class: "ktw-ref" }, a, el("span", { class: "ktw-note" }, kind === "superseded" ? " — superseded by — " : " — cites — "), b);
+    const src = u.r.centre?.mode === "live" ? tw("friends.card.fromLive", "a checkout on this machine") : u.r.state.generated ? tw("friends.card.fromExportDated", "the published export, generated {date}", { date: u.r.state.generated }) : tw("friends.card.fromExport", "the published export");
+    const rel = (a, b, kind) => el("div", { class: "ktw-ref" }, a, el("span", { class: "ktw-note" }, kind === "superseded" ? tw("friends.card.supersededBy", " — superseded by — ") : tw("friends.card.cites", " — cites — ")), b);
     return el("section", { class: "ktw-friend-card" },
       el("h2", {}, el("i", { class: "ktw-dot", style: `background:transparent;border:2px dashed ${host.color(i)};width:11px;height:11px;margin-right:8px` }), el("a", { href: u.r.open || graphHref }, hostMark(u.r.canonical), u.r.name),
-        u.via === "chain" ? el("span", { class: "ktw-pill" }, "via a thought") : null),
-      el("p", { class: "ktw-note" }, `${u.members.length > 1 ? `A family of ${u.members.length}: ${u.members.map((m) => m.name).join(", ")}. ` : ""}Read from ${src}. ${u.r.canonical}${u.r.forkOf ? ` — a fork of ${u.r.forkOf}, by its own export` : ""}`),
-      el("h3", {}, `Cited from here (${out.length})`),
-      ...(out.length ? out.map((x) => rel(el("a", { href: x.from.href }, x.from.label), el("a", { href: x.to.m.href ? x.to.m.href(x.to.e) : graphHref }, x.to.e.title, u.members.length > 1 ? el("span", { class: "ktw-note" }, ` · ${x.to.m.name}`) : null), x.kind)) : [el("p", { class: "ktw-empty" }, u.via === "chain" ? "Nothing here cites it directly — it was reached by following a thought." : "—")]),
-      el("h3", {}, `Citing this project (${back.length})`),
-      ...(back.length ? back.map((x) => rel(el("a", { href: x.from.m.href ? x.from.m.href(x.from.e) : graphHref }, x.from.e.title), el("a", { href: x.to.href }, x.to.label), x.kind)) : [el("p", { class: "ktw-empty" }, "None of its entries cites an entry here.")]));
+        u.via === "chain" ? el("span", { class: "ktw-pill" }, tw("friends.card.viaThought", "via a thought")) : null),
+      el("p", { class: "ktw-note" }, (u.members.length > 1 ? tw("friends.card.family", "A family of {n}: {names}. ", { n: u.members.length, names: u.members.map((m) => m.name).join(", ") }) : "") + tw("friends.card.readFrom", "Read from {source}. ", { source: src }) + u.r.canonical + (u.r.forkOf ? tw("friends.card.forkOf", " — a fork of {of}, by its own export", { of: u.r.forkOf }) : "")),
+      el("h3", {}, tw("friends.card.citedFromHere", "Cited from here ({n})", { n: out.length })),
+      ...(out.length ? out.map((x) => rel(el("a", { href: x.from.href }, x.from.label), el("a", { href: x.to.m.href ? x.to.m.href(x.to.e) : graphHref }, x.to.e.title, u.members.length > 1 ? el("span", { class: "ktw-note" }, ` · ${x.to.m.name}`) : null), x.kind)) : [el("p", { class: "ktw-empty" }, u.via === "chain" ? tw("friends.card.reachedByThought", "Nothing here cites it directly — it was reached by following a thought.") : "—")]),
+      el("h3", {}, tw("friends.card.citingHere", "Citing this project ({n})", { n: back.length })),
+      ...(back.length ? back.map((x) => rel(el("a", { href: x.from.m.href ? x.from.m.href(x.from.e) : graphHref }, x.from.e.title), el("a", { href: x.to.href }, x.to.label), x.kind)) : [el("p", { class: "ktw-empty" }, tw("friends.card.noneBack", "None of its entries cites an entry here."))]));
   };
   const friends = units.filter((u) => u.via !== "chain" && u.via !== "cited"), chained = units.filter((u) => u.via === "chain"), citing = units.filter((u) => u.via === "cited");
   kids.push(...friends.map((u) => card(u, units.indexOf(u))));
-  if (citing.length) kids.push(el("h2", { class: "ktw-section" }, "Citing this project — from the registry"), el("p", { class: "ktw-note" }, `Repositories in the Keep the Why registry whose entries cite this project, from its backlink file${cited.checked ? `, built ${cited.checked}` : ""}. Citations from outside the registry are not in it.`), ...citing.map((u) => card(u, units.indexOf(u))));
-  if (chained.length) kids.push(el("h2", { class: "ktw-section" }, "Reached by following a thought"), ...chained.map((u) => card(u, units.indexOf(u))));
-  if (failed.length) kids.push(el("h2", { class: "ktw-section" }, "Not loaded"), ...failed.map((r) => el("div", { class: "ktw-ref" }, el("a", { href: r.canonical, target: "_blank", rel: "noopener" }, hostMark(r.canonical), repoLabel(r.canonical)), el("span", { class: "ktw-note ktw-warn" }, ` · ${r.error}`))));
+  if (citing.length) kids.push(el("h2", { class: "ktw-section" }, tw("friends.registryHeading", "Citing this project — from the registry")), el("p", { class: "ktw-note" }, cited.checked ? tw("friends.registryNoteBuilt", "Repositories in the Keep the Why registry whose entries cite this project, from its backlink file, built {date}. Citations from outside the registry are not in it.", { date: cited.checked }) : tw("friends.registryNote", "Repositories in the Keep the Why registry whose entries cite this project, from its backlink file. Citations from outside the registry are not in it.")), ...citing.map((u) => card(u, units.indexOf(u))));
+  if (chained.length) kids.push(el("h2", { class: "ktw-section" }, tw("friends.chainedHeading", "Reached by following a thought")), ...chained.map((u) => card(u, units.indexOf(u))));
+  if (failed.length) kids.push(el("h2", { class: "ktw-section" }, tw("friends.failedHeading", "Not loaded")), ...failed.map((r) => el("div", { class: "ktw-ref" }, el("a", { href: r.canonical, target: "_blank", rel: "noopener" }, hostMark(r.canonical), repoLabel(r.canonical)), el("span", { class: "ktw-note ktw-warn" }, ` · ${r.error}`))));
   setKids(box, ...kids);
 }
 

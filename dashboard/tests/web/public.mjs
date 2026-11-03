@@ -137,6 +137,23 @@ const report = {};
   if (report.groups.length !== 4) errors.push("results page: expected 4 groups, got " + report.groups.length);
   if (!report.missing.some((m) => m.startsWith("cli") && /no dashboard-state line/.test(m))) errors.push("results page: cli (no export) not named as not searched");
   if (!report.links.some((h) => h.includes("public=https%3A%2F%2Fgithub.com%2Facme%2Fsuite&root=docs#entry/"))) errors.push("results page: the docs hit does not link to the docs export");
+  // no hit: the sentence keeps the text nodes it had before the views' words — where it was searched, the wider
+  // search with its link (or an empty text), the full stop — in every scope
+  const noHit = async (scope) => {
+    window.location.hash = `#search/${scope}/zzzznotfoundzzzz`; window.dispatchEvent(new window.Event("hashchange")); await tick(400);
+    return [...(main.querySelector(".ktw-search-page > p.ktw-center")?.childNodes || [])].map((n) => (n.nodeType === 3 ? n.data : `<${n.tagName.toLowerCase()} ${n.getAttribute("href")}>${n.textContent}`));
+  };
+  const q = "No entry matches “zzzznotfoundzzzz”";
+  const NO_HIT = {
+    project: [q, " in this project", " — ", "<a #search/all/zzzznotfoundzzzz>search family & friends", "."],
+    family: [q, " in the family", " — ", "<a #search/all/zzzznotfoundzzzz>search family & friends", "."],
+    all: [q, " in the family or the friends", "", "."],
+  };
+  for (const [scope, want] of Object.entries(NO_HIT)) {
+    const got = await noHit(scope);
+    report[`noHit_${scope}`] = got;
+    if (JSON.stringify(got) !== JSON.stringify(want)) errors.push(`results page (${scope}), no hit: its text nodes are not the ones it had — want ${JSON.stringify(want)}, got ${JSON.stringify(got)}`);
+  }
   window.close();
 }
 {

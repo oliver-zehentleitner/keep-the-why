@@ -8,10 +8,12 @@
    globalThis.KeepTheWhy.views.graph, listed in ktw-views.json, tested through the page (canvas-trace.mjs). */
 (function (root) {
 "use strict";
-const { plural, stepLayout, placeShown, seedLayout, carryNode, LAYOUT, linkExistsAt, hostOf, filterActive, entryMatches, fkey, linkFamily, seeDay, supersededDay, parseSupersededBy, readToken } = root.KeepTheWhy.core;
+const { stepLayout, placeShown, seedLayout, carryNode, LAYOUT, linkExistsAt, hostOf, filterActive, entryMatches, fkey, linkFamily, seeDay, supersededDay, parseSupersededBy, readToken } = root.KeepTheWhy.core;
 
-// One graph view per page: create({ scene, nav, prefs }) — the host's scene, navigation and settings.
-function create({ scene, nav, prefs }) {
+// One graph view per page: create({ scene, nav, prefs, words }) — the host's scene, navigation and settings, and its
+// hook for the UI text (ktw-ui.js words).
+function create({ scene, nav, prefs, words }) {
+const tw = root.KeepTheWhy.ui.words(words);
 const narrow = () => !!root.matchMedia?.("(max-width: 900px)").matches;
 const atClock = (e, ext = false) => scene.atClock(e, ext); // the scene's clock (ktw-scene.js)
 const statusNow = (e) => scene.statusNow(e);
@@ -209,7 +211,7 @@ function runGraph(canvas, g, opts = {}) {
       do stepLayout(g, { visible, linkOn }); while (g.alpha > LAYOUT.MIN_ALPHA && performance.now() - t0 < SETTLE_SLICE_MS);
       if (g.alpha > LAYOUT.MIN_ALPHA) {
         // still settling: the canvas says so instead of staying empty
-        publishLayout(g); ctx.clearRect(0, 0, W, H); ctx.globalAlpha = 1; ctx.fillStyle = color("--ktw-fg2"); ctx.font = `13px ${color("--ktw-font") || "sans-serif"}`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(`laying out ${plural(ns.length, "node")}…`, W / 2, H / 2);
+        publishLayout(g); ctx.clearRect(0, 0, W, H); ctx.globalAlpha = 1; ctx.fillStyle = color("--ktw-fg2"); ctx.font = `13px ${color("--ktw-font") || "sans-serif"}`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(tw("graph.layingOut", "laying out {n:node}…", { n: ns.length }), W / 2, H / 2);
         g.raf = canvas.isConnected ? requestAnimationFrame(step) : null; return;
       }
     } else if (g.alpha > LAYOUT.MIN_ALPHA) { const t0 = performance.now(); do stepLayout(g, { visible, linkOn }); while (g.alpha > LAYOUT.MIN_ALPHA && performance.now() - t0 < FRAME_LAYOUT_MS); }
@@ -298,9 +300,9 @@ function runGraph(canvas, g, opts = {}) {
         ctx.font = hubName ? `600 ${(mini ? 12 : 13) / V.scale}px ${color("--ktw-font") || "sans-serif"}` : `${(mini ? 11 : 12) / V.scale}px ${color("--ktw-font") || "sans-serif"}`;
         const lbl = n.label.replace(/`/g, ""); const txt = lbl.length > maxLen ? lbl.slice(0, maxLen - 2) + "…" : lbl;
         const mark = hubName ? hostPath(n.canonical) : null; const iw = mark ? (mini ? 12 : 13) / V.scale : 0; const gap = mark ? 4 / V.scale : 0;
-        const tw = ctx.measureText(txt).width; const y = n.y + n.r + 3 / V.scale;
-        const left = n.x - (tw + iw + gap) / 2; const tx = left + iw + gap + tw / 2; // the mark before the name, the pair centred
-        const box = { x0: left - 3 / V.scale, y0: y - 1 / V.scale, x1: tx + tw / 2 + 3 / V.scale, y1: y + 15 / V.scale };
+        const textW = ctx.measureText(txt).width; const y = n.y + n.r + 3 / V.scale;
+        const left = n.x - (textW + iw + gap) / 2; const tx = left + iw + gap + textW / 2; // the mark before the name, the pair centred
+        const box = { x0: left - 3 / V.scale, y0: y - 1 / V.scale, x1: tx + textW / 2 + 3 / V.scale, y1: y + 15 / V.scale };
         if (!must && !free(box)) continue;
         placed.push(box);
         ctx.fillStyle = color("--ktw-bg"); ctx.globalAlpha = faded ? 0.4 : 0.75; ctx.fillRect(box.x0, box.y0, box.x1 - box.x0, 15 / V.scale); ctx.globalAlpha = faded ? 0.5 : 1;
