@@ -16,6 +16,10 @@ function realm(motion) {
   w.cancelAnimationFrame = () => {};
   const observers = []; // every ResizeObserver made, and whether it was let go
   w.ResizeObserver = class { constructor() { this.on = true; observers.push(this); } observe() {} disconnect() { this.on = false; } };
+  const onCanvas = new Map(); // each canvas's listeners, as [type, fn]
+  const cAdd = w.HTMLCanvasElement.prototype.addEventListener, cRemove = w.HTMLCanvasElement.prototype.removeEventListener;
+  w.HTMLCanvasElement.prototype.addEventListener = function (t, fn, o) { if (!onCanvas.has(this)) onCanvas.set(this, []); onCanvas.get(this).push([t, fn]); return cAdd.call(this, t, fn, o); };
+  w.HTMLCanvasElement.prototype.removeEventListener = function (t, fn, o) { const l = onCanvas.get(this) || []; const i = l.findIndex(([a, b]) => a === t && b === fn); if (i >= 0) l.splice(i, 1); return cRemove.call(this, t, fn, o); };
   const held = new Map(); // the window's listeners, by type: what a loop holds the page by
   const add = w.addEventListener.bind(w), remove = w.removeEventListener.bind(w);
   w.addEventListener = (t, fn, o) => { if (!held.has(t)) held.set(t, new Set()); held.get(t).add(fn); add(t, fn, o); };
@@ -42,7 +46,8 @@ function realm(motion) {
   const G = views.graph.create({ scene, nav, prefs });
   const fg = core.reheatAll(Object.assign({ scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true }, G.assemble(topics, entries)));
   const counts = () => ({ mouseup: held.get("mouseup")?.size || 0, subs, observers: observers.filter((o) => o.on).length });
-  return { w, core, G, fg, scene, counts };
+  const canvasTypes = (c) => (onCanvas.get(c) || []).map(([t]) => t).sort();
+  return { w, core, G, fg, scene, counts, canvasTypes };
 }
 const snap = (fg) => ({ at: fg.nodes.map((n) => [n.x, n.y]), alpha: fg.alpha, relayout: fg.relayout, placing: !!fg.placing });
 
@@ -147,4 +152,63 @@ test("the side pane's copy started leaves the graph's own loop running", () => {
   G.run(w.document.body.appendChild(w.document.createElement("canvas")), fg, {});
   G.run(w.document.body.appendChild(w.document.createElement("canvas")), G.runnerOf(fg), {});
   assert.deepEqual(counts(), plus(base, ONE, 2), "two loops: the page's graph and the side pane's copy");
+});
+
+// a canvas keeps, once its loop is done, only the touch handlers that are its own: the loop's wakers are gone
+const OWN_TOUCH = ["touchend", "touchmove", "touchstart"];
+const WAKE_TYPES = ["dblclick", "mousedown", "mouseleave", "mousemove", "touchmove", "touchstart", "wheel"];
+
+for (const motion of ["on", "off"]) {
+  test(`a copy replaced while its canvas is still on the page takes its wakers off it, and lets go of the graph (motion ${motion})`, () => {
+    const { w, G, fg, canvasTypes } = realm(motion); frames.length = 0;
+    const a = w.document.body.appendChild(w.document.createElement("canvas"));
+    const r1 = G.runnerOf(fg); G.run(a, r1, {});
+    assert.deepEqual(canvasTypes(a), [...OWN_TOUCH, ...WAKE_TYPES].sort(), "running: its wakers and its touch handlers");
+    G.runnerOf(fg);
+    assert.ok(a.isConnected, "the old canvas is still on the page");
+    assert.deepEqual(canvasTypes(a), OWN_TOUCH, "the wakers are gone");
+    assert.equal(r1.wake, null, "the old copy holds no wake"); assert.equal(r1.stopLoop, null, "nor its stop");
+  });
+
+  test(`the graph keeps no wake and no stop of a loop whose canvas left the page (motion ${motion})`, () => {
+    const { w, G, fg, scene, canvasTypes } = realm(motion); frames.length = 0;
+    const c = w.document.body.appendChild(w.document.createElement("canvas"));
+    G.run(c, fg, {});
+    assert.equal(typeof fg.wake, "function"); assert.equal(typeof fg.stopLoop, "function");
+    c.remove(); scene.wake();
+    assert.equal(fg.wake, null, "the graph outlives the canvas: it must not hold it through the wake");
+    assert.equal(fg.stopLoop, null);
+    assert.deepEqual(canvasTypes(c), OWN_TOUCH);
+  });
+
+  test(`the graph run again keeps the new loop's wake, not the old one's nor none (motion ${motion})`, () => {
+    const { w, G, fg } = realm(motion); frames.length = 0;
+    G.run(w.document.body.appendChild(w.document.createElement("canvas")), fg, {});
+    const first = fg.wake;
+    G.run(w.document.body.appendChild(w.document.createElement("canvas")), fg, {});
+    assert.ok(typeof fg.wake === "function" && fg.wake !== first, "the loop before retired after the new one took the graph: the new wake stays");
+    assert.equal(typeof fg.stopLoop, "function");
+  });
+}
+
+// press on a topic, the canvas leaves the page, the button comes up: nothing opens
+function pressTopic(env, { remove }) {
+  const { w, G, fg } = env; frames.length = 0;
+  const c = w.document.body.appendChild(w.document.createElement("canvas"));
+  const opened = []; G.run(c, fg, { onTopic: (n) => opened.push([n.id, c.isConnected]) });
+  frames.shift()(16); // a frame: the canvas has its size, the view its frame
+  const t = fg.nodes.find((n) => n.kind === "topic");
+  const at = { clientX: 300 + fg.ox + t.x * fg.scale, clientY: 200 + fg.oy + t.y * fg.scale, button: 0, bubbles: true };
+  c.dispatchEvent(new w.MouseEvent("mousedown", at));
+  if (remove) c.remove();
+  w.dispatchEvent(new w.MouseEvent("mouseup", at));
+  return opened;
+}
+test("a topic pressed opens on the button's release while its canvas is on the page", () => {
+  const opened = pressTopic(realm("off"), { remove: false });
+  assert.equal(opened.length, 1, "the press reaches the topic: the test reaches the path it guards");
+});
+test("a topic pressed opens nothing if its canvas left the page before the button came up", () => {
+  const opened = pressTopic(realm("off"), { remove: true });
+  assert.deepEqual(opened, [], "no open for a canvas that is gone");
 });

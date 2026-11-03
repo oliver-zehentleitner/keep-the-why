@@ -133,7 +133,9 @@ function runGraph(canvas, g, opts = {}) {
   const walkTo = (n) => (n.self ? null : n.walk ? n.walk() : nav.open(n.href));
   const screenOf = (n) => [W / 2 + g.ox + n.x * g.scale, H / 2 + g.oy + n.y * g.scale];
   const open = (n) => (n.kind === "project" || n.kind === "owner" ? walkTo(n) : n.kind === "entry" && opts.onEntry ? opts.onEntry(n, ...screenOf(n)) : n.kind === "topic" && opts.onTopic ? opts.onTopic(n, ...screenOf(n)) : n.action ? n.action() : nav.open(n.href));
-  const onUp = () => { if (nameDown) { const n = nameDown; nameDown = null; walkTo(n); return; } if (drag && !moved) open(drag); else if (pan && !moved) opts.onBlank?.(); drag = null; pan = null; canvas.classList.remove("ktw-grabbing"); };
+  // the end of a drag, a pan or a click on a name: asks first whether its loop is done (a button let go after the
+  // canvas left the page opens nothing); the same function is added and removed
+  const onUp = () => { if (retired()) return retire(); if (nameDown) { const n = nameDown; nameDown = null; walkTo(n); return; } if (drag && !moved) open(drag); else if (pan && !moved) opts.onBlank?.(); drag = null; pan = null; canvas.classList.remove("ktw-grabbing"); };
   window.addEventListener("mouseup", onUp); // a drag or a pan ends wherever the button comes up
   canvas.onmouseleave = () => { hover = null; hoverName = null; };
   canvas.onwheel = (ev) => { ev.preventDefault(); V.userMoved = true; const r = canvas.getBoundingClientRect(); zoomTo(V.scale * Math.exp(-ev.deltaY * 0.0012), ev.clientX - r.left - W / 2, ev.clientY - r.top - H / 2); };
@@ -184,6 +186,7 @@ function runGraph(canvas, g, opts = {}) {
     ro.disconnect(); ro2.disconnect(); for (const off of listening) off();
     window.removeEventListener("mouseup", wake); window.removeEventListener("mouseup", onUp); for (const evn of WAKERS) canvas.removeEventListener(evn, wake);
     if (g.stopLoop === retire) g.stopLoop = null;
+    if (g.wake === wake) g.wake = null; // the graph outlives its canvases: it must not hold this one, nor its page, through the wake
     g.raf = null;
   };
   const live = (fn) => (...a) => (retired() ? retire() : fn(...a)); // a listener that first asks whether its loop is done
