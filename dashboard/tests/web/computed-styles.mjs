@@ -11,6 +11,7 @@
 import { chromium } from "playwright";
 import fs from "node:fs";
 import path from "node:path";
+import { ADDED, PARENT_BOX } from "./added-elements.mjs";
 
 const [basePage, headPage] = process.argv.slice(2);
 if (!headPage) { console.error("usage: node computed-styles.mjs BASEPAGE PAGE"); process.exit(2); }
@@ -28,26 +29,35 @@ const init = `(() => {
 
 // in the page: every element's computed style (and its ::before/::after), as a hash per tag path; the full
 // text for the paths asked for
-const collect = (want) => {
+// An element the pull request adds on purpose (added-elements.mjs) is left out, and not counted among its siblings.
+// On its parent — the paths in `trim`; null: this page's own — the properties that resolve to the parent's box
+// (PARENT_BOX) are left out too, the one thing an added child changes there.
+const collect = ({ want, added, box, trim }) => {
+  const isAdded = (el) => added.some((sel) => el.closest(sel));
   // custom properties are inputs, not results: what they set shows in the properties that use them, and the
   // tokens' values are held equal by test_views.py
   const SKIP = /^(animation|transition|--)/;
-  const pathOf = (el) => { const p = []; for (let n = el; n && n.localName !== "html"; n = n.parentElement) p.push(`${n.localName}:${n.parentElement ? [...n.parentElement.children].indexOf(n) : 0}`); return p.reverse().join("/"); };
+  const pathOf = (el) => { const p = []; for (let n = el; n && n.localName !== "html"; n = n.parentElement) p.push(`${n.localName}:${n.parentElement ? [...n.parentElement.children].filter((c) => !isAdded(c)).indexOf(n) : 0}`); return p.reverse().join("/"); };
   const text = (cs) => { const v = []; for (let i = 0; i < cs.length; i++) if (!SKIP.test(cs[i])) v.push(`${cs[i]}: ${cs.getPropertyValue(cs[i])}`); return v; };
   const fnv = (s) => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16); };
-  const out = {}, detail = {};
+  const out = {}, detail = {}, parents = [];
+  for (const el of document.body.querySelectorAll("*")) if (!isAdded(el) && [...el.children].some((c) => added.some((sel) => c.matches(sel)))) parents.push(pathOf(el));
+  const trimmed = new Set(trim || parents);
   for (const el of document.body.querySelectorAll("*")) {
+    if (isAdded(el)) continue;
     const p = pathOf(el);
     for (const pseudo of [null, "::before", "::after"]) {
       const cs = getComputedStyle(el, pseudo);
       if (pseudo && cs.content === "none") continue;
-      const key = pseudo ? p + pseudo : p, v = text(cs);
+      const key = pseudo ? p + pseudo : p, v = text(cs).filter((d) => pseudo || !trimmed.has(p) || !box.includes(d.slice(0, d.indexOf(":"))));
       out[key] = fnv(v.join(";"));
       if (want.includes(key)) detail[key] = v;
     }
   }
-  return { out, detail };
+  return { out, detail, parents, counts: added.map((sel) => document.querySelectorAll(sel).length) };
 };
+const ADDED_SELECTORS = ADDED.map((x) => x.selector);
+const seen = ADDED.map(() => ({ base: 0, head: 0 }));
 
 async function open(browser, file, width) {
   const ctx = await browser.newContext({ viewport: { width, height: 900 }, timezoneId: "UTC", reducedMotion: "reduce" });
@@ -79,14 +89,16 @@ for (const [width, theme] of runs) {
   for (const hash of routes) {
     for (const P of [A, B]) await P.page.evaluate((h) => { location.hash = h; }, hash);
     await Promise.all([A.page.waitForTimeout(700), B.page.waitForTimeout(700)]);
-    const [a, b] = await Promise.all([A.page.evaluate(collect, []), B.page.evaluate(collect, [])]);
+    const b = await B.page.evaluate(collect, { want: [], added: ADDED_SELECTORS, box: PARENT_BOX, trim: null });
+    const a = await A.page.evaluate(collect, { want: [], added: ADDED_SELECTORS, box: PARENT_BOX, trim: b.parents });
+    a.counts.forEach((n, i) => (seen[i].base += n)); b.counts.forEach((n, i) => (seen[i].head += n));
     const keys = new Set([...Object.keys(a.out), ...Object.keys(b.out)]);
     const bad = [...keys].filter((k) => a.out[k] !== b.out[k]);
     compared += keys.size;
     if (!bad.length) continue;
     const onlyOne = bad.filter((k) => !(k in a.out) || !(k in b.out));
     if (onlyOne.length) { diffs.push(`${theme} ${width}px ${hash}: the element trees differ (${onlyOne.length} paths in one page only, e.g. ${onlyOne[0]})`); continue; }
-    const [da, db] = await Promise.all([A.page.evaluate(collect, bad.slice(0, 20)), B.page.evaluate(collect, bad.slice(0, 20))]);
+    const [da, db] = await Promise.all([A.page.evaluate(collect, { want: bad.slice(0, 20), added: ADDED_SELECTORS, box: PARENT_BOX, trim: b.parents }), B.page.evaluate(collect, { want: bad.slice(0, 20), added: ADDED_SELECTORS, box: PARENT_BOX, trim: b.parents })]);
     for (const k of bad.slice(0, 20)) {
       const x = new Set(da.detail[k] || []), y = new Set(db.detail[k] || []);
       const lost = [...x].filter((v) => !y.has(v)), got = [...y].filter((v) => !x.has(v));
@@ -97,8 +109,12 @@ for (const [width, theme] of runs) {
   for (const P of [A, B]) { errors.push(...P.errors.map((e) => `${theme} ${width}px: ${e}`)); await P.ctx.close(); }
 }
 await browser.close();
+ADDED.forEach((x, i) => {
+  if (!seen[i].head) diffs.push(`added-elements.mjs: "${x.selector}" matches nothing in the page — a stale entry`);
+  if (seen[i].base) diffs.push(`added-elements.mjs: "${x.selector}" matches ${seen[i].base} elements in the base — not an addition`);
+});
 
-const line = `${routes.length} routes × ${runs.length} runs (${WIDTHS.join(", ")} px dark, 1400 px light): ${compared} element styles compared, ${diffs.length} differ`;
+const line = `${routes.length} routes × ${runs.length} runs (${WIDTHS.join(", ")} px dark, 1400 px light): ${compared} element styles compared, ${diffs.length} differ; added on purpose (added-elements.mjs): ${ADDED.map((x, i) => `${x.selector} ×${seen[i].head}`).join(", ") || "none"}`;
 for (const d of diffs.slice(0, 80)) console.log(d);
 for (const e of errors) console.log("ERROR " + e);
 console.log("\n" + line);

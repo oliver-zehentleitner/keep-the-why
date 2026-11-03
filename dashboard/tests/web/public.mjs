@@ -23,7 +23,7 @@ const app = fs.readFileSync(W + "app.js", "utf8");
 // strings). split/join, not replace: the sources contain `$&`-like sequences.
 // the stylesheet inlined as the export does: the page reads its colour tokens (--ktw-*) from it
 const css = fs.readFileSync(W + "style.css", "utf8");
-const html = fs.readFileSync(W + "index.html", "utf8").split('<link rel="stylesheet" href="/static/style.css">').join("<style>\n" + css + "\n</style>").split('<script type="module" src="/static/app.js"></script>').join("<script>" + lib + "</script>\n<script>(function () {\n\"use strict\";\n" + app + "\nwindow.__fg = () => fgraph; window.__g = () => graph; window.__globeRefit = () => globeRefit(); window.__stage = () => TIMELINE.stage(); window.__active = () => [...new Set([graph, fgraph, graph?.runner, fgraph?.runner, TIMELINE.stage()?.graph].filter(Boolean))]; window.__chainAdd = async (canonical, uuid) => { const f = { canonical, uuids: [uuid] }; CHAIN.extra.set(fkey(canonical), f); await loadFriend(f); if (fgraph) fgraph.at = 0; render(); }; // test hooks\n})();</script>");
+const html = fs.readFileSync(W + "index.html", "utf8").split('<link rel="stylesheet" href="/static/style.css">').join("<style>\n" + css + "\n</style>").split('<script type="module" src="/static/app.js"></script>').join("<script>" + lib + "</script>\n<script>(function () {\n\"use strict\";\n" + app + "\nwindow.__fg = () => fgraph; window.__g = () => graph; window.__globeRefit = () => globeRefit(); window.__scene = () => SCENE; window.__stage = () => TIMELINE.stage(); window.__active = () => [...new Set([graph, fgraph, graph?.runner, fgraph?.runner, TIMELINE.stage()?.graph].filter(Boolean))]; window.__chainAdd = async (canonical, uuid) => { const f = { canonical, uuids: [uuid] }; CHAIN.extra.set(fkey(canonical), f); await loadFriend(f); if (fgraph) fgraph.at = 0; render(); }; // test hooks\n})();</script>");
 
 const GH = "https://github.com/acme";
 const config = (id, lines) => `<!-- keep-the-why:config -->\n- id: ${id}\n${lines.join("\n")}\n<!-- /keep-the-why:config -->\n`;
@@ -907,6 +907,141 @@ const report = {};
   if (window.__stage?.()?.graph !== window.__fg?.()) errors.push("timeline (family export): the stage does not stand on the family graph — the test does not cover the case");
   if (!window.__fg?.()?.runner) errors.push("timeline (family export): the family graph has no running copy in the side pane — the test does not cover the case");
   if (!settled) errors.push("timeline (family export): the stage never saw the family graph settle — a hover would move every card");
+  window.close();
+}
+{
+  // redraw in the side pane of a family member's timeline: the family graph laid out anew from the start, and the
+  // stage's copy follows it to the end (motion off: a turning graph is, by design, not followed)
+  const web = FILES["https://acme.github.io/web/state.json"];
+  const dated = { ...web, exported: true, entries: web.entries.map((e) => ({ ...e, git: { created: { date: "2026-09-20", author: "Web Author" } } })) };
+  const page = html.replace("<script>", `<script>window.__KTW_STATE__ = ${JSON.stringify(dated).replace(/</g, "\\u003c")};</script><script>`);
+  const window = await open("http://localhost/web/keep-the-why-dashboard/#timeline", page, { "ktw-motion": "off" });
+  const d = window.document;
+  for (let i = 0; i < 60 && d.querySelector(".ktw-stage-wrap")?.dataset.settled !== "1"; i++) await tick(250);
+  const quiet = async (gr) => { for (let i = 0; i < 300 && (gr().alpha > 0.003 || gr().placed || gr().relaidOut); i++) await tick(100); };
+  const redrawBtn = [...d.querySelectorAll(".ktw-mini-corner-btn")].find((b) => b.textContent === "redraw");
+  if (!redrawBtn || !redrawBtn.getAttribute("aria-label")) errors.push("redraw: the side pane has no redraw beside fit and reset, or it has no label");
+  else {
+    window.__fg().nodes.find((n) => n.kind === "entry").fixed = true;
+    redrawBtn.click(); await tick(400); await quiet(() => window.__fg()); await tick(300);
+    const fg = window.__fg(), L = window.__scene().layout;
+    let off = 0; for (const n of fg.nodes) if (n.kind === "entry" || n.kind === "topic") { const q = L.get(n.id); off = Math.max(off, q ? Math.hypot(q.x - n.x, q.y - n.y) : Infinity); }
+    report.redrawStage = { off, fixed: fg.nodes.filter((n) => n.fixed).length };
+    if (off !== 0) errors.push("redraw: the stage's layout is not where the family graph laid its nodes out — " + JSON.stringify(report.redrawStage));
+    if (report.redrawStage.fixed) errors.push("redraw: a node placed by hand was not let go");
+  }
+  window.close();
+}
+{
+  // redraw after a session of dragging and loading more — the maintainer's case: nodes dragged and pinned, then a
+  // wave of the globe brings another repository in, then redraw. The layout is the one a fresh build of the same
+  // data gives: another page, the same wave loaded and nothing dragged, redrawn, has every node at the same place.
+  const session = async (drag) => {
+    const window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/refs`)}#globe`, html, { "ktw-globe-intro": "off", "ktw-motion": "off" });
+    const d = window.document; const g = () => window.__g();
+    const quiet = async () => { for (let i = 0; i < 300 && g().alpha > 0.003; i++) await tick(100); };
+    await tick(700); await quiet();
+    if (drag) for (const n of g().nodes.filter((m) => m.kind === "topic").slice(0, 3)) { n.x += 250; n.y -= 180; n.fixed = true; }
+    if (drag) { g().alpha = 0.3; g().wake?.(); await tick(200); await quiet(); }
+    const sel = d.querySelector(".ktw-graph-ui .globe-ctl select"); sel.value = "1"; sel.dispatchEvent(new window.Event("change")); await tick(200);
+    [...d.querySelectorAll(".ktw-graph-ui .globe-ctl button")].find((b) => b.textContent === "go")?.click(); await tick(300);
+    [...(d.querySelector(".globe-dialog")?.querySelectorAll("button") || [])].find((b) => b.textContent === "load them")?.click(); await tick(600); await quiet();
+    const loaded = g().nodes.some((n) => n.kind === "project" && n.label === "acme/far");
+    d.querySelector(".ktw-graph-corner-redraw")?.click(); await tick(400); await quiet();
+    const at = Object.fromEntries(g().nodes.map((n) => [n.id, [n.x, n.y]]));
+    const held = g().nodes.filter((n) => n.fixed).length;
+    window.close();
+    return { at, loaded, held };
+  };
+  const used = await session(true), fresh = await session(false);
+  let diff = 0; for (const [id, [x, y]] of Object.entries(fresh.at)) { const q = used.at[id]; diff = Math.max(diff, q ? Math.hypot(q[0] - x, q[1] - y) : Infinity); }
+  report.redrawAfterSession = { nodes: Object.keys(fresh.at).length, same: Object.keys(fresh.at).length === Object.keys(used.at).length, diff, held: used.held, loaded: used.loaded && fresh.loaded };
+  if (!report.redrawAfterSession.loaded) errors.push("redraw after a session: the wave did not bring acme/far in — the test does not cover loading more");
+  if (diff !== 0 || !report.redrawAfterSession.same) errors.push("redraw after dragging and loading more is not the layout of a fresh build of the same data — " + JSON.stringify(report.redrawAfterSession));
+  if (used.held) errors.push("redraw after a session: nodes placed by hand are still held");
+}
+{
+  // redraw in the side pane's neighbourhood graph (near): it is built from where the full graph has its nodes, so a
+  // redraw there redraws the full graph and builds the neighbourhood from that. The page that has laid the full graph
+  // out, then dragged a node here and redrawn, comes out as a fresh page load: the neighbourhood a fresh build of it,
+  // still after another page and back, and the full graph, opened then, a fresh load of it.
+  const fx = JSON.parse(fs.readFileSync(new URL("./fixture/state.json", import.meta.url), "utf8"));
+  const page = html.replace("<script>", `<script>window.__KTW_STATE__ = ${JSON.stringify({ ...fx, exported: true }).replace(/</g, "\\u003c")};</script><script>`);
+  const entry = fx.entries.find((e) => e.uuid);
+  const near = async (laidOut, drag) => {
+    const window = await open(`http://localhost/x/keep-the-why-dashboard/${laidOut ? "#graph" : `#entry/${entry.uuid}`}`, page, { "ktw-motion": "off" });
+    const d = window.document;
+    const quiet = async (g) => { for (let i = 0; i < 300 && (g()?.alpha ?? 1) > 0.003; i++) await tick(100); };
+    await tick(500);
+    if (laidOut) {
+      await quiet(() => window.__g());
+      // a node of the full graph placed by hand there, which its redraw lets go
+      const t = window.__g().nodes.find((n) => n.kind === "topic"); t.x += 260; t.y -= 170; t.fixed = true; window.__g().alpha = 0.3; window.__g().wake?.(); await tick(200); await quiet(() => window.__g());
+      window.location.hash = `#entry/${entry.uuid}`; window.dispatchEvent(new window.Event("hashchange")); await tick(400);
+    }
+    [...d.querySelectorAll(".ktw-mini-seg button")].find((b) => b.textContent === "near")?.click(); await tick(300);
+    await quiet(() => window.__ktwNear?.());
+    const pre = Object.fromEntries((window.__ktwNear()?.nodes || []).map((n) => [n.id, [n.x, n.y]])); // before the redraw
+    if (drag) { const n = window.__ktwNear().nodes[0]; n.x += 200; n.y -= 120; n.fixed = true; }
+    const btn = [...d.querySelectorAll(".ktw-mini-corner-btn")].find((b) => b.textContent === "redraw");
+    if (drag) { btn?.click(); await tick(300); await quiet(() => window.__ktwNear?.()); }
+    const pos = (g) => (g ? Object.fromEntries(g.nodes.map((n) => [n.id, [n.x, n.y]])) : {});
+    const g = window.__ktwNear?.();
+    const at = pos(g);
+    const held = g ? g.nodes.filter((n) => n.fixed).length : -1;
+    // the page rendered again: another entry, then this one back — its neighbourhood built anew from the full graph
+    const go = async (hash) => { window.location.hash = hash; window.dispatchEvent(new window.Event("hashchange")); await tick(400); };
+    await go(`#entry/${other.uuid}`); await go(`#entry/${entry.uuid}`); await quiet(() => window.__ktwNear?.());
+    const again = pos(window.__ktwNear?.());
+    // and the full graph opened
+    await go("#graph"); await quiet(() => window.__g());
+    const full = pos(window.__g()); const fullHeld = window.__g().nodes.filter((n) => n.fixed).length;
+    window.close();
+    return { at, again, full, fullHeld, pre, held, hadButton: !!btn };
+  };
+  const other = fx.entries.find((e) => e.uuid && e.file !== entry.file);
+  const used = await near(true, true), fresh = await near(false, false);
+  const gap = (a, b) => { let d = 0; for (const [id, [x, y]] of Object.entries(a)) { const q = b[id]; d = Math.max(d, q ? Math.hypot(q[0] - x, q[1] - y) : Infinity); } return Object.keys(a).length === Object.keys(b).length ? d : Infinity; };
+  // a fresh load of the full graph, straight at it
+  const freshFull = await (async () => {
+    const window = await open("http://localhost/x/keep-the-why-dashboard/#graph", page, { "ktw-motion": "off" });
+    await tick(500); for (let i = 0; i < 300 && window.__g().alpha > 0.003; i++) await tick(100);
+    const out = Object.fromEntries(window.__g().nodes.map((n) => [n.id, [n.x, n.y]]));
+    window.close();
+    return out;
+  })();
+  report.redrawNear = { nodes: Object.keys(fresh.at).length, diff: gap(fresh.at, used.at), again: gap(fresh.at, used.again), full: gap(freshFull, used.full), freshEntryFull: gap(freshFull, fresh.full), held: used.held, fullHeld: used.fullHeld, beforeRedraw: gap(fresh.at, used.pre) };
+  if (!used.hadButton || !fresh.hadButton) errors.push("redraw (near): the side pane's neighbourhood graph has no redraw");
+  if (!other) errors.push("redraw (near): the fixture has no entry in another topic to go to and back");
+  if (!(report.redrawNear.beforeRedraw > 1)) errors.push("redraw (near): before the redraw the neighbourhood was already where a fresh build puts it — the test does not tell the two apart");
+  if (!report.redrawNear.nodes || report.redrawNear.diff !== 0) errors.push("redraw (near) after the full graph was laid out and a node dragged is not a fresh build of the neighbourhood — " + JSON.stringify(report.redrawNear));
+  if (report.redrawNear.again !== 0) errors.push("redraw (near) is gone on the next build of the neighbourhood (another page and back) — " + JSON.stringify(report.redrawNear));
+  if (report.redrawNear.full !== 0 || report.redrawNear.freshEntryFull !== 0) errors.push("redraw (near): the full graph opened after it is not a fresh load of it — " + JSON.stringify(report.redrawNear));
+  if (used.held || used.fullHeld) errors.push("redraw (near): a node placed by hand, in the neighbourhood or the full graph, is still held — " + JSON.stringify(report.redrawNear));
+}
+{
+  // redraw on the graph page: every node you placed let go, and the same layout every time — dragged nodes leave no trace
+  const web = FILES["https://acme.github.io/web/state.json"];
+  const page = html.replace("<script>", `<script>window.__KTW_STATE__ = ${JSON.stringify({ ...web, exported: true }).replace(/</g, "\u003c")};</script><script>`);
+  const window = await open("http://localhost/web/keep-the-why-dashboard/#graph", page, { "ktw-motion": "off" }); // the slow turn goes by the clock
+  const d = window.document;
+  const shownG = () => window.__fg?.() || window.__g();
+  const quiet = async () => { for (let i = 0; i < 300 && shownG().alpha > 0.003; i++) await tick(100); };
+  await tick(600); await quiet();
+  const btn = () => d.querySelector(".ktw-graph-corner-redraw");
+  if (!btn() || !/redraw the graph/.test(btn().getAttribute("aria-label") || "") || btn().tagName !== "BUTTON") errors.push("redraw: the graph has no redraw button beside fit and reset, with a label, reachable by keyboard");
+  else {
+    const at = () => Object.fromEntries(shownG().nodes.map((n) => [n.id, [n.x, n.y]]));
+    btn().click(); await tick(400); await quiet();
+    const first = at();
+    const n = shownG().nodes.find((m) => m.kind === "topic"); n.x += 300; n.y -= 200; n.fixed = true; shownG().alpha = 0.3; shownG().wake?.(); await tick(300); await quiet();
+    btn().click(); await tick(400); await quiet();
+    const second = at(); const g = shownG();
+    let diff = 0; for (const [id, [x, y]] of Object.entries(first)) { const q = second[id]; diff = Math.max(diff, q ? Math.hypot(q[0] - x, q[1] - y) : Infinity); }
+    report.redraw = { nodes: Object.keys(first).length, diff, fixed: g.nodes.filter((m) => m.fixed).length, alpha: g.alpha };
+    if (diff !== 0 || Object.keys(first).length !== Object.keys(second).length) errors.push("redraw: two redraws, a drag between them, do not give the same layout — " + JSON.stringify(report.redraw));
+    if (report.redraw.fixed) errors.push("redraw: the node placed by hand is still held");
+  }
   window.close();
 }
 {

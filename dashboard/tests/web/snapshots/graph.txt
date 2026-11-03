@@ -61,6 +61,8 @@
     "Layers"
   <button aria-expanded="false" class="ktw-graph-toggle ktw-legend-toggle" type="button">
     "Legend"
+  <button aria-label="redraw the graph: laid out anew from the start, every node you placed let go, as a fresh load lays it out — the thought held and the switches stay" class="ktw-graph-corner ktw-graph-corner-redraw" title="redraw the graph: laid out anew from the start, every node you placed let go, as a fresh load lays it out — the thought held and the switches stay" type="button">
+    "redraw"
   <button class="ktw-graph-corner ktw-graph-corner-fit" title="fit the view: everything in the box, centred on the point the graph turns around" type="button">
     "fit"
   <button class="ktw-graph-corner ktw-graph-corner-reset" title="let go of the held thought — every node alike again (Esc does this and the bar's reset)" type="button">

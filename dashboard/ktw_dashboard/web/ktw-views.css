@@ -213,6 +213,7 @@ table.ktw-t.ktw-findings .ktw-mono { white-space: nowrap; }
   .ktw-ui-toggle { top: 10px; }
   .ktw-graph-wrap .ktw-graph-corner { bottom: 40px; right: 10px; }
   .ktw-graph-wrap .ktw-graph-corner-fit { right: 64px; }
+  .ktw-graph-wrap .ktw-graph-corner-redraw { right: 108px; }
   .ktw-legend-toggle { bottom: 10px; }
   .ktw-graph-wrap.ktw-ui-open .ktw-path-bar { display: none; }
   .ktw-graph-hint { display: none; }
@@ -395,6 +396,7 @@ a.ktw-author:hover { color: var(--ktw-accent2, #a98cf5); }
 .ktw-graph-wrap .ktw-graph-corner { position: absolute; bottom: 40px; right: 18px; z-index: 3; font: inherit; font-size: 10.5px; padding: 3px 9px; border: 1px solid var(--ktw-line, #3a3a43); border-radius: 5px; background: color-mix(in srgb, var(--ktw-surface, #26262b) 85%, transparent); color: var(--ktw-fg2, #a2a2ad); cursor: pointer; }
 .ktw-graph-wrap .ktw-graph-corner:hover { border-color: var(--ktw-accent, #835bec); color: var(--ktw-accent2, #a98cf5); }
 .ktw-graph-wrap .ktw-graph-corner-fit { right: 72px; }
+.ktw-graph-wrap .ktw-graph-corner-redraw { right: 118px; }
 .ktw-stage-wrap .ktw-stage-reset { position: absolute; top: 8px; right: 8px; z-index: 5; font: inherit; font-size: 10.5px; padding: 3px 9px; border: 1px solid var(--ktw-line, #3a3a43); border-radius: 5px; background: color-mix(in srgb, var(--ktw-surface, #26262b) 85%, transparent); color: var(--ktw-fg2, #a2a2ad); cursor: pointer; }
 .ktw-stage-wrap .ktw-stage-reset:hover { border-color: var(--ktw-accent, #835bec); color: var(--ktw-accent2, #a98cf5); }
 .ktw-stage-wrap .ktw-stage-seg .ktw-seg-label { padding: 2px 4px 2px 7px; font-size: 10.5px; color: var(--ktw-fg3, #6f6f7a); }

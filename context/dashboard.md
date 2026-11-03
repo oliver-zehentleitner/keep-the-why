@@ -1023,3 +1023,22 @@ A step reads the shown nodes into plain arrays once, so the pair loop does no pr
 - **One fix per case:** a flag for the owners switch, another for the project's hub. The review showed both were one class, a change of shape on a settled graph, and a third case would have needed a third flag.
 - **Reheating the whole graph after a build at a lower alpha:** with the old nodes free, a rebuild still moved them 125 to 220 units, whatever the alpha.
 - **A force library, or Barnes–Hut repulsion:** the page has no dependencies, and the pairwise step still fits a frame at this size.
+
+## Redraw rebuilds the graph from no positions, through the same path a page load takes; it is not a reset
+
+**Id:** a3b631ce-9400-4d28-aa63-fb4c0020d85f
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** the maintainer, 2026-11-03: fit adjusts the zoom and reset sets the state straight, and a control that draws the graph again was missing. The scope was agreed as written on the card: a full deterministic relayout that lets go of placed nodes and fits afterwards, with reset staying reset. How it is built is the implementer's, in the pull request that added it.
+**Revisit when:** a host wants redraw without the dashboard's build functions, or a graph's fresh layout comes to depend on the order data arrives in
+**See:** dashboard.md#a-graphs-new-nodes-are-seeded-where-they-hang-never-at-random-a-step-is-capped-a-rebuild-lays-out-only-what-it-added — a707f5d8-d5ec-46ee-b661-74576ccc7f93 — as of 2026-11-03
+
+*Redraw* sits in the graph's corner and in the side pane's, beside *fit* and *reset*. It marks the graph it runs for a fresh build: the project's, or the family's (or the side pane's copy of it). The next build of that graph then starts with no previous positions, so every node is seeded anew and none stays held. The side pane's neighbourhood is built from the full graph's positions, so its redraw redraws the full graph, and the neighbourhood is built from that fresh layout, as on a fresh page load. The whole graph is laid out (`reheatAll`) and framed once it is at rest. The held thought, the switches and the scope stay as they are. That is reset's job, and reset keeps it.
+
+**Reason:** seeding is deterministic. A build from no positions, through the same functions a page load calls, gives the layout a fresh load of the same data gives, and a test can hold it to that: two redraws with a drag between them give the same positions. The project graph seeds in two passes, its own topics and then the layer beside them. A reseed in place would run one pass over everything and come out differently.
+
+**Rejected alternative:**
+- **Clearing the positions on the current graph and calling `seedLayout` once:** fewer lines, but not the layout a page load gives, for the two-pass reason above.
+- **Folding it into *reset*:** reset sets the state straight (the thought held, the stage), and the maintainer wanted the two kept apart.
+- **A neighbourhood redraw that builds only the neighbourhood from no positions:** it looks right until the next build of the neighbourhood (another page and back, a live update), which takes the full graph's positions again and brings back the layout the redraw had dropped. The maintainer chose that a redraw there sticks.

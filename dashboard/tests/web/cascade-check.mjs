@@ -25,6 +25,7 @@ process.env.TZ = "UTC";
 import { JSDOM, VirtualConsole } from "jsdom";
 import { moduleAsClassic } from "./classic.mjs";
 import fs from "node:fs";
+import { ADDED } from "./added-elements.mjs";
 
 const NOW = Date.parse("2026-06-15T12:00:00Z");
 const WIDTHS = [1400, 1000, 800, 500];
@@ -143,7 +144,12 @@ async function load(file) {
   await tick(300);
   return { dom, go: async (hash) => { dom.window.location.hash = hash; dom.window.dispatchEvent(new dom.window.Event("hashchange")); await tick(150); } };
 }
-const pathOf = (el) => { const p = []; for (let n = el; n && n.localName !== "html"; n = n.parentElement) p.push(`${n.localName}:${n.parentElement ? [...n.parentElement.children].indexOf(n) : 0}`); return p.reverse().join("/"); };
+// an element the pull request adds on purpose (added-elements.mjs): left out, with its subtree, and not counted
+// among its siblings
+const added = (el) => ADDED.some((x) => el.closest(x.selector));
+const pathOf = (el) => { const p = []; for (let n = el; n && n.localName !== "html"; n = n.parentElement) p.push(`${n.localName}:${n.parentElement ? [...n.parentElement.children].filter((c) => !added(c)).indexOf(n) : 0}`); return p.reverse().join("/"); };
+const seen = new Map(ADDED.map((x) => [x.selector, { base: 0, split: 0 }]));
+const tally = (doc, side) => { for (const x of ADDED) seen.get(x.selector)[side] += doc.querySelectorAll(x.selector).length; };
 
 const base = await load(basePage), split = await load(splitPage);
 const S = base.dom.window.__KTW_STATE__;
@@ -159,7 +165,8 @@ const baseRules = rulesOf(base.dom.window.document), splitRules = rulesOf(split.
 let compared = 0, expected = 0; const diffs = [];
 for (const hash of routes) {
   await base.go(hash); await split.go(hash);
-  const A = [...base.dom.window.document.body.querySelectorAll("*")], B = [...split.dom.window.document.body.querySelectorAll("*")];
+  tally(base.dom.window.document, "base"); tally(split.dom.window.document, "split");
+  const A = [...base.dom.window.document.body.querySelectorAll("*")].filter((e) => !added(e)), B = [...split.dom.window.document.body.querySelectorAll("*")].filter((e) => !added(e));
   if (A.length !== B.length) { diffs.push(`${hash}: ${A.length} elements in the base, ${B.length} in the split`); continue; }
   for (let i = 0; i < A.length; i++) {
     const path = pathOf(A[i]);
@@ -177,8 +184,12 @@ for (const hash of routes) {
     }
   }
 }
+for (const [sel, n] of seen) {
+  if (!n.split) diffs.push(`added-elements.mjs: "${sel}" matches nothing in the split — a stale entry`);
+  if (n.base) diffs.push(`added-elements.mjs: "${sel}" matches ${n.base} elements in the base — not an addition`);
+}
 const uniq = [...new Set(diffs)];
 for (const d of uniq.slice(0, 60)) console.log(d);
-console.log(`\n${routes.length} routes × ${WIDTHS.length} widths: ${compared} element × property-family comparisons, ${uniq.length} differ, ${expected} expected (EXPECTED)`);
+console.log(`\n${routes.length} routes × ${WIDTHS.length} widths: ${compared} element × property-family comparisons, ${uniq.length} differ, ${expected} expected (EXPECTED); added on purpose (added-elements.mjs): ${[...seen].map(([s, n]) => `${s} ×${n.split}`).join(", ") || "none"}`);
 base.dom.window.close(); split.dom.window.close();
 process.exit(uniq.length ? 1 : 0);

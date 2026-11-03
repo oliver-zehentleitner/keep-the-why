@@ -112,7 +112,7 @@ The constants are `KeepTheWhy.core.LAYOUT`, each with its reason beside it in `k
 - `DECAY` and `MIN_ALPHA`: the cooling.
 - `SEED_GAP` and `SEED_FILL`: how close seeding places its nodes.
 
-With the graph's *motion* off, a graph not yet drawn settles before its first frame and is drawn once it is settled and framed.
+With the graph's *motion* off, a graph not yet drawn settles before its first frame and is drawn once it is settled and framed. The dashboard's *redraw* control is a host's rebuild with no previous graph (`prev` empty), followed by `reheatAll` and a fit. In the side pane's neighbourhood it rebuilds the full graph that way, and the neighbourhood takes its `prev` from it. Seeding is deterministic, so it gives the layout a fresh load of the same data gives.
 
 ## Styles
 
