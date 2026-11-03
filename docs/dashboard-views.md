@@ -23,6 +23,8 @@ All files live in `dashboard/ktw_dashboard/web/` and ship in the `keep-the-why-d
 - **`scripts`** are classic scripts, not ES modules, so a page opened from `file://` can load them. Load them in this order, before your own code. Each adds one frozen object to `globalThis.KeepTheWhy`.
 - **`styles`** style `.ktw-*` classes only and read `--ktw-*` custom properties only (see [Styles](#styles) and [Tokens](#tokens)).
 
+Beside the manifest, `ktw-words.json` lists every key of the views' UI text with its English (see [words](#words)).
+
 | File | On `KeepTheWhy` | What it is |
 |---|---|---|
 | `ktw-core.js` | `core` | Pure functions: state normalisation, routes, filters, the graph's layout steps, the timeline's arithmetic, export verdicts, the token defaults. No DOM. |
@@ -70,6 +72,8 @@ const pages = K.views.pages.create({ scene, nav, prefs, family, search });
 const graph = K.views.graph.create({ scene, nav, prefs });
 const timeline = K.views.timeline.create({ scene, nav, prefs });
 ```
+
+Every `create` also takes `words`, the host's hook for the UI text in its own language (see [words](#words)). Without it, the views are in English.
 
 A view renders into the element the host hands it: `pages.overview(main, H)`, `family.view(main)`, `search.view(main, scope, q)`, and so on. The lib has no page layout of its own. The dashboard's three columns (sidebar, main, details) are the dashboard's, and another host puts the views wherever its own layout has room.
 
@@ -188,6 +192,18 @@ A route with a `centre` is a place in another project: a published export, or an
 | `path`, `path-show`, `path-entries` | the path bar | dashboard host |
 | `scope`, `search-scope` | the scope switch, the search's scope | dashboard host |
 | `theme`, `globe-intro` | the dashboard's own | dashboard only |
+
+### words
+
+`words: (key, params) => string | undefined`, optional on every `views.*.create`. Every UI text the views draw goes through it: headings, buttons, notes, titles, aria labels, the empty, loading and error lines. Each has a stable dotted key (`pages.queues.heading`, `search.none.project`), and `params` carries the counts and names in it.
+
+- **The answer:** a string is used as it is. `undefined` means "not in my catalogue": the English is used, quietly. A throw or an answer that is not a string falls back to the English as well, with one `console.warn` per key, so a broken catalogue shows without flooding the console.
+- **Placeholders**, in the host's text as in the English, are filled from `params`. `{name}` is the value. In the English, `{n:entry}` is a count with its noun ("3 entries") and `{n:match|matches}` gives both forms. A host's own text writes `{n}` and handles its own plural rules with the raw count in `params`.
+- **Nodes inside a sentence:** a param that is a node, such as a link or a button, goes in where its placeholder stands (`"open it with {link}"`). Keep the placeholder in the translation, wherever the language puts it.
+- **`ktw-words.json`** beside the manifest lists every key with its English. A host can check that its catalogue covers it. A test fails if a key in the code is missing from the file, or a key in the file is no longer in the code.
+- **Not translated, on purpose:** the data's own words. That is the entry text (titles, bodies, field values), the spec's vocabulary (the values of Status, Evidence and Type, the field names `Id`, `Source`, `Verification`, `Revisit when`, `Superseded by`, `See`, and the body labels such as `Reason`), and names, files and dates. They read the same in every language because the entries are written with them.
+
+The pieces of `ui` and `core` that make UI text outside a view take the view's words last and fall back to the English: `ui.forkPill(g, tw)`, `ui.headPill(g, tw)`, `ui.roleWord(tw, role)`, `core.kindLabel(kind, tw)`, `core.exportStateUrl(text, raw, tw)`, `core.exportVerdict(state, canonical, url, tw)` and `core.resolveSee(uuid, { known, published, tw })`. `ui.words(hook)` makes such a `tw`, and `ui.english` is the one without a hook.
 
 ### scene
 
