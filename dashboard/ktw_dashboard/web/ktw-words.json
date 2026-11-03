@@ -50,6 +50,7 @@
   "friends.registryNote": "Repositories in the Keep the Why registry whose entries cite this project, from its backlink file. Citations from outside the registry are not in it.",
   "friends.registryNoteBuilt": "Repositories in the Keep the Why registry whose entries cite this project, from its backlink file, built {date}. Citations from outside the registry are not in it.",
   "friends.sub": "Repositories the entries here cite outside the family — linked into the graph, never merged into search, queues or counts. A friend in a family comes as the whole family. One hop: a friend's own friends are not loaded; walk there to see them.",
+  "graph.layingOut": "laying out {n:node}…",
   "pages.authors.byProject": "By project",
   "pages.authors.col.author": "Author",
   "pages.authors.col.created": "Created",

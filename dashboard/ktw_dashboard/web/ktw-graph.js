@@ -8,10 +8,12 @@
    globalThis.KeepTheWhy.views.graph, listed in ktw-views.json, tested through the page (canvas-trace.mjs). */
 (function (root) {
 "use strict";
-const { plural, stepLayout, placeShown, seedLayout, carryNode, LAYOUT, linkExistsAt, hostOf, filterActive, entryMatches, fkey, linkFamily, seeDay, supersededDay, parseSupersededBy, readToken } = root.KeepTheWhy.core;
+const { stepLayout, placeShown, seedLayout, carryNode, LAYOUT, linkExistsAt, hostOf, filterActive, entryMatches, fkey, linkFamily, seeDay, supersededDay, parseSupersededBy, readToken } = root.KeepTheWhy.core;
 
-// One graph view per page: create({ scene, nav, prefs }) — the host's scene, navigation and settings.
-function create({ scene, nav, prefs }) {
+// One graph view per page: create({ scene, nav, prefs, words }) — the host's scene, navigation and settings, and its
+// hook for the UI text (ktw-ui.js words).
+function create({ scene, nav, prefs, words }) {
+const tw = root.KeepTheWhy.ui.words(words);
 const narrow = () => !!root.matchMedia?.("(max-width: 900px)").matches;
 const atClock = (e, ext = false) => scene.atClock(e, ext); // the scene's clock (ktw-scene.js)
 const statusNow = (e) => scene.statusNow(e);
@@ -209,7 +211,7 @@ function runGraph(canvas, g, opts = {}) {
       do stepLayout(g, { visible, linkOn }); while (g.alpha > LAYOUT.MIN_ALPHA && performance.now() - t0 < SETTLE_SLICE_MS);
       if (g.alpha > LAYOUT.MIN_ALPHA) {
         // still settling: the canvas says so instead of staying empty
-        publishLayout(g); ctx.clearRect(0, 0, W, H); ctx.globalAlpha = 1; ctx.fillStyle = color("--ktw-fg2"); ctx.font = `13px ${color("--ktw-font") || "sans-serif"}`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(`laying out ${plural(ns.length, "node")}…`, W / 2, H / 2);
+        publishLayout(g); ctx.clearRect(0, 0, W, H); ctx.globalAlpha = 1; ctx.fillStyle = color("--ktw-fg2"); ctx.font = `13px ${color("--ktw-font") || "sans-serif"}`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(tw("graph.layingOut", "laying out {n:node}…", { n: ns.length }), W / 2, H / 2);
         g.raf = canvas.isConnected ? requestAnimationFrame(step) : null; return;
       }
     } else if (g.alpha > LAYOUT.MIN_ALPHA) { const t0 = performance.now(); do stepLayout(g, { visible, linkOn }); while (g.alpha > LAYOUT.MIN_ALPHA && performance.now() - t0 < FRAME_LAYOUT_MS); }
