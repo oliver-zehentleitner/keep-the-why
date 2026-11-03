@@ -1,0 +1,15 @@
+{
+  "role.ancestor": "ancestor",
+  "role.child": "child",
+  "role.friend": "friend",
+  "role.grandparent": "grandparent",
+  "role.parent": "parent",
+  "role.relative": "relative",
+  "role.self": "self",
+  "role.sibling": "sibling",
+  "ui.fork.byCanonical": "origin differs from the project's `canonical` (.keep-the-why): this checkout is a fork or mirror of it",
+  "ui.fork.byUpstream": "this checkout has an `upstream` remote: origin is a fork of it",
+  "ui.fork.of": "fork of {remote}",
+  "ui.head.detached": "detached",
+  "ui.head.onGitHub": "branch and commit on GitHub"
+}
