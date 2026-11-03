@@ -237,182 +237,182 @@ strokeStyle = "#a98cf5"
 lineWidth = 1
 setLineDash([])
 beginPath()
-moveTo(349.101, 134.608)
-lineTo(541.279, 129.246)
+moveTo(345.659, 154.207)
+lineTo(541.279, 143.563)
 stroke()
 globalAlpha = 0.261
 strokeStyle = "#a98cf5"
 lineWidth = 1
 setLineDash([])
 beginPath()
-moveTo(300.42, 100.374)
-lineTo(349.101, 134.608)
+moveTo(250.287, 100.374)
+lineTo(345.659, 154.207)
 stroke()
 globalAlpha = 0.261
 strokeStyle = "#a98cf5"
 lineWidth = 1
 setLineDash([])
 beginPath()
-moveTo(304.978, 201.789)
-lineTo(300.42, 100.374)
+moveTo(273.692, 205.598)
+lineTo(250.287, 100.374)
 stroke()
 globalAlpha = 0.246
 strokeStyle = "#a98cf5"
 lineWidth = 1
 setLineDash([])
 beginPath()
-moveTo(446.497, 148.582)
-lineTo(398.847, 192.115)
+moveTo(417.842, 140.847)
+lineTo(429.586, 202.912)
 stroke()
 globalAlpha = 0.246
 strokeStyle = "#6f6f7a"
 lineWidth = 1
 setLineDash([5,4])
 beginPath()
-moveTo(398.847, 192.115)
-lineTo(340.751, 190.021)
+moveTo(429.586, 202.912)
+lineTo(256.22, 205.541)
 stroke()
 globalAlpha = 0.246
 strokeStyle = "#a98cf5"
 lineWidth = 1
 setLineDash([])
 beginPath()
-moveTo(340.751, 190.021)
-lineTo(398.847, 192.115)
+moveTo(256.22, 205.541)
+lineTo(429.586, 202.912)
 stroke()
 globalAlpha = 0.285
 strokeStyle = "#a98cf5"
 lineWidth = 1
 setLineDash([])
 beginPath()
-moveTo(380.104, 256.564)
-lineTo(340.751, 190.021)
+moveTo(398.663, 256.564)
+lineTo(256.22, 205.541)
 stroke()
 setLineDash([])
 globalAlpha = 0.163
 strokeStyle = "#6f6f7a"
 lineWidth = 1
 beginPath()
-moveTo(309.319, 216.893)
-lineTo(309.319, 226.362)
+moveTo(296.8, 199.294)
+lineTo(296.8, 226.362)
 stroke()
 globalAlpha = 0.464
 fillStyle = "#26262b"
 globalAlpha = 0.418
 beginPath()
-rect(294.486, 203.201, 29.668, 13.693)
+rect(281.967, 185.601, 29.668, 13.693)
 fill()
 shadowBlur = 0
 fillStyle = "#4aa3df"
 globalAlpha = 0.279
 beginPath()
-rect(294.486, 203.201, 29.668, 13.693)
+rect(281.967, 185.601, 29.668, 13.693)
 fill()
 globalAlpha = 0.464
 fillStyle = "#4aa3df"
 globalAlpha = 0.418
-fillRect(294.486, 203.201, 29.668, 2)
+fillRect(281.967, 185.601, 29.668, 2)
 globalAlpha = 0.464
 lineWidth = 1.2
 strokeStyle = "#4aa3df"
 setLineDash([])
 beginPath()
-rect(294.486, 203.201, 29.668, 13.693)
+rect(281.967, 185.601, 29.668, 13.693)
 stroke()
 setLineDash([])
 globalAlpha = 0.166
 strokeStyle = "#6f6f7a"
 lineWidth = 1
 beginPath()
-moveTo(398.847, 199.029)
-lineTo(398.847, 227.963)
+moveTo(429.586, 209.826)
+lineTo(429.586, 227.963)
 stroke()
 globalAlpha = 0.475
 fillStyle = "#26262b"
 globalAlpha = 0.428
 beginPath()
-rect(383.866, 185.201, 29.962, 13.829)
+rect(414.606, 195.997, 29.962, 13.829)
 fill()
 shadowBlur = 0
 fillStyle = "#6f6f7a"
 globalAlpha = 0.057
 beginPath()
-rect(383.866, 185.201, 29.962, 13.829)
+rect(414.606, 195.997, 29.962, 13.829)
 fill()
 globalAlpha = 0.475
 lineWidth = 1.2
 strokeStyle = "#6f6f7a"
 setLineDash([4,3])
 beginPath()
-rect(383.866, 185.201, 29.962, 13.829)
+rect(414.606, 195.997, 29.962, 13.829)
 stroke()
 setLineDash([])
 globalAlpha = 0.178
 strokeStyle = "#6f6f7a"
 lineWidth = 1
 beginPath()
-moveTo(446.497, 155.719)
-lineTo(446.497, 233.203)
+moveTo(417.842, 147.984)
+lineTo(417.842, 233.203)
 stroke()
 globalAlpha = 0.508
 fillStyle = "#26262b"
 globalAlpha = 0.458
 beginPath()
-rect(431.035, 141.446, 30.925, 14.273)
+rect(402.379, 133.711, 30.925, 14.273)
 fill()
 shadowBlur = 0
 fillStyle = "#e0574f"
 globalAlpha = 0.153
 beginPath()
-rect(431.035, 141.446, 30.925, 14.273)
+rect(402.379, 133.711, 30.925, 14.273)
 fill()
 globalAlpha = 0.508
 save()
 beginPath()
-rect(431.035, 141.446, 30.925, 2)
+rect(402.379, 133.711, 30.925, 2)
 clip()
 fillStyle = "#e0574f"
 globalAlpha = 0.458
 beginPath()
-moveTo(429.035, 141.446)
-lineTo(432.235, 141.446)
-lineTo(430.235, 143.446)
-lineTo(427.035, 143.446)
+moveTo(400.379, 133.711)
+lineTo(403.579, 133.711)
+lineTo(401.579, 135.711)
+lineTo(398.379, 135.711)
 closePath()
 fill()
 beginPath()
-moveTo(435.435, 141.446)
-lineTo(438.635, 141.446)
-lineTo(436.635, 143.446)
-lineTo(433.435, 143.446)
+moveTo(406.779, 133.711)
+lineTo(409.979, 133.711)
+lineTo(407.979, 135.711)
+lineTo(404.779, 135.711)
 closePath()
 fill()
 beginPath()
-moveTo(441.835, 141.446)
-lineTo(445.035, 141.446)
-lineTo(443.035, 143.446)
-lineTo(439.835, 143.446)
+moveTo(413.179, 133.711)
+lineTo(416.379, 133.711)
+lineTo(414.379, 135.711)
+lineTo(411.179, 135.711)
 closePath()
 fill()
 beginPath()
-moveTo(448.235, 141.446)
-lineTo(451.435, 141.446)
-lineTo(449.435, 143.446)
-lineTo(446.235, 143.446)
+moveTo(419.579, 133.711)
+lineTo(422.779, 133.711)
+lineTo(420.779, 135.711)
+lineTo(417.579, 135.711)
 closePath()
 fill()
 beginPath()
-moveTo(454.635, 141.446)
-lineTo(457.835, 141.446)
-lineTo(455.835, 143.446)
-lineTo(452.635, 143.446)
+moveTo(425.979, 133.711)
+lineTo(429.179, 133.711)
+lineTo(427.179, 135.711)
+lineTo(423.979, 135.711)
 closePath()
 fill()
 beginPath()
-moveTo(461.035, 141.446)
-lineTo(464.235, 141.446)
-lineTo(462.235, 143.446)
-lineTo(459.035, 143.446)
+moveTo(432.379, 133.711)
+lineTo(435.579, 133.711)
+lineTo(433.579, 135.711)
+lineTo(430.379, 135.711)
 closePath()
 fill()
 restore()
@@ -421,13 +421,13 @@ lineWidth = 1.2
 strokeStyle = "#e0574f"
 setLineDash([])
 beginPath()
-rect(431.035, 141.446, 30.925, 14.273)
+rect(402.379, 133.711, 30.925, 14.273)
 stroke()
 setLineDash([])
 fillStyle = "#e0574f"
 strokeStyle = "#e0574f"
 save()
-translate(450.96, 145.719)
+translate(422.304, 137.984)
 scale(0.583, 0.583)
 lineWidth = 2.571
 setLineDash([])
@@ -444,27 +444,27 @@ globalAlpha = 0.182
 strokeStyle = "#6f6f7a"
 lineWidth = 1
 beginPath()
-moveTo(541.279, 136.457)
+moveTo(541.279, 150.773)
 lineTo(541.279, 234.943)
 stroke()
 globalAlpha = 0.519
 fillStyle = "#26262b"
 globalAlpha = 0.467
 beginPath()
-moveTo(525.656, 122.036)
-lineTo(550.412, 122.036)
-lineTo(556.902, 128.525)
-lineTo(556.902, 136.457)
-lineTo(525.656, 136.457)
+moveTo(525.656, 136.352)
+lineTo(550.412, 136.352)
+lineTo(556.902, 142.842)
+lineTo(556.902, 150.773)
+lineTo(525.656, 150.773)
 closePath()
 fill()
 shadowBlur = 0
 globalAlpha = 0.519
 fillStyle = "#1e1e22"
 beginPath()
-moveTo(550.412, 122.036)
-lineTo(550.412, 128.525)
-lineTo(556.902, 128.525)
+moveTo(550.412, 136.352)
+lineTo(550.412, 142.842)
+lineTo(556.902, 142.842)
 closePath()
 fill()
 strokeStyle = "#e0a83a"
@@ -474,18 +474,18 @@ lineWidth = 1.2
 strokeStyle = "#e0a83a"
 setLineDash([4,3])
 beginPath()
-moveTo(525.656, 122.036)
-lineTo(550.412, 122.036)
-lineTo(556.902, 128.525)
-lineTo(556.902, 136.457)
-lineTo(525.656, 136.457)
+moveTo(525.656, 136.352)
+lineTo(550.412, 136.352)
+lineTo(556.902, 142.842)
+lineTo(556.902, 150.773)
+lineTo(525.656, 150.773)
 closePath()
 stroke()
 setLineDash([])
 fillStyle = "#e0a83a"
 strokeStyle = "#e0a83a"
 save()
-translate(542.008, 126.457)
+translate(542.008, 140.773)
 scale(0.583, 0.583)
 lineWidth = 2.571
 setLineDash([])
@@ -509,41 +509,41 @@ fillStyle = "#e0574f"
 font = "700 8px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif"
 textAlign = "left"
 textBaseline = "bottom"
-fillText("?", 530.656, 134.457)
+fillText("?", 530.656, 148.773)
 strokeStyle = "#4aa3df"
 lineWidth = 1.2
-strokeRect(522.656, 119.036, 37.245, 20.421)
+strokeRect(522.656, 133.352, 37.245, 20.421)
 globalAlpha = 0.202
 strokeStyle = "#6f6f7a"
 lineWidth = 1
 beginPath()
-moveTo(300.42, 108.015)
-lineTo(300.42, 245.088)
+moveTo(250.287, 108.015)
+lineTo(250.287, 245.088)
 stroke()
 globalAlpha = 0.577
 fillStyle = "#26262b"
 globalAlpha = 0.519
 beginPath()
-rect(283.864, 92.734, 33.111, 15.282)
+rect(233.732, 92.734, 33.111, 15.282)
 fill()
 shadowBlur = 0
 fillStyle = "#835bec"
 globalAlpha = 0.173
 beginPath()
-rect(283.864, 92.734, 33.111, 15.282)
+rect(233.732, 92.734, 33.111, 15.282)
 fill()
 globalAlpha = 0.577
 lineWidth = 1.2
 strokeStyle = "#835bec"
 setLineDash([])
 beginPath()
-rect(283.864, 92.734, 33.111, 15.282)
+rect(233.732, 92.734, 33.111, 15.282)
 stroke()
 setLineDash([])
 fillStyle = "#835bec"
 strokeStyle = "#835bec"
 save()
-translate(305.975, 98.015)
+translate(255.842, 98.015)
 scale(0.583, 0.583)
 lineWidth = 2.571
 setLineDash([])
@@ -559,37 +559,37 @@ globalAlpha = 0.206
 strokeStyle = "#6f6f7a"
 lineWidth = 1
 beginPath()
-moveTo(248.627, 163.206)
-lineTo(248.627, 247.085)
+moveTo(250.644, 163.943)
+lineTo(250.644, 247.085)
 stroke()
 globalAlpha = 0.588
 fillStyle = "#26262b"
 globalAlpha = 0.529
 beginPath()
-rect(231.889, 147.755, 33.478, 15.451)
+rect(233.906, 148.492, 33.478, 15.451)
 fill()
 shadowBlur = 0
 fillStyle = "#4aa3df"
 globalAlpha = 0.176
 beginPath()
-rect(231.889, 147.755, 33.478, 15.451)
+rect(233.906, 148.492, 33.478, 15.451)
 fill()
 globalAlpha = 0.588
 fillStyle = "#4aa3df"
 globalAlpha = 0.529
-fillRect(231.889, 147.755, 33.478, 2)
+fillRect(233.906, 148.492, 33.478, 2)
 globalAlpha = 0.588
 lineWidth = 1.2
 strokeStyle = "#4aa3df"
 setLineDash([])
 beginPath()
-rect(231.889, 147.755, 33.478, 15.451)
+rect(233.906, 148.492, 33.478, 15.451)
 stroke()
 setLineDash([])
 fillStyle = "#4aa3df"
 strokeStyle = "#4aa3df"
 save()
-translate(254.366, 153.206)
+translate(256.383, 153.943)
 scale(0.583, 0.583)
 lineWidth = 2.571
 setLineDash([])
@@ -600,33 +600,33 @@ globalAlpha = 0.209
 strokeStyle = "#6f6f7a"
 lineWidth = 1
 beginPath()
-moveTo(349.101, 142.42)
-lineTo(349.101, 249.126)
+moveTo(345.659, 162.019)
+lineTo(345.659, 249.126)
 stroke()
 globalAlpha = 0.598
 fillStyle = "#26262b"
 globalAlpha = 0.538
 beginPath()
-rect(332.175, 126.796, 33.853, 15.624)
+rect(328.733, 146.395, 33.853, 15.624)
 fill()
 shadowBlur = 0
 fillStyle = "#835bec"
 globalAlpha = 0.359
 beginPath()
-rect(332.175, 126.796, 33.853, 15.624)
+rect(328.733, 146.395, 33.853, 15.624)
 fill()
 globalAlpha = 0.598
 lineWidth = 1.2
 strokeStyle = "#835bec"
 setLineDash([])
 beginPath()
-rect(332.175, 126.796, 33.853, 15.624)
+rect(328.733, 146.395, 33.853, 15.624)
 stroke()
 setLineDash([])
 fillStyle = "#835bec"
 strokeStyle = "#835bec"
 save()
-translate(355.028, 132.42)
+translate(351.585, 152.019)
 scale(0.583, 0.583)
 lineWidth = 2.571
 setLineDash([])
@@ -640,47 +640,47 @@ fill()
 restore()
 strokeStyle = "#d66fd6"
 lineWidth = 1.2
-strokeRect(329.175, 123.796, 39.853, 21.624)
+strokeRect(325.733, 143.395, 39.853, 21.624)
 font = "9.5px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif"
 textAlign = "left"
 textBaseline = "top"
 fillStyle = "#dcdce3"
-fillText("Th…", 337.175, 130.796)
+fillText("Th…", 333.733, 150.395)
 globalAlpha = 0.245
 strokeStyle = "#6f6f7a"
 lineWidth = 1
 beginPath()
-moveTo(553.067, 182.389)
-lineTo(553.067, 271.299)
+moveTo(472.96, 202)
+lineTo(472.96, 271.299)
 stroke()
 globalAlpha = 0.7
 fillStyle = "#26262b"
 globalAlpha = 0.63
 beginPath()
-rect(534.102, 164.883, 37.93, 17.506)
+rect(453.995, 184.494, 37.93, 17.506)
 fill()
 shadowBlur = 0
 fillStyle = "#4aa3df"
 globalAlpha = 0.42
 beginPath()
-rect(534.102, 164.883, 37.93, 17.506)
+rect(453.995, 184.494, 37.93, 17.506)
 fill()
 globalAlpha = 0.7
 fillStyle = "#4aa3df"
 globalAlpha = 0.63
-fillRect(534.102, 164.883, 37.93, 2)
+fillRect(453.995, 184.494, 37.93, 2)
 globalAlpha = 0.7
 lineWidth = 1.2
 strokeStyle = "#4aa3df"
 setLineDash([])
 beginPath()
-rect(534.102, 164.883, 37.93, 17.506)
+rect(453.995, 184.494, 37.93, 17.506)
 stroke()
 setLineDash([])
 fillStyle = "#4aa3df"
 strokeStyle = "#4aa3df"
 save()
-translate(561.031, 172.389)
+translate(480.925, 192)
 scale(0.583, 0.583)
 lineWidth = 2.571
 setLineDash([])
@@ -691,37 +691,37 @@ globalAlpha = 0.245
 strokeStyle = "#6f6f7a"
 lineWidth = 1
 beginPath()
-moveTo(380.104, 265.317)
-lineTo(380.104, 271.299)
+moveTo(398.663, 265.317)
+lineTo(398.663, 271.299)
 stroke()
 globalAlpha = 0.7
 fillStyle = "#26262b"
 globalAlpha = 0.63
 beginPath()
-rect(361.14, 247.811, 37.93, 17.506)
+rect(379.698, 247.811, 37.93, 17.506)
 fill()
 shadowBlur = 0
 fillStyle = "#4aa3df"
 globalAlpha = 0.42
 beginPath()
-rect(361.14, 247.811, 37.93, 17.506)
+rect(379.698, 247.811, 37.93, 17.506)
 fill()
 globalAlpha = 0.7
 fillStyle = "#4aa3df"
 globalAlpha = 0.63
-fillRect(361.14, 247.811, 37.93, 2)
+fillRect(379.698, 247.811, 37.93, 2)
 globalAlpha = 0.7
 lineWidth = 1.2
 strokeStyle = "#4aa3df"
 setLineDash([])
 beginPath()
-rect(361.14, 247.811, 37.93, 17.506)
+rect(379.698, 247.811, 37.93, 17.506)
 stroke()
 setLineDash([])
 fillStyle = "#4aa3df"
 strokeStyle = "#4aa3df"
 save()
-translate(388.069, 255.317)
+translate(406.628, 255.317)
 scale(0.583, 0.583)
 lineWidth = 2.571
 setLineDash([])
@@ -732,14 +732,14 @@ globalAlpha = 0.249
 strokeStyle = "#6f6f7a"
 lineWidth = 1
 beginPath()
-moveTo(515.913, 114.903)
-lineTo(515.913, 273.923)
+moveTo(452.902, 148.163)
+lineTo(452.902, 273.923)
 stroke()
 globalAlpha = 0.711
 fillStyle = "#26262b"
 globalAlpha = 0.64
 beginPath()
-rect(496.707, 97.174, 38.412, 17.729)
+rect(433.696, 130.435, 38.412, 17.729)
 fill()
 shadowBlur = 0
 globalAlpha = 0.711
@@ -747,50 +747,50 @@ lineWidth = 1.2
 strokeStyle = "#8b8b98"
 setLineDash([])
 beginPath()
-rect(496.707, 97.174, 38.412, 17.729)
+rect(433.696, 130.435, 38.412, 17.729)
 stroke()
 setLineDash([])
 fillStyle = "#e0574f"
 font = "700 8px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif"
 textAlign = "left"
 textBaseline = "bottom"
-fillText("?", 501.707, 112.903)
+fillText("?", 438.696, 146.163)
 font = "9.5px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif"
 textAlign = "left"
 textBaseline = "top"
 fillStyle = "#dcdce3"
-fillText("Tem…", 501.707, 101.174)
+fillText("Tem…", 438.696, 134.435)
 globalAlpha = 0.249
 strokeStyle = "#6f6f7a"
 lineWidth = 1
 beginPath()
-moveTo(340.751, 198.885)
-lineTo(340.751, 273.923)
+moveTo(256.22, 214.405)
+lineTo(256.22, 273.923)
 stroke()
 globalAlpha = 0.711
 fillStyle = "#26262b"
 globalAlpha = 0.64
 beginPath()
-rect(321.545, 181.156, 38.412, 17.729)
+rect(237.014, 196.677, 38.412, 17.729)
 fill()
 shadowBlur = 0
 fillStyle = "#835bec"
 globalAlpha = 0.213
 beginPath()
-rect(321.545, 181.156, 38.412, 17.729)
+rect(237.014, 196.677, 38.412, 17.729)
 fill()
 globalAlpha = 0.711
 lineWidth = 1.2
 strokeStyle = "#835bec"
 setLineDash([])
 beginPath()
-rect(321.545, 181.156, 38.412, 17.729)
+rect(237.014, 196.677, 38.412, 17.729)
 stroke()
 setLineDash([])
 fillStyle = "#835bec"
 strokeStyle = "#835bec"
 save()
-translate(348.957, 188.885)
+translate(264.426, 204.405)
 scale(0.583, 0.583)
 lineWidth = 2.571
 setLineDash([])
@@ -806,38 +806,38 @@ font = "9.5px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sa
 textAlign = "left"
 textBaseline = "top"
 fillStyle = "#dcdce3"
-fillText("Syn…", 326.545, 185.156)
+fillText("Syn…", 242.014, 200.677)
 globalAlpha = 0.306
 strokeStyle = "#6f6f7a"
 lineWidth = 1
 beginPath()
-moveTo(304.978, 212.81)
-lineTo(304.978, 324.762)
+moveTo(273.692, 216.62)
+lineTo(273.692, 324.762)
 stroke()
 globalAlpha = 0.874
 fillStyle = "#26262b"
 globalAlpha = 0.787
 beginPath()
-rect(281.099, 190.768, 47.759, 22.043)
+rect(249.812, 194.577, 47.759, 22.043)
 fill()
 shadowBlur = 0
 fillStyle = "#835bec"
 globalAlpha = 0.262
 beginPath()
-rect(281.099, 190.768, 47.759, 22.043)
+rect(249.812, 194.577, 47.759, 22.043)
 fill()
 globalAlpha = 0.874
 lineWidth = 1.2
 strokeStyle = "#835bec"
 setLineDash([])
 beginPath()
-rect(281.099, 190.768, 47.759, 22.043)
+rect(249.812, 194.577, 47.759, 22.043)
 stroke()
 setLineDash([])
 fillStyle = "#835bec"
 strokeStyle = "#835bec"
 save()
-translate(317.858, 202.81)
+translate(286.571, 206.62)
 scale(0.583, 0.583)
 lineWidth = 2.571
 setLineDash([])
@@ -853,223 +853,223 @@ font = "9.5px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sa
 textAlign = "left"
 textBaseline = "top"
 fillStyle = "#dcdce3"
-fillText("Error…", 286.099, 194.768)
+fillText("Error…", 254.812, 198.577)
 font = "600 10.5px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif"
 textAlign = "center"
 textBaseline = "middle"
 globalAlpha = 0.82
 fillStyle = "#1e1e22"
-fillRect(339.256, 204.187, 36, 16)
+fillRect(327.317, 206.366, 36, 16)
 globalAlpha = 0.9
 fillStyle = "#a2a2ad"
-fillText("Sync", 357.256, 212.187)
+fillText("Sync", 345.317, 214.366)
 globalAlpha = 0.82
 fillStyle = "#1e1e22"
-fillRect(487.189, 131.376, 54, 16)
+fillRect(444.246, 146.239, 54, 16)
 globalAlpha = 0.9
 fillStyle = "#a2a2ad"
-fillText("Storage", 514.189, 139.376)
+fillText("Storage", 471.246, 154.239)
 globalAlpha = 0.82
 fillStyle = "#1e1e22"
-fillRect(285.782, 140.063, 30, 16)
+fillRect(265.07, 146.099, 30, 16)
 globalAlpha = 0.9
 fillStyle = "#a2a2ad"
-fillText("API", 300.782, 148.063)
+fillText("API", 280.07, 154.099)
 globalAlpha = 1
 
 ## canvas 2 — ktw-mini ktw-tall
 clearRect(0, 0, 800, 500)
 save()
-translate(252.336, 145.596)
-scale(1.689, 1.689)
+translate(328.528, 217.602)
+scale(1.515, 1.515)
 beginPath()
-moveTo(46, 0)
-lineTo(0, 0)
-lineWidth = 0.355
-setLineDash([1.184,1.776])
+moveTo(6.752, -13.578)
+lineTo(-39.499, -52.333)
+lineWidth = 0.396
+setLineDash([1.321,1.981])
 strokeStyle = "#3a3a43"
 globalAlpha = 1
 stroke()
 beginPath()
-moveTo(46, 0)
-lineTo(166, 0)
-lineWidth = 0.592
+moveTo(6.752, -13.578)
+lineTo(116.072, -16.411)
+lineWidth = 0.66
 setLineDash([])
 strokeStyle = "#3a3a43"
 globalAlpha = 1
 stroke()
 beginPath()
-moveTo(-37.152, 34.034)
-lineTo(0, 0)
-lineWidth = 0.355
-setLineDash([1.184,1.776])
+moveTo(-65.198, -8.095)
+lineTo(-39.499, -52.333)
+lineWidth = 0.396
+setLineDash([1.321,1.981])
 strokeStyle = "#3a3a43"
 globalAlpha = 1
 stroke()
 beginPath()
-moveTo(4.564, -52)
-lineTo(0, 0)
-lineWidth = 0.355
-setLineDash([1.184,1.776])
+moveTo(-66.716, -109.474)
+lineTo(-39.499, -52.333)
+lineWidth = 0.396
+setLineDash([1.321,1.981])
 strokeStyle = "#3a3a43"
 globalAlpha = 1
 stroke()
 beginPath()
-moveTo(32.608, 42.532)
-lineTo(0, 0)
-lineWidth = 0.355
-setLineDash([1.184,1.776])
+moveTo(-19.434, 5.32)
+lineTo(-39.499, -52.333)
+lineWidth = 0.396
+setLineDash([1.321,1.981])
 strokeStyle = "#3a3a43"
 globalAlpha = 1
 stroke()
 beginPath()
-moveTo(212, 0)
-lineTo(166, 0)
-lineWidth = 0.355
-setLineDash([1.184,1.776])
+moveTo(161.097, -20.969)
+lineTo(116.072, -16.411)
+lineWidth = 0.396
+setLineDash([1.321,1.981])
 strokeStyle = "#3a3a43"
 globalAlpha = 1
 stroke()
 beginPath()
-moveTo(128.848, 34.034)
-lineTo(166, 0)
-lineWidth = 0.355
-setLineDash([1.184,1.776])
+moveTo(61.724, -24.751)
+lineTo(116.072, -16.411)
+lineWidth = 0.396
+setLineDash([1.321,1.981])
 strokeStyle = "#3a3a43"
 globalAlpha = 1
 stroke()
 beginPath()
-moveTo(128.848, 34.034)
-lineTo(40.364, 115.093)
-lineWidth = 0.592
+moveTo(61.724, -24.751)
+lineTo(8.853, 92.846)
+lineWidth = 0.66
 setLineDash([])
 strokeStyle = "#3a3a43"
 globalAlpha = 1
 stroke()
 beginPath()
-moveTo(170.564, -52)
-lineTo(166, 0)
-lineWidth = 0.355
-setLineDash([1.184,1.776])
+moveTo(81.884, -56.477)
+lineTo(116.072, -16.411)
+lineWidth = 0.396
+setLineDash([1.321,1.981])
 strokeStyle = "#3a3a43"
 globalAlpha = 1
 stroke()
 beginPath()
-moveTo(198.608, 42.532)
-lineTo(166, 0)
-lineWidth = 0.355
-setLineDash([1.184,1.776])
+moveTo(95.648, 32.085)
+lineTo(116.072, -16.411)
+lineWidth = 0.396
+setLineDash([1.321,1.981])
 strokeStyle = "#3a3a43"
 globalAlpha = 1
 stroke()
 beginPath()
-moveTo(86.364, 115.093)
-lineTo(40.364, 115.093)
-lineWidth = 0.355
-setLineDash([1.184,1.776])
+moveTo(72.066, 106.861)
+lineTo(8.853, 92.846)
+lineWidth = 0.396
+setLineDash([1.321,1.981])
 strokeStyle = "#3a3a43"
 globalAlpha = 1
 stroke()
 beginPath()
-moveTo(86.364, 115.093)
-lineTo(166, 0)
-lineWidth = 0.592
+moveTo(72.066, 106.861)
+lineTo(116.072, -16.411)
+lineWidth = 0.66
 setLineDash([])
 strokeStyle = "#3a3a43"
 globalAlpha = 1
 stroke()
 beginPath()
-moveTo(3.212, 149.127)
-lineTo(40.364, 115.093)
-lineWidth = 0.355
-setLineDash([1.184,1.776])
+moveTo(-40.439, 88.068)
+lineTo(8.853, 92.846)
+lineWidth = 0.396
+setLineDash([1.321,1.981])
 strokeStyle = "#3a3a43"
 globalAlpha = 1
 stroke()
 beginPath()
-moveTo(44.928, 63.093)
-lineTo(40.364, 115.093)
-lineWidth = 0.355
-setLineDash([1.184,1.776])
+moveTo(-47.104, 49.075)
+lineTo(8.853, 92.846)
+lineWidth = 0.396
+setLineDash([1.321,1.981])
 strokeStyle = "#3a3a43"
 globalAlpha = 1
 stroke()
 beginPath()
-moveTo(72.972, 157.625)
-lineTo(40.364, 115.093)
-lineWidth = 0.355
-setLineDash([1.184,1.776])
+moveTo(46.302, 134.257)
+lineTo(8.853, 92.846)
+lineWidth = 0.396
+setLineDash([1.321,1.981])
 strokeStyle = "#3a3a43"
 globalAlpha = 1
 stroke()
 beginPath()
-moveTo(0, 0)
-lineTo(166, 0)
-lineWidth = 0.947
+moveTo(-39.499, -52.333)
+lineTo(116.072, -16.411)
+lineWidth = 1.056
 setLineDash([])
 strokeStyle = "#3a3a43"
 globalAlpha = 1
 stroke()
 beginPath()
-moveTo(166, 0)
-lineTo(40.364, 115.093)
-lineWidth = 0.947
+moveTo(116.072, -16.411)
+lineTo(8.853, 92.846)
+lineWidth = 1.056
 setLineDash([])
 strokeStyle = "#3a3a43"
 globalAlpha = 1
 stroke()
 beginPath()
-moveTo(46, 0)
-lineTo(212, 0)
-lineWidth = 0.888
-setLineDash([])
-strokeStyle = "#a98cf5"
-globalAlpha = 0.85
-stroke()
-beginPath()
-moveTo(4.564, -52)
-lineTo(46, 0)
-lineWidth = 0.888
+moveTo(6.752, -13.578)
+lineTo(161.097, -20.969)
+lineWidth = 0.99
 setLineDash([])
 strokeStyle = "#a98cf5"
 globalAlpha = 0.85
 stroke()
 beginPath()
-moveTo(32.608, 42.532)
-lineTo(4.564, -52)
-lineWidth = 0.888
+moveTo(-66.716, -109.474)
+lineTo(6.752, -13.578)
+lineWidth = 0.99
 setLineDash([])
 strokeStyle = "#a98cf5"
 globalAlpha = 0.85
 stroke()
 beginPath()
-moveTo(128.848, 34.034)
-lineTo(86.364, 115.093)
-lineWidth = 0.888
+moveTo(-19.434, 5.32)
+lineTo(-66.716, -109.474)
+lineWidth = 0.99
 setLineDash([])
 strokeStyle = "#a98cf5"
 globalAlpha = 0.85
 stroke()
 beginPath()
-moveTo(86.364, 115.093)
-lineTo(44.928, 63.093)
-lineWidth = 0.77
-setLineDash([2.96,2.368])
+moveTo(61.724, -24.751)
+lineTo(72.066, 106.861)
+lineWidth = 0.99
+setLineDash([])
+strokeStyle = "#a98cf5"
+globalAlpha = 0.85
+stroke()
+beginPath()
+moveTo(72.066, 106.861)
+lineTo(-47.104, 49.075)
+lineWidth = 0.858
+setLineDash([3.301,2.641])
 strokeStyle = "#6f6f7a"
 globalAlpha = 1
 stroke()
 beginPath()
-moveTo(44.928, 63.093)
-lineTo(86.364, 115.093)
-lineWidth = 0.888
+moveTo(-47.104, 49.075)
+lineTo(72.066, 106.861)
+lineWidth = 0.99
 setLineDash([])
 strokeStyle = "#a98cf5"
 globalAlpha = 0.85
 stroke()
 beginPath()
-moveTo(72.972, 157.625)
-lineTo(44.928, 63.093)
-lineWidth = 0.888
+moveTo(46.302, 134.257)
+lineTo(-47.104, 49.075)
+lineWidth = 0.99
 setLineDash([])
 strokeStyle = "#a98cf5"
 globalAlpha = 0.85
@@ -1077,117 +1077,117 @@ stroke()
 setLineDash([])
 globalAlpha = 1
 beginPath()
-arc(0, 0, 16.4, 0, 6.283)
+arc(-39.499, -52.333, 16.4, 0, 6.283)
 fillStyle = "#835bec"
 fill()
 globalAlpha = 1
 beginPath()
-arc(166, 0, 16.4, 0, 6.283)
+arc(116.072, -16.411, 16.4, 0, 6.283)
 fillStyle = "#835bec"
 fill()
 globalAlpha = 1
 beginPath()
-arc(40.364, 115.093, 16.4, 0, 6.283)
+arc(8.853, 92.846, 16.4, 0, 6.283)
 fillStyle = "#835bec"
 fill()
 globalAlpha = 1
 beginPath()
-arc(46, 0, 4.2, 0, 6.283)
+arc(6.752, -13.578, 4.2, 0, 6.283)
 fillStyle = "#e0a83a"
 fill()
 beginPath()
-arc(46, 0, 5.68, 0, 6.283)
-lineWidth = 0.71
+arc(6.752, -13.578, 5.851, 0, 6.283)
+lineWidth = 0.792
 strokeStyle = "#d66fd6"
 stroke()
 globalAlpha = 1
 beginPath()
-arc(-37.152, 34.034, 4.2, 0, 6.283)
+arc(-65.198, -8.095, 4.2, 0, 6.283)
 fillStyle = "#4fbf7a"
 fill()
 globalAlpha = 1
 beginPath()
-arc(4.564, -52, 4.2, 0, 6.283)
+arc(-66.716, -109.474, 4.2, 0, 6.283)
 fillStyle = "#4fbf7a"
 fill()
 globalAlpha = 1
 beginPath()
-arc(32.608, 42.532, 4.2, 0, 6.283)
+arc(-19.434, 5.32, 4.2, 0, 6.283)
 fillStyle = "#4fbf7a"
 fill()
 globalAlpha = 1
 beginPath()
-arc(212, 0, 4.2, 0, 6.283)
+arc(161.097, -20.969, 4.2, 0, 6.283)
 fillStyle = "#e0574f"
 fill()
 beginPath()
-arc(212, 0, 5.68, 0, 6.283)
-lineWidth = 0.71
+arc(161.097, -20.969, 5.851, 0, 6.283)
+lineWidth = 0.792
 strokeStyle = "#4aa3df"
 stroke()
 globalAlpha = 1
 beginPath()
-arc(128.848, 34.034, 4.2, 0, 6.283)
+arc(61.724, -24.751, 4.2, 0, 6.283)
 fillStyle = "#4fbf7a"
 fill()
 globalAlpha = 1
 beginPath()
-arc(170.564, -52, 4.2, 0, 6.283)
+arc(81.884, -56.477, 4.2, 0, 6.283)
 fillStyle = "#e0574f"
 fill()
 globalAlpha = 1
 beginPath()
-arc(198.608, 42.532, 4.2, 0, 6.283)
+arc(95.648, 32.085, 4.2, 0, 6.283)
 fillStyle = "#e0a83a"
 fill()
 globalAlpha = 1
 beginPath()
-arc(86.364, 115.093, 4.2, 0, 6.283)
+arc(72.066, 106.861, 4.2, 0, 6.283)
 fillStyle = "#1e1e22"
 fill()
-lineWidth = 0.71
+lineWidth = 0.792
 strokeStyle = "#4fbf7a"
 stroke()
 globalAlpha = 1
 beginPath()
-arc(3.212, 149.127, 4.2, 0, 6.283)
+arc(-40.439, 88.068, 4.2, 0, 6.283)
 fillStyle = "#e0a83a"
 fill()
 globalAlpha = 1
 beginPath()
-arc(44.928, 63.093, 4.2, 0, 6.283)
+arc(-47.104, 49.075, 4.2, 0, 6.283)
 fillStyle = "#4fbf7a"
 fill()
 globalAlpha = 1
 beginPath()
-arc(72.972, 157.625, 4.2, 0, 6.283)
+arc(46.302, 134.257, 4.2, 0, 6.283)
 fillStyle = "#e0a83a"
 fill()
 globalAlpha = 1
 textAlign = "center"
 textBaseline = "top"
-font = "6.512543080783965px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif"
+font = "7.262900030753824px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif"
 fillStyle = "#1e1e22"
 globalAlpha = 0.75
-fillRect(-10.776, 17.584, 21.552, 8.881)
+fillRect(-50.48, -34.613, 21.962, 9.904)
 globalAlpha = 1
 fillStyle = "#dcdce3"
-fillText("API", 0, 18.176)
+fillText("API", -39.499, -33.952)
 globalAlpha = 1
-font = "6.512543080783965px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif"
+font = "7.262900030753824px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif"
 fillStyle = "#1e1e22"
 globalAlpha = 0.75
-fillRect(143.224, 17.584, 45.552, 8.881)
+fillRect(93.091, 1.31, 45.962, 9.904)
 globalAlpha = 1
 fillStyle = "#dcdce3"
-fillText("Storage", 166, 18.176)
+fillText("Storage", 116.072, 1.97)
 globalAlpha = 1
-font = "6.512543080783965px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif"
+font = "7.262900030753824px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif"
 fillStyle = "#1e1e22"
 globalAlpha = 0.75
-fillRect(26.588, 132.677, 27.552, 8.881)
+fillRect(-5.128, 110.566, 27.962, 9.904)
 globalAlpha = 1
 fillStyle = "#dcdce3"
-fillText("Sync", 40.364, 133.269)
+fillText("Sync", 8.853, 111.226)
 globalAlpha = 1
 restore()

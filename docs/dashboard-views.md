@@ -86,7 +86,14 @@ Without `ktw-root`, the views' headings, links and code spans take the host's el
 
 ### A graph the host builds
 
-A host that builds a graph of its own (the dashboard's family graph and its friends layer are such graphs) leaves a new node's `x` and `y` unset and calls `KeepTheWhy.core.seedLayout(nodes, links)` once its links are in, then `reheatSeeded(g)`. `graph.assemble` does both itself. A node with a position keeps it, so a node carried over from the graph drawn before keeps its place. `seedLayout` places each new node deterministically:
+A graph is one object the host keeps across rebuilds (`{ nodes, links, index, alpha, … }`). The graph view runs it, and every rebuild starts from the graph drawn before. A rebuild goes like this:
+
+1. **Build.** Build the nodes and links, or take them from `graph.assemble(topics, entries, prev)`, where `prev` maps the previous graph's nodes by id.
+2. **Carry the old nodes.** Bring each node of the previous graph over with `KeepTheWhy.core.carryNode(n, prev[id])`. It keeps the node's place, whether it was held, and whether it was still to be laid out (`seeded`). `assemble` does this for its own nodes.
+3. **Seed the new nodes.** Leave a new node's `x` and `y` unset and call `seedLayout(nodes, links)` once the links are in. `assemble` does this as well.
+4. **Merge and reheat.** Merge the result into the kept graph object, then call `reheatSeeded(g)`. `assemble` does not do this step: it cannot see the kept object. If the rebuild changes how the graph hangs together rather than what is in it (the dashboard's owners switch), call `reheatAll(g)` instead. The dashboard's `buildGraph` in `app.js` does this whole rebuild.
+
+`seedLayout` places each new node deterministically:
 
 - around the node it hangs on (an entry on its topic, a topic on its project, a member on its parent, a project on its owner), on a golden-angle spiral;
 - without one, around a linked node of its own `unit`;

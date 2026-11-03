@@ -8,7 +8,7 @@
    globalThis.KeepTheWhy.views.graph, listed in ktw-views.json, tested through the page (canvas-trace.mjs). */
 (function (root) {
 "use strict";
-const { stepLayout, placeShown, seedLayout, LAYOUT, linkExistsAt, hostOf, filterActive, entryMatches, fkey, linkFamily, seeDay, supersededDay, parseSupersededBy, readToken } = root.KeepTheWhy.core;
+const { plural, stepLayout, placeShown, seedLayout, carryNode, LAYOUT, linkExistsAt, hostOf, filterActive, entryMatches, fkey, linkFamily, seeDay, supersededDay, parseSupersededBy, readToken } = root.KeepTheWhy.core;
 
 // One graph view per page: create({ scene, nav, prefs }) — the host's scene, navigation and settings.
 function create({ scene, nav, prefs }) {
@@ -67,9 +67,12 @@ function hostPath(url) {
   if (!HOST_PATHS.has(h.name)) HOST_PATHS.set(h.name, new Path2D(h.path));
   return HOST_PATHS.get(h.name);
 }
-// how long a frame may spend settling a graph not drawn yet (motion off): most of a 60 Hz frame, so the page
-// still answers while a large family settles over a second or two
-const SETTLE_SLICE_MS = 12;
+// How long a frame may spend on the layout. A graph not drawn yet with motion off draws nothing while it settles,
+// so it takes a longer slice: the page still answers at about 40 frames a second, and a family of a thousand entries
+// settles in about the time its steps take (some 300 steps of 7 to 8 ms in V8). A graph that moves as it is drawn
+// takes as many steps as fit in half a frame: one for a large graph, dozens for a small one, which then settles in
+// a few frames instead of a few hundred.
+const SETTLE_SLICE_MS = 24, FRAME_LAYOUT_MS = 8;
 const miniView = (g) => (g.miniView ||= { scale: 1, ox: 0, oy: 0, userMoved: false, needFit: true, fitScale: 0 }); // the small graph's own view of a graph the page may show too
 const publishLayout = (g, opts) => scene.publishFrom(g, opts); // the scene's (ktw-scene.js publishFrom)
 function runGraph(canvas, g, opts = {}) {
@@ -165,8 +168,12 @@ function runGraph(canvas, g, opts = {}) {
     if (!drawn && !driftOn() && g.alpha > LAYOUT.MIN_ALPHA) {
       const t0 = performance.now();
       do stepLayout(g, { visible, linkOn }); while (g.alpha > LAYOUT.MIN_ALPHA && performance.now() - t0 < SETTLE_SLICE_MS);
-      if (g.alpha > LAYOUT.MIN_ALPHA) { publishLayout(g); g.raf = canvas.isConnected ? requestAnimationFrame(step) : null; return; }
-    } else if (g.alpha > LAYOUT.MIN_ALPHA) stepLayout(g, { visible, linkOn });
+      if (g.alpha > LAYOUT.MIN_ALPHA) {
+        // still settling: the canvas says so instead of staying empty
+        publishLayout(g); ctx.clearRect(0, 0, W, H); ctx.globalAlpha = 1; ctx.fillStyle = color("--ktw-fg2"); ctx.font = `13px ${color("--ktw-font") || "sans-serif"}`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(`laying out ${plural(ns.length, "node")}…`, W / 2, H / 2);
+        g.raf = canvas.isConnected ? requestAnimationFrame(step) : null; return;
+      }
+    } else if (g.alpha > LAYOUT.MIN_ALPHA) { const t0 = performance.now(); do stepLayout(g, { visible, linkOn }); while (g.alpha > LAYOUT.MIN_ALPHA && performance.now() - t0 < FRAME_LAYOUT_MS); }
     publishLayout(g);
     const settledNow = was > LAYOUT.MIN_ALPHA && g.alpha <= LAYOUT.MIN_ALPHA;
     // keep the canvas framed on the nodes while they settle, and once more where they came to rest: the small one
@@ -296,7 +303,7 @@ function runGraph(canvas, g, opts = {}) {
 // graph starts where ktw-core.js seedLayout puts it, once the links are known.
 function seedNode(n, prev) {
   const p = prev[n.id];
-  if (p) Object.assign(n, { x: p.x, y: p.y, vx: 0, vy: 0, fixed: p.fixed });
+  if (p) carryNode(n, p);
   else { n.x = n.y = undefined; n.vx = n.vy = 0; }
   return n;
 }

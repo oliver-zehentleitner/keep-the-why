@@ -1067,6 +1067,23 @@ const report = {};
   if (g.nodes.some((n) => n.kind === "owner")) errors.push("owners: an owner node with the switch off (the default)");
   const box = [...window.document.querySelectorAll(".ktw-graph-ui label")].find((l) => l.textContent === "owners")?.querySelector("input");
   if (!box || box.checked) errors.push("owners: the switch is missing from the graph bar, or on by default");
+  // switched on once the graph has settled: the owner's node comes in and the projects regroup around it — the
+  // graph hangs together otherwise now, so it is laid out anew, not only the owner's node
+  if (box) {
+    const settle = async () => { for (const end = Date.now() + 30000; shown(window).alpha > 0.003 && Date.now() < end; ) await tick(100); };
+    await settle();
+    const at = (gr) => new Map(gr.nodes.filter((n) => n.kind === "project").map((n) => [n.id, [n.x, n.y]]));
+    const before = at(shown(window)); const settledBefore = shown(window).alpha;
+    box.checked = true; box.dispatchEvent(new window.Event("change"));
+    await tick(300); await settle();
+    const after = shown(window); const owner = after.nodes.find((n) => n.kind === "owner");
+    let moved = 0; for (const [id, [x, y]] of before) { const n = after.nodes.find((m) => m.id === id); if (n) moved = Math.max(moved, Math.hypot(n.x - x, n.y - y)); }
+    const suite = after.nodes.find((n) => n.kind === "project" && n.label === "suite");
+    const tie = owner && suite ? Math.hypot(owner.x - suite.x, owner.y - suite.y) : null;
+    report.ownersLate = { settledBefore, moved: Math.round(moved), tie: tie && Math.round(tie), alpha: after.alpha };
+    if (settledBefore > 0.003) errors.push("owners, switched on late: the graph had not settled before the switch — " + JSON.stringify(report.ownersLate));
+    if (!owner || moved < 5 || !(tie > 60 && tie < 400) || after.alpha > 0.003) errors.push("owners, switched on late: the projects did not regroup around the owner — " + JSON.stringify(report.ownersLate));
+  }
   window.close();
   window = await open(`http://localhost/?public=${encodeURIComponent(`${GH}/web`)}#graph`, html, { "ktw-owner-groups": "on" });
   await tick(600);

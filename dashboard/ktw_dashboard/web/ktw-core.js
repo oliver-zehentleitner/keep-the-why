@@ -940,19 +940,29 @@ function layoutTick(nodes, links, alpha, { visible = () => true, linkOn = () => 
   const ns = nodes.filter(visible);
   const k = alpha;
   const still = (n) => n.fixed || (moving && !moving(n)); // `moving(n)`: only those move, the rest hold as if fixed
+  // the shown nodes as plain arrays, read once a step: the pair loop below is the step's whole cost (n² / 2 pairs),
+  // and a property read or a call per pair was most of it. The arithmetic and its order are as on the nodes.
+  const S = ns.length, X = new Float64Array(S), Y = new Float64Array(S), R = new Float64Array(S), VX = new Float64Array(S), VY = new Float64Array(S);
+  const HOLD = new Uint8Array(S), KIND = new Uint8Array(S), UNIT = new Int32Array(S), OWNER = new Int32Array(S); // KIND: 0 entry, 1 other, 2 project
+  const ids = new Map(); const idOf = (v) => { if (!ids.has(v)) ids.set(v, ids.size); return ids.get(v); };
+  for (let i = 0; i < S; i++) {
+    const n = ns[i]; X[i] = n.x; Y[i] = n.y; R[i] = n.r || 0; VX[i] = n.vx; VY[i] = n.vy; HOLD[i] = still(n) ? 1 : 0;
+    KIND[i] = n.kind === "entry" ? 0 : n.kind === "project" ? 2 : 1; UNIT[i] = idOf(n.unit || ""); OWNER[i] = n.owner ? idOf(`owner:${n.owner}`) : -1;
+  }
   // repulsion, never from closer than the two nodes' radii: two nodes on one spot push apart, not out
-  for (let i = 0; i < ns.length; i++) for (let j = i + 1; j < ns.length; j++) {
-    const a = ns[i], b = ns[j]; const sa = still(a), sb = still(b); if (sa && sb) continue; let dx = b.x - a.x, dy = b.y - a.y;
+  for (let i = 0; i < S; i++) for (let j = i + 1; j < S; j++) {
+    const sa = HOLD[i], sb = HOLD[j]; if (sa && sb) continue; let dx = X[j] - X[i], dy = Y[j] - Y[i];
     if (!dx && !dy) { const ang = (i * 7 + j) * GOLDEN; dx = Math.cos(ang) * 0.01; dy = Math.sin(ang) * 0.01; } // one spot: a direction of their own
-    const m = (a.r || 0) + (b.r || 0); const near2 = dx * dx + dy * dy + 0.01; const d2 = Math.max(near2, m * m);
-    const hubs = a.kind === "project" && b.kind === "project";
-    const apart = (a.unit || "") !== (b.unit || "") && !(a.owner && a.owner === b.owner); // this graph and a friend, or two friends: a family keeps together, strangers keep their distance — and so do projects bundled under one owner
+    const m = R[i] + R[j]; const near2 = dx * dx + dy * dy + 0.01; const d2 = Math.max(near2, m * m);
+    const hubs = KIND[i] === 2 && KIND[j] === 2;
+    const apart = UNIT[i] !== UNIT[j] && !(OWNER[i] >= 0 && OWNER[i] === OWNER[j]); // this graph and a friend, or two friends: a family keeps together, strangers keep their distance — and so do projects bundled under one owner
     if (d2 > (hubs ? (apart ? 9000000 : 4000000) : apart ? 640000 : 250000)) continue;
-    const base = hubs ? (apart ? 70000 : 22000) : a.kind === "entry" && b.kind === "entry" ? 260 : a.kind === "entry" || b.kind === "entry" ? 900 : 2600;
+    const base = hubs ? (apart ? 70000 : 22000) : KIND[i] === 0 && KIND[j] === 0 ? 260 : KIND[i] === 0 || KIND[j] === 0 ? 900 : 2600;
     const rep = (apart && !hubs ? base * 2.5 : base) / d2; const d = Math.sqrt(near2);
     const fx = (dx / d) * rep * k, fy = (dy / d) * rep * k;
-    if (!sa) { a.vx -= fx; a.vy -= fy; } if (!sb) { b.vx += fx; b.vy += fy; }
+    if (!sa) { VX[i] -= fx; VY[i] -= fy; } if (!sb) { VX[j] += fx; VY[j] += fy; }
   }
+  for (let i = 0; i < S; i++) { ns[i].vx = VX[i]; ns[i].vy = VY[i]; }
   // springs
   for (const l of links) { if (!linkOn(l)) continue; const a = nodes[l.s], b = nodes[l.t]; const sa = still(a), sb = still(b); if (sa && sb) continue; const dx = b.x - a.x, dy = b.y - a.y; const d = Math.hypot(dx, dy) || 0.01; const f = (d - l.len) * (l.kind === "member" || l.kind === "hub" || l.kind === "owner" ? 0.05 : l.kind === "family" ? 0.03 : 0.02) * k; const fx = (dx / d) * f, fy = (dy / d) * f; if (!sa) { a.vx += fx; a.vy += fy; } if (!sb) { b.vx -= fx; b.vy -= fy; } }
   // gravity + integrate, each move capped
@@ -965,6 +975,13 @@ function layoutTick(nodes, links, alpha, { visible = () => true, linkOn = () => 
   }
   return moved < LAYOUT.REST ? 0 : alpha * LAYOUT.DECAY;
 }
+// A node of the graph drawn before, carried into a rebuild: where it stood, held if it was held, and still to be
+// laid out if it was not yet (seeded) — a node seeded while hidden, or one a placement had not settled when the
+// rebuild came, keeps its turn. Every path that rebuilds a graph from its predecessor carries its nodes this way.
+function carryNode(n, p) { n.x = p.x; n.y = p.y; n.vx = 0; n.vy = 0; n.fixed = p.fixed; if (p.seeded) n.seeded = true; return n; }
+// A rebuild that changes how the graph hangs together, not only what is in it (the owners switch ties projects to
+// an owner, or lets them go): every node may need another place, so the whole graph is laid out again.
+function reheatAll(g) { g.alpha = 1; g.placing = false; return g; }
 // A graph's layout after a build: the nodes seedLayout placed need the full strength of a fresh layout, and
 // only they move (`placing`); a build that placed none (a live update, a reload of the same states) leaves the
 // alpha as it was — nothing to lay out, so nothing moves.
@@ -1015,7 +1032,7 @@ const topicTitle = (st, file) => st.topics?.find((t) => t.file === file)?.title 
 const KTW = (root.KeepTheWhy = root.KeepTheWhy || {});
 KTW.core = Object.freeze({
   TOKEN_DEFAULTS, readToken, valueColor,
-  sameCanonical, exportStateUrl, exportVerdict, resolveSee, LAYOUT, seedLayout, layoutTick, reheatSeeded, placeShown, stepLayout, settleLayout, NO_FILTER, filterActive, entryMatches, fkey, repoLabel, topicTitle,
+  sameCanonical, exportStateUrl, exportVerdict, resolveSee, LAYOUT, seedLayout, layoutTick, carryNode, reheatAll, reheatSeeded, placeShown, stepLayout, settleLayout, NO_FILTER, filterActive, entryMatches, fkey, repoLabel, topicTitle,
   esc, plural, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug,
   hostAnchor, hostFileLink, hostTreeLink, HOSTS, hostOf, canonicalOf, ownerOf, projectLabel,
   parseSupersededBy, entryRefs, typeName, kindLabel, familyRank, familyOrder, groupByFamily, shuffled, searchTerms,

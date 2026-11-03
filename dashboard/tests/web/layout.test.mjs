@@ -11,14 +11,14 @@ import fs from "node:fs";
 import vm from "node:vm";
 
 vm.runInThisContext(fs.readFileSync(new URL("../../ktw_dashboard/web/ktw-core.js", import.meta.url), "utf8"));
-const { LAYOUT, seedLayout, reheatSeeded, placeShown, stepLayout } = globalThis.KeepTheWhy.core;
+const { LAYOUT, seedLayout, carryNode, reheatSeeded, placeShown, stepLayout } = globalThis.KeepTheWhy.core;
 
 // a deterministic count sequence, so the family has uneven topics without randomness in the test either
 const sizes = (n, total, k) => { const w = Array.from({ length: n }, (_, i) => 1 + ((i * k) % 7)); const sum = w.reduce((a, b) => a + b, 0); return w.map((x) => Math.max(1, Math.round((x / sum) * total))); };
 // members: [topics, entries] each; the first is this project, at the origin as buildFamilyGraph places it
 function family(members, { prev = {}, extra = 0 } = {}) {
   const nodes = [], links = [], index = {};
-  const add = (n, at) => { const p = prev[n.id]; if (p) Object.assign(n, { x: p.x, y: p.y }); else { n.x = at?.x; n.y = at?.y; } n.vx = n.vy = 0; index[n.id] = nodes.length; nodes.push(n); return nodes.length - 1; };
+  const add = (n, at) => { const p = prev[n.id]; if (p) carryNode(n, p); else { n.x = at?.x; n.y = at?.y; n.vx = n.vy = 0; } index[n.id] = nodes.length; nodes.push(n); return nodes.length - 1; };
   const entriesOf = [];
   members.forEach(([nt, ne], m) => {
     const hub = add({ id: `p:${m}`, kind: "project", r: 15 }, m === 0 ? { x: 0, y: 0 } : null);
@@ -39,7 +39,7 @@ function family(members, { prev = {}, extra = 0 } = {}) {
 // a friend unit, apart (unit, ext), as addLinkedLayer adds it: its hub, topics and entries, cited from this project
 function friend(g, key, nt, ne, prev = {}) {
   const { nodes, links, index } = g;
-  const add = (n) => { const p = prev[n.id]; if (p) Object.assign(n, { x: p.x, y: p.y }); else n.x = n.y = undefined; n.vx = n.vy = 0; n.unit = key; n.ext = true; index[n.id] = nodes.length; nodes.push(n); return nodes.length - 1; };
+  const add = (n) => { const p = prev[n.id]; if (p) carryNode(n, p); else { n.x = n.y = undefined; n.vx = n.vy = 0; } n.unit = key; n.ext = true; index[n.id] = nodes.length; nodes.push(n); return nodes.length - 1; };
   const hub = add({ id: `f:${key}`, kind: "project", r: 15 }); const mine = [];
   sizes(nt, ne, 5).forEach((c, t) => {
     const ti = add({ id: `ft:${key}:${t}`, kind: "topic", r: 7 + Math.sqrt(c) * 2.4 }); links.push({ s: hub, t: ti, kind: "hub", len: 70 });
@@ -51,7 +51,7 @@ function friend(g, key, nt, ne, prev = {}) {
 // a part linked to nothing: a topic with its entries and no project
 function lone(g, prev = {}) {
   const { nodes, links, index } = g;
-  const add = (n) => { const p = prev[n.id]; if (p) Object.assign(n, { x: p.x, y: p.y }); n.vx = n.vy = 0; index[n.id] = nodes.length; nodes.push(n); return nodes.length - 1; };
+  const add = (n) => { const p = prev[n.id]; if (p) carryNode(n, p); else n.vx = n.vy = 0; index[n.id] = nodes.length; nodes.push(n); return nodes.length - 1; };
   const t = add({ id: "t:lone", kind: "topic", r: 14 });
   for (let e = 0; e < 12; e++) links.push({ s: add({ id: `e:lone:${e}`, kind: "entry", r: 4.2 }), t, kind: "member", len: 42 });
   return g;
@@ -107,7 +107,7 @@ test("the same input gives the same layout", { timeout: 120000 }, () => {
 
 test("a rebuild that brings a friend and a live update leaves the placed nodes where they are", { timeout: 120000 }, () => {
   const g = settled || (() => { const x = build({}); run(x); return x; })();
-  const prev = Object.fromEntries(g.nodes.map((n) => [n.id, { x: n.x, y: n.y }]));
+  const prev = Object.fromEntries(g.nodes.map((n) => [n.id, { x: n.x, y: n.y, seeded: n.seeded }]));
   // nothing new: no node is laid out again, so nothing moves
   const same = build({ ...prev, alpha: 0 });
   assert.equal(same.alpha, 0, "a build that placed nothing leaves the layout at rest");
@@ -151,4 +151,47 @@ test("the clock stepping day by day lays out what each day brings, and the nodes
   }
   day = 15;
   assert.equal(placeShown(g, { visible }), false, "a day already laid out brings nothing to lay out");
+});
+
+// the graph drawn before, as a rebuild reads it: each node by its id
+const prevOf = (g, alpha) => ({ ...Object.fromEntries(g.nodes.map((n) => [n.id, n])), alpha });
+const dayed = (g) => { g.nodes.forEach((n, i) => { if (n.kind === "entry") n.day = i % 30; }); return g; };
+
+test("a node seeded while hidden keeps its turn through a rebuild, and is laid out when it is shown", { timeout: 180000 }, () => {
+  let day = 10; const visible = (n) => n.kind !== "entry" || n.day <= day;
+  const g = dayed(build({})); run(g, 2000, visible);
+  const waiting = g.nodes.filter((n) => n.seeded && !visible(n)).map((n) => n.id);
+  assert.ok(waiting.length > 200, "later days' entries wait");
+  // a rebuild (a live update of the same states) while the day is in the past
+  const h = dayed(build(prevOf(g, 0)));
+  assert.deepEqual(h.nodes.filter((n) => n.seeded).map((n) => n.id), waiting, "the rebuild keeps who is still to be laid out");
+  run(h, 2000, visible);
+  const shown = new Map(h.nodes.filter(visible).map((n) => [n.id, [n.x, n.y]]));
+  day = 11; const brought = h.nodes.filter((n) => n.seeded && visible(n));
+  assert.ok(brought.length > 20 && placeShown(h, { visible }), "the next day brings them into view, to be laid out");
+  run(h, 2000, visible);
+  let jump = 0; for (const n of h.nodes) { const p = shown.get(n.id); if (p) jump = Math.max(jump, Math.hypot(n.x - p[0], n.y - p[1])); }
+  assert.equal(jump, 0, "what was shown holds still");
+  for (const n of brought) {
+    assert.ok(!n.seeded, `${n.id} laid out`);
+    const t = h.nodes[h.links.find((l) => l.kind === "member" && h.nodes[l.s] === n).t];
+    assert.ok(Math.hypot(n.x - t.x, n.y - t.y) < 400, `${n.id} near its topic, not on a stale seed`);
+  }
+});
+
+test("a rebuild while a placement is still running carries it on, and the nodes placed before still hold", { timeout: 180000 }, () => {
+  const g = build({}); run(g);
+  const placed = new Map(g.nodes.map((n) => [n.id, [n.x, n.y]]));
+  // a friend comes in, and while it is being laid out, a live update arrives
+  const h = build(prevOf(g, 0), 25); for (let i = 0; i < 30; i++) stepLayout(h);
+  assert.ok(h.placing && h.nodes.some((n) => n.seeded), "the placement is under way");
+  const k = build(prevOf(h, h.alpha), 25); // the same states again: nothing new, the pending nodes carried over
+  assert.ok(k.placing && k.nodes.filter((n) => n.seeded).length === h.nodes.filter((n) => n.seeded).length, "the rebuild carries the pending placement");
+  const { steps } = run(k);
+  assert.ok(k.alpha === 0 && steps <= 450, `the pending nodes at rest in ${steps} steps`);
+  assert.ok(k.nodes.every((n) => !n.seeded), "all laid out");
+  let jump = 0; for (const n of k.nodes) { const p = placed.get(n.id); if (p) jump = Math.max(jump, Math.hypot(n.x - p[0], n.y - p[1])); }
+  assert.equal(jump, 0, "the nodes placed before the friend came hold still through both rebuilds");
+  const all = shape(k.nodes);
+  assert.ok(all.far <= 4 * all.median, "nothing left far out");
 });

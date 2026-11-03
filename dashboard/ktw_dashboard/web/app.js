@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-const { plural, seedLayout, reheatSeeded, entryRefs, rawFileUrl, configLine, normalizeState, canonicalOf, NO_FILTER, familyOrder, kindLabel, groupByFamily, searchTerms, registryMatches, shuffled, resolveLocation, linkFamily, authorLookup, mergeStates, projectLabel, backlinksUrl, citingOf, paletteToken, ownerOf, exportStateUrl, exportVerdict, fkey, repoLabel } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
+const { plural, seedLayout, carryNode, reheatAll, reheatSeeded, entryRefs, rawFileUrl, configLine, normalizeState, canonicalOf, NO_FILTER, familyOrder, kindLabel, groupByFamily, searchTerms, registryMatches, shuffled, resolveLocation, linkFamily, authorLookup, mergeStates, projectLabel, backlinksUrl, citingOf, paletteToken, ownerOf, exportStateUrl, exportVerdict, fkey, repoLabel } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
 const MD = globalThis.KeepTheWhy.markdown; // ktw-markdown.js
 
 // ---------------------------------------------------------------- prefs (host)
@@ -685,8 +685,9 @@ function buildGraph(project = null) {
   autoFriends(graph);
   if (!project) autoFamily();
   addFriendLayer(graph, prev);
-  addOwnerGroups(graph, prev);
+  const regrouped = addOwnerGroups(graph, prev);
   reheatSeeded(graph); // only what this build placed is laid out; what was placed holds still
+  if (regrouped) reheatAll(graph); // the owners switch: the projects hang on owners now, or no longer
   return graph;
 }
 // the neighbourhood of a topic or an entry, for the side pane (ktw-graph.js), seeded from where the full graph's nodes are
@@ -714,7 +715,7 @@ async function buildFamilyGraph() {
   // a node new to the graph starts where seedLayout (ktw-core.js) puts it, once the links are known; `at` places one
   const add = (n, at) => {
     const p = prev[n.id];
-    if (p) Object.assign(n, { x: p.x, y: p.y, vx: 0, vy: 0, fixed: p.fixed });
+    if (p) carryNode(n, p);
     else { n.x = at?.x; n.y = at?.y; n.vx = n.vy = 0; }
     index[n.id] = nodes.length; nodes.push(n); return n;
   };
@@ -763,8 +764,9 @@ async function buildFamilyGraph() {
   fgraph.friends = friendCandidates(groups.flatMap((G) => G.state.entries || []), [...groups.map((G) => G.canonical), ...pool.missing.map(({ member: m }) => m.canonical)]);
   autoFriends(fgraph);
   addFriendLayer(fgraph, prev);
-  addOwnerGroups(fgraph, prev);
+  const regrouped = addOwnerGroups(fgraph, prev);
   reheatSeeded(fgraph);
+  if (regrouped) reheatAll(fgraph);
   return fgraph;
 }
 // a colour token's value (style.css :root); the computed style is live, so a theme switch is read too
@@ -947,7 +949,7 @@ function addLinkedLayer(g, prev, items) {
   // nodes around its hub, the unit packed outside the graph by its size; `at` places one
   const add = (n, at) => {
     const p = prev[n.id];
-    if (p) Object.assign(n, { x: p.x, y: p.y, vx: 0, vy: 0, fixed: p.fixed });
+    if (p) carryNode(n, p);
     else { n.x = at?.x; n.y = at?.y; n.vx = n.vy = 0; }
     n.unit = unit; n.ext = true;
     index[n.id] = nodes.length; nodes.push(n); return n;
@@ -1062,8 +1064,10 @@ function addLinkedLayer(g, prev, items) {
 // owner with more than one project here gets a node; a project alone stays as it is. The node opens the owner's
 // page on the host. Every hub counts as a project, so the members of a family in one repository count each. A family
 // keeps its shape: only its root hangs on the owner, the members below hang on their parent as they already do.
+// Returns whether the owners differ from the graph drawn before (`prev`): the graph then hangs together otherwise.
 function addOwnerGroups(g, prev) {
-  if (!OWNER_GROUPS) return;
+  const had = Object.keys(prev).filter((id) => id.startsWith("o:")).sort().join("|");
+  if (!OWNER_GROUPS) return had !== "";
   const { nodes, links, index } = g;
   const groups = new Map();
   for (const n of nodes) {
@@ -1088,6 +1092,7 @@ function addOwnerGroups(g, prev) {
       for (const pre of [`${o.key}/`, `${o.label.toLowerCase()}/`, `${o.label.toLowerCase().replace(/\//g, "---")}---`]) if (lc.startsWith(pre) && lc.length > pre.length) { n.label = n.label.slice(pre.length); break; }
     }
   }
+  return nodes.filter((n) => n.kind === "owner").map((n) => n.id).sort().join("|") !== had;
 }
 
 // ---------------------------------------------------------------- path
