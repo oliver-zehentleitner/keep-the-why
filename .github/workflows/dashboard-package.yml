@@ -95,6 +95,12 @@ jobs:
       - name: The host fixture page, two foreign hosts mounting the views from the manifest (jsdom)
         run: cd dashboard/tests/web && node host.mjs
 
+      - name: The views' words, every tw() call and ktw-words.json key for key, and the hook's fallbacks (jsdom)
+        run: cd dashboard/tests/web && node --test words.test.mjs
+
+      - name: Every UI text the views draw goes through the host's words, none left in English (jsdom)
+        run: cd dashboard/tests/web && node words-coverage.mjs
+
       - name: Markdown renderer parity with the HTML-string renderer it replaced (jsdom)
         # every body, title and field value of the fixture and of this repository's own export
         run: cd dashboard/tests/web && node parity.mjs fixture/state.json /tmp/ktw-dashboard-export/state.json

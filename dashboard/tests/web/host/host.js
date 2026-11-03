@@ -11,7 +11,7 @@
    Each host renders one route at a time; window.KTW_HOSTS[name].go(route) moves it, and a route no place
    answers to is an error, never the overview. window.KTW_HOST_PLACES lists every place with what it must show
    under each host; window.KTW_HOST_SETTLE(name, place) goes there and waits for that. host.mjs (jsdom) and
-   host-chromium.mjs (Chromium, under the CSP) drive it. */
+   host-chromium.mjs (Chromium, under the CSP) drive it; words-coverage.mjs drives it with ?words=keys. */
 (async function () {
   "use strict";
   const WEB = new URL("../../../ktw_dashboard/web/", document.baseURI);
@@ -47,6 +47,10 @@
   };
   const CHAIN = ["3c80c624-2274-497a-a1f0-d8ff65b0e0c3", "756f14cb-61c6-4ff2-8dea-29f28c030ca5", "c63efee2"]; // superseded, then cited
 
+  // ?words=keys: every view gets a words hook that answers each key with ⟦key⟧, so any UI text the views draw
+  // without it shows as English (words-coverage.mjs)
+  const WORDS = new URLSearchParams(location.search).get("words") === "keys" ? (key) => `⟦${key}⟧` : undefined;
+
   function makeHost(name, box, full) {
     const ROUTES = K.core.routes;
     const state = K.core.normalizeState(JSON.parse(JSON.stringify(raw)));
@@ -76,12 +80,12 @@
         : { error: `no published export at ${canonical}`, canonical, root }),
     }) : () => ({ state: async () => ({ state, url: "fixture/state.json" }) });
     const scene = K.scene.create({ state, self: state, scope: "project" });
-    const family = K.views.family.create({ scene, nav, provider, host: { mode: () => "export", root: () => "" } });
-    const search = K.views.search.create({ scene, nav, family });
-    const thoughts = K.views.thoughts.create({ scene, nav, prefs });
-    const pages = K.views.pages.create({ scene, nav, prefs, family, search });
-    const graphView = K.views.graph.create({ scene, nav, prefs });
-    const timeline = K.views.timeline.create({ scene, nav, prefs });
+    const family = K.views.family.create({ scene, nav, provider, host: { mode: () => "export", root: () => "" }, words: WORDS });
+    const search = K.views.search.create({ scene, nav, family, words: WORDS });
+    const thoughts = K.views.thoughts.create({ scene, nav, prefs, words: WORDS });
+    const pages = K.views.pages.create({ scene, nav, prefs, family, search, words: WORDS });
+    const graphView = K.views.graph.create({ scene, nav, prefs, words: WORDS });
+    const timeline = K.views.timeline.create({ scene, nav, prefs, words: WORDS });
     // the graph of the project, built by the library (graph.assemble) and kept, so positions survive a move
     let G = null;
     const graphOf = () => (G ||= Object.assign({ scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true, alpha: 1 }, graphView.assemble(state.topics, state.entries)));
