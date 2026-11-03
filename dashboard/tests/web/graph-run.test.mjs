@@ -12,8 +12,9 @@ const frames = []; // the frames asked for, run by hand
 function realm(motion) {
   const dom = new JSDOM("<!doctype html><body></body>", { runScripts: "outside-only", pretendToBeVisual: true });
   const w = dom.window;
-  w.requestAnimationFrame = (fn) => frames.push(fn);
-  w.cancelAnimationFrame = () => {};
+  let ids = 0; // a frame is called off by its id, as a browser does
+  w.requestAnimationFrame = (fn) => { const id = ++ids; frames.push(Object.assign((t) => fn(t), { id })); return id; };
+  w.cancelAnimationFrame = (id) => { const i = frames.findIndex((f) => f.id === id); if (i >= 0) frames.splice(i, 1); };
   const observers = []; // every ResizeObserver made, and whether it was let go
   w.ResizeObserver = class { constructor() { this.on = true; observers.push(this); } observe() {} disconnect() { this.on = false; } };
   const onCanvas = new Map(); // each canvas's listeners, as [type, fn]
@@ -57,9 +58,11 @@ for (const motion of ["on", "off"]) {
     const a = w.document.body.appendChild(w.document.createElement("canvas"));
     const r1 = G.runnerOf(fg, { showEntries: true }); G.run(a, r1, {});
     assert.equal(frames.length, 1, "the old copy asked for a frame");
+    const pending = frames[0];
     G.runnerOf(fg, { showEntries: true }); // the side pane shown anew: the graph runs another copy now
+    assert.equal(frames.length, 0, "the old copy's frame is called off");
     const before = snap(fg);
-    frames.shift()(16);
+    pending(16); // and should a browser run it all the same, it does nothing
     assert.deepEqual(snap(fg), before, "no node moved, the lifecycle is as it was");
     assert.equal(frames.length, 0, "and the old copy asks for no more frames");
   });
@@ -98,9 +101,11 @@ for (const motion of ["on", "off"]) {
     const base = counts();
     const r1 = G.runnerOf(fg); G.run(w.document.body.appendChild(w.document.createElement("canvas")), r1, {});
     assert.deepEqual(counts(), plus(base, ONE), "a running loop holds its listeners and observers");
+    const pending = frames[0];
     G.runnerOf(fg); // shown anew in the side pane
     assert.deepEqual(counts(), base, "the window's listeners, the scene's events and both observers let go");
-    frames.shift()?.(16);
+    assert.equal(frames.length, 0, "its frame called off");
+    pending(16);
     assert.deepEqual(counts(), base, "and its last frame takes nothing back");
   });
 

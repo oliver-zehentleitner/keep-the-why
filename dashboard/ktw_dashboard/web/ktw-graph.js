@@ -187,7 +187,7 @@ function runGraph(canvas, g, opts = {}) {
     window.removeEventListener("mouseup", wake); window.removeEventListener("mouseup", onUp); for (const evn of WAKERS) canvas.removeEventListener(evn, wake);
     if (g.stopLoop === retire) g.stopLoop = null;
     if (g.wake === wake) g.wake = null; // the graph outlives its canvases: it must not hold this one, nor its page, through the wake
-    g.raf = null;
+    if (g.raf) cancelAnimationFrame(g.raf); g.raf = null; // a frame still asked for is not wanted: called off
   };
   const live = (fn) => (...a) => (retired() ? retire() : fn(...a)); // a listener that first asks whether its loop is done
   function step(now) {
