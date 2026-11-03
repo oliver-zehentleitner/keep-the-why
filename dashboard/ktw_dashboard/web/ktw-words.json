@@ -1,4 +1,9 @@
 {
+  "core.export.noLine": "no dashboard-state line in the published .keep-the-why ({raw}) — this project has no published export yet",
+  "core.export.otherRepository": "the export at {url} belongs to {claimed}, not to {canonical}",
+  "core.see.noEntry": "its published export (generated {generated}) has no entry with this Id — the reference may be newer than the export, or the entry lives below the repository's top level",
+  "core.see.notAsked": "not known here, and no published export was asked for",
+  "core.see.unreadable": "its published export could not be read",
   "family.fetch.cache": "Or the read-only context cache, shared by every project on this machine:",
   "family.fetch.clone": "A working tree, writable (the mapping learns it on next start):",
   "family.fetch.summary": "not checked out here — how to get it",

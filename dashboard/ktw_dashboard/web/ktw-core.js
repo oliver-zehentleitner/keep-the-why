@@ -159,8 +159,29 @@ function parseSupersededBy(value) {
 // `undefined`; the reason stays on the entry (the pill's tooltip, the details pane).
 const typeName = (t) => String(t ?? "").split(/\s+[—–-]\s+/)[0].trim();
 
+// The views' words (ktw-ui.js words) fill a text's placeholders from `params` here — {name} the value, {n:noun} a
+// count with its noun's plural, {n:one|many} with the two forms given, a param that is a node put in at its
+// placeholder (the parts then an array, which el() flattens).
+const PLACEHOLDER = /\{(\w+)(?::([^{}]+))?\}/g;
+function fillWords(text, params) {
+  if (!params) return text;
+  // {n:noun} the count and the noun's plural by the core's rule, {n:one|many} the two forms given
+  const counted = (n, noun) => { const [one, many] = noun.split("|"); return many == null ? plural(n, one) : `${n} ${n === 1 ? one : many}`; };
+  const value = (k, noun) => (noun ? counted(params[k], noun) : String(params[k]));
+  if (!Object.values(params).some((v) => v?.nodeType)) return text.replace(PLACEHOLDER, (m, k, noun) => (params[k] == null ? m : value(k, noun)));
+  const parts = []; let at = 0;
+  for (const m of text.matchAll(PLACEHOLDER)) {
+    const v = params[m[1]]; if (v == null) continue;
+    if (m.index > at) parts.push(text.slice(at, m.index));
+    parts.push(v.nodeType ? v : value(m[1], m[2])); at = m.index + m[0].length;
+  }
+  if (at < text.length) parts.push(text.slice(at));
+  return parts;
+}
+// A core function whose text is UI text takes a view's words last (`tw`, ktw-ui.js words); without them the English
+const ENGLISH = (key, english, params) => fillWords(english, params);
 // (with a view's words, `tw` from ktw-ui.js words; without them the English)
-const kindLabel = (k, tw = (key, english) => english) => k === "cache" ? tw("family.kind.cache", "cache, read only") : k === "repository" ? tw("family.kind.repository", "repository, read and write") : k === "public" ? tw("family.kind.public", "published export") : tw("family.kind.none", "not available here");
+const kindLabel = (k, tw = ENGLISH) => k === "cache" ? tw("family.kind.cache", "cache, read only") : k === "repository" ? tw("family.kind.repository", "repository, read and write") : k === "public" ? tw("family.kind.public", "published export") : tw("family.kind.none", "not available here");
 
 // A family member's place among its siblings: this project first, the ancestors from the top, then
 // parent, siblings, children and the rest of the tree.
@@ -280,33 +301,33 @@ function highlightParts(text, terms) {
 // Two addresses name the same repository whatever their case and trailing slashes.
 const sameCanonical = (a, b) => String(a || "").replace(/\/+$/, "").toLowerCase() === String(b || "").replace(/\/+$/, "").toLowerCase();
 // From a repository's published .keep-the-why: the address of its export, or why there is none.
-function exportStateUrl(configText, raw) {
+function exportStateUrl(configText, raw, tw = ENGLISH) {
   const url = configLine(String(configText ?? ""), "dashboard-state");
-  if (!url) return { error: `no dashboard-state line in the published .keep-the-why (${raw}) — this project has no published export yet`, missingLine: true };
-  if (!/^https:\/\//.test(url)) return { error: `dashboard-state is not an https URL: ${url}` };
+  if (!url) return { error: tw("core.export.noLine", "no dashboard-state line in the published .keep-the-why ({raw}) — this project has no published export yet", { raw }), missingLine: true };
+  if (!/^https:\/\//.test(url)) return { error: tw("core.export.notHttps", "dashboard-state is not an https URL: {url}", { url }) };
   return { url };
 }
 // An export fetched for `canonical`: shown as that repository, as a fork of the one it names, or refused.
 // A fork's export was made in a checkout whose origin is the cited repository, and declares the
 // repository it was forked from as its canonical; an export that claims another repository otherwise
 // is not shown as this one.
-function exportVerdict(state, canonical, url) {
+function exportVerdict(state, canonical, url, tw = ENGLISH) {
   const claimed = state?.project?.canonical;
   const origin = state?.project?.git?.remote ? `https://${state.project.git.remote}` : "";
   if (claimed && !sameCanonical(claimed, canonical) && origin && sameCanonical(origin, canonical)) return { forkOf: claimed };
-  if (claimed && !sameCanonical(claimed, canonical)) return { error: `the export at ${url} belongs to ${claimed}, not to ${canonical}` };
+  if (claimed && !sameCanonical(claimed, canonical)) return { error: tw("core.export.otherRepository", "the export at {url} belongs to {claimed}, not to {canonical}", { url, claimed, canonical }) };
   return {};
 }
 // A See into another repository, resolved the way the page shows it: the project the live server knows
 // carries the Id first (`known`, a provider resolveEntry result, absent outside live mode), else the
 // repository's published export (`published`, a provider exportState result). Returns { entry, via } —
 // via "live" or "export", the host makes the link — or { error } with the reason to show.
-function resolveSee(uuid, { known = null, published = null } = {}) {
+function resolveSee(uuid, { known = null, published = null, tw = ENGLISH } = {}) {
   if (known && !known.error) return { entry: known.entry || {}, via: "live", project: known.project };
-  if (!published) return { error: "not known here, and no published export was asked for" };
-  if (!published.state) return { error: published.error || "its published export could not be read" }; // a host's result with neither is still a failure
+  if (!published) return { error: tw("core.see.notAsked", "not known here, and no published export was asked for") };
+  if (!published.state) return { error: published.error || tw("core.see.unreadable", "its published export could not be read") }; // a host's result with neither is still a failure
   const entry = (published.state.entries || []).find((e) => e.uuid === uuid);
-  if (!entry) return { error: `its published export (generated ${published.state.generated || "?"}) has no entry with this Id — the reference may be newer than the export, or the entry lives below the repository's top level` };
+  if (!entry) return { error: tw("core.see.noEntry", "its published export (generated {generated}) has no entry with this Id — the reference may be newer than the export, or the entry lives below the repository's top level", { generated: published.state.generated || "?" }) };
   return { entry, via: "export" };
 }
 // A family location as the published side reads it: an https URL is another
@@ -1060,7 +1081,7 @@ KTW.core = Object.freeze({
   sameCanonical, exportStateUrl, exportVerdict, resolveSee, LAYOUT, seedLayout, layoutTick, carryNode, reheatAll, treeOf, reheatAfterBuild, reheatSeeded, placeShown, stepLayout, settleLayout, NO_FILTER, filterActive, entryMatches, fkey, repoLabel, topicTitle,
   esc, plural, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug,
   hostAnchor, hostFileLink, hostTreeLink, HOSTS, hostOf, canonicalOf, ownerOf, projectLabel,
-  parseSupersededBy, entryRefs, typeName, kindLabel, familyRank, familyOrder, groupByFamily, shuffled, searchTerms,
+  parseSupersededBy, entryRefs, typeName, kindLabel, fillWords, familyRank, familyOrder, groupByFamily, shuffled, searchTerms,
   registryMatches, bodyProse, searchHit, compareHits, snippetAt, highlightParts, resolveLocation, backlinksUrl,
   citingOf, friendsOf, thoughtsOf, SHAKY, thoughtInsights, linkFamily, authorLookup, mergeStates,
   todayISO, nowISO, isMoment, msOf, isoAt, addDays, dayDiff, createdOn,

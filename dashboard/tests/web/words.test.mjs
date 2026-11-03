@@ -115,3 +115,14 @@ test("a throw or a non-string falls back to the English, with one warning per ke
   assert.match(warnings[0], /"x\.throws".*threw: broken/);
   assert.match(warnings[1], /"x\.number".*number, not a string/);
 });
+
+test("the core's UI text takes a view's words: a member's availability, the reasons a reference or an export did not load", () => {
+  const { core } = dom.window.KeepTheWhy;
+  const tw = ui.words((key, p) => ({ "family.kind.cache": "Cache", "core.see.notAsked": "nicht gefragt", "core.export.notHttps": `kein https: ${p.url}` })[key]);
+  assert.equal(core.kindLabel("cache", tw), "Cache");
+  assert.equal(core.kindLabel("cache"), "cache, read only");
+  assert.equal(core.resolveSee("x", { tw }).error, "nicht gefragt");
+  assert.equal(core.resolveSee("x").error, "not known here, and no published export was asked for");
+  assert.equal(core.exportStateUrl("- dashboard-state: http://a", "raw", tw).error, "kein https: http://a");
+  assert.equal(core.exportStateUrl("- dashboard-state: http://a", "raw").error, "dashboard-state is not an https URL: http://a");
+});

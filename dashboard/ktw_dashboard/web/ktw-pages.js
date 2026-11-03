@@ -306,7 +306,7 @@ function forHost(H) {
     if (!REMOTE_REFS[key]) REMOTE_REFS[key] = (async () => {
       const P = H.provider();
       const known = P.resolveEntry ? await P.resolveEntry(uuid) : null; // the rules are resolveSee's (ktw-core.js)
-      const r = resolveSee(uuid, { known, published: known && !known.error ? null : await family.publicState(canonical, "") });
+      const r = resolveSee(uuid, { known, published: known && !known.error ? null : await family.publicState(canonical, ""), tw });
       if (r.error) return { error: r.error };
       return { entry: r.entry, route: { view: "entry", uuid, centre: r.via === "live" ? { mode: "live", project: r.project } : { mode: "public", canonical, root: "" } } };
     })().catch((err) => ({ error: err?.message || String(err) })); // a host's lookup that throws is a reference not resolved

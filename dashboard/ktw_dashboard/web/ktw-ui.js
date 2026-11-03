@@ -5,7 +5,7 @@
    A classic script on globalThis.KeepTheWhy.ui, listed in ktw-views.json after the core. */
 (function (root) {
 "use strict";
-const { typeName, hostOf, highlightParts, plural } = root.KeepTheWhy.core;
+const { typeName, hostOf, highlightParts, fillWords } = root.KeepTheWhy.core;
 
 // The views' words: `words(hook)` gives `tw(key, english, params)`, the one way a view's UI text reaches the page.
 // The host's hook — `(key, params) => string | undefined`, the `words` option of every views.*.create — answers a
@@ -16,22 +16,6 @@ const { typeName, hostOf, highlightParts, plural } = root.KeepTheWhy.core;
 // node goes in at its placeholder, wherever the host's word order puts it — then tw gives the parts as an array, which
 // el() flattens. Every key and its English is listed in ktw-words.json; keys and English are string literals at
 // every call, so the catalogue is what the code says (words.test.mjs).
-const PLACEHOLDER = /\{(\w+)(?::([^{}]+))?\}/g;
-function fillWords(text, params) {
-  if (!params) return text;
-  // {n:noun} the count and the noun's plural by the core's rule, {n:one|many} the two forms given
-  const counted = (n, noun) => { const [one, many] = noun.split("|"); return many == null ? plural(n, one) : `${n} ${n === 1 ? one : many}`; };
-  const value = (k, noun) => (noun ? counted(params[k], noun) : String(params[k]));
-  if (!Object.values(params).some((v) => v?.nodeType)) return text.replace(PLACEHOLDER, (m, k, noun) => (params[k] == null ? m : value(k, noun)));
-  const parts = []; let at = 0;
-  for (const m of text.matchAll(PLACEHOLDER)) {
-    const v = params[m[1]]; if (v == null) continue;
-    if (m.index > at) parts.push(text.slice(at, m.index));
-    parts.push(v.nodeType ? v : value(m[1], m[2])); at = m.index + m[0].length;
-  }
-  if (at < text.length) parts.push(text.slice(at));
-  return parts;
-}
 function words(hook = null) {
   const warned = new Set();
   const warn = (key, why) => { if (warned.has(key)) return; warned.add(key); console.warn(`KeepTheWhy words: "${key}" ${why}; the English is used`); };
