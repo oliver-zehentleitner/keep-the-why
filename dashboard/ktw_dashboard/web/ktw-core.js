@@ -169,13 +169,17 @@ function fillWords(text, params) {
   const counted = (n, noun) => { const [one, many] = noun.split("|"); return many == null ? plural(n, one) : `${n} ${n === 1 ? one : many}`; };
   const value = (k, noun) => (noun ? counted(params[k], noun) : String(params[k]));
   if (!Object.values(params).some((v) => v?.nodeType)) return text.replace(PLACEHOLDER, (m, k, noun) => (params[k] == null ? m : value(k, noun)));
-  const parts = []; let at = 0;
+  // the text between two nodes is one part, its values filled in: one text node, as a template literal gave
+  const parts = []; let at = 0, run = "";
   for (const m of text.matchAll(PLACEHOLDER)) {
-    const v = params[m[1]]; if (v == null) continue;
-    if (m.index > at) parts.push(text.slice(at, m.index));
-    parts.push(v.nodeType ? v : value(m[1], m[2])); at = m.index + m[0].length;
+    const v = params[m[1]];
+    run += text.slice(at, m.index); at = m.index + m[0].length;
+    if (v == null) run += m[0];
+    else if (!v.nodeType) run += value(m[1], m[2]);
+    else { if (run) parts.push(run); run = ""; parts.push(v); }
   }
-  if (at < text.length) parts.push(text.slice(at));
+  run += text.slice(at);
+  if (run) parts.push(run);
   return parts;
 }
 // A core function whose text is UI text takes a view's words last (`tw`, ktw-ui.js words); without them the English

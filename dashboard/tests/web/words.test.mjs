@@ -101,6 +101,9 @@ test("a node goes in at its placeholder, where the host's word order puts it", (
   const en = parts(tw("x.en", "open it with {link}", { link })), de = parts(tw("x.de", "open it with {link}", { link }));
   assert.equal(en.length, 2); assert.equal(en[0], "open it with "); assert.equal(en[1], link);
   assert.equal(de.length, 2); assert.equal(de[0], link); assert.equal(de[1], " öffnet es");
+  // the values beside a node stay in one text with the words around them
+  const mixed = parts(tw("x.mixed", "Thoughts ({n}) {min}", { n: 3, min: link }));
+  assert.equal(mixed.length, 2); assert.equal(mixed[0], "Thoughts (3) "); assert.equal(mixed[1], link);
 });
 
 test("a throw or a non-string falls back to the English, with one warning per key", () => {
