@@ -961,6 +961,40 @@ const report = {};
   if (used.held) errors.push("redraw after a session: nodes placed by hand are still held");
 }
 {
+  // redraw in the side pane's neighbourhood graph (near): it is built from where the full graph has its nodes, and a
+  // redraw builds it from no positions instead. The page that has laid the full graph out, then dragged a node
+  // here and redrawn, comes out as a page that never built the full graph: a fresh build of the neighbourhood.
+  const fx = JSON.parse(fs.readFileSync(new URL("./fixture/state.json", import.meta.url), "utf8"));
+  const page = html.replace("<script>", `<script>window.__KTW_STATE__ = ${JSON.stringify({ ...fx, exported: true }).replace(/</g, "\\u003c")};</script><script>`);
+  const entry = fx.entries.find((e) => e.uuid);
+  const near = async (laidOut, drag) => {
+    const window = await open(`http://localhost/x/keep-the-why-dashboard/${laidOut ? "#graph" : `#entry/${entry.uuid}`}`, page, { "ktw-motion": "off" });
+    const d = window.document;
+    const quiet = async (g) => { for (let i = 0; i < 300 && (g()?.alpha ?? 1) > 0.003; i++) await tick(100); };
+    await tick(500);
+    if (laidOut) { await quiet(() => window.__g()); window.location.hash = `#entry/${entry.uuid}`; window.dispatchEvent(new window.Event("hashchange")); await tick(400); }
+    [...d.querySelectorAll(".ktw-mini-seg button")].find((b) => b.textContent === "near")?.click(); await tick(300);
+    await quiet(() => window.__ktwNear?.());
+    const pre = Object.fromEntries((window.__ktwNear()?.nodes || []).map((n) => [n.id, [n.x, n.y]])); // before the redraw
+    if (drag) { const n = window.__ktwNear().nodes[0]; n.x += 200; n.y -= 120; n.fixed = true; }
+    const btn = [...d.querySelectorAll(".ktw-mini-corner-btn")].find((b) => b.textContent === "redraw");
+    btn?.click(); await tick(300); await quiet(() => window.__ktwNear?.());
+    const g = window.__ktwNear?.();
+    const at = g ? Object.fromEntries(g.nodes.map((n) => [n.id, [n.x, n.y]])) : {};
+    const out = { at, pre, held: g ? g.nodes.filter((n) => n.fixed).length : -1, hadButton: !!btn };
+    window.close();
+    return out;
+  };
+  const used = await near(true, true), fresh = await near(false, false);
+  let diff = 0; for (const [id, [x, y]] of Object.entries(fresh.at)) { const q = used.at[id]; diff = Math.max(diff, q ? Math.hypot(q[0] - x, q[1] - y) : Infinity); }
+  let before = 0; for (const [id, [x, y]] of Object.entries(fresh.at)) { const q = used.pre[id]; before = Math.max(before, q ? Math.hypot(q[0] - x, q[1] - y) : Infinity); }
+  report.redrawNear = { nodes: Object.keys(fresh.at).length, same: Object.keys(fresh.at).length === Object.keys(used.at).length, diff, held: used.held, beforeRedraw: before };
+  if (!used.hadButton || !fresh.hadButton) errors.push("redraw (near): the side pane's neighbourhood graph has no redraw");
+  if (!(before > 1)) errors.push("redraw (near): before the redraw the neighbourhood was already where a fresh build puts it — the test does not tell the two apart");
+  if (!report.redrawNear.nodes || diff !== 0 || !report.redrawNear.same) errors.push("redraw (near) after the full graph was laid out and a node dragged is not a fresh build of the neighbourhood — " + JSON.stringify(report.redrawNear));
+  if (used.held) errors.push("redraw (near): the node placed by hand is still held");
+}
+{
   // redraw on the graph page: every node you placed let go, and the same layout every time — dragged nodes leave no trace
   const web = FILES["https://acme.github.io/web/state.json"];
   const page = html.replace("<script>", `<script>window.__KTW_STATE__ = ${JSON.stringify({ ...web, exported: true }).replace(/</g, "\u003c")};</script><script>`);

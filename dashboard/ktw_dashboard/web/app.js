@@ -628,6 +628,8 @@ function renderDetailsDefault() {
 // again after every scope change — it follows the page: the neighbourhood of
 // the entry or topic shown, else the scope (the project, or the whole family).
 let MINI = null;
+let NEAR_SHOWN = null; // the side pane's neighbourhood graph drawn last
+window.__ktwNear = () => NEAR_SHOWN; // test hook (jsdom public), not used by the page
 function miniGraph(d, ctx) {
   const focusId = ctx.entry ? `e:${ctx.entry.id}` : ctx.topic ? `t:${ctx.topic.file}` : null;
   if (narrow()) { d.append(el("h3", {}, "Graph"), navLink({ class: "ktw-backlink", href: { view: "graph" } }, "Open the project graph →")); return; }
@@ -664,7 +666,7 @@ function miniGraph(d, ctx) {
     const up = modes.includes("family") && familyGraphShown() ? "family" : "project";
     if (n || hasFamily()) box.append(el("span", { class: "ktw-mini-seg ktw-mini-friends" }, el("button", { type: "button", title: `show the friends — switches to the ${up} level`,
       onclick: () => { MINI = up; FRIENDS.load = true; setFriendsAuto(true); render(); } }, n ? `friends (${n})` : "friends")));
-    const near = ctx.entry ? buildSubgraph(ctx.entry) : buildTopicSubgraph(ctx.topic); cornerFor(near);
+    const near = ctx.entry ? buildSubgraph(ctx.entry) : buildTopicSubgraph(ctx.topic); cornerFor(near); NEAR_SHOWN = near;
     return requestAnimationFrame(() => runGraph(canvas, near, opts));
   }
   if (mode === "project") { const g = buildGraph(ctx.entry?.project || ctx.topic?.project || null); holdReading(g); fillFilters(g); cornerFor(g); /* friends are in the gear's groups */ return requestAnimationFrame(() => runGraph(canvas, g, opts)); }
