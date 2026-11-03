@@ -10,56 +10,18 @@
 //
 // What a canvas draws is not in the DOM and not in a snapshot; a change to the graph or the stage is
 // shown with before/after screenshots in its pull request instead.
-process.env.TZ = "UTC"; // before the first Date: the timeline labels hours in the reader's zone
-
-import { JSDOM, VirtualConsole } from "jsdom";
-import { moduleAsClassic } from "./classic.mjs";
+import { openPage, routesOf } from "./fixture-page.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "snapshots");
-const NOW = Date.parse("2026-06-15T12:00:00Z"); // the fixture's `generated`: "today" for the page
 const [page, flag] = process.argv.slice(2);
 if (!page) { console.error("usage: node snapshot.mjs PAGE [--update]"); process.exit(2); }
 const update = flag === "--update";
 
-// ---- the page, with everything that differs between two runs held still
-const html = moduleAsClassic(fs.readFileSync(page, "utf8"));
-const errors = [];
-const vc = new VirtualConsole();
-vc.on("jsdomError", (e) => errors.push("jsdom: " + (e.detail?.stack || e.message || e).toString().split("\n").slice(0, 2).join(" | ")));
-vc.on("error", (...a) => errors.push("console: " + a.join(" ")));
-const dom = new JSDOM(html, {
-  runScripts: "dangerously",
-  pretendToBeVisual: true,
-  url: "http://localhost/",
-  virtualConsole: vc,
-  beforeParse(window) {
-    const RealDate = window.Date;
-    class FixedDate extends RealDate {
-      constructor(...a) { if (a.length) super(...a); else super(NOW); }
-      static now() { return NOW; }
-    }
-    window.Date = FixedDate;
-    let seed = 0x2f1c5b7e; // mulberry32: the same "random" sequence on every run
-    window.Math.random = () => { seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-    window.ResizeObserver = class { observe() {} disconnect() {} };
-    window.HTMLCanvasElement.prototype.getContext = () =>
-      new Proxy({}, { get: (t, k) => (k === "measureText" ? () => ({ width: 10 }) : () => {}), set: () => true });
-    window.requestAnimationFrame = (fn) => window.setTimeout(() => fn(0), 16);
-    window.cancelAnimationFrame = (id) => window.clearTimeout(id);
-    window.matchMedia = () => ({ matches: false });
-    window.CSS = { escape: (s) => s.replace(/([^\w-])/g, "\\$1") };
-    window.addEventListener("error", (e) => errors.push("window: " + e.message));
-  },
-});
-const { window } = dom;
-const doc = window.document;
-const tick = (ms) => new Promise((r) => setTimeout(r, ms));
-const go = async (hash) => { window.location.hash = hash; window.dispatchEvent(new window.Event("hashchange")); await tick(150); };
-await tick(300);
-const S = window.__KTW_STATE__;
+// ---- the page, with everything that differs between two runs held still (fixture-page.mjs)
+const { window, doc, go, errors, state: S } = await openPage(page);
 if (!S?.entries?.length) { console.log("no state on the page"); process.exit(1); }
 
 // ---- an element tree as text: one node per line, attributes sorted, text collapsed
@@ -76,32 +38,8 @@ function tree(node, depth = 0, out = []) {
 }
 const section = (name, sel) => { const n = doc.querySelector(sel); return [`## ${name}`, ...(n ? tree(n) : ["(missing)"]), ""]; };
 
-// ---- the routes: every branch of the page's router that renders without a network
-const byTitle = (part) => S.entries.find((e) => e.title.includes(part));
-const routes = [
-  ["overview", "#overview"],
-  ["graph", "#graph"],
-  ["timeline", "#timeline"],
-  ["timeline-day", "#timeline/2026-04-15"],
-  ["authors", "#authors"],
-  ["queues", "#queues"],
-  ["findings", "#findings"],
-  ["family", "#family"],
-  ["projects", "#projects"],
-  ["friends", "#friends"],
-  ["thoughts", "#thoughts"],
-  ...S.topics.map((t) => [`topic-${t.file.replace(/\.md$/, "")}`, `#topic/${t.file}`]),
-  ["entry-superseded", `#entry/${byTitle("waits for the snapshot").uuid}`],
-  ["entry-callouts-lists", `#entry/${byTitle("versioned snapshot").uuid}`],
-  ["entry-open-unknown", `#entry/${byTitle("retry three times").uuid}`],
-  ["entry-contradicted", `#entry/${byTitle("capped at one megabyte").uuid}`],
-  ["entry-source-link", `#entry/${byTitle("stable code").uuid}`],
-  ["entry-undefined-type", `#entry/${byTitle("Temporary files").uuid}`],
-  ["entry-hostile-text", `#entry/${byTitle("Pasted").uuid}`],
-  ["search", "#search/self/snapshot"],
-  // no hit: the sentence's text nodes as they were before the views' words (the wider search: public.mjs)
-  ["search-none", "#search/project/zzzznotfoundzzzz"],
-];
+// ---- the routes: every branch of the page's router that renders without a network (fixture-page.mjs)
+const routes = routesOf(S);
 const results = new Map();
 let shell = null;
 for (const [name, hash] of routes) {

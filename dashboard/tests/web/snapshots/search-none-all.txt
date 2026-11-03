@@ -1,0 +1,84 @@
+# #search/all/zzzznotfoundzzzz
+
+## #main
+<div class="ktw-search-head">
+  <h1>
+    "Search"
+    <span class="ktw-q">
+      "“zzzznotfoundzzzz”"
+  <span class="ktw-search-scope" title="where to search — the switch next to the project menu sets the graph and the lists, not the search; registry: a project rather than entries">
+    <a class="ktw-on" href="#search/project/zzzznotfoundzzzz">
+      "this project"
+    <a class href="#search/registry/zzzznotfoundzzzz">
+      "registry"
+<p class="ktw-sub">
+  "0 entries in 0 projects · searched: title, body, Revisit when, Source, Verification, Superseded by, Id, file, type, status, evidence"
+<div class="ktw-search-page">
+  <p class="ktw-center">
+    "No entry matches “zzzznotfoundzzzz”"
+    "in this project"
+    "."
+
+## #details
+<div class="ktw-pane-width" title="the width of this pane: 1×, 2×, 3×, or half the page — one width where the pane is the graph, one where it holds details">
+  <span class="ktw-label">
+    "Width"
+  <span class="ktw-mini-width">
+    <button class type="button">
+      "1×"
+    <button class="ktw-on" type="button">
+      "2×"
+    <button class type="button">
+      "3×"
+    <button class type="button">
+      "½"
+<div class="ktw-mini ktw-fill">
+  <canvas height="0" width="0">
+  <span class="ktw-mini-seg">
+    <span class="ktw-mini-title">
+      "graph"
+  <span class="ktw-mini-hint">
+    "hover · click"
+  <span class="ktw-mini-corner">
+    <button aria-label="redraw the graph: laid out anew from the start, every node you placed let go, as a fresh load lays it out — the thought held and the switches stay" class="ktw-mini-corner-btn" title="redraw the graph: laid out anew from the start, every node you placed let go, as a fresh load lays it out — the thought held and the switches stay" type="button">
+      "redraw"
+    <button class="ktw-mini-corner-btn" title="fit the view: everything in the box" type="button">
+      "fit"
+    <button class="ktw-mini-corner-btn" title="let go of the held thought — every node alike again (Esc, on a page without a reset of its own)" type="button">
+      "reset"
+  <button class="ktw-mini-open" title="open the full graph — the same level, centred on what is shown here" type="button">
+    "⤢ full graph"
+  <button class="ktw-mini-gear" title="the graph's switches — the same as in the full graph" type="button">
+    "⚙"
+  <div class="ktw-mini-filters ktw-graph-ui" hidden>
+    <span class="ktw-ui-group">
+      <label>
+        <input checked type="checkbox">
+        "entries"
+      <label title="the names of this project's topics and entries — topics, and entries when zoomed in">
+        <input checked type="checkbox">
+        "labels"
+    <span class="ktw-ui-group ktw-cited-ctl">
+      <label title="who in the Keep the Why registry cites this project — the registry's backlink file, https://keepthewhy.com/registry/backlinks/github.com/acme/widget.json, loaded on the click and not remembered. Citations from repositories outside the registry are not in it.">
+        <input type="checkbox">
+        "cited by"
+    <span class="ktw-ui-group">
+      <label title="the projects of one owner around a node for the owner — only an owner with more than one project in the graph; the node opens the owner's page">
+        <input type="checkbox">
+        "owners"
+    <span class="ktw-ui-group">
+      <label title="the path's projects in the graph — the projects you came through; unchecked they are hidden, not forgotten (the path bar discards)">
+        <input checked type="checkbox">
+        "path"
+    <span class="ktw-ui-group">
+      <label title="the graph turns very slowly; it stops while you point at it">
+        <input checked type="checkbox">
+        "motion"
+    <span class="ktw-ui-group">
+      <button class="ktw-link-btn" title="every switch in this bar on">
+        "select all"
+      <button class="ktw-link-btn" title="every switch in this bar off — the project's topics alone">
+        "unselect all"
+    <span class="ktw-ui-group">
+      <button class="ktw-link-btn ktw-graph-reset" title="fit the graph and let go of every node you placed">
+        "reset"
