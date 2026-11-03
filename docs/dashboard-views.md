@@ -92,7 +92,7 @@ A host that builds a graph of its own (the dashboard's family graph and its frie
 - without one, around a linked node of its own `unit`;
 - linked to nothing placed, packed outside what is placed, so another unit (a friend, the path) sits apart.
 
-`reheatSeeded` raises the graph's alpha only if the build placed new nodes. Until they come to rest, only they move (`stepLayout`), and the nodes already shown hold still.
+`reheatSeeded` raises the graph's alpha only if the build placed new nodes. Until they come to rest, only they move (`stepLayout`), and the nodes already shown hold still. A node that comes into view later (the day, a lit thought, the entries switch) is laid out the same way. `placeShown` places it anew where it hangs now, and only it moves.
 
 The constants are `KeepTheWhy.core.LAYOUT`, each with its reason beside it in `ktw-core.js`:
 - `MAX_STEP`: the most a node moves in one step.

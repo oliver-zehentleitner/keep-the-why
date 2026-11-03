@@ -965,26 +965,34 @@ function layoutTick(nodes, links, alpha, { visible = () => true, linkOn = () => 
   }
   return moved < LAYOUT.REST ? 0 : alpha * LAYOUT.DECAY;
 }
-// A graph's layout after a build: the nodes seedLayout placed need the full strength of a fresh layout, and a
-// build that placed none (a live update, a reload of the same states) leaves the alpha as it was — nothing to
-// lay out, so nothing moves.
-function reheatSeeded(g) { if (g.nodes.some((n) => n.seeded)) g.alpha = 1; return g; }
-// One step of a graph's layout ({ nodes, links, alpha }), as the page and settleLayout run it. After a build
-// that added nodes to a placed graph, only the new ones (seeded) move until they are at rest — the nodes already
-// placed hold still, so a family, a friend or a live update coming in does not shake what is already shown.
-// Once settled, the new nodes count as placed. Returns the alpha left.
-function stepLayout(g, { visible, linkOn } = {}) {
-  const fresh = g.nodes.some((n) => n.seeded), grown = fresh && g.nodes.some((n) => !n.seeded);
-  g.alpha = layoutTick(g.nodes, g.links, g.alpha, { visible, linkOn, moving: grown ? (n) => n.seeded : null });
-  if (fresh && g.alpha <= LAYOUT.MIN_ALPHA) for (const n of g.nodes) delete n.seeded;
+// A graph's layout after a build: the nodes seedLayout placed need the full strength of a fresh layout, and
+// only they move (`placing`); a build that placed none (a live update, a reload of the same states) leaves the
+// alpha as it was — nothing to lay out, so nothing moves.
+function reheatSeeded(g) { if (g.nodes.some((n) => n.seeded)) { g.alpha = 1; g.placing = true; } return g; }
+// The nodes shown that are not laid out yet — seeded while hidden, then brought into view by the day, a lit
+// thought or a switch — placed anew where they hang now, and laid out alone. Returns whether there were any.
+function placeShown(g, { visible = () => true } = {}) {
+  const fresh = g.nodes.filter((n) => n.seeded && visible(n));
+  if (!fresh.length) return false;
+  for (const n of fresh) n.x = n.y = undefined;
+  seedLayout(g.nodes, g.links); g.alpha = 1; g.placing = true;
+  return true;
+}
+// One step of a graph's layout ({ nodes, links, alpha, placing }), as the page and settleLayout run it. While
+// `placing`, only the nodes not laid out yet (seeded) move; the nodes already placed hold still, so a family, a
+// friend, a live update or a new day coming in does not shake what is already shown. Settled, the seeded nodes
+// that were shown count as laid out; one still hidden keeps waiting for its turn. Returns the alpha left.
+function stepLayout(g, { visible = () => true, linkOn } = {}) {
+  g.alpha = layoutTick(g.nodes, g.links, g.alpha, { visible, linkOn, moving: g.placing ? (n) => !!n.seeded : null });
+  if (g.alpha <= LAYOUT.MIN_ALPHA) { for (const n of g.nodes) if (n.seeded && visible(n)) delete n.seeded; g.placing = false; }
   return g.alpha;
 }
 // every step until the layout has settled (at rest, or alpha at or under `until`), or `maxTicks`; returns the
 // alpha left
 function settleLayout(nodes, links, { alpha = 1, until = LAYOUT.MIN_ALPHA, maxTicks = 2000, visible, linkOn } = {}) {
-  const g = { nodes, links, alpha }; let t = 0;
+  const g = { nodes, links, alpha, placing: nodes.some((n) => n.seeded) }; let t = 0;
   while (g.alpha > until && t++ < maxTicks) stepLayout(g, { visible, linkOn });
-  if (g.alpha > LAYOUT.MIN_ALPHA) for (const n of nodes) delete n.seeded; // stopped by maxTicks or `until`: placed as they are
+  if (g.alpha > LAYOUT.MIN_ALPHA) for (const n of nodes) if (n.seeded && (!visible || visible(n))) delete n.seeded; // stopped by maxTicks or `until`: placed as they are
   return g.alpha;
 }
 
@@ -1007,7 +1015,7 @@ const topicTitle = (st, file) => st.topics?.find((t) => t.file === file)?.title 
 const KTW = (root.KeepTheWhy = root.KeepTheWhy || {});
 KTW.core = Object.freeze({
   TOKEN_DEFAULTS, readToken, valueColor,
-  sameCanonical, exportStateUrl, exportVerdict, resolveSee, LAYOUT, seedLayout, layoutTick, reheatSeeded, stepLayout, settleLayout, NO_FILTER, filterActive, entryMatches, fkey, repoLabel, topicTitle,
+  sameCanonical, exportStateUrl, exportVerdict, resolveSee, LAYOUT, seedLayout, layoutTick, reheatSeeded, placeShown, stepLayout, settleLayout, NO_FILTER, filterActive, entryMatches, fkey, repoLabel, topicTitle,
   esc, plural, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug,
   hostAnchor, hostFileLink, hostTreeLink, HOSTS, hostOf, canonicalOf, ownerOf, projectLabel,
   parseSupersededBy, entryRefs, typeName, kindLabel, familyRank, familyOrder, groupByFamily, shuffled, searchTerms,

@@ -3,14 +3,15 @@
 // topics on spokes, entries on their topics, See lines inside and across members, a friend unit apart — with
 // over a thousand entries, and measured: it settles within a bound of steps, no step moves a node further than
 // LAYOUT.MAX_STEP, the whole stays in a bounded box with no node far out of the rest, the same input gives the
-// same layout, and a rebuild that adds a friend and a live update moves the nodes already placed only a little.
+// same layout; a rebuild that adds a friend and a live update, and the clock stepping day by day, lay out only
+// what they bring, and the nodes already shown do not move at all.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
 
 vm.runInThisContext(fs.readFileSync(new URL("../../ktw_dashboard/web/ktw-core.js", import.meta.url), "utf8"));
-const { LAYOUT, seedLayout, reheatSeeded, stepLayout } = globalThis.KeepTheWhy.core;
+const { LAYOUT, seedLayout, reheatSeeded, placeShown, stepLayout } = globalThis.KeepTheWhy.core;
 
 // a deterministic count sequence, so the family has uneven topics without randomness in the test either
 const sizes = (n, total, k) => { const w = Array.from({ length: n }, (_, i) => 1 + ((i * k) % 7)); const sum = w.reduce((a, b) => a + b, 0); return w.map((x) => Math.max(1, Math.round((x / sum) * total))); };
@@ -58,11 +59,11 @@ function lone(g, prev = {}) {
 const MEMBERS = [[40, 620], [22, 240], [12, 150]]; // 1010 entries over three members
 const build = (prev, live = 0) => { const g = family(MEMBERS, { prev, extra: live }); friend(g, "f1", 6, 60, prev); friend(g, "f2", 3, 20, prev); if (live) friend(g, "f3", 4, 40, prev); lone(g, prev); seedLayout(g.nodes, g.links); return reheatSeeded(Object.assign(g, { alpha: prev.alpha ?? 1 })); };
 // the page's steps (stepLayout) until settled, or `max`: how many, and the largest single move of a node
-function run(g, max = 2000) {
+function run(g, max = 2000, visible = undefined) {
   let steps = 0, biggest = 0;
   while (g.alpha > LAYOUT.MIN_ALPHA && steps < max) {
     const before = g.nodes.map((n) => [n.x, n.y]);
-    stepLayout(g); steps++;
+    stepLayout(g, { visible }); steps++;
     g.nodes.forEach((n, i) => { biggest = Math.max(biggest, Math.hypot(n.x - before[i][0], n.y - before[i][1])); });
   }
   return { steps, biggest };
@@ -128,4 +129,26 @@ test("a rebuild that brings a friend and a live update leaves the placed nodes w
     const t = h.nodes[h.index[`t:0:${n.id.split(":")[2]}`]];
     assert.ok(Math.hypot(n.x - t.x, n.y - t.y) < 400, `${n.id} near its topic (${Math.round(Math.hypot(n.x - t.x, n.y - t.y))})`);
   }
+});
+
+test("the clock stepping day by day lays out what each day brings, and the nodes already shown hold still", { timeout: 180000 }, () => {
+  // each entry is shown from its own day on, as the clock shows it; the projects and topics are there from the start
+  const g = build({});
+  g.nodes.forEach((n, i) => { if (n.kind === "entry") n.day = i % 30; });
+  let day = 10; const visible = (n) => n.kind !== "entry" || n.day <= day;
+  run(g, 2000, visible);
+  assert.ok(g.nodes.some((n) => n.seeded && !visible(n)), "the entries of later days wait, still to be laid out");
+  for (day = 11; day <= 15; day++) {
+    const before = new Map(g.nodes.filter(visible).filter((n) => !n.seeded).map((n) => [n, [n.x, n.y]]));
+    const brought = g.nodes.filter((n) => n.seeded && visible(n));
+    assert.ok(brought.length > 20 && placeShown(g, { visible }), `day ${day} brings entries into view`);
+    const { steps, biggest } = run(g, 2000, visible);
+    let jump = 0; for (const [n, [x, y]] of before) jump = Math.max(jump, Math.hypot(n.x - x, n.y - y));
+    assert.equal(jump, 0, `day ${day}: the nodes already shown hold still`);
+    assert.ok(g.alpha === 0 && steps <= 450 && biggest <= LAYOUT.MAX_STEP + 1e-9, `day ${day}: the new ones at rest in ${steps} steps, none past the cap`);
+    for (const n of brought) { const t = g.nodes[g.links.find((l) => l.kind === "member" && g.nodes[l.s] === n)?.t]; if (t) assert.ok(Math.hypot(n.x - t.x, n.y - t.y) < 400, `${n.id} near its topic`); }
+    assert.ok(brought.every((n) => !n.seeded), `day ${day}: what it brought counts as laid out`);
+  }
+  day = 15;
+  assert.equal(placeShown(g, { visible }), false, "a day already laid out brings nothing to lay out");
 });

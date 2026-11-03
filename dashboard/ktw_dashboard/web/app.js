@@ -1579,7 +1579,7 @@ function projectsLegend(g) {
     const u = n.friend && !n.kin ? units.get(n.unit) : null;
     const notShown = u && u.members.length === 1 && (u.r.members || []).length > 1 ? u.r.members.length : 0;
     const forkOf = u?.r.forkOf || null;
-    out.push(el("span", { class: n.friend ? "ktw-friend" : "ktw-family", style: depth ? `padding-left:${depth * 14}px` : "", title: kind(n), onmouseenter: () => { g.spot = projectNodes(g, n); g.alpha = Math.max(g.alpha, 0.02); g.wake?.(); }, onmouseleave: () => { g.spot = null; g.alpha = Math.max(g.alpha, 0.02); g.wake?.(); } }, el("i", { class: "ktw-dot", style: `${ring(n)}width:10px;height:10px` }), hostMark(n.canonical), name,
+    out.push(el("span", { class: n.friend ? "ktw-friend" : "ktw-family", style: depth ? `padding-left:${depth * 14}px` : "", title: kind(n), onmouseenter: () => { g.spot = projectNodes(g, n); g.wake?.(); }, onmouseleave: () => { g.spot = null; g.wake?.(); } }, el("i", { class: "ktw-dot", style: `${ring(n)}width:10px;height:10px` }), hostMark(n.canonical), name,
       notShown ? el("span", { class: "ktw-note" }, ` · family of ${notShown}, not shown`) : null,
       forkOf ? el("span", { class: "ktw-note", title: `the export names ${forkOf} as its canonical and was made in a checkout of ${u.r.canonical}` }, " · fork of ", el("a", { href: forkOf, target: "_blank", rel: "noopener" }, hostMark(forkOf), repoLabel(forkOf))) : null,
       n.hop != null ? el("span", { class: "ktw-note" }, n.hop === "registry" ? " · from the registry" : ` · hop ${n.hop}`) : n.chain ? el("span", { class: "ktw-note" }, " · via a thought") : null,
@@ -1609,7 +1609,7 @@ function graphControlGroups(g, family, view = g) {
   const globe = globeUi(g);
   return [
     globe,
-    el("span", { class: "ktw-ui-group" }, el("label", {}, el("input", { type: "checkbox", checked: g.showEntries, onchange: (ev) => { g.showEntries = ev.target.checked; setShowEntries(ev.target.checked); g.alpha = 0.5; g.wake?.(); } }), "entries"), labelsUi(g, "project", "this project's topics and entries")),
+    el("span", { class: "ktw-ui-group" }, el("label", {}, el("input", { type: "checkbox", checked: g.showEntries, onchange: (ev) => { g.showEntries = ev.target.checked; setShowEntries(ev.target.checked); g.wake?.(); } }), "entries"), labelsUi(g, "project", "this project's topics and entries")),
     famUi ? el("span", { class: "ktw-ui-group" }, famUi, FAMILY_NB_ON ? labelsUi(g, "family", "the family's projects") : null) : null,
     fui ? el("span", { class: "ktw-ui-group" }, fui) : null,
     citedUi(g),
@@ -1978,7 +1978,7 @@ function setupTheme() {
   const saved = prefs.get("theme");
   const prefersLight = window.matchMedia?.("(prefers-color-scheme: light)").matches;
   if (saved === "light" || (!saved && prefersLight)) document.documentElement.dataset.theme = "light";
-  $("#theme").onclick = () => { const light = document.documentElement.dataset.theme === "light"; if (light) delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = "light"; prefs.set("theme", light ? "dark" : "light"); if (graph) { graph.alpha = Math.max(graph.alpha, 0.05); graph.wake?.(); } };
+  $("#theme").onclick = () => { const light = document.documentElement.dataset.theme === "light"; if (light) delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = "light"; prefs.set("theme", light ? "dark" : "light"); if (graph) graph.wake?.(); };
 }
 function fitSelect(sel) {
   // size the select to its current option's text, not the browser's default width

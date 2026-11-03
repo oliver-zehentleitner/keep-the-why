@@ -8,7 +8,7 @@
    globalThis.KeepTheWhy.views.graph, listed in ktw-views.json, tested through the page (canvas-trace.mjs). */
 (function (root) {
 "use strict";
-const { stepLayout, seedLayout, LAYOUT, linkExistsAt, hostOf, filterActive, entryMatches, fkey, linkFamily, seeDay, supersededDay, parseSupersededBy, readToken } = root.KeepTheWhy.core;
+const { stepLayout, placeShown, seedLayout, LAYOUT, linkExistsAt, hostOf, filterActive, entryMatches, fkey, linkFamily, seeDay, supersededDay, parseSupersededBy, readToken } = root.KeepTheWhy.core;
 
 // One graph view per page: create({ scene, nav, prefs }) — the host's scene, navigation and settings.
 function create({ scene, nav, prefs }) {
@@ -26,9 +26,11 @@ const labelsOn = (n) => LABELS[labelGroupOf(n)] !== false;
 
 function lightThought(g, t) {
   g.thought = t ? { nodes: new Set(t.steps), pairs: new Set(t.ids.slice(1).map((id, i) => `${id}|${t.ids[i]}`)) } : null;
-  // lighting a thought brings entries into view that may be hidden otherwise, so the layout settles again (and the
-  // small graph refits); letting go only redraws — a refit would move the view the person has set
-  if (t) g.alpha = Math.max(g.alpha, 0.02); g.wake?.(); scene.wake(); // the stage, too, shows what is lit (it follows the scene)
+  // lighting a thought brings entries into view that may be hidden otherwise: those not laid out yet are, as any
+  // node newly shown (the step's placeShown), and the small graph refits; letting go only redraws — a refit would
+  // move the view the person has set
+  if (t && g.miniView) g.miniView.needFit = true;
+  g.wake?.(); scene.wake(); // the stage, too, shows what is lit (it follows the scene)
 }
 
 // the nodes a project hub stands for: its topics and entries, by the ids the layers give them
@@ -46,7 +48,7 @@ function projectNodes(g, hub) {
 function spotIn(G, canonical, root) {
   const same = (n) => n.kind === "project" && n.canonical && fkey(n.canonical) === fkey(canonical) && (root === undefined || (n.root || "") === (root || ""));
   const hub = canonical ? G.nodes.find(same) : null;
-  G.spot = hub ? projectNodes(G, hub) : null; G.alpha = Math.max(G.alpha, 0.02); G.wake?.();
+  G.spot = hub ? projectNodes(G, hub) : null; G.wake?.();
 }
 
 // The graph turns very slowly in its plane — one turn in about six minutes —
@@ -154,6 +156,9 @@ function runGraph(canvas, g, opts = {}) {
     // settled and only turning: every other frame is enough
     if (drifting && g.alpha <= LAYOUT.MIN_ALPHA && (frame++ & 1)) { g.raf = canvas.isConnected ? requestAnimationFrame(step) : null; return; }
     const ns = g.nodes.filter(visible);
+    // a node shown that is not laid out yet — the day, a lit thought or the entries switch brought it into view — is
+    // placed where it hangs now and laid out, alone (core placeShown)
+    if (!g.placing && g.nodes.some((n) => n.seeded && visible(n))) placeShown(g, { visible });
     const was = g.alpha;
     // the forces are ktw-core.js's. With motion off, a graph not shown yet settles first, in slices of a frame's
     // time, and is drawn once, settled and framed; with motion on, it settles a step a frame, as it is drawn.
@@ -271,7 +276,7 @@ function runGraph(canvas, g, opts = {}) {
   const wake = () => { if (!g.raf && canvas.isConnected) g.raf = requestAnimationFrame(step); };
   // the scene's changes this graph follows, until its canvas leaves the page
   const listening = [
-    scene.on("day", (day, { grew }) => { if (grew && g.alpha < 0.2) g.alpha = 0.2; g.wake?.(); }),
+    scene.on("day", () => g.wake?.()), // what the day brings into view is laid out by the step (placeShown); the rest stays
     scene.on("focus", () => g.wake?.()),
     scene.on("thought", (t) => lightThought(g, t)),
     scene.on("spot", (canonical, root) => spotIn(g, canonical, root)),
@@ -281,7 +286,7 @@ function runGraph(canvas, g, opts = {}) {
   window.addEventListener("mouseup", wake);
   g.wake = wake;
   ro.observe(canvas); // re-observe after the resize handler above; a resize wakes the loop
-  const ro2 = new ResizeObserver(() => { resize(); if (g.alpha < 0.05) g.alpha = 0.05; wake(); }); ro2.observe(canvas);
+  const ro2 = new ResizeObserver(() => { resize(); if ((mini || opts.fit) && !V.userMoved) V.needFit = true; wake(); }); ro2.observe(canvas); // reframed, not laid out again
   if (g.raf) cancelAnimationFrame(g.raf);
   g.raf = requestAnimationFrame(step);
 }
