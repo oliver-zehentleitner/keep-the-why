@@ -158,6 +158,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: cd dashboard/tests/web && node cascade-check.mjs /tmp/ktw-base.html /tmp/ktw-head.html
 
+      - name: The node structure against the base branch, every route, the text nodes' boundaries included (jsdom)
+        if: ${{ !cancelled() }}
+        run: cd dashboard/tests/web && node textnodes.mjs /tmp/ktw-base.html /tmp/ktw-head.html
+
       - name: The host fixture page in Chromium, under its Content-Security-Policy, with foreign tokens
         if: ${{ !cancelled() }}
         run: cd dashboard/tests/web && node host-chromium.mjs
