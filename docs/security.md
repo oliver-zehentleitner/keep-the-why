@@ -79,4 +79,9 @@ All of these are second opinions, not a substitute for reading `SKILL.md` and th
 
 ## Reporting a vulnerability in Keep the Why itself
 
-That's a different question from the above — see [`SECURITY.md`](https://github.com/oliver-zehentleitner/keep-the-why/blob/latest/SECURITY.md) for the disclosure process, or report directly via [GitHub Security Advisories](https://github.com/oliver-zehentleitner/keep-the-why/security/advisories/new).
+That's a different question from the above. Report it privately, through either channel:
+
+- [GitHub Security Advisories](https://github.com/oliver-zehentleitner/keep-the-why/security/advisories/new)
+- Email: [reporting-a-vulnerability@keepthewhy.com](mailto:reporting-a-vulnerability@keepthewhy.com)
+
+Never as a public issue, discussion or pull request. [`SECURITY.md`](https://github.com/oliver-zehentleitner/keep-the-why/blob/latest/SECURITY.md) describes the disclosure process.
