@@ -147,7 +147,7 @@ function loadedProjects() {
 function fillLoadedPop(pop) {
   const { bytes } = loadedTotals();
   const list = loadedProjects();
-  const fileLink = (f, label) => el("a", { href: f.url, target: "_blank", rel: "noopener", title: f.url }, label);
+  const fileLink = (f, label) => el("a", { href: ownHref(f.url), target: "_blank", rel: "noopener", title: f.url }, label);
   const row = (G) => {
     const st = G.files.state, b = G.files.bodies, c = G.files.config;
     const v = st ? [st.schema ? `ktw ${st.schema}` : null, st.dashboard ? `dashboard ${st.dashboard}` : null, st.linter ? `lint ${st.linter}` : null].filter(Boolean).join(" · ") : c?.schema ? `ktw ${c.schema}` : "";
@@ -160,7 +160,7 @@ function fillLoadedPop(pop) {
     if (G.files.other) parts.push(el("span", {}, `file ${fmtBytes(G.files.other.bytes)}`));
     // the links on a line of their own, under the name: the dashboard, then each file that came
     const links = [
-      G.dashboard ? el("a", { class: "dash", href: G.dashboard, target: G.dashboard.startsWith(pagePath()) ? null : "_blank", rel: "noopener", title: "this project's dashboard" }, "dashboard ↗") : null,
+      G.dashboard ? el("a", { class: "dash", href: ownHref(G.dashboard), target: G.dashboard.startsWith(pagePath()) ? null : "_blank", rel: "noopener", title: "this project's dashboard" }, "dashboard ↗") : null,
       st && st.kind !== "page" ? fileLink(st, "state ↗") : null,
       b ? fileLink(b, "bodies ↗") : null,
       c ? fileLink(c, ".keep-the-why ↗") : null,
@@ -179,7 +179,7 @@ function fillLoadedPop(pop) {
     ...failed.map(([url, f]) => el("div", { class: "loaded-row failed" }, el("span", { class: "size ktw-warn" }, "⚠"),
       el("span", { class: "what" }, el("b", {}, hostMark(f.canonical), f.canonical ? repoLabel(f.canonical) : f.kind), el("span", { class: "ktw-note" }, ` — ${f.kind}`),
         el("br"), el("span", { class: "ktw-err" }, (f.error.startsWith(`${url}: `) ? f.error.slice(url.length + 2) : f.error.endsWith(` for ${url}`) ? f.error.slice(0, -(url.length + 5)) : f.error)), // the address is linked below; say it once
-        el("br"), el("a", { href: url, target: "_blank", rel: "noopener", title: "open it in the browser — does it answer at all?" }, `${url} ↗`))))) : null;
+        el("br"), el("a", { href: ownHref(url), target: "_blank", rel: "noopener", title: "open it in the browser — does it answer at all?" }, `${url} ↗`))))) : null;
   const toFailed = failed.length ? el("a", { href: "#", class: "ktw-warn", onclick: (ev) => { ev.preventDefault(); pop.querySelector("#loaded-failed")?.scrollIntoView?.({ block: "start", behavior: "smooth" }); } }, ` · ⚠ ${failed.length} not loaded ↓`) : null;
   setKids(pop, el("div", { class: "loaded-head" }, `${plural(list.length, "project")} — ${plural(LOADED.size, "file")} — ${fmtBytes(bytes)}`, toFailed), ...list.map(row), failedBlock);
 }
@@ -235,6 +235,13 @@ async function fetchForeign(url) {
   finally { clearTimeout(timer); }
 }
 const absolute = (url) => new URL(url, location.href).href;
+// an address of this page's own server (an absolute() URL: the live server's /api/…, an export's files) as a link:
+// its path, which core.safeHref takes as a place of this page, where the full http URL of a local server would be
+// no https link from the data; another server's address stays as it is, for safeHref to decide
+function ownHref(url) {
+  let u, here; try { u = new URL(String(url), location.href); here = new URL(location.href); } catch { return String(url); }
+  return u.protocol === here.protocol && u.host === here.host ? u.pathname + u.search + u.hash : String(url);
+}
 const failure = (err, fallback) => err?.message || fallback;
 const DASHBOARD = {
   // this page's own project: { state, url } — the state embedded in an export, or the live server's
