@@ -1061,3 +1061,22 @@ Every view takes `words: (key, params) => string | undefined` on `create`, and i
 - **The English only in `ktw-words.json`, looked up by key:** one source, but the lib would have to load JSON before drawing anything, or carry it twice.
 - **Splitting a sentence around a node into separate keys:** no placeholders for nodes, but the pieces fix the English word order for every language.
 - **A silent fallback for a hook that throws or answers a non-string:** quieter, but a broken catalogue would pass unseen; one warning per key shows it without flooding the console.
+
+## One rule for every address the views link to: safeUrl where the data is read, safeHref behind every URL attribute
+
+**Id:** 0c360e6c-d9c5-4d2b-b9d9-8a132e74c53d
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** the card for one safeUrl, from a second host's review of the views (a foreign project's `canonical: "javascript:…"` became a clickable link, and neither host sends a Content-Security-Policy for it); the split below was proposed by the implementer and approved by the project's lead with five additions (backslash rejected, the scheme checked by the URL parser, every URL attribute, a bounded warning set, the http change named in the changelog), 2026-11-04
+**Revisit when:** the views get a host whose own places are absolute URLs with a scheme other than https, or a Content-Security-Policy that restricts navigation is decided for the hosts
+
+An address from the data — a project's `canonical`, a `See` or `Superseded by` remote, `dashboard-state`, a Markdown link, the host's commit and tree links built from `canonical`, an author's profile from a host's API — is linked only if `core.safeUrl` passes it. It must be an absolute `https:` URL, checked with the URL parser, with a host and no user or password, and with no space, control character, bidi character or backslash anywhere. A rejected address is shown as its text (`ui.outLink`, `ui.extLink`) with one warning per address, at most 100. Behind that, `ui.setAttrs` sets `href`, `xlink:href`, `src`, `action` and `formaction` only as `core.safeHref` passes them. `safeHref` accepts a relative reference, or whatever `safeUrl` accepts. An `http:` canonical or dashboard-state in the Config table is text now.
+
+**Reason:** the views' own links are the host's places (`nav.href`): `#…`, `?…` or a path. An https-only rule in `el()` would break every one of them, so the backstop lets a relative reference through. That keeps a relative value from the data from reaching a link only where the data is read, where `safeUrl` stands. A backslash goes because a browser reads `\` as `/` in an http(s) URL, so `/\evil.example` is protocol-relative. The scheme comes from the parser, so a regex cannot be fooled by case or by leading characters, which the character reject catches first anyway. `https:evil.example` parses as https with a host and passes, because it goes where it says. The address is returned as given, not normalised, so the pages are unchanged node for node.
+
+**Rejected alternative:**
+- **https only, inside `el()` for every href:** one rule, but it breaks every link to a host's own place, which is relative.
+- **`safeUrl` at the call sites only, no backstop:** less code, but a new call site could hand data straight to an href.
+- **A regex for the scheme:** shorter, but it is the parser's job, and the parser is what the browser follows.
+- **Dropping a rejected link:** quieter, but the reader would lose the address. As text it stays readable, and the warning says why it is not a link.
