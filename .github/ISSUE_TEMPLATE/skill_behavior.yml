@@ -9,7 +9,7 @@ body:
       value: |
         Use this when the skill was loaded and the agent still deviated from what `SKILL.md` or the references describe — it wrote an entry without asking when it should have asked, invented a reason, skipped the setup wizard, ignored a setting, and so on. For the linter, the GitHub Action or the docs use the *Bug report* template instead.
 
-        Security vulnerabilities do not belong here: report them privately through a [GitHub Security Advisory](https://github.com/oliver-zehentleitner/keep-the-why/security/advisories/new) or to reporting-a-vulnerability@keepthewhy.com.
+        Security vulnerabilities do not belong here: report them privately through a [GitHub Security Advisory](https://github.com/oliver-zehentleitner/keep-the-why/security/advisories/new) or to reporting-a-vulnerability@keepthewhy.com — never as a public issue, discussion or pull request.
 
         Most fields are optional, but the more of them you fill in, the better the chance the behavior can be reproduced. The single most useful thing is the transcript excerpt.
 

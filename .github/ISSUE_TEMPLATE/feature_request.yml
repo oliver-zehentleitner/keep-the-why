@@ -9,7 +9,7 @@ body:
       value: |
         Before proposing, have a look at this repository's own [`context/`](https://github.com/oliver-zehentleitner/keep-the-why/tree/main/context) — it records the decisions behind the skill, including alternatives that were considered and rejected, and why. If your idea is one of them, say what has changed since.
 
-        Security vulnerabilities do not belong here: report them privately through a [GitHub Security Advisory](https://github.com/oliver-zehentleitner/keep-the-why/security/advisories/new) or to reporting-a-vulnerability@keepthewhy.com.
+        Security vulnerabilities do not belong here: report them privately through a [GitHub Security Advisory](https://github.com/oliver-zehentleitner/keep-the-why/security/advisories/new) or to reporting-a-vulnerability@keepthewhy.com — never as a public issue, discussion or pull request.
 
         For anything beyond a small fix, an issue first is appreciated so the direction can be discussed before code or wording is written (see [CONTRIBUTING.md](https://github.com/oliver-zehentleitner/keep-the-why/blob/main/CONTRIBUTING.md)).
 

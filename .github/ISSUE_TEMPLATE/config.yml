@@ -2,7 +2,7 @@ blank_issues_enabled: true
 contact_links:
   - name: Report a security vulnerability
     url: https://github.com/oliver-zehentleitner/keep-the-why/security/advisories/new
-    about: Privately, through a GitHub Security Advisory or by email to reporting-a-vulnerability@keepthewhy.com — never as a public issue.
+    about: Privately, through a GitHub Security Advisory or by email to reporting-a-vulnerability@keepthewhy.com — never as a public issue, discussion or pull request.
   - name: Questions and ideas — Discussions
     url: https://github.com/oliver-zehentleitner/keep-the-why/discussions
     about: Not sure it's a bug, or want to talk a design question through first? Start a discussion.
