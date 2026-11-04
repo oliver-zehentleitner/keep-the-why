@@ -9,6 +9,8 @@ body:
       value: |
         Use this for anything in this repository that runs as code or is published as text: `ktw-lint`, the `keep-the-why-lint` GitHub Action, the documentation at keepthewhy.com, the evals runner in `tools/evals/`. If the agent behaved differently than the skill describes, use the *Skill behavior report* template instead.
 
+        Security vulnerabilities do not belong here: report them privately through a [GitHub Security Advisory](https://github.com/oliver-zehentleitner/keep-the-why/security/advisories/new) or to reporting-a-vulnerability@keepthewhy.com — never as a public issue, discussion or pull request.
+
   - type: checkboxes
     id: confirmation
     attributes:

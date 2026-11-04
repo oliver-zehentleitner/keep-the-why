@@ -12,10 +12,14 @@ This document outlines security procedures and general policies for the
 Thank you for improving the security of `keep-the-why`. We appreciate your 
 efforts and responsible disclosure and will make every effort to acknowledge your contributions.
 
-Please report security bugs privately via GitHub Security Advisories:
-https://github.com/oliver-zehentleitner/keep-the-why/security/advisories/new
+Please report security bugs privately, through either of these channels:
 
-The lead maintainer will acknowledge your email within 48 hours, and will send a
+  * GitHub Security Advisories: https://github.com/oliver-zehentleitner/keep-the-why/security/advisories/new
+  * Email: reporting-a-vulnerability@keepthewhy.com
+
+Never report a security bug as a public issue, discussion or pull request.
+
+The lead maintainer will acknowledge your report within 48 hours, and will send a
 more detailed response within 48 hours indicating the next steps in handling
 your report. After the initial reply to your report, the security team will
 endeavor to keep you informed of the progress towards a fix and full
