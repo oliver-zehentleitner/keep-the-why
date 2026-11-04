@@ -38,10 +38,15 @@ function centreUrl(c) {
   if (c.mode === "live" && c.project) return `${pagePath()}?project=${encodeURIComponent(c.project)}`;
   return pagePath();
 }
+// the only ways this page leaves for an address: here, as core.safeHref passes it (a place of this dashboard,
+// or an https address), or in a new window, as core.safeUrl passes it; anything else goes nowhere
+// (tests/test_views.py holds every navigation in this file to these two)
+function leave(href, win = null) { const u = safeHref(href); if (u == null) { win?.close(); return; } if (win) win.location.href = u; else location.href = u; }
+function openOut(href) { const u = safeUrl(href); if (u) window.open(u, "_blank", "noopener"); }
 const nav = {
   href: (route) => (route.centre ? centreUrl(route.centre) : "") + ROUTES.format(route),
   go(route, { replace = false } = {}) {
-    if (route.centre) { location.href = nav.href(route); return; }
+    if (route.centre) { leave(nav.href(route)); return; }
     const hash = ROUTES.format(route);
     if (replace) history.replaceState(null, "", hash); else location.hash = hash;
   },
@@ -49,7 +54,7 @@ const nav = {
   onChange: (fn) => window.addEventListener("hashchange", () => fn(nav.current())),
   // follow an address nav.href made (a graph node carries its own): a place on this page, or another page — as
   // core.safeHref passes it, as a link's href would be
-  open(href) { if (href.startsWith("#")) nav.go(ROUTES.parse(href)); else if (safeHref(href) != null) location.href = href; },
+  open(href) { if (href.startsWith("#")) nav.go(ROUTES.parse(href)); else leave(href); },
 };
 const onView = (...views) => { const r = nav.current(); return !r.alias && !r.unknown && views.includes(r.view); };
 // a link to a place: a real anchor — middle-click, a new tab and a screen reader work — whose plain click moves
@@ -383,7 +388,7 @@ const publicHref = (canonical, root = "", hash = "#overview") => centreUrl({ mod
 // or with the family scope the whole family merged, ktw-core.js mergeStates); SCENE.self, this project's own
 // state, always; SCENE.day, the clock; SCENE.focus, SCENE.scope, the layout — and the events views follow.
 // DOM helpers, pills and glyphs every view uses (ktw-ui.js): no state, only nodes
-const { el, setKids, pill, statusPill, evPill, typePills, typeGlyphSvg, hostMark, marked, outLink, remoteLink, forkPill, headPill } = globalThis.KeepTheWhy.ui;
+const { el, setAttrs, setKids, pill, statusPill, evPill, typePills, typeGlyphSvg, hostMark, marked, outLink, remoteLink, forkPill, headPill } = globalThis.KeepTheWhy.ui;
 const SCENE = globalThis.KeepTheWhy.scene.create({ scope: prefs.get("scope") || prefs.get("search-scope") || "project" }); // search-scope: the name before the scope switched the graph too
 // The graph view (ktw-graph.js): it draws what the host builds, given the scene, navigation and settings only.
 const GRAPH = globalThis.KeepTheWhy.views.graph.create({ scene: SCENE, nav, prefs });
@@ -1109,7 +1114,7 @@ function addOwnerGroups(g, prev) {
     if (hubs.length < 2) continue;
     const id = `o:${o.key}`; const p = prev[id];
     const cx = hubs.reduce((a, n) => a + n.x, 0) / hubs.length, cy = hubs.reduce((a, n) => a + n.y, 0) / hubs.length;
-    const owner = { id, kind: "owner", ext: true, unit: id, label: o.label, canonical: o.url, r: 17, x: cx, y: cy, vx: 0, vy: 0, href: o.url, walk: () => { if (safeUrl(o.url)) window.open(o.url, "_blank", "noopener"); } };
+    const owner = { id, kind: "owner", ext: true, unit: id, label: o.label, canonical: o.url, r: 17, x: cx, y: cy, vx: 0, vy: 0, href: o.url, walk: () => openOut(o.url) };
     if (p) carryNode(owner, p); else owner.seeded = true; // placed at its projects' centre, after they were seeded (TREE_LINK.owner then gives the graph its shape)
     index[id] = nodes.length; nodes.push(owner);
     for (const n of hubs) {
@@ -1899,8 +1904,8 @@ function authorLink(name, commit, project) {
     let url = look.fallback;
     url = safeUrl((await provider().authorProfile(canonicalOf(project), commit)).profile) || look.fallback; // offline or rate-limited: the commit page names the author too; a profile that is not https is not followed
     if (url !== look.fallback) AUTHOR_URLS[key] = url;
-    ev.target.closest("a").href = url;
-    if (w) w.location.href = url; else window.open(url, "_blank", "noopener");
+    setAttrs(ev.target.closest("a"), { href: url });
+    if (w) leave(url, w); else openOut(url);
   } }, name);
 }
 // The badges, ready to paste: the static one, and the two live ones from this project's published export

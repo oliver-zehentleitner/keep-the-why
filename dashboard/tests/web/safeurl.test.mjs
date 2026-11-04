@@ -12,7 +12,8 @@ import fs from "node:fs";
 import vm from "node:vm";
 import { JSDOM } from "jsdom";
 
-const dom = new JSDOM("<!doctype html><body></body>", { runScripts: "outside-only" });
+// the page an https host serves: an anchor resolves its href against this address
+const dom = new JSDOM("<!doctype html><body></body>", { runScripts: "outside-only", url: "https://host.example/dashboard/index.html" });
 const { window } = dom;
 const realm = dom.getInternalVMContext();
 for (const name of ["ktw-core.js", "ktw-ui.js", "ktw-scene.js", "ktw-markdown.js", "ktw-pages.js"]) {
@@ -35,7 +36,7 @@ const HOSTILE = [
   "http://example.org/", "ftp://example.org/", "https://user@example.org/", "https://:pw@example.org/", "https://user:pw@example.org/",
   "//evil.example/", "\\\\evil.example", "/\\evil.example", "https://example.org\\@evil.example/", "https:\\\\evil.example",
   "https://exa mple.org/", "https://example.org/a b", "https://example.org/\ta", "https://example.org/\n", "https://example.org/\u0000",
-  "https://example.org/‮gnp.exe", "https://example.org/⁦x", "https://example.org/‏", "https://example.org/ ",
+  "https://example.org/\u202egnp.exe", "https://example.org/\u2066x", "https://example.org/\u200f", "https://example.org/\u00a0",
   "https://", "https:", "not a url", "",
 ];
 
@@ -54,6 +55,33 @@ test("safeUrl: an https address without its two slashes is rejected — an ancho
   }
   // with its slashes, the anchor goes where the address says
   page.setAttribute("href", "https://evil.example/"); assert.equal(page.href, "https://evil.example/");
+}));
+
+test("zero-width characters are rejected as the bidi ones are: an address reads as it goes, in the host and the path", () => warnings(() => {
+  for (const c of ["\u200b", "\u200c", "\u200d", "\u2060", "\ufeff", "\u00ad"]) {
+    assert.equal(safeUrl(`https://exa${c}mple.org/`), null, `host ${JSON.stringify(c)}`);
+    assert.equal(safeUrl(`https://example.org/a${c}b`), null, `path ${JSON.stringify(c)}`);
+    assert.equal(safeHref(`#topic/a${c}.md`), null, `relative ${JSON.stringify(c)}`);
+  }
+}));
+
+test("an accepted address is where an anchor on an https page goes; a rejected one makes no link", () => warnings(() => {
+  for (const u of ["https://evil.example/", "https://github.com/acme/platform/blob/HEAD/context/a.md#b"]) {
+    const a = ui.el("a", { href: u }); assert.equal(a.href, u, u);
+    assert.equal(new window.URL(a.href).origin, new window.URL(u).origin);
+  }
+  for (const u of ["https:evil.example", "https:/api/logout"]) assert.equal(ui.el("a", { href: u }).hasAttribute("href"), false, u);
+  assert.equal(ui.el("a", { href: "#overview" }).href, "https://host.example/dashboard/index.html#overview", "a host's own place stays on the page");
+}));
+
+test("Markdown on an https page: a slashless https link is text, as it was before the rule", () => warnings(() => {
+  for (const url of ["https:/api/logout", "https:evil.example", "HTTPS:evil.example"]) {
+    const frag = markdown.render(doc, `see [x](${url}) here`, { topicHref: () => null });
+    assert.equal(frag.querySelector("a[href]"), null, url); // an <a> without href, as main renders a target it does not link
+    assert.match(frag.textContent, /see x here/);
+  }
+  const ok = markdown.render(doc, "[x](https://example.org/a)", { topicHref: () => null }).querySelector("a");
+  assert.equal(ok.href, "https://example.org/a");
 }));
 
 test("safeUrl rejects every other scheme, a user or password, a backslash, and space, control and bidi characters", () => {
@@ -137,7 +165,7 @@ test("the host's addresses of a file, a directory and an author's commit need an
 test("Markdown: a link is a link only to an https address safeUrl passes; the rest is its text", () => warnings(() => {
   const link = (url) => markdown.parseInline(`[t](${url})`, { topicHref: () => null })[0];
   assert.deepEqual(JSON.parse(JSON.stringify(link("https://example.org/a"))), { t: "a", href: "https://example.org/a", external: true, c: [{ t: "text", v: "t" }] });
-  for (const url of ["javascript:alert(1)", "https://user@example.org/", "https://example.org/‮x", "https://example.org\\@evil.example", "/\\evil.example"]) {
+  for (const url of ["javascript:alert(1)", "https://user@example.org/", "https://example.org/\u202ex", "https://example.org\\@evil.example", "/\\evil.example"]) {
     const n = link(url);
     assert.equal(n.href, null, url);
   }

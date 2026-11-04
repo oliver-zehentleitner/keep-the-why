@@ -70,7 +70,7 @@ const slug = hostAnchor; // the fallback id of an entry a state carries without 
 
 // The one rule for an address the views link to. `safeUrl` is for an address from the data — a canonical, a
 // remote, a dashboard-state, a Markdown link, a profile a host's API names: an absolute https URL with a host and
-// no user or password, and no space, control or bidi character and no backslash anywhere (a browser reads `\` as
+// no user or password, and no space, control, zero-width or bidi character and no backslash anywhere (a browser reads `\` as
 // `/`, and a hidden character can make the address read other than it goes). It starts with `https://`: an anchor
 // resolves `https:evil.example` or `https:/evil.example` against the page, to a path on the page's own host when
 // the page is https, though the URL parser alone reads a host into it. A rejected address comes back null — the
@@ -78,7 +78,7 @@ const slug = hostAnchor; // the fallback id of an entry a state carries without 
 // not normalised.
 // `safeHref` is the backstop every URL attribute the views set goes through (ui.js setAttrs): a relative reference
 // passes — a host's own places are `#…`, `?…`, a path — and anything with a scheme must pass `safeUrl`.
-const UNSAFE_CHARS = /[\s\u0000-\u001f\u007f-\u009f؜‎‏‪-‮⁦-⁩\\]/u;
+const UNSAFE_CHARS = /[\s\u0000-\u001f\u007f-\u009f\u00ad\u061c\u200b-\u200f\u202a-\u202e\u2060\u2066-\u2069\ufeff\\]/u;
 const URL_WARNED = new Set(), URL_WARNED_MAX = 100; // bounded: a hostile state does not grow it without end
 function urlRejected(u, why) {
   if (!URL_WARNED.has(u) && URL_WARNED.size < URL_WARNED_MAX) { URL_WARNED.add(u); console.warn(`KeepTheWhy: not linked (${why}): ${JSON.stringify(u.length > 200 ? u.slice(0, 200) + "…" : u)}`); }

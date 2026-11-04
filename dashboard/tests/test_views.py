@@ -233,6 +233,47 @@ class LibraryFilesTest(unittest.TestCase):
         src = _read("ktw-markdown.js")
         self.assertIn("n.href && safeHref(n.href) != null) {", src)
 
+    def test_app_leaves_only_through_its_two_helpers(self):
+        # app.js navigates or opens a window only in leave (as core.safeHref passes the address) and openOut (as
+        # core.safeUrl passes it), and sets an address only through ui.setAttrs; a blank window it fills later is the
+        # one literal. A later change that navigates on its own, or drops a helper's check, fails here
+        sink = re.compile(
+            r"""\.(?:href|src|srcset|action|formAction)\s*=(?!=)|\bwindow\.open\(|\blocation\.(?:assign|replace)\("""
+            r"""|setAttribute\(\s*["'](?:href|xlink:href|src|srcset|action|formaction)["']"""
+        )
+        helpers = {"function leave(": "safeHref(", "function openOut(": "safeUrl("}
+        for lineno, line in enumerate(_read("app.js").splitlines(), 1):
+            if not sink.search(line):
+                continue
+            with self.subTest(line=lineno):
+                helper = next((h for h in helpers if line.startswith(h)), None)
+                if helper:
+                    self.assertIn(helpers[helper], line, f"app.js:{lineno}")
+                else:
+                    self.assertRegex(
+                        line,
+                        r"""window\.open\("about:blank", "_blank"\)""",
+                        f"app.js:{lineno}: an address sink outside leave/openOut",
+                    )
+
+    def test_no_invisible_characters_in_the_source(self):
+        # a bidi or zero-width character in the source reads other than it runs; the address rule names them by
+        # escape, never as the character itself
+        invisible = re.compile(
+            "[%s]"
+            % "".join(
+                chr(c)
+                for c in [0x00AD, 0x061C, 0x2060, 0xFEFF]
+                + list(range(0x200B, 0x2010))
+                + list(range(0x202A, 0x202F))
+                + list(range(0x2066, 0x206A))
+            )
+        )
+        for name in [*self.files(), "app.js"]:
+            for lineno, line in enumerate(_read(name).splitlines(), 1):
+                with self.subTest(name=name, line=lineno):
+                    self.assertIsNone(invisible.search(line), f"{name}:{lineno}")
+
     def test_rendering_safety_subset(self):
         for name in self.files():
             for lineno, line in enumerate(_read(name).splitlines(), 1):
