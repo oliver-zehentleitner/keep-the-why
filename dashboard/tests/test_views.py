@@ -227,9 +227,11 @@ class LibraryFilesTest(unittest.TestCase):
             or re.search(r"\.(?:href|src|srcset|action|formAction)\s*=(?!=)", line)
             or re.search(r"\bwindow\.open\(", line)
         ]
-        self.assertEqual([n for n, _ in found], ["ktw-markdown.js"], f"address setters: {found}")
+        self.assertEqual(
+            [n for n, _ in found], ["ktw-markdown.js"], f"address setters: {found}"
+        )
         src = _read("ktw-markdown.js")
-        self.assertIn('n.href && safeHref(n.href) != null) {', src)
+        self.assertIn("n.href && safeHref(n.href) != null) {", src)
 
     def test_rendering_safety_subset(self):
         for name in self.files():
