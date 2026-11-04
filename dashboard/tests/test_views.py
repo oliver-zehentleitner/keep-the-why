@@ -214,6 +214,23 @@ class LibraryFilesTest(unittest.TestCase):
             [n for n, _ in found], ["ktw-ui.js"], f"generic attribute setters: {found}"
         )
 
+    def test_one_address_rule(self):
+        # an address reaches the DOM through ui.setAttrs, which sets href, xlink:href, src, action and formaction only
+        # as core.safeHref passes them; the one other setter is the Markdown builder, behind the same safeHref. No
+        # library file assigns an address property or opens a window on its own: navigating is the host's nav
+        URL_ATTR = r"""setAttribute\(\s*["'](?:href|xlink:href|src|srcset|action|formaction)["']"""
+        found = [
+            (name, lineno)
+            for name in self.files()
+            for lineno, line in enumerate(_read(name).splitlines(), 1)
+            if re.search(URL_ATTR, line)
+            or re.search(r"\.(?:href|src|srcset|action|formAction)\s*=(?!=)", line)
+            or re.search(r"\bwindow\.open\(", line)
+        ]
+        self.assertEqual([n for n, _ in found], ["ktw-markdown.js"], f"address setters: {found}")
+        src = _read("ktw-markdown.js")
+        self.assertIn('n.href && safeHref(n.href) != null) {', src)
+
     def test_rendering_safety_subset(self):
         for name in self.files():
             for lineno, line in enumerate(_read(name).splitlines(), 1):

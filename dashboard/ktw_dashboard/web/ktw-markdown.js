@@ -12,7 +12,7 @@
              **Rejected alternative:**, **Consequence:**, **Considered:** or
              **Why this needs an answer:** as a labelled callout
    inline  — `code`, **bold**, *italic* and _italic_ at word bounds, [text](url)
-             for an https URL, [text](topic.md#anchor) and a bare topic.md when
+             for an https URL core.safeUrl passes, [text](topic.md#anchor) and a bare topic.md when
              the host knows that topic. Every other link target is text only;
              raw HTML, images, tables and the rest stay literal text.
 
@@ -22,6 +22,7 @@
    then read into the tree. That keeps what a body looks like unchanged. */
 (function (root) {
 "use strict";
+const { safeUrl, safeHref } = root.KeepTheWhy.core; // ktw-core.js, loaded before this module
 
 // markers: opening and closing code, bold, italic; a link opens with LINK, its
 // index into the link list, LINK_END, and closes with LINK_CLOSE
@@ -50,7 +51,7 @@ function parseInline(md, { topicHref = () => null } = {}) {
   s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (m, t, u) => {
     const url = u.replace(MARKERS, "");
     if (TOPIC_LINK.test(url)) { const href = topicHref(url.split("#")[0]); if (href) return `${link(href, false)}${t}${LINK_C}`; }
-    if (/^https:\/\//.test(url)) return `${link(url, true)}${t}${LINK_C}`;
+    if (/^https:/i.test(url) && safeUrl(url)) return `${link(url, true)}${t}${LINK_C}`; // an https address with a user, a hidden character or a backslash warns and stays text
     return `${link(null, false)}${t}${LINK_C}`; // the text stays, no target
   });
   // a bare topic name, alone or as code, becomes a link — not right after a
@@ -157,7 +158,7 @@ function buildInline(doc, nodes, into) {
   for (const n of nodes) {
     if (n.t === "text") { into.appendChild(doc.createTextNode(n.v)); continue; }
     const node = doc.createElement(n.t);
-    if (n.t === "a" && n.href) {
+    if (n.t === "a" && n.href && safeHref(n.href) != null) { // a topic's address is the host's; the backstop all the same
       node.setAttribute("href", n.href);
       if (n.external) { node.setAttribute("target", "_blank"); node.setAttribute("rel", "noopener noreferrer"); }
     }

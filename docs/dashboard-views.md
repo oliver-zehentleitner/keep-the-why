@@ -57,6 +57,21 @@ Entry text is written by people and agents, so no file here turns a string into 
 
 A host vendoring the files can run the same check over its copy.
 
+### Addresses
+
+A state can come from another repository, so the views link an address from the data only after `core.safeUrl` passes it:
+
+- **https only:** an absolute `https:` URL with a host, no user or password, and no space, control character, bidi character or backslash anywhere. `https:evil.example` parses as https with a host and passes on purpose.
+- **Covers:** a project's `canonical`, a `See` or `Superseded by` remote, `dashboard-state`, a Markdown link, the host's commit and tree links, and an author's profile.
+- **Rejected addresses:** the views show the text without linking it, and warn once per address (at most 100 warnings).
+- **`http:` is rejected too.** A `canonical` or `dashboard-state` written as `http://` shows as text.
+
+**Data contract:** every address a state carries is https.
+
+`ui.setAttrs`, behind `el` and `svgEl`, is the backstop. It sets `href`, `xlink:href`, `src`, `action` and `formaction` only as `core.safeHref` passes them, and otherwise leaves the attribute out, so the element keeps its text. `safeHref` lets a relative reference through, because a host's own places (`nav.href`) are `#…`, `?…` or a path, and holds anything with a scheme to `safeUrl`.
+
+For a link out of the page to an address from the data, the views use `ui.outLink(attrs, ...kids)`: an `<a>` when `safeUrl` passes `attrs.href`, otherwise a `<span>` with the same children, class and title. `ui.extLink` and `ui.remoteLink` do the same. `dashboard/tests/test_views.py` fails the build if a library file sets an address attribute outside `setAttrs` and the Markdown builder, assigns an address property, or calls `window.open`.
+
 ## Mounting the views
 
 A page makes one scene, then one instance of each view it shows:

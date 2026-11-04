@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-const { plural, seedLayout, carryNode, reheatAfterBuild, reheatAll, entryRefs, rawFileUrl, configLine, normalizeState, canonicalOf, NO_FILTER, familyOrder, kindLabel, groupByFamily, searchTerms, registryMatches, shuffled, resolveLocation, linkFamily, authorLookup, mergeStates, projectLabel, backlinksUrl, citingOf, paletteToken, ownerOf, exportStateUrl, exportVerdict, fkey, repoLabel } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
+const { plural, safeUrl, safeHref, seedLayout, carryNode, reheatAfterBuild, reheatAll, entryRefs, rawFileUrl, configLine, normalizeState, canonicalOf, NO_FILTER, familyOrder, kindLabel, groupByFamily, searchTerms, registryMatches, shuffled, resolveLocation, linkFamily, authorLookup, mergeStates, projectLabel, backlinksUrl, citingOf, paletteToken, ownerOf, exportStateUrl, exportVerdict, fkey, repoLabel } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
 const MD = globalThis.KeepTheWhy.markdown; // ktw-markdown.js
 
 // ---------------------------------------------------------------- prefs (host)
@@ -47,8 +47,9 @@ const nav = {
   },
   current: () => ROUTES.parse(location.hash),
   onChange: (fn) => window.addEventListener("hashchange", () => fn(nav.current())),
-  // follow an address nav.href made (a graph node carries its own): a place on this page, or another page
-  open(href) { if (href.startsWith("#")) nav.go(ROUTES.parse(href)); else location.href = href; },
+  // follow an address nav.href made (a graph node carries its own): a place on this page, or another page — as
+  // core.safeHref passes it, as a link's href would be
+  open(href) { if (href.startsWith("#")) nav.go(ROUTES.parse(href)); else if (safeHref(href) != null) location.href = href; },
 };
 const onView = (...views) => { const r = nav.current(); return !r.alias && !r.unknown && views.includes(r.view); };
 // a link to a place: a real anchor — middle-click, a new tab and a screen reader work — whose plain click moves
@@ -382,7 +383,7 @@ const publicHref = (canonical, root = "", hash = "#overview") => centreUrl({ mod
 // or with the family scope the whole family merged, ktw-core.js mergeStates); SCENE.self, this project's own
 // state, always; SCENE.day, the clock; SCENE.focus, SCENE.scope, the layout — and the events views follow.
 // DOM helpers, pills and glyphs every view uses (ktw-ui.js): no state, only nodes
-const { el, setKids, pill, statusPill, evPill, typePills, typeGlyphSvg, hostMark, marked, remoteLink, forkPill, headPill } = globalThis.KeepTheWhy.ui;
+const { el, setKids, pill, statusPill, evPill, typePills, typeGlyphSvg, hostMark, marked, outLink, remoteLink, forkPill, headPill } = globalThis.KeepTheWhy.ui;
 const SCENE = globalThis.KeepTheWhy.scene.create({ scope: prefs.get("scope") || prefs.get("search-scope") || "project" }); // search-scope: the name before the scope switched the graph too
 // The graph view (ktw-graph.js): it draws what the host builds, given the scene, navigation and settings only.
 const GRAPH = globalThis.KeepTheWhy.views.graph.create({ scene: SCENE, nav, prefs });
@@ -1108,7 +1109,7 @@ function addOwnerGroups(g, prev) {
     if (hubs.length < 2) continue;
     const id = `o:${o.key}`; const p = prev[id];
     const cx = hubs.reduce((a, n) => a + n.x, 0) / hubs.length, cy = hubs.reduce((a, n) => a + n.y, 0) / hubs.length;
-    const owner = { id, kind: "owner", ext: true, unit: id, label: o.label, canonical: o.url, r: 17, x: cx, y: cy, vx: 0, vy: 0, href: o.url, walk: () => window.open(o.url, "_blank", "noopener") };
+    const owner = { id, kind: "owner", ext: true, unit: id, label: o.label, canonical: o.url, r: 17, x: cx, y: cy, vx: 0, vy: 0, href: o.url, walk: () => { if (safeUrl(o.url)) window.open(o.url, "_blank", "noopener"); } };
     if (p) carryNode(owner, p); else owner.seeded = true; // placed at its projects' centre, after they were seeded (TREE_LINK.owner then gives the graph its shape)
     index[id] = nodes.length; nodes.push(owner);
     for (const n of hubs) {
@@ -1614,7 +1615,7 @@ function projectsLegend(g) {
     const forkOf = u?.r.forkOf || null;
     out.push(el("span", { class: n.friend ? "ktw-friend" : "ktw-family", style: depth ? `padding-left:${depth * 14}px` : "", title: kind(n), onmouseenter: () => { g.spot = projectNodes(g, n); g.wake?.(); }, onmouseleave: () => { g.spot = null; g.wake?.(); } }, el("i", { class: "ktw-dot", style: `${ring(n)}width:10px;height:10px` }), hostMark(n.canonical), name,
       notShown ? el("span", { class: "ktw-note" }, ` · family of ${notShown}, not shown`) : null,
-      forkOf ? el("span", { class: "ktw-note", title: `the export names ${forkOf} as its canonical and was made in a checkout of ${u.r.canonical}` }, " · fork of ", el("a", { href: forkOf, target: "_blank", rel: "noopener" }, hostMark(forkOf), repoLabel(forkOf))) : null,
+      forkOf ? el("span", { class: "ktw-note", title: `the export names ${forkOf} as its canonical and was made in a checkout of ${u.r.canonical}` }, " · fork of ", outLink({ href: forkOf, target: "_blank", rel: "noopener" }, hostMark(forkOf), repoLabel(forkOf))) : null,
       n.hop != null ? el("span", { class: "ktw-note" }, n.hop === "registry" ? " · from the registry" : ` · hop ${n.hop}`) : n.chain ? el("span", { class: "ktw-note" }, " · via a thought") : null,
       n.citing ? el("span", { class: "ktw-note" }, n.citedOnly ? " · cites this project" : " · cites this project too") : null));
   }
@@ -1896,7 +1897,7 @@ function authorLink(name, commit, project) {
     ev.preventDefault();
     const w = window.open("about:blank", "_blank"); if (w) w.opener = null;
     let url = look.fallback;
-    url = (await provider().authorProfile(canonicalOf(project), commit)).profile || look.fallback; // offline or rate-limited: the commit page names the author too
+    url = safeUrl((await provider().authorProfile(canonicalOf(project), commit)).profile) || look.fallback; // offline or rate-limited: the commit page names the author too; a profile that is not https is not followed
     if (url !== look.fallback) AUTHOR_URLS[key] = url;
     ev.target.closest("a").href = url;
     if (w) w.location.href = url; else window.open(url, "_blank", "noopener");
@@ -1907,7 +1908,7 @@ function authorLink(name, commit, project) {
 function renderBadges() {
   const pop = $("#badges-pop"); if (!pop || !SCENE.state) return;
   const st = SCENE.self?.project?.dashboard_state || SCENE.state.project?.dashboard_state || "";
-  const base = /^https:\/\//.test(st) ? st.replace(/state\.json$/, "") : "";
+  const base = safeUrl(st) ? st.replace(/state\.json$/, "") : "";
   const list = [{ name: "Keep the Why", img: "https://keepthewhy.com/assets/badge.svg", href: "https://keepthewhy.com", alt: "Keep the Why" }];
   if (base) list.push({ name: "live", img: `${base}badge-entries.svg`, href: base, alt: "Keep the Why · live" }, { name: "live, flat", img: `${base}badge-entries-flat.svg`, href: base, alt: "keep the why" });
   // a family root whose members all live in this repository: the family's numbers, from the same export
@@ -1922,7 +1923,7 @@ function renderBadges() {
   };
   setKids(pop, el("b", {}, "Badges"),
     ...list.map((x) => el("div", { class: "badge-item" },
-      el("a", { href: x.href, target: "_blank", rel: "noopener" }, el("img", { src: x.img, alt: x.alt })),
+      outLink({ href: x.href, target: "_blank", rel: "noopener" }, el("img", { src: x.img, alt: x.alt })),
       field("MD", `[![${x.alt}](${x.img})](${x.href})`),
       field("HTML", `<a href="${x.href}"><img alt="${x.alt}" src="${x.img}"></a>`))),
     base ? null : el("p", { class: "ktw-note" }, "The live badges come with a published export — a dashboard-state line in .keep-the-why."), famNote);

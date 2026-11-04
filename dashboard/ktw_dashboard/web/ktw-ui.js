@@ -5,7 +5,7 @@
    A classic script on globalThis.KeepTheWhy.ui, listed in ktw-views.json after the core. */
 (function (root) {
 "use strict";
-const { typeName, hostOf, highlightParts, fillWords } = root.KeepTheWhy.core;
+const { typeName, hostOf, highlightParts, fillWords, safeUrl, safeHref } = root.KeepTheWhy.core;
 
 // The views' words: `words(hook)` gives `tw(key, english, params)`, the one way a view's UI text reaches the page.
 // The host's hook — `(key, params) => string | undefined`, the `words` option of every views.*.create — answers a
@@ -37,15 +37,18 @@ const roleWord = (tw, role) => ({ self: tw("role.self", "self"), parent: tw("rol
 
 // Attributes on an element, HTML or SVG: class; style through the CSSOM — a page under a Content-Security-Policy
 // without 'unsafe-inline' (Maity's hub pages, default-src 'self') drops a style attribute set as markup, not the
-// element's style object; on<event> handlers; the rest as attributes. null or false leaves one out. Every element
-// the views build gets its attributes here (el, svgEl), so no style reaches setAttribute.
+// element's style object; on<event> handlers; an address (href, xlink:href, src, action, formaction) only as
+// core.safeHref passes it — one it rejects is left out, so a link stays its text and is no link; the rest as
+// attributes. null or false leaves one out. Every element the views build gets its attributes here (el, svgEl), so
+// no style and no unchecked address reaches setAttribute.
+const URL_ATTRS = new Set(["href", "xlink:href", "src", "action", "formaction"]);
 function setAttrs(n, attrs) {
   for (const [k, v] of Object.entries(attrs)) {
     if (v == null || v === false) continue;
     if (k === "class") n.setAttribute("class", v);
     else if (k === "style") n.style.cssText = v;
     else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
-    else n.setAttribute(k, v === true ? "" : v);
+    else { const u = URL_ATTRS.has(k) ? safeHref(String(v)) : v === true ? "" : v; if (u != null) n.setAttribute(k, u); }
   }
   return n;
 }
@@ -112,9 +115,15 @@ function extIcon() {
   path.setAttribute("d", "M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z");
   svg.append(path); return svg;
 }
-// a link out of the page, with the mark after it
-const extLink = (href, text, cls = "") => el("a", { class: `ktw-ext ${cls}`.trim(), href, target: "_blank", rel: "noopener" }, text, extIcon());
-const remoteLink = (remote) => el("a", { class: "ktw-gh", href: `https://${remote}`, target: "_blank", rel: "noopener" }, hostMark(remote), remote);
+// a link out of the page to an address from the data (attrs.href): an <a> as given when core.safeUrl passes the
+// address; otherwise a <span> with the same children and the rest of the attributes — shown, not followed
+const outLink = (attrs, ...kids) => {
+  if (safeUrl(attrs.href)) return el("a", attrs, ...kids);
+  const { href, target, rel, ...rest } = attrs; return el("span", rest, ...kids);
+};
+// a link out of the page, with the mark after it; an address core.safeUrl rejects is its text, without the mark
+const extLink = (href, text, cls = "") => (safeUrl(href) ? el("a", { class: `ktw-ext ${cls}`.trim(), href, target: "_blank", rel: "noopener" }, text, extIcon()) : el("span", { class: cls || null }, text));
+const remoteLink = (remote) => outLink({ class: "ktw-gh", href: `https://${remote}`, target: "_blank", rel: "noopener" }, hostMark(remote), remote);
 const onGitHub = (g) => !!g?.remote && /^github\.com\//.test(g.remote);
 // a fork checkout: `origin` is the fork, the published repository is elsewhere — read from
 // the `upstream` remote, or from `canonical` in .keep-the-why differing from `origin`
@@ -127,10 +136,10 @@ const headPill = (g, tw = english) => {
   if (!onGitHub(g)) return el("span", { class: "ktw-pill", title: g.remote || "" }, `${branch || tw("ui.head.detached", "detached")}@${g.head}`);
   const base = `https://${g.remote}`;
   return el("span", { class: "ktw-pill", title: tw("ui.head.onGitHub", "branch and commit on GitHub") },
-    branch ? el("a", { class: "ktw-gh", href: `${base}/tree/${encodeURIComponent(branch)}`, target: "_blank", rel: "noopener" }, branch) : tw("ui.head.detached", "detached"), "@",
-    el("a", { class: "ktw-gh", href: `${base}/commit/${g.head_full || g.head}`, target: "_blank", rel: "noopener", title: g.head_full || g.head }, g.head));
+    branch ? outLink({ class: "ktw-gh", href: `${base}/tree/${encodeURIComponent(branch)}`, target: "_blank", rel: "noopener" }, branch) : tw("ui.head.detached", "detached"), "@",
+    outLink({ class: "ktw-gh", href: `${base}/commit/${g.head_full || g.head}`, target: "_blank", rel: "noopener", title: g.head_full || g.head }, g.head));
 };
 
 const KTW = (root.KeepTheWhy = root.KeepTheWhy || {});
-KTW.ui = Object.freeze({ words, english, roleWord, el, svgEl, setAttrs, setKids, pill, statusPill, evPill, typePills, entryPills, GLYPHS, typeGlyphSvg, hostMark, marked, navLinks, extLink, remoteLink, forkPill, headPill });
+KTW.ui = Object.freeze({ words, english, roleWord, el, svgEl, setAttrs, setKids, pill, statusPill, evPill, typePills, entryPills, GLYPHS, typeGlyphSvg, hostMark, marked, navLinks, outLink, extLink, remoteLink, forkPill, headPill });
 })(globalThis);
