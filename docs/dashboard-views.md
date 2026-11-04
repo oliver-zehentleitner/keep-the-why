@@ -61,14 +61,14 @@ A host vendoring the files can run the same check over its copy.
 
 A state can come from another repository, so the views link an address from the data only after `core.safeUrl` passes it:
 
-- **https only:** an absolute `https:` URL with a host, no user or password, and no space, control character, bidi character or backslash anywhere. `https:evil.example` parses as https with a host and passes on purpose.
+- **https only:** an absolute URL that starts with `https://`, with a host, no user or password, and no space, control character, bidi character or backslash anywhere. `https:evil.example` and `https:/evil.example` are rejected: the URL parser reads a host into them, but an anchor on an https page resolves them to a path on the page's own host.
 - **Covers:** a project's `canonical`, a `See` or `Superseded by` remote, `dashboard-state`, a Markdown link, the host's commit and tree links, and an author's profile.
 - **Rejected addresses:** the views show the text without linking it, and warn once per address (at most 100 warnings).
 - **`http:` is rejected too.** A `canonical` or `dashboard-state` written as `http://` shows as text.
 
 **Data contract:** every address a state carries is https.
 
-`ui.setAttrs`, behind `el` and `svgEl`, is the backstop. It sets `href`, `xlink:href`, `src`, `action` and `formaction` only as `core.safeHref` passes them, and otherwise leaves the attribute out, so the element keeps its text. `safeHref` lets a relative reference through, because a host's own places (`nav.href`) are `#…`, `?…` or a path, and holds anything with a scheme to `safeUrl`.
+`ui.setAttrs`, behind `el` and `svgEl`, is the backstop. It sets `href`, `xlink:href`, `src`, `action` and `formaction` only as `core.safeHref` passes them, and otherwise leaves the attribute out, so the element keeps its text. It recognises an attribute by its lowercase name, because an HTML element folds `HREF` to `href`, and sets it as given. An `on…` attribute is set only when its value is a function; handler source text is never set. `safeHref` lets a relative reference through, because a host's own places (`nav.href`) are `#…`, `?…` or a path, and holds anything with a scheme to `safeUrl`.
 
 For a link out of the page to an address from the data, the views use `ui.outLink(attrs, ...kids)`: an `<a>` when `safeUrl` passes `attrs.href`, otherwise a `<span>` with the same children, class and title. `ui.extLink` and `ui.remoteLink` do the same. `dashboard/tests/test_views.py` fails the build if a library file sets an address attribute outside `setAttrs` and the Markdown builder, assigns an address property, or calls `window.open`.
 

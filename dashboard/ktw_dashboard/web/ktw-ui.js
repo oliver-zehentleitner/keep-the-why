@@ -40,15 +40,18 @@ const roleWord = (tw, role) => ({ self: tw("role.self", "self"), parent: tw("rol
 // element's style object; on<event> handlers; an address (href, xlink:href, src, action, formaction) only as
 // core.safeHref passes it — one it rejects is left out, so a link stays its text and is no link; the rest as
 // attributes. null or false leaves one out. Every element the views build gets its attributes here (el, svgEl), so
-// no style and no unchecked address reaches setAttribute.
+// no style and no unchecked address reaches setAttribute. A name is told by its lowercase — an HTML element folds
+// `HREF` to `href` — and set as given, so an SVG name keeps its case (viewBox); an on<event> that is not a function
+// is left out, never set as a handler's source text.
 const URL_ATTRS = new Set(["href", "xlink:href", "src", "action", "formaction"]);
 function setAttrs(n, attrs) {
   for (const [k, v] of Object.entries(attrs)) {
     if (v == null || v === false) continue;
-    if (k === "class") n.setAttribute("class", v);
-    else if (k === "style") n.style.cssText = v;
-    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
-    else { const u = URL_ATTRS.has(k) ? safeHref(String(v)) : v === true ? "" : v; if (u != null) n.setAttribute(k, u); }
+    const name = k.toLowerCase();
+    if (name === "class") n.setAttribute("class", v);
+    else if (name === "style") n.style.cssText = v;
+    else if (name.startsWith("on")) { if (typeof v === "function") n.addEventListener(name.slice(2), v); }
+    else { const u = URL_ATTRS.has(name) ? safeHref(String(v)) : v === true ? "" : v; if (u != null) n.setAttribute(k, u); }
   }
   return n;
 }

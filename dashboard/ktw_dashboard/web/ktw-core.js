@@ -71,9 +71,11 @@ const slug = hostAnchor; // the fallback id of an entry a state carries without 
 // The one rule for an address the views link to. `safeUrl` is for an address from the data — a canonical, a
 // remote, a dashboard-state, a Markdown link, a profile a host's API names: an absolute https URL with a host and
 // no user or password, and no space, control or bidi character and no backslash anywhere (a browser reads `\` as
-// `/`, and a hidden character can make the address read other than it goes). `https:evil.example` parses as https
-// with a host and passes on purpose. A rejected address comes back null — the caller shows its text, not a link —
-// with one warning per address; an accepted one comes back as it was given, not normalised.
+// `/`, and a hidden character can make the address read other than it goes). It starts with `https://`: an anchor
+// resolves `https:evil.example` or `https:/evil.example` against the page, to a path on the page's own host when
+// the page is https, though the URL parser alone reads a host into it. A rejected address comes back null — the
+// caller shows its text, not a link — with one warning per address; an accepted one comes back as it was given,
+// not normalised.
 // `safeHref` is the backstop every URL attribute the views set goes through (ui.js setAttrs): a relative reference
 // passes — a host's own places are `#…`, `?…`, a path — and anything with a scheme must pass `safeUrl`.
 const UNSAFE_CHARS = /[\s\u0000-\u001f\u007f-\u009f؜‎‏‪-‮⁦-⁩\\]/u;
@@ -85,6 +87,7 @@ function urlRejected(u, why) {
 function safeUrl(u) {
   if (typeof u !== "string" || !u) return null;
   if (UNSAFE_CHARS.test(u)) return urlRejected(u, "a space, control, bidi character or backslash");
+  if (!/^https:\/\//i.test(u)) return urlRejected(u, "not https://");
   let p; try { p = new URL(u); } catch { return urlRejected(u, "not a URL"); }
   if (p.protocol !== "https:") return urlRejected(u, "not https");
   if (!p.hostname) return urlRejected(u, "no host");

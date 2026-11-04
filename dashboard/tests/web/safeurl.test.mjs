@@ -44,11 +44,17 @@ test("safeUrl: an absolute https address with a host passes as it was given", ()
     assert.equal(safeUrl(u), u, u);
 });
 
-test("safeUrl: https:evil.example parses as https with a host, and passes on purpose", () => {
-  // the URL parser reads the special scheme's missing slashes as there; the address goes where it says
-  assert.equal(new window.URL("https:evil.example").hostname, "evil.example");
-  assert.equal(safeUrl("https:evil.example"), "https:evil.example");
-});
+test("safeUrl: an https address without its two slashes is rejected — an anchor resolves it against the page", () => warnings(() => {
+  // the URL parser alone reads a host into it; a link on an https page goes to a path of the page's own host
+  const page = new JSDOM("<!doctype html><a></a>", { url: "https://host.example/dashboard/index.html" }).window.document.querySelector("a");
+  for (const [u, lands] of [["https:evil.example", "https://host.example/dashboard/evil.example"], ["https:/evil.example", "https://host.example/evil.example"], ["HTTPS:evil.example", "https://host.example/dashboard/evil.example"]]) {
+    assert.equal(new window.URL(u).hostname, "evil.example", "the parser without a base");
+    page.setAttribute("href", u); assert.equal(page.href, lands, "the anchor on an https page");
+    assert.equal(safeUrl(u), null, u); assert.equal(safeHref(u), null, u);
+  }
+  // with its slashes, the anchor goes where the address says
+  page.setAttribute("href", "https://evil.example/"); assert.equal(page.href, "https://evil.example/");
+}));
 
 test("safeUrl rejects every other scheme, a user or password, a backslash, and space, control and bidi characters", () => {
   warnings(() => { for (const u of HOSTILE) assert.equal(safeUrl(u), null, JSON.stringify(u)); });
@@ -65,7 +71,7 @@ test("safeHref: a host's own places pass, as relative references; a scheme is he
 test("one warning per rejected address, and a bounded number of them however many a state holds", () => {
   const once = warnings(() => { for (let i = 0; i < 3; i++) safeUrl("javascript:once()"); });
   assert.equal(once.length, 1, once.join("\n"));
-  assert.match(once[0], /not linked \(not https\): "javascript:once\(\)"/);
+  assert.match(once[0], /not linked \(not https:\/\/\): "javascript:once\(\)"/);
   const many = warnings(() => { for (let i = 0; i < 500; i++) safeUrl(`javascript:many(${i})`); });
   assert.ok(many.length <= 100, `${many.length} warnings`);
   assert.equal(safeUrl("javascript:many(499)"), null, "still rejected once no longer warned");
@@ -84,6 +90,26 @@ test("el and svgEl set an address only as safeHref passes it: a rejected one is 
   assert.equal(ui.svgEl("a", { href: "javascript:alert(1)" }).hasAttribute("href"), false);
   assert.equal(ui.svgEl("a", { href: "#graph" }).getAttribute("href"), "#graph");
 }));
+
+test("an attribute's name is told by its lowercase: HREF, Src, formAction go through safeHref too", () => warnings(() => {
+  for (const attr of ["HREF", "Href", "SRC", "ACTION", "formAction", "FORMACTION"]) {
+    const n = ui.el("a", { [attr]: "javascript:alert(1)" }, "text");
+    assert.deepEqual([...n.attributes].map((a) => a.name), [], attr);
+    assert.equal(ui.el("a", { [attr]: "#ok" }).getAttribute(attr.toLowerCase()), "#ok", `${attr}: a safe one is set`);
+  }
+  for (const attr of ["XLINK:HREF", "Href"]) assert.equal(ui.svgEl("a", { [attr]: "javascript:alert(1)" }).attributes.length, 0, `svg ${attr}`);
+  // an SVG name keeps its case
+  assert.equal(ui.svgEl("svg", { viewBox: "0 0 1 1" }).getAttribute("viewBox"), "0 0 1 1");
+}));
+
+test("an on<event> is a function or nothing: never a handler's source text, in any case", () => {
+  for (const attr of ["onclick", "ONCLICK", "onClick", "onmouseover"]) {
+    const n = ui.el("a", { [attr]: "alert(1)" }, "text");
+    assert.equal(n.attributes.length, 0, attr);
+  }
+  let hit = 0; const n = ui.el("button", { onClick: () => { hit++; } }); n.click();
+  assert.equal(hit, 1, "a function is a listener, the event's name in lowercase");
+});
 
 test("a link out to an address from the data: an anchor when safeUrl passes it, else its text", () => warnings(() => {
   const ok = ui.outLink({ class: "ktw-gh", href: "https://example.org", target: "_blank", rel: "noopener", title: "t" }, "x");
