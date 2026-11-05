@@ -2,7 +2,7 @@ name: Build and Publish keep-the-why-lint (PyPI)
 
 # Manual trigger only. Builds the linter package from lint/, publishes it to
 # PyPI via trusted publishing (environment "pypi"), and — only after the
-# upload succeeded — pushes a lightweight tag lint-v<version> so every PyPI
+# upload succeeded — pushes an annotated tag lint-v<version> so every PyPI
 # release points at exactly one commit, and moves the lint-latest tag the
 # GitHub Action snippet references. PyPI is the source of truth; the tags
 # are traceability, created by the same run, never by hand.
@@ -63,11 +63,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
-      contents: write
+      contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: dist
@@ -78,12 +76,42 @@ jobs:
         with:
           packages-dir: dist
 
+      # Tags under the release-tags ruleset can only be pushed by the
+      # repository admin and the release-tags App, never by GITHUB_TOKEN.
+      # The App's key lives in this environment only, so the token exists
+      # after the maintainer approved the run and after the upload
+      # succeeded — no write credential is on disk while the PyPI action
+      # runs. See context/release-and-distribution.md.
+      - name: Mint the release-tags token
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
       - name: Tag the published commit
         env:
           VERSION: ${{ needs.build.outputs.version }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # The tagger is the App's bot user, the account that pushes the
+          # tag. No fallback identity: a failed lookup fails the run.
+          BOT_ID=$(gh api "/users/${APP_SLUG}[bot]" --jq .id) || {
+            echo "::error::cannot resolve the bot user of App '${APP_SLUG}'"
+            exit 1
+          }
+          if ! [[ "$BOT_ID" =~ ^[0-9]+$ ]]; then
+            echo "::error::bot user id of '${APP_SLUG}' is '${BOT_ID}', not a number"
+            exit 1
+          fi
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${BOT_ID}+${APP_SLUG}[bot]@users.noreply.github.com"
           git tag "lint-v$VERSION" -m "keep-the-why-lint $VERSION (PyPI)"
           git push origin "lint-v$VERSION"
 
