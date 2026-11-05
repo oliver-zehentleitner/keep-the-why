@@ -107,8 +107,10 @@ function onlyRecoloured(theme, roles, base, page) {
 }
 const seen = ADDED.map(() => ({ base: 0, head: 0 }));
 
-async function open(browser, file, width) {
-  const ctx = await browser.newContext({ viewport: { width, height: 900 }, timezoneId: "UTC", reducedMotion: "reduce" });
+// the browser's colour scheme is the run's theme: with no stored choice the dashboard follows it, and a default
+// context is light, which would leave every "dark" run light
+async function open(browser, file, width, theme = "dark") {
+  const ctx = await browser.newContext({ viewport: { width, height: 900 }, timezoneId: "UTC", reducedMotion: "reduce", colorScheme: theme === "light" ? "light" : "dark" });
   await ctx.addInitScript(init);
   const page = await ctx.newPage();
   const errors = [];
@@ -132,8 +134,13 @@ await probe.ctx.close();
 let compared = 0, recolouredCount = 0; const diffs = []; const errors = [];
 const runs = [...WIDTHS.map((w) => [w, "dark"]), [1400, "light"]];
 for (const [width, theme] of runs) {
-  const A = await open(browser, basePage, width), B = await open(browser, headPage, width);
+  const A = await open(browser, basePage, width, theme), B = await open(browser, headPage, width, theme);
   for (const P of [A, B]) await P.page.evaluate((t) => { if (t === "light") document.documentElement.dataset.theme = "light"; }, theme);
+  // each page shows the theme its run is for, or the run fails: a wrong scheme must not pass as the other theme
+  for (const [P, which] of [[A, "base"], [B, "page"]]) {
+    const shows = await P.page.evaluate(() => (document.documentElement.dataset.theme === "light" ? "light" : "dark"));
+    if (shows !== theme) errors.push(`${theme} ${width}px: the ${which} shows the ${shows} theme`);
+  }
   for (const hash of routes) {
     for (const P of [A, B]) await P.page.evaluate((h) => { location.hash = h; }, hash);
     await Promise.all([A.page.waitForTimeout(700), B.page.waitForTimeout(700)]);
@@ -147,10 +154,7 @@ for (const [width, theme] of runs) {
     const onlyOne = bad.filter((k) => !(k in a.out) || !(k in b.out));
     if (onlyOne.length) { diffs.push(`${theme} ${width}px ${hash}: the element trees differ (${onlyOne.length} paths in one page only, e.g. ${onlyOne[0]})`); continue; }
     const [da, db] = await Promise.all([A.page.evaluate(collect, { want: bad, added: ADDED_SELECTORS, box: PARENT_BOX, trim: b.parents, sites: SITES }), B.page.evaluate(collect, { want: bad, added: ADDED_SELECTORS, box: PARENT_BOX, trim: b.parents, sites: SITES })]);
-    // the theme the page shows, not the run's name: with no stored choice the dashboard follows the browser's
-    // colour scheme, which is light in a default context
-    const shown = await B.page.evaluate(() => (document.documentElement.dataset.theme === "light" ? "light" : "dark"));
-    const unexplained = bad.filter((k) => !onlyRecoloured(shown, db.roles[k] || [], da.detail[k] || [], db.detail[k] || []));
+    const unexplained = bad.filter((k) => !onlyRecoloured(theme, db.roles[k] || [], da.detail[k] || [], db.detail[k] || []));
     recolouredCount += bad.length - unexplained.length;
     for (const k of unexplained.slice(0, 20)) {
       const x = new Set(da.detail[k] || []), y = new Set(db.detail[k] || []);
