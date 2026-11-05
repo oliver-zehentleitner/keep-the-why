@@ -111,6 +111,26 @@ jobs:
           APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
+          TAG="lint-v$VERSION"
+          # A re-run of this job (the release checklist's first remedy)
+          # may find the tag already pushed by an earlier attempt. On this
+          # run's commit it is kept and not pushed again; on any other
+          # commit the run fails — a release tag is never moved.
+          REMOTE=$(git ls-remote --tags origin "refs/tags/$TAG" "refs/tags/$TAG^{}") || {
+            echo "::error::cannot list the tags on origin"
+            exit 1
+          }
+          if [ -n "$REMOTE" ]; then
+            AT=$(awk -v r="refs/tags/$TAG^{}" '$2 == r { print $1 }' <<<"$REMOTE")
+            [ -n "$AT" ] || AT=$(awk -v r="refs/tags/$TAG" '$2 == r { print $1 }' <<<"$REMOTE")
+            if [ "$AT" != "$GITHUB_SHA" ]; then
+              echo "::error::$TAG already exists on $AT, not on this run's commit $GITHUB_SHA — not moved"
+              exit 1
+            fi
+            echo "::notice::$TAG already points at $GITHUB_SHA (an earlier attempt of this run); kept, not pushed again"
+            git fetch --no-tags origin "refs/tags/$TAG:refs/tags/$TAG"
+            exit 0
+          fi
           # The tagger is the App's bot user, the account that pushes the
           # tag. No fallback identity: a failed lookup fails the run.
           BOT_ID=$(gh api "/users/${APP_SLUG}[bot]" --jq .id) || {
@@ -123,8 +143,8 @@ jobs:
           fi
           git config user.name "${APP_SLUG}[bot]"
           git config user.email "${BOT_ID}+${APP_SLUG}[bot]@users.noreply.github.com"
-          git tag "lint-v$VERSION" -m "keep-the-why-lint $VERSION (PyPI)"
-          git push origin "lint-v$VERSION"
+          git tag "$TAG" -m "keep-the-why-lint $VERSION (PyPI)"
+          git push origin "$TAG"
 
       # lint-latest is the ref the GitHub Action snippet uses
       # (uses: oliver-zehentleitner/keep-the-why@lint-latest). It follows
