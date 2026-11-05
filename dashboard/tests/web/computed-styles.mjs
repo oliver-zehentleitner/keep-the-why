@@ -12,6 +12,7 @@ import { chromium } from "playwright";
 import fs from "node:fs";
 import path from "node:path";
 import { ADDED, PARENT_BOX } from "./added-elements.mjs";
+import { recolourSites } from "./recolour-sites.mjs";
 
 const [basePage, headPage] = process.argv.slice(2);
 if (!headPage) { console.error("usage: node computed-styles.mjs BASEPAGE PAGE"); process.exit(2); }
@@ -32,7 +33,7 @@ const init = `(() => {
 // An element the pull request adds on purpose (added-elements.mjs) is left out, and not counted among its siblings.
 // On its parent — the paths in `trim`; null: this page's own — the properties that resolve to the parent's box
 // (PARENT_BOX) are left out too, the one thing an added child changes there.
-const collect = ({ want, added, box, trim }) => {
+const collect = ({ want, added, box, trim, sites }) => {
   const isAdded = (el) => added.some((sel) => el.closest(sel));
   // custom properties are inputs, not results: what they set shows in the properties that use them, and the
   // tokens' values are held equal by test_views.py
@@ -40,7 +41,9 @@ const collect = ({ want, added, box, trim }) => {
   const pathOf = (el) => { const p = []; for (let n = el; n && n.localName !== "html"; n = n.parentElement) p.push(`${n.localName}:${n.parentElement ? [...n.parentElement.children].filter((c) => !isAdded(c)).indexOf(n) : 0}`); return p.reverse().join("/"); };
   const text = (cs) => { const v = []; for (let i = 0; i < cs.length; i++) if (!SKIP.test(cs[i])) v.push(`${cs[i]}: ${cs.getPropertyValue(cs[i])}`); return v; };
   const fnv = (s) => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16); };
-  const out = {}, detail = {}, parents = [];
+  const out = {}, detail = {}, roles = {}, parents = [];
+  const any = (list, f) => (list || []).some((s) => { try { return f(s); } catch { return false; } });
+  const rolesOf = (el) => (sites ? [any(sites.text, (s) => el.closest(s)) && "text", any(sites.fill, (s) => el.matches(s)) && "fill", any(sites.fillBorder, (s) => el.matches(s)) && "fillBorder", any(sites.shimmer, (s) => el.matches(s)) && "shimmer"].filter(Boolean) : []);
   for (const el of document.body.querySelectorAll("*")) if (!isAdded(el) && [...el.children].some((c) => added.some((sel) => c.matches(sel)))) parents.push(pathOf(el));
   const trimmed = new Set(trim || parents);
   for (const el of document.body.querySelectorAll("*")) {
@@ -51,46 +54,56 @@ const collect = ({ want, added, box, trim }) => {
       if (pseudo && cs.content === "none") continue;
       const key = pseudo ? p + pseudo : p, v = text(cs).filter((d) => pseudo || !trimmed.has(p) || !box.includes(d.slice(0, d.indexOf(":"))));
       out[key] = fnv(v.join(";"));
-      if (want.includes(key)) detail[key] = v;
+      if (want.includes(key)) { detail[key] = v; roles[key] = rolesOf(el); }
     }
   }
-  return { out, detail, parents, counts: added.map((sel) => document.querySelectorAll(sel).length) };
+  return { out, detail, roles, parents, counts: added.map((sel) => document.querySelectorAll(sel).length) };
 };
 const ADDED_SELECTORS = ADDED.map((x) => x.selector);
-// colours a pull request changes on purpose, per theme: a computed value that differs only in these colours, each
-// replaced by one it may become (in the properties named, where an entry names them), is expected, not a
-// difference. WCAG AA for text on accent (context/dashboard.md, "Text on accent is a pair of tokens"): the accent
-// #835bec as a fill under text becomes --ktw-accent-fill #7a52e6, accent-coloured text becomes --ktw-accent-text
-// or --ktw-status-active-text (#a98cf5 in dark, #6234d9 in light), and the update hint's shimmer band, white,
-// becomes --accent-shine (#dcd0fb in dark, #3b1d99 in light) in its gradient
+// colours a pull request changes on purpose, per role and theme (the theme the page shows). The roles are bound to
+// the rules that read the new tokens (recolour-sites.mjs): an element changes a colour only in its role's
+// properties, and only from a colour to one it may become. WCAG AA for text on accent (context/dashboard.md, "Text
+// on accent is a pair of tokens"): text in the accent becomes --ktw-accent-text / --ktw-status-active-text
+// (#a98cf5 in dark, #6234d9 in light); a solid accent under text becomes --ktw-accent-fill #7a52e6; the update
+// hint's shimmer is built on the accent text with a readable band (#dcd0fb in dark, #3b1d99 in light)
+const SITES = recolourSites();
+const ACCENT = "rgb(131, 91, 236)", ACCENT2 = "rgb(169, 140, 245)", WHITE = "rgb(255, 255, 255)";
+const FILL = "rgb(122, 82, 230)", TEXT = { dark: ACCENT2, light: "rgb(98, 52, 217)" }, SHINE = { dark: "rgb(220, 208, 251)", light: "rgb(59, 29, 153)" };
+// the properties that take the text colour: the text itself and what follows it (currentColor), and SVG text
+const TEXT_PROPS = /^(color|fill|caret-color|column-rule-color|outline-color|text-decoration-color|text-emphasis-color|-webkit-text-fill-color|-webkit-text-stroke-color)$/;
+const BORDER_PROPS = /^border(-(top|right|bottom|left|block-start|block-end|inline-start|inline-end))?-color$/;
 const RECOLOURED = {
-  dark: [
-    { from: "rgb(131, 91, 236)", to: ["rgb(122, 82, 230)", "rgb(169, 140, 245)"] },
-    { from: "rgb(255, 255, 255)", to: ["rgb(220, 208, 251)"], props: /^background(-image)?$/ },
-  ],
-  light: [
-    { from: "rgb(131, 91, 236)", to: ["rgb(122, 82, 230)", "rgb(98, 52, 217)"] },
-    { from: "rgb(169, 140, 245)", to: ["rgb(98, 52, 217)"] },
-    { from: "rgb(255, 255, 255)", to: ["rgb(59, 29, 153)"], props: /^background(-image)?$/ },
-  ],
+  text: { props: TEXT_PROPS, dark: { [ACCENT]: [TEXT.dark] }, light: { [ACCENT]: [TEXT.light], [ACCENT2]: [TEXT.light] } },
+  fill: { props: /^background-color$/, dark: { [ACCENT]: [FILL] }, light: { [ACCENT]: [FILL] } },
+  fillBorder: { props: BORDER_PROPS, dark: { [ACCENT]: [FILL] }, light: { [ACCENT]: [FILL] } },
+  shimmer: { props: /^background-image$/, dark: { [WHITE]: [SHINE.dark] }, light: { [ACCENT2]: [TEXT.light], [WHITE]: [SHINE.light] } },
 };
 const COLOUR = /rgba?\([^()]*\)/g;
-// is `got` what `lost` becomes with only the theme's recolourings applied, colour by colour?
-function recoloured(theme, lost, got) {
-  const prop = lost.slice(0, lost.indexOf(":"));
+const valueOf = (decls, prop) => { const d = decls.find((x) => x.startsWith(prop + ": ")); return d ? d.slice(prop.length + 2) : null; };
+// is `got` what `lost` becomes, colour by colour, with only the recolourings `role` allows in `theme`?
+function recoloured(role, theme, lost, got) {
   const a = lost.match(COLOUR) || [], b = got.match(COLOUR) || [];
   if (a.length !== b.length || lost.replace(COLOUR, "\0") !== got.replace(COLOUR, "\0")) return false;
-  const may = (c, d) => RECOLOURED[theme].some((x) => x.from === c && x.to.includes(d) && (!x.props || x.props.test(prop)));
-  return a.every((c, i) => c === b[i] || may(c, b[i])) && a.some((c, i) => c !== b[i]);
+  const map = RECOLOURED[role][theme];
+  return a.every((c, i) => c === b[i] || (map[c] || []).includes(b[i])) && a.some((c, i) => c !== b[i]);
 }
-// an element whose every changed declaration is such a recolouring of the same property
-function onlyRecoloured(theme, base, page) {
+// an element whose every changed declaration is a recolouring its roles allow: a text role's border only where it
+// is the text colour (currentColor) before and after
+function onlyRecoloured(theme, roles, base, page) {
   const x = new Set(base), y = new Set(page);
   const lost = [...x].filter((v) => !y.has(v)), got = [...y].filter((v) => !x.has(v));
   if (!lost.length || lost.length !== got.length) return false;
   const prop = (d) => d.slice(0, d.indexOf(":"));
   const byProp = new Map(got.map((d) => [prop(d), d]));
-  return lost.every((d) => byProp.has(prop(d)) && recoloured(theme, d, byProp.get(prop(d))));
+  return lost.every((d) => {
+    const p = prop(d), g = byProp.get(p);
+    if (!g) return false;
+    return roles.some((role) => {
+      const r = RECOLOURED[role];
+      const follows = role === "text" && BORDER_PROPS.test(p) && valueOf(base, p) === valueOf(base, "color") && valueOf(page, p) === valueOf(page, "color");
+      return (r.props.test(p) || follows) && recoloured(role, theme, d, g);
+    });
+  });
 }
 const seen = ADDED.map(() => ({ base: 0, head: 0 }));
 
@@ -133,11 +146,11 @@ for (const [width, theme] of runs) {
     if (!bad.length) continue;
     const onlyOne = bad.filter((k) => !(k in a.out) || !(k in b.out));
     if (onlyOne.length) { diffs.push(`${theme} ${width}px ${hash}: the element trees differ (${onlyOne.length} paths in one page only, e.g. ${onlyOne[0]})`); continue; }
-    const [da, db] = await Promise.all([A.page.evaluate(collect, { want: bad, added: ADDED_SELECTORS, box: PARENT_BOX, trim: b.parents }), B.page.evaluate(collect, { want: bad, added: ADDED_SELECTORS, box: PARENT_BOX, trim: b.parents })]);
+    const [da, db] = await Promise.all([A.page.evaluate(collect, { want: bad, added: ADDED_SELECTORS, box: PARENT_BOX, trim: b.parents, sites: SITES }), B.page.evaluate(collect, { want: bad, added: ADDED_SELECTORS, box: PARENT_BOX, trim: b.parents, sites: SITES })]);
     // the theme the page shows, not the run's name: with no stored choice the dashboard follows the browser's
     // colour scheme, which is light in a default context
     const shown = await B.page.evaluate(() => (document.documentElement.dataset.theme === "light" ? "light" : "dark"));
-    const unexplained = bad.filter((k) => !onlyRecoloured(shown, da.detail[k] || [], db.detail[k] || []));
+    const unexplained = bad.filter((k) => !onlyRecoloured(shown, db.roles[k] || [], da.detail[k] || [], db.detail[k] || []));
     recolouredCount += bad.length - unexplained.length;
     for (const k of unexplained.slice(0, 20)) {
       const x = new Set(da.detail[k] || []), y = new Set(db.detail[k] || []);

@@ -26,6 +26,7 @@ import { JSDOM, VirtualConsole } from "jsdom";
 import { moduleAsClassic } from "./classic.mjs";
 import fs from "node:fs";
 import { ADDED } from "./added-elements.mjs";
+import { recolourSites, rolesOf } from "./recolour-sites.mjs";
 
 const NOW = Date.parse("2026-06-15T12:00:00Z");
 const WIDTHS = [1400, 1000, 800, 500];
@@ -47,18 +48,21 @@ const EXPECTED = [
   { path: /^body:\d+\/div:\d+\/(main|aside):\d+$/, family: "font", split: "font-family: var(--font)" },
   { path: /^body:\d+\/div:\d+\/(main|aside):\d+$/, family: "color", split: "color: var(--fg)" },
 ];
-// what the split changes on purpose: one declaration of the base's family replaced by another, the rest the same.
-// WCAG AA for text on accent (context/dashboard.md, "Text on accent is a pair of tokens"): accent-coloured text
-// reads --ktw-accent-text, text on a solid accent sits as --ktw-on-accent on --ktw-accent-fill
+// what the split changes on purpose: one declaration of the base's family replaced by another, the rest the same,
+// on an element whose role allows it (recolour-sites.mjs: the rules that read the new tokens). WCAG AA for text on
+// accent (context/dashboard.md, "Text on accent is a pair of tokens"): accent-coloured text reads
+// --ktw-accent-text / --ktw-status-active-text, text on a solid accent sits as --ktw-on-accent on
+// --ktw-accent-fill, the update hint's shimmer is built on the accent text
+const SITES = recolourSites({ states: false }); // a state rule matches here, as in cascade() below
 const REPLACED = [
-  { family: "color", base: "color: var(--accent2)", split: "color: var(--accent-text)" },
-  { family: "color", base: "color: var(--accent)", split: "color: var(--accent-text)" },
-  { family: "color", base: "color: #fff", split: "color: var(--on-accent)" },
-  { family: "background", base: "background: var(--accent)", split: "background: var(--accent-fill)" },
-  { family: "border", base: "border-color: var(--accent)", split: "border-color: var(--accent-fill)" },
-  { family: "fill", base: "fill: var(--accent2)", split: "fill: var(--accent-text)" },
-  { family: "color", base: "color: var(--active)", split: "color: var(--active-text)" },
-  { family: "background", base: "background: linear-gradient(90deg, var(--accent2) 0%, #fff 45%, var(--accent2) 55%, var(--accent2) 100%)", split: "background: linear-gradient(90deg, var(--accent-text) 0%, var(--accent-shine) 45%, var(--accent-text) 55%, var(--accent-text) 100%)" },
+  { role: "text", family: "color", base: "color: var(--accent2)", split: "color: var(--accent-text)" },
+  { role: "text", family: "color", base: "color: var(--accent)", split: "color: var(--accent-text)" },
+  { role: "text", family: "color", base: "color: var(--active)", split: "color: var(--active-text)" },
+  { role: "text", family: "color", base: "color: #fff", split: "color: var(--on-accent)" },
+  { role: "text", family: "fill", base: "fill: var(--accent2)", split: "fill: var(--accent-text)" },
+  { role: "fill", family: "background", base: "background: var(--accent)", split: "background: var(--accent-fill)" },
+  { role: "fillBorder", family: "border", base: "border-color: var(--accent)", split: "border-color: var(--accent-fill)" },
+  { role: "shimmer", family: "background", base: "background: linear-gradient(90deg, var(--accent2) 0%, #fff 45%, var(--accent2) 55%, var(--accent2) 100%)", split: "background: linear-gradient(90deg, var(--accent-text) 0%, var(--accent-shine) 45%, var(--accent-text) 55%, var(--accent-text) 100%)" },
 ];
 
 // ---- specificity and matching for the selectors this stylesheet uses
@@ -192,7 +196,8 @@ for (const hash of routes) {
         // expected: the split's family is the base's plus exactly the one declaration named
         const plus = (x) => { const parts = (b.get(f) || "").split("; ").filter((d) => d !== x.split); return parts.join("; ") === (a.get(f) || "") && parts.length < (b.get(f) || "").split("; ").length; };
         if (EXPECTED.some((x) => x.path.test(path) && x.family === f && plus(x))) { expected++; continue; }
-        const swapped = (s) => REPLACED.filter((x) => x.family === f).reduce((acc, x) => acc.split("; ").map((d) => (d === x.base ? x.split : d)).join("; "), s);
+        const roles = rolesOf(B[i], SITES);
+        const swapped = (s) => REPLACED.filter((x) => x.family === f && roles.includes(x.role)).reduce((acc, x) => acc.split("; ").map((d) => (d === x.base ? x.split : d)).join("; "), s);
         if (a.has(f) && b.has(f) && swapped(a.get(f)) === b.get(f)) { expected++; continue; }
         diffs.push(`${hash} @${w}px ${path} [${f}]\n    base:  ${a.get(f) ?? "(none)"}\n    split: ${b.get(f) ?? "(none)"}`);
       }

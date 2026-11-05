@@ -109,6 +109,10 @@ test("no text resolves to the raw accent, through whatever token: color, fill an
   }
 });
 
+// The stops are enough here: between two stops each channel is interpolated linearly in sRGB, and in the update
+// hint's gradient every channel moves the same way between neighbouring stops (all up in dark, #a98cf5 to #dcd0fb;
+// all down in light, #6234d9 to #3b1d99), so the luminance, and the ratio against a plain ground, lies between
+// the stops' and is lowest at one of them.
 test("text drawn by a gradient (a transparent text fill) reaches 4.5:1 at every colour of the gradient, in both themes", () => {
   let seen = 0;
   for (const r of rules(STYLE).concat(rules(VIEWS))) {
