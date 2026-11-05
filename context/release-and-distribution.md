@@ -88,16 +88,37 @@ Before `gh release create` and the `latest` move, the workflow compares the tag'
 
 **Id:** da26d6e0-300d-4801-ad1e-0421a2eb1f1b
 **Type:** decision
-**Status:** active
+**Status:** superseded
 **Evidence:** confirmed
 **Source:** security audit of the whole repository, 2026-09-07; maintainer call the same day
 **Revisit when:** a third account gets write access, or the bot's credentials leave the maintainer's own machine
+**Superseded by:** 208bee54-2ba6-4242-b14a-598686be92f4
 
 The `pypi` environment has no required reviewer and no deployment-branch policy, and no tag ruleset restricts `v*`, `latest` or `lint-*`. Anyone with write access can run `publish-lint.yml` and push a skill tag that creates a release and moves `latest`. Write access is two accounts: the maintainer and the assisting agent's bot account, whose token lives on the maintainer's own machine.
 
 **Reason:** the protections would guard against a compromised write-access account, and the only such account besides the maintainer's runs on the maintainer's system — a compromise of one is a compromise of both, so a required-reviewer step would ask the compromised party to approve itself. The releases are run by the agent on the maintainer's explicit request (`CONTRIBUTING.md`, release checklist), which the protection would turn into a two-step dance with no security gained.
 
 **Rejected alternative:** required reviewer on `pypi` plus a tag ruleset allowing only the maintainer. Rejected for now for the reason above; it becomes right the moment the two-accounts-one-machine premise stops holding.
+
+## Release tags move only through an App whose key needs the maintainer's approval
+
+**Id:** 208bee54-2ba6-4242-b14a-598686be92f4
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer decision between three options, 2026-11-05, after the revisit condition of da26d6e0 was met (several agents with write access now run on the machine that held the bot's token)
+**Revisit when:** someone other than the maintainer needs to approve releases, or GitHub lets `GITHUB_TOKEN` be a ruleset bypass actor
+
+A tag ruleset protects `v*`, `latest`, `lint-v*`, `lint-latest` and `dashboard-v*`: no creation, update or deletion, no force push, with only the repository admin and a GitHub App, `keep-the-why-release-tags`, allowed to bypass it. The App can write contents and is installed on this repository only. Its key and Client ID are stored in two environments, never as repository secrets. `pypi` runs `publish-lint.yml` and `publish-dashboard.yml` from `main` only. `release` runs `release.yml` from `main` and `v*.*.*` tags. Both need the maintainer's approval, so every run that moves a tag waits for his click. The workflows mint a short-lived App token in the approved job and push the tags with it. In the publish jobs that happens only after the PyPI upload succeeded, so no write credential is on disk while the third-party upload action runs. The App's bot user is the tagger of the annotated `lint-v*` and `dashboard-v*` tags, with its id read at run time and no fallback identity. The maintainer pushes `vX.Y.Z` himself. Agents keep write access but have no bypass.
+
+**Reason:** write access is no longer two accounts on one machine. With several agents holding write access, the premise of da26d6e0 — a reviewer step would only ask the compromised party to approve itself — no longer holds. A tag ruleset alone would break the release workflows, because `GITHUB_TOKEN` cannot be a bypass actor and the three workflows pushed their tags with it. An App can be one, and keeping its key in environments that need the maintainer's approval means that a workflow changed on any branch cannot read it or move a tag without that approval.
+
+**Rejected alternatives:**
+- *A ruleset on `v*.*.*` only.* `latest`, `lint-latest` and the package tags would stay movable by every write account, and `lint-latest` is what the GitHub Action installs from.
+- *Moving `latest`, `lint-*` and `dashboard-*` by hand.* It gives up the property that every tag is made by the run that published, from the same commit.
+- *A personal access token or a deploy key as a repository secret.* Every workflow on every branch can read a repository secret, so there is no approval in the path, and a PAT acts as a person, not as a narrow installation.
+
+**Consequence:** every release run now waits for the maintainer in Actions. The tag push can be refused after the PyPI upload has succeeded. Then the version is on PyPI without its tag, and a re-run fails at PyPI. The recovery is the maintainer pushing the tag by hand as admin, on the run's commit (`CONTRIBUTING.md`, release checklist). It is the one place a tag is made by hand.
 
 ## skills.sh rides the moving `latest` tag; awesome-copilot needs a pinned release instead
 
