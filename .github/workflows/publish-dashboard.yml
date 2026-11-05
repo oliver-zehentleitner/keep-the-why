@@ -76,12 +76,21 @@ jobs:
         with:
           packages-dir: dist
 
-      # Tags under the release-tags ruleset can only be pushed by the
-      # repository admin and the release-tags App, never by GITHUB_TOKEN.
-      # The App's key lives in this environment only, so the token exists
-      # after the maintainer approved the run and after the upload
-      # succeeded — no write credential is on disk while the PyPI action
-      # runs. See context/release-and-distribution.md.
+  # The tags go out in a job of their own, on a fresh runner. The runner
+  # receives every secret a job references when the job starts, so the
+  # release-tags App's key must not be referenced in the upload job at
+  # all — not even in a step after the upload — or it would be in memory
+  # while the third-party PyPI action runs. The key lives only in the
+  # `release` environment; tags under the release-tags ruleset can be
+  # pushed by the repository admin and that App, never by GITHUB_TOKEN.
+  # See context/release-and-distribution.md.
+  tag:
+    needs: [build, publish]
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+    steps:
       - name: Mint the release-tags token
         id: app-token
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
@@ -90,8 +99,10 @@ jobs:
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
           permission-contents: write
 
+      # The commit `build` built from and `publish` uploaded.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.sha }}
           token: ${{ steps.app-token.outputs.token }}
 
       - name: Tag the published commit
