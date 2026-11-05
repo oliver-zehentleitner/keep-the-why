@@ -78,7 +78,11 @@ const slug = hostAnchor; // the fallback id of an entry a state carries without 
 // not normalised.
 // `safeHref` is the backstop every URL attribute the views set goes through (ui.js setAttrs): a relative reference
 // passes — a host's own places are `#…`, `?…`, a path — and anything with a scheme must pass `safeUrl`.
+// `plainText` is the same rule without the space and the backslash, for a name that is not an address (a
+// project's key on this machine is its path): a string with no control, zero-width or bidi character.
+const CONTROL_CHARS = /[\u0000-\u001f\u007f-\u009f\u00ad\u061c\u200b-\u200f\u202a-\u202e\u2060\u2066-\u2069\ufeff]/u;
 const UNSAFE_CHARS = /[\s\u0000-\u001f\u007f-\u009f\u00ad\u061c\u200b-\u200f\u202a-\u202e\u2060\u2066-\u2069\ufeff\\]/u;
+const plainText = (s) => typeof s === "string" && !CONTROL_CHARS.test(s);
 const URL_WARNED = new Set(), URL_WARNED_MAX = 100; // bounded: a hostile state does not grow it without end
 function urlRejected(u, why) {
   if (!URL_WARNED.has(u) && URL_WARNED.size < URL_WARNED_MAX) { URL_WARNED.add(u); console.warn(`KeepTheWhy: not linked (${why}): ${JSON.stringify(u.length > 200 ? u.slice(0, 200) + "…" : u)}`); }
@@ -860,31 +864,62 @@ function sortAuthors(rows, key, dir) {
 // #entry/<uuid>, #topic/<file>, #timeline/<day>, #search/<scope>/<q>,
 // #thought/<a,b,…>, #ref/<canonical>/<uuid>, a page by its name (#graph),
 // and #graph/family, an old link to the family graph (alias: "family").
+// A route with a `centre` — a place in another project — carries it as a prefix:
+// #centre/public/<canonical>/<root>/<place> (a published export; <root> may be empty) and
+// #centre/live/<project>/<place> (a project a server knows), where <place> is one of the
+// above without its `#`, and nothing for the overview. Every value is encoded
+// (encodeURIComponent; a topic's file per path segment, so its `/` stays), so a file named
+// `a #b?.md` or a canonical with a port survives the round trip: parse(format(r)) is r. A
+// centre's values are not checked here — a host that acts on them checks them (core.safeUrl
+// for a canonical). The `export` centre, a page's own embedded state, is not another
+// project and writes no prefix. The dashboard itself keeps a centre in the query
+// (?public=, ?project=); the prefix is for hosts that write a route as one path.
 const PAGES = ["overview", "graph", "globe", "timeline", "authors", "queues", "findings", "family", "projects", "friends", "thoughts"];
 const decodePart = (s) => { try { return decodeURIComponent(s); } catch { return s; } }; // a malformed escape stays as written
-function parseRoute(hash) {
-  const r = String(hash || "").replace(/^#/, "");
+const enc = encodeURIComponent;
+const encPath = (file) => String(file).split("/").map(enc).join("/");
+function parsePlace(r) {
   if (!r) return { view: "overview" };
   if (PAGES.includes(r)) return { view: r };
   if (r === "graph/family") return { view: "graph", alias: "family" };
-  if (r.startsWith("timeline/")) return { view: "timeline", day: r.slice(9) || null };
-  if (r.startsWith("topic/")) return { view: "topic", file: r.slice(6) };
+  if (r.startsWith("timeline/")) return { view: "timeline", day: decodePart(r.slice(9)) || null };
+  if (r.startsWith("topic/")) return { view: "topic", file: decodePart(r.slice(6)) };
   if (r.startsWith("entry/")) return { view: "entry", uuid: decodePart(r.slice(6)) };
   if (r.startsWith("thought/")) return { view: "thought", refs: r.slice(8).split(",").filter(Boolean).map(decodePart) };
-  if (r.startsWith("ref/")) { const cut = r.lastIndexOf("/"); return { view: "ref", canonical: decodePart(r.slice(4, cut)), uuid: r.slice(cut + 1) }; }
-  if (r.startsWith("search/")) { const [, scope, ...q] = r.split("/"); return { view: "search", scope, q: decodePart(q.join("/")) }; }
-  return { view: "overview", unknown: r }; // a hash no place answers to shows the overview, as it always has
+  if (r.startsWith("ref/")) { const cut = r.lastIndexOf("/"); return { view: "ref", canonical: decodePart(r.slice(4, cut)), uuid: decodePart(r.slice(cut + 1)) }; }
+  if (r.startsWith("search/")) { const [, scope, ...q] = r.split("/"); return { view: "search", scope: decodePart(scope), q: decodePart(q.join("/")) }; }
+  return null;
+}
+function parseRoute(hash) {
+  const r = String(hash || "").replace(/^#/, "");
+  if (r.startsWith("centre/")) {
+    const parts = r.split("/");
+    const at = parts[1] === "public" && parts.length >= 4 ? 4 : parts[1] === "live" && parts.length >= 3 && parts[2] ? 3 : 0;
+    const centre = at === 4 ? { mode: "public", canonical: decodePart(parts[2]), root: decodePart(parts[3]) }
+      : at === 3 ? { mode: "live", project: decodePart(parts[2]) } : null;
+    const place = centre && (centre.mode !== "public" || centre.canonical) ? parsePlace(parts.slice(at).join("/")) : null;
+    if (place) return { ...place, centre };
+    return { view: "overview", unknown: r };
+  }
+  return parsePlace(r) || { view: "overview", unknown: r }; // a hash no place answers to shows the overview, as it always has
+}
+function formatPlace(route) {
+  const v = route?.view || "overview";
+  if (v === "timeline") return route.day ? `timeline/${enc(route.day)}` : "timeline";
+  if (v === "graph" && route.alias === "family") return "graph/family";
+  if (v === "topic") return `topic/${encPath(route.file)}`;
+  if (v === "entry") return `entry/${enc(route.uuid)}`;
+  if (v === "thought") return `thought/${(route.refs || []).map(enc).join(",")}`;
+  if (v === "ref") return `ref/${enc(route.canonical)}/${enc(route.uuid)}`;
+  if (v === "search") return `search/${enc(route.scope)}/${enc(route.q)}`;
+  return PAGES.includes(v) ? v : "overview";
 }
 function formatRoute(route) {
-  const v = route?.view || "overview";
-  if (v === "timeline") return route.day ? `#timeline/${route.day}` : "#timeline";
-  if (v === "graph" && route.alias === "family") return "#graph/family";
-  if (v === "topic") return `#topic/${route.file}`;
-  if (v === "entry") return `#entry/${encodeURIComponent(route.uuid)}`;
-  if (v === "thought") return `#thought/${(route.refs || []).map(encodeURIComponent).join(",")}`;
-  if (v === "ref") return `#ref/${encodeURIComponent(route.canonical)}/${route.uuid}`;
-  if (v === "search") return `#search/${route.scope}/${encodeURIComponent(route.q)}`;
-  return PAGES.includes(v) ? `#${v}` : "#overview";
+  const c = route?.centre;
+  const place = formatPlace(route);
+  if (c?.mode === "public") return `#centre/public/${enc(c.canonical)}/${enc(c.root || "")}${place === "overview" ? "" : `/${place}`}`;
+  if (c?.mode === "live") return `#centre/live/${enc(c.project)}${place === "overview" ? "" : `/${place}`}`;
+  return `#${place}`;
 }
 const routes = Object.freeze({ PAGES, parse: parseRoute, format: formatRoute });
 
@@ -1124,7 +1159,7 @@ KTW.core = Object.freeze({
   TOKEN_DEFAULTS, readToken, valueColor,
   sameCanonical, exportStateUrl, exportVerdict, resolveSee, LAYOUT, seedLayout, layoutTick, carryNode, reheatAll, treeOf, reheatAfterBuild, reheatSeeded, placeShown, stepLayout, settleLayout, NO_FILTER, filterActive, entryMatches, fkey, repoLabel, topicTitle,
   esc, plural, UUID_RE, isUuid, rawFileUrl, configLine, normalizeState, slug,
-  safeUrl, safeHref, hostAnchor, hostFileLink, hostTreeLink, HOSTS, hostOf, canonicalOf, ownerOf, projectLabel,
+  safeUrl, safeHref, plainText, hostAnchor, hostFileLink, hostTreeLink, HOSTS, hostOf, canonicalOf, ownerOf, projectLabel,
   parseSupersededBy, entryRefs, typeName, kindLabel, fillWords, familyRank, familyOrder, groupByFamily, shuffled, searchTerms,
   registryMatches, bodyProse, searchHit, compareHits, snippetAt, highlightParts, resolveLocation, backlinksUrl,
   citingOf, friendsOf, thoughtsOf, SHAKY, thoughtInsights, linkFamily, authorLookup, mergeStates,

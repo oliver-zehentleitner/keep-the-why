@@ -1289,6 +1289,32 @@ const report = {};
   if (notLinked.length) errors.push("live monitor: warned " + notLinked.join(" | "));
   window.close();
 }
+{
+  // a #centre/… hash — the routes grammar's form of a place in another project, as a host that writes routes as
+  // paths links it — moves the page once to its own form, ?public=, in place of the hash, and the page does not
+  // start where it was. A centre that does not pass the checks (core.safeUrl for a canonical) is not followed:
+  // the page starts on the overview, warns, and goes nowhere
+  const UUID = "5a1e5a1e-0000-4000-8000-000000000002";
+  const good = `#centre/public/${encodeURIComponent(`${GH}/web`)}//entry/${UUID}`;
+  let nav = navigations.length, got = fetched.length;
+  let window = await open(`https://acme.github.io/dash/index.html${good}`);
+  report.centreRedirect = { navigations: navigations.length - nav, fetched: fetched.length - got, main: window.document.getElementById("main")?.children.length ?? null };
+  if (navigations.length - nav !== 1) errors.push(`centre hash: expected one move to the page's own address, got ${navigations.length - nav}`);
+  if (fetched.length !== got) errors.push("centre hash: the page started here and fetched before it moved: " + fetched.slice(got).join(" "));
+  window.close();
+  for (const canonical of ["javascript:alert(1)", "http://github.com/acme/web", "//evil.example/x", "https://user@evil.example/x"]) {
+    warns.length = 0; nav = navigations.length;
+    window = await open(`https://acme.github.io/dash/index.html#centre/public/${encodeURIComponent(canonical)}//entry/${UUID}`);
+    if (navigations.length !== nav) errors.push(`centre hash: a hostile canonical ${canonical} moved the page`);
+    if (!warns.some((w) => /not followed/.test(w))) errors.push(`centre hash: no warning for the hostile canonical ${canonical}`);
+    if (window.location.search) errors.push(`centre hash: the page's query changed for ${canonical}: ${window.location.search}`);
+    window.close();
+  }
+  warns.length = 0; nav = navigations.length;
+  window = await open(`https://acme.github.io/dash/index.html#centre/live/${encodeURIComponent("a\u202eb")}`);
+  if (navigations.length !== nav || !warns.some((w) => /not followed/.test(w))) errors.push("centre hash: a project key with a bidi character was followed, or not warned about");
+  window.close();
+}
 console.log(JSON.stringify(report, null, 1));
 console.log("ERRORS:", errors.length); for (const e of errors) console.log("  " + e);
 process.exit(errors.length ? 1 : 0);

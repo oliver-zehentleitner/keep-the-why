@@ -104,7 +104,7 @@ test("a reference resolved later lands with the host that drew it, whichever hos
   assert.deepEqual(JSON.parse(JSON.stringify(calls.filter((c) => c[1] === "resolveEntry"))), [["A", "resolveEntry", REMOTE], ["B", "resolveEntry", REMOTE]]);
   assert.match(mainA.querySelector(".ktw-ref.ktw-remote").textContent, /A's entry/);
   assert.match(mainB.querySelector(".ktw-ref.ktw-remote").textContent, /B's entry/);
-  assert.equal(mainA.querySelector(".ktw-ref.ktw-remote a").getAttribute("href"), "/maity/p/why" + core.routes.format({ view: "entry", uuid: REMOTE }), "the host's own address for the entry");
+  assert.equal(mainA.querySelector(".ktw-ref.ktw-remote a").getAttribute("href"), "/maity/p/why" + core.routes.format({ view: "entry", uuid: REMOTE, centre: { mode: "live", project: "A" } }), "the host's own address for the entry, in the project it was found in");
 });
 
 test("the address an entry's copy-link button copies is the host's, the path not doubled", () => {
