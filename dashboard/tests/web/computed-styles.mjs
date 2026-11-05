@@ -134,7 +134,10 @@ for (const [width, theme] of runs) {
     const onlyOne = bad.filter((k) => !(k in a.out) || !(k in b.out));
     if (onlyOne.length) { diffs.push(`${theme} ${width}px ${hash}: the element trees differ (${onlyOne.length} paths in one page only, e.g. ${onlyOne[0]})`); continue; }
     const [da, db] = await Promise.all([A.page.evaluate(collect, { want: bad, added: ADDED_SELECTORS, box: PARENT_BOX, trim: b.parents }), B.page.evaluate(collect, { want: bad, added: ADDED_SELECTORS, box: PARENT_BOX, trim: b.parents })]);
-    const unexplained = bad.filter((k) => !onlyRecoloured(theme, da.detail[k] || [], db.detail[k] || []));
+    // the theme the page shows, not the run's name: with no stored choice the dashboard follows the browser's
+    // colour scheme, which is light in a default context
+    const shown = await B.page.evaluate(() => (document.documentElement.dataset.theme === "light" ? "light" : "dark"));
+    const unexplained = bad.filter((k) => !onlyRecoloured(shown, da.detail[k] || [], db.detail[k] || []));
     recolouredCount += bad.length - unexplained.length;
     for (const k of unexplained.slice(0, 20)) {
       const x = new Set(da.detail[k] || []), y = new Set(db.detail[k] || []);
