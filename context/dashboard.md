@@ -965,6 +965,25 @@ A host loads three stylesheets: its element defaults (the dashboard's `base.css`
 - Mapping the tokens as `--ktw-fg: var(--fg)`: the shortest form, and the one the design named, but the canvas would read the text `var(--fg)` under jsdom.
 - Loading `ktw-views.css` after the host's stylesheet: a view would then override the host's own adjustments.
 
+## Text on accent is a pair of tokens, not a darker accent
+
+**Id:** 1fbc57c9-450f-4ce1-8908-c88af4a50162
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** the card for WCAG AA on accent, from a host's review of the views (white on the accent measured 4.49:1, the light type pill 2.06:1); the token design was proposed by the implementer and approved by the project's lead, who widened it from the pill to every accent-coloured text, 2026-11-05
+**Revisit when:** the views get a theme whose accent is light enough that white text cannot reach 4.5:1 on any fill near it, or WCAG 3's contrast method replaces the 2.x ratio as the bar
+
+Text on a solid accent area takes `--ktw-on-accent` over `--ktw-accent-fill`, and accent-coloured text takes `--ktw-accent-text`. `--ktw-accent` itself stays as it was, for borders, bars, outlines and the graph. The active Status pill's text takes `--ktw-status-active-text` in the same way, its border staying `--ktw-status-active`; a separate token, not `--ktw-accent-text`, because a host may give the active status a colour of its own. The fallbacks and both of the dashboard's themes reach 4.5:1: `#ffffff` on `#7a52e6` is 5.03:1, and `--ktw-accent-text` is `#a98cf5` in dark and `#6234d9` in light. A test measures the pairs from the shipped stylesheets and fails on any text colour that resolves to the raw accent, through whatever token, and on a gradient text whose colours do not reach 4.5:1.
+
+**Reason:** the accent's non-text uses (borders, bars, the graph's topic nodes) need no text contrast, and they are what makes the views look like themselves. Darkening the accent itself would have changed all of them, and every canvas trace with them, to fix a handful of labels. A separate token per role lets a host that brings its own accent set the text colours to match, and lets the contrast be checked pair by pair.
+
+**Rejected alternatives:**
+- *A slightly darker `--ktw-accent`* (`#8159ec` already passes with white): it changes every border, bar and graph node, and leaves no room for a host's accent.
+- *Dark text on the accent* (black on `#835bec`, 4.67:1): it flips the look of every selected button and barely passes.
+- *Fixing only the type pill:* the card's finding. The light theme's links, marks and counts were 2.59:1 for the same reason, so the token covers every accent-coloured text, the canvas's included.
+- *Nesting `var(--ktw-accent-text, var(--ktw-accent2, …))` for hosts that set only `--ktw-accent2`:* every fallback in `ktw-views.css` is one literal, held to `TOKEN_DEFAULTS` by a test, so that a host without a token sees one colour wherever it is read. Instead, the token table names the three a host sets.
+
 ## exportState and bodies are optional; a rejection, or a bodies answer that leaves the state lean, is an answer with an error
 
 **Id:** 09dbb355-cd4b-42cc-8fe8-e032ebabdf82

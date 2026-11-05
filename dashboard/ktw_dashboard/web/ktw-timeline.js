@@ -166,7 +166,7 @@ function stagePainter(ctx, scene, cam, layout, v, o) {
       mm--; if (mm < 1) { mm = 12; yy--; }
     }
     // the day shown, in the corner
-    ctx.globalAlpha = 1; ctx.textBaseline = "top"; ctx.font = `600 11px ${color("--ktw-mono") || "monospace"}`; ctx.fillStyle = color("--ktw-accent2"); ctx.fillText(`${day}${PLAY.on ? " ▶" : ""}`, 10, 9);
+    ctx.globalAlpha = 1; ctx.textBaseline = "top"; ctx.font = `600 11px ${color("--ktw-mono") || "monospace"}`; ctx.fillStyle = color("--ktw-accent-text"); ctx.fillText(`${day}${PLAY.on ? " ▶" : ""}`, 10, 9);
   }
   function laneNames(day) { // by topic: along the near edge, the upper shelf's lane above the lower's
     const { proj, floorY, K } = cam;
@@ -181,7 +181,7 @@ function stagePainter(ctx, scene, cam, layout, v, o) {
     const groups = new Map();
     for (const { c } of vis) { if (c.ext) continue; const b = boxes.get(c); const g = groups.get(c.e.file) || groups.set(c.e.file, { x: 0, y: 0, n: 0 }).get(c.e.file); g.x += b.cx; g.y += b.cy; g.n++; }
     ctx.font = font(10.5, "600"); ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    for (const [file, g] of groups) { const t = (topicOf(file)?.title || file).replace(/`/g, "").slice(0, 34); const x = g.x / g.n, y = g.y / g.n; const w = ctx.measureText(t).width + 12; const on = v.hoverTopic === file; ctx.globalAlpha = on ? 0.95 : 0.82; ctx.fillStyle = on ? color("--ktw-surface2") : color("--ktw-bg"); ctx.fillRect(x - w / 2, y - 8, w, 16); ctx.globalAlpha = on ? 1 : 0.9; ctx.fillStyle = on ? color("--ktw-accent2") : color("--ktw-fg2"); ctx.fillText(t, x, y); labels.push({ file, x0: x - w / 2, y0: y - 8, x1: x + w / 2, y1: y + 8 }); }
+    for (const [file, g] of groups) { const t = (topicOf(file)?.title || file).replace(/`/g, "").slice(0, 34); const x = g.x / g.n, y = g.y / g.n; const w = ctx.measureText(t).width + 12; const on = v.hoverTopic === file; ctx.globalAlpha = on ? 0.95 : 0.82; ctx.fillStyle = on ? color("--ktw-surface2") : color("--ktw-bg"); ctx.fillRect(x - w / 2, y - 8, w, 16); ctx.globalAlpha = on ? 1 : 0.9; ctx.fillStyle = on ? color("--ktw-accent-text") : color("--ktw-fg2"); ctx.fillText(t, x, y); labels.push({ file, x0: x - w / 2, y0: y - 8, x1: x + w / 2, y1: y + 8 }); }
   }
   function lines(day, boxes, lit) { // every See and Superseded by written by then; a lit thought's and the held or pointed-at card's stand out, the rest fade
     const pairs = scene.G?.thought?.pairs || null;

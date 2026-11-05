@@ -45,19 +45,22 @@ for (let i = 0; i < places; i++) {
     if (r.ink) inked.push(`${name} ${r.view} ${r.ink}px`);
   }
 }
-// the tokens: a Status pill on the overview, in host A's colour and in the views' fallback under host B
+// the tokens: a Status pill on the overview, in host A's colours and in the views' fallbacks under host B — the
+// text in the status's text token, the border in the status colour
 await page.evaluate(async () => { for (const n of ["a", "b"]) window.KTW_HOSTS[n].go({ view: "overview" }); await new Promise((r) => setTimeout(r, 300)); });
 const colours = await page.evaluate(() => ["a", "b"].map((n) => {
   const pill = window.KTW_HOSTS[n].main.querySelector(".ktw-pill.ktw-status-active, .ktw-pill.ktw-status-open");
   const dot = window.KTW_HOSTS[n].main.querySelector(".ktw-stack i, .ktw-bar i");
-  return { pill: pill && [pill.className, getComputedStyle(pill).color], dot: dot && getComputedStyle(dot).backgroundColor };
+  return { pill: pill && [pill.className, getComputedStyle(pill).color, getComputedStyle(pill).borderTopColor], dot: dot && getComputedStyle(dot).backgroundColor };
 }));
-const want = { a: { active: "rgb(181, 73, 43)", open: "rgb(44, 110, 155)" }, b: { active: "rgb(131, 91, 236)", open: "rgb(74, 163, 223)" } };
+const want = { a: { active: "rgb(156, 61, 34)", open: "rgb(44, 110, 155)" }, b: { active: "rgb(169, 140, 245)", open: "rgb(74, 163, 223)" } };
+const wantBorder = { a: { active: "rgb(181, 73, 43)", open: "rgb(44, 110, 155)" }, b: { active: "rgb(131, 91, 236)", open: "rgb(74, 163, 223)" } };
 ["a", "b"].forEach((n, i) => {
   const c = colours[i];
   if (!c.pill) { errors.push(`host ${n}: no Status pill on the overview`); return; }
   const kind = /status-active/.test(c.pill[0]) ? "active" : "open";
-  if (c.pill[1] !== want[n][kind]) errors.push(`host ${n}: a ${kind} pill is ${c.pill[1]}, the host's token says ${want[n][kind]}`);
+  if (c.pill[1] !== want[n][kind]) errors.push(`host ${n}: a ${kind} pill's text is ${c.pill[1]}, the host's token says ${want[n][kind]}`);
+  if (c.pill[2] !== wantBorder[n][kind]) errors.push(`host ${n}: a ${kind} pill's border is ${c.pill[2]}, the host's status colour is ${wantBorder[n][kind]}`);
   if (!c.dot || c.dot === "rgba(0, 0, 0, 0)") errors.push(`host ${n}: a bar or a stack has no colour (${c.dot}) — an inline style the policy dropped?`);
 });
 errors.push(...(await page.evaluate(() => window.KTW_HOST_ERRORS || [])));

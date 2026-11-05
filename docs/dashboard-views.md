@@ -94,6 +94,13 @@ Every `create` also takes `words`, the host's hook for the UI text in its own la
 
 A view renders into the element the host hands it: `pages.overview(main, H)`, `family.view(main)`, `search.view(main, scope, q)`, and so on. The lib has no page layout of its own. The dashboard's three columns (sidebar, main, details) are the dashboard's, and another host puts the views wherever its own layout has room.
 
+**The container stays in the document.** Hand a view a container that is already in the document when you call it, and leave it there while the view loads. Some views await the provider and then draw into what they put in the container. If they find it detached, they take it that the reader has left the page, and stop without a message. That is what keeps a slow answer from drawing over the page the reader went on to:
+
+- **Containers checked for detachment:** `thoughts.page(main, host)`, `family.view(main)` and `family.friendsView(main, host)` stop when their container is detached after an await.
+- **Route checked instead:** `search.view(main, scope, q)` stops when `nav.current()` is no longer that search.
+
+A host that attaches its view root only after the view function has returned shows that view's "Loading…" for ever. This happens when the provider answers within a microtask. There is no warning for it, because a detached container is also what every ordinary navigation leaves behind.
+
 **The host's duty:** every container a view renders into carries the class `ktw-root`, and a side pane also carries `ktw-aside`. The dashboard does this on `#main` and on `#details`:
 
 ```html
@@ -295,6 +302,14 @@ The views read colours, fonts and the corner radius from `--ktw-*` custom proper
 
 To restyle the views, set the tokens on `:root` or on any ancestor of the views.
 
+**Contrast.** Text on accent meets WCAG AA (4.5:1) with the fallbacks and in both of the dashboard's themes, and a host that sets these tokens keeps it:
+
+- `--ktw-on-accent` against `--ktw-accent-fill`;
+- `--ktw-accent-text` against `--ktw-bg`, against `--ktw-surface`, and against the type pill's tint (`--ktw-accent` at 18% over either);
+- `--ktw-status-active-text` against the pill's ground `--ktw-surface2`, and against `--ktw-surface` and `--ktw-bg`.
+
+A host that changes `--ktw-accent` or `--ktw-status-active` sets these with it; they do not follow on their own. The dashboard's light theme sets `--ktw-accent-text` and `--ktw-status-active-text` to `#6234d9`. `dashboard/tests/web/contrast.test.mjs` measures the pairs from the stylesheets.
+
 | Token | Fallback | What |
 |---|---|---|
 | `--ktw-bg` | `#1e1e22` | page ground |
@@ -304,8 +319,11 @@ To restyle the views, set the tokens on `:root` or on any ancestor of the views.
 | `--ktw-fg` | `#dcdce3` | text |
 | `--ktw-fg2` | `#a2a2ad` | secondary text |
 | `--ktw-fg3` | `#6f6f7a` | faint text, labels |
-| `--ktw-accent` | `#835bec` | the accent |
-| `--ktw-accent2` | `#a98cf5` | links |
+| `--ktw-accent` | `#835bec` | the accent: borders, bars, outlines, the graph |
+| `--ktw-accent2` | `#a98cf5` | the accent's lighter tone: lines and frames in the graph and the timeline |
+| `--ktw-accent-fill` | `#7a52e6` | a solid accent area with text on it (a selected button, the search scope) |
+| `--ktw-on-accent` | `#ffffff` | text on `--ktw-accent-fill` |
+| `--ktw-accent-text` | `#a98cf5` | accent-coloured text: links, marks, counts, the type pill |
 | `--ktw-ok` | `#4fbf7a` | good |
 | `--ktw-warn` | `#e0a83a` | warning |
 | `--ktw-bad` | `#e0574f` | error |
@@ -314,7 +332,8 @@ To restyle the views, set the tokens on `:root` or on any ancestor of the views.
 | `--ktw-confirmed` | `#4fbf7a` | Evidence: confirmed |
 | `--ktw-inferred` | `#e0a83a` | Evidence: inferred |
 | `--ktw-unknown` | `#e0574f` | Evidence: unknown |
-| `--ktw-status-active` | `#835bec` | Status: active |
+| `--ktw-status-active` | `#835bec` | Status: active (the pill's border, bars, the graph) |
+| `--ktw-status-active-text` | `#a98cf5` | the active Status pill's text |
 | `--ktw-status-superseded` | `#6f6f7a` | Status: superseded |
 | `--ktw-status-open` | `#4aa3df` | Status: open |
 | `--ktw-status-needs-review` | `#e0a83a` | Status: needs-review |

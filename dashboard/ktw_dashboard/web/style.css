@@ -10,6 +10,11 @@
   --ktw-fg3: #6f6f7a;
   --ktw-accent: #835bec;
   --ktw-accent2: #a98cf5;
+  /* text on accent (WCAG AA, 4.5:1, in both themes): text on a solid accent area takes --ktw-on-accent over
+     --ktw-accent-fill, accent-coloured text takes --ktw-accent-text; a theme that changes one keeps the ratio */
+  --ktw-accent-fill: #7a52e6;
+  --ktw-on-accent: #ffffff;
+  --ktw-accent-text: #a98cf5;
   --ktw-ok: #4fbf7a;
   --ktw-warn: #e0a83a;
   --ktw-bad: #e0574f;
@@ -19,6 +24,7 @@
   --ktw-inferred: #e0a83a;
   --ktw-unknown: #e0574f;
   --ktw-status-active: #835bec;
+  --ktw-status-active-text: #a98cf5;
   --ktw-status-superseded: #6f6f7a;
   --ktw-status-open: #4aa3df;
   --ktw-status-needs-review: #e0a83a;
@@ -28,10 +34,10 @@
   --ktw-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --bg: #1e1e22; --bg2: #26262b; --bg3: #2f2f36; --line: #3a3a43;
   --fg: #dcdce3; --fg2: #a2a2ad; --fg3: #6f6f7a;
-  --accent: #835bec; --accent2: #a98cf5;
+  --accent: #835bec; --accent2: #a98cf5; --accent-fill: #7a52e6; --on-accent: #ffffff; --accent-text: #a98cf5; --accent-shine: #dcd0fb;
   --ok: #4fbf7a; --warn: #e0a83a; --bad: #e0574f; --info: #4aa3df; --muted: #8b8b98;
   --confirmed: #4fbf7a; --inferred: #e0a83a; --unknown: #e0574f;
-  --active: #835bec; --superseded: #6f6f7a; --open: #4aa3df; --needs-review: #e0a83a; --pending-confirmation: #d66fd6;
+  --active: #835bec; --active-text: #a98cf5; --superseded: #6f6f7a; --open: #4aa3df; --needs-review: #e0a83a; --pending-confirmation: #d66fd6;
   /* the colour tokens the page's views read (--ktw-*): a Type's colour, and the palette for authors,
      family members and friends; another host restyles the views by setting these. Literal values, the
      same in both themes, not var(--accent) and the like: jsdom, which renders the DOM snapshots, does not
@@ -52,8 +58,10 @@
   --ktw-fg2: #55555f;
   --ktw-fg3: #8a8a96;
   --ktw-status-superseded: #9a9aa6;
+  --ktw-accent-text: #6234d9;
+  --ktw-status-active-text: #6234d9;
   --bg: #fafafa; --bg2: #ffffff; --bg3: #f0f0f3; --line: #e2e2e8;
-  --fg: #1f1f26; --fg2: #55555f; --fg3: #8a8a96; --superseded: #9a9aa6;
+  --fg: #1f1f26; --fg2: #55555f; --fg3: #8a8a96; --superseded: #9a9aa6; --accent-text: #6234d9; --active-text: #6234d9; --accent-shine: #3b1d99;
   color-scheme: light;
 }
 .app { display: grid; height: 100vh; grid-template-columns: 280px 1fr 340px; grid-template-rows: 48px 36px 1fr 24px;
@@ -131,9 +139,9 @@
 .statusbar { grid-area: status; display: flex; gap: 18px; align-items: center; padding: 0 14px; font-size: 11px; color: var(--fg3); background: var(--bg2); border-top: 1px solid var(--line); }
 .statusbar a { color: var(--fg2); }
 .statusbar a:hover { color: var(--fg); }
-.statusbar .outdated a { color: var(--accent2); background: linear-gradient(90deg, var(--accent2) 0%, #fff 45%, var(--accent2) 55%, var(--accent2) 100%); background-size: 240% 100%; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: shimmer 2.8s linear infinite; cursor: help; }
+.statusbar .outdated a { color: var(--accent-text); background: linear-gradient(90deg, var(--accent-text) 0%, var(--accent-shine) 45%, var(--accent-text) 55%, var(--accent-text) 100%); background-size: 240% 100%; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: shimmer 2.8s linear infinite; cursor: help; }
 @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -40% 0; } }
-@media (prefers-reduced-motion: reduce) { .statusbar .outdated a { animation: none; -webkit-text-fill-color: currentColor; background: none; color: var(--accent2); text-decoration: underline dotted; } }
+@media (prefers-reduced-motion: reduce) { .statusbar .outdated a { animation: none; -webkit-text-fill-color: currentColor; background: none; color: var(--accent-text); text-decoration: underline dotted; } }
 .nav-toggle { display: none; background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 5px 10px; color: var(--fg2); cursor: pointer; white-space: nowrap; margin-left: 4px; }
 .statusbar .grow { margin-left: auto; }
 #loaded { position: relative; }
@@ -204,7 +212,7 @@
   .project-select { max-width: calc(100vw - 150px); }
 }
 /* the family merged: a project heading in the sidebar, a banner on the overview, author links */
-.tree .tree-project { padding: 10px 16px 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--accent2); }
+.tree .tree-project { padding: 10px 16px 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--accent-text); }
 .ktw-path-bar .grow { flex: 1; }
 @media (min-width: 901px) {
   .app[data-side="2"] { grid-template-columns: 280px minmax(0, 1fr) min(680px, 45vw); }
@@ -232,7 +240,7 @@
 .ktw-graph-ui .globe-info-box p { margin: 6px 0 0; }
 .ktw-graph-ui .globe-info-box b { color: var(--fg); }
 .ktw-graph-ui .globe-info-box code { font-size: 10px; }
-.ktw-graph-ui .globe-info-box a { color: var(--accent2); }
+.ktw-graph-ui .globe-info-box a { color: var(--accent-text); }
 .globe-dialog { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; }
 .globe-card { background: var(--bg2); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; max-width: 560px; width: calc(100% - 40px); max-height: 80vh; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 12px 40px rgba(0,0,0,.45); }
 .globe-card h3 { margin: 0; }
@@ -240,7 +248,7 @@
 .globe-list div { padding: 2px 0; }
 .globe-actions { display: flex; gap: 10px; justify-content: flex-end; }
 .globe-actions .portion { margin-right: auto; display: flex; gap: 6px; align-items: center; }
-.globe-actions .primary { background: var(--accent); color: #fff; border: 0; border-radius: 5px; padding: 5px 12px; cursor: pointer; }
+.globe-actions .primary { background: var(--accent-fill); color: var(--on-accent); border: 0; border-radius: 5px; padding: 5px 12px; cursor: pointer; }
 .globe-intro .globe-list p { margin: 4px 0 8px; line-height: 1.45; }
 .globe-intro .globe-actions label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
 .loaded-row.own { background: color-mix(in srgb, var(--accent) 8%, transparent); }
@@ -262,7 +270,7 @@
 #loaded > a .ktw-warn { color: var(--warn); }
 /* without JavaScript: a notice, in an export the project's topics and entries as links to its host, and what Keep the Why is */
 .nojs { max-width: 860px; margin: 0 auto; padding: 24px 16px 48px; line-height: 1.5; }
-.nojs a { color: var(--accent2); }
+.nojs a { color: var(--accent-text); }
 .nojs-brand { display: inline-block; margin-bottom: 8px; }
 .nojs-brand img { display: block; height: 29px; width: auto; }
 .nojs-need { color: var(--fg2); border-left: 3px solid var(--accent); padding-left: 12px; }

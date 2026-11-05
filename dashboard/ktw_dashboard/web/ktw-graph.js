@@ -306,7 +306,7 @@ function runGraph(canvas, g, opts = {}) {
         if (!must && !free(box)) continue;
         placed.push(box);
         ctx.fillStyle = color("--ktw-bg"); ctx.globalAlpha = faded ? 0.4 : 0.75; ctx.fillRect(box.x0, box.y0, box.x1 - box.x0, 15 / V.scale); ctx.globalAlpha = faded ? 0.5 : 1;
-        ctx.fillStyle = n.kind === "entry" ? color("--ktw-fg2") : hubName && n === hoverName ? color("--ktw-accent2") : color("--ktw-fg"); ctx.fillText(txt, tx, y);
+        ctx.fillStyle = n.kind === "entry" ? color("--ktw-fg2") : hubName && n === hoverName ? color("--ktw-accent-text") : color("--ktw-fg"); ctx.fillText(txt, tx, y);
         if (mark) { ctx.save(); ctx.translate(left, y + 0.5 / V.scale); ctx.scale(iw / 24, iw / 24); ctx.fill(mark); ctx.restore(); }
         if (hubName) {
           g.nameBoxes.push({ n, ...box });

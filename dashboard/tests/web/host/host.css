@@ -5,9 +5,10 @@
   --ktw-bg: #fffdf7; --ktw-surface: #f7f2e7; --ktw-surface2: #efe7d6; --ktw-line: #d9cdb4;
   --ktw-fg: #2b2620; --ktw-fg2: #5b5246; --ktw-fg3: #8a7f70;
   --ktw-accent: #b5492b; --ktw-accent2: #c4612f;
+  --ktw-accent-fill: #b5492b; --ktw-on-accent: #ffffff; --ktw-accent-text: #9c3d22;
   --ktw-ok: #2f7d4f; --ktw-warn: #a8740f; --ktw-bad: #b03a2e; --ktw-info: #2c6e9b; --ktw-muted: #7d7468;
   --ktw-confirmed: #2f7d4f; --ktw-inferred: #a8740f; --ktw-unknown: #b03a2e;
-  --ktw-status-active: #b5492b; --ktw-status-superseded: #9a9183; --ktw-status-open: #2c6e9b;
+  --ktw-status-active: #b5492b; --ktw-status-active-text: #9c3d22; --ktw-status-superseded: #9a9183; --ktw-status-open: #2c6e9b;
   --ktw-status-needs-review: #a8740f; --ktw-status-pending-confirmation: #8e4aa0;
   --ktw-radius: 3px; --ktw-font: Georgia, serif; --ktw-mono: "Courier New", monospace;
   --ktw-type-decision: #b5492b; --ktw-type-constraint: #2c6e9b; --ktw-type-workaround: #a8740f; --ktw-type-incident: #b03a2e;
