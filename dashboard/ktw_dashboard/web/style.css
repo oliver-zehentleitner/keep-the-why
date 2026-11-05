@@ -24,6 +24,7 @@
   --ktw-inferred: #e0a83a;
   --ktw-unknown: #e0574f;
   --ktw-status-active: #835bec;
+  --ktw-status-active-text: #a98cf5;
   --ktw-status-superseded: #6f6f7a;
   --ktw-status-open: #4aa3df;
   --ktw-status-needs-review: #e0a83a;
@@ -33,10 +34,10 @@
   --ktw-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --bg: #1e1e22; --bg2: #26262b; --bg3: #2f2f36; --line: #3a3a43;
   --fg: #dcdce3; --fg2: #a2a2ad; --fg3: #6f6f7a;
-  --accent: #835bec; --accent2: #a98cf5; --accent-fill: #7a52e6; --on-accent: #ffffff; --accent-text: #a98cf5;
+  --accent: #835bec; --accent2: #a98cf5; --accent-fill: #7a52e6; --on-accent: #ffffff; --accent-text: #a98cf5; --accent-shine: #dcd0fb;
   --ok: #4fbf7a; --warn: #e0a83a; --bad: #e0574f; --info: #4aa3df; --muted: #8b8b98;
   --confirmed: #4fbf7a; --inferred: #e0a83a; --unknown: #e0574f;
-  --active: #835bec; --superseded: #6f6f7a; --open: #4aa3df; --needs-review: #e0a83a; --pending-confirmation: #d66fd6;
+  --active: #835bec; --active-text: #a98cf5; --superseded: #6f6f7a; --open: #4aa3df; --needs-review: #e0a83a; --pending-confirmation: #d66fd6;
   /* the colour tokens the page's views read (--ktw-*): a Type's colour, and the palette for authors,
      family members and friends; another host restyles the views by setting these. Literal values, the
      same in both themes, not var(--accent) and the like: jsdom, which renders the DOM snapshots, does not
@@ -58,8 +59,9 @@
   --ktw-fg3: #8a8a96;
   --ktw-status-superseded: #9a9aa6;
   --ktw-accent-text: #6234d9;
+  --ktw-status-active-text: #6234d9;
   --bg: #fafafa; --bg2: #ffffff; --bg3: #f0f0f3; --line: #e2e2e8;
-  --fg: #1f1f26; --fg2: #55555f; --fg3: #8a8a96; --superseded: #9a9aa6; --accent-text: #6234d9;
+  --fg: #1f1f26; --fg2: #55555f; --fg3: #8a8a96; --superseded: #9a9aa6; --accent-text: #6234d9; --active-text: #6234d9; --accent-shine: #3b1d99;
   color-scheme: light;
 }
 .app { display: grid; height: 100vh; grid-template-columns: 280px 1fr 340px; grid-template-rows: 48px 36px 1fr 24px;
@@ -137,7 +139,7 @@
 .statusbar { grid-area: status; display: flex; gap: 18px; align-items: center; padding: 0 14px; font-size: 11px; color: var(--fg3); background: var(--bg2); border-top: 1px solid var(--line); }
 .statusbar a { color: var(--fg2); }
 .statusbar a:hover { color: var(--fg); }
-.statusbar .outdated a { color: var(--accent-text); background: linear-gradient(90deg, var(--accent2) 0%, #fff 45%, var(--accent2) 55%, var(--accent2) 100%); background-size: 240% 100%; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: shimmer 2.8s linear infinite; cursor: help; }
+.statusbar .outdated a { color: var(--accent-text); background: linear-gradient(90deg, var(--accent-text) 0%, var(--accent-shine) 45%, var(--accent-text) 55%, var(--accent-text) 100%); background-size: 240% 100%; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: shimmer 2.8s linear infinite; cursor: help; }
 @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -40% 0; } }
 @media (prefers-reduced-motion: reduce) { .statusbar .outdated a { animation: none; -webkit-text-fill-color: currentColor; background: none; color: var(--accent-text); text-decoration: underline dotted; } }
 .nav-toggle { display: none; background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 5px 10px; color: var(--fg2); cursor: pointer; white-space: nowrap; margin-left: 4px; }

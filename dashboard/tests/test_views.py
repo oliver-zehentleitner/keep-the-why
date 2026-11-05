@@ -299,6 +299,7 @@ TOKEN_OF = {
     "accent-fill": "accent-fill",
     "on-accent": "on-accent",
     "accent-text": "accent-text",
+    "active-text": "status-active-text",
     "ok": "ok",
     "warn": "warn",
     "bad": "bad",

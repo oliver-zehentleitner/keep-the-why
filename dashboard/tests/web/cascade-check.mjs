@@ -32,7 +32,7 @@ const WIDTHS = [1400, 1000, 800, 500];
 const [basePage, splitPage] = process.argv.slice(2);
 if (!splitPage) { console.error("usage: node cascade-check.mjs BASEPAGE SPLITPAGE"); process.exit(2); }
 
-const TOKEN_OF = { bg: "bg", bg2: "surface", bg3: "surface2", line: "line", fg: "fg", fg2: "fg2", fg3: "fg3", accent: "accent", accent2: "accent2", "accent-fill": "accent-fill", "on-accent": "on-accent", "accent-text": "accent-text",
+const TOKEN_OF = { bg: "bg", bg2: "surface", bg3: "surface2", line: "line", fg: "fg", fg2: "fg2", fg3: "fg3", accent: "accent", accent2: "accent2", "accent-fill": "accent-fill", "on-accent": "on-accent", "accent-text": "accent-text", "active-text": "status-active-text",
   ok: "ok", warn: "warn", bad: "bad", info: "info", muted: "muted", confirmed: "confirmed", inferred: "inferred", unknown: "unknown",
   active: "status-active", superseded: "status-superseded", open: "status-open", "needs-review": "status-needs-review",
   "pending-confirmation": "status-pending-confirmation", radius: "radius", font: "font", mono: "mono" };
@@ -57,6 +57,8 @@ const REPLACED = [
   { family: "background", base: "background: var(--accent)", split: "background: var(--accent-fill)" },
   { family: "border", base: "border-color: var(--accent)", split: "border-color: var(--accent-fill)" },
   { family: "fill", base: "fill: var(--accent2)", split: "fill: var(--accent-text)" },
+  { family: "color", base: "color: var(--active)", split: "color: var(--active-text)" },
+  { family: "background", base: "background: linear-gradient(90deg, var(--accent2) 0%, #fff 45%, var(--accent2) 55%, var(--accent2) 100%)", split: "background: linear-gradient(90deg, var(--accent-text) 0%, var(--accent-shine) 45%, var(--accent-text) 55%, var(--accent-text) 100%)" },
 ];
 
 // ---- specificity and matching for the selectors this stylesheet uses

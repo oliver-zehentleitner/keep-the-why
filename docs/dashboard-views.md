@@ -298,9 +298,10 @@ To restyle the views, set the tokens on `:root` or on any ancestor of the views.
 **Contrast.** Text on accent meets WCAG AA (4.5:1) with the fallbacks and in both of the dashboard's themes, and a host that sets these tokens keeps it:
 
 - `--ktw-on-accent` against `--ktw-accent-fill`;
-- `--ktw-accent-text` against `--ktw-bg`, against `--ktw-surface`, and against the type pill's tint (`--ktw-accent` at 18% over either).
+- `--ktw-accent-text` against `--ktw-bg`, against `--ktw-surface`, and against the type pill's tint (`--ktw-accent` at 18% over either);
+- `--ktw-status-active-text` against the pill's ground `--ktw-surface2`, and against `--ktw-surface` and `--ktw-bg`.
 
-A host that changes `--ktw-accent` sets the three with it; they do not follow it on their own. The dashboard's light theme sets `--ktw-accent-text: #6234d9`. `dashboard/tests/web/contrast.test.mjs` measures the pairs from the stylesheets.
+A host that changes `--ktw-accent` or `--ktw-status-active` sets these with it; they do not follow on their own. The dashboard's light theme sets `--ktw-accent-text` and `--ktw-status-active-text` to `#6234d9`. `dashboard/tests/web/contrast.test.mjs` measures the pairs from the stylesheets.
 
 | Token | Fallback | What |
 |---|---|---|
@@ -324,7 +325,8 @@ A host that changes `--ktw-accent` sets the three with it; they do not follow it
 | `--ktw-confirmed` | `#4fbf7a` | Evidence: confirmed |
 | `--ktw-inferred` | `#e0a83a` | Evidence: inferred |
 | `--ktw-unknown` | `#e0574f` | Evidence: unknown |
-| `--ktw-status-active` | `#835bec` | Status: active |
+| `--ktw-status-active` | `#835bec` | Status: active (the pill's border, bars, the graph) |
+| `--ktw-status-active-text` | `#a98cf5` | the active Status pill's text |
 | `--ktw-status-superseded` | `#6f6f7a` | Status: superseded |
 | `--ktw-status-open` | `#4aa3df` | Status: open |
 | `--ktw-status-needs-review` | `#e0a83a` | Status: needs-review |

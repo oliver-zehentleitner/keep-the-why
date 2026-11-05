@@ -687,6 +687,7 @@ const TOKEN_DEFAULTS = Object.freeze({
   "--ktw-inferred": "#e0a83a",
   "--ktw-unknown": "#e0574f",
   "--ktw-status-active": "#835bec",
+  "--ktw-status-active-text": "#a98cf5",
   "--ktw-status-superseded": "#6f6f7a",
   "--ktw-status-open": "#4aa3df",
   "--ktw-status-needs-review": "#e0a83a",

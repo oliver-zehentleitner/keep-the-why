@@ -38,7 +38,7 @@ h3 a.ktw-config-file { font-weight: 400; font-size: 12px; margin-left: 8px; text
 .ktw-sub { color: var(--ktw-fg2, #a2a2ad); margin: 0 0 18px; }
 .ktw-pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; line-height: 18px; background: var(--ktw-surface2, #2f2f36); color: var(--ktw-fg2, #a2a2ad); border: 1px solid var(--ktw-line, #3a3a43); white-space: nowrap; }
 .ktw-pill.ktw-type { border-color: transparent; background: color-mix(in srgb, var(--ktw-accent, #835bec) 18%, transparent); color: var(--ktw-accent-text, #a98cf5); }
-.ktw-pill.ktw-status-active { color: var(--ktw-status-active, #835bec); border-color: var(--ktw-status-active, #835bec); }
+.ktw-pill.ktw-status-active { color: var(--ktw-status-active-text, #a98cf5); border-color: var(--ktw-status-active, #835bec); }
 .ktw-pill.ktw-fork { border-style: dashed; }
 .ktw-pill.ktw-fork a { color: inherit; }
 .ktw-pill.ktw-status-superseded { color: var(--ktw-status-superseded, #6f6f7a); text-decoration: line-through; }
@@ -360,7 +360,7 @@ a.ktw-author:hover { color: var(--ktw-accent-text, #a98cf5); }
 .ktw-aside .ktw-mini .ktw-mini-corner-btn:hover { color: var(--ktw-fg, #dcdce3); border-color: var(--ktw-accent, #835bec); }
 .ktw-crumbs .ktw-share-btn { float: right; background: transparent; border: 1px solid var(--ktw-line, #3a3a43); border-radius: 4px; color: var(--ktw-fg3, #6f6f7a); font-size: 11px; padding: 1px 8px; cursor: pointer; margin-left: 6px; font-family: inherit; line-height: 1.5; text-decoration: none; }
 .ktw-crumbs .ktw-share-btn:hover { color: var(--ktw-fg, #dcdce3); border-color: var(--ktw-accent, #835bec); }
-.ktw-crumbs .ktw-share-btn.ktw-done { color: var(--ktw-status-active, #835bec); border-color: var(--ktw-status-active, #835bec); }
+.ktw-crumbs .ktw-share-btn.ktw-done { color: var(--ktw-status-active-text, #a98cf5); border-color: var(--ktw-status-active, #835bec); }
 /* ---- timeline: the playhead and the stage */
 .ktw-timeline .ktw-now { stroke: var(--ktw-accent2, #a98cf5); stroke-width: 1.5; stroke-dasharray: 3 3; }
 .ktw-timeline .ktw-now-label { fill: var(--ktw-accent-text, #a98cf5); font-size: 10px; font-family: var(--ktw-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace); }

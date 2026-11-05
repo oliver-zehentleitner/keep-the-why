@@ -1,8 +1,9 @@
 // Text on accent meets WCAG AA (4.5:1) in both themes, read from the stylesheets as they ship, not from numbers
 // written here: ktw-views.css (its fallbacks are what a host without the tokens gets), and style.css's two
 // themes (the dashboard's values). Text on a solid accent area is --ktw-on-accent over --ktw-accent-fill;
-// accent-coloured text is --ktw-accent-text, against the page, the surface and the type pill's tint. And no
-// rule draws text in the raw accent or in white on it, where the pairs would not reach.
+// accent-coloured text is --ktw-accent-text, against the page, the surface and the type pill's tint; the active
+// status pill's text is --ktw-status-active-text on the pill's ground. And no rule draws text that resolves to the
+// raw accent, whatever token it comes through, nor a gradient text whose colours do not reach.
 //
 //   node --test contrast.test.mjs
 import { test } from "node:test";
@@ -49,6 +50,21 @@ const THEMES = {
   "the dashboard, dark": { fill: DARK["ktw-accent-fill"], on: DARK["ktw-on-accent"], text: DARK["ktw-accent-text"], accent: DARK["ktw-accent"], bg: DARK["ktw-bg"], surface: DARK["ktw-surface"] },
   "the dashboard, light": { fill: LIGHT["ktw-accent-fill"], on: LIGHT["ktw-on-accent"], text: LIGHT["ktw-accent-text"], accent: LIGHT["ktw-accent"], bg: LIGHT["ktw-bg"], surface: LIGHT["ktw-surface"] },
 };
+for (const [t, vals] of [[THEMES["the views' fallbacks"], null], [THEMES["the dashboard, dark"], DARK], [THEMES["the dashboard, light"], LIGHT]]) {
+  t.active = vals ? vals["ktw-status-active-text"] : fallback("--ktw-status-active-text");
+  t.surface2 = vals ? vals["ktw-surface2"] : fallback("--ktw-surface2");
+}
+// a value as the colour it is in a theme: each var() as the theme sets it, else as its fallback
+function resolve(value, vals) {
+  let v = value;
+  for (let i = 0; i < 5 && /var\(/.test(v); i++) {
+    v = v.replace(/var\(--([\w-]+)(?:,\s*([^()]*(?:\([^()]*\)[^()]*)*))?\)/g, (m, name, fb) => (vals && vals[name]) || (fb || "").trim() || m);
+  }
+  return v.trim().toLowerCase();
+}
+const RESOLVE_IN = { "the views' fallbacks": null, "the dashboard, dark": DARK, "the dashboard, light": LIGHT };
+// the raw accent as text, per theme: #835bec everywhere; #a98cf5 too in light, where it is 2.59:1 on the page
+const RAW = { "the views' fallbacks": ["#835bec"], "the dashboard, dark": ["#835bec"], "the dashboard, light": ["#835bec", "#a98cf5"] };
 
 test("text on a solid accent area: --ktw-on-accent over --ktw-accent-fill, 4.5:1 in every theme", () => {
   for (const [name, t] of Object.entries(THEMES)) {
@@ -68,9 +84,53 @@ test("accent-coloured text: --ktw-accent-text on the page, the surface and the t
   }
 });
 
+test("the active status pill's text: --ktw-status-active-text on the pill's ground, the surface and the page, 4.5:1 in every theme", () => {
+  for (const [name, t] of Object.entries(THEMES)) {
+    for (const [where, under] of [["pill", t.surface2], ["surface", t.surface], ["page", t.bg]]) {
+      const r = ratio(t.active, under);
+      assert.ok(r >= AA, `${name}: ${t.active} on the ${where} (${under}) is ${r.toFixed(2)}:1`);
+    }
+  }
+});
+
+test("no text resolves to the raw accent, through whatever token: color, fill and a text fill", () => {
+  for (const [file, css] of [["ktw-views.css", VIEWS], ["style.css", STYLE]]) {
+    for (const r of rules(css)) {
+      if (r.sel.startsWith(":root")) continue;
+      const decl = Object.fromEntries([...r.body.matchAll(/(?:^|;)\s*([\w-]+)\s*:\s*([^;]+)/g)].map((m) => [m[1], m[2].trim()]));
+      for (const prop of ["color", "fill", "-webkit-text-fill-color"]) {
+        if (!decl[prop]) continue;
+        for (const [theme, vals] of Object.entries(RESOLVE_IN)) {
+          const c = resolve(decl[prop], vals);
+          assert.ok(!RAW[theme].includes(c), `${file} ${r.sel}: ${prop} resolves to ${c} in ${theme}, the raw accent`);
+        }
+      }
+    }
+  }
+});
+
+test("text drawn by a gradient (a transparent text fill) reaches 4.5:1 at every colour of the gradient, in both themes", () => {
+  let seen = 0;
+  for (const r of rules(STYLE).concat(rules(VIEWS))) {
+    if (!/-webkit-text-fill-color:\s*transparent/.test(r.body)) continue;
+    seen++;
+    const bgDecl = r.body.match(/background(?:-image)?:\s*([^;]+)/)[1];
+    for (const [theme, vals] of [["dark", DARK], ["light", LIGHT]]) {
+      const stops = resolve(bgDecl, vals).match(/#[0-9a-f]{3,8}/g) || [];
+      assert.ok(stops.length >= 2, `${r.sel}: no colours in its gradient`);
+      for (const s of stops) for (const under of [vals.bg, vals.bg2]) {
+        const q = ratio(s, under);
+        assert.ok(q >= AA, `${r.sel} (${theme}): the gradient's ${s} on ${under} is ${q.toFixed(2)}:1`);
+      }
+    }
+  }
+  assert.ok(seen >= 1, "the update hint's shimmer is the gradient text this test is for");
+});
+
 test("the dashboard's own chrome sets the same pairs as the views, in both themes", () => {
   for (const [vals, theme] of [[DARK, "dark"], [LIGHT, "light"]]) {
     for (const k of ["accent-fill", "on-accent", "accent-text"]) assert.equal(vals[k], vals[`ktw-${k}`], `${theme}: --${k} is --ktw-${k}`);
+    assert.equal(vals["active-text"], vals["ktw-status-active-text"], `${theme}: --active-text is --ktw-status-active-text`);
   }
 });
 

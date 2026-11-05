@@ -58,19 +58,30 @@ const collect = ({ want, added, box, trim }) => {
 };
 const ADDED_SELECTORS = ADDED.map((x) => x.selector);
 // colours a pull request changes on purpose, per theme: a computed value that differs only in these colours, each
-// replaced by one it may become, is expected, not a difference. WCAG AA for text on accent (context/dashboard.md,
-// "Text on accent is a pair of tokens"): the accent #835bec as a fill under text becomes --ktw-accent-fill
-// #7a52e6, accent-coloured text becomes --ktw-accent-text (#a98cf5 in dark, #6234d9 in light)
+// replaced by one it may become (in the properties named, where an entry names them), is expected, not a
+// difference. WCAG AA for text on accent (context/dashboard.md, "Text on accent is a pair of tokens"): the accent
+// #835bec as a fill under text becomes --ktw-accent-fill #7a52e6, accent-coloured text becomes --ktw-accent-text
+// or --ktw-status-active-text (#a98cf5 in dark, #6234d9 in light), and the update hint's shimmer band, white,
+// becomes --accent-shine (#dcd0fb in dark, #3b1d99 in light) in its gradient
 const RECOLOURED = {
-  dark: { "rgb(131, 91, 236)": ["rgb(122, 82, 230)", "rgb(169, 140, 245)"] },
-  light: { "rgb(131, 91, 236)": ["rgb(122, 82, 230)", "rgb(98, 52, 217)"], "rgb(169, 140, 245)": ["rgb(98, 52, 217)"] },
+  dark: [
+    { from: "rgb(131, 91, 236)", to: ["rgb(122, 82, 230)", "rgb(169, 140, 245)"] },
+    { from: "rgb(255, 255, 255)", to: ["rgb(220, 208, 251)"], props: /^background(-image)?$/ },
+  ],
+  light: [
+    { from: "rgb(131, 91, 236)", to: ["rgb(122, 82, 230)", "rgb(98, 52, 217)"] },
+    { from: "rgb(169, 140, 245)", to: ["rgb(98, 52, 217)"] },
+    { from: "rgb(255, 255, 255)", to: ["rgb(59, 29, 153)"], props: /^background(-image)?$/ },
+  ],
 };
 const COLOUR = /rgba?\([^()]*\)/g;
 // is `got` what `lost` becomes with only the theme's recolourings applied, colour by colour?
 function recoloured(theme, lost, got) {
+  const prop = lost.slice(0, lost.indexOf(":"));
   const a = lost.match(COLOUR) || [], b = got.match(COLOUR) || [];
   if (a.length !== b.length || lost.replace(COLOUR, "\0") !== got.replace(COLOUR, "\0")) return false;
-  return a.every((c, i) => c === b[i] || (RECOLOURED[theme][c] || []).includes(b[i])) && a.some((c, i) => c !== b[i]);
+  const may = (c, d) => RECOLOURED[theme].some((x) => x.from === c && x.to.includes(d) && (!x.props || x.props.test(prop)));
+  return a.every((c, i) => c === b[i] || may(c, b[i])) && a.some((c, i) => c !== b[i]);
 }
 // an element whose every changed declaration is such a recolouring of the same property
 function onlyRecoloured(theme, base, page) {
