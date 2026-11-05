@@ -295,6 +295,13 @@ The views read colours, fonts and the corner radius from `--ktw-*` custom proper
 
 To restyle the views, set the tokens on `:root` or on any ancestor of the views.
 
+**Contrast.** Text on accent meets WCAG AA (4.5:1) with the fallbacks and in both of the dashboard's themes, and a host that sets these tokens keeps it:
+
+- `--ktw-on-accent` against `--ktw-accent-fill`;
+- `--ktw-accent-text` against `--ktw-bg`, against `--ktw-surface`, and against the type pill's tint (`--ktw-accent` at 18% over either).
+
+A host that changes `--ktw-accent` sets the three with it; they do not follow it on their own. The dashboard's light theme sets `--ktw-accent-text: #6234d9`. `dashboard/tests/web/contrast.test.mjs` measures the pairs from the stylesheets.
+
 | Token | Fallback | What |
 |---|---|---|
 | `--ktw-bg` | `#1e1e22` | page ground |
@@ -304,8 +311,11 @@ To restyle the views, set the tokens on `:root` or on any ancestor of the views.
 | `--ktw-fg` | `#dcdce3` | text |
 | `--ktw-fg2` | `#a2a2ad` | secondary text |
 | `--ktw-fg3` | `#6f6f7a` | faint text, labels |
-| `--ktw-accent` | `#835bec` | the accent |
-| `--ktw-accent2` | `#a98cf5` | links |
+| `--ktw-accent` | `#835bec` | the accent: borders, bars, outlines, the graph |
+| `--ktw-accent2` | `#a98cf5` | the accent's lighter tone: lines and frames in the graph and the timeline |
+| `--ktw-accent-fill` | `#7a52e6` | a solid accent area with text on it (a selected button, the search scope) |
+| `--ktw-on-accent` | `#ffffff` | text on `--ktw-accent-fill` |
+| `--ktw-accent-text` | `#a98cf5` | accent-coloured text: links, marks, counts, the type pill |
 | `--ktw-ok` | `#4fbf7a` | good |
 | `--ktw-warn` | `#e0a83a` | warning |
 | `--ktw-bad` | `#e0574f` | error |

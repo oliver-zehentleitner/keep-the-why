@@ -57,6 +57,30 @@ const collect = ({ want, added, box, trim }) => {
   return { out, detail, parents, counts: added.map((sel) => document.querySelectorAll(sel).length) };
 };
 const ADDED_SELECTORS = ADDED.map((x) => x.selector);
+// colours a pull request changes on purpose, per theme: a computed value that differs only in these colours, each
+// replaced by one it may become, is expected, not a difference. WCAG AA for text on accent (context/dashboard.md,
+// "Text on accent is a pair of tokens"): the accent #835bec as a fill under text becomes --ktw-accent-fill
+// #7a52e6, accent-coloured text becomes --ktw-accent-text (#a98cf5 in dark, #6234d9 in light)
+const RECOLOURED = {
+  dark: { "rgb(131, 91, 236)": ["rgb(122, 82, 230)", "rgb(169, 140, 245)"] },
+  light: { "rgb(131, 91, 236)": ["rgb(122, 82, 230)", "rgb(98, 52, 217)"], "rgb(169, 140, 245)": ["rgb(98, 52, 217)"] },
+};
+const COLOUR = /rgba?\([^()]*\)/g;
+// is `got` what `lost` becomes with only the theme's recolourings applied, colour by colour?
+function recoloured(theme, lost, got) {
+  const a = lost.match(COLOUR) || [], b = got.match(COLOUR) || [];
+  if (a.length !== b.length || lost.replace(COLOUR, "\0") !== got.replace(COLOUR, "\0")) return false;
+  return a.every((c, i) => c === b[i] || (RECOLOURED[theme][c] || []).includes(b[i])) && a.some((c, i) => c !== b[i]);
+}
+// an element whose every changed declaration is such a recolouring of the same property
+function onlyRecoloured(theme, base, page) {
+  const x = new Set(base), y = new Set(page);
+  const lost = [...x].filter((v) => !y.has(v)), got = [...y].filter((v) => !x.has(v));
+  if (!lost.length || lost.length !== got.length) return false;
+  const prop = (d) => d.slice(0, d.indexOf(":"));
+  const byProp = new Map(got.map((d) => [prop(d), d]));
+  return lost.every((d) => byProp.has(prop(d)) && recoloured(theme, d, byProp.get(prop(d))));
+}
 const seen = ADDED.map(() => ({ base: 0, head: 0 }));
 
 async function open(browser, file, width) {
@@ -81,7 +105,7 @@ const routes = await probe.page.evaluate(() => {
 });
 await probe.ctx.close();
 
-let compared = 0; const diffs = []; const errors = [];
+let compared = 0, recolouredCount = 0; const diffs = []; const errors = [];
 const runs = [...WIDTHS.map((w) => [w, "dark"]), [1400, "light"]];
 for (const [width, theme] of runs) {
   const A = await open(browser, basePage, width), B = await open(browser, headPage, width);
@@ -98,13 +122,15 @@ for (const [width, theme] of runs) {
     if (!bad.length) continue;
     const onlyOne = bad.filter((k) => !(k in a.out) || !(k in b.out));
     if (onlyOne.length) { diffs.push(`${theme} ${width}px ${hash}: the element trees differ (${onlyOne.length} paths in one page only, e.g. ${onlyOne[0]})`); continue; }
-    const [da, db] = await Promise.all([A.page.evaluate(collect, { want: bad.slice(0, 20), added: ADDED_SELECTORS, box: PARENT_BOX, trim: b.parents }), B.page.evaluate(collect, { want: bad.slice(0, 20), added: ADDED_SELECTORS, box: PARENT_BOX, trim: b.parents })]);
-    for (const k of bad.slice(0, 20)) {
+    const [da, db] = await Promise.all([A.page.evaluate(collect, { want: bad, added: ADDED_SELECTORS, box: PARENT_BOX, trim: b.parents }), B.page.evaluate(collect, { want: bad, added: ADDED_SELECTORS, box: PARENT_BOX, trim: b.parents })]);
+    const unexplained = bad.filter((k) => !onlyRecoloured(theme, da.detail[k] || [], db.detail[k] || []));
+    recolouredCount += bad.length - unexplained.length;
+    for (const k of unexplained.slice(0, 20)) {
       const x = new Set(da.detail[k] || []), y = new Set(db.detail[k] || []);
       const lost = [...x].filter((v) => !y.has(v)), got = [...y].filter((v) => !x.has(v));
       diffs.push(`${theme} ${width}px ${hash} ${k}\n    base: ${lost.join("; ") || "(same)"}\n    page: ${got.join("; ") || "(same)"}`);
     }
-    if (bad.length > 20) diffs.push(`${theme} ${width}px ${hash}: ${bad.length - 20} more elements differ`);
+    if (unexplained.length > 20) diffs.push(`${theme} ${width}px ${hash}: ${unexplained.length - 20} more elements differ`);
   }
   for (const P of [A, B]) { errors.push(...P.errors.map((e) => `${theme} ${width}px: ${e}`)); await P.ctx.close(); }
 }
@@ -114,7 +140,7 @@ ADDED.forEach((x, i) => {
   if (seen[i].base) diffs.push(`added-elements.mjs: "${x.selector}" matches ${seen[i].base} elements in the base — not an addition`);
 });
 
-const line = `${routes.length} routes × ${runs.length} runs (${WIDTHS.join(", ")} px dark, 1400 px light): ${compared} element styles compared, ${diffs.length} differ; added on purpose (added-elements.mjs): ${ADDED.map((x, i) => `${x.selector} ×${seen[i].head}`).join(", ") || "none"}`;
+const line = `${routes.length} routes × ${runs.length} runs (${WIDTHS.join(", ")} px dark, 1400 px light): ${compared} element styles compared, ${diffs.length} differ, ${recolouredCount} recoloured on purpose (RECOLOURED); added on purpose (added-elements.mjs): ${ADDED.map((x, i) => `${x.selector} ×${seen[i].head}`).join(", ") || "none"}`;
 for (const d of diffs.slice(0, 80)) console.log(d);
 for (const e of errors) console.log("ERROR " + e);
 console.log("\n" + line);

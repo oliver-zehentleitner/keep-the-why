@@ -32,7 +32,7 @@ const WIDTHS = [1400, 1000, 800, 500];
 const [basePage, splitPage] = process.argv.slice(2);
 if (!splitPage) { console.error("usage: node cascade-check.mjs BASEPAGE SPLITPAGE"); process.exit(2); }
 
-const TOKEN_OF = { bg: "bg", bg2: "surface", bg3: "surface2", line: "line", fg: "fg", fg2: "fg2", fg3: "fg3", accent: "accent", accent2: "accent2",
+const TOKEN_OF = { bg: "bg", bg2: "surface", bg3: "surface2", line: "line", fg: "fg", fg2: "fg2", fg3: "fg3", accent: "accent", accent2: "accent2", "accent-fill": "accent-fill", "on-accent": "on-accent", "accent-text": "accent-text",
   ok: "ok", warn: "warn", bad: "bad", info: "info", muted: "muted", confirmed: "confirmed", inferred: "inferred", unknown: "unknown",
   active: "status-active", superseded: "status-superseded", open: "status-open", "needs-review": "status-needs-review",
   "pending-confirmation": "status-pending-confirmation", radius: "radius", font: "font", mono: "mono" };
@@ -46,6 +46,17 @@ const EXPECTED = [
   // the body has at every width (its size, which grows on a phone, is left to the host) and they inherited before
   { path: /^body:\d+\/div:\d+\/(main|aside):\d+$/, family: "font", split: "font-family: var(--font)" },
   { path: /^body:\d+\/div:\d+\/(main|aside):\d+$/, family: "color", split: "color: var(--fg)" },
+];
+// what the split changes on purpose: one declaration of the base's family replaced by another, the rest the same.
+// WCAG AA for text on accent (context/dashboard.md, "Text on accent is a pair of tokens"): accent-coloured text
+// reads --ktw-accent-text, text on a solid accent sits as --ktw-on-accent on --ktw-accent-fill
+const REPLACED = [
+  { family: "color", base: "color: var(--accent2)", split: "color: var(--accent-text)" },
+  { family: "color", base: "color: var(--accent)", split: "color: var(--accent-text)" },
+  { family: "color", base: "color: #fff", split: "color: var(--on-accent)" },
+  { family: "background", base: "background: var(--accent)", split: "background: var(--accent-fill)" },
+  { family: "border", base: "border-color: var(--accent)", split: "border-color: var(--accent-fill)" },
+  { family: "fill", base: "fill: var(--accent2)", split: "fill: var(--accent-text)" },
 ];
 
 // ---- specificity and matching for the selectors this stylesheet uses
@@ -179,6 +190,8 @@ for (const hash of routes) {
         // expected: the split's family is the base's plus exactly the one declaration named
         const plus = (x) => { const parts = (b.get(f) || "").split("; ").filter((d) => d !== x.split); return parts.join("; ") === (a.get(f) || "") && parts.length < (b.get(f) || "").split("; ").length; };
         if (EXPECTED.some((x) => x.path.test(path) && x.family === f && plus(x))) { expected++; continue; }
+        const swapped = (s) => REPLACED.filter((x) => x.family === f).reduce((acc, x) => acc.split("; ").map((d) => (d === x.base ? x.split : d)).join("; "), s);
+        if (a.has(f) && b.has(f) && swapped(a.get(f)) === b.get(f)) { expected++; continue; }
         diffs.push(`${hash} @${w}px ${path} [${f}]\n    base:  ${a.get(f) ?? "(none)"}\n    split: ${b.get(f) ?? "(none)"}`);
       }
     }
