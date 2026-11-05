@@ -16,15 +16,31 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    # The environment holds the release-tags App's key and needs the
+    # maintainer's approval; only `main` and v*.*.* tags may deploy to it.
+    environment: release
     env:
       # The tag reaches the scripts as an environment variable, never by
       # `${{ }}` interpolation into `run:` — a tag name is a valid git ref
       # even when it contains quotes or semicolons.
       TAG: ${{ github.event.inputs.tag || github.ref_name }}
     steps:
+      # `latest` sits under the release-tags ruleset, which GITHUB_TOKEN
+      # cannot bypass; the push at the end uses the App's token. Minted
+      # first, because everything between here and that push is this
+      # file's own scripts in the same approved job.
+      - name: Mint the release-tags token
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.inputs.tag || github.ref }}
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Refuse non-skill tags
         # Bare v<major>.<minor>.<patch> tags are reserved for the skill: the
