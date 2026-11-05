@@ -94,6 +94,13 @@ Every `create` also takes `words`, the host's hook for the UI text in its own la
 
 A view renders into the element the host hands it: `pages.overview(main, H)`, `family.view(main)`, `search.view(main, scope, q)`, and so on. The lib has no page layout of its own. The dashboard's three columns (sidebar, main, details) are the dashboard's, and another host puts the views wherever its own layout has room.
 
+**The container stays in the document.** Hand a view a container that is already in the document when you call it, and leave it there while the view loads. Some views await the provider and then draw into what they put in the container. If they find it detached, they take it that the reader has left the page, and stop without a message. That is what keeps a slow answer from drawing over the page the reader went on to:
+
+- **Containers checked for detachment:** `thoughts.page(main, host)`, `family.view(main)` and `family.friendsView(main, host)` stop when their container is detached after an await.
+- **Route checked instead:** `search.view(main, scope, q)` stops when `nav.current()` is no longer that search.
+
+A host that attaches its view root only after the view function has returned shows that view's "Loading…" for ever. This happens when the provider answers within a microtask. There is no warning for it, because a detached container is also what every ordinary navigation leaves behind.
+
 **The host's duty:** every container a view renders into carries the class `ktw-root`, and a side pane also carries `ktw-aside`. The dashboard does this on `#main` and on `#details`:
 
 ```html
