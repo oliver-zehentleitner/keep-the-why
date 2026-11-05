@@ -72,6 +72,8 @@ A state can come from another repository, so the views link an address from the 
 
 For a link out of the page to an address from the data, the views use `ui.outLink(attrs, ...kids)`: an `<a>` when `safeUrl` passes `attrs.href`, otherwise a `<span>` with the same children, class and title. `ui.extLink` and `ui.remoteLink` do the same. `dashboard/tests/test_views.py` fails the build if a library file sets an address attribute outside `setAttrs` and the Markdown builder, assigns an address property, or calls `window.open`. It also fails if the dashboard's `app.js` navigates or opens a window anywhere but its two helpers, `leave` (behind `safeHref`) and `openOut` (behind `safeUrl`), or if a library file or `app.js` contains a literal bidi or zero-width character.
 
+`core.plainText(s)` is the same rule for a name that is not an address, such as a project's key on a machine, which is its path. It passes a string with no control character, zero-width or bidi character, and allows a space and a backslash.
+
 ## Mounting the views
 
 A page makes one scene, then one instance of each view it shows:
@@ -190,7 +192,18 @@ The views name places as routes (`KeepTheWhy.core.routes`: `parse`, `format`, `P
 | `onChange(fn)` | calls `fn(route)` when that changes |
 | `open(href)` | follows an address `href` made (a graph node carries its own) |
 
-A route with a `centre` is a place in another project: a published export, or another project a server knows. The dashboard writes routes as a `#` hash, so its links and bookmarks keep working. The fixture host writes them as paths (`/a/why/topic/api.md`). A host maps routes onto its own addresses and never sees the dashboard's grammar. An anchor made with `ui.navLinks(nav)` is a real link (middle-click and a new tab work), and a plain click goes through `nav.go`.
+A route with a `centre` is a place in another project: a published export, or another project a server knows. `routes.format` writes a route as one string and `routes.parse` reads it back, so `parse(format(route))` is the route:
+
+| Place | Written as |
+|---|---|
+| a page | `#graph`, `#timeline`, … (`routes.PAGES`) |
+| an entry, a topic, a day | `#entry/<uuid>`, `#topic/<file>`, `#timeline/<day>` |
+| a search, a thought, an entry in another repository | `#search/<scope>/<q>`, `#thought/<a,b,…>`, `#ref/<canonical>/<uuid>` |
+| any of these in another project | `#centre/public/<canonical>/<root>/<place>` (a published export; `<root>` may be empty) or `#centre/live/<project>/<place>` |
+
+Every value is encoded with `encodeURIComponent`; a topic's file is encoded per path segment, so its `/` stays. `parse` does not check a centre's values. A host that acts on them checks them: `core.safeUrl` for a canonical, `core.plainText` for a project's key.
+
+The dashboard writes routes as a `#` hash, so its links and bookmarks keep working, and keeps a centre in its query (`?public=`, `?project=`). A `#centre/…` hash moves it there once, if the centre passes those checks. The fixture host writes routes as paths (`/a/why/topic/api.md`, `/a/why/centre/public/…/entry/<uuid>`). A host maps routes onto its own addresses. An anchor made with `ui.navLinks(nav)` is a real link (middle-click and a new tab work), and a plain click goes through `nav.go`.
 
 ### prefs
 

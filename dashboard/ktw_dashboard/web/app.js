@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-const { plural, safeUrl, safeHref, seedLayout, carryNode, reheatAfterBuild, reheatAll, entryRefs, rawFileUrl, configLine, normalizeState, canonicalOf, NO_FILTER, familyOrder, kindLabel, groupByFamily, searchTerms, registryMatches, shuffled, resolveLocation, linkFamily, authorLookup, mergeStates, projectLabel, backlinksUrl, citingOf, paletteToken, ownerOf, exportStateUrl, exportVerdict, fkey, repoLabel } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
+const { plural, safeUrl, safeHref, plainText, seedLayout, carryNode, reheatAfterBuild, reheatAll, entryRefs, rawFileUrl, configLine, normalizeState, canonicalOf, NO_FILTER, familyOrder, kindLabel, groupByFamily, searchTerms, registryMatches, shuffled, resolveLocation, linkFamily, authorLookup, mergeStates, projectLabel, backlinksUrl, citingOf, paletteToken, ownerOf, exportStateUrl, exportVerdict, fkey, repoLabel } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
 const MD = globalThis.KeepTheWhy.markdown; // ktw-markdown.js
 
 // ---------------------------------------------------------------- prefs (host)
@@ -41,21 +41,39 @@ function centreUrl(c) {
 // the only ways this page leaves for an address: here, as core.safeHref passes it (a place of this dashboard,
 // or an https address), or in a new window, as core.safeUrl passes it; anything else goes nowhere
 // (tests/test_views.py holds every navigation in this file to these two)
-function leave(href, win = null) { const u = safeHref(href); if (u == null) { win?.close(); return; } if (win) win.location.href = u; else location.href = u; }
+function leave(href, win = null, { replace = false } = {}) { const u = safeHref(href); if (u == null) { win?.close(); return; } if (win) win.location.href = u; else if (replace) location.replace(u); else location.href = u; }
 function openOut(href) { const u = safeUrl(href); if (u) window.open(u, "_blank", "noopener"); }
 const nav = {
-  href: (route) => (route.centre ? centreUrl(route.centre) : "") + ROUTES.format(route),
+  href: (route) => (route.centre ? centreUrl(route.centre) + ROUTES.format({ ...route, centre: undefined }) : ROUTES.format(route)),
   go(route, { replace = false } = {}) {
     if (route.centre) { leave(nav.href(route)); return; }
     const hash = ROUTES.format(route);
     if (replace) history.replaceState(null, "", hash); else location.hash = hash;
   },
-  current: () => ROUTES.parse(location.hash),
+  current() { const r = ROUTES.parse(location.hash); return r.centre ? { view: "overview", unknown: location.hash.slice(1) } : r; }, // a centre lives in the query here (hashCentre)
   onChange: (fn) => window.addEventListener("hashchange", () => fn(nav.current())),
   // follow an address nav.href made (a graph node carries its own): a place on this page, or another page — as
   // core.safeHref passes it, as a link's href would be
   open(href) { if (href.startsWith("#")) nav.go(ROUTES.parse(href)); else leave(href); },
 };
+// A #centre/… hash is the routes grammar's form of a place in another project, the one a host that writes a
+// route as one path uses. This page keeps a centre in its query, so it moves there once, in place of the hash.
+// The values come from the address and pass the same checks a centre of this page's own links does: a
+// published export's canonical as core.safeUrl passes it, its root without a space, control, bidi character
+// or backslash, and a project's key (its path on this machine) as core.plainText passes it. A centre that
+// fails is not followed: the page shows the overview, as for any hash no place answers to, with a warning.
+function hashCentre() {
+  const r = ROUTES.parse(location.hash);
+  const c = r.centre;
+  if (!c) return null;
+  const ok = c.mode === "public" ? safeUrl(c.canonical) != null && plainText(c.root) && !/[\s\\]/.test(c.root) : c.mode === "live" && !!c.project && plainText(c.project);
+  if (ok) return nav.href(r);
+  console.warn(`KeepTheWhy: not followed (a centre that does not pass the checks): ${JSON.stringify(location.hash.slice(0, 200))}`);
+  return false;
+}
+const CENTRE_MOVE = hashCentre();
+if (CENTRE_MOVE) leave(CENTRE_MOVE, null, { replace: true });
+window.addEventListener("hashchange", () => { const to = hashCentre(); if (to) leave(to, null, { replace: true }); });
 const onView = (...views) => { const r = nav.current(); return !r.alias && !r.unknown && views.includes(r.view); };
 // a link to a place: a real anchor — middle-click, a new tab and a screen reader work — whose plain click moves
 // through nav. `href` in attrs is the route; it keeps its place among the attributes, so the markup is as before.
@@ -2138,4 +2156,4 @@ async function boot() {
   pollUpdates(); setTimeout(pollUpdates, 20000); // the server's first check may still be running at boot
   setInterval(pollUpdates, 60 * 60 * 1000);
 }
-boot();
+if (!CENTRE_MOVE) boot(); // a page that moves to its centre's own address starts there, not here
