@@ -6,8 +6,10 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
 
-const file = new URL("../../ktw_dashboard/web/ktw-markdown.js", import.meta.url);
-vm.runInThisContext(fs.readFileSync(file, "utf8"), { filename: file.pathname });
+for (const name of ["ktw-core.js", "ktw-markdown.js"]) { // the core first: the links' rule is its safeUrl
+  const file = new URL(`../../ktw_dashboard/web/${name}`, import.meta.url);
+  vm.runInThisContext(fs.readFileSync(file, "utf8"), { filename: file.pathname });
+}
 const { parse, parseInline } = globalThis.KeepTheWhy.markdown;
 const topics = new Set(["auth.md", "sync.md"]);
 const opts = { topicHref: (f) => (topics.has(f) ? `#topic/${f}` : null) };

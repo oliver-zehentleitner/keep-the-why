@@ -92,6 +92,9 @@ jobs:
       - name: Styles through the CSSOM, as a page under a strict Content-Security-Policy needs them (jsdom)
         run: cd dashboard/tests/web && node --test ui.test.mjs
 
+      - name: One rule for every address the views link to, a hostile state's included (jsdom)
+        run: cd dashboard/tests/web && node --test safeurl.test.mjs
+
       - name: The host fixture page, two foreign hosts mounting the views from the manifest (jsdom)
         run: cd dashboard/tests/web && node host.mjs
 

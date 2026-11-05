@@ -10,7 +10,7 @@
 (function (root) {
 "use strict";
 const { canonicalOf, resolveLocation, familyRank, familyOrder, friendsOf, fkey, repoLabel, kindLabel, entryRefs } = root.KeepTheWhy.core;
-const { el, setKids, hostMark, words: wordsOf, roleWord } = root.KeepTheWhy.ui;
+const { el, setKids, hostMark, outLink, words: wordsOf, roleWord } = root.KeepTheWhy.ui;
 
 // One family per page: create({ scene, nav, provider, host, words }) — provider() returns the methods the current
 // mode can answer (the dashboard's provider), host the two questions above, words the host's hook for the UI text
@@ -336,7 +336,7 @@ async function friendsView(main, host) {
   kids.push(...friends.map((u) => card(u, units.indexOf(u))));
   if (citing.length) kids.push(el("h2", { class: "ktw-section" }, tw("friends.registryHeading", "Citing this project — from the registry")), el("p", { class: "ktw-note" }, cited.checked ? tw("friends.registryNoteBuilt", "Repositories in the Keep the Why registry whose entries cite this project, from its backlink file, built {date}. Citations from outside the registry are not in it.", { date: cited.checked }) : tw("friends.registryNote", "Repositories in the Keep the Why registry whose entries cite this project, from its backlink file. Citations from outside the registry are not in it.")), ...citing.map((u) => card(u, units.indexOf(u))));
   if (chained.length) kids.push(el("h2", { class: "ktw-section" }, tw("friends.chainedHeading", "Reached by following a thought")), ...chained.map((u) => card(u, units.indexOf(u))));
-  if (failed.length) kids.push(el("h2", { class: "ktw-section" }, tw("friends.failedHeading", "Not loaded")), ...failed.map((r) => el("div", { class: "ktw-ref" }, el("a", { href: r.canonical, target: "_blank", rel: "noopener" }, hostMark(r.canonical), repoLabel(r.canonical)), el("span", { class: "ktw-note ktw-warn" }, ` · ${r.error}`))));
+  if (failed.length) kids.push(el("h2", { class: "ktw-section" }, tw("friends.failedHeading", "Not loaded")), ...failed.map((r) => el("div", { class: "ktw-ref" }, outLink({ href: r.canonical, target: "_blank", rel: "noopener" }, hostMark(r.canonical), repoLabel(r.canonical)), el("span", { class: "ktw-note ktw-warn" }, ` · ${r.error}`))));
   setKids(box, ...kids);
 }
 

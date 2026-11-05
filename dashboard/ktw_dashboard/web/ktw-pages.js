@@ -10,9 +10,9 @@
    listed in ktw-views.json. */
 (function (root) {
 "use strict";
-const { typeName, isUuid, canonicalOf, hostFileLink, hostTreeLink, hostAnchor, parseSupersededBy, resolveSee, repoLabel, topicTitle, mergeAuthors, sortAuthors, AUTHOR_SORTS, filterActive, entryMatches, valueColor } = root.KeepTheWhy.core;
+const { typeName, isUuid, canonicalOf, safeUrl, hostFileLink, hostTreeLink, hostAnchor, parseSupersededBy, resolveSee, repoLabel, topicTitle, mergeAuthors, sortAuthors, AUTHOR_SORTS, filterActive, entryMatches, valueColor } = root.KeepTheWhy.core;
 const ui = root.KeepTheWhy.ui;
-const { el, setKids, pill, statusPill, evPill, entryPills, hostMark, extLink, remoteLink, forkPill, headPill } = ui;
+const { el, setKids, pill, statusPill, evPill, entryPills, hostMark, outLink, extLink, remoteLink, forkPill, headPill } = ui;
 const fmtDate = (d) => d || "—";
 
 // One pages view per page: create({ scene, nav, prefs, family, search, words }) — the family (ktw-family.js) loads
@@ -85,9 +85,10 @@ function configFileLink(p) {
   return href ? [" ", extLink(href, p.config_file || ".keep-the-why", "ktw-mono ktw-note ktw-config-file")] : null;
 }
 // a Config value: the three that are addresses open where they point — canonical and dashboard-state as
-// written, context as the directory on the host (under the root in a mono repository); the rest is text
+// written when core.safeUrl passes them (https), context as the directory on the host (under the root in a mono
+// repository); the rest, and an address that is not https, is text
 function configValue(p, key, v) {
-  const href = key === "canonical" || key === "dashboard-state" ? (/^https?:\/\//.test(v) ? v : null)
+  const href = key === "canonical" || key === "dashboard-state" ? safeUrl(v)
     : key === "context" ? hostTreeLink(canonicalOf(p), p.git?.branch, [p.root, p.context || String(v).replace(/^`|`$/g, "")].filter(Boolean).join("/")) : null;
   return href ? extLink(href, v, "ktw-v ktw-mono") : el("span", { class: "ktw-v ktw-mono" }, v);
 }
@@ -293,7 +294,7 @@ function forHost(H) {
     const r = await resolveRemoteRef(canonical, uuid);
     if (r.entry) { nav.go(r.route); return; }
     setKids(main, el("div", { class: "ktw-center" }, el("p", {}, tw("pages.lookup.remoteNone", "Cannot open {uuid} in {repo}: {error}.", { uuid, repo: repoLabel(canonical), error: r.error })),
-      el("p", { class: "ktw-note" }, el("a", { href: canonical, target: "_blank", rel: "noopener" }, canonical.replace(/^https:\/\//, "")))));
+      el("p", { class: "ktw-note" }, outLink({ href: canonical, target: "_blank", rel: "noopener" }, canonical.replace(/^https:\/\//, "")))));
   }
   // A reference into another repository, resolved when it is shown: the entry
   // from a project known to the live server, else from the repository's
@@ -315,7 +316,7 @@ function forHost(H) {
   function remoteRefLine(ref, label) {
     const lead = () => (label ? el("b", {}, label) : null);
     const date = ref.date ? el("span", { class: "ktw-note" }, tw("pages.ref.asOf", " · as of {date}", { date: ref.date })) : null;
-    const repo = () => el("a", { class: "ktw-note", href: ref.remote, target: "_blank", rel: "noopener", title: tw("pages.ref.repositoryTitle", "the repository on its host") }, tw("pages.ref.repository", " · repository"));
+    const repo = () => outLink({ class: "ktw-note", href: ref.remote, target: "_blank", rel: "noopener", title: tw("pages.ref.repositoryTitle", "the repository on its host") }, tw("pages.ref.repository", " · repository"));
     const row = el("div", { class: "ktw-ref ktw-remote" }, lead(), navLink({ href: { view: "ref", canonical: ref.remote, uuid: ref.uuid } }, hostMark(ref.remote), repoLabel(ref.remote)),
       el("span", { class: "ktw-note ktw-mono" }, ` · ${ref.uuid}`), el("span", { class: "ktw-note" }, tw("pages.ref.resolving", " · resolving…")), date, repo());
     resolveRemoteRef(ref.remote, ref.uuid).then((r) => {
@@ -323,7 +324,7 @@ function forHost(H) {
         const e = r.entry; const state = [e.status, e.evidence].filter(Boolean).join(" · ");
         setKids(row, lead(), navLink({ href: r.route }, e.title || ref.uuid), el("span", { class: "ktw-note" }, " · ", hostMark(ref.remote), `${repoLabel(ref.remote)}${state ? " · " + state : ""}`), date, repo());
       } else {
-        setKids(row, lead(), el("a", { href: ref.remote, target: "_blank", rel: "noopener" }, hostMark(ref.remote), repoLabel(ref.remote)), el("span", { class: "ktw-note ktw-mono" }, ` · ${ref.uuid}`), el("span", { class: "ktw-note ktw-warn" }, tw("pages.ref.notResolved", " · not resolved: {error}", { error: r.error })), date);
+        setKids(row, lead(), outLink({ href: ref.remote, target: "_blank", rel: "noopener" }, hostMark(ref.remote), repoLabel(ref.remote)), el("span", { class: "ktw-note ktw-mono" }, ` · ${ref.uuid}`), el("span", { class: "ktw-note ktw-warn" }, tw("pages.ref.notResolved", " · not resolved: {error}", { error: r.error })), date);
       }
     });
     return row;
@@ -334,7 +335,7 @@ function forHost(H) {
     const date = ref.date ? el("span", { class: "ktw-note" }, tw("pages.ref.asOf", " · as of {date}", { date: ref.date })) : null;
     if (target) return el("div", { class: "ktw-ref" }, label ? el("b", {}, label) : null, navLink({ href: entryRoute(target) }, target.title), el("span", { class: "ktw-note" }, ` · ${topicOf(target.file)?.title || target.file}`), date);
     if (ref.remote && ref.uuid) return remoteRefLine(ref, label);
-    if (ref.remote) return el("div", { class: "ktw-ref" }, label ? el("b", {}, label) : null, el("a", { href: ref.remote, target: "_blank", rel: "noopener" }, ref.remote.replace(/^https:\/\//, "")), date);
+    if (ref.remote) return el("div", { class: "ktw-ref" }, label ? el("b", {}, label) : null, outLink({ href: ref.remote, target: "_blank", rel: "noopener" }, ref.remote.replace(/^https:\/\//, "")), date);
     if (ref.file) return el("div", { class: "ktw-ref" }, label ? el("b", {}, label) : null, topicOf(ref.file) ? navLink({ href: { view: "topic", file: ref.file } }, ref.locator) : ref.locator, el("span", { class: "ktw-note ktw-mono" }, ` · ${ref.uuid || ""}`), el("span", { class: "ktw-note ktw-warn" }, tw("pages.ref.stale", " · Id not found here — the locator may be stale")), date);
     return el("div", { class: "ktw-ref" }, label ? el("b", {}, label) : null, ref.text || "");
   }
@@ -418,7 +419,7 @@ function forHost(H) {
     d.append(el("h3", {}, tw("pages.details.entry", "Entry")), el("div", { class: "ktw-kv" },
       e.uuid ? [el("span", { class: "ktw-k" }, "Id"), el("span", { class: "ktw-v ktw-mono", title: tw("pages.details.idTitle", "the entry's address — what See and Superseded by lines resolve to") }, e.uuid)] : null,
       e.project ? [el("span", { class: "ktw-k" }, tw("pages.details.project", "project")), el("span", { class: "ktw-v" }, e.origin?.href ? el("a", { href: H.memberLink(e.origin.member, "#overview") }, e.project) : e.project)] : null,
-      el("span", { class: "ktw-k" }, tw("pages.details.at", "at")), el("span", { class: "ktw-v ktw-mono" }, hostHref ? el("a", { class: "ktw-gh", href: hostHref, target: "_blank", rel: "noopener", title: tw("pages.details.openOnHost", "open on the host") }, e.id) : e.id),
+      el("span", { class: "ktw-k" }, tw("pages.details.at", "at")), el("span", { class: "ktw-v ktw-mono" }, hostHref ? outLink({ class: "ktw-gh", href: hostHref, target: "_blank", rel: "noopener", title: tw("pages.details.openOnHost", "open on the host") }, e.id) : e.id),
       el("span", { class: "ktw-k" }, "type"), el("span", { class: "ktw-v" }, (e.type || []).join(", ") || "—"),
       el("span", { class: "ktw-k" }, "status"), el("span", { class: "ktw-v" }, statusPill(e.status)),
       el("span", { class: "ktw-k" }, "evidence"), el("span", { class: "ktw-v" }, evPill(e.evidence)),

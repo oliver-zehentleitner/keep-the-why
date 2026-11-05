@@ -2,7 +2,7 @@
    The page knows only the state (see state.py): live from /api/events, or
    embedded as window.__KTW_STATE__ in an export. It renders; it never writes. */
 
-const { plural, seedLayout, carryNode, reheatAfterBuild, reheatAll, entryRefs, rawFileUrl, configLine, normalizeState, canonicalOf, NO_FILTER, familyOrder, kindLabel, groupByFamily, searchTerms, registryMatches, shuffled, resolveLocation, linkFamily, authorLookup, mergeStates, projectLabel, backlinksUrl, citingOf, paletteToken, ownerOf, exportStateUrl, exportVerdict, fkey, repoLabel } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
+const { plural, safeUrl, safeHref, seedLayout, carryNode, reheatAfterBuild, reheatAll, entryRefs, rawFileUrl, configLine, normalizeState, canonicalOf, NO_FILTER, familyOrder, kindLabel, groupByFamily, searchTerms, registryMatches, shuffled, resolveLocation, linkFamily, authorLookup, mergeStates, projectLabel, backlinksUrl, citingOf, paletteToken, ownerOf, exportStateUrl, exportVerdict, fkey, repoLabel } = globalThis.KeepTheWhy.core; // ktw-core.js, loaded before this module
 const MD = globalThis.KeepTheWhy.markdown; // ktw-markdown.js
 
 // ---------------------------------------------------------------- prefs (host)
@@ -38,17 +38,23 @@ function centreUrl(c) {
   if (c.mode === "live" && c.project) return `${pagePath()}?project=${encodeURIComponent(c.project)}`;
   return pagePath();
 }
+// the only ways this page leaves for an address: here, as core.safeHref passes it (a place of this dashboard,
+// or an https address), or in a new window, as core.safeUrl passes it; anything else goes nowhere
+// (tests/test_views.py holds every navigation in this file to these two)
+function leave(href, win = null) { const u = safeHref(href); if (u == null) { win?.close(); return; } if (win) win.location.href = u; else location.href = u; }
+function openOut(href) { const u = safeUrl(href); if (u) window.open(u, "_blank", "noopener"); }
 const nav = {
   href: (route) => (route.centre ? centreUrl(route.centre) : "") + ROUTES.format(route),
   go(route, { replace = false } = {}) {
-    if (route.centre) { location.href = nav.href(route); return; }
+    if (route.centre) { leave(nav.href(route)); return; }
     const hash = ROUTES.format(route);
     if (replace) history.replaceState(null, "", hash); else location.hash = hash;
   },
   current: () => ROUTES.parse(location.hash),
   onChange: (fn) => window.addEventListener("hashchange", () => fn(nav.current())),
-  // follow an address nav.href made (a graph node carries its own): a place on this page, or another page
-  open(href) { if (href.startsWith("#")) nav.go(ROUTES.parse(href)); else location.href = href; },
+  // follow an address nav.href made (a graph node carries its own): a place on this page, or another page — as
+  // core.safeHref passes it, as a link's href would be
+  open(href) { if (href.startsWith("#")) nav.go(ROUTES.parse(href)); else leave(href); },
 };
 const onView = (...views) => { const r = nav.current(); return !r.alias && !r.unknown && views.includes(r.view); };
 // a link to a place: a real anchor — middle-click, a new tab and a screen reader work — whose plain click moves
@@ -141,7 +147,7 @@ function loadedProjects() {
 function fillLoadedPop(pop) {
   const { bytes } = loadedTotals();
   const list = loadedProjects();
-  const fileLink = (f, label) => el("a", { href: f.url, target: "_blank", rel: "noopener", title: f.url }, label);
+  const fileLink = (f, label) => el("a", { href: ownHref(f.url), target: "_blank", rel: "noopener", title: f.url }, label);
   const row = (G) => {
     const st = G.files.state, b = G.files.bodies, c = G.files.config;
     const v = st ? [st.schema ? `ktw ${st.schema}` : null, st.dashboard ? `dashboard ${st.dashboard}` : null, st.linter ? `lint ${st.linter}` : null].filter(Boolean).join(" · ") : c?.schema ? `ktw ${c.schema}` : "";
@@ -154,7 +160,7 @@ function fillLoadedPop(pop) {
     if (G.files.other) parts.push(el("span", {}, `file ${fmtBytes(G.files.other.bytes)}`));
     // the links on a line of their own, under the name: the dashboard, then each file that came
     const links = [
-      G.dashboard ? el("a", { class: "dash", href: G.dashboard, target: G.dashboard.startsWith(pagePath()) ? null : "_blank", rel: "noopener", title: "this project's dashboard" }, "dashboard ↗") : null,
+      G.dashboard ? el("a", { class: "dash", href: ownHref(G.dashboard), target: G.dashboard.startsWith(pagePath()) ? null : "_blank", rel: "noopener", title: "this project's dashboard" }, "dashboard ↗") : null,
       st && st.kind !== "page" ? fileLink(st, "state ↗") : null,
       b ? fileLink(b, "bodies ↗") : null,
       c ? fileLink(c, ".keep-the-why ↗") : null,
@@ -173,7 +179,7 @@ function fillLoadedPop(pop) {
     ...failed.map(([url, f]) => el("div", { class: "loaded-row failed" }, el("span", { class: "size ktw-warn" }, "⚠"),
       el("span", { class: "what" }, el("b", {}, hostMark(f.canonical), f.canonical ? repoLabel(f.canonical) : f.kind), el("span", { class: "ktw-note" }, ` — ${f.kind}`),
         el("br"), el("span", { class: "ktw-err" }, (f.error.startsWith(`${url}: `) ? f.error.slice(url.length + 2) : f.error.endsWith(` for ${url}`) ? f.error.slice(0, -(url.length + 5)) : f.error)), // the address is linked below; say it once
-        el("br"), el("a", { href: url, target: "_blank", rel: "noopener", title: "open it in the browser — does it answer at all?" }, `${url} ↗`))))) : null;
+        el("br"), el("a", { href: ownHref(url), target: "_blank", rel: "noopener", title: "open it in the browser — does it answer at all?" }, `${url} ↗`))))) : null;
   const toFailed = failed.length ? el("a", { href: "#", class: "ktw-warn", onclick: (ev) => { ev.preventDefault(); pop.querySelector("#loaded-failed")?.scrollIntoView?.({ block: "start", behavior: "smooth" }); } }, ` · ⚠ ${failed.length} not loaded ↓`) : null;
   setKids(pop, el("div", { class: "loaded-head" }, `${plural(list.length, "project")} — ${plural(LOADED.size, "file")} — ${fmtBytes(bytes)}`, toFailed), ...list.map(row), failedBlock);
 }
@@ -229,6 +235,13 @@ async function fetchForeign(url) {
   finally { clearTimeout(timer); }
 }
 const absolute = (url) => new URL(url, location.href).href;
+// an address of this page's own server (an absolute() URL: the live server's /api/…, an export's files) as a link:
+// its path, which core.safeHref takes as a place of this page, where the full http URL of a local server would be
+// no https link from the data; another server's address stays as it is, for safeHref to decide
+function ownHref(url) {
+  let u, here; try { u = new URL(String(url), location.href); here = new URL(location.href); } catch { return String(url); }
+  return u.protocol === here.protocol && u.host === here.host ? u.pathname + u.search + u.hash : String(url);
+}
 const failure = (err, fallback) => err?.message || fallback;
 const DASHBOARD = {
   // this page's own project: { state, url } — the state embedded in an export, or the live server's
@@ -382,7 +395,7 @@ const publicHref = (canonical, root = "", hash = "#overview") => centreUrl({ mod
 // or with the family scope the whole family merged, ktw-core.js mergeStates); SCENE.self, this project's own
 // state, always; SCENE.day, the clock; SCENE.focus, SCENE.scope, the layout — and the events views follow.
 // DOM helpers, pills and glyphs every view uses (ktw-ui.js): no state, only nodes
-const { el, setKids, pill, statusPill, evPill, typePills, typeGlyphSvg, hostMark, marked, remoteLink, forkPill, headPill } = globalThis.KeepTheWhy.ui;
+const { el, setAttrs, setKids, pill, statusPill, evPill, typePills, typeGlyphSvg, hostMark, marked, outLink, remoteLink, forkPill, headPill } = globalThis.KeepTheWhy.ui;
 const SCENE = globalThis.KeepTheWhy.scene.create({ scope: prefs.get("scope") || prefs.get("search-scope") || "project" }); // search-scope: the name before the scope switched the graph too
 // The graph view (ktw-graph.js): it draws what the host builds, given the scene, navigation and settings only.
 const GRAPH = globalThis.KeepTheWhy.views.graph.create({ scene: SCENE, nav, prefs });
@@ -1108,7 +1121,7 @@ function addOwnerGroups(g, prev) {
     if (hubs.length < 2) continue;
     const id = `o:${o.key}`; const p = prev[id];
     const cx = hubs.reduce((a, n) => a + n.x, 0) / hubs.length, cy = hubs.reduce((a, n) => a + n.y, 0) / hubs.length;
-    const owner = { id, kind: "owner", ext: true, unit: id, label: o.label, canonical: o.url, r: 17, x: cx, y: cy, vx: 0, vy: 0, href: o.url, walk: () => window.open(o.url, "_blank", "noopener") };
+    const owner = { id, kind: "owner", ext: true, unit: id, label: o.label, canonical: o.url, r: 17, x: cx, y: cy, vx: 0, vy: 0, href: o.url, walk: () => openOut(o.url) };
     if (p) carryNode(owner, p); else owner.seeded = true; // placed at its projects' centre, after they were seeded (TREE_LINK.owner then gives the graph its shape)
     index[id] = nodes.length; nodes.push(owner);
     for (const n of hubs) {
@@ -1614,7 +1627,7 @@ function projectsLegend(g) {
     const forkOf = u?.r.forkOf || null;
     out.push(el("span", { class: n.friend ? "ktw-friend" : "ktw-family", style: depth ? `padding-left:${depth * 14}px` : "", title: kind(n), onmouseenter: () => { g.spot = projectNodes(g, n); g.wake?.(); }, onmouseleave: () => { g.spot = null; g.wake?.(); } }, el("i", { class: "ktw-dot", style: `${ring(n)}width:10px;height:10px` }), hostMark(n.canonical), name,
       notShown ? el("span", { class: "ktw-note" }, ` · family of ${notShown}, not shown`) : null,
-      forkOf ? el("span", { class: "ktw-note", title: `the export names ${forkOf} as its canonical and was made in a checkout of ${u.r.canonical}` }, " · fork of ", el("a", { href: forkOf, target: "_blank", rel: "noopener" }, hostMark(forkOf), repoLabel(forkOf))) : null,
+      forkOf ? el("span", { class: "ktw-note", title: `the export names ${forkOf} as its canonical and was made in a checkout of ${u.r.canonical}` }, " · fork of ", outLink({ href: forkOf, target: "_blank", rel: "noopener" }, hostMark(forkOf), repoLabel(forkOf))) : null,
       n.hop != null ? el("span", { class: "ktw-note" }, n.hop === "registry" ? " · from the registry" : ` · hop ${n.hop}`) : n.chain ? el("span", { class: "ktw-note" }, " · via a thought") : null,
       n.citing ? el("span", { class: "ktw-note" }, n.citedOnly ? " · cites this project" : " · cites this project too") : null));
   }
@@ -1896,10 +1909,10 @@ function authorLink(name, commit, project) {
     ev.preventDefault();
     const w = window.open("about:blank", "_blank"); if (w) w.opener = null;
     let url = look.fallback;
-    url = (await provider().authorProfile(canonicalOf(project), commit)).profile || look.fallback; // offline or rate-limited: the commit page names the author too
+    url = safeUrl((await provider().authorProfile(canonicalOf(project), commit)).profile) || look.fallback; // offline or rate-limited: the commit page names the author too; a profile that is not https is not followed
     if (url !== look.fallback) AUTHOR_URLS[key] = url;
-    ev.target.closest("a").href = url;
-    if (w) w.location.href = url; else window.open(url, "_blank", "noopener");
+    setAttrs(ev.target.closest("a"), { href: url });
+    if (w) leave(url, w); else openOut(url);
   } }, name);
 }
 // The badges, ready to paste: the static one, and the two live ones from this project's published export
@@ -1907,7 +1920,7 @@ function authorLink(name, commit, project) {
 function renderBadges() {
   const pop = $("#badges-pop"); if (!pop || !SCENE.state) return;
   const st = SCENE.self?.project?.dashboard_state || SCENE.state.project?.dashboard_state || "";
-  const base = /^https:\/\//.test(st) ? st.replace(/state\.json$/, "") : "";
+  const base = safeUrl(st) ? st.replace(/state\.json$/, "") : "";
   const list = [{ name: "Keep the Why", img: "https://keepthewhy.com/assets/badge.svg", href: "https://keepthewhy.com", alt: "Keep the Why" }];
   if (base) list.push({ name: "live", img: `${base}badge-entries.svg`, href: base, alt: "Keep the Why · live" }, { name: "live, flat", img: `${base}badge-entries-flat.svg`, href: base, alt: "keep the why" });
   // a family root whose members all live in this repository: the family's numbers, from the same export
@@ -1922,7 +1935,7 @@ function renderBadges() {
   };
   setKids(pop, el("b", {}, "Badges"),
     ...list.map((x) => el("div", { class: "badge-item" },
-      el("a", { href: x.href, target: "_blank", rel: "noopener" }, el("img", { src: x.img, alt: x.alt })),
+      outLink({ href: x.href, target: "_blank", rel: "noopener" }, el("img", { src: x.img, alt: x.alt })),
       field("MD", `[![${x.alt}](${x.img})](${x.href})`),
       field("HTML", `<a href="${x.href}"><img alt="${x.alt}" src="${x.img}"></a>`))),
     base ? null : el("p", { class: "ktw-note" }, "The live badges come with a published export — a dashboard-state line in .keep-the-why."), famNote);

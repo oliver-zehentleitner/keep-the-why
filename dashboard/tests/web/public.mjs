@@ -86,6 +86,7 @@ const stubFetch = async (url) => {
 };
 
 const errors = [];
+const warns = []; // console.warn, read where a block asks for none of one kind
 const navigations = []; // jsdom does not navigate: a location.href to another page is reported, not followed
 const tick = (ms) => new Promise((r) => setTimeout(r, ms));
 // the canvas stub throws where a real canvas does — an arc with a negative radius — so a drawing bug that stops the graph's loop in a browser fails here too
@@ -93,8 +94,9 @@ async function open(url, page = html, store = {}) {
   const vc = new VirtualConsole();
   vc.on("jsdomError", (e) => /^Not implemented: navigation/.test(e.message || "") ? navigations.push(e.message) : errors.push("jsdom: " + (e.detail?.stack || e.message || e).toString().split("\n").slice(0, 2).join(" | ")));
   vc.on("error", (...a) => errors.push("console: " + a.join(" ")));
+  vc.on("warn", (...a) => warns.push(a.join(" ")));
   const dom = new JSDOM(page, { url, runScripts: "dangerously", pretendToBeVisual: true, virtualConsole: vc,
-    beforeParse(w) { for (const [k, v] of Object.entries(store)) w.localStorage.setItem(k, v); w.fetch = stubFetch; w.ResizeObserver = class { observe() {} disconnect() {} }; w.HTMLCanvasElement.prototype.getContext = () => new Proxy({}, { get: (t, k) => (k === "measureText" ? () => ({ width: 10 }) : k === "arc" ? (x, y, r) => { if (!(r >= 0)) throw new w.DOMException(`arc: radius ${r} is negative`, "IndexSizeError"); } : () => {}), set: () => true }); w.matchMedia = () => ({ matches: false }); w.CSS = { escape: (x) => x.replace(/([^\w-])/g, "\\$1") }; } });
+    beforeParse(w) { for (const [k, v] of Object.entries(store)) w.localStorage.setItem(k, v); w.fetch = stubFetch; w.EventSource = class { addEventListener() {} close() {} }; w.ResizeObserver = class { observe() {} disconnect() {} }; w.HTMLCanvasElement.prototype.getContext = () => new Proxy({}, { get: (t, k) => (k === "measureText" ? () => ({ width: 10 }) : k === "arc" ? (x, y, r) => { if (!(r >= 0)) throw new w.DOMException(`arc: radius ${r} is negative`, "IndexSizeError"); } : () => {}), set: () => true }); w.matchMedia = () => ({ matches: false }); w.CSS = { escape: (x) => x.replace(/([^\w-])/g, "\\$1") }; } });
   await tick(300);
   return dom.window;
 }
@@ -1263,6 +1265,28 @@ const report = {};
   if (tied.join() !== "suite") errors.push("owners: only the family's root should hang on the owner, got " + tied.join());
   // on the owner's node a hub drops the owner from its name: github.com/acme/suite reads suite, the id acme---web reads web
   if (onOwner.some((l) => /acme(\/|---)/.test(l)) || !onOwner.includes("suite") || !onOwner.includes("web")) errors.push("owners: a hub on the owner's node still repeats the owner: " + onOwner.join());
+  window.close();
+}
+{
+  // live mode, the local server over http: the state monitor links the page's own files by their path — safeHref
+  // takes a path as this page's place, where the server's full http URL is no https link — and warns about nothing
+  const LOCAL = "http://127.0.0.1:8765";
+  FILES[`${LOCAL}/api/state.json`] = state("acme---local", { canonical: `${GH}/local` }, [entry("Local", "On this machine.", { uuid: "5a1e5a1e-0000-4000-8000-00000000100c" })]);
+  warns.length = 0;
+  const window = await open(`${LOCAL}/#overview`);
+  await tick(300);
+  const d = window.document;
+  d.querySelector("#loaded > a")?.click(); await tick(50);
+  const link = [...d.querySelectorAll(".loaded-pop a")].find((a) => /state ↗/.test(a.textContent));
+  report.liveMonitor = { href: link?.getAttribute("href") ?? null, title: link?.getAttribute("title") ?? null };
+  if (!link) errors.push("live monitor: no state ↗ link");
+  else {
+    if (link.getAttribute("href") !== "/api/state.json") errors.push(`live monitor: the state link's href is ${JSON.stringify(link.getAttribute("href"))}, want the path /api/state.json`);
+    if (link.getAttribute("title") !== `${LOCAL}/api/state.json`) errors.push("live monitor: the title should keep the full address, got " + link.getAttribute("title"));
+    if (link.href !== `${LOCAL}/api/state.json`) errors.push("live monitor: the link does not resolve to the server's state, got " + link.href);
+  }
+  const notLinked = warns.filter((w) => /not linked/.test(w));
+  if (notLinked.length) errors.push("live monitor: warned " + notLinked.join(" | "));
   window.close();
 }
 console.log(JSON.stringify(report, null, 1));

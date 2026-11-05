@@ -16,8 +16,10 @@ import path from "node:path";
 import vm from "node:vm";
 import { renderMarkdown, inline, setTopics } from "./markdown-legacy.mjs";
 
-const file = new URL("../../ktw_dashboard/web/ktw-markdown.js", import.meta.url);
-vm.runInThisContext(fs.readFileSync(file, "utf8"), { filename: file.pathname });
+for (const name of ["ktw-core.js", "ktw-markdown.js"]) { // the core first: the links' rule is its safeUrl
+  const file = new URL(`../../ktw_dashboard/web/${name}`, import.meta.url);
+  vm.runInThisContext(fs.readFileSync(file, "utf8"), { filename: file.pathname });
+}
 const md = globalThis.KeepTheWhy.markdown;
 const { window } = new JSDOM("<!doctype html><body></body>");
 const doc = window.document;
