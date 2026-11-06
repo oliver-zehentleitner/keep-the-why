@@ -53,7 +53,7 @@ const colours = await page.evaluate(() => ["a", "b"].map((n) => {
   const dot = window.KTW_HOSTS[n].main.querySelector(".ktw-stack i, .ktw-bar i");
   return { pill: pill && [pill.className, getComputedStyle(pill).color, getComputedStyle(pill).borderTopColor], dot: dot && getComputedStyle(dot).backgroundColor };
 }));
-const want = { a: { active: "rgb(156, 61, 34)", open: "rgb(44, 110, 155)" }, b: { active: "rgb(169, 140, 245)", open: "rgb(74, 163, 223)" } };
+const want = { a: { active: "rgb(156, 61, 34)", open: "rgb(42, 105, 148)" }, b: { active: "rgb(169, 140, 245)", open: "rgb(74, 163, 223)" } };
 const wantBorder = { a: { active: "rgb(181, 73, 43)", open: "rgb(44, 110, 155)" }, b: { active: "rgb(131, 91, 236)", open: "rgb(74, 163, 223)" } };
 ["a", "b"].forEach((n, i) => {
   const c = colours[i];

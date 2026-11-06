@@ -36,7 +36,7 @@ function stageLegend() {
   return el("div", { class: "ktw-stage-legend" },
     el("span", { class: "ktw-grp" }, ...TYPE_KINDS.map((k) => el("span", { style: `color:${token(TYPE_TOKENS[k])}` }, typeGlyphSvg(k), " ", el("span", { style: "color:var(--ktw-fg2, #a2a2ad)" }, k))), el("span", {}, sw("", "color:var(--ktw-muted, #8b8b98)"), el("span", {}, tw("timeline.legend.noType", "no type")))),
     el("span", { class: "ktw-grp", title: tw("timeline.legend.evidence", "Evidence is the fill") }, el("span", {}, sw("ktw-solid", "color:var(--ktw-fg2, #a2a2ad)"), "confirmed"), el("span", {}, sw("ktw-hatch", "color:var(--ktw-fg2, #a2a2ad)"), "inferred"), el("span", {}, sw("", "color:var(--ktw-fg2, #a2a2ad)"), "unknown")),
-    el("span", { class: "ktw-grp", title: tw("timeline.legend.status", "Status is the edge") }, el("span", {}, sw("ktw-dashed", "color:var(--ktw-fg3, #6f6f7a)"), "superseded"), el("span", {}, sw("ktw-ring", "color:var(--ktw-fg2, #a2a2ad)"), tw("timeline.legend.inQuestion", "open · needs review · pending"))));
+    el("span", { class: "ktw-grp", title: tw("timeline.legend.status", "Status is the edge") }, el("span", {}, sw("ktw-dashed", "color:var(--ktw-fg3-line, #6f6f7a)"), "superseded"), el("span", {}, sw("ktw-ring", "color:var(--ktw-fg2, #a2a2ad)"), tw("timeline.legend.inQuestion", "open · needs review · pending"))));
 }
 
 // A card's shape is its Type. decision: a plain card with a diamond. constraint: a thick band across the top, a
@@ -161,7 +161,7 @@ function stagePainter(ctx, scene, cam, layout, v, o) {
     for (let guard = 0; guard < 600; guard++) {
       const first = `${yy}-${String(mm).padStart(2, "0")}-01`; const z = zOf(first); if (z > zFar) break;
       const [ax, ay] = proj(xl, floorY, z), [bx, by] = proj(xr, floorY, z);
-      ctx.globalAlpha = 0.35 + 0.65 * depthAlpha(z); ctx.strokeStyle = mm === 1 ? color("--ktw-fg3") : color("--ktw-line"); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+      ctx.globalAlpha = 0.35 + 0.65 * depthAlpha(z); ctx.strokeStyle = mm === 1 ? color("--ktw-fg3-line") : color("--ktw-line"); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
       ctx.fillStyle = color("--ktw-fg2"); ctx.font = font(10, "600"); if (ay > 8 && ay < v.H - 4) ctx.fillText(mm === 1 ? `${yy}-01` : first.slice(0, 7), ax + 6, ay); ctx.font = font(10);
       mm--; if (mm < 1) { mm = 12; yy--; }
     }
@@ -191,7 +191,7 @@ function stagePainter(ctx, scene, cam, layout, v, o) {
       const near = [v.hover, v.held].some((c) => c && (l.a === c || l.b === c));
       const A = boxes.get(l.a), B = boxes.get(l.b);
       ctx.globalAlpha = onLit || near ? 0.95 : lit.size ? 0.08 : 0.35 * Math.min(A.s, B.s) + 0.1;
-      ctx.strokeStyle = onLit || near ? color("--ktw-fg") : l.kind === "see" ? color("--ktw-accent2") : color("--ktw-fg3"); ctx.lineWidth = onLit || near ? 1.6 : 1; ctx.setLineDash(l.kind === "superseded" ? [5, 4] : []);
+      ctx.strokeStyle = onLit || near ? color("--ktw-fg") : l.kind === "see" ? color("--ktw-accent2") : color("--ktw-fg3-line"); ctx.lineWidth = onLit || near ? 1.6 : 1; ctx.setLineDash(l.kind === "superseded" ? [5, 4] : []);
       ctx.beginPath(); ctx.moveTo(A.cx, A.cy); ctx.lineTo(B.cx, B.cy); ctx.stroke();
     }
     ctx.setLineDash([]);
@@ -204,10 +204,10 @@ function stagePainter(ctx, scene, cam, layout, v, o) {
     const fresh = dayDiff(c.day, day) <= 3 && !PLAY.frac; // arrived within three days of the day shown: it glows
     const a = held ? 1 : (faded ? 0.16 : 1) * cam.depthAlpha(z); // the held card at full strength, whatever its depth
     const [fx, fy] = cam.proj(layout.posOf(c).x, cam.floorY, z); // the foot
-    ctx.globalAlpha = a * (held || hovered ? 0.9 : 0.35); ctx.strokeStyle = held || hovered ? color("--ktw-fg") : color("--ktw-fg3"); ctx.lineWidth = held || hovered ? 1.5 : 1; ctx.beginPath(); ctx.moveTo(b.cx, b.y1); ctx.lineTo(fx, fy); ctx.stroke();
+    ctx.globalAlpha = a * (held || hovered ? 0.9 : 0.35); ctx.strokeStyle = held || hovered ? color("--ktw-fg") : color("--ktw-fg3-line"); ctx.lineWidth = held || hovered ? 1.5 : 1; ctx.beginPath(); ctx.moveTo(b.cx, b.y1); ctx.lineTo(fx, fy); ctx.stroke();
     b.foot = [b.cx, b.y1, fx, fy];
     const kind = typeKind(e); const fold = kind === "workaround" ? Math.min(b.h * 0.45, b.w * 0.3) : 0;
-    const evc = sup ? color("--ktw-fg3") : (TYPE_TOKENS[kind] ? color(TYPE_TOKENS[kind]) : "") || color("--ktw-muted"); // the type's colour; a superseded card goes grey
+    const evc = sup ? color("--ktw-fg3-line") : (TYPE_TOKENS[kind] ? color(TYPE_TOKENS[kind]) : "") || color("--ktw-muted"); // the type's colour; a superseded card goes grey
     const outline = () => { ctx.beginPath(); if (fold) { ctx.moveTo(b.x0, b.y0); ctx.lineTo(b.x1 - fold, b.y0); ctx.lineTo(b.x1, b.y0 + fold); ctx.lineTo(b.x1, b.y1); ctx.lineTo(b.x0, b.y1); ctx.closePath(); } else ctx.rect(b.x0, b.y0, b.w, b.h); };
     ctx.globalAlpha = a;
     if (fresh || isLit || hovered || held || isStep) { ctx.shadowColor = held || isStep ? color("--ktw-accent2") : isLit ? color("--ktw-fg") : evc; ctx.shadowBlur = held ? 36 : isStep ? 22 : 14; }
@@ -223,7 +223,7 @@ function stagePainter(ctx, scene, cam, layout, v, o) {
     ctx.lineWidth = held ? 2.6 : hovered ? 2 : 1.2; ctx.strokeStyle = held ? color("--ktw-fg") : evc; ctx.setLineDash(sup || kind === "workaround" ? [4, 3] : []); outline(); ctx.stroke(); ctx.setLineDash([]);
     if (held) { ctx.strokeStyle = color("--ktw-accent2"); ctx.lineWidth = 2; ctx.globalAlpha = 0.9; ctx.strokeRect(b.x0 - 6, b.y0 - 6, b.w + 12, b.h + 12); ctx.globalAlpha = a; }
     if (kind && b.w > 30) { ctx.fillStyle = evc; ctx.strokeStyle = evc; const gs = Math.max(7, Math.min(11, b.h * 0.3)); typeGlyph(ctx, kind, b.x1 - gs - 4 - (fold ? fold * 0.6 : 0), b.y1 - gs - 3, gs); }
-    if (e.evidence === "unknown" && b.w > 30) { ctx.fillStyle = color("--ktw-unknown"); ctx.font = font(Math.max(8, Math.min(12, b.h * 0.32)), "700"); ctx.textAlign = "left"; ctx.textBaseline = "bottom"; ctx.fillText("?", b.x0 + 5, b.y1 - 2); }
+    if (e.evidence === "unknown" && b.w > 30) { ctx.fillStyle = color("--ktw-unknown-text"); ctx.font = font(Math.max(8, Math.min(12, b.h * 0.32)), "700"); ctx.textAlign = "left"; ctx.textBaseline = "bottom"; ctx.fillText("?", b.x0 + 5, b.y1 - 2); }
     if (st === "open" || st === "needs-review" || st === "pending-confirmation") { ctx.strokeStyle = color(`--ktw-status-${st}`); ctx.lineWidth = 1.2; ctx.strokeRect(b.x0 - 3, b.y0 - 3, b.w + 6, b.h + 6); }
     if (isStep) { ctx.strokeStyle = color("--ktw-accent2"); ctx.lineWidth = 2.5; ctx.strokeRect(b.x0 - 5, b.y0 - 5, b.w + 10, b.h + 10); }
     // the title on every card with room for a word, the type never below reading size: a card far back shows its first words

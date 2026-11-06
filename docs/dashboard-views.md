@@ -306,7 +306,10 @@ To restyle the views, set the tokens on `:root` or on any ancestor of the views.
 
 - `--ktw-on-accent` against `--ktw-accent-fill`;
 - `--ktw-accent-text` against `--ktw-bg`, against `--ktw-surface`, and against the type pill's tint (`--ktw-accent` at 18% over either);
-- `--ktw-status-active-text` against the pill's ground `--ktw-surface2`, and against `--ktw-surface` and `--ktw-bg`.
+- `--ktw-status-active-text` against the pill's ground `--ktw-surface2`, and against `--ktw-surface` and `--ktw-bg`;
+- every other `-text` token of a Status, Evidence or severity colour, and `--ktw-fg3`, against the same three.
+
+**Text and its colour are separate tokens.** A Status, Evidence or severity colour draws borders, dots, bars and the graph. Its `-text` token draws the words on a pill, a count or a label. `--ktw-fg3` is faint text and reaches AA, and `--ktw-fg3-line` is the faint colour for what is not text. A host that sets one of these colours sets its `-text` token with it, and a host that sets `--ktw-fg3` keeps it at 4.5:1.
 
 A host that changes `--ktw-accent` or `--ktw-status-active` sets these with it; they do not follow on their own. The dashboard's light theme sets `--ktw-accent-text` and `--ktw-status-active-text` to `#6234d9`. `dashboard/tests/web/contrast.test.mjs` measures the pairs from the stylesheets.
 
@@ -318,26 +321,38 @@ A host that changes `--ktw-accent` or `--ktw-status-active` sets these with it; 
 | `--ktw-line` | `#3a3a43` | borders and rules |
 | `--ktw-fg` | `#dcdce3` | text |
 | `--ktw-fg2` | `#a2a2ad` | secondary text |
-| `--ktw-fg3` | `#6f6f7a` | faint text, labels |
+| `--ktw-fg3` | `#9999a2` | faint text, labels (AA) |
+| `--ktw-fg3-line` | `#6f6f7a` | the faint colour for what is not text: a dotted rule, the timeline's grid and lines, a superseded card's grey, the graph's superseded links and owner ring |
 | `--ktw-accent` | `#835bec` | the accent: borders, bars, outlines, the graph |
 | `--ktw-accent2` | `#a98cf5` | the accent's lighter tone: lines and frames in the graph and the timeline |
 | `--ktw-accent-fill` | `#7a52e6` | a solid accent area with text on it (a selected button, the search scope) |
 | `--ktw-on-accent` | `#ffffff` | text on `--ktw-accent-fill` |
 | `--ktw-accent-text` | `#a98cf5` | accent-coloured text: links, marks, counts, the type pill |
 | `--ktw-ok` | `#4fbf7a` | good |
+| `--ktw-ok-text` | `#4fbf7a` | text in `--ktw-ok` |
 | `--ktw-warn` | `#e0a83a` | warning |
+| `--ktw-warn-text` | `#e0a83a` | text in `--ktw-warn` |
 | `--ktw-bad` | `#e0574f` | error |
+| `--ktw-bad-text` | `#e77c76` | text in `--ktw-bad` |
 | `--ktw-info` | `#4aa3df` | information |
+| `--ktw-info-text` | `#4aa3df` | text in `--ktw-info` |
 | `--ktw-muted` | `#8b8b98` | an entry with no Evidence colour |
 | `--ktw-confirmed` | `#4fbf7a` | Evidence: confirmed |
+| `--ktw-confirmed-text` | `#4fbf7a` | the confirmed Evidence pill's text |
 | `--ktw-inferred` | `#e0a83a` | Evidence: inferred |
+| `--ktw-inferred-text` | `#e0a83a` | the inferred Evidence pill's text |
 | `--ktw-unknown` | `#e0574f` | Evidence: unknown |
+| `--ktw-unknown-text` | `#e77c76` | the unknown Evidence pill's text |
 | `--ktw-status-active` | `#835bec` | Status: active (the pill's border, bars, the graph) |
 | `--ktw-status-active-text` | `#a98cf5` | the active Status pill's text |
-| `--ktw-status-superseded` | `#6f6f7a` | Status: superseded |
-| `--ktw-status-open` | `#4aa3df` | Status: open |
-| `--ktw-status-needs-review` | `#e0a83a` | Status: needs-review |
-| `--ktw-status-pending-confirmation` | `#d66fd6` | Status: pending-confirmation |
+| `--ktw-status-superseded` | `#6f6f7a` | Status: superseded (the pill's border, bars, the graph) |
+| `--ktw-status-superseded-text` | `#9999a2` | the superseded Status pill's text |
+| `--ktw-status-open` | `#4aa3df` | Status: open (the pill's border, bars, the graph) |
+| `--ktw-status-open-text` | `#4aa3df` | the open Status pill's text |
+| `--ktw-status-needs-review` | `#e0a83a` | Status: needs-review (the pill's border, bars, the graph) |
+| `--ktw-status-needs-review-text` | `#e0a83a` | the needs-review Status pill's text |
+| `--ktw-status-pending-confirmation` | `#d66fd6` | Status: pending-confirmation (the pill's border, bars, the graph) |
+| `--ktw-status-pending-confirmation-text` | `#d875d8` | the pending-confirmation Status pill's text |
 | `--ktw-type-decision` | `#835bec` | Type: decision |
 | `--ktw-type-constraint` | `#4aa3df` | Type: constraint |
 | `--ktw-type-workaround` | `#e0a83a` | Type: workaround |

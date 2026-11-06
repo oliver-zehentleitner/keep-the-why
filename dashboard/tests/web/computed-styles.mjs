@@ -69,21 +69,23 @@ const collect = ({ want, added, box, trim, sites, restyle }) => {
 const ADDED_SELECTORS = ADDED.map((x) => x.selector);
 // colours a pull request changes on purpose, per role and theme (the theme the page shows). The roles are bound to
 // the rules that read the new tokens (recolour-sites.mjs): an element changes a colour only in its role's
-// properties, and only from a colour to one it may become. WCAG AA for text on accent (context/dashboard.md, "Text
-// on accent is a pair of tokens"): text in the accent becomes --ktw-accent-text / --ktw-status-active-text
-// (#a98cf5 in dark, #6234d9 in light); a solid accent under text becomes --ktw-accent-fill #7a52e6; the update
-// hint's shimmer is built on the accent text with a readable band (#dcd0fb in dark, #3b1d99 in light)
+// properties, and only from a colour to one it may become. WCAG AA for status, evidence and severity text and the
+// faint text (context/dashboard.md, "Text on accent is a pair of tokens"): text in one of those colours takes its
+// -text token, the faint text --ktw-fg3 is raised; what is not text keeps the old faint colour as --ktw-fg3-line
 const SITES = recolourSites();
-const ACCENT = "rgb(131, 91, 236)", ACCENT2 = "rgb(169, 140, 245)", WHITE = "rgb(255, 255, 255)";
-const FILL = "rgb(122, 82, 230)", TEXT = { dark: ACCENT2, light: "rgb(98, 52, 217)" }, SHINE = { dark: "rgb(220, 208, 251)", light: "rgb(59, 29, 153)" };
+const rgb = (hex) => `rgb(${[1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(", ")})`;
+const pairs = (list) => Object.fromEntries(list.map(([from, ...to]) => [rgb(from), to.map(rgb)]));
 // the properties that take the text colour: the text itself and what follows it (currentColor), and SVG text
 const TEXT_PROPS = /^(color|fill|caret-color|column-rule-color|outline-color|text-decoration-color|text-emphasis-color|-webkit-text-fill-color|-webkit-text-stroke-color)$/;
 const BORDER_PROPS = /^border(-(top|right|bottom|left|block-start|block-end|inline-start|inline-end))?-color$/;
 const RECOLOURED = {
-  text: { props: TEXT_PROPS, dark: { [ACCENT]: [TEXT.dark] }, light: { [ACCENT]: [TEXT.light], [ACCENT2]: [TEXT.light] } },
-  fill: { props: /^background-color$/, dark: { [ACCENT]: [FILL] }, light: { [ACCENT]: [FILL] } },
-  fillBorder: { props: BORDER_PROPS, dark: { [ACCENT]: [FILL] }, light: { [ACCENT]: [FILL] } },
-  shimmer: { props: /^background-image$/, dark: { [WHITE]: [SHINE.dark] }, light: { [ACCENT2]: [TEXT.light], [WHITE]: [SHINE.light] } },
+  text: {
+    props: TEXT_PROPS,
+    // dark: the faint text and superseded #6f6f7a, bad, pending; the other colours already reach AA there
+    dark: pairs([["#6f6f7a", "#9999a2"], ["#e0574f", "#e77c76"], ["#d66fd6", "#d875d8"]]),
+    // light: every status, evidence and severity colour, superseded and the faint text
+    light: pairs([["#8a8a96", "#696975"], ["#9a9aa6", "#696977"], ["#4fbf7a", "#2b7749"], ["#e0a83a", "#8a6316"], ["#e0574f", "#c92d23"], ["#4aa3df", "#1d6fa6"], ["#d66fd6", "#ae31ae"]]),
+  },
 };
 // properties a pull request changes on purpose on the elements a selector matches: a pill that holds free text (an
 // entry's Source and Verification) wraps inside its column (CHANGELOG, 0.11.45); its own size follows its text
