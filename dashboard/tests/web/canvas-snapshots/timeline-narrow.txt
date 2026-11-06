@@ -22,7 +22,7 @@ beginPath()
 moveTo(22.553, 445.473)
 lineTo(777.447, 445.473)
 stroke()
-fillStyle = "#6f6f7a"
+fillStyle = "#9999a2"
 globalAlpha = 0.9
 fillText("15", 28.553, 445.473)
 globalAlpha = 0.65
@@ -31,7 +31,7 @@ beginPath()
 moveTo(40.771, 427.11)
 lineTo(759.229, 427.11)
 stroke()
-fillStyle = "#6f6f7a"
+fillStyle = "#9999a2"
 globalAlpha = 0.9
 fillText("14", 46.771, 427.11)
 globalAlpha = 0.65
@@ -46,7 +46,7 @@ beginPath()
 moveTo(68.935, 398.72)
 lineTo(731.065, 398.72)
 stroke()
-fillStyle = "#6f6f7a"
+fillStyle = "#9999a2"
 globalAlpha = 0.9
 fillText("12", 74.935, 398.72)
 globalAlpha = 0.65
@@ -61,7 +61,7 @@ beginPath()
 moveTo(89.883, 377.603)
 lineTo(710.117, 377.603)
 stroke()
-fillStyle = "#6f6f7a"
+fillStyle = "#9999a2"
 globalAlpha = 0.895
 fillText("10", 95.883, 377.603)
 globalAlpha = 0.639
@@ -76,7 +76,7 @@ beginPath()
 moveTo(106.214, 361.142)
 lineTo(693.786, 361.142)
 stroke()
-fillStyle = "#6f6f7a"
+fillStyle = "#9999a2"
 globalAlpha = 0.883
 fillText("8", 112.214, 361.142)
 globalAlpha = 0.622
@@ -91,7 +91,7 @@ beginPath()
 moveTo(130.303, 336.86)
 lineTo(669.697, 336.86)
 stroke()
-fillStyle = "#6f6f7a"
+fillStyle = "#9999a2"
 globalAlpha = 0.862
 fillText("4", 136.303, 336.86)
 globalAlpha = 0.603
@@ -106,7 +106,7 @@ beginPath()
 moveTo(147.466, 319.559)
 lineTo(652.534, 319.559)
 stroke()
-fillStyle = "#6f6f7a"
+fillStyle = "#9999a2"
 globalAlpha = 0.844
 fillText("31", 153.466, 319.559)
 globalAlpha = 0.583
@@ -121,7 +121,7 @@ beginPath()
 moveTo(165.915, 300.962)
 lineTo(634.085, 300.962)
 stroke()
-fillStyle = "#6f6f7a"
+fillStyle = "#9999a2"
 globalAlpha = 0.823
 fillText("25", 171.915, 300.962)
 globalAlpha = 0.563
@@ -142,7 +142,7 @@ beginPath()
 moveTo(189.415, 277.274)
 lineTo(610.585, 277.274)
 stroke()
-fillStyle = "#6f6f7a"
+fillStyle = "#9999a2"
 globalAlpha = 0.79
 fillText("13", 195.415, 277.274)
 globalAlpha = 0.526
@@ -163,7 +163,7 @@ beginPath()
 moveTo(212.398, 254.106)
 lineTo(587.602, 254.106)
 stroke()
-fillStyle = "#6f6f7a"
+fillStyle = "#9999a2"
 globalAlpha = 0.749
 fillText("22", 218.398, 254.106)
 globalAlpha = 0.484
@@ -184,7 +184,7 @@ beginPath()
 moveTo(234.132, 232.198)
 lineTo(565.868, 232.198)
 stroke()
-fillStyle = "#6f6f7a"
+fillStyle = "#9999a2"
 globalAlpha = 0.701
 fillText("14", 240.132, 232.198)
 globalAlpha = 0.916
@@ -505,7 +505,7 @@ lineTo(7.5, 4.5)
 lineTo(10.5, 4.5)
 stroke()
 restore()
-fillStyle = "#e0574f"
+fillStyle = "#e77c76"
 font = "700 8px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif"
 textAlign = "left"
 textBaseline = "bottom"
@@ -750,7 +750,7 @@ beginPath()
 rect(450.951, 125.924, 38.412, 17.729)
 stroke()
 setLineDash([])
-fillStyle = "#e0574f"
+fillStyle = "#e77c76"
 font = "700 8px -apple-system, \"Segoe UI\", Inter, Roboto, \"Helvetica Neue\", sans-serif"
 textAlign = "left"
 textBaseline = "bottom"
