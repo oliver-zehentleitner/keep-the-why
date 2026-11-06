@@ -207,13 +207,23 @@ then the median tokens read over all text questions and over hits:
 - Entry-level index: 55k / 281k / 565k tokens.
 - Cache: 10 / 50 / 101 MB.
 
+**What the larger sets are.** ×5 and ×10 are an adversarial stress test, not a forecast for a large real
+`context/`. Ten deranged near-copies of one family are harder to tell apart than ten different projects' worth of
+entries would be. Read the falling recall as the hard case: many similar entries, one of them right.
+
 **What changed in the picture.**
-- **Recall now falls with size,** as it should. At ×10, BM25 finds the right entry in the top ten for under half
+- **Recall now falls with size** in that hard case, as it should. At ×10, BM25 finds the right entry in the top ten for under half
   the text questions, and hybrid for 59 %. The first run's .69 / .77 were the artefact.
 - **At ×10, BM25 beats hybrid at rank 1** (.34 against .22); hybrid wins at @5 and @10. Fusing ranks spreads
   the first place.
 - **Telling similar entries apart is the hard part at scale,** not reading cost. Every variant still reads about
   1k tokens per question, against the baseline's 34k–195k.
+
+**Next, for the hard case** (head, #770):
+- BM25F, with field weights tuned on held-out questions.
+- Cheap signals to tell similar hits apart: the member and topic title in each hit line, `--member` / `--topic`
+  scoping, and a search within the hits.
+- Whether a two-step search (broad, then within the topic of the best hits) recovers recall at ×10.
 
 **Open questions.**
 - How much of the ranking gap is the query? An agent writes its own query, not the question as asked.
