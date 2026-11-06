@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import statistics
 import sys
 import time
@@ -29,6 +30,9 @@ try:
 except ImportError:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lint"))
     from ktw_lint.entries import parse_topic_text
+from ktw_lint.checks import (
+    _split_value,
+)  # a field value's head, as the linter splits it
 
 HERE = Path(__file__).resolve().parent
 SKIP = {"index.md", "README.md", "AGENTS.md", "CLAUDE.md"}
@@ -87,6 +91,22 @@ def ids_in(value: str) -> list[str]:
     )
 
 
+# The fields an entry may carry more than once, by the linter: Type (several lines since context-schema 0.9.0) and
+# See. Id, Status, Evidence and Superseded by are single (E112, "more than one … line"). A rule on a repeatable field
+# matches by membership, never on the first line alone.
+REPEATABLE = {"Type", "See"}
+
+
+def values(e: dict, field: str) -> list[str]:
+    """Every value of a field, its head only (`undefined — reason` is `undefined`), as the linter reads it."""
+    return [_split_value(v)[0] for v in e["fields"].get(field, [])]
+
+
+def matches(e: dict, field: str, want: str) -> bool:
+    got = values(e, field)
+    return want in got if field in REPEATABLE else got[:1] == [want]
+
+
 def derive(rule: dict, entries: dict) -> list[str]:
     """Recompute a graph or filter question's expected ids from the dataset."""
     if "superseded_by_of" in rule:
@@ -110,18 +130,31 @@ def derive(rule: dict, entries: dict) -> list[str]:
             i
             for i in see
             if i in entries
-            and entries[i]["fields"].get("Type", [""])[0]
-            == rule.get("type", entries[i]["fields"].get("Type", [""])[0])
+            and ("type" not in rule or matches(entries[i], "Type", rule["type"]))
         ]
     out = [
         k
         for k, e in entries.items()
-        if all(e["fields"].get(f.capitalize(), [""])[0] == v for f, v in rule.items())
+        if all(matches(e, f.capitalize(), v) for f, v in rule.items())
     ]
     return sorted(out)
 
 
 FILTER_RULE_KEYS = {"type", "status", "evidence"}
+
+
+def raw_count(rule: dict, data: dict) -> int:
+    """The entries a one-field filter rule matches, counted as `**Field:** value` lines in the topic files' text."""
+    ((field, want),) = rule.items()
+    line = re.compile(
+        r"^\*\*"
+        + field.capitalize()
+        + r":\*\*\s*"
+        + re.escape(want)
+        + r"(?:\s*[—–-]\s.*)?\s*$",
+        re.M,
+    )
+    return sum(len(line.findall(text)) for text in data["texts"].values())
 
 
 def expected_in(q: dict, data: dict) -> list[str]:
@@ -218,6 +251,15 @@ def main(argv=None) -> int:
                 if sorted(again) != sorted(q["expected"]):
                     problems.append(
                         f"{ds.name} {q['id']}: the rule gives {again}, questions.json says {q['expected']}"
+                    )
+            # a filter's answer, counted a second way and outside the parser: its field lines in the raw text.
+            # Each rule field occurs at most once per entry with a given value (E109 for Type, E112 for the single
+            # fields), so the lines are as many as the entries.
+            if q.get("rule") and set(q["rule"]) <= FILTER_RULE_KEYS:
+                raw = raw_count(q["rule"], data)
+                if raw != len(expected_in(q, data)):
+                    problems.append(
+                        f"{ds.name} {q['id']}: {len(expected_in(q, data))} entries match, the raw text has {raw}"
                     )
             share = leak(q, data)
             held = q["kind"] not in ("supersedes", "see", "thought-chain", "filter")

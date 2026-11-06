@@ -59,6 +59,11 @@ starts in (default: the root) and the members the answer lives in:
   needs-review entry of the family); the harness recomputes their Ids from every dataset and fails when they
   differ. A filter question's answer in a copied set is every entry the filter matches there, the copies'
   included: nothing in a copy says it is one.
+- A rule on a field an entry may carry more than once, Type or See, matches any of its lines: an entry with
+  `**Type:** decision` and `**Type:** incident` is an incident (17 of the original's 23 incidents carry it first, 6
+  after another Type). A filter's answer is also counted a second way, as its field lines in the raw text, and the
+  harness fails when the two differ (review finding: reading the first Type only had dropped those 6, and the
+  check against the same reading could not see it).
 
 The harness also checks that no question gives its answer away: the share of the expected entry's title words
 (stop words out, a plural folded) that the question repeats must stay at or below 40 %, reported per question.

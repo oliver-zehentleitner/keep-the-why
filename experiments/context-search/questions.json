@@ -441,12 +441,16 @@
    "kind": "filter",
    "question": "List every incident recorded anywhere in Maity's family: the root and its hub, web and cli members.",
    "expected": [
+    "06563fc8-cd5c-4820-b089-9d233f3d44b8",
     "19df9565-836c-4f23-a707-9c72d471b4d1",
     "1a5e729f-816a-4682-ab8c-a2029aa1ea0a",
     "2083a296-dac3-4164-b51e-9a3a6a38a26b",
+    "210f3def-e846-4f72-ad22-2ad911ec3bf2",
     "48327066-0929-495b-8f2c-e85f55b0878c",
+    "5380a247-324f-4ab8-92c6-37350e02b0cb",
     "5ce3c8ac-2db5-4a49-8934-65c6bc790496",
     "5f1597e2-a1d2-416b-af05-44b60854533a",
+    "721bcdfa-9464-4b57-b885-a1455f5adbb8",
     "798f7da4-9902-4fbe-8c24-d96762ec0224",
     "871f9226-a39d-4a71-84a6-c0b65a4fbf2e",
     "8c119e9f-9bc8-464f-8fae-54770977af9a",
@@ -456,11 +460,13 @@
     "a693f08e-ee64-44b7-b245-872065c2dc0e",
     "b1c7bd7d-a497-41ed-97e3-989f63c80a1c",
     "c0692bcc-f883-443e-a55c-e280a117cd9d",
+    "d295eb2a-38ad-4e27-9dfa-524bb0963a24",
+    "dc0a02f8-c657-406a-8f63-f260b588e7e8",
     "f3bec014-28b7-4bfe-9ca8-304f1481fceb",
     "f5af51a7-1a53-4782-9af5-6c91b4f7d77c"
    ],
    "source": "the state: Type incident",
-   "derivation": "computed: every entry with Type incident",
+   "derivation": "computed: every entry with a Type incident line, a second or later Type line included",
    "rule": {
     "type": "incident"
    },
