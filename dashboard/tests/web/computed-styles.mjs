@@ -33,7 +33,7 @@ const init = `(() => {
 // An element the pull request adds on purpose (added-elements.mjs) is left out, and not counted among its siblings.
 // On its parent — the paths in `trim`; null: this page's own — the properties that resolve to the parent's box
 // (PARENT_BOX) are left out too, the one thing an added child changes there.
-const collect = ({ want, added, box, trim, sites }) => {
+const collect = ({ want, added, box, trim, sites, restyle }) => {
   const isAdded = (el) => added.some((sel) => el.closest(sel));
   // custom properties are inputs, not results: what they set shows in the properties that use them, and the
   // tokens' values are held equal by test_views.py
@@ -43,7 +43,14 @@ const collect = ({ want, added, box, trim, sites }) => {
   const fnv = (s) => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16); };
   const out = {}, detail = {}, roles = {}, parents = [];
   const any = (list, f) => (list || []).some((s) => { try { return f(s); } catch { return false; } });
-  const rolesOf = (el) => (sites ? [any(sites.text, (s) => el.closest(s)) && "text", any(sites.fill, (s) => el.matches(s)) && "fill", any(sites.fillBorder, (s) => el.matches(s)) && "fillBorder", any(sites.shimmer, (s) => el.matches(s)) && "shimmer"].filter(Boolean) : []);
+  // restyle: [{ selector, within }] — the element itself, what inherits from it, and the blocks around it in `within`
+  const restyled = (el) => (restyle || []).flatMap((x, i) => { try {
+    if (el.matches(x.selector)) return [`restyled:${i}`];
+    if (el.closest(x.selector)) return [`restyled-in:${i}`];
+    if (x.within && el.closest(x.within) && el.querySelector(x.selector)) return [`restyled-around:${i}`];
+    return [];
+  } catch { return []; } });
+  const rolesOf = (el) => [...restyled(el), ...(sites ? [any(sites.text, (s) => el.closest(s)) && "text", any(sites.fill, (s) => el.matches(s)) && "fill", any(sites.fillBorder, (s) => el.matches(s)) && "fillBorder", any(sites.shimmer, (s) => el.matches(s)) && "shimmer"].filter(Boolean) : [])];
   for (const el of document.body.querySelectorAll("*")) if (!isAdded(el) && [...el.children].some((c) => added.some((sel) => c.matches(sel)))) parents.push(pathOf(el));
   const trimmed = new Set(trim || parents);
   for (const el of document.body.querySelectorAll("*")) {
@@ -80,6 +87,17 @@ const RECOLOURED = {
     light: pairs([["#8a8a96", "#696975"], ["#9a9aa6", "#696977"], ["#4fbf7a", "#2b7749"], ["#e0a83a", "#8a6316"], ["#e0574f", "#c92d23"], ["#4aa3df", "#1d6fa6"], ["#d66fd6", "#ae31ae"]]),
   },
 };
+// properties a pull request changes on purpose on the elements a selector matches: a pill that holds free text (an
+// entry's Source and Verification) wraps inside its column (CHANGELOG, 0.11.45); its own size follows its text
+// What inherits it (a link inside the pill) takes the wrapping too; where a pill now wraps instead of running past
+// its column, the blocks around it inside the entry reader grow by its new lines (height and the origins that
+// follow it)
+const RESTYLED = [{
+  selector: ".ktw-pill.ktw-wrap",
+  props: /^(white-space|white-space-collapse|text-wrap|text-wrap-mode|overflow-wrap|word-wrap|max-width|max-inline-size|box-sizing|border(-[a-z]+)*-radius|width|inline-size|height|block-size|perspective-origin|transform-origin)$/,
+  inherited: /^(white-space|white-space-collapse|text-wrap|text-wrap-mode|overflow-wrap|word-wrap)$/,
+  around: { within: ".ktw-reader", props: /^(height|block-size|perspective-origin|transform-origin)$/ },
+}];
 const COLOUR = /rgba?\([^()]*\)/g;
 const valueOf = (decls, prop) => { const d = decls.find((x) => x.startsWith(prop + ": ")); return d ? d.slice(prop.length + 2) : null; };
 // is `got` what `lost` becomes, colour by colour, with only the recolourings `role` allows in `theme`?
@@ -100,6 +118,10 @@ function onlyRecoloured(theme, roles, base, page) {
   return lost.every((d) => {
     const p = prop(d), g = byProp.get(p);
     if (!g) return false;
+    if (roles.some((r) => { const [kind, i] = r.split(":"); const x = RESTYLED[+i];
+      // around the pill a block may only grow: a block that shrinks would be another bug
+      const grows = !/^(height|block-size)$/.test(p) || parseFloat(g.slice(p.length + 2)) > parseFloat(d.slice(p.length + 2));
+      return (kind === "restyled" && x.props.test(p)) || (kind === "restyled-in" && x.inherited.test(p)) || (kind === "restyled-around" && x.around.props.test(p) && grows); })) return true;
     return roles.some((role) => {
       const r = RECOLOURED[role];
       if (!r) return false; // a role this pull request recolours nothing in
@@ -156,7 +178,7 @@ for (const [width, theme] of runs) {
     if (!bad.length) continue;
     const onlyOne = bad.filter((k) => !(k in a.out) || !(k in b.out));
     if (onlyOne.length) { diffs.push(`${theme} ${width}px ${hash}: the element trees differ (${onlyOne.length} paths in one page only, e.g. ${onlyOne[0]})`); continue; }
-    const [da, db] = await Promise.all([A.page.evaluate(collect, { want: bad, added: ADDED_SELECTORS, box: PARENT_BOX, trim: b.parents, sites: SITES }), B.page.evaluate(collect, { want: bad, added: ADDED_SELECTORS, box: PARENT_BOX, trim: b.parents, sites: SITES })]);
+    const [da, db] = await Promise.all([A.page.evaluate(collect, { want: bad, added: ADDED_SELECTORS, box: PARENT_BOX, trim: b.parents, sites: SITES, restyle: RESTYLED.map((x) => ({ selector: x.selector, within: x.around?.within })) }), B.page.evaluate(collect, { want: bad, added: ADDED_SELECTORS, box: PARENT_BOX, trim: b.parents, sites: SITES, restyle: RESTYLED.map((x) => ({ selector: x.selector, within: x.around?.within })) })]);
     const unexplained = bad.filter((k) => !onlyRecoloured(theme, db.roles[k] || [], da.detail[k] || [], db.detail[k] || []));
     recolouredCount += bad.length - unexplained.length;
     for (const k of unexplained.slice(0, 20)) {

@@ -24,7 +24,7 @@
       "superseded"
     <span class="ktw-pill ktw-ev-confirmed">
       "confirmed"
-    <span class="ktw-pill">
+    <span class="ktw-pill ktw-wrap">
       "Source: maintainer interview, 2026-03-01"
   <div class="ktw-body">
     <p>

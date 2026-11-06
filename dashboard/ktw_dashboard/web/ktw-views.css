@@ -37,6 +37,9 @@ h3 a.ktw-config-file { font-weight: 400; font-size: 12px; margin-left: 8px; text
 .ktw-dot.ktw-superseded { opacity: .4; }
 .ktw-sub { color: var(--ktw-fg2, #a2a2ad); margin: 0 0 18px; }
 .ktw-pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; line-height: 18px; background: var(--ktw-surface2, #2f2f36); color: var(--ktw-fg2, #a2a2ad); border: 1px solid var(--ktw-line, #3a3a43); white-space: nowrap; }
+/* a pill that holds free text (an entry's Source, its Verification) wraps inside its column; the short pills stay on
+   one line */
+.ktw-pill.ktw-wrap { white-space: normal; overflow-wrap: anywhere; max-width: 100%; box-sizing: border-box; border-radius: 10px; }
 .ktw-pill.ktw-type { border-color: transparent; background: color-mix(in srgb, var(--ktw-accent, #835bec) 18%, transparent); color: var(--ktw-accent-text, #a98cf5); }
 .ktw-pill.ktw-status-active { color: var(--ktw-status-active-text, #a98cf5); border-color: var(--ktw-status-active, #835bec); }
 .ktw-pill.ktw-fork { border-style: dashed; }
