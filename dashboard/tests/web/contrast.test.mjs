@@ -63,8 +63,17 @@ function resolve(value, vals) {
   return v.trim().toLowerCase();
 }
 const RESOLVE_IN = { "the views' fallbacks": null, "the dashboard, dark": DARK, "the dashboard, light": LIGHT };
-// the raw accent as text, per theme: #835bec everywhere; #a98cf5 too in light, where it is 2.59:1 on the page
-const RAW = { "the views' fallbacks": ["#835bec"], "the dashboard, dark": ["#835bec"], "the dashboard, light": ["#835bec", "#a98cf5"] };
+// the raw colours as text, per theme, wherever a text token takes their place: the accent #835bec everywhere and
+// #a98cf5 in light; the old faint text (#6f6f7a, light #8a8a96), now --ktw-fg3-line; and the status, evidence and
+// severity colours where they miss AA as text (bad and pending in dark, all of them and superseded in light)
+const DARK_RAW = ["#835bec", "#6f6f7a", "#e0574f", "#d66fd6"];
+const RAW = { "the views' fallbacks": DARK_RAW, "the dashboard, dark": DARK_RAW,
+  "the dashboard, light": ["#835bec", "#a98cf5", "#8a8a96", "#9a9aa6", "#4fbf7a", "#e0a83a", "#e0574f", "#4aa3df", "#d66fd6"] };
+// an SVG `fill` is text colour only on text: these selectors fill a shape, a mark that keeps the colour itself
+const DECORATIVE_FILLS = new Set([".ktw-timeline .ktw-sup"]); // the per-week superseded marks under the timeline's bars
+// the text tokens of the status, evidence and severity colours, and the faint text
+const TEXT_TOKENS = ["ok-text", "confirmed-text", "warn-text", "inferred-text", "status-needs-review-text", "bad-text", "unknown-text",
+  "info-text", "status-open-text", "status-pending-confirmation-text", "status-superseded-text", "fg3"];
 
 test("text on a solid accent area: --ktw-on-accent over --ktw-accent-fill, 4.5:1 in every theme", () => {
   for (const [name, t] of Object.entries(THEMES)) {
@@ -93,16 +102,38 @@ test("the active status pill's text: --ktw-status-active-text on the pill's grou
   }
 });
 
+test("status, evidence and severity text, and the faint text: each text token on a pill's ground, the surface and the page, 4.5:1 in every theme", () => {
+  for (const [name, vals] of Object.entries(RESOLVE_IN)) {
+    const ground = (k) => (vals ? vals[`ktw-${k}`] : fallback(`--ktw-${k}`));
+    for (const tok of TEXT_TOKENS) {
+      const c = vals ? vals[`ktw-${tok}`] : fallback(`--ktw-${tok}`);
+      for (const where of ["surface2", "surface", "bg"]) {
+        const r = ratio(c, ground(where));
+        assert.ok(r >= AA, `${name}: --ktw-${tok} ${c} on ${where} (${ground(where)}) is ${r.toFixed(2)}:1`);
+      }
+    }
+  }
+});
+
+test("the dashboard's chrome sets the same text tokens as the views, in both themes", () => {
+  const SHELL = { ok: "ok", confirmed: "confirmed", warn: "warn", inferred: "inferred", "status-needs-review": "needs-review", bad: "bad", unknown: "unknown", info: "info", "status-open": "open", "status-pending-confirmation": "pending-confirmation", "status-superseded": "superseded" };
+  for (const [vals, theme] of [[DARK, "dark"], [LIGHT, "light"]]) {
+    for (const [tok, v] of Object.entries(SHELL)) assert.equal(vals[`${v}-text`], vals[`ktw-${tok}-text`], `${theme}: --${v}-text is --ktw-${tok}-text`);
+    assert.equal(vals.fg3, vals["ktw-fg3"], `${theme}: --fg3 is --ktw-fg3`);
+    assert.equal(vals["fg3-line"], vals["ktw-fg3-line"], `${theme}: --fg3-line is --ktw-fg3-line`);
+  }
+});
+
 test("no text resolves to the raw accent, through whatever token: color, fill and a text fill", () => {
   for (const [file, css] of [["ktw-views.css", VIEWS], ["style.css", STYLE]]) {
     for (const r of rules(css)) {
       if (r.sel.startsWith(":root")) continue;
       const decl = Object.fromEntries([...r.body.matchAll(/(?:^|;)\s*([\w-]+)\s*:\s*([^;]+)/g)].map((m) => [m[1], m[2].trim()]));
       for (const prop of ["color", "fill", "-webkit-text-fill-color"]) {
-        if (!decl[prop]) continue;
+        if (!decl[prop] || (prop === "fill" && DECORATIVE_FILLS.has(r.sel))) continue;
         for (const [theme, vals] of Object.entries(RESOLVE_IN)) {
           const c = resolve(decl[prop], vals);
-          assert.ok(!RAW[theme].includes(c), `${file} ${r.sel}: ${prop} resolves to ${c} in ${theme}, the raw accent`);
+          assert.ok(!RAW[theme].includes(c), `${file} ${r.sel}: ${prop} resolves to ${c} in ${theme}, a raw colour a text token takes the place of`);
         }
       }
     }
@@ -113,6 +144,32 @@ test("no text resolves to the raw accent, through whatever token: color, fill an
 // hint's gradient every channel moves the same way between neighbouring stops (all up in dark, #a98cf5 to #dcd0fb;
 // all down in light, #6234d9 to #3b1d99), so the luminance, and the ratio against a plain ground, lies between
 // the stops' and is lowest at one of them.
+// the scripts set a few colours inline (a dropdown's empty-state note, the legends' marks): a text colour there
+// meets the same rule. The timeline legend's `sw(…)` swatch is an empty mark whose border is currentColor, so its
+// `color` is a line colour, not text.
+test("no text colour set inline by the scripts resolves to a raw colour", () => {
+  const files = ["app.js", ...fs.readdirSync(W).filter((n) => /^ktw-.+\.js$/.test(n))];
+  let seen = 0;
+  for (const name of files) {
+    fs.readFileSync(W + name, "utf8").split("\n").forEach((line, i) => {
+      for (const m of line.matchAll(/(?:^|[;"`{\s])color:\s*(var\(--[\w-]+(?:,\s*#[0-9a-fA-F]{3,8})?\))/g)) {
+        if (/\bsw\(/.test(line.slice(Math.max(0, m.index - 40), m.index))) continue; // the timeline legend's swatch
+        seen++;
+        for (const [theme, vals] of Object.entries(RESOLVE_IN)) {
+          const c = resolve(m[1], vals);
+          assert.ok(!RAW[theme].includes(c), `${name}:${i + 1}: inline color ${m[1]} resolves to ${c} in ${theme}, a raw colour a text token takes the place of`);
+        }
+      }
+    });
+  }
+  assert.ok(seen >= 1, "the search dropdown's note sets its colour inline; this test is for such places");
+});
+
+test("every decorative fill named above is still a rule of the stylesheet", () => {
+  const sels = new Set(rules(VIEWS).map((r) => r.sel));
+  for (const s of DECORATIVE_FILLS) assert.ok(sels.has(s), `${s} is gone from ktw-views.css — drop it from DECORATIVE_FILLS`);
+});
+
 test("text drawn by a gradient (a transparent text fill) reaches 4.5:1 at every colour of the gradient, in both themes", () => {
   let seen = 0;
   for (const r of rules(STYLE).concat(rules(VIEWS))) {

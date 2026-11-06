@@ -7,7 +7,8 @@
   --ktw-line: #3a3a43;
   --ktw-fg: #dcdce3;
   --ktw-fg2: #a2a2ad;
-  --ktw-fg3: #6f6f7a;
+  --ktw-fg3: #9999a2;
+  --ktw-fg3-line: #6f6f7a;
   --ktw-accent: #835bec;
   --ktw-accent2: #a98cf5;
   /* text on accent (WCAG AA, 4.5:1, in both themes): text on a solid accent area takes --ktw-on-accent over
@@ -29,15 +30,29 @@
   --ktw-status-open: #4aa3df;
   --ktw-status-needs-review: #e0a83a;
   --ktw-status-pending-confirmation: #d66fd6;
+  /* the text tokens of the status, evidence and severity colours (WCAG AA on a pill's ground and above); the
+     colours themselves stay for borders, dots, bars and the graph */
+  --ktw-ok-text: #4fbf7a;
+  --ktw-confirmed-text: #4fbf7a;
+  --ktw-warn-text: #e0a83a;
+  --ktw-inferred-text: #e0a83a;
+  --ktw-status-needs-review-text: #e0a83a;
+  --ktw-bad-text: #e77c76;
+  --ktw-unknown-text: #e77c76;
+  --ktw-info-text: #4aa3df;
+  --ktw-status-open-text: #4aa3df;
+  --ktw-status-pending-confirmation-text: #d875d8;
+  --ktw-status-superseded-text: #9999a2;
   --ktw-radius: 8px;
   --ktw-font: -apple-system, "Segoe UI", Inter, Roboto, "Helvetica Neue", sans-serif;
   --ktw-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --bg: #1e1e22; --bg2: #26262b; --bg3: #2f2f36; --line: #3a3a43;
-  --fg: #dcdce3; --fg2: #a2a2ad; --fg3: #6f6f7a;
+  --fg: #dcdce3; --fg2: #a2a2ad; --fg3: #9999a2; --fg3-line: #6f6f7a;
   --accent: #835bec; --accent2: #a98cf5; --accent-fill: #7a52e6; --on-accent: #ffffff; --accent-text: #a98cf5; --accent-shine: #dcd0fb;
   --ok: #4fbf7a; --warn: #e0a83a; --bad: #e0574f; --info: #4aa3df; --muted: #8b8b98;
   --confirmed: #4fbf7a; --inferred: #e0a83a; --unknown: #e0574f;
   --active: #835bec; --active-text: #a98cf5; --superseded: #6f6f7a; --open: #4aa3df; --needs-review: #e0a83a; --pending-confirmation: #d66fd6;
+  --ok-text: #4fbf7a; --confirmed-text: #4fbf7a; --warn-text: #e0a83a; --inferred-text: #e0a83a; --needs-review-text: #e0a83a; --bad-text: #e77c76; --unknown-text: #e77c76; --info-text: #4aa3df; --open-text: #4aa3df; --pending-confirmation-text: #d875d8; --superseded-text: #9999a2;
   /* the colour tokens the page's views read (--ktw-*): a Type's colour, and the palette for authors,
      family members and friends; another host restyles the views by setting these. Literal values, the
      same in both themes, not var(--accent) and the like: jsdom, which renders the DOM snapshots, does not
@@ -56,12 +71,25 @@
   --ktw-line: #e2e2e8;
   --ktw-fg: #1f1f26;
   --ktw-fg2: #55555f;
-  --ktw-fg3: #8a8a96;
+  --ktw-fg3: #696975;
+  --ktw-fg3-line: #8a8a96;
   --ktw-status-superseded: #9a9aa6;
   --ktw-accent-text: #6234d9;
   --ktw-status-active-text: #6234d9;
+  --ktw-ok-text: #2b7749;
+  --ktw-confirmed-text: #2b7749;
+  --ktw-warn-text: #8a6316;
+  --ktw-inferred-text: #8a6316;
+  --ktw-status-needs-review-text: #8a6316;
+  --ktw-bad-text: #c92d23;
+  --ktw-unknown-text: #c92d23;
+  --ktw-info-text: #1d6fa6;
+  --ktw-status-open-text: #1d6fa6;
+  --ktw-status-pending-confirmation-text: #ae31ae;
+  --ktw-status-superseded-text: #696977;
   --bg: #fafafa; --bg2: #ffffff; --bg3: #f0f0f3; --line: #e2e2e8;
-  --fg: #1f1f26; --fg2: #55555f; --fg3: #8a8a96; --superseded: #9a9aa6; --accent-text: #6234d9; --active-text: #6234d9; --accent-shine: #3b1d99;
+  --fg: #1f1f26; --fg2: #55555f; --fg3: #696975; --fg3-line: #8a8a96; --superseded: #9a9aa6; --accent-text: #6234d9; --active-text: #6234d9; --accent-shine: #3b1d99;
+  --ok-text: #2b7749; --confirmed-text: #2b7749; --warn-text: #8a6316; --inferred-text: #8a6316; --needs-review-text: #8a6316; --bad-text: #c92d23; --unknown-text: #c92d23; --info-text: #1d6fa6; --open-text: #1d6fa6; --pending-confirmation-text: #ae31ae; --superseded-text: #696977;
   color-scheme: light;
 }
 .app { display: grid; height: 100vh; grid-template-columns: 280px 1fr 340px; grid-template-rows: 48px 36px 1fr 24px;
@@ -71,16 +99,16 @@
 .strip .lbl { color: var(--fg2); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-right: 2px; }
 .strip a.ktw-stat { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--fg); background: var(--bg); }
 .strip a.ktw-stat b { color: var(--fg); font-weight: 650; }
-.strip a.ktw-stat:hover { text-decoration: none; border-color: var(--fg3); }
+.strip a.ktw-stat:hover { text-decoration: none; border-color: var(--fg3-line); }
 .strip a.ktw-stat.zero { color: var(--fg2); }
 .strip a.ktw-stat.zero b { color: var(--fg2); font-weight: 500; }
-.strip a.ktw-stat.q-open b { color: var(--open); }
-.strip a.ktw-stat.q-needs-review b { color: var(--needs-review); }
-.strip a.ktw-stat.q-pending-confirmation b { color: var(--pending-confirmation); }
-.strip a.ktw-stat.q-unknown b { color: var(--unknown); }
-.strip a.ktw-stat.lint-bad b { color: var(--bad); }
-.strip a.ktw-stat.lint-warn b { color: var(--warn); }
-.strip a.ktw-stat.lint-ok b { color: var(--ok); }
+.strip a.ktw-stat.q-open b { color: var(--open-text); }
+.strip a.ktw-stat.q-needs-review b { color: var(--needs-review-text); }
+.strip a.ktw-stat.q-pending-confirmation b { color: var(--pending-confirmation-text); }
+.strip a.ktw-stat.q-unknown b { color: var(--unknown-text); }
+.strip a.ktw-stat.lint-bad b { color: var(--bad-text); }
+.strip a.ktw-stat.lint-warn b { color: var(--warn-text); }
+.strip a.ktw-stat.lint-ok b { color: var(--ok-text); }
 .strip a.ktw-stat.hot { border-color: color-mix(in srgb, var(--warn) 60%, transparent); }
 /* The top bar stays dark in both themes, like the site's header: the wordmark is made for a dark ground. */
 .topbar { grid-area: top; display: flex; align-items: center; gap: 16px; padding: 0 14px; background: #141418; border-bottom: 1px solid #2a2a31; color: #e6e6ec; color-scheme: dark; }
@@ -106,13 +134,13 @@
 #search:focus { border-color: var(--accent); }
 .live { color: var(--fg3); white-space: nowrap; cursor: default; }
 .live .live-dot { font-style: normal; margin-right: 4px; }
-.live.ktw-on { color: var(--ok); }
+.live.ktw-on { color: var(--ok-text); }
 .live.ktw-on .live-dot { display: inline-block; animation: pulse 2.4s ease-in-out infinite; }
-.live.ktw-off { color: var(--bad); }
-.live.ktw-export { color: var(--info); }
+.live.ktw-off { color: var(--bad-text); }
+.live.ktw-export { color: var(--info-text); }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
 .icon-btn { background: transparent; border: 1px solid var(--line); border-radius: 6px; width: 30px; height: 30px; cursor: pointer; color: var(--fg2); }
-.icon-btn:hover { color: var(--fg); border-color: var(--fg3); }
+.icon-btn:hover { color: var(--fg); border-color: var(--fg3-line); }
 .sidebar { grid-area: side; overflow: auto; background: var(--bg2); border-right: 1px solid var(--line); padding: 10px 0; }
 .nav a { display: flex; justify-content: space-between; padding: 6px 16px; color: var(--fg2); }
 .nav a:hover { color: var(--fg); text-decoration: none; background: var(--bg3); }
@@ -267,7 +295,7 @@
 .loaded-failed { margin-top: 10px; border-top: 2px solid var(--warn); padding-top: 4px; }
 .loaded-row.failed .ktw-err { color: var(--fg); }
 .loaded-row.failed a { word-break: break-all; }
-#loaded > a .ktw-warn { color: var(--warn); }
+#loaded > a .ktw-warn { color: var(--warn-text); }
 /* without JavaScript: a notice, in an export the project's topics and entries as links to its host, and what Keep the Why is */
 .nojs { max-width: 860px; margin: 0 auto; padding: 24px 16px 48px; line-height: 1.5; }
 .nojs a { color: var(--accent-text); }

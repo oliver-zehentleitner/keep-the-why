@@ -3,13 +3,16 @@
    sets none and gets the views' fallbacks. */
 #host-a {
   --ktw-bg: #fffdf7; --ktw-surface: #f7f2e7; --ktw-surface2: #efe7d6; --ktw-line: #d9cdb4;
-  --ktw-fg: #2b2620; --ktw-fg2: #5b5246; --ktw-fg3: #8a7f70;
+  --ktw-fg: #2b2620; --ktw-fg2: #5b5246; --ktw-fg3: #6b6357; --ktw-fg3-line: #8a7f70;
   --ktw-accent: #b5492b; --ktw-accent2: #c4612f;
   --ktw-accent-fill: #b5492b; --ktw-on-accent: #ffffff; --ktw-accent-text: #9c3d22;
   --ktw-ok: #2f7d4f; --ktw-warn: #a8740f; --ktw-bad: #b03a2e; --ktw-info: #2c6e9b; --ktw-muted: #7d7468;
   --ktw-confirmed: #2f7d4f; --ktw-inferred: #a8740f; --ktw-unknown: #b03a2e;
   --ktw-status-active: #b5492b; --ktw-status-active-text: #9c3d22; --ktw-status-superseded: #9a9183; --ktw-status-open: #2c6e9b;
   --ktw-status-needs-review: #a8740f; --ktw-status-pending-confirmation: #8e4aa0;
+  --ktw-ok-text: #2a7147; --ktw-confirmed-text: #2a7147; --ktw-warn-text: #865c0c; --ktw-inferred-text: #865c0c;
+  --ktw-status-needs-review-text: #865c0c; --ktw-bad-text: #af3a2e; --ktw-unknown-text: #af3a2e; --ktw-info-text: #2a6994;
+  --ktw-status-open-text: #2a6994; --ktw-status-pending-confirmation-text: #8b489d; --ktw-status-superseded-text: #6a6357;
   --ktw-radius: 3px; --ktw-font: Georgia, serif; --ktw-mono: "Courier New", monospace;
   --ktw-type-decision: #b5492b; --ktw-type-constraint: #2c6e9b; --ktw-type-workaround: #a8740f; --ktw-type-incident: #b03a2e;
   --ktw-palette-0: #b5492b; --ktw-palette-1: #2c6e9b; --ktw-palette-2: #2f7d4f; --ktw-palette-3: #a8740f; --ktw-palette-4: #b03a2e;

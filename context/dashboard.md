@@ -984,6 +984,8 @@ Text on a solid accent area takes `--ktw-on-accent` over `--ktw-accent-fill`, an
 - *Fixing only the type pill:* the card's finding. The light theme's links, marks and counts were 2.59:1 for the same reason, so the token covers every accent-coloured text, the canvas's included.
 - *Nesting `var(--ktw-accent-text, var(--ktw-accent2, …))` for hosts that set only `--ktw-accent2`:* every fallback in `ktw-views.css` is one literal, held to `TOKEN_DEFAULTS` by a test, so that a host without a token sees one colour wherever it is read. Instead, the token table names the three a host sets.
 
+**Extended to Status, Evidence and severity text and the faint text (2026-11-06):** the same split, for the same reason. Every one of those colours gets a `-text` token, named like `--ktw-status-active-text`, and the colour stays for what is not text. There is one token per colour, not one per hue, because a host may set confirmed apart from ok, and each fallback in `ktw-views.css` is one literal, so the tokens cannot alias each other there. `--ktw-fg3` went the other way: its documented role is faint text, so the token itself is raised to AA, and the decorative uses moved to a new `--ktw-fg3-line` with the old value. Rejected: a separate `--ktw-fg3-text` beside the old value. It would have touched every one of fg3's text uses, and a host that set fg3 as faint text, as documented, would have seen nothing change.
+
 ## exportState and bodies are optional; a rejection, or a bodies answer that leaves the state lean, is an answer with an error
 
 **Id:** 09dbb355-cd4b-42cc-8fe8-e032ebabdf82

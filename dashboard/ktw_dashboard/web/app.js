@@ -632,11 +632,11 @@ function renderDetailsDefault() {
         el("span", {}, "with entries hidden, references between projects are drawn between their topics")] : null,
       el("span", {}, el("i", { class: "ktw-dot", style: "background:var(--accent);width:12px;height:12px" }), "topic — size follows its entry count"),
       el("span", {}, el("i", { class: "ktw-dot ktw-confirmed" }), "entry, Evidence confirmed"), el("span", {}, el("i", { class: "ktw-dot ktw-inferred" }), "entry, Evidence inferred"), el("span", {}, el("i", { class: "ktw-dot ktw-unknown" }), "entry, Evidence unknown"),
-      el("span", {}, el("i", { class: "ktw-dot", style: "background:transparent;border:1.5px solid var(--fg3)" }), "superseded — hollow"),
+      el("span", {}, el("i", { class: "ktw-dot", style: "background:transparent;border:1.5px solid var(--fg3-line)" }), "superseded — hollow"),
       el("span", {}, el("i", { class: "ktw-dot", style: "background:var(--bg);border:1.5px solid var(--open)" }), "ring — open, needs review, pending"),
       el("span", {}, "solid line — a reference between topics; dotted — membership"),
-      el("span", {}, el("i", { class: "ktw-dot", style: "background:transparent;border:2px dashed var(--fg3);width:10px;height:10px" }), "friend — a repository cited outside the family, loaded with the graph; a click on its hub or name goes there"),
-      el("span", {}, el("i", { class: "ktw-dot", style: "background:transparent;border:2px dotted var(--fg3);width:10px;height:10px" }), "path — a project you walked through to get here, numbered in order; a click goes back there")),
+      el("span", {}, el("i", { class: "ktw-dot", style: "background:transparent;border:2px dashed var(--fg3-line);width:10px;height:10px" }), "friend — a repository cited outside the family, loaded with the graph; a click on its hub or name goes there"),
+      el("span", {}, el("i", { class: "ktw-dot", style: "background:transparent;border:2px dotted var(--fg3-line);width:10px;height:10px" }), "path — a project you walked through to get here, numbered in order; a click goes back there")),
       el("h3", {}, "Keys"), el("p", { class: "ktw-note" }, el("kbd", {}, "/"), " search · ", el("kbd", {}, "g"), " graph · ", el("kbd", {}, "o"), " overview · ", el("kbd", {}, "q"), " queues · ", el("kbd", {}, "t"), " timeline · ", el("kbd", {}, "a"), " authors · ", el("kbd", {}, "l"), " findings"));
     return;
   }
@@ -1705,7 +1705,7 @@ function viewGraph(main) {
       : el("div", { class: "ktw-graph-legend" },
         el("span", {}, el("i", { class: "ktw-dot", style: "background:var(--accent);width:12px;height:12px" }), "topic (size = entries)"),
         el("span", {}, el("i", { class: "ktw-dot ktw-confirmed" }), "confirmed"), el("span", {}, el("i", { class: "ktw-dot ktw-inferred" }), "inferred"), el("span", {}, el("i", { class: "ktw-dot ktw-unknown" }), "unknown"),
-        el("span", {}, el("i", { class: "ktw-dot", style: "background:transparent;border:1.5px solid var(--fg3)" }), "superseded"),
+        el("span", {}, el("i", { class: "ktw-dot", style: "background:transparent;border:1.5px solid var(--fg3-line)" }), "superseded"),
         el("span", {}, "— reference · ··· membership"), ...pathLegend(g), ...projectsLegend(g), ...familyLegend(g).filter((x) => x.classList.contains("ktw-warn") || x.classList.contains("ktw-note")), ...friendsLegend(g).filter((x) => x.classList.contains("ktw-warn")));
     // on a phone the switches and the legend sit behind two buttons, so the graph gets the screen (CSS shows them there only)
     const toggle = (cls, label, other) => el("button", { type: "button", class: `ktw-graph-toggle ktw-${cls}-toggle`, "aria-expanded": "false",

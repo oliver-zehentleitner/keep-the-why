@@ -33,7 +33,8 @@ const WIDTHS = [1400, 1000, 800, 500];
 const [basePage, splitPage] = process.argv.slice(2);
 if (!splitPage) { console.error("usage: node cascade-check.mjs BASEPAGE SPLITPAGE"); process.exit(2); }
 
-const TOKEN_OF = { bg: "bg", bg2: "surface", bg3: "surface2", line: "line", fg: "fg", fg2: "fg2", fg3: "fg3", accent: "accent", accent2: "accent2", "accent-fill": "accent-fill", "on-accent": "on-accent", "accent-text": "accent-text", "active-text": "status-active-text",
+const TOKEN_OF = { bg: "bg", bg2: "surface", bg3: "surface2", line: "line", fg: "fg", fg2: "fg2", fg3: "fg3", accent: "accent", accent2: "accent2", "accent-fill": "accent-fill", "on-accent": "on-accent", "accent-text": "accent-text", "active-text": "status-active-text", "fg3-line": "fg3-line",
+  "ok-text": "ok-text", "confirmed-text": "confirmed-text", "warn-text": "warn-text", "inferred-text": "inferred-text", "needs-review-text": "status-needs-review-text", "bad-text": "bad-text", "unknown-text": "unknown-text", "info-text": "info-text", "open-text": "status-open-text", "pending-confirmation-text": "status-pending-confirmation-text", "superseded-text": "status-superseded-text",
   ok: "ok", warn: "warn", bad: "bad", info: "info", muted: "muted", confirmed: "confirmed", inferred: "inferred", unknown: "unknown",
   active: "status-active", superseded: "status-superseded", open: "status-open", "needs-review": "status-needs-review",
   "pending-confirmation": "status-pending-confirmation", radius: "radius", font: "font", mono: "mono" };
@@ -49,20 +50,18 @@ const EXPECTED = [
   { path: /^body:\d+\/div:\d+\/(main|aside):\d+$/, family: "color", split: "color: var(--fg)" },
 ];
 // what the split changes on purpose: one declaration of the base's family replaced by another, the rest the same,
-// on an element whose role allows it (recolour-sites.mjs: the rules that read the new tokens). WCAG AA for text on
-// accent (context/dashboard.md, "Text on accent is a pair of tokens"): accent-coloured text reads
-// --ktw-accent-text / --ktw-status-active-text, text on a solid accent sits as --ktw-on-accent on
-// --ktw-accent-fill, the update hint's shimmer is built on the accent text
+// on an element whose role allows it (recolour-sites.mjs: the rules that read the new tokens). WCAG AA for status,
+// evidence and severity text and the faint text (context/dashboard.md, "Text on accent is a pair of tokens"): text
+// in one of those colours reads its -text token; what is not text reads --ktw-fg3-line in place of --ktw-fg3
 const SITES = recolourSites({ states: false }); // a state rule matches here, as in cascade() below
+const TEXTED = ["ok", "confirmed", "warn", "inferred", "needs-review", "bad", "unknown", "info", "open", "pending-confirmation", "superseded"];
 const REPLACED = [
-  { role: "text", family: "color", base: "color: var(--accent2)", split: "color: var(--accent-text)" },
-  { role: "text", family: "color", base: "color: var(--accent)", split: "color: var(--accent-text)" },
-  { role: "text", family: "color", base: "color: var(--active)", split: "color: var(--active-text)" },
-  { role: "text", family: "color", base: "color: #fff", split: "color: var(--on-accent)" },
-  { role: "text", family: "fill", base: "fill: var(--accent2)", split: "fill: var(--accent-text)" },
-  { role: "fill", family: "background", base: "background: var(--accent)", split: "background: var(--accent-fill)" },
-  { role: "fillBorder", family: "border", base: "border-color: var(--accent)", split: "border-color: var(--accent-fill)" },
-  { role: "shimmer", family: "background", base: "background: linear-gradient(90deg, var(--accent2) 0%, #fff 45%, var(--accent2) 55%, var(--accent2) 100%)", split: "background: linear-gradient(90deg, var(--accent-text) 0%, var(--accent-shine) 45%, var(--accent-text) 55%, var(--accent-text) 100%)" },
+  ...TEXTED.flatMap((c) => [
+    { role: "text", family: "color", base: `color: var(--${c})`, split: `color: var(--${c}-text)` },
+    { role: "text", family: "fill", base: `fill: var(--${c})`, split: `fill: var(--${c}-text)` },
+  ]),
+  { role: "line", family: "border", base: "border-color: var(--fg3)", split: "border-color: var(--fg3-line)" },
+  { role: "line", family: "border", base: "border-bottom: 1px dotted var(--fg3)", split: "border-bottom: 1px dotted var(--fg3-line)" },
 ];
 
 // ---- specificity and matching for the selectors this stylesheet uses
