@@ -4,8 +4,8 @@ For each dataset it builds the prototype's cache (time and size) and, for each q
 
 - ranked search with the question as the query — BM25, static embeddings (model2vec), and both fused by
   reciprocal rank (RRF): recall@1/@5/@10 (the share of the expected entries in the top k), MRR (1 / the rank of
-  the first expected entry), and the tokens of `find -n 10` plus `show` of the first expected hit, which is what an
-  agent would read to answer;
+  the first expected entry), and the tokens of `find -n 10` plus `show` of the first expected hit (of the first hit
+  on a miss) — a lower bound, since the harness knows which hit is right; the agent runs measure what is read;
 - the entry-level index: the tokens of `index` for the whole family, one line per entry;
 - the exact commands for graph and filter questions: `find --type/--status` (every match), `graph ID` (the
   starting entry's edges), with the tokens they print and whether the answer is in them.
@@ -202,7 +202,7 @@ def main(argv=None) -> int:
     lines = [
         f"Tokenizer: {H.TOKENIZER}",
         "",
-        "Ranked search on the text questions (graph and filter questions are measured under their commands below), with the question as the query: recall@1 / @5 / @10, MRR, median tokens read (find -n 10 plus show of the first expected hit, or of the first hit on a miss) over all text questions / over hits only",
+        "Ranked search on the text questions (graph and filter questions are measured under their commands below), with the question as the query: recall@1 / @5 / @10, MRR, median tokens read (find -n 10 plus show of the first expected hit, or of the first hit on a miss) over all text questions / over hits only. The tokens are an oracle lower bound: the harness knows which hit is right and reads only that one; an agent's real reading sequence is measured in the agent runs",
         "",
     ]
     names = [

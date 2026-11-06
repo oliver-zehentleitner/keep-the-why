@@ -225,6 +225,47 @@ entries would be. Read the falling recall as the hard case: many similar entries
   scoping, and a search within the hits.
 - Whether a two-step search (broad, then within the topic of the best hits) recovers recall at ×10.
 
+## 2026-11-06 — Step 3c: three more findings from review, the oracle and the cache corrected
+
+**What was wrong** (#769 and #770, #ydrr):
+- **Only the first Type line counted.** An entry may carry Type more than once (since context-schema 0.9.0). The
+  oracle and the prototype both read the first line only.
+  - In the pinned family, 23 entries are incidents; 6 of them carry incident after another Type. q30 ("every
+    incident") expected 17.
+  - The exact-command recall of 1.0 was self-confirming: the prototype's `find --type` had the same blind spot as
+    the answer key it was checked against. Against the full answer, it would have found 17 of 23 on q30.
+  - The hypothesis that a check of rule against expected list catches a wrong answer key was wrong when both come
+    from the same reading of the data.
+- **The cache missed a second change to an already modified file.** Its key was the committed tree plus
+  `git status --porcelain`, and a file's status line stays the same however often it changes again. The prototype
+  then served the old text and postings.
+- **The token figure is an oracle lower bound.** The harness knows which hit is right and reads only that one. An
+  agent reads what it judges likely, and the agent runs (PR 3) measure that.
+
+**The fixes.**
+- **Repeatable fields match by membership:** Type and See, the fields the linter lets repeat. Id, Status, Evidence
+  and Superseded by are single (E112).
+  - This holds in the filter rules, the See-rule derivation, and the prototype's cache and filter. A hit line shows
+    every Type, `decision+incident/active`.
+  - q30 expects all 23.
+- **A second count, outside the parser.** A filter's answer is also counted as its `**Field:** value` lines in the
+  raw topic text, and the harness fails when the two differ. With the old reading, it reports 17 against 23.
+- **The cache key is content:** the committed tree, plus the bytes of every modified or untracked file under the
+  members' `context/`.
+  - `test_ktw_proto.py` has the review's reproduction (mark, build, mark again, load: a miss, the new marker), an
+    untracked file, an unchanged hit, and a second Type line.
+  - On the old prototype the dirty-file test and the Type test fail.
+  - For the real `ktw` this is a hard requirement, not a detail: a search that answers from stale text is worse
+    than none.
+- **The results and the harness state the lower bound** next to the token figures.
+
+**The numbers** (`results/2026-11-06-offline-candidates/`, `results/2026-11-06-offline-baseline/`):
+- **Phase 1:** unchanged. q30's baseline reads the same index and topic files.
+- **Ranked text questions:** unchanged, since q30 is a filter question and not in that table; a few medians move
+  by a token or two, as hit lines now carry every Type.
+- **Graph and filter questions under their commands:** recall 1.0, now against the full answer and the raw count;
+  median 1.9k tokens at ×1, 2.5k at ×5 and ×10.
+
 **Open questions.**
 - How much of the ranking gap is the query? An agent writes its own query, not the question as asked.
 - Does an agent recognise graph and filter questions, and use the exact commands for them?

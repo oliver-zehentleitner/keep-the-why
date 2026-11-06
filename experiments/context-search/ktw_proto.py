@@ -10,8 +10,9 @@ text (BM25), and optionally local embeddings — all over one cache of a family'
 PROJECT is any member of a family; the family is found from there (its root's children) as harness_offline.load
 reads it, with the linter's parser. Output is one line per entry, `id · type/status · title · member/file:L1-L2`,
 the shortest form that still lets an agent open the right lines; `--json` gives everything. The cache lives under
-~/.cache/keep-the-why/ (or $KTW_CACHE), keyed on `git rev-parse HEAD:` of the family plus `git status --porcelain`
-of its context directories, so a change to any entry rebuilds it.
+~/.cache/keep-the-why/ (or $KTW_CACHE), keyed on content: `git rev-parse HEAD:` of the family plus the bytes of every
+modified or untracked file under its context directories, so any change to an entry rebuilds it, a second change to
+an already modified file included.
 
 This is an experiment, not the shipped tool: what wins here is built properly in `ktw`.
 """
@@ -57,27 +58,48 @@ def family_root(start: Path) -> Path:
     return p
 
 
+CONTEXT = [
+    "context/**",
+    "**/context/**",
+]  # the members' context directories, as git pathspecs (glob)
+
+
 def cache_key(root: Path) -> str:
+    """What the cache was built from, by content: the committed tree, and every modified or untracked file under a
+    member's context/ by its bytes (a deleted one by its absence). A second change to a file that was already
+    dirty changes the key; `git status` alone would not, its line for the file stays the same.
+    """
+    h = hashlib.sha256()
     try:
-        tree = subprocess.run(
-            ["git", "-C", str(root), "rev-parse", "HEAD:"],
-            capture_output=True,
-            text=True,
-            check=True,
-        ).stdout.strip()
+        git = ["git", "-C", str(root)]
+        h.update(
+            subprocess.run(
+                git + ["rev-parse", "HEAD:"], capture_output=True, text=True, check=True
+            ).stdout.encode()
+        )
         dirty = subprocess.run(
-            ["git", "-C", str(root), "status", "--porcelain", "--", "."],
+            git
+            + ["status", "--porcelain", "-z", "--untracked-files=all", "--"]
+            + [f":(glob){g}" for g in CONTEXT],
             capture_output=True,
-            text=True,
             check=True,
-        ).stdout
-        return hashlib.sha256((tree + "\n" + dirty).encode()).hexdigest()[:16]
+        ).stdout.split(b"\0")
+        paths = sorted({d[3:].decode() for d in dirty if len(d) > 3})
     except (
         OSError,
         subprocess.CalledProcessError,
-    ):  # no git: the newest mtime of any context file
-        newest = max((p.stat().st_mtime for p in root.rglob("context/*.md")), default=0)
-        return f"mtime-{int(newest)}"
+    ):  # no git: every context file by content
+        paths = sorted(
+            str(p.relative_to(root))
+            for g in CONTEXT
+            for p in root.glob(g)
+            if p.is_file()
+        )
+    for rel in paths:
+        f = root / rel
+        h.update(rel.encode() + b"\0")
+        h.update(hashlib.sha256(f.read_bytes()).digest() if f.is_file() else b"deleted")
+    return h.hexdigest()[:16]
 
 
 def cache_dir(root: Path) -> Path:
@@ -115,7 +137,8 @@ def build(root: Path) -> dict:
             "member": e["member"],
             "file": e["file"],
             "lines": [start, end],
-            "type": f.get("Type", [""])[0],
+            # Type may be given more than once (several lines, context-schema 0.9.0): all of them, by membership
+            "type": harness_offline.values(e, "Type"),
             "status": f.get("Status", [""])[0],
             "evidence": f.get("Evidence", [""])[0],
             "see": [i for v in f.get("See", []) for i in harness_offline.ids_in(v)],
@@ -209,14 +232,14 @@ def embed_rank(c: dict, info: dict, query: str) -> list[tuple[str, float]]:
 
 def matches(e: dict, a) -> bool:
     return (
-        (not a.type or e["type"] == a.type)
+        (not a.type or a.type in e["type"])
         and (not a.status or e["status"] == a.status)
         and (not a.member or e["member"] == a.member)
     )
 
 
 def line(eid: str, e: dict) -> str:
-    return f"{eid} · {e['type']}/{e['status']} · {e['title']} · {e['file']}:{e['lines'][0]}-{e['lines'][1]}"
+    return f"{eid} · {'+'.join(e['type'])}/{e['status']} · {e['title']} · {e['file']}:{e['lines'][0]}-{e['lines'][1]}"
 
 
 def main(argv=None) -> int:
@@ -257,7 +280,7 @@ def main(argv=None) -> int:
         out = [(i, e) for i, e in E.items() if matches(e, a)]
         print(
             "\n".join(
-                f"{i} · {e['type']}/{e['status']} · {e['title']} · {e['file']}"
+                f"{i} · {'+'.join(e['type'])}/{e['status']} · {e['title']} · {e['file']}"
                 for i, e in out
             )
         )

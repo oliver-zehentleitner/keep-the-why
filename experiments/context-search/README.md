@@ -84,10 +84,15 @@ Graph and filter questions name their starting point or filter on purpose and ar
   family's entries (the linter's parser): an entry-level index, filters (`--type`, `--status`, `--member`),
   graph queries over See and Superseded by in both directions, ranked full text (BM25), and static embeddings
   (`--rank embed`, model2vec `potion-base-8M`, an extra). One line per entry, `id · type/status · title ·
-  member/file:L1-L2`. The cache is keyed on the tree of the family and the dirty state of its context.
+  member/file:L1-L2`, every Type of an entry joined by `+`. The cache is keyed on content: the family's committed
+  tree and the bytes of every modified or untracked file under its context directories.
+- `test_ktw_proto.py`: the cache key (a second change to a dirty file, an untracked file, an unchanged hit) and
+  the Type filter on a second Type line. `python -m unittest discover -s experiments/context-search -p 'test_*.py'`;
+  not in CI.
 - `harness_candidates.py DATA_DIR [--out results/DATE] [--no-embed]`: the candidates on every dataset, no model
   in the loop: recall@1/@5/@10 and MRR of BM25, embeddings and both fused by reciprocal rank (the question as the
-  query), the tokens an agent would read (`find -n 10` and `show` of the first hit), the entry-level index's
+  query), the tokens read (`find -n 10` and `show` of the first expected hit; a lower bound, since the harness
+  knows which hit is right), the entry-level index's
   tokens, the exact commands for graph and filter questions, and the cache's build time and size. In the
   identical control an expected entry counts as found at its best-ranked copy.
 
