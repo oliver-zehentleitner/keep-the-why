@@ -127,10 +127,13 @@ def main(argv=None) -> int:
                 r = ranks(order, groups)
                 top = order[:10]
                 lines = "\n".join(P.line(i, E[i]) for i in top)
-                shown = next((i for i in order[:10] if i in wanted), None)
+                shown = next((i for i in top if i in wanted), None)
+                # a miss reads something too: the first hit, as the agent would before it searches again
+                read = shown or (top[0] if top else None)
                 r["tokens"] = H.tokens(lines) + (
-                    H.tokens(E[shown]["text"]) if shown else 0
+                    H.tokens(E[read]["text"]) if read else 0
                 )
+                r["hit"] = shown is not None
                 row[name] = r
             rule = q.get("rule") or {}
             if rule and set(rule) <= H.FILTER_RULE_KEYS:
@@ -157,8 +160,9 @@ def main(argv=None) -> int:
                 }
             rows.append(row)
         summ = {}
+        GRAPH_KINDS = ("filter", "supersedes", "see", "thought-chain")
         for name in ("bm25", "embed", "hybrid"):
-            rs = [r[name] for r in rows if name in r and r["kind"] not in ("filter",)]
+            rs = [r[name] for r in rows if name in r and r["kind"] not in GRAPH_KINDS]
             if rs:
                 summ[name] = {
                     **{
@@ -169,6 +173,9 @@ def main(argv=None) -> int:
                     },
                     "mrr": round(statistics.mean(x["mrr"] for x in rs), 3),
                     "median_tokens": statistics.median(x["tokens"] for x in rs),
+                    "median_tokens_hits": statistics.median(
+                        [x["tokens"] for x in rs if x["hit"]] or [0]
+                    ),
                 }
         ex = [r["exact"] for r in rows if "exact" in r]
         report["datasets"][ds.name] = {
@@ -195,7 +202,7 @@ def main(argv=None) -> int:
     lines = [
         f"Tokenizer: {H.TOKENIZER}",
         "",
-        "Ranked search with the question as the query (filter questions left out): recall@1 / @5 / @10, MRR, median tokens read (find -n 10 + show of the first hit)",
+        "Ranked search on the text questions (graph and filter questions are measured under their commands below), with the question as the query: recall@1 / @5 / @10, MRR, median tokens read (find -n 10 plus show of the first expected hit, or of the first hit on a miss) over all text questions / over hits only",
         "",
     ]
     names = [
@@ -206,10 +213,20 @@ def main(argv=None) -> int:
     lines += ["| dataset | " + " | ".join(names) + " |", "|---|" + "---|" * len(names)]
     for name, d in report["datasets"].items():
         cells = [
-            f"{d['ranked'][n]['recall@1']:.2f} / {d['ranked'][n]['recall@5']:.2f} / {d['ranked'][n]['recall@10']:.2f}, {d['ranked'][n]['mrr']:.2f}, {d['ranked'][n]['median_tokens']}"
+            f"{d['ranked'][n]['recall@1']:.2f} / {d['ranked'][n]['recall@5']:.2f} / {d['ranked'][n]['recall@10']:.2f}, {d['ranked'][n]['mrr']:.2f}, {d['ranked'][n]['median_tokens']} / {d['ranked'][n]['median_tokens_hits']}"
             for n in names
         ]
         lines.append(f"| {name} | " + " | ".join(cells) + " |")
+    lines += [
+        "",
+        "Graph and filter questions under their commands (graph ID --depth 3, find --type/--status): the share of the answer the output holds, median tokens. q28's answer is a chain of three entries, so a ranked search's recall@1 there is at most 1/3; it is counted here, not above.",
+        "",
+        "| dataset | recall | median tokens |",
+        "|---|---|---|",
+    ] + [
+        f"| {name} | {d['exact']['recall']} | {d['exact']['median_tokens']} |"
+        for name, d in report["datasets"].items()
+    ]
     lines += [
         "",
         "| dataset | entries | cache build s | cache MB | embed s | vectors MB | entry index tokens | exact commands: recall, median tokens |",

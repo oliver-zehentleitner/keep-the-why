@@ -33,6 +33,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import harness_offline  # noqa: E402  (the family loader, on the linter's parser)
+from ktw_lint.entries import KNOWN_FIELDS  # noqa: E402
 
 WORD = re.compile(r"[a-z0-9]+")
 STOP = set(
@@ -40,6 +41,8 @@ STOP = set(
     then there these this to was were when which while who why will with""".split()
 )
 K1, B = 1.2, 0.75
+# an entry's metadata lines: the fields the linter knows, never the body labels the prose carries
+META = re.compile(r"^\*\*(" + "|".join(re.escape(f) for f in KNOWN_FIELDS) + r"):\*\*")
 
 
 def words(text: str) -> list[str]:
@@ -82,17 +85,6 @@ def cache_dir(root: Path) -> Path:
     return base / hashlib.sha256(str(root).encode()).hexdigest()[:16]
 
 
-def line_range(texts: dict, entry: dict) -> tuple[int, int]:
-    lines = texts[entry["file"]].splitlines()
-    start = entry["line"]
-    end = len(lines)
-    for i in range(start, len(lines)):
-        if lines[i].startswith("## ") or lines[i].startswith("# "):
-            end = i
-            break
-    return start, end
-
-
 def build(root: Path) -> dict:
     """Every entry of the family with its member, file, line range, fields and a gist; and the BM25 postings."""
     t0 = time.perf_counter()
@@ -113,7 +105,9 @@ def build(root: Path) -> dict:
             ),
             len(lines),
         )
-        body = "\n".join(l for l in lines[start:end] if not l.startswith("**"))
+        # the prose: everything under the heading but the metadata lines (Id, Type, Status, Source, See, …); a
+        # body label's line (Reason, Rejected alternative, Consequence, …) is prose and stays
+        body = "\n".join(l for l in lines[start:end] if not META.match(l))
         f = e["fields"]
         gist = next((p.strip() for p in body.split("\n\n") if p.strip()), "")[:160]
         entries[eid] = {
@@ -129,14 +123,14 @@ def build(root: Path) -> dict:
                 i for v in f.get("Superseded by", []) for i in harness_offline.ids_in(v)
             ],
             "gist": gist,
+            "body": body,
             "text": "\n".join(lines[start - 1 : end]),
         }
     postings: dict[str, dict[str, int]] = defaultdict(dict)
     lengths = {}
     for eid, e in entries.items():
-        tf = Counter(
-            words(e["title"] + " " + e["title"] + " " + e["text"])
-        )  # the title counts twice
+        # the title counts twice (the heading line is not in `body`), the prose once, the metadata not at all
+        tf = Counter(words(e["title"] + " " + e["title"] + " " + e["body"]))
         lengths[eid] = sum(tf.values())
         for w, n in tf.items():
             postings[w][eid] = n

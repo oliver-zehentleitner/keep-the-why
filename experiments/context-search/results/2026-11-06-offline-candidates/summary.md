@@ -1,17 +1,26 @@
 Tokenizer: tiktoken cl100k_base
 
-Ranked search with the question as the query (filter questions left out): recall@1 / @5 / @10, MRR, median tokens read (find -n 10 + show of the first hit)
+Ranked search on the text questions (graph and filter questions are measured under their commands below), with the question as the query: recall@1 / @5 / @10, MRR, median tokens read (find -n 10 plus show of the first expected hit, or of the first hit on a miss) over all text questions / over hits only
 
 | dataset | bm25 | embed | hybrid |
 |---|---|---|---|
-| x1 | 0.36 / 0.64 / 0.74, 0.49, 1000 | 0.23 / 0.51 / 0.64, 0.36, 896 | 0.39 / 0.72 / 0.83, 0.53, 1025 |
-| x10 | 0.39 / 0.54 / 0.69, 0.47, 932 | 0.23 / 0.46 / 0.59, 0.35, 892 | 0.39 / 0.69 / 0.77, 0.52, 990 |
-| x10-identical | 0.36 / 0.36 / 0.36, 0.38, 636 | 0.26 / 0.26 / 0.28, 0.28, 595 | 0.41 / 0.44 / 0.54, 0.45, 880 |
-| x5 | 0.36 / 0.59 / 0.74, 0.47, 962 | 0.23 / 0.49 / 0.61, 0.35, 896 | 0.39 / 0.69 / 0.80, 0.51, 1005 |
+| x1 | 0.38 / 0.56 / 0.72, 0.47, 1050.0 / 1026 | 0.25 / 0.50 / 0.66, 0.38, 1033.0 / 995 | 0.38 / 0.75 / 0.78, 0.52, 1038.0 / 1011 |
+| x10 | 0.34 / 0.41 / 0.47, 0.38, 1125.5 / 1084 | 0.19 / 0.25 / 0.34, 0.24, 1022.5 / 1043 | 0.22 / 0.50 / 0.59, 0.37, 1052.5 / 1033 |
+| x10-identical | 0.38 / 0.38 / 0.38, 0.39, 1089.0 / 1072.0 | 0.28 / 0.28 / 0.31, 0.30, 1052.5 / 1036.5 | 0.41 / 0.47 / 0.50, 0.45, 1077.5 / 999.0 |
+| x5 | 0.34 / 0.47 / 0.53, 0.40, 1116.5 / 1051 | 0.19 / 0.31 / 0.47, 0.26, 1024.0 / 988 | 0.19 / 0.53 / 0.59, 0.36, 1066.5 / 1042 |
+
+Graph and filter questions under their commands (graph ID --depth 3, find --type/--status): the share of the answer the output holds, median tokens. q28's answer is a chain of three entries, so a ranked search's recall@1 there is at most 1/3; it is counted here, not above.
+
+| dataset | recall | median tokens |
+|---|---|---|
+| x1 | 1.0 | 1892 |
+| x10 | 1.0 | 2460 |
+| x10-identical | 1.0 | 2460 |
+| x5 | 1.0 | 2460 |
 
 | dataset | entries | cache build s | cache MB | embed s | vectors MB | entry index tokens | exact commands: recall, median tokens |
 |---|---|---|---|---|---|---|---|
-| x1 | 1043 | 0.42 | 10.0 | 0.54 | 1.1 | 54624 | 1.0, 1892 |
-| x10 | 10430 | 4.02 | 98.9 | 3.27 | 10.7 | 605842 | 1.0, 2460 |
-| x10-identical | 10430 | 4.03 | 99.3 | 3.27 | 10.7 | 562471 | 1.0, 2460 |
-| x5 | 5215 | 2.09 | 49.5 | 4.45 | 5.3 | 299562 | 1.0, 2460 |
+| x1 | 1043 | 0.32 | 10.1 | 0.42 | 1.1 | 54624 | 1.0, 1892 |
+| x10 | 10430 | 3.19 | 100.8 | 5.82 | 10.7 | 564781 | 1.0, 2460 |
+| x10-identical | 10430 | 3.05 | 100.7 | 2.35 | 10.7 | 562471 | 1.0, 2460 |
+| x5 | 5215 | 1.6 | 50.4 | 4.36 | 5.3 | 281254 | 1.0, 2460 |

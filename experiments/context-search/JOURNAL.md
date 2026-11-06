@@ -118,9 +118,7 @@ The max is the needs-review question. On a copied set, the answer is every needs
   - the tokens an agent would read (`find -n 10` and `show` of the first hit);
   - the exact commands for graph and filter questions.
 
-**The numbers** (`results/2026-11-06-offline-candidates/`):
-
-Recall@1 / @5 / @10:
+**The numbers, first run: overstated at ×5 and ×10, see step 3b.** Recall@1 / @5 / @10:
 
 | set | BM25 | embed | hybrid |
 |---|---|---|---|
@@ -130,7 +128,8 @@ Recall@1 / @5 / @10:
 | ×10 identical | .36 / .36 / .36 | .26 / .26 / .28 | .41 / .44 / .54 |
 
 - **Reading cost:** about 900–1000 tokens per question, against the baseline's 34k–226k.
-- **Graph and filter questions:** answered fully by their commands, a median of about 2.5k tokens.
+- **Graph and filter questions:** answered fully by their commands, a median of 1.9k tokens at ×1 and 2.5k at ×5
+  and ×10.
 - **The entry-level index as one file:** 55k tokens at ×1, 606k at ×10.
 - **Cache:**
   - build: 0.4 s at ×1, 4 s at ×10;
@@ -162,6 +161,59 @@ Recall@1 / @5 / @10:
   - a compact cache (SQLite FTS5 via `sqlite3` if every target Python has it, otherwise a compact binary
     format);
   - grouping of near-identical hits.
+
+## 2026-11-06 — Step 3b: an artefact found in review, the data and the numbers corrected
+
+**The question.** Why did recall@1 rise from ×1 to ×10, when more similar entries should make the right one harder
+to find?
+
+**What was wrong.** A reviewer (#770, #s8qb) traced it to the generator. Each copy renamed the 150 domain words
+to made-up words unique to that copy, so at ×10 exactly the words a question uses had a document frequency of one
+copy, while every other word had ten. BM25's IDF gave the query words about ln 10 more weight, and the larger
+sets overstated how well a search tells entries apart. The hypothesis behind the made-up words, that a copy only
+has to stop answering the question, was right; that it could do so without changing the statistics was wrong.
+
+**The fix** (#769):
+- **Copies now shuffle the domain words among themselves:** a reproducible derangement per copy, within bands of
+  five neighbours in frequency. A copy reads like a plausible project of the same kind and still does not answer
+  a question about the original, but every domain word occurs in every copy.
+- **What IDF sees now:** a word's set-wide document frequency against (copies + 1) times its original's is 1.06
+  at the median (0.36 to 3.75), against 0.1 for the query words before. The generator fails if a word is missing
+  from a copy.
+- **A second bug the new names exposed:** two file stems could now meet in one copy. A collision silently
+  dropped a file, and lint caught the dangling See it left; names are kept unique.
+
+**The measurement fixes** (#770, same review):
+- A miss used to cost no `show`, so a worse ranking looked cheaper. A miss now reads its first hit.
+- The token median is reported over all text questions and over hits.
+- Graph and filter questions are taken out of the ranked table and reported under their commands. q28's answer is
+  a chain of three, which caps a ranked recall@1 at 1/3.
+- BM25 indexed the title three times (twice explicitly and once in the heading line) and the metadata lines
+  (Id, Type, Status, Source, See) as text. It now indexes the title twice and the prose once, with the body
+  labels (Reason, Rejected alternative, …) counted as prose.
+- Earlier, a filter that dropped every `**…**` line had thrown away exactly those labels.
+
+**The numbers, corrected** (`results/2026-11-06-offline-candidates/`, 32 text questions). Recall@1 / @5 / @10,
+then the median tokens read over all text questions and over hits:
+
+| set | BM25 | embed | hybrid |
+|---|---|---|---|
+| ×1 | .38 / .56 / .72, 1050 / 1026 | .25 / .50 / .66, 1033 / 995 | .38 / .75 / .78, 1038 / 1011 |
+| ×5 | .34 / .47 / .53, 1117 / 1051 | .19 / .31 / .47, 1024 / 988 | .19 / .53 / .59, 1067 / 1042 |
+| ×10 | .34 / .41 / .47, 1126 / 1084 | .19 / .25 / .34, 1023 / 1043 | .22 / .50 / .59, 1053 / 1033 |
+| ×10 identical | .38 / .38 / .38, 1089 / 1072 | .28 / .28 / .31, 1053 / 1037 | .41 / .47 / .50, 1078 / 999 |
+
+- Graph and filter questions under their commands: recall 1.0; median 1.9k tokens at ×1, 2.5k at ×5 and ×10.
+- Entry-level index: 55k / 281k / 565k tokens.
+- Cache: 10 / 50 / 101 MB.
+
+**What changed in the picture.**
+- **Recall now falls with size,** as it should. At ×10, BM25 finds the right entry in the top ten for under half
+  the text questions, and hybrid for 59 %. The first run's .69 / .77 were the artefact.
+- **At ×10, BM25 beats hybrid at rank 1** (.34 against .22); hybrid wins at @5 and @10. Fusing ranks spreads
+  the first place.
+- **Telling similar entries apart is the hard part at scale,** not reading cost. Every variant still reads about
+  1k tokens per question, against the baseline's 34k–195k.
 
 **Open questions.**
 - How much of the ranking gap is the query? An agent writes its own query, not the question as asked.
