@@ -36,6 +36,10 @@ jobs:
           client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
           permission-contents: write
+          # a tag on a commit whose workflow files differ from the default branch's (main moved on with a
+          # workflow change while the run was waiting) counts as a workflow change to GitHub: without this
+          # the push is refused with GH013. See context/release-and-distribution.md.
+          permission-workflows: write
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
