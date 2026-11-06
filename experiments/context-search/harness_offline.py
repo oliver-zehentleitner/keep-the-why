@@ -121,11 +121,59 @@ def derive(rule: dict, entries: dict) -> list[str]:
     return sorted(out)
 
 
+FILTER_RULE_KEYS = {"type", "status", "evidence"}
+
+
+def expected_in(q: dict, data: dict) -> list[str]:
+    """The answer in this dataset. A filter question ("every incident") is answered by every entry the filter
+    matches, the copies' included — a copy is a full entry of the family, and nothing in it says it is one. Every
+    other question is answered by the original entries it names, which every dataset holds.
+    """
+    rule = q.get("rule") or {}
+    if rule and set(rule) <= FILTER_RULE_KEYS:
+        return derive(rule, data["entries"])
+    return q["expected"]
+
+
+STOP_Q = set(
+    """a an and are as at be but by can does did do for from has have how if in into is it its no not of on or so
+    than that the their then there these this to was what when where which while who why will with would should
+    could after before about any ever every one ones own maity""".split()
+)
+
+
+def content_words(text: str) -> set[str]:
+    import re
+
+    return {
+        w[:-1] if w.endswith("s") and len(w) > 4 else w
+        for w in re.findall(r"[a-z0-9]+", text.lower())
+        if len(w) > 2 and w not in STOP_Q
+    }
+
+
+LEAK_LIMIT = 0.4  # the share of an expected title's content words a question may repeat
+
+
+def leak(q: dict, data: dict) -> float:
+    """How much of the expected entry's title the question repeats: the share of the title's content words that
+    appear in the question (stop words out, a trailing plural s folded). Graph and filter questions name their
+    starting point or their filter on purpose and are not held to the limit."""
+    qw = content_words(q["question"])
+    shares = []
+    for i in q["expected"]:
+        if i in data["entries"]:
+            tw = content_words(data["entries"][i]["title"])
+            if tw:
+                shares.append(len(qw & tw) / len(tw))
+    return round(max(shares), 2) if shares else 0.0
+
+
 def baseline(q: dict, data: dict) -> dict:
     """Today's way in a family: the start member's index and, by the skill's family rule, the other members'
     indexes, then the topic files that hold the answer — a lower bound, the right topics first time.
     """
-    found = [data["entries"][i] for i in q["expected"] if i in data["entries"]]
+    found = [data["entries"][i] for i in expected_in(q, data) if i in data["entries"]]
     files = sorted({e["file"] for e in found})
     index = sum(tokens(t) for t in data["indexes"].values())
     return {
@@ -161,14 +209,30 @@ def main(argv=None) -> int:
                 problems.append(
                     f"{ds.name} {q['id']}: expected ids not in the dataset: {missing}"
                 )
-            if "rule" in q:
+            # every set: a graph rule must give the question's Ids again; a filter rule, on the original set,
+            # the Ids questions.json names (on a copied set it is the answer itself, see expected_in)
+            if "rule" in q and (
+                not set(q["rule"]) <= FILTER_RULE_KEYS or ds.name == "x1"
+            ):
                 again = derive(q["rule"], data["entries"])
-                if sorted(again) != sorted(q["expected"]) and ds.name in ("x1",):
+                if sorted(again) != sorted(q["expected"]):
                     problems.append(
                         f"{ds.name} {q['id']}: the rule gives {again}, questions.json says {q['expected']}"
                     )
+            share = leak(q, data)
+            held = q["kind"] not in ("supersedes", "see", "thought-chain", "filter")
+            if held and share > LEAK_LIMIT and ds.name == "x1":
+                problems.append(
+                    f"{q['id']}: the question repeats {share:.0%} of its answer's title (limit {LEAK_LIMIT:.0%})"
+                )
             rows.append(
-                {"q": q["id"], "kind": q["kind"], "baseline": baseline(q, data)}
+                {
+                    "q": q["id"],
+                    "kind": q["kind"],
+                    "expected": len(expected_in(q, data)),
+                    "leak": share if held else None,
+                    "baseline": baseline(q, data),
+                }
             )
         bt = [r["baseline"]["tokens"] for r in rows]
         members = {
@@ -219,6 +283,18 @@ def main(argv=None) -> int:
             for m in names
         ]
         lines.append(f"| {name} | " + " | ".join(cells) + " |")
+    x1 = report["datasets"].get("x1")
+    if x1:
+        lines += [
+            "",
+            f"Answer leak: the share of the expected title's content words the question repeats (limit {LEAK_LIMIT:.0%}; graph and filter questions not held)",
+            "",
+            "| question | kind | leak |",
+            "|---|---|---|",
+        ] + [
+            f"| {r['q']} | {r['kind']} | {'—' if r['leak'] is None else f'{r["leak"]:.0%}'} |"
+            for r in x1["rows"]
+        ]
     lines += ["", f"Problems: {len(problems)}"] + [f"- {p}" for p in problems]
     print("\n".join(lines))
     if a.out:

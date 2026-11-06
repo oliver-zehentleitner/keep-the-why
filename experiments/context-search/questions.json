@@ -22,7 +22,7 @@
   {
    "id": "q02",
    "kind": "why-rejected",
-   "question": "When Maity says its traffic is end-to-end encrypted, what does that actually cover, and why not encrypt the content itself?",
+   "question": "What exactly does Maity's security promise about protecting traffic between the hub and its users cover?",
    "expected": [
     "9cdde84c-924f-4d6c-bc29-2468af6eaffb"
    ],
@@ -64,7 +64,7 @@
   {
    "id": "q05",
    "kind": "incident",
-   "question": "Has the shared build machine ever run out of disk space, and what filled it?",
+   "question": "What was behind the time the shared build server could no longer write anything?",
    "expected": [
     "b1c7bd7d-a497-41ed-97e3-989f63c80a1c"
    ],
@@ -148,7 +148,7 @@
   {
    "id": "q11",
    "kind": "why-rejected",
-   "question": "Why don't browser notifications show the text of the message?",
+   "question": "Why can't someone read what a chat says from the desktop pop-up alone?",
    "expected": [
     "c44871c6-9d74-481b-892b-184e1ea518f5"
    ],
@@ -232,7 +232,7 @@
   {
    "id": "q17",
    "kind": "incident",
-   "question": "Why is the self-hosted CI runner capped and started with a single service?",
+   "question": "After the first self-hosted CI runner took the machine down, what limits were put on it?",
    "expected": [
     "a35df240-f14b-4468-8ab2-23b447a08175"
    ],
@@ -246,7 +246,7 @@
   {
    "id": "q18",
    "kind": "why-rejected",
-   "question": "Where do changelog entries go in a pull request, and why not straight into CHANGELOG.md?",
+   "question": "How does a pull request record its user-visible change so that parallel pull requests don't conflict?",
    "expected": [
     "b1258d90-a82b-48a1-9c5f-7ee4eb1295f9"
    ],
@@ -260,7 +260,7 @@
   {
    "id": "q19",
    "kind": "why-rejected",
-   "question": "Does a context/ entry need its own commit in the PR?",
+   "question": "How should a PR that adds a decision record to context/ be laid out in commits?",
    "expected": [
     "70b1f348-5885-4b97-95c9-70544e5ee62c"
    ],
@@ -568,7 +568,7 @@
   {
    "id": "q35",
    "kind": "why-rejected",
-   "question": "Can the hub run as several pods, and when is that refused?",
+   "question": "Can the hub be scaled out horizontally, and in which setups does Maity say no?",
    "expected": [
     "ec91fe03-1e12-4fb6-8c8e-f09ae8528e5d"
    ],
@@ -610,7 +610,7 @@
   {
    "id": "q38",
    "kind": "why-rejected",
-   "question": "Why does the Members page show two plain tables instead of trust levels?",
+   "question": "How is the organisation's people view structured, and where does trust show up in it?",
    "expected": [
     "f4ec0c89-33e8-4f62-b192-371a23b91581"
    ],
@@ -638,7 +638,7 @@
   {
    "id": "q40",
    "kind": "constraint",
-   "question": "Can a git remote URL with a token in it show up in the CLI's output?",
+   "question": "Could a credential embedded in a clone address ever appear in what the CLI prints?",
    "expected": [
     "44c5155a-ae4d-4f18-ace9-1ac3a46f5a33"
    ],

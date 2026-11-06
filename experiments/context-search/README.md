@@ -34,7 +34,10 @@ for m in . hub web cli; do ktw-lint --strict $D/x10/$m; done   # every member of
   its own topics. Each copy has new Ids (`uuid5`, reproducible), new topic names and anchors, its references
   rewritten into the copy — one Id map for the whole family, so a reference from one member into another stays in
   the copy — and the 150 most frequent title words of the family renamed to made-up words, so a copy does not
-  answer a question about the original. The one right answer stays the original entry.
+  answer a question about the original. The one right answer stays the original entry. URLs (a canonical, an
+  external reference) are names and never renamed, and the words the entry format itself uses stay: the
+  linter's field names and fixed values and the body labels the dashboard's state parser reads, taken from
+  there. The generator fails unless every reference by canonical to a family entry names a member's canonical.
 - **identical** (offline control only): copies keep the text, so size is measured without the cost of telling
   entries apart.
 
@@ -49,8 +52,13 @@ starts in (default: the root) and the members the answer lives in:
   `cli`), rephrased as the question someone would ask; the expected Id is the entry that commit added. 7 start in
   another member than the answer's.
 - 9 come from the graph or a filter (what supersedes X, a supersede chain, a See link, every incident and every
-  needs-review entry of the family); the harness recomputes their Ids from the dataset and fails when they
-  differ.
+  needs-review entry of the family); the harness recomputes their Ids from every dataset and fails when they
+  differ. A filter question's answer in a copied set is every entry the filter matches there, the copies'
+  included: nothing in a copy says it is one.
+
+The harness also checks that no question gives its answer away: the share of the expected entry's title words
+(stop words out, a plural folded) that the question repeats must stay at or below 40 %, reported per question.
+Graph and filter questions name their starting point or filter on purpose and are not held to it.
 
 ## The measurements
 

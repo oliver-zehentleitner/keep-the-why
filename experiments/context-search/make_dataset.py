@@ -35,11 +35,14 @@ import sys
 import uuid
 from pathlib import Path
 
+REPO = Path(__file__).resolve().parents[2]
 try:
-    from ktw_lint.entries import anchor, parse_topic_text
+    from ktw_lint import checks as lint_checks
+    from ktw_lint.entries import KNOWN_FIELDS, anchor, parse_topic_text
 except ImportError:  # run from the repository without the linter installed
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lint"))
-    from ktw_lint.entries import anchor, parse_topic_text
+    sys.path.insert(0, str(REPO / "lint"))
+    from ktw_lint import checks as lint_checks
+    from ktw_lint.entries import KNOWN_FIELDS, anchor, parse_topic_text
 
 NAMESPACE = uuid.UUID("6f1c2a5e-6b1e-4f0e-9a4d-2c7b5e1d3a90")
 SKIP = {"index.md", "README.md", "AGENTS.md", "CLAUDE.md"}
@@ -47,6 +50,7 @@ UUID_RE = re.compile(
     r"\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b"
 )
 LOCATOR_RE = re.compile(r"\b([a-z0-9][a-z0-9._-]*\.md)#([A-Za-z0-9_-]+)")
+URL_RE = re.compile(r"https?://[^\s)>\]`]+")
 FILE_RE = re.compile(r"\b([a-z0-9][a-z0-9._-]*\.md)\b")
 WORD_RE = re.compile(r"[A-Za-z][a-z]+")
 STOP = set(
@@ -56,12 +60,37 @@ STOP = set(
     some still such than that their them then there these they this those though through under until upon very
     what when where whether which while whom whose will with within without would your yours once ones gets""".split()
 )
-# the words the entry format itself uses: field names and their fixed values stay, or a copy would not lint
-FORMAT = set(
-    """decision workaround incident constraint undefined active superseded open needs review pending confirmation
-    confirmed inferred unknown corroborated uncorroborated contradicted source revisit verification evidence status
-    type reason rejected alternative alternatives consequence related none""".split()
-)
+
+
+def format_words() -> set[str]:
+    """The words the entry format itself uses, taken from where the format is defined, not listed here: the
+    linter's field names and fixed values, and the body labels the dashboard's state parser reads (Reason,
+    Considered, Why this needs an answer, ...). They stay in a copy, or it would not lint or parse alike.
+    """
+    words = set()
+    for name in KNOWN_FIELDS:
+        words.update(WORD_RE.findall(name.lower()))
+    for values in (
+        lint_checks.TYPE_VALUES,
+        lint_checks.STATUS_VALUES,
+        lint_checks.EVIDENCE_VALUES,
+        lint_checks.VERIFICATION_VALUES,
+    ):
+        for v in values:
+            words.update(WORD_RE.findall(v.lower()))
+    state = (REPO / "dashboard" / "ktw_dashboard" / "state.py").read_text(
+        encoding="utf-8"
+    )
+    labels = re.search(r"_LABEL_RE = re\.compile\(\s*r\"\^\\\*\\\*\(([^)]*)\)", state)
+    for label in (labels.group(1).split("|") if labels else []):
+        words.update(WORD_RE.findall(label.lower()))
+    words |= {"undefined", "none"}
+    return words | {
+        w + "s" for w in words
+    }  # a plural ("alternatives") is the same word
+
+
+FORMAT = format_words()
 CONSONANTS, VOWELS = "bdfgklmnprstvz", "aeiou"
 
 
@@ -134,6 +163,8 @@ def rewrite(
             return hold(f"{files[f]}#{anchors.get((f, a), a)}")
         return hold(m.group(0))
 
+    # a URL (a canonical, an external reference) is a name, never vocabulary
+    text = URL_RE.sub(lambda m: hold(m.group(0)), text)
     text = LOCATOR_RE.sub(locator, text)
     text = UUID_RE.sub(lambda m: hold(ids.get(m.group(0), m.group(0))), text)
     text = FILE_RE.sub(lambda m: hold(files.get(m.group(1), m.group(1))), text)
@@ -195,6 +226,33 @@ def write_index(src_index: Path, dst: Path, lines: list[tuple[str, str]]) -> Non
         body += [f"- [{f}]({f}){d}" for f, d in sorted(lines) if f[0].upper() == h]
         body.append("")
     dst.write_text("\n".join(body), encoding="utf-8")
+
+
+SEE_LINE = re.compile(
+    r"(https?://\S+)\s+[—–-]\s+([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})"
+)
+
+
+def check_canonicals(out: Path, family_ids: set[str]) -> int:
+    """Every reference by canonical to an entry of the family must name a member's canonical, in every copy: a
+    reference the vocabulary map bent would still lint (as a reference to another repository), but it would point
+    outside the family. Returns the number checked; raises on the first that does not resolve.
+    """
+    canonicals = set()
+    for cfg in out.rglob(".keep-the-why"):
+        m = re.search(r"^- canonical: (\S+)", cfg.read_text(encoding="utf-8"), re.M)
+        if m:
+            canonicals.add(m.group(1).rstrip("/"))
+    checked = 0
+    for p in out.rglob("context/*.md"):
+        for url, uid in SEE_LINE.findall(p.read_text(encoding="utf-8")):
+            if uid in family_ids:
+                checked += 1
+                if url.rstrip("/") not in canonicals:
+                    raise SystemExit(
+                        f"{p}: a reference to {uid} names {url}, not a member's canonical {sorted(canonicals)}"
+                    )
+    return checked
 
 
 def build(src: Path, out: Path, copies: int, mode: str, vocab_size: int) -> dict:
@@ -307,6 +365,7 @@ def build(src: Path, out: Path, copies: int, mode: str, vocab_size: int) -> dict
         ),
         encoding="utf-8",
     )
+    canonical_refs = check_canonicals(out, {i for lst in ids_out.values() for i in lst})
     per = {
         loc: {
             "topics": len(ts) * (copies + 1),
@@ -318,6 +377,7 @@ def build(src: Path, out: Path, copies: int, mode: str, vocab_size: int) -> dict
         "members": per,
         "entries": sum(len(v) for v in ids_out.values()),
         "vocabulary": len(terms),
+        "canonical_references": canonical_refs,
     }
 
 
