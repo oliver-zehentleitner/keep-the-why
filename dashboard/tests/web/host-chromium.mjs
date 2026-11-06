@@ -63,10 +63,34 @@ const wantBorder = { a: { active: "rgb(181, 73, 43)", open: "rgb(44, 110, 155)" 
   if (c.pill[2] !== wantBorder[n][kind]) errors.push(`host ${n}: a ${kind} pill's border is ${c.pill[2]}, the host's status colour is ${wantBorder[n][kind]}`);
   if (!c.dot || c.dot === "rgba(0, 0, 0, 0)") errors.push(`host ${n}: a bar or a stack has no colour (${c.dot}) — an inline style the policy dropped?`);
 });
+// a long Source and Verification wrap inside the entry page's column under both hosts: the pills that hold free
+// text are not single-line pills (a long Source ran into the page beside it). Set on one entry of each host's
+// state, the entry page drawn anew and measured, then the values restored.
+const wrapped = await page.evaluate(async () => {
+  const LONG = "the card for the entry page, from a review of the views on two hosts, with a link that has no break in it: https://example.org/a/very/long/path/without/any/place/to/break/" + "x".repeat(120);
+  const out = [];
+  for (const n of ["a", "b"]) {
+    const H = window.KTW_HOSTS[n], e = H.state.entries.find((x) => x.uuid);
+    const was = [e.source, e.verification];
+    e.source = LONG; e.verification = LONG;
+    H.go({ view: "overview" }); await new Promise((r) => setTimeout(r, 50));
+    H.go({ view: "entry", uuid: e.uuid }); await new Promise((r) => setTimeout(r, 300));
+    const col = H.main.getBoundingClientRect();
+    const pills = [...H.main.querySelectorAll(".ktw-fields .ktw-pill.ktw-wrap")];
+    out.push({ n, count: pills.length, over: pills.map((p) => Math.round(p.getBoundingClientRect().right - col.right)), lines: pills.map((p) => Math.round(p.getBoundingClientRect().height / parseFloat(getComputedStyle(p).lineHeight))) });
+    [e.source, e.verification] = was;
+  }
+  return out;
+});
+for (const w of wrapped) {
+  if (w.count !== 2) errors.push(`host ${w.n}: the entry page shows ${w.count} free-text pills, want Source and Verification`);
+  if (w.over.some((x) => x > 0)) errors.push(`host ${w.n}: a long Source or Verification runs ${Math.max(...w.over)}px past its column`);
+  if (w.lines.some((x) => x < 2)) errors.push(`host ${w.n}: a long Source or Verification stays on one line (${w.lines.join(", ")} lines)`);
+}
 errors.push(...(await page.evaluate(() => window.KTW_HOST_ERRORS || [])));
 await browser.close(); server.close();
 
-const line = `${rendered}/${places * 2} places show what they must under two hosts in Chromium, under default-src 'self' (canvases with ink: ${inked.join(", ")}); ${errors.length} problems`;
+const line = `${rendered}/${places * 2} places show what they must under two hosts in Chromium, under default-src 'self' (canvases with ink: ${inked.join(", ")}; long Source/Verification lines: ${wrapped.map((w) => `${w.n} ${w.lines.join("/")}`).join(", ")}); ${errors.length} problems`;
 for (const e of errors) console.log("  " + e);
 console.log(line);
 if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### The views under two foreign hosts (Chromium, CSP)\n\n${line}\n\n${errors.length ? "```\n" + errors.join("\n") + "\n```\n" : ""}`);
