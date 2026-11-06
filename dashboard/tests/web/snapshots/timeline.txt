@@ -181,7 +181,7 @@
       "unknown"
   <span class="ktw-grp" title="Status is the edge">
     <span>
-      <i class="ktw-sw ktw-dashed" style="color: var(--ktw-fg3, #6f6f7a);">
+      <i class="ktw-sw ktw-dashed" style="color: var(--ktw-fg3-line, #6f6f7a);">
       "superseded"
     <span>
       <i class="ktw-sw ktw-ring" style="color: var(--ktw-fg2, #a2a2ad);">

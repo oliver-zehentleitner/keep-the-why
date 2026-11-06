@@ -36,7 +36,7 @@ function stageLegend() {
   return el("div", { class: "ktw-stage-legend" },
     el("span", { class: "ktw-grp" }, ...TYPE_KINDS.map((k) => el("span", { style: `color:${token(TYPE_TOKENS[k])}` }, typeGlyphSvg(k), " ", el("span", { style: "color:var(--ktw-fg2, #a2a2ad)" }, k))), el("span", {}, sw("", "color:var(--ktw-muted, #8b8b98)"), el("span", {}, tw("timeline.legend.noType", "no type")))),
     el("span", { class: "ktw-grp", title: tw("timeline.legend.evidence", "Evidence is the fill") }, el("span", {}, sw("ktw-solid", "color:var(--ktw-fg2, #a2a2ad)"), "confirmed"), el("span", {}, sw("ktw-hatch", "color:var(--ktw-fg2, #a2a2ad)"), "inferred"), el("span", {}, sw("", "color:var(--ktw-fg2, #a2a2ad)"), "unknown")),
-    el("span", { class: "ktw-grp", title: tw("timeline.legend.status", "Status is the edge") }, el("span", {}, sw("ktw-dashed", "color:var(--ktw-fg3, #6f6f7a)"), "superseded"), el("span", {}, sw("ktw-ring", "color:var(--ktw-fg2, #a2a2ad)"), tw("timeline.legend.inQuestion", "open · needs review · pending"))));
+    el("span", { class: "ktw-grp", title: tw("timeline.legend.status", "Status is the edge") }, el("span", {}, sw("ktw-dashed", "color:var(--ktw-fg3-line, #6f6f7a)"), "superseded"), el("span", {}, sw("ktw-ring", "color:var(--ktw-fg2, #a2a2ad)"), tw("timeline.legend.inQuestion", "open · needs review · pending"))));
 }
 
 // A card's shape is its Type. decision: a plain card with a diamond. constraint: a thick band across the top, a

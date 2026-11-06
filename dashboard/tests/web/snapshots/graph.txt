@@ -49,7 +49,7 @@
       <i class="ktw-dot ktw-unknown">
       "unknown"
     <span>
-      <i class="ktw-dot" style="background: transparent; border: 1.5px solid var(--fg3);">
+      <i class="ktw-dot" style="background: transparent; border: 1.5px solid var(--fg3-line);">
       "superseded"
     <span>
       "— reference · ··· membership"
@@ -126,7 +126,7 @@
     <i class="ktw-dot ktw-unknown">
     "entry, Evidence unknown"
   <span>
-    <i class="ktw-dot" style="background: transparent; border: 1.5px solid var(--fg3);">
+    <i class="ktw-dot" style="background: transparent; border: 1.5px solid var(--fg3-line);">
     "superseded — hollow"
   <span>
     <i class="ktw-dot" style="background: var(--bg); border: 1.5px solid var(--open);">
@@ -134,10 +134,10 @@
   <span>
     "solid line — a reference between topics; dotted — membership"
   <span>
-    <i class="ktw-dot" style="background: transparent; border: 2px dashed var(--fg3); width: 10px; height: 10px;">
+    <i class="ktw-dot" style="background: transparent; border: 2px dashed var(--fg3-line); width: 10px; height: 10px;">
     "friend — a repository cited outside the family, loaded with the graph; a click on its hub or name goes there"
   <span>
-    <i class="ktw-dot" style="background: transparent; border: 2px dotted var(--fg3); width: 10px; height: 10px;">
+    <i class="ktw-dot" style="background: transparent; border: 2px dotted var(--fg3-line); width: 10px; height: 10px;">
     "path — a project you walked through to get here, numbered in order; a click goes back there"
 <h3>
   "Keys"

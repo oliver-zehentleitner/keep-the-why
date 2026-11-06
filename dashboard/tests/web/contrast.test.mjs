@@ -144,6 +144,27 @@ test("no text resolves to the raw accent, through whatever token: color, fill an
 // hint's gradient every channel moves the same way between neighbouring stops (all up in dark, #a98cf5 to #dcd0fb;
 // all down in light, #6234d9 to #3b1d99), so the luminance, and the ratio against a plain ground, lies between
 // the stops' and is lowest at one of them.
+// the scripts set a few colours inline (a dropdown's empty-state note, the legends' marks): a text colour there
+// meets the same rule. The timeline legend's `sw(…)` swatch is an empty mark whose border is currentColor, so its
+// `color` is a line colour, not text.
+test("no text colour set inline by the scripts resolves to a raw colour", () => {
+  const files = ["app.js", ...fs.readdirSync(W).filter((n) => /^ktw-.+\.js$/.test(n))];
+  let seen = 0;
+  for (const name of files) {
+    fs.readFileSync(W + name, "utf8").split("\n").forEach((line, i) => {
+      for (const m of line.matchAll(/(?:^|[;"`{\s])color:\s*(var\(--[\w-]+(?:,\s*#[0-9a-fA-F]{3,8})?\))/g)) {
+        if (/\bsw\(/.test(line.slice(Math.max(0, m.index - 40), m.index))) continue; // the timeline legend's swatch
+        seen++;
+        for (const [theme, vals] of Object.entries(RESOLVE_IN)) {
+          const c = resolve(m[1], vals);
+          assert.ok(!RAW[theme].includes(c), `${name}:${i + 1}: inline color ${m[1]} resolves to ${c} in ${theme}, a raw colour a text token takes the place of`);
+        }
+      }
+    });
+  }
+  assert.ok(seen >= 1, "the search dropdown's note sets its colour inline; this test is for such places");
+});
+
 test("every decorative fill named above is still a rule of the stylesheet", () => {
   const sels = new Set(rules(VIEWS).map((r) => r.sel));
   for (const s of DECORATIVE_FILLS) assert.ok(sels.has(s), `${s} is gone from ktw-views.css — drop it from DECORATIVE_FILLS`);

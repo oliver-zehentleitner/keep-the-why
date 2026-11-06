@@ -148,7 +148,7 @@ function attach({ input, box, within }) {
       ...(shown.length ? shown.map(({ e, hit, g }) => el("a", { href: g.href(e), onclick: close },
       el("div", {}, marked(e.title.replace(/`/g, ""), hit.terms)),
       el("div", { class: "ktw-sr-file" }, topicTitle(g.state, e.file)),
-      el("div", { class: "ktw-sr-snip" }, hitSnippet(hit)))) : [el("div", { style: "padding:10px 12px;color:var(--ktw-fg3, #6f6f7a)" }, tw("search.dropdown.none", "no matches in this project"))]),
+      el("div", { class: "ktw-sr-snip" }, hitSnippet(hit)))) : [el("div", { style: "padding:10px 12px;color:var(--ktw-fg3, #9999a2)" }, tw("search.dropdown.none", "no matches in this project"))]),
       REG.on ? navLink({ class: "ktw-sr-all", href: { view: "search", scope: "registry", q: q }, onclick: close }, tw("search.dropdown.registryPage", "↵  projects in the registry, as a page"))
         : navLink({ class: "ktw-sr-all", href: { view: "search", scope: "project", q: q }, onclick: close }, all.length > shown.length ? tw("search.dropdown.allResults", "↵  all {n} results in this project", { n: all.length }) : tw("search.dropdown.resultsPage", "↵  results page"))].filter(Boolean)); // replaceChildren writes a null as the text "null"
     box.hidden = false; sel = -1;
