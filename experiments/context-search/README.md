@@ -71,4 +71,15 @@ Graph and filter questions name their starting point or filter on purpose and ar
   Code first, then Codex CLI or opencode) for the baseline and the offline winners, with exact answers, the
   session's total context at the answer, tool calls and wall time.
 
+- `ktw_proto.py PROJECT index|find|show|graph|cache`: a prototype of the search commands over one cache of the
+  family's entries (the linter's parser): an entry-level index, filters (`--type`, `--status`, `--member`),
+  graph queries over See and Superseded by in both directions, ranked full text (BM25), and static embeddings
+  (`--rank embed`, model2vec `potion-base-8M`, an extra). One line per entry, `id · type/status · title ·
+  member/file:L1-L2`. The cache is keyed on the tree of the family and the dirty state of its context.
+- `harness_candidates.py DATA_DIR [--out results/DATE] [--no-embed]`: the candidates on every dataset, no model
+  in the loop: recall@1/@5/@10 and MRR of BM25, embeddings and both fused by reciprocal rank (the question as the
+  query), the tokens an agent would read (`find -n 10` and `show` of the first hit), the entry-level index's
+  tokens, the exact commands for graph and filter questions, and the cache's build time and size. In the
+  identical control an expected entry counts as found at its best-ranked copy.
+
 `results/` keeps each run's `summary.md`. Transcripts stay on the machine that ran them.
