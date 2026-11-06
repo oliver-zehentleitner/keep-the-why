@@ -8,9 +8,10 @@ project's references) are left as they are.
 Two modes:
 
 - vocab (the primary dataset): each copy also renames the domain vocabulary, the most frequent words of the topic
-  and entry titles, through a deterministic map of made-up words. A copy reads like the original but does not
-  answer a question about it, so the one right answer stays the original entry: the realistic case of many
-  similar entries and one correct one.
+  and entry titles, shuffled among themselves (a reproducible derangement per copy: no word keeps its place).
+  A copy reads like a plausible project of the same kind but does not answer a question about the original, so
+  the one right answer stays the original entry: the realistic case of many similar entries and one correct one.
+  Every domain word occurs in every copy, so its document frequency grows with the set like any other word's.
 - identical (an offline control only): copies keep the original text, so every copy answers like the original.
   It separates what size costs from what telling entries apart costs.
 
@@ -27,8 +28,8 @@ from __future__ import annotations
 
 import argparse
 import collections
-import hashlib
 import json
+import random
 import re
 import shutil
 import sys
@@ -91,17 +92,6 @@ def format_words() -> set[str]:
 
 
 FORMAT = format_words()
-CONSONANTS, VOWELS = "bdfgklmnprstvz", "aeiou"
-
-
-def pseudo(term: str, copy: int) -> str:
-    """A made-up word for `term` in copy `copy`: pronounceable, deterministic, about as long as the term."""
-    h = hashlib.sha256(f"{term}|{copy}".encode()).digest()
-    syllables = max(2, (len(term) + 2) // 3)
-    return "".join(
-        CONSONANTS[h[2 * i] % len(CONSONANTS)] + VOWELS[h[2 * i + 1] % len(VOWELS)]
-        for i in range(syllables)
-    )
 
 
 def vocabulary(topics: dict[str, str], size: int) -> list[str]:
@@ -118,12 +108,32 @@ def vocabulary(topics: dict[str, str], size: int) -> list[str]:
     return [w for w, _ in counts.most_common(size)]
 
 
+BAND = 5  # domain words are shuffled only among neighbours in frequency
+
+
 def word_map(terms: list[str], copy: int) -> dict[str, str]:
-    m = {t: pseudo(t, copy) for t in terms}
-    for (
-        t
-    ) in terms:  # a plural follows its singular, so "card" and "cards" stay one word
-        if t.endswith("s") and t[:-1] in m:
+    """Copy `copy`'s renaming: the domain words shuffled among themselves, a derangement (no word keeps its place),
+    within bands of BAND neighbours in frequency (`terms` comes most frequent first). Every domain word still occurs
+    in every copy, as a stand-in for a word about as frequent, so its document frequency across a set grows with
+    the set like any other word's. Made-up words unique to a copy would give exactly the query words a document
+    frequency of one copy and so an inflated IDF; a free shuffle would swap frequent and rare words and make a
+    word's frequency swing from copy to copy. A plural follows its singular."""
+    base = [t for t in terms if not (t.endswith("s") and t[:-1] in terms)]
+    rng = random.Random(f"derangement|{copy}")
+    bands = [base[i : i + BAND] for i in range(0, len(base), BAND)]
+    if len(bands) > 1 and len(bands[-1]) < 2:  # a band of one cannot be deranged
+        last = bands.pop()
+        bands[-1] = bands[-1] + last
+    m = {}
+    for band in bands:
+        perm = band[:]
+        while True:
+            rng.shuffle(perm)
+            if all(a != b for a, b in zip(band, perm)):
+                break
+        m.update(zip(band, perm))
+    for t in terms:
+        if t not in m:
             m[t] = m[t[:-1]] + "s"
     return m
 
@@ -255,6 +265,49 @@ def check_canonicals(out: Path, family_ids: set[str]) -> int:
     return checked
 
 
+def df_spread(out: Path, terms: list[str], copies: int) -> dict:
+    """How evenly the domain words spread over the copies: for each word, the number of entries in each copy
+    whose text has it. Every word must occur in every copy, or the copies would give the words that are left a
+    smaller document frequency, and BM25 a larger IDF, than the rest of the vocabulary (raises). Reports the
+    spread per word, max/min of its per-copy counts: the median and the worst."""
+    base = [t for t in terms if not (t.endswith("s") and t[:-1] in terms)]
+    per = {t: [0] * (copies + 1) for t in base}
+    for p in out.rglob("context/*.md"):
+        if p.name in SKIP:
+            continue
+        m = re.search(r"-k(\d+)\.md$", p.name)
+        k = int(m.group(1)) if m else 0
+        for entry in p.read_text(encoding="utf-8").split("\n## ")[1:]:
+            present = {w.lower() for w in WORD_RE.findall(entry)}
+            for t in base:
+                if t in present or t + "s" in present:
+                    per[t][k] += 1
+    missing = [
+        (t, k) for t, counts in per.items() for k, n in enumerate(counts) if n == 0
+    ]
+    if missing:
+        raise SystemExit(
+            f"domain words missing from a copy (word, copy): {missing[:10]}"
+        )
+    spreads = sorted(max(c) / min(c) for c in per.values())
+    # what IDF sees: a word's document frequency in the whole set against (copies + 1) times its frequency in
+    # the original; 1.0 is what a copy of identical text gives, the made-up words of the first build gave 1/(N+1)
+    ratios = sorted(sum(c) / ((copies + 1) * c[0]) for c in per.values())
+    mid = len(ratios) // 2
+    return {
+        "words": len(base),
+        "per_copy_spread": {
+            "median": round(spreads[len(spreads) // 2], 2),
+            "max": round(spreads[-1], 2),
+        },
+        "set_df_ratio": {
+            "min": round(ratios[0], 2),
+            "median": round(ratios[mid], 2),
+            "max": round(ratios[-1], 2),
+        },
+    }
+
+
 def build(src: Path, out: Path, copies: int, mode: str, vocab_size: int) -> dict:
     """The family at `src` (its root's `.keep-the-why`), every member with its copies beside its own topics."""
     members = family(src)
@@ -287,14 +340,21 @@ def build(src: Path, out: Path, copies: int, mode: str, vocab_size: int) -> dict
         files: dict[str, dict[str, str]] = {}
         anchors: dict[str, dict] = {}
         for loc, ts in topics.items():
-            files[loc] = {
-                f: (
+            files[loc] = {}
+            for (
+                f
+            ) in (
+                ts
+            ):  # a renamed stem can meet another file's: keep every name in the copy unique
+                name = (
                     f
                     if k == 0
-                    else f"{(apply_words(f[:-3], words) if words else f[:-3])}-k{k}.md".lower()
+                    else f"{(apply_words(f[:-3], words) if words else f[:-3])}-k{k}".lower()
                 )
-                for f in ts
-            }
+                stem, n = name.removesuffix(".md"), 2
+                while f"{stem}.md" in files[loc].values():
+                    stem, n = f"{name.removesuffix('.md')}-{n}", n + 1
+                files[loc][f] = f"{stem}.md"
             anchors[loc] = {}
             for f, text in ts.items():
                 for e in parse_topic_text(text):
@@ -378,6 +438,9 @@ def build(src: Path, out: Path, copies: int, mode: str, vocab_size: int) -> dict
         "entries": sum(len(v) for v in ids_out.values()),
         "vocabulary": len(terms),
         "canonical_references": canonical_refs,
+        "df_spread": (
+            df_spread(out, terms, copies) if (mode == "vocab" and copies) else None
+        ),
     }
 
 
