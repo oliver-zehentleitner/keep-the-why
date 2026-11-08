@@ -31,8 +31,8 @@ for m in . hub web cli; do ktw-lint --strict $D/x10/$m; done   # every member of
 ```
 
 - **vocab** (the primary sets): every member keeps its `.keep-the-why` and family links and gets its copies beside
-  its own topics. Each copy has new Ids (`uuid5`, reproducible), new topic names and anchors, its references
-  rewritten into the copy — one Id map for the whole family, so a reference from one member into another stays in
+  its own topics. Each copy has new Ids (reproducible, shaped like version 4 as the originals are), new topic
+  names (deranged like the words, no copy marker) and anchors, its references rewritten into the copy — one Id map for the whole family, so a reference from one member into another stays in
   the copy — and the 150 most frequent title words of the family shuffled among themselves (a reproducible
   derangement per copy, within bands of five neighbours in frequency), so a copy reads like a plausible project
   of the same kind but does not answer a question about the original. Every domain word occurs in every copy, so
