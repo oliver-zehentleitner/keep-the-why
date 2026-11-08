@@ -128,7 +128,7 @@ Graph and filter questions name their starting point or filter on purpose and ar
   | oliver-zehentleitner/unicorn-fy | MIT | 6 |
   | rapt0p7/scenegrid-console | MIT | 10 |
   | zyvop/zyvop-cli | MIT (package.json) | 10 |
-  | gitlab.com/oliver-zehentleitner/keep-the-why-demo | none declared | 7 |
+  | gitlab.com/oliver-zehentleitner/keep-the-why-demo | none declared; owner: the maintainer of this repository | 7 |
 
   All are public.
 

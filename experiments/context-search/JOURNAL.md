@@ -338,7 +338,7 @@ on every load unless the tool sets the offline flag itself, and an 18-minute fir
   set holds 1740 entries.
   - All 17 are public.
   - 15 declare MIT on the forge; zyvop-cli declares MIT in its `package.json`; keep-the-why-demo declares no
-    license.
+    license and is this repository's maintainer's own.
   - Only the generator, the pins and the questions are committed, never a project's content.
 - **The questions.** 37, at least 2 per project, with the same leak check (at most 33 % of the title's words; the
   limit is 40 %).
