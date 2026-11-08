@@ -273,7 +273,60 @@ on every load unless the tool sets the offline flag itself, and an 18-minute fir
 - **Graph and filter questions under their commands:** recall 1.0, now against the full answer and the raw count;
   median 1.9k tokens at ×1, 2.5k at ×5 and ×10.
 
+## 2026-11-08 — Step 4: BM25F and a two-step search, offline
+
+**The questions.**
+- Does weighting an entry's fields separately (BM25F) tell similar entries apart better than one bag of words?
+- Does searching again within the topics of the first hits recover the recall the larger sets lose?
+
+**The setup** (`harness_bm25f.py`).
+- **Fields:**
+  - the title;
+  - the prose (as BM25 indexes it);
+  - a topic field: the member, the topic file's heading and its line in the member's index.
+- **Tuning:** a grid of 1,200 settings (k1; the title's and the topic's weight against prose; b per field), chosen
+  by MRR on one half of the 32 text questions and measured on the other half, then the halves swap. The grid's
+  best on all questions is reported as a ceiling, never as a result. A half is 16 questions, so one question moves
+  recall by .06.
+- **Two steps:** a ranked search; then the same query again, ranked only among the entries of the topics of the
+  first three hits, with the IDF counted inside that scope. The tokens are both hit lists plus `show`, a lower bound.
+
+**The numbers** (`results/2026-11-08-offline-bm25f/`), recall@1 / @5 / @10, MRR:
+
+| set | BM25 | BM25F, held out | BM25, 2 steps | BM25F, 2 steps | BM25F ceiling |
+|---|---|---|---|---|---|
+| ×1 | .38 / .56 / .72, .47 | .41 / .59 / .72, .51 | .34 / .53 / .62, .43 | .28 / .62 / .75, .45 | .50 / .59 / .69, .56 |
+| ×5 | .34 / .47 / .53, .40 | .31 / .53 / .59, .40 | .28 / .44 / .50, .34 | .31 / .44 / .50, .38 | .38 / .53 / .59, .44 |
+| ×10 | .34 / .41 / .47, .38 | .28 / .44 / .53, .38 | .28 / .44 / .47, .34 | .31 / .44 / .53, .39 | .38 / .44 / .53, .42 |
+| ×10 identical | .38 / .38 / .38, .39 | .41 / .41 / .41, .42 | .38 / .44 / .44, .40 | .38 / .47 / .47, .40 | .50 / .50 / .50, .51 |
+
+- **Tokens:** one search reads about 1.05k–1.15k tokens; two steps read 1.6k–1.7k.
+- **Chosen settings:** the title weighted 5 to 8 against prose 1 in every half and every set; the topic field
+  weighted 0 in every one.
+
+**What it shows.**
+- **BM25F hardly helps.** Held out, it gains .06 at recall@10 on ×5 and ×10, and loses .06 at rank 1 on ×10,
+  one question either way. MRR moves by at most .04. Even the ceiling, tuned on the questions it is measured on,
+  stays below hybrid's .59 at ×10.
+- **The one stable signal is the title.** Every tuning run weights it 5 to 8 times the prose, against 2 now.
+- **The topic field is a failed hypothesis.** The index's topic lines are long and full of the domain's words, so
+  they match many questions about the same area equally, and do not tell one entry from another. Every tuning run
+  switched them off.
+- **Two steps do not recover recall.** Recall@10 at ×10 stays at .47 for BM25 and .53 for BM25F, at
+  600 tokens more. A scope made from the first three hits' topics cannot hold an entry whose topic none of them is
+  in, and reranking inside it costs rank-1 hits at ×1 (.38 to .34 for BM25, .41 to .28 for BM25F). An agent's
+  second step will be a different query, not the same one in a smaller scope; that is the agent runs' question.
+
+**Decisions.**
+- No tuned BM25F for `ktw`. Raise the title weight in the one-bag BM25 instead; that is the setting that
+  carried over.
+- The topic field and the second step leave the offline candidates.
+- Hybrid stays the best offline candidate at @5 and @10, BM25 at rank 1. The agent runs (PR 3) decide between
+  them, with hybrid's install weight as a cost.
+
 **Open questions.**
+- In a family of several repositories, `git -C root` does not descend into a member with its own `.git`. The cache
+  key of `ktw` has to be computed per member, or hash each member's files by content (#s8qb, 90379).
 - How much of the ranking gap is the query? An agent writes its own query, not the question as asked.
 - Does an agent recognise graph and filter questions, and use the exact commands for them?
 - How much context does an agent's session hold at the answer, against the per-turn sums?

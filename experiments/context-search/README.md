@@ -98,4 +98,9 @@ Graph and filter questions name their starting point or filter on purpose and ar
   tokens, the exact commands for graph and filter questions, and the cache's build time and size. In the
   identical control an expected entry counts as found at its best-ranked copy.
 
+- `harness_bm25f.py DATA_DIR [--out results/DATE] [--sets x1,x10]`: BM25F over the title, the prose and a topic
+  field (member, topic heading, its index line), its parameters chosen on one half of the text questions and
+  measured on the other, both ways; and a two-step search (the same query again within the topics of the first
+  three hits). Needs numpy.
+
 `results/` keeps each run's `summary.md`. Transcripts stay on the machine that ran them.
