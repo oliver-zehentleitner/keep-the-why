@@ -1,7 +1,8 @@
 """Build a context-search dataset from a project's context/: the original plus N copies.
 
-Every copy gets new entry Ids (uuid5 of the old Id and the copy number, so a build is reproducible), new topic
-file names and anchors, and its See / Superseded by references and inline locators rewritten into the same copy,
+Every copy gets new entry Ids (derived from the old Id and the copy number, so a build is reproducible, and shaped
+like the version-4 Ids the originals carry), new topic file names (the stem's words deranged like the rest, no
+copy marker) and anchors, and its See / Superseded by references and inline locators rewritten into the same copy,
 so the graph stays valid and nothing points across copies. Ids and files the source does not own (another
 project's references) are left as they are.
 
@@ -28,6 +29,7 @@ from __future__ import annotations
 
 import argparse
 import collections
+import itertools
 import json
 import random
 import re
@@ -46,6 +48,37 @@ except ImportError:  # run from the repository without the linter installed
     from ktw_lint.entries import KNOWN_FIELDS, anchor, parse_topic_text
 
 NAMESPACE = uuid.UUID("6f1c2a5e-6b1e-4f0e-9a4d-2c7b5e1d3a90")
+
+
+def copy_id(eid: str, k: int) -> str:
+    """A copy's Id: uuid5 of the original and the copy number for reproducibility, with the version and variant
+    bits set as a random (version 4) Id has them. A uuid5 Id says it was derived; an agent found the copies by
+    that alone (pilot, 2026-11-08)."""
+    b = bytearray(uuid.uuid5(NAMESPACE, f"{eid}|{k}").bytes)
+    b[6] = (b[6] & 0x0F) | 0x40
+    b[8] = (b[8] & 0x3F) | 0x80
+    return str(uuid.UUID(bytes=bytes(b)))
+
+
+def copy_stem(
+    stem: str, words: dict | None, k: int, used: set[str], pool: list[str]
+) -> str:
+    """A copy's topic file stem: its words deranged like the copy's text, and no copy marker; an agent found the
+    copies by a `-kN` suffix (pilot, 2026-11-08). A stem the member already has (one the derangement left as it
+    was, the original's own) becomes a single domain word instead, then a pair, chosen reproducibly, so that nine
+    copies of `brand.md` do not read as `brand-*.md` beside it."""
+    base = (apply_words(stem, words) if words else stem).lower()
+    rng = random.Random(f"stem|{stem}|{k}")
+    singles = sorted({w for w in pool if not w.endswith("s")})
+    rng.shuffle(singles)
+    pairs = (f"{a}-{b}" for a in singles for b in singles if a != b)
+    for name in itertools.chain([base], singles, pairs):
+        if name not in used:
+            used.add(name)
+            return name
+    raise SystemExit(f"no unique stem left for {stem} in copy {k}")
+
+
 SKIP = {"index.md", "README.md", "AGENTS.md", "CLAUDE.md"}
 UUID_RE = re.compile(
     r"\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b"
@@ -265,7 +298,9 @@ def check_canonicals(out: Path, family_ids: set[str]) -> int:
     return checked
 
 
-def df_spread(out: Path, terms: list[str], copies: int) -> dict:
+def df_spread(
+    out: Path, terms: list[str], copies: int, copy_of: dict[str, int]
+) -> dict:
     """How evenly the domain words spread over the copies: for each word, the number of entries in each copy
     whose text has it. Every word must occur in every copy, or the copies would give the words that are left a
     smaller document frequency, and BM25 a larger IDF, than the rest of the vocabulary (raises). Reports the
@@ -275,8 +310,8 @@ def df_spread(out: Path, terms: list[str], copies: int) -> dict:
     for p in out.rglob("context/*.md"):
         if p.name in SKIP:
             continue
-        m = re.search(r"-k(\d+)\.md$", p.name)
-        k = int(m.group(1)) if m else 0
+        # which copy a file belongs to: the build's own record, since no file name says it any more
+        k = copy_of[p.relative_to(out).as_posix()]
         for entry in p.read_text(encoding="utf-8").split("\n## ")[1:]:
             present = {w.lower() for w in WORD_RE.findall(entry)}
             for t in base:
@@ -322,6 +357,12 @@ def build(src: Path, out: Path, copies: int, mode: str, vocab_size: int) -> dict
     }
     every = {f"{loc}/{f}": text for loc, ts in topics.items() for f, text in ts.items()}
     terms = vocabulary(every, vocab_size) if mode == "vocab" else []
+    # words for making a copy's file stem unique: the domain's own, in both modes
+    pool = terms or vocabulary(every, vocab_size)
+    used: dict[str, set[str]] = {loc: set() for loc, _ in members}
+    copy_of: dict[str, int] = (
+        {}
+    )  # member/context/file.md -> the copy it belongs to (0: the original)
     if out.exists():
         shutil.rmtree(out)
     ids_out: dict[str, list[str]] = collections.defaultdict(list)
@@ -341,20 +382,14 @@ def build(src: Path, out: Path, copies: int, mode: str, vocab_size: int) -> dict
         anchors: dict[str, dict] = {}
         for loc, ts in topics.items():
             files[loc] = {}
-            for (
-                f
-            ) in (
-                ts
-            ):  # a renamed stem can meet another file's: keep every name in the copy unique
-                name = (
-                    f
-                    if k == 0
-                    else f"{(apply_words(f[:-3], words) if words else f[:-3])}-k{k}".lower()
-                )
-                stem, n = name.removesuffix(".md"), 2
-                while f"{stem}.md" in files[loc].values():
-                    stem, n = f"{name.removesuffix('.md')}-{n}", n + 1
-                files[loc][f] = f"{stem}.md"
+            # every file name unique in its member, the originals' and every copy's (a renamed stem can meet
+            # another file's)
+            for f in ts:
+                if k == 0:
+                    used[loc].add(f[:-3])
+                    files[loc][f] = f
+                else:
+                    files[loc][f] = copy_stem(f[:-3], words, k, used[loc], pool) + ".md"
             anchors[loc] = {}
             for f, text in ts.items():
                 for e in parse_topic_text(text):
@@ -362,15 +397,14 @@ def build(src: Path, out: Path, copies: int, mode: str, vocab_size: int) -> dict
                         (fl.value.strip() for fl in e.fields if fl.name == "Id"), None
                     )
                     if eid:
-                        ids[eid] = (
-                            eid if k == 0 else str(uuid.uuid5(NAMESPACE, f"{eid}|{k}"))
-                        )
+                        ids[eid] = eid if k == 0 else copy_id(eid, k)
                         ids_out[eid].append(ids[eid])
                         member_of[eid] = loc
                     new_title = apply_words(e.title, words) if words else e.title
                     anchors[loc][(f, anchor(e.title))] = anchor(new_title)
         for loc, ts in topics.items():
             for f, text in ts.items():
+                copy_of[(Path(loc) / "context" / files[loc][f]).as_posix()] = k
                 (out / loc / "context" / files[loc][f]).write_text(
                     rewrite(text, words, ids, files[loc], anchors[loc]) if k else text,
                     encoding="utf-8",
@@ -439,7 +473,9 @@ def build(src: Path, out: Path, copies: int, mode: str, vocab_size: int) -> dict
         "vocabulary": len(terms),
         "canonical_references": canonical_refs,
         "df_spread": (
-            df_spread(out, terms, copies) if (mode == "vocab" and copies) else None
+            df_spread(out, terms, copies, copy_of)
+            if (mode == "vocab" and copies)
+            else None
         ),
     }
 
