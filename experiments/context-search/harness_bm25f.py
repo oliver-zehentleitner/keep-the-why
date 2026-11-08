@@ -149,6 +149,83 @@ class Index:
         order = np.argsort(-total, kind="stable")
         return [self.ids[k] for k in order if total[k] > 0]
 
+    def score_bag(
+        self, query: str, w_title: float, k1: float = P.K1, b: float = P.B
+    ) -> list[str]:
+        """ktw_proto.py's BM25, one bag of words: the title counted w_title times, the prose once, one length. With
+        w_title 2 it ranks as P.bm25 does."""
+        n = len(self.ids)
+        length = w_title * self.len["title"] + self.len["prose"]
+        avg = max(length.mean(), 1e-9)
+        total = np.zeros(n)
+        for term in set(P.words(query)):
+            tf = np.zeros(n)
+            for f, w in (("title", w_title), ("prose", 1.0)):
+                if term in self.post[f]:
+                    rows, cnt = self.post[f][term]
+                    np.add.at(tf, rows, w * cnt)
+            df = int((tf > 0).sum())
+            if not df:
+                continue
+            idf = math.log(1 + (n - df + 0.5) / (df + 0.5))
+            total += idf * tf * (k1 + 1) / (tf + k1 * (1 - b + b * length / avg))
+        order = np.argsort(-total, kind="stable")
+        return [self.ids[k] for k in order if total[k] > 0]
+
+
+TITLE_WEIGHTS = (1, 2, 3, 4, 5, 6, 8, 10)
+
+
+def title_weight_check(data_dir: Path, questions: list[dict]) -> dict:
+    """The one setting BM25F carried over, confirmed on questions it was not chosen on: the title weight of the
+    one-bag BM25, chosen by MRR on Maity's text questions in ×1 and measured on the registry's own questions in the
+    registry set, with every weight's numbers on both for the curve."""
+    out = {"weights": {}}
+    sets = {}
+    for name in ("x1", "registry"):
+        ds = data_dir / name
+        cache, _ = P.load(ds)
+        data = H.load(ds)
+        sets[name] = (Index(cache, data), data)
+    tune = [q for q in questions if q["id"].startswith("q")]
+    test = [q for q in questions if q["id"].startswith("r")]
+    for w in TITLE_WEIGHTS:
+        row = {}
+        for label, name, qs in (
+            ("maity_x1", "x1", tune),
+            ("registry_own", "registry", test),
+        ):
+            ix, data = sets[name]
+            rs = [
+                C.ranks(
+                    ix.score_bag(q["question"], w),
+                    [{i} for i in H.expected_in(q, data)],
+                )
+                for q in qs
+            ]
+            row[label] = {
+                **{
+                    f"recall@{k}": round(
+                        statistics.mean(r[f"recall@{k}"] for r in rs), 3
+                    )
+                    for k in C.KS
+                },
+                "mrr": round(statistics.mean(r["mrr"] for r in rs), 3),
+            }
+        out["weights"][w] = row
+    out["chosen"] = max(
+        TITLE_WEIGHTS, key=lambda w: out["weights"][w]["maity_x1"]["mrr"]
+    )
+    # the bag reproduces ktw_proto's BM25 at weight 2
+    ix, _ = sets["x1"]
+    cache, _ = P.load(data_dir / "x1")
+    out["reproduces_bm25"] = all(
+        ix.score_bag(q["question"], 2)[:10]
+        == [i for i, _ in P.bm25(cache, q["question"])][:10]
+        for q in tune
+    )
+    return out
+
 
 def configs():
     keys = list(GRID)
@@ -165,23 +242,22 @@ def two_step(ix: Index, query: str, p: dict, first: list[str]) -> list[str]:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("data", type=Path)
-    ap.add_argument("--questions", type=Path, default=HERE / "questions.json")
+    ap.add_argument("--questions", type=Path, nargs="+", default=list(H.QUESTION_FILES))
     ap.add_argument("--out", type=Path)
     ap.add_argument("--sets", default="x1,x5,x10,x10-identical")
     a = ap.parse_args(argv)
     os.environ.setdefault("KTW_CACHE", "/var/tmp/ktw-context-search-cache")
+    every = [q for q in H.load_questions(a.questions) if q["kind"] not in GRAPH_KINDS]
     questions = [
-        q
-        for q in json.loads(a.questions.read_text(encoding="utf-8"))["questions"]
-        if q["kind"] not in GRAPH_KINDS
-    ]
+        q for q in every if "sets" not in q
+    ]  # Maity's, the ones every set holds
     halves = [questions[0::2], questions[1::2]]
     report = {
         "grid": GRID,
         "halves": [[q["id"] for q in h] for h in halves],
         "sets": {},
     }
-    for name in a.sets.split(","):
+    for name in [s for s in a.sets.split(",") if s != "registry"]:
         ds = a.data / name
         cache, _ = P.load(ds)
         data = H.load(ds)
@@ -257,32 +333,55 @@ def main(argv=None) -> int:
             "bm25f_2step": measure(lambda q: held[q["id"]], True),
         }
         print(name, json.dumps(report["sets"][name]), flush=True)
+    if "registry" in a.sets.split(","):
+        report["title_weight"] = title_weight_check(a.data, every)
+        print("title weight", json.dumps(report["title_weight"]), flush=True)
     rows = ("bm25", "bm25f", "bm25_2step", "bm25f_2step", "bm25f_ceiling")
-    lines = [
-        f"Tokenizer: {H.TOKENIZER}",
-        "",
-        "Text questions only, the question as the query: recall@1 / @5 / @10, MRR, median tokens (a lower bound: "
-        "the hit lists read plus `show` of the first expected hit). bm25f is measured on the half of the questions "
-        "its parameters were not chosen on; bm25f ceiling is the grid's best on all questions, for scale only.",
-        "",
-        "| dataset | " + " | ".join(rows) + " |",
-        "|---|" + "---|" * len(rows),
-    ]
-    for name, d in report["sets"].items():
-        cells = [
-            f"{d[r]['recall@1']:.2f} / {d[r]['recall@5']:.2f} / {d[r]['recall@10']:.2f}, {d[r]['mrr']:.2f}, {d[r]['median_tokens']}"
-            for r in rows
+    lines = [f"Tokenizer: {H.TOKENIZER}"]
+    if report["sets"]:
+        lines += [
+            "",
+            "Text questions only, the question as the query: recall@1 / @5 / @10, MRR, median tokens (a lower bound: "
+            "the hit lists read plus `show` of the first expected hit). bm25f is measured on the half of the questions "
+            "its parameters were not chosen on; bm25f ceiling is the grid's best on all questions, for scale only.",
+            "",
+            "| dataset | " + " | ".join(rows) + " |",
+            "|---|" + "---|" * len(rows),
         ]
-        lines.append(f"| {name} | " + " | ".join(cells) + " |")
-    lines += [
-        "",
-        "Parameters chosen per half (tuned on half 1 → used on half 2, and back), and the ceiling's:",
-        "",
-    ]
-    for name, d in report["sets"].items():
-        lines.append(
-            f"- {name}: {d['chosen'][0]}; {d['chosen'][1]}; ceiling {d['ceiling']}"
-        )
+        for name, d in report["sets"].items():
+            cells = [
+                f"{d[r]['recall@1']:.2f} / {d[r]['recall@5']:.2f} / {d[r]['recall@10']:.2f}, {d[r]['mrr']:.2f}, {d[r]['median_tokens']}"
+                for r in rows
+            ]
+            lines.append(f"| {name} | " + " | ".join(cells) + " |")
+        lines += [
+            "",
+            "Parameters chosen per half (tuned on half 1 → used on half 2, and back), and the ceiling's:",
+            "",
+        ]
+        for name, d in report["sets"].items():
+            lines.append(
+                f"- {name}: {d['chosen'][0]}; {d['chosen'][1]}; ceiling {d['ceiling']}"
+            )
+    tw = report.get("title_weight")
+    if tw:
+        lines += [
+            "",
+            f"The one-bag BM25's title weight, chosen by MRR on Maity's text questions in x1 ({tw['chosen']}) and measured on "
+            f"the registry's own questions in the registry set: recall@1 / @5 / @10, MRR. Weight 2 is ktw_proto.py's "
+            f"(reproduced: {tw['reproduces_bm25']}).",
+            "",
+            "| title weight | Maity, x1 | registry, own questions |",
+            "|---|---|---|",
+        ] + [
+            f"| {w}{' (chosen)' if w == tw['chosen'] else ''} | "
+            + " | ".join(
+                f"{r[k]['recall@1']:.2f} / {r[k]['recall@5']:.2f} / {r[k]['recall@10']:.2f}, {r[k]['mrr']:.2f}"
+                for k in ("maity_x1", "registry_own")
+            )
+            + " |"
+            for w, r in tw["weights"].items()
+        ]
     print("\n".join(lines))
     if a.out:
         a.out.mkdir(parents=True, exist_ok=True)

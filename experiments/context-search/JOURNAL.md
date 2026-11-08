@@ -324,6 +324,70 @@ on every load unless the tool sets the offline flag itself, and an 18-minute fir
 - Hybrid stays the best offline candidate at @5 and @10, BM25 at rank 1. The agent runs (PR 3) decide between
   them, with hybrid's install weight as a cost.
 
+## 2026-11-08 — Step 5: the registry, a large set of different real projects
+
+**The question.** ×5 and ×10 are a stress test of near-copies (step 3b). How do the candidates do on many
+*different* real projects, and does step 4's title weight hold on questions it was not chosen on?
+
+**The setup** (`make_registry.py`, `registry-pins.json`, `questions-registry.json`, idea Oliver's via the head).
+- **The data.** Every project the Keep the Why registry lists (`registry/projects.txt` at keep-the-why
+  `28bfdc9`), each at a pinned commit. A project brings its family members inside its own repository: its root and
+  the local children of its children blocks. Maity is left out of the list, since its family is the set's root,
+  at the commit questions.json pins. Every entry keeps its Id; the build fails on an Id that occurs twice.
+- **17 projects:** 697 entries, from 3 (ubdcc-dashboard) to 300 (lasteverLM, 7 members). With Maity's 1043, the
+  set holds 1740 entries.
+  - All 17 are public.
+  - 15 declare MIT on the forge; zyvop-cli declares MIT in its `package.json`; keep-the-why-demo declares no
+    license.
+  - Only the generator, the pins and the questions are committed, never a project's content.
+- **The questions.** 37, at least 2 per project, with the same leak check (at most 33 % of the title's words; the
+  limit is 40 %).
+  - 11 come from commits that added exactly one entry, the commit's subject checked against the title by hand.
+  - Many projects wrote their entries several at a time, the small ones all in one first commit. The other 26
+    questions are written from the entry itself, which is a weaker derivation and is marked so in each question.
+  - Maity's 41 questions apply to the registry set too.
+- **Commands.** Phase 1 and phase 2 as before; the registry set is reported on all questions, Maity's alone and
+  its own alone.
+- **Step 4's title weight.** Chosen by MRR on Maity's text questions in ×1, measured on the registry's own
+  questions.
+
+**The numbers** (`results/2026-11-08-offline-registry/`). Recall@1 / @5 / @10, MRR, median tokens:
+
+| set, questions | BM25 | embed | hybrid |
+|---|---|---|---|
+| ×1, Maity's | .38 / .56 / .72, .47, 1050 | .25 / .50 / .66, .38, 1034 | .38 / .75 / .78, .52, 1038 |
+| registry, Maity's | .38 / .50 / .69, .46, 1061 | .25 / .47 / .66, .37, 1030 | .31 / .72 / .78, .48, 1079 |
+| registry, its own | .49 / .70 / .81, .60, 993 | .30 / .57 / .68, .43, 984 | .51 / .78 / .89, .64, 950 |
+| ×10, Maity's | .34 / .41 / .47, .38, 1128 | .19 / .25 / .34, .24, 1024 | .22 / .50 / .59, .37, 1053 |
+
+- **The baseline** (every member's index plus the answer's topic files): a median of 34.6k tokens on the registry
+  set. Reading every index alone is 29.3k tokens.
+- **Graph and filter commands:** recall 1.0, median 2.4k tokens.
+- **Cache:** 16 MB; it builds in 0.5 s.
+- **The title weight**, Maity on ×1 and the registry's own questions, MRR:
+
+  | weight | 1 | 2 (now) | 3 | 4 | 5 (chosen) | 6 | 8 | 10 |
+  |---|---|---|---|---|---|---|---|---|
+  | Maity, ×1 | .47 | .47 | .47 | .49 | .51 | .49 | .47 | .47 |
+  | registry, own | .61 | .60 | .60 | .60 | .60 | .60 | .59 | .59 |
+
+**What it shows.**
+- **Different projects barely disturb a search.** Maity's questions lose little going from ×1 to the registry set:
+  .72 to .69 at BM25's recall@10, .78 to .78 for hybrid. On ×10 they drop to .47 and .59. Near-copies are the hard
+  case; a larger set of other projects is not, because their words differ.
+- **The registry's own questions are easier than Maity's.** Hybrid finds the answer in the top ten for 89 % of
+  them, BM25 for 81 %. Small projects have few entries that compete.
+- **Hybrid is the best at @5 and @10 on every realistic set.** At rank 1, BM25 and hybrid are even on the
+  registry's questions (.49 and .51), and BM25 is ahead on Maity's (.38 and .31).
+- **Step 4's title weight does not hold.** On the registry's questions every weight gives an MRR of .59 to .61, and
+  on Maity's ×1 the chosen 5 adds two questions at rank 1 over 2. The hypothesis that the weight carried over was
+  wrong; it was fitted to Maity's titles.
+
+**Decisions.**
+- Keep the title weight at 2. Step 4's proposal of 5 is withdrawn.
+- The registry set is the realistic large set for the agent runs, beside ×10 as the stress test.
+- Hybrid against BM25 is decided there, as before; offline, hybrid's lead is at @5 and @10, not at rank 1.
+
 **Open questions.**
 - In a family of several repositories, `git -C root` does not descend into a member with its own `.git`. The cache
   key of `ktw` has to be computed per member, or hash each member's files by content (#s8qb, 90379).

@@ -67,13 +67,13 @@ def rrf(*orders: list[str], k: int = 60) -> list[str]:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("data", type=Path)
-    ap.add_argument("--questions", type=Path, default=HERE / "questions.json")
+    ap.add_argument("--questions", type=Path, nargs="+", default=list(H.QUESTION_FILES))
     ap.add_argument("--out", type=Path)
     ap.add_argument(
         "--no-embed", action="store_true", help="leave out the embedding candidates"
     )
     a = ap.parse_args(argv)
-    questions = json.loads(a.questions.read_text(encoding="utf-8"))["questions"]
+    all_questions = H.load_questions(a.questions)
     os.environ.setdefault("KTW_CACHE", "/var/tmp/ktw-context-search-cache")
     report = {"tokenizer": H.TOKENIZER, "datasets": {}}
     for ds in sorted(p for p in a.data.iterdir() if (p / ".keep-the-why").is_file()):
@@ -106,7 +106,7 @@ def main(argv=None) -> int:
                 "bytes": vecs.astype("float32").nbytes,
             }
         rows = []
-        for q in questions:
+        for q in [q for q in all_questions if H.applies(q, ds.name)]:
             filt = bool(q.get("rule")) and set(q["rule"]) <= H.FILTER_RULE_KEYS
             # one group per expected entry; in the identical control its copies answer as well as it does
             groups = [
@@ -159,11 +159,16 @@ def main(argv=None) -> int:
                     / max(len(groups), 1),
                 }
             rows.append(row)
-        summ = {}
         GRAPH_KINDS = ("filter", "supersedes", "see", "thought-chain")
-        for name in ("bm25", "embed", "hybrid"):
-            rs = [r[name] for r in rows if name in r and r["kind"] not in GRAPH_KINDS]
-            if rs:
+
+        def summarise(sub):
+            summ = {}
+            for name in ("bm25", "embed", "hybrid"):
+                rs = [
+                    r[name] for r in sub if name in r and r["kind"] not in GRAPH_KINDS
+                ]
+                if not rs:
+                    continue
                 summ[name] = {
                     **{
                         f"recall@{k}": round(
@@ -177,6 +182,22 @@ def main(argv=None) -> int:
                         [x["tokens"] for x in rs if x["hit"]] or [0]
                     ),
                 }
+            return summ
+
+        summ = summarise(rows)
+        # a set with questions of its own (the registry): Maity's and its own also apart
+        by_source = (
+            {
+                "Maity's questions": summarise(
+                    [r for r in rows if r["q"].startswith("q")]
+                ),
+                "its own questions": summarise(
+                    [r for r in rows if r["q"].startswith("r")]
+                ),
+            }
+            if any(r["q"].startswith("r") for r in rows)
+            else {}
+        )
         ex = [r["exact"] for r in rows if "exact" in r]
         report["datasets"][ds.name] = {
             "entries": len(E),
@@ -188,6 +209,7 @@ def main(argv=None) -> int:
             ),
             "index_tokens": index_tokens,
             "ranked": summ,
+            "ranked_by_source": by_source,
             "exact": {
                 "questions": len(ex),
                 "recall": (
@@ -217,6 +239,12 @@ def main(argv=None) -> int:
             for n in names
         ]
         lines.append(f"| {name} | " + " | ".join(cells) + " |")
+        for src, s in d["ranked_by_source"].items():
+            cells = [
+                f"{s[n]['recall@1']:.2f} / {s[n]['recall@5']:.2f} / {s[n]['recall@10']:.2f}, {s[n]['mrr']:.2f}, {s[n]['median_tokens']} / {s[n]['median_tokens_hits']}"
+                for n in names
+            ]
+            lines.append(f"| {name}, {src} | " + " | ".join(cells) + " |")
     lines += [
         "",
         "Graph and filter questions under their commands (graph ID --depth 3, find --type/--status): the share of the answer the output holds, median tokens. q28's answer is a chain of three entries, so a ranked search's recall@1 there is at most 1/3; it is counted here, not above.",

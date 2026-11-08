@@ -141,6 +141,21 @@ def derive(rule: dict, entries: dict) -> list[str]:
 
 
 FILTER_RULE_KEYS = {"type", "status", "evidence"}
+# Maity's questions apply to every set (each holds Maity's family); a file that names "sets" applies to those alone
+QUESTION_FILES = (HERE / "questions.json", HERE / "questions-registry.json")
+
+
+def load_questions(paths) -> list[dict]:
+    out = []
+    for p in paths:
+        j = json.loads(Path(p).read_text(encoding="utf-8"))
+        for q in j["questions"]:
+            out.append({**q, "sets": j["sets"]} if "sets" in j else q)
+    return out
+
+
+def applies(q: dict, ds_name: str) -> bool:
+    return "sets" not in q or ds_name in q["sets"]
 
 
 def raw_count(rule: dict, data: dict) -> int:
@@ -225,10 +240,10 @@ def main(argv=None) -> int:
         type=Path,
         help="a directory of datasets made by make_dataset.py (x1, x5, x10, ...)",
     )
-    ap.add_argument("--questions", type=Path, default=HERE / "questions.json")
+    ap.add_argument("--questions", type=Path, nargs="+", default=list(QUESTION_FILES))
     ap.add_argument("--out", type=Path, help="write summary.json and summary.md here")
     a = ap.parse_args(argv)
-    questions = json.loads(a.questions.read_text(encoding="utf-8"))["questions"]
+    all_questions = load_questions(a.questions)
     report = {"tokenizer": TOKENIZER, "datasets": {}}
     problems = []
     for ds in sorted(p for p in a.data.iterdir() if (p / ".keep-the-why").is_file()):
@@ -236,6 +251,7 @@ def main(argv=None) -> int:
         data = load(ds)
         load_s = time.perf_counter() - t0
         rows = []
+        questions = [q for q in all_questions if applies(q, ds.name)]
         for q in questions:
             missing = [i for i in q["expected"] if i not in data["entries"]]
             if missing:
@@ -263,7 +279,8 @@ def main(argv=None) -> int:
                     )
             share = leak(q, data)
             held = q["kind"] not in ("supersedes", "see", "thought-chain", "filter")
-            if held and share > LEAK_LIMIT and ds.name == "x1":
+            # once per question: on ×1 for Maity's, on their own set for a file that names its sets
+            if held and share > LEAK_LIMIT and (ds.name == "x1" or "sets" in q):
                 problems.append(
                     f"{q['id']}: the question repeats {share:.0%} of its answer's title (limit {LEAK_LIMIT:.0%})"
                 )
@@ -300,8 +317,12 @@ def main(argv=None) -> int:
             "rows": rows,
         }
     report["problems"] = problems
-    first = next(iter(report["datasets"].values()), {"members": {}})
-    names = sorted(first["members"])
+    # the members every set has (Maity's family); the registry's projects get a table of their own
+    names = sorted(
+        set.intersection(*(set(d["members"]) for d in report["datasets"].values()))
+        if report["datasets"]
+        else set()
+    )
     lines = [
         f"Tokenizer: {TOKENIZER}",
         "",
@@ -325,6 +346,21 @@ def main(argv=None) -> int:
             for m in names
         ]
         lines.append(f"| {name} | " + " | ".join(cells) + " |")
+    reg = report["datasets"].get("registry")
+    if reg:
+        projects: dict[str, list[int]] = {}
+        for m, v in reg["members"].items():
+            if m.startswith("registry/"):
+                acc = projects.setdefault(m.split("/")[1], [0, 0, 0])
+                for k, key in enumerate(("entries", "topics", "index_tokens")):
+                    acc[k] += v[key]
+        lines += [
+            "",
+            "Registry projects (beside Maity's family in the registry set): entries / topics / index tokens",
+            "",
+            "| project | entries | topics | index tokens |",
+            "|---|---|---|---|",
+        ] + [f"| {p} | {e} | {t} | {i} |" for p, (e, t, i) in sorted(projects.items())]
     x1 = report["datasets"].get("x1")
     if x1:
         lines += [
@@ -336,6 +372,7 @@ def main(argv=None) -> int:
         ] + [
             f"| {r['q']} | {r['kind']} | {'—' if r['leak'] is None else f'{r["leak"]:.0%}'} |"
             for r in x1["rows"]
+            + ([r for r in reg["rows"] if r["q"].startswith("r")] if reg else [])
         ]
     lines += ["", f"Problems: {len(problems)}"] + [f"- {p}" for p in problems]
     print("\n".join(lines))

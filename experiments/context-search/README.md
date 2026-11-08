@@ -103,4 +103,33 @@ Graph and filter questions name their starting point or filter on purpose and ar
   measured on the other, both ways; and a two-step search (the same query again within the topics of the first
   three hits). Needs numpy.
 
+- `make_registry.py X1_DIR SRC_DIR OUT_DIR [--update-pins]`: the registry set — every project in the Keep the
+  Why registry at the commit `registry-pins.json` pins (with its license and visibility), its in-repository family
+  members only, beside Maity's ×1 family; Maity itself is left out of the list. It fails on an Id that occurs twice.
+  `questions-registry.json` holds the set's own 37 questions (`"sets": ["registry"]`); the harnesses read both
+  question files and give a file's questions to its sets alone. Only the generator, the pins and the questions are
+  committed, never a project's content.
+
+  | project | license | entries |
+  |---|---|---|
+  | hasansezertasan/copier-pyproject | MIT | 112 |
+  | hasansezertasan/copier-rust | MIT | 24 |
+  | oliver-zehentleitner-aigent/ordersync | MIT | 4 |
+  | oliver-zehentleitner/keep-the-why | MIT | 163 |
+  | oliver-zehentleitner/lasteverLM | MIT | 300 |
+  | oliver-zehentleitner/repo-native-project-memory | MIT | 6 |
+  | oliver-zehentleitner/ubdcc-dashboard | MIT | 3 |
+  | oliver-zehentleitner/unicorn-binance-depth-cache-cluster | MIT | 5 |
+  | oliver-zehentleitner/unicorn-binance-local-depth-cache | MIT | 5 |
+  | oliver-zehentleitner/unicorn-binance-rest-api | MIT | 5 |
+  | oliver-zehentleitner/unicorn-binance-suite | MIT | 10 |
+  | oliver-zehentleitner/unicorn-binance-trailing-stop-loss | MIT | 6 |
+  | oliver-zehentleitner/unicorn-binance-websocket-api | MIT | 21 |
+  | oliver-zehentleitner/unicorn-fy | MIT | 6 |
+  | rapt0p7/scenegrid-console | MIT | 10 |
+  | zyvop/zyvop-cli | MIT (package.json) | 10 |
+  | gitlab.com/oliver-zehentleitner/keep-the-why-demo | none declared | 7 |
+
+  All are public.
+
 `results/` keeps each run's `summary.md`. Transcripts stay on the machine that ran them.
