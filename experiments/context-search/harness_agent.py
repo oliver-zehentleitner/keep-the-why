@@ -22,7 +22,9 @@ Per session: the Ids the answer names, in order (exact@1: the first is an expect
 precision); the total context at the answer (the last assistant turn's input, cache-read and cache-creation
 tokens); tool calls by tool and `ktw` subcommand; turns; wall time; cost; the model and CLI version; whether the
 skill was loaded and the index read. Results go to one JSON file per session, so a stopped series resumes where it
-stopped, and a session that hit the account's usage limit is not counted and stops the series.
+stopped; a session that hit the account's usage limit is not counted, and the series waits (--retry-interval) and
+runs it again, for --max-wait-hours at most. The cost is recorded as the CLI reports it (`total_cost_usd`), the
+equivalent figure for a series run on the subscription's quota; --max-cost caps it when given.
 
     python harness_agent.py DATA_DIR OUT_DIR --plan pilot|grid|core|opus [--model claude-sonnet-5-5]
                             [--runs N] [--max-cost USD] [--dry-run]
@@ -228,6 +230,16 @@ def measure(events: list, expected: list[str], wall: float) -> dict:
     }
 
 
+def limited(res: dict, m: dict) -> bool:
+    """Whether the session ran into the account's usage limit instead of answering: in the CLI's error, in its raw
+    output when nothing parsed, or as the whole answer when it names no Id."""
+    return bool(
+        LIMIT.search(res.get("error") or "")
+        or (not res.get("events") and LIMIT.search(res.get("raw") or ""))
+        or (not m["named"] and LIMIT.search(m["answer"] or ""))
+    )
+
+
 def summarize(out: Path) -> str:
     """One table per set: per variant, exact@1 (sessions with the first named Id right), list recall, and the
     medians of the context at the answer, turns, tool calls, wall time and cost; then the start path's checks.
@@ -278,6 +290,13 @@ def main(argv=None) -> int:
         help="stop once the series' cost reaches this many USD",
     )
     ap.add_argument("--timeout", type=int, default=900)
+    ap.add_argument(
+        "--retry-interval",
+        type=int,
+        default=600,
+        help="seconds to wait after a usage limit",
+    )
+    ap.add_argument("--max-wait-hours", type=float, default=12)
     ap.add_argument("--variants", default=",".join(VARIANTS))
     ap.add_argument(
         "--summarize",
@@ -303,6 +322,7 @@ def main(argv=None) -> int:
         for p in a.out.glob("*.json")
     )
     base = Path(os.environ.get("TMPDIR", "/var/tmp"))
+    started = time.monotonic()
     only = set(a.only.split(",")) if a.only else None
     for ds, qid in subset(a.plan):
         if only and f"{ds}:{qid}" not in only:
@@ -319,26 +339,47 @@ def main(argv=None) -> int:
                 if a.max_cost is not None and spent >= a.max_cost:
                     print(f"cost cap reached: {spent:.2f} USD", flush=True)
                     return 3
-                with tempfile.TemporaryDirectory(dir=base, prefix="ktw-agent-") as tmp:
-                    w, home = workdir(a.data, ds, variant, Path(tmp))
-                    if a.dry_run:
-                        print(key, w, sorted(p.name for p in w.iterdir()), flush=True)
-                        if variant == VARIANTS[-1]:
-                            return 0
-                        continue
-                    t0 = time.monotonic()
-                    res = run_agent_claude(
-                        q["question"] + PROMPT_TAIL, w, a.model, a.timeout, home=home
+                # on the account's usage limit the session is not counted: wait and run it again, the way
+                # tools/evals does, until the limit window has passed or --max-wait-hours is spent
+                while True:
+                    with tempfile.TemporaryDirectory(
+                        dir=base, prefix="ktw-agent-"
+                    ) as tmp:
+                        w, home = workdir(a.data, ds, variant, Path(tmp))
+                        if a.dry_run:
+                            print(
+                                key, w, sorted(p.name for p in w.iterdir()), flush=True
+                            )
+                            break
+                        t0 = time.monotonic()
+                        res = run_agent_claude(
+                            q["question"] + PROMPT_TAIL,
+                            w,
+                            a.model,
+                            a.timeout,
+                            home=home,
+                        )
+                        wall = time.monotonic() - t0
+                    events = res.get("events") or []
+                    usage = session_usage(events)
+                    m = measure(events, expected, wall)
+                    if not limited(res, m):
+                        break
+                    if time.monotonic() - started > a.max_wait_hours * 3600:
+                        print(
+                            f"usage limit at {key}; --max-wait-hours spent, stopping",
+                            flush=True,
+                        )
+                        return 4
+                    print(
+                        f"usage limit at {key}; not counted, retrying in {a.retry_interval}s",
+                        flush=True,
                     )
-                    wall = time.monotonic() - t0
-                events = res.get("events") or []
-                usage = session_usage(events)
-                m = measure(events, expected, wall)
-                if LIMIT.search(res.get("error") or "") or (
-                    not events and LIMIT.search(res.get("raw") or "")
-                ):
-                    print(f"usage limit at {key}; not counted, stopping", flush=True)
-                    return 4
+                    time.sleep(a.retry_interval)
+                if a.dry_run:
+                    if variant == VARIANTS[-1]:
+                        return 0
+                    continue
                 row = {
                     "key": key,
                     "plan": a.plan,
