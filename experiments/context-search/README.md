@@ -88,7 +88,9 @@ Graph and filter questions name their starting point or filter on purpose and ar
   tree and the bytes of every modified or untracked file under its context directories.
 - `test_ktw_proto.py`: the cache key (a second change to a dirty file, an untracked file, an unchanged hit) and
   the Type filter on a second Type line. `python -m unittest discover -s experiments/context-search -p 'test_*.py'`;
-  not in CI.
+  CI runs it on every pull request (`lint-package.yml`, `context-search`).
+- Embeddings: once the model is cached, run with `HF_HUB_OFFLINE=1`. Without it, model2vec goes to the Hugging Face
+  Hub when it loads the model, unauthenticated, and one run hung there for 25 minutes.
 - `harness_candidates.py DATA_DIR [--out results/DATE] [--no-embed]`: the candidates on every dataset, no model
   in the loop: recall@1/@5/@10 and MRR of BM25, embeddings and both fused by reciprocal rank (the question as the
   query), the tokens read (`find -n 10` and `show` of the first expected hit; a lower bound, since the harness

@@ -259,6 +259,13 @@ entries would be. Read the falling recall as the hard case: many similar entries
     than none.
 - **The results and the harness state the lower bound** next to the token figures.
 
+**Install weight, once more.** The first rerun hung for 25 minutes before it measured anything: with the model
+already cached, model2vec still went to the Hugging Face Hub when it loaded the model, unauthenticated. With
+`HF_HUB_OFFLINE=1` the same run finished in under ten minutes. For `ktw[embed]` that is part of the cost: a network call
+on every load unless the tool sets the offline flag itself, and an 18-minute first download without a token.
+
+**CI.** `test_ktw_proto.py` runs on every pull request (`lint-package.yml`, job `context-search`).
+
 **The numbers** (`results/2026-11-06-offline-candidates/`, `results/2026-11-06-offline-baseline/`):
 - **Phase 1:** unchanged. q30's baseline reads the same index and topic files.
 - **Ranked text questions:** unchanged, since q30 is a filter question and not in that table; a few medians move
