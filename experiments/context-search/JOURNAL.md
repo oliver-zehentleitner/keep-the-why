@@ -456,6 +456,40 @@ about 600 sessions?
   USD, the list questions on ×10 being the most expensive, and take about 3–4 hours. The Opus slice is not
   measured yet; its first three sessions would give the rate.
 
+## 2026-11-08 — Step 6b: the copies stop giving themselves away, and a fourth variant
+
+**The head's rulings on the pilot** (#770, 91306).
+- **B-index as a fourth variant.** It tests the path the documentation describes ("reads the index, then the
+  topic"); B stays as the measured reality.
+- **The copy fix goes into #769 before the series.**
+
+**The fix** (`make_dataset.py`, #769).
+- **A copy's Id** is uuid5 of the original and the copy number, as before, with the version and variant bits a
+  random Id has. All 10,430 Ids in ×10 now read as version 4.
+- **A copy's file stem** is deranged like its words, with no marker. A stem the member already has (one the
+  derangement left unchanged, like `brand.md`) becomes a single domain word, then a pair, chosen reproducibly. So
+  nine copies of `brand.md` do not appear as `brand-*.md` beside it.
+- **`df_spread`** reads which copy a file belongs to from the build's record. The old match on the `-kN` suffix
+  had also missed files renamed after a collision, so its figures move a little (×10: per-copy spread median
+  2.49, set-wide ratio median 1.08).
+
+**The reruns.**
+- **Phase 1:** Problems 0, every member of every set lints clean. The ×10 indexes are 176.7k tokens, the names
+  being shorter.
+- **Phase 2, ×10 (the only set with a visible change):** BM25 .34 / .44 / .47, hybrid .22 / .53 / .59,
+  embeddings alone .16 / .25 / .41. Every move is one question or less.
+- **BM25F and the two-step search:** within a question of step 4. The registry set is unchanged, since its ×1 is.
+
+**B-index** (`harness_agent.py`): B, with the line Maity's own `AGENTS.md` carries above the Keep the Why section,
+"Why it is built this way: `context/index.md`".
+
+**The series, re-estimated with four variants:**
+- the main grid: 44 question-set pairs × 4 variants × 3 runs = 528 sessions;
+- the ×10 core: 7 more runs of its 7 text questions in each variant = 196;
+- 724 Sonnet sessions in all, at the pilot's 0.135 USD a session about 98 USD, up to about 120 with the
+  ×10 list questions;
+- the Opus slice: 7 × 4 × 3 = 84 sessions, its rate measured on its first three.
+
 **Open questions.**
 - In a family of several repositories, `git -C root` does not descend into a member with its own `.git`. The cache
   key of `ktw` has to be computed per member, or hash each member's files by content (#s8qb, 90379).

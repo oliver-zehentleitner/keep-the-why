@@ -137,6 +137,8 @@ Graph and filter questions name their starting point or filter on purpose and ar
   variant:
   - B: the skill installed, with the project's start path (the `AGENTS.md` section from `autostart.md`, a
     `CLAUDE.md` that imports it);
+  - B-index: B, with Maity's own `AGENTS.md` line "Why it is built this way: `context/index.md`" above it, the
+    documented path;
   - F-bm25 and F-hybrid: B, plus `ktw` (this prototype) on PATH and a short note in `CLAUDE.md`.
 
   Each session gets a fake home with only the login, and `--setting-sources project,local`. It records the named

@@ -5,7 +5,9 @@ Variants:
 - B, the baseline: the project as Maity's repository has it, with the Keep the Why skill installed where Claude
   Code finds it (`.claude/skills/keep-the-why/`), today's wording, and its start path: an `AGENTS.md` section that
   has the agent load the skill first (autostart.md, path 2) and a `CLAUDE.md` that imports it. No search tool: the
-  skill's way is the index, then the topics.
+  skill's way is the index, then the topics, but in the pilot the agent grepped the topics instead.
+- B-index: B, with the line Maity's own `AGENTS.md` has above the section, "Why it is built this way:
+  `context/index.md`": the documented path, index first.
 - F-bm25: B, plus `ktw` on PATH (ktw_proto.py: index, find, show, graph; `find` ranks by BM25) and a short note
   added to the project's CLAUDE.md that says the command exists and how to call it, nothing about what to search for.
 - F-hybrid: F-bm25 with `find` ranking by BM25 and static embeddings fused (KTW_RANK=hybrid), the model cached
@@ -50,7 +52,9 @@ from ktw_evals.drivers.claude import run_agent_claude  # noqa: E402
 from ktw_evals.judge import session_usage  # noqa: E402
 
 UUID = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
-VARIANTS = ("B", "F-bm25", "F-hybrid")
+VARIANTS = ("B", "B-index", "F-bm25", "F-hybrid")
+# the line Maity's own AGENTS.md has, and the path the documentation describes: the index first, then the topic
+INDEX_POINTER = "- Why it is built this way: `context/index.md`\n\n"
 PROMPT_TAIL = (
     "\n\nAnswer in one or two sentences, and give the Id of the entry that answers it "
     "(for a list: every Id)."
@@ -132,9 +136,10 @@ def workdir(data: Path, ds: str, variant: str, root: Path) -> tuple[Path, Path]:
     # the project's start path, as Maity's own repository has it (autostart.md, path 2): an AGENTS.md section that
     # tells the agent to load the skill first, and a CLAUDE.md that imports it; without one the skill is not loaded
     # for a plain question (pilot, 2026-11-08), and the baseline would not be the skill's way
-    (w / "AGENTS.md").write_text("# Agents\n\n" + AUTOSTART, encoding="utf-8")
+    pointer = INDEX_POINTER if variant == "B-index" else ""
+    (w / "AGENTS.md").write_text("# Agents\n\n" + pointer + AUTOSTART, encoding="utf-8")
     claude_md = "@AGENTS.md\n"
-    if variant != "B":
+    if variant.startswith("F"):
         tool_dir(home, "hybrid" if variant == "F-hybrid" else "bm25")
         claude_md += "\n" + NOTE
     (w / "CLAUDE.md").write_text(claude_md, encoding="utf-8")
