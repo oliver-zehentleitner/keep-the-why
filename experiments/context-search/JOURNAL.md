@@ -388,6 +388,74 @@ on every load unless the tool sets the offline flag itself, and an 18-minute fir
 - The registry set is the realistic large set for the agent runs, beside ×10 as the stress test.
 - Hybrid against BM25 is decided there, as before; offline, hybrid's lead is at @5 and @10, not at rank 1.
 
+**A bias in the registry's questions** (#s8qb, #771). The 26 entry-derived questions are easier than the 11
+commit-derived ones: BM25's MRR is .67 against .44. They name their project, which narrows the search to a small
+repository, and they share body words with the entry that the title-only leak check does not see. On the 11
+commit-derived ones, recall@1 / @5 / @10 is .27 / .55 / .73 for BM25 and .27 / .64 / .73 for hybrid; on the 26
+others, .58 / .77 / .85 and .61 / .85 / .96. From here on the
+registry's numbers are reported split by derivation, and the agent runs take a commit-derived question from every
+project that has one.
+
+## 2026-11-08 — Step 6: the pilot of the agent runs
+
+**The question.** Does the runner measure what it is meant to, and what does a session cost, before a series of
+about 600 sessions?
+
+**The setup** (`harness_agent.py`, `agent-subset.json`).
+- **Sessions:** Claude Code 2.1.319, `claude-sonnet-5-5`, in a fresh copy of the dataset per session, without its
+  `ids.json`. The fake home holds only the login, and `--setting-sources project,local` keeps user-level
+  instructions, memory and skills out.
+- **The prompt:** the question, and an answer in one or two sentences naming the entry's Id.
+- **Grading:** mechanical, on the Ids the answer names.
+- **The pilot:** q05 (one entry) and q30 (every incident, a list) on ×1, ×10 and the registry set, once per variant
+  — 18 sessions, run twice.
+- **Variants:**
+  - B: today's skill, no search tool;
+  - F-bm25 and F-hybrid: `ktw` on PATH and a short note in `CLAUDE.md`.
+
+**Run 1: the baseline was not the skill's way.** The skill was installed but nothing told the agent to load it.
+- **What the agent did:** for a plain question it loaded the skill in 1 session of 18, and read `context/index.md`
+  in 3. It searched `context/` with `grep` and read the hit's lines with `sed`.
+- **Why:** `autostart.md` says the skill does not load itself; a project picks a start path. Maity's own repository
+  has one, the "Keep the Why" section in `AGENTS.md` that the skill's wizard writes.
+- **Cost:** 1.61 USD in all, a median of 0.066 USD a session.
+
+**The harness fixes after run 1.**
+- **A start path in every variant:** the `AGENTS.md` section from `autostart.md` and a `CLAUDE.md` with
+  `@AGENTS.md`; F adds its note below the import.
+- **A trace per session:** each tool call with its main argument.
+- **Real paths in `ktw`'s hit lines:** `hub/context/x.md`, not `hub/x.md`, which no agent could open. The offline
+  token figures move by a few tokens a line (`results/2026-11-08-offline-registry/`).
+- **`ktw find TEXT` as several words:** they are one query now, quoted or not.
+- **A filter's cut list says so:** `… 10 of 230 matching entries; -n 230 lists all`.
+- **The cache's format is part of its key.**
+- **A filter question asks about one family.** In the registry set, Maity's q30 and q31 now expect Maity's family
+  alone, 23 and 33 entries, not every project's 45 and 33. Run 1 graded q30 on the registry against 45 (recall .51);
+  its answers named the 23 that are right.
+
+**Run 2** (`results/2026-11-08-agent-pilot/`): 2.43 USD, a median of 0.126 USD and 18 s a session.
+- **Skill and index:** every session loaded the skill (18/18); none read `context/index.md` (0/18). Today's
+  skill says the index is "for deciding what to load"; to answer a question the agent lists the topic files and
+  greps them.
+- **The skill's cost:** loading it adds about 14k tokens to every session, the variants' alike. The context at the
+  answer is 36k–45k for every variant, with no difference between B and F on ×1 and the registry set. F saves
+  turns (4.5–5.5 against 7–11) and, on ×10, time (22–24 s against 48 s).
+- **Exact@1:** 18/18 in both runs. The two questions are easy, and the pilot cannot rank the variants.
+- **q30 on ×10, a second artefact of the copies.** An F session named 23 of the 230 incidents and said why: the
+  others "sit in `-kN`-suffixed files that look like scrambled near-copies". The copies' file names (`-k1` … `-k9`)
+  and their Ids give them away: the Ids are uuid5, version 5 where every real one is version 4. The hypothesis
+  that nothing in a copy says it is one is wrong. An agent can tell, and some do. B named all 230.
+
+**Decisions and proposals, for the head.**
+- **The baseline:** B with a start path is the skill's way today, grep included. Whether an index-first variant is
+  wanted is the head's call: the skill does not say to read the index first.
+- **The copies:** generate Ids that look like version 4, and keep a copy's file stems without the `-kN` suffix,
+  deranged like their words; then rerun phases 1 and 2. Until then, filter questions on ×10 count only as a lower
+  bound of what an agent reports.
+- **The series' cost, from run 2:** 0.135 USD a session on average. The 543 Sonnet sessions would cost about 70–90
+  USD, the list questions on ×10 being the most expensive, and take about 3–4 hours. The Opus slice is not
+  measured yet; its first three sessions would give the rate.
+
 **Open questions.**
 - In a family of several repositories, `git -C root` does not descend into a member with its own `.git`. The cache
   key of `ktw` has to be computed per member, or hash each member's files by content (#s8qb, 90379).

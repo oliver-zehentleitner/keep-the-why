@@ -158,8 +158,9 @@ def applies(q: dict, ds_name: str) -> bool:
     return "sets" not in q or ds_name in q["sets"]
 
 
-def raw_count(rule: dict, data: dict) -> int:
-    """The entries a one-field filter rule matches, counted as `**Field:** value` lines in the topic files' text."""
+def raw_count(rule: dict, data: dict, maity_only: bool = True) -> int:
+    """The entries a one-field filter rule matches, counted as `**Field:** value` lines in the topic files' text;
+    for Maity's questions, in Maity's family only (as expected_in scopes them)."""
     ((field, want),) = rule.items()
     line = re.compile(
         r"^\*\*"
@@ -169,17 +170,29 @@ def raw_count(rule: dict, data: dict) -> int:
         + r"(?:\s*[—–-]\s.*)?\s*$",
         re.M,
     )
-    return sum(len(line.findall(text)) for text in data["texts"].values())
+    return sum(
+        len(line.findall(text))
+        for key, text in data["texts"].items()
+        if not (maity_only and key.startswith("registry/"))
+    )
 
 
 def expected_in(q: dict, data: dict) -> list[str]:
     """The answer in this dataset. A filter question ("every incident") is answered by every entry the filter
     matches, the copies' included — a copy is a full entry of the family, and nothing in it says it is one. Every
     other question is answered by the original entries it names, which every dataset holds.
+
+    A filter question asks about one family: Maity's names it ("anywhere in Maity's family"), so in the registry
+    set the other projects' entries (under `registry/`) are not its answer, whatever they match.
     """
     rule = q.get("rule") or {}
     if rule and set(rule) <= FILTER_RULE_KEYS:
-        return derive(rule, data["entries"])
+        scope = {
+            k: e
+            for k, e in data["entries"].items()
+            if "sets" in q or not e["member"].startswith("registry/")
+        }
+        return derive(rule, scope)
     return q["expected"]
 
 
@@ -272,7 +285,7 @@ def main(argv=None) -> int:
             # Each rule field occurs at most once per entry with a given value (E109 for Type, E112 for the single
             # fields), so the lines are as many as the entries.
             if q.get("rule") and set(q["rule"]) <= FILTER_RULE_KEYS:
-                raw = raw_count(q["rule"], data)
+                raw = raw_count(q["rule"], data, maity_only="sets" not in q)
                 if raw != len(expected_in(q, data)):
                     problems.append(
                         f"{ds.name} {q['id']}: {len(expected_in(q, data))} entries match, the raw text has {raw}"

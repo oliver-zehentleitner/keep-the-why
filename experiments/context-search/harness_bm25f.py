@@ -189,11 +189,15 @@ def title_weight_check(data_dir: Path, questions: list[dict]) -> dict:
         sets[name] = (Index(cache, data), data)
     tune = [q for q in questions if q["id"].startswith("q")]
     test = [q for q in questions if q["id"].startswith("r")]
+    commit = [q for q in test if q["derivation"].startswith("the one entry")]
+    entry = [q for q in test if not q["derivation"].startswith("the one entry")]
     for w in TITLE_WEIGHTS:
         row = {}
         for label, name, qs in (
             ("maity_x1", "x1", tune),
             ("registry_own", "registry", test),
+            ("registry_commit", "registry", commit),
+            ("registry_entry", "registry", entry),
         ):
             ix, data = sets[name]
             rs = [
@@ -371,13 +375,18 @@ def main(argv=None) -> int:
             f"the registry's own questions in the registry set: recall@1 / @5 / @10, MRR. Weight 2 is ktw_proto.py's "
             f"(reproduced: {tw['reproduces_bm25']}).",
             "",
-            "| title weight | Maity, x1 | registry, own questions |",
-            "|---|---|---|",
+            "| title weight | Maity, x1 | registry, own questions | own, commit-derived | own, entry-derived |",
+            "|---|---|---|---|---|",
         ] + [
             f"| {w}{' (chosen)' if w == tw['chosen'] else ''} | "
             + " | ".join(
                 f"{r[k]['recall@1']:.2f} / {r[k]['recall@5']:.2f} / {r[k]['recall@10']:.2f}, {r[k]['mrr']:.2f}"
-                for k in ("maity_x1", "registry_own")
+                for k in (
+                    "maity_x1",
+                    "registry_own",
+                    "registry_commit",
+                    "registry_entry",
+                )
             )
             + " |"
             for w, r in tw["weights"].items()

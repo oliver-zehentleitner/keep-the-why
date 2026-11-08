@@ -2,7 +2,7 @@ Tokenizer: tiktoken cl100k_base
 
 | dataset | entries | topics | KB | index tokens (all members) | baseline median | baseline max |
 |---|---|---|---|---|---|---|
-| registry | 1740 | 220 | 3697 | 29293 | 34593.0 | 337906 |
+| registry | 1740 | 220 | 3697 | 29293 | 34593.0 | 280748 |
 | x1 | 1043 | 85 | 2341 | 18008 | 33955 | 269463 |
 | x10 | 10430 | 850 | 23436 | 179315 | 195262 | 2706862 |
 | x10-identical | 10430 | 850 | 23431 | 177965 | 193912 | 2693481 |

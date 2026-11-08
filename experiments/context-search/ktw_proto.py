@@ -2,13 +2,13 @@
 text (BM25), and optionally local embeddings — all over one cache of a family's entries.
 
     python ktw_proto.py PROJECT index [--member M]
-    python ktw_proto.py PROJECT find [TEXT] [--type T] [--status S] [--member M] [-n 10] [--rank bm25|embed]
+    python ktw_proto.py PROJECT find [TEXT] [--type T] [--status S] [--member M] [-n 10] [--rank bm25|embed|hybrid]
     python ktw_proto.py PROJECT show ID...
     python ktw_proto.py PROJECT graph ID [--depth N]
     python ktw_proto.py PROJECT cache [--rebuild]
 
 PROJECT is any member of a family; the family is found from there (its root's children) as harness_offline.load
-reads it, with the linter's parser. Output is one line per entry, `id · type/status · title · member/file:L1-L2`,
+reads it, with the linter's parser. Output is one line per entry, `id · type/status · title · member/context/topic.md:L1-L2`,
 the shortest form that still lets an agent open the right lines; `--json` gives everything. The cache lives under
 ~/.cache/keep-the-why/ (or $KTW_CACHE), keyed on content: `git rev-parse HEAD:` of the family plus the bytes of every
 modified or untracked file under its context directories, so any change to an entry rebuilds it, a second change to
@@ -58,6 +58,8 @@ def family_root(start: Path) -> Path:
     return p
 
 
+# the cache's layout: a change to what build() stores changes the key, so an old cache is never read as a new one
+CACHE_FORMAT = "2"
 CONTEXT = [
     "context/**",
     "**/context/**",
@@ -69,7 +71,7 @@ def cache_key(root: Path) -> str:
     member's context/ by its bytes (a deleted one by its absence). A second change to a file that was already
     dirty changes the key; `git status` alone would not, its line for the file stays the same.
     """
-    h = hashlib.sha256()
+    h = hashlib.sha256(CACHE_FORMAT.encode())
     try:
         git = ["git", "-C", str(root)]
         h.update(
@@ -136,6 +138,12 @@ def build(root: Path) -> dict:
             "title": e["title"],
             "member": e["member"],
             "file": e["file"],
+            # the path to open, from the family's root: member/context/topic.md
+            "path": (
+                f"{e['member']}/context/{e['file'].rsplit('/', 1)[1]}"
+                if e["member"] != "."
+                else f"context/{e['file'].rsplit('/', 1)[1]}"
+            ),
             "lines": [start, end],
             # Type may be given more than once (several lines, context-schema 0.9.0): all of them, by membership
             "type": harness_offline.values(e, "Type"),
@@ -230,6 +238,15 @@ def embed_rank(c: dict, info: dict, query: str) -> list[tuple[str, float]]:
     return [(ids[k], float(sims[k])) for k in order]
 
 
+def hybrid(*ranked: list[tuple[str, float]], k: int = 60) -> list[tuple[str, float]]:
+    """Reciprocal rank fusion (k 60) of several rankings, as harness_candidates.py measures it."""
+    score: dict[str, float] = defaultdict(float)
+    for r in ranked:
+        for n, (i, _) in enumerate(r, 1):
+            score[i] += 1 / (k + n)
+    return sorted(score.items(), key=lambda kv: -kv[1])
+
+
 def matches(e: dict, a) -> bool:
     return (
         (not a.type or a.type in e["type"])
@@ -239,7 +256,7 @@ def matches(e: dict, a) -> bool:
 
 
 def line(eid: str, e: dict) -> str:
-    return f"{eid} · {'+'.join(e['type'])}/{e['status']} · {e['title']} · {e['file']}:{e['lines'][0]}-{e['lines'][1]}"
+    return f"{eid} · {'+'.join(e['type'])}/{e['status']} · {e['title']} · {e['path']}:{e['lines'][0]}-{e['lines'][1]}"
 
 
 def main(argv=None) -> int:
@@ -248,12 +265,16 @@ def main(argv=None) -> int:
     sub = ap.add_subparsers(dest="cmd", required=True)
     for name in ("index", "find"):
         s = sub.add_parser(name)
-        s.add_argument("text", nargs="?", default="")
+        s.add_argument("text", nargs="*")
         s.add_argument("--type")
         s.add_argument("--status")
         s.add_argument("--member")
         s.add_argument("-n", type=int, default=10)
-        s.add_argument("--rank", choices=("bm25", "embed"), default="bm25")
+        s.add_argument(
+            "--rank",
+            choices=("bm25", "embed", "hybrid"),
+            default=os.environ.get("KTW_RANK", "bm25"),
+        )
     s = sub.add_parser("show")
     s.add_argument("ids", nargs="+")
     s = sub.add_parser("graph")
@@ -263,6 +284,10 @@ def main(argv=None) -> int:
     s.add_argument("--rebuild", action="store_true")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
+    if isinstance(getattr(a, "text", None), list):
+        a.text = " ".join(
+            a.text
+        )  # `ktw find two words` reads as one query, quoted or not
     c, info = load(a.project, rebuild=getattr(a, "rebuild", False))
     E = c["entries"]
     if a.cmd == "cache":
@@ -280,7 +305,7 @@ def main(argv=None) -> int:
         out = [(i, e) for i, e in E.items() if matches(e, a)]
         print(
             "\n".join(
-                f"{i} · {'+'.join(e['type'])}/{e['status']} · {e['title']} · {e['file']}"
+                f"{i} · {'+'.join(e['type'])}/{e['status']} · {e['title']} · {e['path']}"
                 for i, e in out
             )
         )
@@ -289,10 +314,14 @@ def main(argv=None) -> int:
         if not a.text:
             ranked = [(i, 0.0) for i in E]
         else:
-            ranked = (
-                embed_rank(c, info, a.text) if a.rank == "embed" else bm25(c, a.text)
-            )
-        hits = [(i, s) for i, s in ranked if matches(E[i], a)][: a.n]
+            if a.rank == "embed":
+                ranked = embed_rank(c, info, a.text)
+            elif a.rank == "hybrid":
+                ranked = hybrid(bm25(c, a.text), embed_rank(c, info, a.text))
+            else:
+                ranked = bm25(c, a.text)
+        matched = [(i, s) for i, s in ranked if matches(E[i], a)]
+        hits = matched[: a.n]
         if a.json:
             print(
                 json.dumps(
@@ -308,6 +337,11 @@ def main(argv=None) -> int:
             )
         else:
             print("\n".join(line(i, E[i]) for i, _ in hits))
+            # a filter's list cut short says so: every match is an answer, not a ranking to stop reading
+            if not a.text and len(matched) > len(hits):
+                print(
+                    f"… {len(hits)} of {len(matched)} matching entries; -n {len(matched)} lists all"
+                )
         return 0
     if a.cmd == "show":
         print(

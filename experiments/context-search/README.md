@@ -84,7 +84,7 @@ Graph and filter questions name their starting point or filter on purpose and ar
   family's entries (the linter's parser): an entry-level index, filters (`--type`, `--status`, `--member`),
   graph queries over See and Superseded by in both directions, ranked full text (BM25), and static embeddings
   (`--rank embed`, model2vec `potion-base-8M`, an extra). One line per entry, `id · type/status · title ·
-  member/file:L1-L2`, every Type of an entry joined by `+`. The cache is keyed on content: the family's committed
+  member/context/topic.md:L1-L2`, every Type of an entry joined by `+`. The cache is keyed on content: the family's committed
   tree and the bytes of every modified or untracked file under its context directories.
 - `test_ktw_proto.py`: the cache key (a second change to a dirty file, an untracked file, an unchanged hit) and
   the Type filter on a second Type line. `python -m unittest discover -s experiments/context-search -p 'test_*.py'`;
@@ -131,5 +131,18 @@ Graph and filter questions name their starting point or filter on purpose and ar
   | gitlab.com/oliver-zehentleitner/keep-the-why-demo | none declared; owner: the maintainer of this repository | 7 |
 
   All are public.
+
+- `harness_agent.py DATA_DIR OUT_DIR --plan pilot|grid|core|opus [--model …] [--runs N] [--max-cost USD]`: the
+  agent runs. Claude Code answers each question of `agent-subset.json` in a fresh copy of the set, once per
+  variant:
+  - B: the skill installed, with the project's start path (the `AGENTS.md` section from `autostart.md`, a
+    `CLAUDE.md` that imports it);
+  - F-bm25 and F-hybrid: B, plus `ktw` (this prototype) on PATH and a short note in `CLAUDE.md`.
+
+  Each session gets a fake home with only the login, and `--setting-sources project,local`. It records the named
+  Ids (exact@1, list recall and precision), the context at the answer, turns, tool calls with a trace, wall time,
+  cost, model and CLI, and whether the skill was loaded and the index read. There is one JSON file per session, so a
+  stopped series resumes; a usage limit stops it and the session is not counted. `--summarize` writes
+  `summary.md`.
 
 `results/` keeps each run's `summary.md`. Transcripts stay on the machine that ran them.

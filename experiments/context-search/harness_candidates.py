@@ -115,7 +115,14 @@ def main(argv=None) -> int:
                 for i in H.expected_in(q, data)
             ]
             wanted = set().union(*groups) if groups else set()
-            row = {"q": q["id"], "kind": q["kind"]}
+            row = {
+                "q": q["id"],
+                "kind": q["kind"],
+                # how a question was derived: from a commit that added exactly its entry, or from the entry itself
+                "derived": (
+                    "commit" if q["derivation"].startswith("the one entry") else "entry"
+                ),
+            }
             orders = {"bm25": [i for i, _ in P.bm25(c, q["question"])]}
             if embed:
                 qv = embed["model"].encode([q["question"]])[0]
@@ -193,6 +200,21 @@ def main(argv=None) -> int:
                 ),
                 "its own questions": summarise(
                     [r for r in rows if r["q"].startswith("r")]
+                ),
+                # the entry-derived ones name their project and share its words: easier (#s8qb, #771)
+                "its own, commit-derived": summarise(
+                    [
+                        r
+                        for r in rows
+                        if r["q"].startswith("r") and r["derived"] == "commit"
+                    ]
+                ),
+                "its own, entry-derived": summarise(
+                    [
+                        r
+                        for r in rows
+                        if r["q"].startswith("r") and r["derived"] == "entry"
+                    ]
                 ),
             }
             if any(r["q"].startswith("r") for r in rows)
