@@ -360,7 +360,7 @@ function forHost(H) {
     const r = el("div", { class: `ktw-reader ktw-${e.status}` },
       el("div", { class: "ktw-crumbs" }, navLink({ href: { view: "overview" } }, tw("pages.crumbs.overview", "Overview")), " / ", navLink({ href: { view: "topic", file: e.file } }, t?.title || e.file), tw("pages.crumbs.line", " / line {line}", { line: e.line }), shareButton(e), sourceLink(entryHostHref(e))),
       el("h1", {}, inline(e.title)),
-      el("div", { class: "ktw-fields" }, ...entryPills(e), e.source ? el("span", { class: "ktw-pill" }, labelled("Source: ", e.source)) : null, e.verification ? el("span", { class: "ktw-pill" }, labelled("Verification: ", e.verification.split(/\s[—-]\s/)[0])) : null),
+      el("div", { class: "ktw-fields" }, ...entryPills(e), e.source ? el("span", { class: "ktw-pill ktw-wrap" }, labelled("Source: ", e.source)) : null, e.verification ? el("span", { class: "ktw-pill ktw-wrap" }, labelled("Verification: ", e.verification.split(/\s[—-]\s/)[0])) : null),
       el("div", { class: "ktw-body" }, renderMarkdown(e.body.text || tw("pages.entry.noBody", "_(no body)_"))),
       e.revisit_when ? el("div", { class: "ktw-body" }, el("div", { class: "ktw-label" }, el("b", {}, "Revisit when"), el("p", {}, inline(e.revisit_when)))) : null,
       refsBox(e),

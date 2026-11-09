@@ -24,7 +24,7 @@
       "active"
     <span class="ktw-pill ktw-ev-confirmed">
       "confirmed"
-    <span class="ktw-pill">
+    <span class="ktw-pill ktw-wrap">
       "Source: maintainer conversation, 2026-05-09"
   <div class="ktw-body">
     <p>

@@ -24,7 +24,7 @@
       "active"
     <span class="ktw-pill ktw-ev-inferred">
       "inferred"
-    <span class="ktw-pill">
+    <span class="ktw-pill ktw-wrap">
       "Source: <img src=x onerror=alert(1)>"
       <a>
         "report"

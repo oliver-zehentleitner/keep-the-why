@@ -24,7 +24,7 @@
       "open"
     <span class="ktw-pill ktw-ev-unknown">
       "unknown"
-    <span class="ktw-pill">
+    <span class="ktw-pill ktw-wrap">
       "Source: code reading"
   <div class="ktw-body">
     <p>

@@ -64,6 +64,11 @@ const REPLACED = [
   { role: "line", family: "border", base: "border-bottom: 1px dotted var(--fg3)", split: "border-bottom: 1px dotted var(--fg3-line)" },
 ];
 
+// declarations the split changes on purpose on the elements a selector matches, family by family: a pill that holds
+// free text (an entry's Source and Verification, .ktw-pill.ktw-wrap) wraps inside its column instead of running
+// past it (CHANGELOG, 0.11.45)
+const RESTYLED = [{ selector: ".ktw-pill.ktw-wrap", families: ["white", "overflow", "max", "box", "border"] }];
+
 // ---- specificity and matching for the selectors this stylesheet uses
 const STATE = /:(hover|focus|focus-visible|focus-within|active|visited)(?![\w-])/g;
 function specificity(sel) {
@@ -195,6 +200,7 @@ for (const hash of routes) {
         // expected: the split's family is the base's plus exactly the one declaration named
         const plus = (x) => { const parts = (b.get(f) || "").split("; ").filter((d) => d !== x.split); return parts.join("; ") === (a.get(f) || "") && parts.length < (b.get(f) || "").split("; ").length; };
         if (EXPECTED.some((x) => x.path.test(path) && x.family === f && plus(x))) { expected++; continue; }
+        if (RESTYLED.some((x) => x.families.includes(f) && B[i].matches(x.selector))) { expected++; continue; }
         const roles = rolesOf(B[i], SITES);
         const swapped = (s) => REPLACED.filter((x) => x.family === f && roles.includes(x.role)).reduce((acc, x) => acc.split("; ").map((d) => (d === x.base ? x.split : d)).join("; "), s);
         if (a.has(f) && b.has(f) && swapped(a.get(f)) === b.get(f)) { expected++; continue; }
