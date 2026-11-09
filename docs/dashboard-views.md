@@ -363,3 +363,27 @@ A host that changes `--ktw-accent` or `--ktw-status-active` sets these with it; 
 | `--ktw-mono` | `ui-monospace, SFMono-Regular, Menlo, Consolas, monospace` | code, Ids |
 
 The graph and the stage draw on a canvas and read their colours with `getComputedStyle`. Give the tokens literal colours, not `var()` chains, because some renderers (jsdom among them) do not resolve a chain there. The dashboard sets every token as a literal equal to its own variable, in both themes, and `test_views.py` holds them equal.
+
+### Upgrading to 0.11.45
+
+0.11.45 splits each Status, Evidence and severity colour into two tokens. The colour (`--ktw-warn`) keeps drawing borders, dots, bars and the graph. A new `-text` token (`--ktw-warn-text`) takes over every place the colour was text. A host that maps the dashboard's colours onto its own maps each `-text` token as text, separately from its colour.
+
+**On which ground.** Every `-text` token below is text on the pills' solid ground, `--ktw-surface2`, not on a tint. It also appears on the surface and the page (counts, notes), and it holds 4.5:1 on all three. This is where it differs from `--ktw-accent-text` (0.11.44), which also sits on the type pill's tint, `--ktw-accent` at 18% over the page or the surface. A host whose own names separate text on a tint from text on a plain background puts these tokens with the plain-background text.
+
+| Token (new) | Takes over as text from | Before 0.11.45 (dark / light) | Now (dark / light) | Text it draws |
+|---|---|---|---|---|
+| `--ktw-ok-text` | `--ktw-ok` | `#4fbf7a` / `#4fbf7a` | `#4fbf7a` / `#2b7749` | the severity tile's count, the repository kind pill |
+| `--ktw-confirmed-text` | `--ktw-confirmed` | `#4fbf7a` / `#4fbf7a` | `#4fbf7a` / `#2b7749` | the confirmed Evidence pill |
+| `--ktw-warn-text` | `--ktw-warn` | `#e0a83a` / `#e0a83a` | `#e0a83a` / `#8a6316` | the warning pill and tile, warning notes |
+| `--ktw-inferred-text` | `--ktw-inferred` | `#e0a83a` / `#e0a83a` | `#e0a83a` / `#8a6316` | the inferred Evidence pill |
+| `--ktw-bad-text` | `--ktw-bad` | `#e0574f` / `#e0574f` | `#e77c76` / `#c92d23` | the error pill and tile, a danger link |
+| `--ktw-unknown-text` | `--ktw-unknown` | `#e0574f` / `#e0574f` | `#e77c76` / `#c92d23` | the unknown Evidence pill |
+| `--ktw-info-text` | `--ktw-info` | `#4aa3df` / `#4aa3df` | `#4aa3df` / `#1d6fa6` | the cache kind pill |
+| `--ktw-status-needs-review-text` | `--ktw-status-needs-review` | `#e0a83a` / `#e0a83a` | `#e0a83a` / `#8a6316` | the needs-review Status pill |
+| `--ktw-status-open-text` | `--ktw-status-open` | `#4aa3df` / `#4aa3df` | `#4aa3df` / `#1d6fa6` | the open Status pill |
+| `--ktw-status-pending-confirmation-text` | `--ktw-status-pending-confirmation` | `#d66fd6` / `#d66fd6` | `#d875d8` / `#ae31ae` | the pending-confirmation Status pill |
+| `--ktw-status-superseded-text` | `--ktw-status-superseded` | `#6f6f7a` / `#9a9aa6` | `#9999a2` / `#696977` | the superseded Status pill |
+
+`--ktw-fg3` is text only now, and it is raised: `#9999a2` (light `#696975`), from `#6f6f7a` (light `#8a8a96`). The new `--ktw-fg3-line` carries the old value, `#6f6f7a` (light `#8a8a96`), for the lines and marks that are not text: a dotted rule, the timeline's grid and lines, a superseded card's grey, and the graph's superseded links and owner ring. A host that used `--ktw-fg3` for both maps its faint text to `--ktw-fg3` and its faint lines to `--ktw-fg3-line`.
+
+The values come from the dashboard's stylesheets (`style.css`; dark is also the views' fallback). Before 0.11.45 the text was drawn in the colour itself. In light, the colours other than `--ktw-status-superseded` kept their dark values, which is how warn, inferred and needs-review text came to 1.88:1 on a pill's ground. `dashboard/tests/web/contrast.test.mjs` measures every pair.
