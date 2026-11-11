@@ -57,7 +57,18 @@ test("the quick start names no version that would go stale", () => {
   const docs = fs.readFileSync(DOCS, "utf8");
   const quick = docs.slice(docs.indexOf("## Quick start"), docs.indexOf("## The files"));
   assert.ok(quick.length > 0, "the docs have a Quick start before The files");
-  assert.doesNotMatch(quick, /\b\d+\.\d+\.\d+\b/, "the quick start names a version number");
+  // three numbers, not four (127.0.0.1 is an address)
+  assert.doesNotMatch(quick, /(?<![\d.])\d+\.\d+\.\d+(?![\d.])/, "the quick start names a version number");
+});
+
+test("the quick start says how to open the page: served over HTTP, not as a file", () => {
+  // the page fetches state.json, which a browser blocks for a page opened from file://; the test serves it, and a
+  // reader has to as well
+  const docs = fs.readFileSync(DOCS, "utf8");
+  const quick = docs.slice(docs.indexOf("## Quick start"), docs.indexOf("## The files"));
+  assert.match(quick, /python -m http\.server 8000 --bind 127\.0\.0\.1/, "the quick start names a command that serves the page");
+  assert.match(quick, /http:\/\/127\.0\.0\.1:8000\//, "the quick start names the URL to open");
+  assert.match(quick, /file:\/\//, "the quick start says why not to open it as a file");
 });
 
 test("the quick start page shows the overview and the graph, with no error", async () => {

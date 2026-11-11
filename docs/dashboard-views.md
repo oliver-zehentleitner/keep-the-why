@@ -120,6 +120,14 @@ The second line prints the folder that holds them. Copy the scripts and the styl
 ```
 <!-- quickstart:end -->
 
+**4. Serve it.** From the page's folder:
+
+```sh
+python -m http.server 8000 --bind 127.0.0.1
+```
+
+Then open `http://127.0.0.1:8000/`. The page fetches `state.json`, so it has to be served over HTTP: opened as a local file (`file://`), the browser blocks that fetch and the page stays empty. Any static web server does.
+
 What it does, top to bottom:
 
 - **Three stylesheets in cascade order:** the host's element defaults, `ktw-views.css`, then the host's own rules (see [Styles](#styles)). The last block maps three tokens onto the host's theme: the page and card grounds and the font. Give tokens literal colours, and when you set a colour, set its `-text` token with it (see [Tokens](#tokens)).
@@ -150,7 +158,7 @@ All files live in `dashboard/ktw_dashboard/web/` and ship in the `keep-the-why-d
 
 - **`api`** is the major version of what the files offer a host. It changes when a host would have to change.
 - **`state`** is the `state.json` major the files read.
-- **`scripts`** are classic scripts, not ES modules, so a page opened from `file://` can load them. Load them in this order, before your own code. Each adds one frozen object to `globalThis.KeepTheWhy`.
+- **`scripts`** are classic scripts, not ES modules, so a page opened from `file://` can load them; a provider that fetches its data, like the [quick start](#quick-start)'s, still needs the page served over HTTP. Load them in this order, before your own code. Each adds one frozen object to `globalThis.KeepTheWhy`.
 - **`styles`** style `.ktw-*` classes only and read `--ktw-*` custom properties only (see [Styles](#styles) and [Tokens](#tokens)).
 
 Beside the manifest, `ktw-words.json` lists every key of the views' UI text with its English (see [words](#words)).
