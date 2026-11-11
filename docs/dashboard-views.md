@@ -4,6 +4,136 @@ The dashboard's page is built from library files that another page can load and 
 
 The views render; they never write. Nothing in them stores, posts or deletes anything, and nothing in them reaches the network except through the provider the host hands them.
 
+## Quick start
+
+The smallest page that mounts the views: the overview and the graph of one project, read from its published `state.json`.
+
+**1. Get the files.** They ship in the `keep-the-why-dashboard` wheel:
+
+```sh
+pip install keep-the-why-dashboard
+python -c "import ktw_dashboard, pathlib; print(pathlib.Path(ktw_dashboard.__file__).parent / 'web')"
+```
+
+The second line prints the folder that holds them. Copy the scripts and the stylesheet `ktw-views.json` lists, with the manifest itself, into a `ktw/` folder beside your page. The same files are in the repository at each `dashboard-v<version>` tag, under `dashboard/ktw_dashboard/web/`. Pin the version you vendor, and read `api` in `ktw-views.json` when you move to a newer one: it changes when a host has to change.
+
+**2. Put the project's `state.json` beside the page.** A published export has one: `ktw-dashboard --export DIR` writes `DIR/state.json` beside its page (see [the dashboard](dashboard.md)). Any URL the page may fetch works.
+
+**3. The page.**
+
+<!-- quickstart:begin (dashboard/tests/web/quickstart/index.html; quickstart.test.mjs runs it and holds this copy to it) -->
+```html
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Why it is built this way</title>
+<!-- 1. the host's element defaults -->
+<style>
+  body { margin: 0; padding: 24px; font: 15px/1.5 system-ui, sans-serif; background: #10141a; color: #e6e6ea; }
+  a { color: #8fb8ff; }
+</style>
+<!-- 2. the views' stylesheet -->
+<link rel="stylesheet" href="ktw/ktw-views.css">
+<!-- 3. the host's own rules, here three tokens mapped onto the host's theme -->
+<style>
+  :root { --ktw-bg: #10141a; --ktw-surface: #171c24; --ktw-font: system-ui, sans-serif; }
+  .why-graph { height: 420px; }
+</style>
+<!-- the views, in the order ktw/ktw-views.json lists them -->
+<script src="ktw/ktw-core.js"></script>
+<script src="ktw/ktw-ui.js"></script>
+<script src="ktw/ktw-scene.js"></script>
+<script src="ktw/ktw-markdown.js"></script>
+<script src="ktw/ktw-graph.js"></script>
+<script src="ktw/ktw-timeline.js"></script>
+<script src="ktw/ktw-family.js"></script>
+<script src="ktw/ktw-search.js"></script>
+<script src="ktw/ktw-thoughts.js"></script>
+<script src="ktw/ktw-pages.js"></script>
+</head>
+<body>
+<main id="why" class="ktw-root"></main>
+<script>
+(async function () {
+  const K = globalThis.KeepTheWhy;
+  // a project's published state.json (the dashboard's export writes one); any URL the page may fetch
+  const raw = await (await fetch("state.json")).json();
+  const state = K.core.normalizeState(raw);
+
+  // provider: every request the views make goes through it; state() is the only one they need
+  const provider = () => ({ state: async () => ({ state, url: "state.json" }) });
+  // nav: routes kept in the page's hash (#overview, #graph, …)
+  const routes = K.core.routes;
+  const nav = {
+    href: (route) => routes.format(route),
+    go(route, { replace = false } = {}) {
+      if (replace) history.replaceState(null, "", routes.format(route));
+      else location.hash = routes.format(route);
+    },
+    current: () => routes.parse(location.hash),
+    onChange: (fn) => addEventListener("hashchange", () => fn(nav.current())),
+    open: (href) => { location.hash = href; },
+  };
+  // prefs: the reader's settings, here in localStorage
+  const prefs = {
+    get(key, fallback) { try { return localStorage.getItem("why-" + key) ?? fallback; } catch { return fallback; } },
+    set(key, value) { try { localStorage.setItem("why-" + key, String(value)); } catch {} },
+  };
+
+  // one scene, then the views this page shows
+  const scene = K.scene.create({ state, self: state, scope: "project" });
+  const family = K.views.family.create({ scene, nav, provider, host: { mode: () => "export", root: () => "" } });
+  const search = K.views.search.create({ scene, nav, family });
+  const pages = K.views.pages.create({ scene, nav, prefs, family, search });
+  const graph = K.views.graph.create({ scene, nav, prefs });
+
+  // what only this page can answer for the overview: Markdown with links to its own topic places (the topic
+  // and entry pages ask for more, see "Host hooks")
+  const topicHref = (file) => nav.href({ view: "topic", file });
+  const H = {
+    inline: (md) => K.markdown.renderInline(document, md, { topicHref }),
+    renderBody: (md) => K.markdown.render(document, md, { topicHref }),
+  };
+  let G = null; // the graph, built once and kept, so its layout survives a move
+
+  const main = document.getElementById("why");
+  function render() {
+    main.replaceChildren();
+    const route = nav.current();
+    if (route.view === "graph") {
+      const wrap = document.createElement("div");
+      wrap.className = "ktw-graph-wrap why-graph";
+      const canvas = document.createElement("canvas");
+      wrap.append(canvas);
+      main.append(wrap);
+      G ||= Object.assign({ scale: 1, ox: 0, oy: 0, showEntries: true, showLabels: true, alpha: 1 }, graph.assemble(state.topics, state.entries));
+      graph.run(canvas, G, { fit: true });
+    } else pages.overview(main, H);
+  }
+  nav.onChange(render);
+  render();
+})();
+</script>
+</body>
+</html>
+```
+<!-- quickstart:end -->
+
+What it does, top to bottom:
+
+- **Three stylesheets in cascade order:** the host's element defaults, `ktw-views.css`, then the host's own rules (see [Styles](#styles)). The last block maps three tokens onto the host's theme: the page and card grounds and the font. Give tokens literal colours, and when you set a colour, set its `-text` token with it (see [Tokens](#tokens)).
+- **The scripts in the manifest's order.** Each adds one object to `globalThis.KeepTheWhy`.
+- **A container with `ktw-root`**, in the document before a view draws into it (see [Mounting the views](#mounting-the-views)).
+- **A provider with `state()` alone.** Features that need more say so or hide (see [provider](#provider)).
+- **A `nav` on the page's hash** and **`prefs` in `localStorage`** (see [nav](#nav) and [prefs](#prefs)).
+- **One scene, then the views:** `pages.overview(main, H)` and `graph.run(canvas, G, …)`. The overview asks its host only for Markdown with the page's topic links. The topic and entry pages, the queues and the timeline ask for more (see [Host hooks](#host-hooks)).
+- **Inline style and script, for brevity.** Under a policy like `default-src 'self'` (see [Content-Security-Policy](#content-security-policy)), the two style blocks and the script move into files of their own; `dashboard/tests/web/host/` is set up that way.
+
+`dashboard/tests/web/quickstart.test.mjs` serves this page as above and checks it in jsdom: the overview with its topics, the graph's canvas, a link followed through the page's `nav`, and no error.
+
+**Next:** `dashboard/tests/web/host/` is a complete host. It runs two hosts on one page, with path routes instead of a hash, every place the views offer, and a strict Content-Security-Policy.
+
 ## The files
 
 All files live in `dashboard/ktw_dashboard/web/` and ship in the `keep-the-why-dashboard` wheel. `ktw-views.json` lists them in load order:
