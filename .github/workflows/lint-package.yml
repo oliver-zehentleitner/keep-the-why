@@ -65,6 +65,22 @@ jobs:
             echo "::warning::linter SUPPORTED_SCHEMA ($LINT) differs from the skill version ($SKILL) — fine if this release has no structural change, otherwise add the gate and bump lint/ktw_lint/__init__.py"
           fi
 
+  context-search:
+    # The context-search prototype reads entries with this linter's parser, and its cache key must
+    # rebuild on any change to an entry: a search that answers from stale text is worse than none
+    # (experiments/context-search/JOURNAL.md, step 3c). One Python version is enough for that.
+    name: context-search prototype (cache key, Type filter)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+
+      - name: Run the prototype's tests
+        run: PYTHONPATH=lint python -m unittest discover -s experiments/context-search -p 'test_*.py' -v
+
   action-smoke:
     name: root action.yml (this PR's action, latest linter from PyPI)
     runs-on: ubuntu-latest

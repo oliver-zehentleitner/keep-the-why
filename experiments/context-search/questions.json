@@ -1,0 +1,673 @@
+{
+ "source": {
+  "repository": "https://github.com/oliver-zehentleitner/maity",
+  "commit": "0720d70115a5dea52249c1c6de4553d488bf8ed0",
+  "path": "context/"
+ },
+ "questions": [
+  {
+   "id": "q01",
+   "kind": "why-rejected",
+   "question": "Why doesn't Maity support Python 3.9 or 3.10 anywhere, not even for the CLI?",
+   "expected": [
+    "22a7d470-4458-493b-8df6-08176d4abb13"
+   ],
+   "source": "Maity commit subject: context: Python 3.11 as the minimum everywhere",
+   "derivation": "the one entry the source commit added (git log -p context/), title checked by hand",
+   "start": ".",
+   "answer_members": [
+    "."
+   ]
+  },
+  {
+   "id": "q02",
+   "kind": "why-rejected",
+   "question": "What exactly does Maity's security promise about protecting traffic between the hub and its users cover?",
+   "expected": [
+    "9cdde84c-924f-4d6c-bc29-2468af6eaffb"
+   ],
+   "source": "Maity commit subject: docs: \"end-to-end encryption\" means transport security (#418)",
+   "derivation": "the one entry the source commit added (git log -p context/), title checked by hand",
+   "start": ".",
+   "answer_members": [
+    "."
+   ]
+  },
+  {
+   "id": "q03",
+   "kind": "constraint",
+   "question": "Why can't a reviewer agent run in the same workspace as the agent whose PR it reviews?",
+   "expected": [
+    "5380a247-324f-4ab8-92c6-37350e02b0cb"
+   ],
+   "source": "Maity commit subject: context: reviewer independence assumes separate environments",
+   "derivation": "the one entry the source commit added (git log -p context/), title checked by hand",
+   "start": ".",
+   "answer_members": [
+    "."
+   ]
+  },
+  {
+   "id": "q04",
+   "kind": "incident",
+   "question": "What went wrong when an agent cleaned up processes on the shared machine?",
+   "expected": [
+    "871f9226-a39d-4a71-84a6-c0b65a4fbf2e"
+   ],
+   "source": "Maity commit subject: context: record the server stopped by another agent's pkill",
+   "derivation": "the one entry the source commit added (git log -p context/), title checked by hand",
+   "start": ".",
+   "answer_members": [
+    "."
+   ]
+  },
+  {
+   "id": "q05",
+   "kind": "incident",
+   "question": "What was behind the time the shared build server could no longer write anything?",
+   "expected": [
+    "b1c7bd7d-a497-41ed-97e3-989f63c80a1c"
+   ],
+   "source": "Maity commit subject: context: record the full disk on the shared build machine",
+   "derivation": "the one entry the source commit added (git log -p context/), title checked by hand",
+   "start": ".",
+   "answer_members": [
+    "."
+   ]
+  },
+  {
+   "id": "q06",
+   "kind": "constraint",
+   "question": "How does Maity keep API tokens and passwords away from the language model?",
+   "expected": [
+    "d6472393-f74c-44fe-bfb9-5647770afaa6"
+   ],
+   "source": "Maity commit subject: context: record that credentials never enter the model's context",
+   "derivation": "the one entry the source commit added (git log -p context/), title checked by hand",
+   "start": ".",
+   "answer_members": [
+    "."
+   ]
+  },
+  {
+   "id": "q07",
+   "kind": "why-rejected",
+   "question": "Why does joining a project not require installing the Maity CLI first?",
+   "expected": [
+    "85ad7ffd-5a81-4ca7-8718-c4f596a34ca2"
+   ],
+   "source": "Maity commit subject: context: record that joining must work with nothing installed",
+   "derivation": "the one entry the source commit added (git log -p context/), title checked by hand",
+   "start": ".",
+   "answer_members": [
+    "."
+   ]
+  },
+  {
+   "id": "q08",
+   "kind": "why-rejected",
+   "question": "Where is the work on Maity itself coordinated, and why there?",
+   "expected": [
+    "9d07bc5d-a65e-46d9-809f-c80353be6319"
+   ],
+   "source": "Maity commit subject: context: maity.team as the only platform for building Maity",
+   "derivation": "the one entry the source commit added (git log -p context/), title checked by hand",
+   "start": ".",
+   "answer_members": [
+    "."
+   ]
+  },
+  {
+   "id": "q09",
+   "kind": "why-rejected",
+   "question": "If a member's agent hits a provider usage limit, how long do its card leases get extended?",
+   "expected": [
+    "42d8258e-7dd7-4c6f-96e4-61926576d299"
+   ],
+   "source": "Maity commit subject: context: lease cap during a limit is 24 h per outage (maintainer decision) (#237)",
+   "derivation": "the one entry the source commit added (git log -p context/), title checked by hand",
+   "start": ".",
+   "answer_members": [
+    "."
+   ]
+  },
+  {
+   "id": "q10",
+   "kind": "why-rejected",
+   "question": "How is the Maity CLI released to PyPI, and why not with an API token?",
+   "expected": [
+    "227cd75c-bfc7-4cd8-9ba8-cf877cd3bf21"
+   ],
+   "source": "Maity commit subject: cli: publish to PyPI as maity (trusted publishing, 0.1.0a1) (#422)",
+   "derivation": "the one entry the source commit added (git log -p context/), title checked by hand",
+   "start": ".",
+   "answer_members": [
+    "."
+   ]
+  },
+  {
+   "id": "q11",
+   "kind": "why-rejected",
+   "question": "Why can't someone read what a chat says from the desktop pop-up alone?",
+   "expected": [
+    "c44871c6-9d74-481b-892b-184e1ea518f5"
+   ],
+   "source": "Maity commit subject: Remove browser.content: the setting never did anything (#1160)",
+   "derivation": "the one entry the source commit added (git log -p context/), title checked by hand",
+   "start": ".",
+   "answer_members": [
+    "."
+   ]
+  },
+  {
+   "id": "q12",
+   "kind": "fact",
+   "question": "What format does the device code for signing in a CLI have?",
+   "expected": [
+    "f74e7ab6-027b-47bc-906a-35e2e1892ec6"
+   ],
+   "source": "Maity commit subject: docs: the device code is 12 characters in three groups (\u00a72.6.2) (#421)",
+   "derivation": "the one entry the source commit added (git log -p context/), title checked by hand",
+   "start": ".",
+   "answer_members": [
+    "."
+   ]
+  },
+  {
+   "id": "q13",
+   "kind": "why-rejected",
+   "question": "Can a user rename their handle, and what happens to the old one?",
+   "expected": [
+    "d5a4542f-63cc-4c1c-962e-f1c02df48ee9"
+   ],
+   "source": "Maity commit subject: docs: handles are renameable aliases of a fixed id (\u00a76.24) (#420)",
+   "derivation": "the one entry the source commit added (git log -p context/), title checked by hand",
+   "start": ".",
+   "answer_members": [
+    "."
+   ]
+  },
+  {
+   "id": "q14",
+   "kind": "constraint",
+   "question": "Will the hosted Maity service run my agents for me?",
+   "expected": [
+    "df759e0f-d23b-4ff6-82c8-540406c3f409"
+   ],
+   "source": "Maity commit subject: context/scope.md: the hosted offering runs no agent workloads (#345)",
+   "derivation": "the one entry the source commit added (git log -p context/), title checked by hand",
+   "start": ".",
+   "answer_members": [
+    "."
+   ]
+  },
+  {
+   "id": "q15",
+   "kind": "why-rejected",
+   "question": "Is there a paid edition of the Maity code, or one codebase for every way to run it?",
+   "expected": [
+    "930cc491-24f2-4dbe-94b6-b5b49e7e2fb2"
+   ],
+   "source": "Maity commit subject: docs: one codebase, three ways to run it; no billing in the core (#274)",
+   "derivation": "the one entry the source commit added (git log -p context/), title checked by hand",
+   "start": ".",
+   "answer_members": [
+    "."
+   ]
+  },
+  {
+   "id": "q16",
+   "kind": "why-rejected",
+   "question": "Why does a pull request not run the whole test suite?",
+   "expected": [
+    "06b11a79-65dc-4364-b6ca-bd36927ae829"
+   ],
+   "source": "Maity commit subject: ci: run only the suites a pull request can affect; cancel superseded runs (#284)",
+   "derivation": "the one entry the source commit added (git log -p context/), title checked by hand",
+   "start": ".",
+   "answer_members": [
+    "."
+   ]
+  },
+  {
+   "id": "q17",
+   "kind": "incident",
+   "question": "After the first self-hosted CI runner took the machine down, what limits were put on it?",
+   "expected": [
+    "a35df240-f14b-4468-8ab2-23b447a08175"
+   ],
+   "source": "Maity commit subject: ci: cap the runner services and start with one (after the first run took the machine down) (#571)",
+   "derivation": "the one entry the source commit added (git log -p context/), title checked by hand",
+   "start": ".",
+   "answer_members": [
+    "."
+   ]
+  },
+  {
+   "id": "q18",
+   "kind": "why-rejected",
+   "question": "How does a pull request record its user-visible change so that parallel pull requests don't conflict?",
+   "expected": [
+    "b1258d90-a82b-48a1-9c5f-7ee4eb1295f9"
+   ],
+   "source": "Maity commit subject: context: changelog entries as one file per pull request",
+   "derivation": "the one entry the source commit added (git log -p context/), title checked by hand",
+   "start": ".",
+   "answer_members": [
+    "."
+   ]
+  },
+  {
+   "id": "q19",
+   "kind": "why-rejected",
+   "question": "How should a PR that adds a decision record to context/ be laid out in commits?",
+   "expected": [
+    "70b1f348-5885-4b97-95c9-70544e5ee62c"
+   ],
+   "source": "Maity commit subject: Context entries need no commit of their own; squash stays (#450)",
+   "derivation": "the one entry the source commit added (git log -p context/), title checked by hand",
+   "start": ".",
+   "answer_members": [
+    "."
+   ]
+  },
+  {
+   "id": "q20",
+   "kind": "why-rejected",
+   "question": "Does mentioning someone in a decision request notify them?",
+   "expected": [
+    "f0420440-3572-4771-a358-dc47fea0a707"
+   ],
+   "source": "Maity commit subject: context: mentions resolved at write time, no pings from requests or chats",
+   "derivation": "the one entry the source commit added (git log -p context/), title checked by hand",
+   "start": ".",
+   "answer_members": [
+    "."
+   ]
+  },
+  {
+   "id": "q21",
+   "kind": "why-rejected",
+   "question": "What happens to an agent's running work when its human pauses it?",
+   "expected": [
+    "87fd8ecf-fa9b-4cdc-9979-03ad34959c45"
+   ],
+   "source": "Maity commit subject: context: a human pause is a soft stop",
+   "derivation": "the one entry the source commit added (git log -p context/), title checked by hand",
+   "start": ".",
+   "answer_members": [
+    "."
+   ]
+  },
+  {
+   "id": "q22",
+   "kind": "why-rejected",
+   "question": "What does the hub do when two members run their agents in the same environment?",
+   "expected": [
+    "abd84bd0-a085-4d5a-b3b0-f8358c12e444"
+   ],
+   "source": "Maity commit subject: context: members sharing an environment are warned, never refused",
+   "derivation": "the one entry the source commit added (git log -p context/), title checked by hand",
+   "start": ".",
+   "answer_members": [
+    "."
+   ]
+  },
+  {
+   "id": "q23",
+   "kind": "supersedes",
+   "question": "Maity once decided that authority comes from the role in the org chart, not from who typed the message. Which decision replaced that?",
+   "expected": [
+    "37cfa04a-98af-4b48-a612-4142de167656"
+   ],
+   "source": "the state graph: Superseded by of 30f183d5-9f56-494f-a3a1-468cd10f5cc9",
+   "derivation": "computed: the entry's Superseded by",
+   "rule": {
+    "superseded_by_of": "30f183d5-9f56-494f-a3a1-468cd10f5cc9"
+   },
+   "start": ".",
+   "answer_members": [
+    "."
+   ]
+  },
+  {
+   "id": "q24",
+   "kind": "supersedes",
+   "question": "An optional join host used to answer only the agent join. What replaced that decision?",
+   "expected": [
+    "cb26f4f4-ac8a-4a65-889d-a45896810a0e"
+   ],
+   "source": "the state graph: Superseded by of a749f1eb-f54f-4549-8113-2abee4e2d666",
+   "derivation": "computed: the entry's Superseded by",
+   "rule": {
+    "superseded_by_of": "a749f1eb-f54f-4549-8113-2abee4e2d666"
+   },
+   "start": ".",
+   "answer_members": [
+    "."
+   ]
+  },
+  {
+   "id": "q25",
+   "kind": "supersedes",
+   "question": "A bridge once lent its hands to agents that could not reach the repository. What is the current decision about bridges?",
+   "expected": [
+    "0e96faf7-0422-4f93-8730-13362f7006bd"
+   ],
+   "source": "the state graph: Superseded by of 1dca249c-935e-4ed8-9408-f6adee662e8a",
+   "derivation": "computed: the entry's Superseded by",
+   "rule": {
+    "superseded_by_of": "1dca249c-935e-4ed8-9408-f6adee662e8a"
+   },
+   "start": ".",
+   "answer_members": [
+    "."
+   ]
+  },
+  {
+   "id": "q26",
+   "kind": "supersedes",
+   "question": "Usage statistics were first counted from what the hub already holds. Which decision superseded that one?",
+   "expected": [
+    "b9dc57f9-7581-47ef-acc8-00b679f7aa1e"
+   ],
+   "source": "the state graph: Superseded by of 02f126c2-5d8c-4ea4-89bd-ceb499efd24d",
+   "derivation": "computed: the entry's Superseded by",
+   "rule": {
+    "superseded_by_of": "02f126c2-5d8c-4ea4-89bd-ceb499efd24d"
+   },
+   "start": ".",
+   "answer_members": [
+    "."
+   ]
+  },
+  {
+   "id": "q27",
+   "kind": "supersedes",
+   "question": "The rented runner user was fenced by an owner-match chain on OUTPUT. What replaced that setup?",
+   "expected": [
+    "41cea0a5-28af-4a1a-87ad-aad00c580b77"
+   ],
+   "source": "the state graph: Superseded by of ca3532c5-f8f1-4687-b467-ee1b129dc603",
+   "derivation": "computed: the entry's Superseded by",
+   "rule": {
+    "superseded_by_of": "ca3532c5-f8f1-4687-b467-ee1b129dc603"
+   },
+   "start": ".",
+   "answer_members": [
+    "."
+   ]
+  },
+  {
+   "id": "q28",
+   "kind": "thought-chain",
+   "question": "How has the rule for reviewing pull requests changed over time, and which version is the current one?",
+   "expected": [
+    "0b12c29d-1539-4737-9bc3-e5e5815238ec",
+    "297a0ea7-ebd0-4007-8b12-f839d005d205",
+    "c73e26c4-60b2-49e7-9df8-278fca4fcb2e"
+   ],
+   "answer_first": "c73e26c4-60b2-49e7-9df8-278fca4fcb2e",
+   "source": "the state graph: the Superseded by chain from 0b12c29d",
+   "derivation": "computed: the chain 0b12c29d \u2192 297a0ea7 \u2192 c73e26c4; the current one is the head",
+   "rule": {
+    "supersede_chain_from": "0b12c29d-1539-4737-9bc3-e5e5815238ec"
+   },
+   "start": ".",
+   "answer_members": [
+    "."
+   ]
+  },
+  {
+   "id": "q29",
+   "kind": "see",
+   "question": "Which incident is linked to the decision that pull requests get an independent first review on another vendor's model?",
+   "expected": [
+    "1a5e729f-816a-4682-ab8c-a2029aa1ea0a"
+   ],
+   "source": "the state graph: See of 0b12c29d",
+   "derivation": "computed: the incident among the entry's See targets",
+   "rule": {
+    "see_of": "0b12c29d-1539-4737-9bc3-e5e5815238ec",
+    "type": "incident"
+   },
+   "start": ".",
+   "answer_members": [
+    "."
+   ]
+  },
+  {
+   "id": "q30",
+   "kind": "filter",
+   "question": "List every incident recorded anywhere in Maity's family: the root and its hub, web and cli members.",
+   "expected": [
+    "06563fc8-cd5c-4820-b089-9d233f3d44b8",
+    "19df9565-836c-4f23-a707-9c72d471b4d1",
+    "1a5e729f-816a-4682-ab8c-a2029aa1ea0a",
+    "2083a296-dac3-4164-b51e-9a3a6a38a26b",
+    "210f3def-e846-4f72-ad22-2ad911ec3bf2",
+    "48327066-0929-495b-8f2c-e85f55b0878c",
+    "5380a247-324f-4ab8-92c6-37350e02b0cb",
+    "5ce3c8ac-2db5-4a49-8934-65c6bc790496",
+    "5f1597e2-a1d2-416b-af05-44b60854533a",
+    "721bcdfa-9464-4b57-b885-a1455f5adbb8",
+    "798f7da4-9902-4fbe-8c24-d96762ec0224",
+    "871f9226-a39d-4a71-84a6-c0b65a4fbf2e",
+    "8c119e9f-9bc8-464f-8fae-54770977af9a",
+    "9092661c-3553-4e0f-81d1-fa521fa05581",
+    "998fc76e-6c7b-4791-91de-d04a0d514333",
+    "a35df240-f14b-4468-8ab2-23b447a08175",
+    "a693f08e-ee64-44b7-b245-872065c2dc0e",
+    "b1c7bd7d-a497-41ed-97e3-989f63c80a1c",
+    "c0692bcc-f883-443e-a55c-e280a117cd9d",
+    "d295eb2a-38ad-4e27-9dfa-524bb0963a24",
+    "dc0a02f8-c657-406a-8f63-f260b588e7e8",
+    "f3bec014-28b7-4bfe-9ca8-304f1481fceb",
+    "f5af51a7-1a53-4782-9af5-6c91b4f7d77c"
+   ],
+   "source": "the state: Type incident",
+   "derivation": "computed: every entry with a Type incident line, a second or later Type line included",
+   "rule": {
+    "type": "incident"
+   },
+   "start": ".",
+   "answer_members": [
+    ".",
+    "hub",
+    "web"
+   ]
+  },
+  {
+   "id": "q31",
+   "kind": "filter",
+   "question": "Which entries anywhere in Maity's family are waiting to be re-checked?",
+   "expected": [
+    "02fb33e3-0fc5-4140-8e33-016045fefdbb",
+    "035104e6-f041-4d9e-9813-163671458358",
+    "242091d4-23c3-446e-ae63-6bb67057640e",
+    "25a99503-c0df-436b-a0b2-7b1d0b1a966f",
+    "261f1ce2-819b-4aac-ae4a-387bb83d0907",
+    "2b3a388d-15e6-4b30-a566-aad5e5116838",
+    "3194a790-29c5-43b6-a07a-cdb21f2f6aae",
+    "3d679346-7e9d-45be-a4f7-f1137a2a274e",
+    "40bb824a-6d56-405e-bca1-5bae5600ecdc",
+    "4423561d-6f8e-4ad5-8729-0b896fb37e3c",
+    "442bb50d-5a43-44f2-85c3-24a3fd39878f",
+    "4c3f8949-c8df-4c99-bb0c-08dc47205eed",
+    "4e888b31-6cfd-4bde-b3dc-dd78f210a556",
+    "4fdf4cc1-e916-44d7-9064-5b07989b0d06",
+    "588c979f-8c75-4ad4-ab2d-cd19a1921738",
+    "66053e8f-9e9b-447b-896d-be37f8007724",
+    "6c688878-105b-4162-b0ad-5e1302df921c",
+    "838c7e0a-0586-442b-874d-57d9c8328b73",
+    "85937747-12e7-42bd-98d7-6fd923e18ef0",
+    "8e483bb1-53be-4ce2-a139-561989db21af",
+    "9a0ed6f7-694b-4036-8b78-16ff53aa760a",
+    "a5b07f08-306e-4f33-8643-8b59af50dd71",
+    "a753a0f6-a606-43dd-86db-3431a1679721",
+    "a91a5a3d-a29a-4c9e-9721-d01d89aeacd2",
+    "ad2319c8-9158-483e-b180-ee88691c6b87",
+    "b7a13a49-7c56-49d6-bc18-4622b21d0077",
+    "c3e2532b-f64a-4ade-b834-853ad4b1160f",
+    "d079ff73-8c38-435c-9881-522363f62400",
+    "d4a944d2-5e48-45e4-a93b-f528f43705ed",
+    "f502c036-d109-46e5-a25a-ffc793bc08bd",
+    "f63430e9-d5ca-430e-afef-d44ec980bd35",
+    "f6560be2-4153-4d19-adc7-6fdc8589991f",
+    "fcc59a72-46a0-4741-9d6f-abada05edab6"
+   ],
+   "source": "the state: Status needs-review",
+   "derivation": "computed: every entry with Status needs-review",
+   "rule": {
+    "status": "needs-review"
+   },
+   "start": ".",
+   "answer_members": [
+    ".",
+    "cli",
+    "hub",
+    "web"
+   ]
+  },
+  {
+   "id": "q32",
+   "kind": "why-rejected",
+   "question": "How are Maity's database backups on k3s protected, and what happens when the key is missing?",
+   "expected": [
+    "f6cd5dc1-f718-4490-92fc-285f88085514"
+   ],
+   "source": "Maity commit subject (hub/context): k3s backups: encrypted with gpg to a public key in a Secret, failing visibly without it (#1367)",
+   "derivation": "the one entry the source commit added (git log -p hub/context/), title checked by hand",
+   "start": "web",
+   "answer_members": [
+    "hub"
+   ]
+  },
+  {
+   "id": "q33",
+   "kind": "why-rejected",
+   "question": "Where and how is the hub's container image published, and why not from any branch?",
+   "expected": [
+    "dd54e1f8-29a5-434e-abbe-f08d61d293fe"
+   ],
+   "source": "Maity commit subject (hub/context): image: publish only from main and v* tags, through an environment, signed keyless (#1366)",
+   "derivation": "the one entry the source commit added (git log -p hub/context/), title checked by hand",
+   "start": ".",
+   "answer_members": [
+    "hub"
+   ]
+  },
+  {
+   "id": "q34",
+   "kind": "why-rejected",
+   "question": "How many projects can one owner have, and do archived ones count?",
+   "expected": [
+    "d4151a3a-29ff-48fd-8901-2389727444c7"
+   ],
+   "source": "Maity commit subject (hub/context): Cap projects per owner at 10; archived projects leave background sweeps (#1337)",
+   "derivation": "the one entry the source commit added (git log -p hub/context/), title checked by hand",
+   "start": "hub",
+   "answer_members": [
+    "hub"
+   ]
+  },
+  {
+   "id": "q35",
+   "kind": "why-rejected",
+   "question": "Can the hub be scaled out horizontally, and in which setups does Maity say no?",
+   "expected": [
+    "ec91fe03-1e12-4fb6-8c8e-f09ae8528e5d"
+   ],
+   "source": "Maity commit subject (hub/context): hub, chart: several pods (replicas, MAITY_REPLICAS) (#1278)",
+   "derivation": "the one entry the source commit added (git log -p hub/context/), title checked by hand",
+   "start": "cli",
+   "answer_members": [
+    "hub"
+   ]
+  },
+  {
+   "id": "q36",
+   "kind": "why-rejected",
+   "question": "Why doesn't a very long line in a request push the dashboard wider than the window?",
+   "expected": [
+    "af756909-d3b0-4484-af3f-f88c41014ac4"
+   ],
+   "source": "Maity commit subject (web/context): web: a long line in a request or a card note keeps the page inside the window (tsk-6bn80bppb5e5) (#1347)",
+   "derivation": "the one entry the source commit added (git log -p web/context/), title checked by hand",
+   "start": ".",
+   "answer_members": [
+    "web"
+   ]
+  },
+  {
+   "id": "q37",
+   "kind": "why-rejected",
+   "question": "How does the German dashboard keep its terminology consistent?",
+   "expected": [
+    "fc2e6592-2711-447a-978c-75a9ccce1e0a"
+   ],
+   "source": "Maity commit subject (web/context): web: the dashboard in German, and the glossary (#1156)",
+   "derivation": "the one entry the source commit added (git log -p web/context/), title checked by hand",
+   "start": "web",
+   "answer_members": [
+    "web"
+   ]
+  },
+  {
+   "id": "q38",
+   "kind": "why-rejected",
+   "question": "How is the organisation's people view structured, and where does trust show up in it?",
+   "expected": [
+    "f4ec0c89-33e8-4f62-b192-371a23b91581"
+   ],
+   "source": "Maity commit subject (web/context): web: Members is two tables again, without levels; only the organisation tree follows trust (#1087)",
+   "derivation": "the one entry the source commit added (git log -p web/context/), title checked by hand",
+   "start": "hub",
+   "answer_members": [
+    "web"
+   ]
+  },
+  {
+   "id": "q39",
+   "kind": "why-rejected",
+   "question": "What does maity wait do when the hub answers 429 Too Many Requests?",
+   "expected": [
+    "6288d23f-c0fb-477d-a120-8e862ae10628"
+   ],
+   "source": "Maity commit subject (cli/context): cli: maity wait retries a 429 like a 5xx, never sooner than its Retry-After (#1359)",
+   "derivation": "the one entry the source commit added (git log -p cli/context/), title checked by hand",
+   "start": "hub",
+   "answer_members": [
+    "cli"
+   ]
+  },
+  {
+   "id": "q40",
+   "kind": "constraint",
+   "question": "Could a credential embedded in a clone address ever appear in what the CLI prints?",
+   "expected": [
+    "44c5155a-ae4d-4f18-ace9-1ac3a46f5a33"
+   ],
+   "source": "Maity commit subject (cli/context): cli: never show a credential from a remote URL (\u00a713, tsk-r31sb7ag0spv) (#789)",
+   "derivation": "the one entry the source commit added (git log -p cli/context/), title checked by hand",
+   "start": "cli",
+   "answer_members": [
+    "cli"
+   ]
+  },
+  {
+   "id": "q41",
+   "kind": "why-rejected",
+   "question": "Why does the CLI read long message text from stdin or a file instead of an argument?",
+   "expected": [
+    "1be5edbf-e53f-407f-b5b1-e4836ba195a8"
+   ],
+   "source": "Maity commit subject (cli/context): cli: free text from stdin or a file so the shell cannot eat code spans (#435)",
+   "derivation": "the one entry the source commit added (git log -p cli/context/), title checked by hand",
+   "start": ".",
+   "answer_members": [
+    "cli"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,49 @@
+{
+ "chosen": "2026-11-08, before any agent run, from the offline ranks of phase 2 (results/2026-11-08-offline-registry/candidates): easy, medium and hard for BM25 at x10",
+ "maity_text": [
+  "q10",
+  "q14",
+  "q09",
+  "q05",
+  "q18",
+  "q02",
+  "q12"
+ ],
+ "maity_graph": [
+  "q23",
+  "q28",
+  "q29",
+  "q30",
+  "q31"
+ ],
+ "registry_own": [
+  "r02",
+  "r10",
+  "r11",
+  "r18",
+  "r33",
+  "r05",
+  "r07",
+  "r29"
+ ],
+ "pilot": [
+  "q05",
+  "q30"
+ ],
+ "sets": {
+  "x1": [
+   "maity_text",
+   "maity_graph"
+  ],
+  "x10": [
+   "maity_text",
+   "maity_graph"
+  ],
+  "registry": [
+   "maity_text",
+   "maity_graph",
+   "registry_own"
+  ]
+ },
+ "registry_note": "every project with a commit-derived question gives one (r02, r10, r11, r18, r33); three entry-derived ones (r05, r07, r29) are reported apart, being easier (#s8qb on #771); changed before any series run"
+}

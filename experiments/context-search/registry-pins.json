@@ -1,0 +1,181 @@
+{
+ "registry_commit": "28bfdc94abff039892ee1f3b400fa8f409e88b6d",
+ "projects": [
+  {
+   "url": "https://github.com/hasansezertasan/copier-pyproject",
+   "commit": "761208db7e9777d84a6d9669b5be761e2e4cd51f",
+   "license": "MIT",
+   "visibility": "public",
+   "members": [
+    "."
+   ],
+   "entries": 112
+  },
+  {
+   "url": "https://github.com/hasansezertasan/copier-rust",
+   "commit": "b852a62b338cd9dee7014f3169bffcd1e741936e",
+   "license": "MIT",
+   "visibility": "public",
+   "members": [
+    "."
+   ],
+   "entries": 24
+  },
+  {
+   "url": "https://github.com/oliver-zehentleitner-aigent/ordersync",
+   "commit": "5d6f240f799e998624ff6b9c9754d2d9464557fa",
+   "license": "MIT",
+   "visibility": "public",
+   "members": [
+    "."
+   ],
+   "entries": 4
+  },
+  {
+   "url": "https://github.com/oliver-zehentleitner/keep-the-why",
+   "commit": "28bfdc94abff039892ee1f3b400fa8f409e88b6d",
+   "license": "MIT",
+   "visibility": "public",
+   "members": [
+    "."
+   ],
+   "entries": 163
+  },
+  {
+   "url": "https://github.com/oliver-zehentleitner/lasteverLM",
+   "commit": "54b6c5c39abc436eb2fade8f4d5876d4448cec65",
+   "license": "MIT",
+   "visibility": "public",
+   "members": [
+    ".",
+    "core",
+    "account",
+    "infra",
+    "ingest",
+    "rag",
+    "web"
+   ],
+   "entries": 300
+  },
+  {
+   "url": "https://github.com/oliver-zehentleitner/repo-native-project-memory",
+   "commit": "8f29de0a7ffcd6bf38a2201937474313b540b8ac",
+   "license": "MIT",
+   "visibility": "public",
+   "members": [
+    "."
+   ],
+   "entries": 6
+  },
+  {
+   "url": "https://github.com/oliver-zehentleitner/ubdcc-dashboard",
+   "commit": "54a1770510a8bdb5948f8d0a7d29b17d2e0ef796",
+   "license": "MIT",
+   "visibility": "public",
+   "members": [
+    "."
+   ],
+   "entries": 3
+  },
+  {
+   "url": "https://github.com/oliver-zehentleitner/unicorn-binance-depth-cache-cluster",
+   "commit": "75ca5239adda3655fe97ec59729c9ad4e2d2298e",
+   "license": "MIT",
+   "visibility": "public",
+   "members": [
+    "."
+   ],
+   "entries": 5
+  },
+  {
+   "url": "https://github.com/oliver-zehentleitner/unicorn-binance-local-depth-cache",
+   "commit": "30a13c7910b8f2fe5b22c4b3d195f13b4e2c6247",
+   "license": "MIT",
+   "visibility": "public",
+   "members": [
+    "."
+   ],
+   "entries": 5
+  },
+  {
+   "url": "https://github.com/oliver-zehentleitner/unicorn-binance-rest-api",
+   "commit": "2d7996fac1e6a0a95599d500851d39fdace8128b",
+   "license": "MIT",
+   "visibility": "public",
+   "members": [
+    "."
+   ],
+   "entries": 5
+  },
+  {
+   "url": "https://github.com/oliver-zehentleitner/unicorn-binance-suite",
+   "commit": "2a600a6abc6635200b66fb828e1f7bc3ef398cc5",
+   "license": "MIT",
+   "visibility": "public",
+   "members": [
+    "."
+   ],
+   "entries": 10
+  },
+  {
+   "url": "https://github.com/oliver-zehentleitner/unicorn-binance-trailing-stop-loss",
+   "commit": "9117539b5dc77d91592c92c20d3707b82d750021",
+   "license": "MIT",
+   "visibility": "public",
+   "members": [
+    "."
+   ],
+   "entries": 6
+  },
+  {
+   "url": "https://github.com/oliver-zehentleitner/unicorn-binance-websocket-api",
+   "commit": "86ef4485d89d32d864f643b0c975501e4dd9731d",
+   "license": "MIT",
+   "visibility": "public",
+   "members": [
+    "."
+   ],
+   "entries": 21
+  },
+  {
+   "url": "https://github.com/oliver-zehentleitner/unicorn-fy",
+   "commit": "ebbf85d8cf8531c5b21e5863b56dbb1f65db0aba",
+   "license": "MIT",
+   "visibility": "public",
+   "members": [
+    "."
+   ],
+   "entries": 6
+  },
+  {
+   "url": "https://github.com/rapt0p7/scenegrid-console",
+   "commit": "8ae88b6029756f0f32f107b9efea7d5faf8f6710",
+   "license": "MIT",
+   "visibility": "public",
+   "members": [
+    "."
+   ],
+   "entries": 10
+  },
+  {
+   "url": "https://github.com/zyvop/zyvop-cli",
+   "commit": "b6ad667b9491dcc1bf93c27defd48e93552185bf",
+   "license": "MIT (package.json)",
+   "visibility": "public",
+   "members": [
+    "."
+   ],
+   "entries": 10
+  },
+  {
+   "url": "https://gitlab.com/oliver-zehentleitner/keep-the-why-demo",
+   "commit": "14164717ccf546db986a3d0dfc5f2fe5ecdd737d",
+   "license": "none declared",
+   "visibility": "public",
+   "members": [
+    "."
+   ],
+   "entries": 7
+  }
+ ]
+}
