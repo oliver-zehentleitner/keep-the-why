@@ -106,6 +106,10 @@ ktw-dashboard 0.3.6 — 11 project(s), selected: /home/me/projects/keep-the-why
 
 What that page looks like for this repository's own `context/`: [keepthewhy.com/dashboard/live/](https://keepthewhy.com/dashboard/live/), exported on every docs build.
 
+## Embedding the views
+
+The views are a library that any page can mount. The page hands them a provider, routes and `--ktw-*` tokens, and they render one project's `state.json`, read-only. The files ship in this wheel (`ktw_dashboard/web/`, listed in `ktw-views.json`). Maity is the first host outside the Keep the Why repository. The [quick start](https://keepthewhy.com/dashboard-views/#quick-start) is one page that mounts the overview and the graph.
+
 ## What Git can and cannot tell
 
 `git blame` on an entry's heading says who committed it and when; `git log -L` on its `Status` line gives the sequence of values with author and date; `git log -S` on the heading finds the commit that introduced it. That is the author layer — and it is Git's notion of author: the committer of record. When a coding agent writes an entry inside a developer's session, Git shows the developer. The dashboard reports what Git says and adds no convention of its own.

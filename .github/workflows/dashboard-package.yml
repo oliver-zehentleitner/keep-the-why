@@ -98,6 +98,9 @@ jobs:
       - name: The host fixture page, two foreign hosts mounting the views from the manifest (jsdom)
         run: cd dashboard/tests/web && node host.mjs
 
+      - name: The quick start in docs/dashboard-views.md, run as a page and held to the docs' copy (jsdom)
+        run: cd dashboard/tests/web && node --test quickstart.test.mjs
+
       - name: The views' words, every tw() call and ktw-words.json key for key, and the hook's fallbacks (jsdom)
         run: cd dashboard/tests/web && node --test words.test.mjs
 

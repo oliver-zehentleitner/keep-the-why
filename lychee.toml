@@ -11,10 +11,13 @@
 # dashboard/tests/web/fixture and .../snapshots are the DOM snapshot test's
 # invented project (github.com/acme/widget, acme.example) and the page as it
 # renders it: the links point at a repository that does not exist, by design.
+# dashboard/tests/web/quickstart is the docs' quick start page, served by its
+# test (quickstart.test.mjs), which maps ktw/ onto ktw_dashboard/web/ and puts
+# state.json beside it: those files exist only in that layout, not in the repo.
 # docs/evals/runs/ are the runner's per-run summaries, published as written:
 # a URL in them is whatever the judge quoted, often cut off mid-way by the
 # runner's column limit.
-exclude_path = ["tools/evals/fixtures", "experiments/rejected-change/results", "dashboard/ktw_dashboard/web", "docs/evals/runs", "dashboard/tests/web/fixture", "dashboard/tests/web/snapshots"]
+exclude_path = ["tools/evals/fixtures", "experiments/rejected-change/results", "dashboard/ktw_dashboard/web", "docs/evals/runs", "dashboard/tests/web/fixture", "dashboard/tests/web/snapshots", "dashboard/tests/web/quickstart"]
 
 # mcpmarket.com rate-limits lychee's request bursts with 429s (seen repeatedly
 # on the "Also listed on" link across README.md/llms.txt/docs/installation.md,

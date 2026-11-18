@@ -346,6 +346,10 @@ pypi.org for newer dashboard and linter versions at start and once a day (`--no-
 turns it off). Standard library plus keep-the-why-lint as the parser; the page is plain
 JavaScript. Versioned independently of the skill (`dashboard-v<version>` tags). Docs:
 https://keepthewhy.com/dashboard/
+The views are also a library any page can mount: a provider, routes and `--ktw-*` tokens, read-only;
+the files ship in the wheel under `ktw_dashboard/web/` (`ktw-views.json` lists them). Maity is the
+first outside host. Host contract and a tested one-page quick start:
+https://keepthewhy.com/dashboard-views/
 
 ## Related Work
 
