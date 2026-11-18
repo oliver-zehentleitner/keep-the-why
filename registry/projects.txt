@@ -15,6 +15,9 @@
 # globe finds repositories by their citations without it. A listing is an
 # invitation to be found from anywhere, including from projects that cite
 # nothing of yours.
+https://github.com/hasansezertasan/amb
+https://github.com/hasansezertasan/cobo
+https://github.com/hasansezertasan/copier-copier
 https://github.com/hasansezertasan/copier-pyproject
 https://github.com/hasansezertasan/copier-rust
 https://github.com/oliver-zehentleitner-aigent/ordersync
@@ -30,6 +33,7 @@ https://github.com/oliver-zehentleitner/unicorn-binance-suite
 https://github.com/oliver-zehentleitner/unicorn-binance-trailing-stop-loss
 https://github.com/oliver-zehentleitner/unicorn-binance-websocket-api
 https://github.com/oliver-zehentleitner/unicorn-fy
+https://github.com/PaketMutfak/croupier
 https://github.com/rapt0p7/scenegrid-console
 https://github.com/zyvop/zyvop-cli
 https://gitlab.com/oliver-zehentleitner/keep-the-why-demo
